@@ -1,16 +1,30 @@
-# Formation Symfony — le moteur
+# Forelse · apprendre — le moteur
 
-Une plateforme pour **apprendre Symfony en codant, sans vidéo** : l'apprenant écrit son code dans le navigateur, un vrai projet Symfony tourne **dans le navigateur** (PHP 8.4 compilé en WebAssembly), l'aperçu se met à jour en direct et des tests PHPUnit valident chaque objectif.
+Une plateforme pour **apprendre à développer en codant**, sans vidéo ni installation. L'apprenant écrit son code dans
+le navigateur, où tourne un vrai projet : PHP 8.4 compilé en WebAssembly pour Symfony et Laravel, et des simulateurs
+pour Docker et Nuxt. L'aperçu se met à jour en direct, et des tests automatiques valident chaque objectif. Rien n'est
+exécuté sur le serveur.
 
-Ce dépôt contient le **moteur**, open source (AGPL-3.0) et auto-hébergeable. Les exercices vivent dans des **packs de contenu**, chargés par le moteur. Un pack de démonstration est fourni dans `examples/packs/demo`.
+C'est le moteur de [apprendre.forelse.fr](https://apprendre.forelse.fr), **open source (AGPL-3.0) et
+auto-hébergeable**. Les exercices n'en font pas partie : ils vivent dans des **packs de contenu**, que le moteur
+charge. Un pack de démonstration est fourni dans `examples/packs/demo`, et chacun peut écrire les siens. Les parcours
+de Forelse ne sont pas dans ce dépôt ; une école ou une entreprise peut les utiliser sur sa propre instance, sur devis
+([en savoir plus](https://apprendre.forelse.fr/auto-hebergement)).
+
+- **Installer une instance** avec Docker : [auto-hebergement/README.md](auto-hebergement/README.md)
+- **Écrire des exercices** : [Packs de contenu](#packs-de-contenu) et [L'atelier des auteurs](#latelier-des-auteurs)
+- **Développer le moteur** : [Démarrer en local](#démarrer-en-local)
+- **Ce qui change d'une version à l'autre** : [CHANGELOG.md](CHANGELOG.md)
 
 ## Architecture
 
 ```
 platform/         Application Symfony 8.1 : pages, comptes, progression, API, content:check
 playground/       Îlot TypeScript : runtime PHP WebAssembly, éditeur Monaco, aperçu isolé
-environments/     Projets de base dans lesquels s'exécutent les exercices (symfony-8, symfony-8-doctrine, symfony-8-app, symfony-8-2-dev, laravel-13, docker)
-tools/            Empaquetage des environnements (archive + index de complétion)
+environments/     Projets de base dans lesquels s'exécutent les exercices (symfony-8, symfony-8-doctrine, symfony-8-app, symfony-8-2-dev, laravel-13, docker, nuxt-4)
+tools/            Empaquetage des environnements (archive + index de complétion), simulateurs Docker (docker-sim) et Nuxt (nuxt-sim)
+auto-hebergement/ Guide, compose.yaml et .env.example d'une instance auto-hébergée
+deploy/           compose.yaml de l'instance de Forelse, copié sur son serveur par l'intégration continue
 examples/packs/   Pack de démonstration (format de contenu, tests du moteur)
 ```
 
