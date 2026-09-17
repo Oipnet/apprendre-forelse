@@ -1,0 +1,208 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon compte · Forelse{% endblock %}
+
+{% block body_class %}site-page account{% endblock %}
+
+{% macro track_tag(state) %}
+    {%- set tags = {
+        started: ['En cours', 'rust'],
+        done: ['Terminé', 'green'],
+        open: ['Accès actif', 'green'],
+        free: ['Gratuit', 'green'],
+        not_started: ['Non démarré', 'muted'],
+    } -%}
+    <span class="ac-tag {{ tags[state][1] }}">{{ tags[state][0] }}</span>
+{%- endmacro %}
+
+{% macro next_line(row) %}
+    {%- if row.state == 'done' -%}
+        Parcours terminé, bravo.
+    {%- elseif row.next -%}
+        {{ row.completed or row.lastActivity ? 'Prochain exercice' : 'Premier exercice' }} : <strong>{{ row.next.title }}</strong>
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro action(row, class) %}
+    {%- if row.state == 'done' -%}
+        <a class="{{ class }}" href="{{ path('app_track', {trackId: row.track.id}) }}">Revoir le parcours <span class="lp-mono">→</span></a>
+    {%- elseif row.next -%}
+        <a class="{{ class }}" href="{{ path('app_exercise', {trackId: row.track.id, exerciseId: row.next.id}) }}">{{ row.completed or row.lastActivity ? 'Reprendre' : 'Commencer' }} <span class="lp-mono">→</span></a>
+    {%- endif -%}
+{%- endmacro %}
+
+{% block body %}
+    {% set user = app.user %}
+    {% set featured = progress|filter(row => row.state == 'started')|first %}
+    <main class="ac-wrap">
+        {% if not user.emailVerified %}
+            <div class="ac-banner warn" id="confirmation">
+                <span class="ac-banner-icon" aria-hidden="true">!</span>
+                <p><strong>Confirmez votre adresse {{ user.email }}.</strong> Le lien est dans l'email reçu à l'inscription. Sans adresse confirmée, un reçu ou un lien de mot de passe oublié risque de ne jamais vous parvenir.</p>
+                <form method="post" action="{{ path('app_account_resend_confirmation') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                    <button class="ac-btn outline small" type="submit">Renvoyer le lien</button>
+                </form>
+            </div>
+        {% endif %}
+
+        <header class="ac-head">
+            <div>
+                <h1>Mon compte</h1>
+                <p>{{ user.displayName }}{% if user.cohort %} · cohorte « {{ user.cohort.name }} »{% endif %}</p>
+            </div>
+            <dl class="ac-kpis">
+                <div><dt>XP</dt> <dd>{{ user.xp }}</dd></div>
+                <div><dt>exercice{{ completedExercises > 1 ? 's' }} réussi{{ completedExercises > 1 ? 's' }}</dt> <dd>{{ completedExercises }}</dd></div>
+                <div><dt>accès actif{{ activeAccesses > 1 ? 's' }}</dt> <dd>{{ activeAccesses }}</dd></div>
+            </dl>
+        </header>
+
+        <div class="ac-layout">
+            <div class="ac-main">
+                <section id="progression">
+                    <div class="ac-section-head">
+                        <h2>Reprendre où j'en suis</h2>
+                        <a href="{{ path('app_home') }}#parcours">Tous les parcours →</a>
+                    </div>
+
+                    {% if featured %}
+                        <article class="ac-featured">
+                            <div class="ac-eyebrow">En cours</div>
+                            <div class="ac-featured-row">
+                                <div>
+                                    <a class="ac-track-title" href="{{ path('app_track', {trackId: featured.track.id}) }}">{{ featured.track.title }}</a>
+                                    <p>{{ _self.next_line(featured) }}</p>
+                                </div>
+                                {{ _self.action(featured, 'ac-btn primary') }}
+                            </div>
+                            <div class="ac-meter">
+                                <div class="ac-meter-legend"><span>{{ featured.completed }} / {{ featured.total }} exercices</span><span class="xp">{{ featured.xp }} XP</span></div>
+                                <div class="ac-bar lg" aria-hidden="true"><div style="width: {{ featured.total ? max(1, (featured.completed / featured.total * 100)|round) : 0 }}%"></div></div>
+                            </div>
+                        </article>
+                    {% endif %}
+
+                    {% set others = featured ? progress|filter(row => row.track.id != featured.track.id) : progress %}
+                    {% if others is not empty %}
+                        <ul class="ac-tracks">
+                            {% for row in others %}
+                                <li>
+                                    <div>
+                                        <div class="ac-track-name">
+                                            <a href="{{ path('app_track', {trackId: row.track.id}) }}">{{ row.track.title }}</a>
+                                            {{ _self.track_tag(row.state) }}
+                                        </div>
+                                        <p>{{ _self.next_line(row) }}</p>
+                                    </div>
+                                    <div class="ac-track-foot">
+                                        <div class="ac-meter-legend"><span>{{ row.completed }} / {{ row.total }} exercices</span><span class="{{ row.xp ? 'xp' }}">{{ row.xp }} XP</span></div>
+                                        <div class="ac-bar" aria-hidden="true"><div style="width: {{ row.total ? (row.completed / row.total * 100)|round : 0 }}%"></div></div>
+                                        {{ _self.action(row, 'ac-btn outline') }}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% elseif not featured %}
+                        <p class="ac-muted">Aucun parcours ouvert pour l'instant. <a href="{{ path('app_home') }}#parcours">Choisir un parcours</a> : le premier chapitre est toujours gratuit.</p>
+                    {% endif %}
+                </section>
+
+                <section id="profil">
+                    <h2>Profil</h2>
+                    <p class="ac-muted ac-intro">Votre pseudo s'affiche en haut des pages{% if user.cohort %} et dans le suivi de votre cohorte{% endif %}.</p>
+                    <div class="ac-forms">
+                        <div class="ac-card site-form">
+                            {{ form_start(profileForm) }}
+                                {{ form_row(profileForm.displayName) }}
+                                {{ form_row(profileForm.email) }}
+                                <button class="ac-btn primary" type="submit">Enregistrer</button>
+                            {{ form_end(profileForm) }}
+                        </div>
+                        <div class="ac-card site-form" id="mot-de-passe">
+                            <div class="ac-eyebrow">Mot de passe</div>
+                            {{ form_start(passwordForm) }}
+                                {{ form_row(passwordForm.currentPassword, {attr: {placeholder: '••••••••'}}) }}
+                                {{ form_row(passwordForm.plainPassword, {attr: {placeholder: '8 caractères minimum'}}) }}
+                                <button class="ac-btn outline" type="submit">Changer le mot de passe</button>
+                            {{ form_end(passwordForm) }}
+                        </div>
+                    </div>
+                </section>
+
+                <section id="suppression">
+                    <details class="ac-danger"{% if deleteOpen %} open{% endif %}>
+                        <summary>
+                            <span class="ac-danger-text">
+                                <span class="ac-danger-title">Supprimer mon compte</span>
+                                <span>Votre compte, votre code, votre progression, vos avis et vos accès aux parcours sont effacés tout de suite. <strong>Un parcours acheté ne sera plus accessible</strong> ; l'achat reste dans notre comptabilité, sans lien avec vous. C'est irréversible.</span>
+                            </span>
+                            <span class="ac-btn danger-outline" aria-hidden="true"><span class="closed">Supprimer mon compte</span><span class="opened">Annuler</span></span>
+                        </summary>
+                        <div class="ac-danger-body site-form">
+                            {{ form_start(deleteForm) }}
+                                {{ form_row(deleteForm.password, {label: 'Votre mot de passe, pour confirmer'}) }}
+                                <button class="ac-btn danger" type="submit">Supprimer définitivement</button>
+                            {{ form_end(deleteForm) }}
+                        </div>
+                    </details>
+                </section>
+            </div>
+
+            <aside class="ac-aside">
+                <div class="ac-card" id="acces">
+                    <div class="ac-eyebrow">Mes accès</div>
+                    {% if accesses is empty %}
+                        <p class="ac-muted">Aucun accès pour l'instant. Le premier chapitre de chaque parcours est gratuit.</p>
+                    {% else %}
+                        <ul class="ac-list">
+                            {% for access in accesses %}
+                                {% set track = tracks[access.trackId] ?? null %}
+                                {% set state = access.active(now) ? 'actif' : (access.startsAt > now ? 'à venir' : 'terminé') %}
+                                <li>
+                                    <div class="ac-list-head">
+                                        {% if track %}<a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a>{% else %}<span>{{ access.trackId }}</span>{% endif %}
+                                        <span class="ac-tag {{ state == 'actif' ? 'green' : 'muted' }}">{{ state }}</span>
+                                    </div>
+                                    <div class="ac-muted">{{ access.source.label }}{% if access.cohort %} ({{ access.cohort.name }}){% endif %} · {{ access.endsAt ? 'jusqu\'au ' ~ access.endsAt|date('d/m/Y') : 'à vie' }}</div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="ac-card" id="achats">
+                    <div class="ac-eyebrow">Mes achats</div>
+                    {% if purchases is empty %}
+                        <p class="ac-muted">Aucun pour l'instant.</p>
+                    {% else %}
+                        <ul class="ac-list">
+                            {% for purchase in purchases %}
+                                {% set track = tracks[purchase.trackId] ?? null %}
+                                <li>
+                                    <div class="ac-list-head">
+                                        <span>{{ track ? track.title : purchase.trackId }}</span>
+                                        <span class="lp-mono">{{ (purchase.amountPaid ?? purchase.price)|euros }}</span>
+                                    </div>
+                                    <div class="ac-muted">{{ purchase.createdAt|date('d/m/Y') }} · {{ purchase.status.label }}</div>
+                                    {% if purchase.stripeInvoiceId or purchase.receiptUrl %}
+                                        <div class="ac-docs">
+                                            {% if purchase.stripeInvoiceId %}<a href="{{ path('app_account_invoice', {id: purchase.id}) }}">Facture (PDF)</a>{% endif %}
+                                            {% if purchase.receiptUrl %}<a href="{{ purchase.receiptUrl }}" target="_blank" rel="noopener">Reçu</a>{% endif %}
+                                        </div>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="ac-card tinted">
+                    <div class="ac-eyebrow">Pratique</div>
+                    <p>{{ practiceCompleted ? practiceCompleted ~ ' exercice' ~ (practiceCompleted > 1 ? 's' : '') ~ ' réussi' ~ (practiceCompleted > 1 ? 's' : '') ~ ' hors parcours.' : 'De courts exercices hors parcours, sur une fonctionnalité précise.' }}</p>
+                    <a class="ac-btn outline" href="{{ path('app_practice') }}">Voir les exercices <span class="lp-mono">→</span></a>
+                </div>
+            </aside>
+        </div>
+    </main>
+{% endblock %}

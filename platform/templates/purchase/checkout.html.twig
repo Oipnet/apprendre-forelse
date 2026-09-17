@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Acheter « {{ track.title }} » · Forelse{% endblock %}
+
+{% block body %}
+    <main class="form-card">
+        <h1>{{ track.title }}</h1>
+        <p class="price">
+            {% if offer.quote.discounted %}<s class="meta" aria-label="Prix normal">{{ offer.quote.normalPrice|euros }}</s>{% endif %}
+            <strong>{{ offer.quote.price|euros }}</strong> <span class="meta">TTC</span>
+        </p>
+        <p><strong>Accès à vie au parcours et à ses mises à jour.</strong></p>
+        {% if offer.quote.founder %}
+            <p class="meta">Prix fondateur{% if offer.quote.founderSeatsLeft is not null %}, encore {{ offer.quote.founderSeatsLeft }} place{{ offer.quote.founderSeatsLeft > 1 ? 's' }}{% endif %}{% if offer.quote.founderEndsAt %}, jusqu'au {{ offer.quote.founderEndsAt|date('d/m/Y') }}{% endif %}.</p>
+        {% elseif offer.quote.cohort %}
+            <p class="meta">Tarif de votre cohorte « {{ offer.quote.cohort.name }} ».</p>
+        {% endif %}
+        <p class="meta">La TVA de votre pays est calculée à l'étape suivante, sur la page de paiement sécurisée de Stripe ; le prix affiché la comprend.</p>
+
+        {{ form_start(form) }}
+            <div class="waiver">
+                {{ form_widget(form.termsOfSale) }}
+                {{ form_label(form.termsOfSale) }}
+            </div>
+            {{ form_errors(form.termsOfSale) }}
+            <div class="waiver">
+                {{ form_widget(form.withdrawalWaiver) }}
+                {{ form_label(form.withdrawalWaiver) }}
+            </div>
+            {{ form_errors(form.withdrawalWaiver) }}
+            <button class="primary" type="submit">Payer {{ offer.quote.price|euros }}</button>
+        {{ form_end(form) }}
+        <p class="meta"><a href="{{ path('app_track', {trackId: track.id}) }}">Retour au parcours</a></p>
+    </main>
+{% endblock %}

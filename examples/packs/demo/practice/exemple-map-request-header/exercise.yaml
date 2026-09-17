@@ -1,0 +1,41 @@
+id: exemple-map-request-header
+title: 'Lire un en-tête avec #[MapRequestHeader]'
+environment: symfony-8
+published: 2026-09-16
+summary: Un en-tête HTTP arrive directement en argument du contrôleur, et son absence donne une 400 sans une ligne de code.
+version: '8.1'
+pull_request: https://github.com/symfony/symfony/pull/51379
+concepts: [Contrôleur, HttpKernel]
+
+open: src/Controller/VersionController.php
+preview: /api/version
+
+editable:
+  - src/Controller/VersionController.php
+
+requests:
+  - title: Avec l'en-tête
+    method: GET
+    path: /api/version
+    headers:
+      X-Api-Version: '2'
+  - title: Sans l'en-tête
+    method: GET
+    path: /api/version
+
+docs:
+  - title: 'Contrôleurs : lire les en-têtes de la requête'
+    url: https://symfony.com/doc/current/controller.html#mapping-request-headers
+
+objectives:
+  - test: testLaVersionDemandeeEstLue
+    label: 'GET /api/version avec « X-Api-Version: 2 » répond « Version demandée : 2 »'
+  - test: testSansEnTeteLaRequeteEstRefusee
+    label: "Sans l'en-tête, la réponse est une 400"
+  - test: testLeControleurUtiliseMapRequestHeader
+    label: "L'en-tête arrive par #[MapRequestHeader], sans objet Request"
+
+hints:
+  - "Remplacez l'argument `Request $request` par un argument `string` marqué `#[MapRequestHeader]` (espace de noms `Symfony\\Component\\HttpKernel\\Attribute`)."
+  - "Sans nom, l'attribut déduit l'en-tête du nom de l'argument : `$xApiVersion` lit `x-api-version`. Vous pouvez aussi l'écrire : `#[MapRequestHeader('x-api-version')]`."
+  - "Un argument `string` non nullable et sans valeur par défaut rend l'en-tête obligatoire : Symfony répond 400 tout seul. Le `if` peut partir."

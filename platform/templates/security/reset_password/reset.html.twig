@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau mot de passe · Forelse{% endblock %}
+
+{% block body %}
+    <main class="form-card">
+        <h1>Nouveau mot de passe</h1>
+        {{ form_start(form) }}
+            {{ form_row(form.plainPassword) }}
+            <button class="primary" type="submit">Enregistrer et me connecter</button>
+        {{ form_end(form) }}
+    </main>
+{% endblock %}

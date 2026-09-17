@@ -1,0 +1,13 @@
+<script>
+    document.querySelectorAll('[data-copy]').forEach((button) => {
+        if (!navigator.clipboard) {
+            return;
+        }
+        button.hidden = false;
+        button.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(button.dataset.copy);
+            button.textContent = 'Copié ✓';
+            setTimeout(() => { button.textContent = 'Copier'; }, 2000);
+        });
+    });
+</script>

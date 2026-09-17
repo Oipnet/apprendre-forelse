@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <main class="page legal-page">
+        <p class="meta">Le site</p>
+        <h1>Mentions légales</h1>
+        <p class="lead">Qui édite {{ siteHost }}, qui l'héberge, et ce que vous pouvez faire de ce qui s'y trouve.</p>
+
+        {{ include('legal/_missing.html.twig') }}
+
+        <section id="editeur">
+            <h2>Éditeur du site</h2>
+            {% if not legal.publisherName %}<p class="meta">Non renseigné.</p>{% endif %}
+            <dl class="legal-facts">
+                {% if legal.publisherName %}
+                    <div><dt>Dénomination</dt><dd>{{ legal.publisherName }}</dd></div>
+                {% endif %}
+                {% if legal.publisherLegalForm %}
+                    <div><dt>Forme juridique</dt><dd>{{ legal.publisherLegalForm }}</dd></div>
+                {% endif %}
+                {% if legal.publisherRegistration %}
+                    <div><dt>Immatriculation</dt><dd>{{ legal.publisherRegistration }}</dd></div>
+                {% endif %}
+                {% if legal.publisherVat %}
+                    <div><dt>TVA intracommunautaire</dt><dd>{{ legal.publisherVat }}</dd></div>
+                {% endif %}
+                {% if legal.publisherAddress %}
+                    <div><dt>Siège social</dt><dd>{{ legal.publisherAddress }}</dd></div>
+                {% endif %}
+                {% if legal.publisherEmail %}
+                    <div><dt>Contact</dt><dd><a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a></dd></div>
+                {% endif %}
+                {% if legal.publisherPhone %}
+                    <div><dt>Téléphone</dt><dd>{{ legal.publisherPhone }}</dd></div>
+                {% endif %}
+                {% if legal.publicationDirector %}
+                    <div><dt>Directeur de la publication</dt><dd>{{ legal.publicationDirector }}</dd></div>
+                {% endif %}
+            </dl>
+        </section>
+
+        <section id="hebergeur">
+            <h2>Hébergement</h2>
+            {% if not legal.hostName %}<p class="meta">Non renseigné.</p>{% endif %}
+            <dl class="legal-facts">
+                {% if legal.hostName %}
+                    <div><dt>Hébergeur</dt><dd>{{ legal.hostName }}</dd></div>
+                {% endif %}
+                {% if legal.hostAddress %}
+                    <div><dt>Adresse</dt><dd>{{ legal.hostAddress }}</dd></div>
+                {% endif %}
+                {% if legal.hostPhone %}
+                    <div><dt>Téléphone</dt><dd>{{ legal.hostPhone }}</dd></div>
+                {% endif %}
+            </dl>
+            <p>Le bac à sable dans lequel s'affiche l'aperçu de votre code est servi depuis un domaine distinct, <span class="lp-mono">{{ sandboxHost }}</span>, par le même hébergeur. Cette séparation isole le code exécuté dans votre navigateur du site lui-même.</p>
+        </section>
+
+        <section id="propriete">
+            <h2>Propriété intellectuelle</h2>
+            <p>Le moteur de la plateforme est un logiciel libre, publié sous licence <a href="https://www.gnu.org/licenses/agpl-3.0.fr.html">GNU AGPL v3</a>. Vous pouvez en obtenir le code source, l'étudier, le modifier et le redistribuer dans les conditions de cette licence.</p>
+            <p>Les parcours, exercices, fiches de cours, textes, illustrations et la marque <em>Forelse</em> ne sont pas couverts par cette licence : ils restent la propriété de l'éditeur ou de leurs auteurs respectifs. Toute reproduction ou diffusion hors d'un usage personnel d'apprentissage demande une autorisation écrite.</p>
+            <p>Le code que vous écrivez dans les exercices vous appartient.</p>
+            <p>Les noms des langages, frameworks et logiciels enseignés ou cités sont des marques ou des œuvres de leurs titulaires respectifs. Ce site s'y réfère pour dire ce qu'il enseigne : il n'est parrainé, approuvé ni affilié par aucun d'eux.</p>
+        </section>
+
+        <section id="donnees">
+            <h2>Données personnelles</h2>
+            <p>Ce que le site collecte, pourquoi, combien de temps, et vos droits : voir la <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
+        </section>
+
+        <section id="responsabilite">
+            <h2>Responsabilité</h2>
+            <p>Les contenus pédagogiques sont rédigés avec soin, mais peuvent contenir des erreurs ou vieillir : les frameworks évoluent. Ils sont fournis à titre d'apprentissage, sans garantie d'exactitude ni d'adéquation à un usage particulier.</p>
+            <p>Le code des exercices s'exécute dans votre navigateur, dans un bac à sable sans accès au disque ni au réseau. L'éditeur ne peut être tenu responsable de l'usage que vous faites, ailleurs, du code écrit ou appris ici.</p>
+            <p>Les liens vers d'autres sites sont donnés à titre d'information ; l'éditeur ne répond pas de leur contenu.</p>
+        </section>
+
+        <p class="meta">Dernière mise à jour : {{ updatedAt|date('d/m/Y') }}.</p>
+    </main>
+{% endblock %}

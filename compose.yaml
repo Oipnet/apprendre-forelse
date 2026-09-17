@@ -1,0 +1,49 @@
+# Lancer en local :      docker compose up --build
+#   → plateforme http://localhost:8080, bac à sable http://127.0.0.1:8080
+#   (port occupé ? LOCAL_PORT=8090 docker compose up --build)
+#   (hôtes différents = origines et cookies séparés)
+#
+# Pour une vraie instance (image publiée, domaines, HTTPS, emails…) : auto-hebergement/README.md.
+services:
+  app:
+    build: .
+    image: apprendre-forelse
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:${LOCAL_PORT:-8080}}
+      SANDBOX_URL: ${SANDBOX_URL:-http://127.0.0.1:${LOCAL_PORT:-8080}}
+      APP_SECRET: ${APP_SECRET:-}
+      DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:-formation}@db:5432/formation?serverVersion=17&charset=utf8
+    volumes:
+      - data:/data
+      - config:/config
+      # Packs de contenu, en lecture seule (vide : pack de démonstration).
+      - ${PACKS_DIR:-./examples/packs}:/packs:ro
+    ports:
+      # Caddy écoute sur le port indiqué dans les URL : même port des deux côtés.
+      - "${LOCAL_PORT:-8080}:${LOCAL_PORT:-8080}"
+      - "${HTTP_PORT:-8081}:80"
+      - "${HTTPS_PORT:-8443}:443"
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: formation
+      POSTGRES_USER: formation
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-formation}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U formation -d formation"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  data:
+  config:
+  db:

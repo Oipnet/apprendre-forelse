@@ -1,0 +1,7 @@
+{# Instance pas encore configurée : on le dit, on n'invente rien (voir LEGAL_* dans .env). #}
+{% if missing is not empty %}
+    <div class="legal-missing" role="alert">
+        <strong>Mentions incomplètes.</strong> L'exploitant de ce site n'a pas encore renseigné :
+        {% for variable in missing %}<code>{{ variable }}</code>{{ not loop.last ? ', ' }}{% endfor %}.
+    </div>
+{% endif %}

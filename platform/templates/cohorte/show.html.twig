@@ -1,0 +1,96 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ cohort.label }}{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-secondary" href="{{ path('chef') }}">← Mes cohortes</a>
+{% endblock %}
+
+{% block main %}
+    <p>
+        Code d'invitation <code>{{ cohort.cohort.code }}</code>{% if not cohort.cohort.active %} · <strong>inscriptions fermées</strong>{% endif %}
+        · {{ cohort.users|length }} apprenant{{ cohort.users|length > 1 ? 's' }}
+    </p>
+    <p>{{ include('cohorte/_invitation.html.twig', {cohort: cohort.cohort}) }}</p>
+
+    <section class="beta-panel" id="financement">
+        <div class="beta-panel-header">
+            <h2>Financement</h2>
+            <span class="badge badge-info">{{ cohort.cohort.fundingMode.label }}</span>
+        </div>
+        <div class="beta-panel-body">
+            {{ include('cohorte/_financing.html.twig', {cohort: cohort.cohort, quote: quote, headcountForm: canManage ? headcountForm : null}) }}
+        </div>
+    </section>
+
+    <section class="beta-panel" id="parcours">
+        <div class="beta-panel-header">
+            <h2>Parcours disponibles</h2>
+            {% if cohort.cohort.hasTrackSelection %}
+                <span class="badge badge-info">{{ cohort.cohort.availableTrackIds|length }} sur {{ tracks|length }}</span>
+            {% else %}
+                <span class="badge badge-secondary">Tous</span>
+            {% endif %}
+        </div>
+        <div class="beta-panel-body">
+            <p class="text-muted">
+                {% if cohort.cohort.fundedByInstitution %}
+                    Chaque parcours coché est ouvert aux apprenants jusqu'à la fin des accès de la cohorte ; en ajouter
+                    un change l'estimation du devis. Retirer un parcours ferme l'accès que la cohorte donnait, sans
+                    supprimer de progression (un parcours acheté par l'apprenant reste ouvert).
+                {% else %}
+                    Les apprenants ne voient que les parcours cochés ; aucun coché, ils les voient tous.
+                    Retirer un parcours ne supprime aucune progression : ceux qui l'ont commencé peuvent le terminer.
+                {% endif %}
+            </p>
+            {{ form_start(form) }}
+                <table class="beta-table">
+                    <thead>
+                        <tr><th class="beta-center">Proposé</th><th>Parcours</th><th>Apprenants</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for choice in form.trackIds %}
+                            {% set track = tracks[choice.vars.value] %}
+                            <tr>
+                                <td class="beta-center">{{ form_widget(choice, {attr: {'aria-label': track.title}}) }}</td>
+                                <td>
+                                    <label for="{{ choice.vars.id }}">{{ track.title }}</label>
+                                    {% if track.restricted %}
+                                        <span class="badge badge-secondary" title="{{ is_granted('ROLE_ADMIN') ? 'Le cocher l\'ouvre aux apprenants de cette cohorte.' : 'Seul un administrateur peut l\'ouvrir à la cohorte.' }}">en préparation</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set count = inProgress[track.id] ?? 0 %}
+                                    {% if count %}
+                                        <span class="badge badge-warning" title="Ont commencé ce parcours sans le terminer">{{ count }} apprenant{{ count > 1 ? 's' }} en cours</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if canManage %}
+                    <p><button class="btn btn-primary" type="submit">Enregistrer les parcours</button></p>
+                {% endif %}
+            {{ form_end(form) }}
+        </div>
+    </section>
+
+    <section class="beta-panel">
+        <div class="beta-panel-header">
+            <h2>Avancement</h2>
+            <span class="badge badge-success">{{ cohort.completedExercises }} exercice{{ cohort.completedExercises > 1 ? 's' }} réussi{{ cohort.completedExercises > 1 ? 's' }}</span>
+        </div>
+        <div class="beta-panel-body">
+            {% if cohort.users is empty %}
+                <p class="text-muted">Personne ne s'est encore inscrit : envoyez le lien d'invitation.</p>
+            {% endif %}
+            {{ include('admin/_cohort_progress.html.twig') }}
+        </div>
+    </section>
+{% endblock %}
+
+{% block body_javascript %}
+    {{ parent() }}
+    {{ include('cohorte/_copy_script.html.twig') }}
+{% endblock %}

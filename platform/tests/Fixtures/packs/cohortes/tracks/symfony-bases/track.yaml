@@ -1,0 +1,6 @@
+id: symfony-bases
+title: Bases de Symfony
+description: Un parcours Symfony.
+environment: symfony-8
+chapters:
+  - {id: c1, title: Premier chapitre Symfony, exercises: [e1]}

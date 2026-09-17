@@ -1,0 +1,41 @@
+{
+  "name": "@forelse/simulateur-nuxt",
+  "version": "0.1.0",
+  "description": "Simulateur Nuxt en TypeScript : routes serveur Nitro/h3 sans Node, pour apprendre Nuxt dans le navigateur.",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --dir tests",
+    "conformite": "vitest run --dir conformite",
+    "typecheck": "tsc --noEmit",
+    "demo": "node --experimental-transform-types demo/serveur.ts"
+  },
+  "dependencies": {
+    "@vitest/expect": "5.0.1",
+    "@vitest/spy": "5.0.1",
+    "chai": "^6.2.2",
+    "devalue": "5.9.2",
+    "es-module-lexer": "^2.3.2",
+    "fnv1a-64": "0.1.2",
+    "hookable": "6.1.1",
+    "object-identity": "0.2.3",
+    "ofetch": "1.5.1",
+    "ohash": "2.0.12",
+    "sucrase": "^3.35.1",
+    "unrouting": "^0.2.3",
+    "unstorage": "1.17.5",
+    "vue": "3.5.42",
+    "vue-router": "5.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "rolldown": "^1.2.9",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  }
+}

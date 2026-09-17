@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Email envoyé · Forelse{% endblock %}
+
+{% block body %}
+    <main class="form-card">
+        <h1>Regardez votre boîte mail</h1>
+        <p>Si un compte existe avec cette adresse, un email vient de partir avec un lien pour choisir un nouveau mot de passe. Il est valable {{ resetToken.expirationMessageKey|trans(resetToken.expirationMessageData, 'ResetPasswordBundle') }}.</p>
+        <p class="meta">Rien reçu ? Vérifiez vos indésirables, ou <a href="{{ path('app_forgot_password_request') }}">refaites une demande</a> une fois ce délai passé.</p>
+    </main>
+{% endblock %}

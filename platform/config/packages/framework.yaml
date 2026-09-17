@@ -1,0 +1,27 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+
+    # Note that the session will be started ONLY if you read or write from it.
+    # Cookie limité à l'hôte de la plateforme (pas de `cookie_domain`) : l'origine
+    # bac à sable, qui exécute le code des apprenants, ne doit jamais le recevoir.
+    session:
+        # Fichiers de session hors du conteneur (SESSIONS_DIR, dans le volume /data en production) : un
+        # déploiement recrée le conteneur, et ne doit pas déconnecter tout le monde.
+        handler_id: session.handler.native_file
+        save_path: '%env(resolve:SESSIONS_DIR)%'
+        cookie_httponly: true
+        cookie_samesite: lax
+        cookie_secure: auto
+
+    # X-Robots-Tag est posé par SearchIndexingListener, selon la page : pas de noindex global en mode debug.
+    disallow_search_engine_index: false
+
+    #esi: true
+    #fragments: true
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

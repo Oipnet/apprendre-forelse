@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ chapter.title }} · Fiche de cours · Atelier{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ vite_entry_link_tags('atelier') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ vite_entry_script_tags('atelier') }}
+{% endblock %}
+
+{% block body_class %}playground-page{% endblock %}
+
+{# Plein écran : l'atelier dessine sa propre barre. #}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block body %}
+    <div class="playground studio lesson-studio" data-studio-lesson data-config="{{ config|json_encode }}">
+        <header class="topbar">
+            <div class="crumbs">
+                <a class="lp-brand" href="{{ path('app_home') }}" title="Forelse · apprendre"><img src="{{ asset('img/logo-84.png') }}" alt="" width="72" height="84"><span class="lp-serif">Forelse</span><span class="lp-chip">apprendre</span></a><span>›</span>
+                <a href="{{ path('app_studio') }}">Atelier</a><span>›</span>{{ track.title }}<span>›</span>Fiche de cours · {{ chapter.title }}
+            </div>
+            <div class="status">Prêt</div>
+            <div class="actions">
+                <a class="button ghost small" href="{{ config.urls.lire }}" target="_blank" rel="noopener">Voir la fiche ↗</a>
+                <button id="squelette" class="ghost" title="Assembler un point de départ à partir des exercices du chapitre">Squelette</button>
+                {% if config.ia %}<button id="rediger" class="ghost" title="Demander un brouillon complet au modèle">Rédiger avec l'IA</button>{% endif %}
+                <button id="supprimer-fiche" class="ghost" title="Retirer la fiche du chapitre">🗑</button>
+                <button id="enregistrer" class="primary">Enregistrer</button>
+            </div>
+        </header>
+        <main class="workspace">
+            <section class="panel code">
+                <nav class="tabs">
+                    <span class="tabs-files" id="tabs"></span>
+                </nav>
+                <div class="code-body">
+                    <div class="editor" id="editor"></div>
+                </div>
+            </section>
+            <section class="panel apercu">
+                <p class="aide">
+                    Aperçu tel que l'apprenant le verra. La fiche commence à <code>##</code>, le HTML brut n'est pas rendu,
+                    les commentaires <code>&lt;!-- … --&gt;</code> disparaissent. Enregistrer une fiche vide la retire du chapitre.
+                </p>
+                <article class="lesson" id="apercu"></article>
+            </section>
+        </main>
+    </div>
+{% endblock %}

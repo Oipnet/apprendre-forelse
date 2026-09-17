@@ -1,0 +1,28 @@
+id: 02-bonjour-prenom
+title: Bonjour à vous
+concepts: [Paramètre de route]
+xp: 50
+# Part de l'état final de l'exercice précédent (starter + solution)
+base: 01-bonjour
+
+open: src/Controller/BonjourController.php
+preview: /bonjour/Ada
+
+editable:
+  - src/Controller/BonjourController.php
+
+docs:
+  - title: 'Les paramètres de route'
+    url: https://symfony.com/doc/current/routing.html#route-parameters
+  - title: 'Les contrôleurs'
+    url: https://symfony.com/doc/current/controller.html
+
+objectives:
+  - test: testLaPageSaluePrenom
+    label: /bonjour/Ada affiche « Bonjour Ada ! »
+  - test: testLaPageSansPrenomFonctionneToujours
+    label: /bonjour affiche toujours « Bonjour Symfony ! »
+
+hints:
+  - Une route peut contenir un paramètre entre accolades, récupéré comme argument de la méthode.
+  - "`#[Route('/bonjour/{prenom}')]` avec `public function prenom(string $prenom): Response`."

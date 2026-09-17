@@ -1,0 +1,4 @@
+# Environnement d'exécution : projet Symfony de base, empaqueté par tools/build-env.sh
+id: symfony-8-doctrine
+title: Symfony 8.1 — Twig, Doctrine ORM (SQLite), PHPUnit
+php: '8.4'

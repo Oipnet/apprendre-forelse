@@ -1,0 +1,23 @@
+{% set title = track ? track.title : purchase.trackId %}
+Bonjour{{ purchase.user ? ' ' ~ purchase.user.displayName : '' }},
+
+Merci pour votre achat : votre accès au parcours « {{ title }} » est ouvert, à vie, avec ses mises à jour.
+
+Montant payé : {{ (purchase.amountPaid ?? purchase.price)|euros }} TTC, le {{ purchase.paidAt|date('d/m/Y') }}.
+{% if track %}
+
+Reprendre le parcours : {{ url('app_track', {trackId: track.id}) }}
+{% endif %}
+
+{% if purchase.receiptUrl %}Votre reçu : {{ purchase.receiptUrl }}{% else %}Votre reçu sera disponible dans votre compte : {{ url('app_account') }}{% endif %}
+{% if purchase.stripeInvoiceId %}
+
+Votre facture se télécharge depuis votre compte : {{ url('app_account') }}
+{% endif %}
+
+
+{% if purchase.termsVersion %}Conditions générales de vente acceptées (version du {{ purchase.termsVersion|date('d/m/Y') }}) : {{ url('app_terms') }}
+
+{% endif %}Vous avez demandé l'accès immédiat au parcours et renoncé à votre droit de rétractation le {{ purchase.withdrawalWaiverAcceptedAt|date('d/m/Y à H:i') }}.
+
+Forelse · apprendre

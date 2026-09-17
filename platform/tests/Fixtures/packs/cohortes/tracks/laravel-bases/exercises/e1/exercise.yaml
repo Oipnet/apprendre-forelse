@@ -1,0 +1,6 @@
+id: e1
+title: Exercice unique
+access: free
+xp: 10
+editable: [app/Http/Controllers/BonjourController.php]
+objectives: [{test: testA, label: A}]

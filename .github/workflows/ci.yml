@@ -1,0 +1,351 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    # Publication d'une version : l'étiquette vXX.YY.ZZ déclenche les images Docker correspondantes.
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  pull_request:
+  workflow_dispatch:
+
+# Un seul passage à la fois par branche : les suivants annulent le précédent.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Xdebug ferait planter le serveur interne de PHP et ralentirait PHPUnit.
+  PHP_VERSION: '8.4'
+  NODE_VERSION: '22'
+
+jobs:
+  # Une étiquette de version vise un commit que la poussée de main vient de tester et de construire
+  # (tools/release.sh commite sur main, puis étiquette) : plutôt que tout refaire, on attend la CI de main
+  # sur ce commit et, si elle est verte, on reprend son image (voir « Publier la version »). Si elle a
+  # échoué, a été annulée ou n'existe pas, l'étiquette refait tests et construction, comme avant.
+  # Tourne à chaque passage (sans rien faire hors étiquette) : un job ignoré ferait ignorer ses dépendants.
+  reprise:
+    name: Image déjà testée
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+    outputs:
+      image: ${{ steps.cherche.outputs.image }}
+    steps:
+      - name: Connexion au registre
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attendre la CI de main sur ce commit
+        id: cherche
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}"
+          # Poussées ensemble (git push --follow-tags), la CI de main est encore en cours : jusqu'à 25 minutes.
+          for _ in $(seq 1 50); do
+            etat=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push --commit "$GITHUB_SHA" \
+              --limit 1 --json status,conclusion --jq '.[0] | "\(.status) \(.conclusion)"')
+            case "$etat" in
+              "completed success")
+                if docker buildx imagetools inspect "$image" > /dev/null 2>&1; then
+                  echo "CI de main verte pour $GITHUB_SHA : reprise de $image."
+                  echo "image=$image" >> "$GITHUB_OUTPUT"
+                else
+                  echo "::warning::CI de main verte mais $image introuvable : tests et construction complets."
+                fi
+                exit 0 ;;
+              completed*)
+                echo "::warning::CI de main terminée en « ${etat#completed } » pour ce commit : tests et construction complets."
+                exit 0 ;;
+            esac
+            sleep 30
+          done
+          echo "::warning::Pas de CI de main terminée pour $GITHUB_SHA : tests et construction complets."
+
+  moteur:
+    name: Tests, types et packs
+    needs: reprise
+    if: needs.reprise.outputs.image == ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: formation
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d formation"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://app:app@127.0.0.1:5432/formation?serverVersion=17&charset=utf8
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ctype, iconv, intl, pdo_pgsql, zip
+          coverage: none # pas de Xdebug ni de PCOV : plus rapide, et Xdebug fait planter le serveur
+
+      - name: Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            playground/package-lock.json
+            tools/nuxt-sim/package-lock.json
+            tools/nuxt-sim/conformite/reference/package-lock.json
+
+      - name: Dépendances de la plateforme
+        uses: ramsey/composer-install@v3
+        with:
+          working-directory: platform
+
+      - name: Dépendances du playground
+        run: npm ci
+        working-directory: playground
+
+      # Les environnements sont lourds à construire (3 × composer install + archive) et ne
+      # changent qu'avec leurs composer.lock : on les garde d'un passage à l'autre.
+      - name: Environnements en cache
+        id: cache-environnements
+        uses: actions/cache@v6
+        with:
+          path: |
+            environments/*/vendor
+            platform/public/envs
+          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'tools/build-env.sh', 'tools/build-completion.php', 'tools/docker-sim/composer.json', 'tools/docker-sim/src/**', 'tools/docker-sim/bin/**', 'environments/nuxt-*/**') }}
+
+      - name: Construire les environnements
+        if: steps.cache-environnements.outputs.cache-hit != 'true'
+        run: for env in environments/*/; do tools/build-env.sh "$(basename "$env")"; done
+
+      - name: Dépendances du simulateur Docker
+        uses: ramsey/composer-install@v3
+        with:
+          working-directory: tools/docker-sim
+          dependency-versions: highest
+
+      - name: Tests du simulateur Docker
+        run: php vendor/bin/phpunit
+        working-directory: tools/docker-sim
+
+      - name: Tests du simulateur Nuxt
+        run: npm ci && npm run typecheck && npm test
+        working-directory: tools/nuxt-sim
+
+      # Le vrai Nuxt (version épinglée dans conformite/reference) reçoit les mêmes requêtes que le simulateur :
+      # un écart fait échouer le passage avant qu'un exercice ne l'enseigne.
+      - name: Conformité du simulateur Nuxt
+        run: npm ci --prefix conformite/reference && npm run conformite
+        working-directory: tools/nuxt-sim
+
+      - name: Types du playground
+        run: npm run typecheck
+        working-directory: playground
+
+      - name: Build du playground
+        run: npm run build
+        working-directory: playground
+
+      - name: Base de test
+        run: php bin/console doctrine:database:create --if-not-exists --env=test
+        working-directory: platform
+
+      - name: Tests de la plateforme
+        run: php bin/phpunit
+        working-directory: platform
+
+      - name: Vérifier le pack de démonstration
+        run: php bin/console content:check demo
+        working-directory: platform
+
+  docker:
+    name: Image Docker
+    needs: reprise
+    if: needs.reprise.outputs.image == ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      # Référence immuable (par empreinte) de l'image publiée : le déploiement s'y épingle.
+      image: ${{ steps.reference.outputs.image }}
+    env:
+      # Publiée sur une poussée de main (:edge) ou d'une étiquette de version (:X.Y.Z, :X.Y, :latest) ;
+      # sur une pull request, l'image est seulement construite.
+      PUBLIER: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Connexion au registre
+        if: env.PUBLIER == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Versionnage sémantique (voir CHANGELOG.md) : une instance auto-hébergée épingle :0.1 ou :0.1.0,
+      # :latest suit la dernière version publiée, :edge le dernier commit de main (sans garantie).
+      # Pas d'étiquette majeure seule tant qu'on est en 0.x : en 0.x, une mineure peut casser.
+      - name: Étiquettes de l'image
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref_name, 'v0.') }}
+            type=edge,branch=main
+            type=sha,format=long,prefix=
+
+      - name: Construire l'image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: ${{ env.PUBLIER == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # L'empreinte plutôt qu'une étiquette : elle désigne cette image-ci et aucune autre.
+      # (En minuscules : le nom du dépôt ne l'est pas forcément, un nom d'image doit l'être.)
+      - name: Référence de l'image
+        id: reference
+        if: env.PUBLIER == 'true'
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  # L'image testée sur main reçoit les étiquettes de la version (:X.Y.Z, :X.Y, :latest) : mêmes octets, rien
+  # à reconstruire. Ne tourne que sur une étiquette dont la CI de main a réussi (voir « Image déjà testée »).
+  version:
+    name: Publier la version
+    needs: reprise
+    if: needs.reprise.outputs.image != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Connexion au registre
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Étiquettes de la version
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref_name, 'v0.') }}
+
+      - name: Étiqueter l'image de main
+        env:
+          SOURCE: ${{ needs.reprise.outputs.image }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          args=()
+          while IFS= read -r tag; do [ -n "$tag" ] && args+=(--tag "$tag"); done <<< "$TAGS"
+          docker buildx imagetools create "${args[@]}" "$SOURCE"
+          docker buildx imagetools inspect "$SOURCE" | head -3
+
+  # Les exercices vivent dans un autre dépôt : on lui demande de les revérifier contre ce moteur
+  # (workflow « Contenu », déclencheur repository_dispatch). Variable CONTENU_DEPOT (propriétaire/nom)
+  # et secret CONTENU_TOKEN (jeton fine-grained : Contents → Read and write sur le dépôt de contenu).
+  contenu:
+    name: Revérifier le contenu
+    needs: moteur
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && vars.CONTENU_DEPOT != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Déclencher le workflow du dépôt de contenu
+        env:
+          GH_TOKEN: ${{ secrets.CONTENU_TOKEN }}
+        run: gh api "repos/${{ vars.CONTENU_DEPOT }}/dispatches" -f event_type=moteur-mis-a-jour -f "client_payload[moteur]=${{ github.sha }}"
+
+  deployer:
+    name: Déployer sur le VPS
+    needs: [moteur, docker]
+    # Une poussée sur main, ou un lancement manuel sur main (ex. après un incident GitHub) : jamais une PR.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Un déploiement à la fois, jamais annulé en cours de route.
+    concurrency:
+      group: deploiement-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Accès SSH au serveur
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy
+          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName ${{ secrets.DEPLOY_HOST }}
+            User deploy
+            IdentityFile ~/.ssh/deploy
+            IdentitiesOnly yes
+          EOF
+
+      - name: Fichier compose
+        run: scp deploy/compose.yaml vps:/srv/forelse/compose.yaml
+
+      - name: Mettre à jour les conteneurs
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | ssh vps 'docker login ghcr.io -u ${{ github.actor }} --password-stdin'
+          # Sans épinglage, une étiquette qui n'existe plus (ou un APP_IMAGE oublié dans le .env
+          # du serveur) fait tirer une image inchangée : compose ne recrée rien et la CI reste verte.
+          # L'image déployée reçoit aussi l'étiquette locale :edge, celle qu'utilise compose.yaml par défaut : un
+          # `docker compose up -d` lancé à la main sur le serveur (après avoir modifié .env) relance la même image,
+          # au lieu d'une ancienne :edge restée en cache (vu le 2026-09-17 : retour à un moteur 0.1.0).
+          ssh vps 'cd /srv/forelse \
+            && export APP_IMAGE=${{ needs.docker.outputs.image }} \
+            && docker compose pull --quiet \
+            && docker tag "$APP_IMAGE" "${APP_IMAGE%@*}:edge" \
+            && docker compose up -d --remove-orphans --wait --wait-timeout 180 \
+            && docker logout ghcr.io \
+            && docker image prune -f > /dev/null'
+
+      - name: Vérifier la réponse de la plateforme
+        run: curl -fsSIL --retry 6 --retry-delay 5 --retry-all-errors "${{ vars.APP_URL }}" | head -1

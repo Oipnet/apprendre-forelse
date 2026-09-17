@@ -1,0 +1,22 @@
+{#
+  Ce qui décrit un exercice de parcours, lisible sans compte : fil d'Ariane, titre, position, notions, consigne.
+  Jamais ce qui le résout (indices, tests, solution). Variables : track, chapter, chapterNumber, exercise, position, instructions.
+#}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <ol>
+        <li><a href="{{ path('app_home') }}">Accueil</a></li>
+        <li><a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></li>
+        <li>Chapitre {{ chapterNumber }} : {{ chapter.title }}</li>
+        <li aria-current="page">{{ exercise.title }}</li>
+    </ol>
+</nav>
+<h1>{{ exercise.title }}</h1>
+<p class="meta exercise-facts">
+    Exercice {{ position }} sur {{ chapter.exerciseIds|length }} du chapitre {{ chapterNumber }}
+    · {{ exercise.xp }} XP
+    · {{ exercise.objectives|length }} objectif{{ exercise.objectives|length > 1 ? 's' }} vérifié{{ exercise.objectives|length > 1 ? 's' }} par des tests
+</p>
+{% if exercise.concepts %}
+    <p class="exercise-concepts"><span class="meta">Notions abordées :</span> {% for concept in exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</p>
+{% endif %}
+<article class="lesson exercise-instructions">{{ instructions|raw }}</article>

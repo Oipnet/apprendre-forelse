@@ -1,0 +1,4 @@
+# Environnement d'exécution : projet Symfony de base, empaqueté par tools/build-env.sh
+id: symfony-8-app
+title: Symfony 8.1 — Twig, Doctrine (SQLite), Form, Validator, Security, Serializer, Messenger, Mailer, Workflow, PHPUnit
+php: '8.4'

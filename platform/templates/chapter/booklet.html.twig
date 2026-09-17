@@ -1,0 +1,53 @@
+{# Livret d'un parcours : toutes les fiches de cours, derrière une page de garde et un sommaire. #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>{{ track.title }} · Livret</title>
+    {{ include('chapter/_pdf_styles.html.twig') }}
+    <style>
+        .toc h2 { font-size: 15pt; margin: 0 0 12pt; }
+        .toc ol { padding-left: 0; list-style: none; }
+        .toc li { margin: 0 0 8pt; padding-bottom: 8pt; border-bottom: 1px solid #eee; }
+        .toc .number { color: #7c6cf2; font-weight: bold; margin-right: 8pt; }
+        .toc .concepts { color: #777; font-size: 9pt; margin: 2pt 0 0 0; }
+        .chapter-head { page-break-before: always; margin: 0 0 18pt; padding-bottom: 8pt; border-bottom: 2px solid #7c6cf2; }
+        .chapter-head .number { color: #7c6cf2; font-size: 11pt; font-weight: bold; margin: 0; }
+        .chapter-head h1 { font-size: 20pt; margin: 2pt 0 6pt; }
+        .chapter-head .concepts span { display: inline-block; padding: 1pt 7pt; margin: 0 4pt 4pt 0; border: 1px solid #ccc; border-radius: 10pt; font-size: 8.5pt; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="cover">
+        <p class="pack">{{ pack.title }}</p>
+        <p class="number">Livret du parcours</p>
+        <h1>{{ track.title }}</h1>
+        {% if track.description %}<p class="track">{{ track.description }}</p>{% endif %}
+        <p class="learner">
+            Livret établi pour <strong>{{ user.displayName }}</strong> le {{ date|date('d/m/Y') }},
+            après la réussite des {{ track.exerciseIds|length }} exercices du parcours{% if xp %} ({{ xp }} XP){% endif %}.
+        </p>
+    </div>
+
+    <div class="toc">
+        <h2>Sommaire</h2>
+        <ol>
+            {% for item in chapters %}
+                <li>
+                    <span class="number">{{ item.number }}</span> {{ item.chapter.title }}
+                    {% if item.concepts %}<p class="concepts">{{ item.concepts|join(' · ') }}</p>{% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    {% for item in chapters %}
+        <div class="chapter-head">
+            <p class="number">Chapitre {{ item.number }}</p>
+            <h1>{{ item.chapter.title }}</h1>
+            {% if item.concepts %}<p class="concepts">{% for concept in item.concepts %}<span>{{ concept }}</span>{% endfor %}</p>{% endif %}
+        </div>
+        <div class="lesson">{{ item.html|raw }}</div>
+    {% endfor %}
+</body>
+</html>

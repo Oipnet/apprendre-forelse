@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+
+// Sous-processus de PhpExecutor : lit la requête (JSON) sur l'entrée standard, exécute le script du conteneur.
+require dirname(__DIR__).'/src/Runtime/PhpExecutor.php';
+
+$payload = json_decode((string) stream_get_contents(STDIN), true);
+if ($payload['mode'] === 'cli' && $payload['stdin'] !== '') {
+    // Pas de vraie entrée standard pour le script : on la met à disposition.
+    $GLOBALS['__SIM_STDIN'] = $payload['stdin'];
+}
+$result = Forelse\DockerSim\Runtime\PhpExecutor::execute($payload);
+$output = $result['output'];
+unset($result['output']);
+echo $output, "\n@@PHP-EXEC@@", json_encode($result, JSON_INVALID_UTF8_SUBSTITUTE);

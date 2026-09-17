@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% macro filter_link(label, query, active) %}
+    <a class="tag{{ active ? ' active' : '' }}" href="{{ path('app_practice', query|filter(v => v is not null and v is not same as(false))) }}"{% if active %} aria-current="true"{% endif %}>{{ label }}</a>
+{% endmacro %}
+
+{% block body %}
+    {% import _self as ui %}
+    <main class="page practice">
+        <p class="meta">Pratique</p>
+        <h1>Se servir d'une fonctionnalité, tout de suite</h1>
+        <p class="lead">De courts exercices, à part des parcours : un code écrit à l'ancienne, à réécrire avec la fonctionnalité. Souvent une nouveauté du framework, parfois un point précis qui mérite qu'on s'y arrête.</p>
+
+        {% if total %}
+            <nav class="practice-filters" aria-label="Filtrer les exercices">
+                <div>
+                    {{ ui.filter_link('Tous', filters|merge({framework: null}), filters.framework is null) }}
+                    {% for id, label in frameworks %}
+                        {{ ui.filter_link(label, filters|merge({framework: id}), filters.framework == id) }}
+                    {% endfor %}
+                    {{ ui.filter_link('Nouveautés seulement', filters|merge({nouveautes: not filters.nouveautes}), filters.nouveautes) }}
+                </div>
+                {% if notions %}
+                    <div>
+                        {{ ui.filter_link('Toutes les notions', filters|merge({notion: null}), filters.notion is null) }}
+                        {% for notion in notions %}
+                            {{ ui.filter_link(notion, filters|merge({notion: notion}), filters.notion == notion) }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </nav>
+        {% endif %}
+
+        {% if items %}
+            <ol class="practice-list">
+                {% for item in items %}
+                    {% set practice = item.practice %}
+                    <li data-state="{{ item.state }}">
+                        <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
+                            <span class="practice-head">
+                                <span class="tag framework">{{ frameworks[practice.framework] ?? practice.framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
+                                {% if practice.version %}<span class="tag new">Nouveauté</span>{% endif %}
+                                {% if practice.isRestricted %}<span class="tag">En préparation</span>{% endif %}
+                                {% if practice.isScheduled %}<span class="tag">Programmé le {{ practice.published|date('d/m/Y') }}</span>{% endif %}
+                                <time class="meta" datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time>
+                                {% if item.state == 'completed' %}<span class="state">✓ Réussi</span>{% elseif item.state == 'in_progress' %}<span class="state">En cours</span>{% endif %}
+                            </span>
+                            <span class="title">{{ practice.exercise.title }}</span>
+                            <span class="summary">{{ practice.summary }}</span>
+                            {% if practice.exercise.concepts %}
+                                <span class="practice-notions">{% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ol>
+            {% if not app.user %}
+                <p class="meta">Chaque exercice demande un compte : <a href="{{ path('app_register') }}">créez le vôtre</a> ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
+            {% endif %}
+        {% elseif total %}
+            <p class="meta">Aucun exercice ne correspond à ces filtres. <a href="{{ path('app_practice') }}">Tout afficher</a></p>
+        {% else %}
+            <p class="meta">Pas encore d'exercice ici : revenez bientôt.</p>
+        {% endif %}
+    </main>
+{% endblock %}

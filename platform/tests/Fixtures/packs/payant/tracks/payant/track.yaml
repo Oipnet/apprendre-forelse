@@ -1,0 +1,7 @@
+id: payant
+title: Parcours payant
+description: Un premier chapitre libre, puis un chapitre réservé à ceux qui ont accès au parcours.
+environment: symfony-8
+chapters:
+  - {id: libre, title: Chapitre libre, exercises: [e1]}
+  - {id: complet, title: Chapitre du parcours complet, exercises: [e2, e3]}

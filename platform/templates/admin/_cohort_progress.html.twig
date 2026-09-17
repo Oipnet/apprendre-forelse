@@ -1,0 +1,24 @@
+{# Avancement d'une cohorte (CohortStats) : un tableau par parcours, une ligne par chapitre. Admin et espace des chefs. #}
+{% for track in cohort.tracks %}
+    <h3>{{ track.title }}</h3>
+    <table class="beta-table">
+        <thead>
+            <tr><th>Chapitre</th><th>Exercices</th><th>Réussis</th><th style="width: 40%">Avancement</th></tr>
+        </thead>
+        <tbody>
+            {% for chapter in track.chapters %}
+                {% set rate = (chapter.rate * 100)|round %}
+                <tr>
+                    <td>{{ chapter.title }}</td>
+                    <td>{{ chapter.exerciseIds|length }}</td>
+                    <td>{{ chapter.completed }} / {{ chapter.exerciseIds|length * cohort.users|length }}</td>
+                    <td>
+                        <div class="beta-progress" title="{{ rate }} %">
+                            <div class="beta-progress-bar" data-level="{{ chapter.rate >= 0.7 ? 'high' : chapter.rate >= 0.3 ? 'mid' : 'low' }}" style="inline-size: {{ rate }}%">{{ rate }} %</div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endfor %}

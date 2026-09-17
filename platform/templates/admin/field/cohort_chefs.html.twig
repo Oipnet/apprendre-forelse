@@ -1,0 +1,2 @@
+{# Chefs d'une cohorte, par pseudo. #}
+{{ entity.instance.chefs|map(chef => chef.displayName)|join(', ')|default('—') }}

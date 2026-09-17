@@ -1,0 +1,87 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "platform",
+      "runtimeExecutable": "php",
+      "runtimeArgs": [
+        "-d",
+        "xdebug.mode=off",
+        "-S",
+        "localhost:8000",
+        "-t",
+        "platform/public"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "platform-prod",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "APP_ENV=prod",
+        "APP_DEBUG=0",
+        "php",
+        "-d",
+        "variables_order=EGPCS",
+        "-d",
+        "xdebug.mode=off",
+        "-S",
+        "localhost:8000",
+        "-t",
+        "platform/public"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "sandbox",
+      "runtimeExecutable": "php",
+      "runtimeArgs": [
+        "-d",
+        "xdebug.mode=off",
+        "-S",
+        "127.0.0.1:8001",
+        "-t",
+        "platform/public"
+      ],
+      "port": 8001
+    },
+    {
+      "name": "docker",
+      "url": "http://localhost:8090",
+      "port": 8090
+    },
+    {
+      "name": "vite",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "playground",
+        "run",
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "nuxt-sim",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "tools/nuxt-sim",
+        "run",
+        "demo"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "mailpit",
+      "runtimeExecutable": "mailpit",
+      "runtimeArgs": [
+        "--smtp",
+        "127.0.0.1:1025",
+        "--listen",
+        "127.0.0.1:8025"
+      ],
+      "port": 8025
+    }
+  ]
+}

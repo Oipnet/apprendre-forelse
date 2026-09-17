@@ -1,0 +1,8 @@
+Nouvel apprenant sur Forelse :
+
+Nom     : {{ user.displayName }}
+Email   : {{ user.email }}
+Cohorte : {{ user.cohort ? user.cohort.name ~ ' (' ~ user.cohort.code ~ ')' : 'aucune' }}
+Inscrit : {{ user.createdAt|date('d/m/Y à H:i') }}
+
+Sa fiche dans l'admin : {{ adminUrl }}

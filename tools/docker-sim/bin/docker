@@ -1,0 +1,18 @@
+#!/usr/bin/env php
+<?php
+
+// La commande docker du simulateur, pour la ligne de commande native (tests, content:check, curieux).
+$autoload = null;
+foreach ([__DIR__.'/../vendor/autoload.php', __DIR__.'/../../../autoload.php', getcwd().'/vendor/autoload.php'] as $candidate) {
+    if (is_file($candidate)) {
+        $autoload = $candidate;
+        break;
+    }
+}
+require $autoload;
+
+$project = getenv('DOCKER_SIM_PROJECT') ?: getcwd();
+$application = new Forelse\DockerSim\Cli\Application(Forelse\DockerSim\Cli\Application::defaultStateDirectory($project), $project);
+$code = $application->run(array_slice($argv, 1));
+echo $application->output;
+exit($code);

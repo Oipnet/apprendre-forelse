@@ -1,0 +1,14 @@
+twig:
+    file_name_pattern: '*.twig'
+    globals:
+        # Version du moteur (fichier VERSION), affichée en pied de page : indispensable pour
+        # qu'une instance auto-hébergée sache ce qu'elle fait tourner.
+        moteur_version: '@App\Version'
+        # Google Search Console (méthode « balise HTML ») : vide, pas de balise.
+        google_site_verification: '%env(GOOGLE_SITE_VERIFICATION)%'
+        # Balises de la page publique en cours (voir App\Seo\SeoWriter).
+        seo: '@App\Seo\PageSeo'
+
+when@test:
+    twig:
+        strict_variables: true

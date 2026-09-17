@@ -1,0 +1,41 @@
+{#
+  Financement d'une cohorte : mode, dates, effectif prévu, estimation du devis. Partagé par l'espace des chefs
+  (effectif modifiable) et l'administration. Aucune action de paiement.
+  Variables : cohort (Cohort), quote (CohortQuote), headcountForm (facultatif).
+#}
+<dl class="beta-financing">
+    <dt>Financement</dt>
+    <dd>{{ cohort.fundingMode.label }}{% if cohort.fundedByInstitution %} : les apprenants reçoivent l'accès aux parcours cochés{% else %} : chaque apprenant achète ses parcours{% endif %}</dd>
+    <dt>Accès</dt>
+    <dd>du {{ cohort.accessStartsAt|date('d/m/Y') }} au {{ cohort.accessEndsAt|date('d/m/Y') }}</dd>
+    {% if not cohort.fundedByInstitution %}
+        <dt>Prix par apprenant et par parcours</dt>
+        <dd>{{ cohort.learnerPrice is not null ? cohort.learnerPrice|euros ~ ' TTC' : 'prix courant du parcours' }}</dd>
+    {% endif %}
+    <dt>Effectif prévu</dt>
+    <dd>
+        {% if headcountForm is defined and headcountForm %}
+            {{ form_start(headcountForm, {attr: {class: 'beta-inline-form'}}) }}
+                {{ form_widget(headcountForm.expectedHeadcount, {attr: {'aria-label': 'Effectif prévu', class: 'form-control'}}) }}
+                <button class="btn btn-secondary" type="submit">Enregistrer</button>
+            {{ form_end(headcountForm) }}
+        {% else %}
+            {{ cohort.expectedHeadcount }}
+        {% endif %}
+    </dd>
+    {% if cohort.fundedByInstitution %}
+        <dt>Estimation</dt>
+        <dd>
+            {{ quote.amount|euros }} TTC
+            <span class="text-muted">({{ quote.headcount }} apprenant{{ quote.headcount > 1 ? 's' }} × {{ quote.trackCount }} parcours × {{ quote.unitPrice|euros }}{% if quote.percent != 100 %}, palier à {{ quote.percent }} %{% endif %})</span>
+        </dd>
+        <dt>Devis</dt>
+        <dd>
+            {{ cohort.quoteAmount is not null ? cohort.quoteAmount|euros ~ ' TTC' : 'pas encore établi' }}
+            {% if quote.differsFrom(cohort.quoteAmount) %}
+                <span class="badge badge-warning">devis à revoir : l'estimation a changé</span>
+            {% endif %}
+        </dd>
+    {% endif %}
+</dl>
+{% if not is_granted('ROLE_ADMIN') %}<p class="text-muted">Seul l'administrateur modifie le mode de financement, les dates, les tarifs et le devis.</p>{% endif %}

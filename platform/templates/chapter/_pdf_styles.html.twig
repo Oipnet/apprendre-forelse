@@ -1,0 +1,36 @@
+{# Styles communs à la fiche et au livret (dompdf : CSS 2.1, pas de flexbox ni de grid, tailles en pt). #}
+<style>
+        @page { margin: 60pt 50pt 60pt 50pt; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10pt; line-height: 1.5; color: #222; }
+        .cover { page-break-after: always; padding-top: 140pt; }
+        .cover .pack { color: #777; font-size: 10pt; text-transform: uppercase; letter-spacing: 1pt; }
+        .cover .track { font-size: 14pt; color: #555; margin: 8pt 0 30pt; }
+        .cover .number { color: #7c6cf2; font-size: 12pt; font-weight: bold; }
+        .cover h1 { font-size: 26pt; line-height: 1.2; margin: 4pt 0 24pt; }
+        .cover .concepts span { display: inline-block; padding: 2pt 8pt; margin: 0 4pt 4pt 0; border: 1px solid #ccc; border-radius: 10pt; font-size: 9pt; color: #555; }
+        .cover .learner { margin-top: 60pt; padding-top: 12pt; border-top: 1px solid #ddd; color: #555; font-size: 10pt; }
+        .lesson h2 { font-size: 15pt; margin: 22pt 0 8pt; padding-bottom: 4pt; border-bottom: 1px solid #ddd; page-break-after: avoid; }
+        .lesson h3 { font-size: 12pt; margin: 16pt 0 6pt; page-break-after: avoid; }
+        .lesson p, .lesson li { margin: 0 0 6pt; }
+        .lesson ul, .lesson ol { padding-left: 18pt; }
+        .lesson pre { background: #f4f4f7; border: 1px solid #e0e0e6; border-radius: 4pt; padding: 8pt 10pt; font-size: 8.5pt; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; page-break-inside: avoid; }
+        .lesson code { font-family: 'DejaVu Sans Mono', monospace; font-size: 8.5pt; }
+        .lesson p code, .lesson li code, .lesson td code { background: #f0f0f4; padding: 0 3pt; border-radius: 2pt; }
+        .lesson table { border-collapse: collapse; margin: 8pt 0; width: 100%; }
+        .lesson th, .lesson td { border: 1px solid #ddd; padding: 4pt 6pt; text-align: left; vertical-align: top; }
+        .lesson th { background: #f4f4f7; }
+        .lesson blockquote { margin: 8pt 0; padding: 2pt 10pt; border-left: 3px solid #7c6cf2; color: #555; }
+        .lesson a { color: #5b4bd6; text-decoration: none; }
+        .lesson img { max-width: 100%; }
+        /* Coloration (classes hl-… de tempest/highlight), palette claire pour l'impression */
+        .hl-keyword { color: #8250df; }
+        .hl-type { color: #0550ae; }
+        .hl-property { color: #b35900; }
+        .hl-attribute { color: #7a5c00; }
+        .hl-value { color: #0a7a3d; }
+        .hl-number, .hl-literal { color: #c2410c; }
+        .hl-generic { color: #0b6f8a; }
+        .hl-comment, .hl-comment span { color: #777; font-style: italic; }
+        .hl-strong { font-weight: bold; }
+        .hl-em { font-style: italic; }
+</style>

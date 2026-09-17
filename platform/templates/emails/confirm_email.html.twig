@@ -1,0 +1,19 @@
+<p>Bonjour {{ user.displayName }},</p>
+
+{% if change %}
+<p>Vous avez demandé à utiliser cette adresse pour votre compte Forelse. Pour la confirmer, ouvrez ce lien :</p>
+{% else %}
+<p>Bienvenue sur Forelse. Pour confirmer votre adresse email, ouvrez ce lien :</p>
+{% endif %}
+
+<p><a href="{{ link }}">{{ link }}</a></p>
+
+<p>Il est valable {{ hours }} heures et ne sert qu'une fois.</p>
+
+{% if change %}
+<p>Si vous n'avez rien demandé, ignorez cet email : l'adresse de votre compte reste inchangée.</p>
+{% else %}
+<p>Si vous n'avez pas créé de compte, ignorez cet email.</p>
+{% endif %}
+
+<p>Forelse · apprendre</p>

@@ -1,0 +1,7 @@
+id: atelier-secret
+title: Atelier en préparation
+description: Un parcours réservé aux administrateurs.
+environment: symfony-8
+visibility: admin
+chapters:
+  - {id: c1, title: Premier chapitre secret, exercises: [e1]}

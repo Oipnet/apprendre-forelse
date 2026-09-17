@@ -1,0 +1,44 @@
+{
+  "name": "@formation/playground",
+  "version": "1.0.0",
+  "description": "Îlot TypeScript du moteur : runtime PHP WebAssembly, éditeur, aperçu isolé.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@php-wasm/universal": "^3.1.53",
+    "@php-wasm/util": "^3.1.53",
+    "@php-wasm/web": "^3.1.53",
+    "dompurify": "^3.4.15",
+    "fflate": "^0.8.3",
+    "marked": "^18.0.12",
+    "monaco-editor": "^0.56.0"
+  },
+  "devDependencies": {
+    "@php-wasm/node": "^3.1.53",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vite-plugin-symfony": "^8.2.4"
+  },
+  "overrides": {
+    "@php-wasm/web-5-2": "file:./stubs/php-wasm-unused",
+    "@php-wasm/node-5-2": "file:./stubs/php-wasm-unused",
+    "@php-wasm/web-7-4": "file:./stubs/php-wasm-unused",
+    "@php-wasm/node-7-4": "file:./stubs/php-wasm-unused",
+    "@php-wasm/web-8-0": "file:./stubs/php-wasm-unused",
+    "@php-wasm/node-8-0": "file:./stubs/php-wasm-unused",
+    "@php-wasm/web-8-1": "file:./stubs/php-wasm-unused",
+    "@php-wasm/node-8-1": "file:./stubs/php-wasm-unused",
+    "@php-wasm/web-8-2": "file:./stubs/php-wasm-unused",
+    "@php-wasm/node-8-2": "file:./stubs/php-wasm-unused",
+    "@php-wasm/web-8-3": "file:./stubs/php-wasm-unused",
+    "@php-wasm/node-8-3": "file:./stubs/php-wasm-unused",
+    "@php-wasm/web-8-5": "file:./stubs/php-wasm-unused",
+    "@php-wasm/node-8-5": "file:./stubs/php-wasm-unused"
+  }
+}

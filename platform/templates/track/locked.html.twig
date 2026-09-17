@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ chapter.title }} · {{ track.title }} · Forelse{% endblock %}
+
+{% block body %}
+    <main class="page">
+        <p class="meta"><a href="{{ path('app_track', {trackId: track.id}) }}">← {{ track.title }}</a></p>
+        <h1>{{ chapter.title }}</h1>
+        {% if not offer.locked %}
+            <p class="lead">Ce chapitre ne vous est pas ouvert pour l'instant.</p>
+        {% else %}
+            <p class="lead">Ce chapitre fait partie du parcours complet. Le premier chapitre est gratuit ; la suite demande un accès au parcours{{ offer.comingSoon ? ', dont l\'achat sera bientôt disponible' }}.</p>
+            <p>Votre progression est conservée : si vous avez déjà travaillé ici, vous reprendrez exactement où vous en étiez.</p>
+            {{ include('track/_price.html.twig') }}
+        {% endif %}
+    </main>
+{% endblock %}

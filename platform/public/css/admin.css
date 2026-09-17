@@ -1,0 +1,162 @@
+/* Tableau de bord bêta : panneaux et tableaux des pages maison (avancement, cohorte, fiche apprenant).
+   Tout passe par les variables du thème d'EasyAdmin, donc le mode sombre suit sans règle dédiée.
+   Les classes .content-panel / .table d'EasyAdmin 4 ne sont plus thémées en v5 (fond blanc codé en dur). */
+
+.beta-panel {
+    border: var(--border-width) var(--border-style) var(--form-fieldset-border-color);
+    border-radius: var(--border-radius-lg);
+    margin-block-end: var(--ea-sp-10);
+}
+.beta-panel-header {
+    align-items: center;
+    border-block-end: var(--border-width) var(--border-style) var(--form-fieldset-border-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ea-sp-4);
+    padding: var(--ea-sp-6) var(--ea-sp-8);
+}
+.beta-panel-header h2,
+.beta-panel-header h3 {
+    color: var(--form-fieldset-header-color);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+}
+.beta-panel-body {
+    padding: var(--ea-sp-6) var(--ea-sp-8);
+}
+.beta-panel-body.beta-scroll {
+    overflow-x: auto;
+}
+.beta-panel-body > p:last-child {
+    margin-block-end: 0;
+}
+.beta-panel-body h3 {
+    color: var(--text-color);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    margin: var(--ea-sp-8) 0 var(--ea-sp-3);
+}
+.beta-panel-body h3:first-child {
+    margin-block-start: 0;
+}
+
+.beta-table {
+    border-collapse: collapse;
+    color: var(--table-cell-color);
+    inline-size: 100%;
+}
+.beta-table th {
+    box-shadow: inset 0 -2px 0 var(--table-cell-border-color);
+    color: var(--table-thead-color);
+    font-weight: var(--font-weight-medium);
+    padding: var(--ea-sp-3) var(--ea-sp-4);
+    text-align: start;
+    white-space: nowrap;
+}
+.beta-table td {
+    box-shadow: inset 0 1px 0 var(--table-cell-border-color);
+    padding: var(--ea-sp-3) var(--ea-sp-4);
+    vertical-align: middle;
+}
+.beta-table tbody tr:first-child td {
+    box-shadow: none;
+}
+.beta-table tbody tr:hover td {
+    background: var(--table-hover-cell-bg);
+}
+.beta-table .beta-center {
+    text-align: center;
+}
+.beta-table.beta-compact {
+    font-size: var(--font-size-sm);
+}
+.beta-table.beta-compact th,
+.beta-table.beta-compact td {
+    padding: var(--ea-sp-2) var(--ea-sp-3);
+}
+
+/* Barre d'avancement : la jauge reprend le fond secondaire du thème, la couleur dépend du taux. */
+.beta-progress {
+    background: var(--secondary-bg);
+    block-size: 0.9rem;
+    border-radius: var(--border-radius-full);
+    overflow: hidden;
+}
+.beta-progress-bar {
+    background: var(--gray-500);
+    block-size: 100%;
+    border-radius: var(--border-radius-full);
+    color: var(--white);
+    font-size: var(--font-size-xs);
+    line-height: 0.9rem;
+    overflow: hidden;
+    text-align: center;
+    white-space: nowrap;
+    transition: inline-size var(--ea-duration-slow) var(--ea-ease-out);
+}
+.beta-progress-bar[data-level="mid"] {
+    background: var(--color-warning);
+}
+.beta-progress-bar[data-level="high"] {
+    background: var(--color-success);
+}
+
+/* Fiche apprenant : une ligne par chapitre, titre / jauge / pastilles des exercices. */
+.beta-chapter {
+    align-items: center;
+    box-shadow: inset 0 1px 0 var(--table-cell-border-color);
+    display: grid;
+    gap: var(--ea-sp-6);
+    grid-template-columns: minmax(180px, 1fr) 140px 3fr;
+    padding: var(--ea-sp-3) 0;
+}
+.beta-chapter:first-child {
+    box-shadow: none;
+}
+.beta-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ea-sp-2);
+}
+.beta-chips .badge + .badge {
+    margin-inline-start: 0;
+}
+
+/* Espace des chefs de cohorte : lien d'invitation à copier. */
+.beta-copy {
+    align-items: center;
+    display: flex;
+    gap: var(--ea-sp-2);
+    min-inline-size: 18rem;
+}
+
+/* Financement d'une cohorte : libellés et valeurs sur deux colonnes, qui s'empilent sur petit écran. */
+.beta-financing {
+    display: grid;
+    gap: var(--ea-sp-2) var(--ea-sp-4);
+    grid-template-columns: minmax(10rem, max-content) 1fr;
+    margin-block-end: var(--ea-sp-3);
+}
+.beta-financing dt {
+    font-weight: 600;
+}
+.beta-financing dd {
+    margin: 0;
+}
+.beta-inline-form {
+    align-items: center;
+    display: flex;
+    gap: var(--ea-sp-2);
+}
+.beta-inline-form input {
+    inline-size: 7rem;
+}
+@media (max-width: 40rem) {
+    .beta-financing {
+        grid-template-columns: 1fr;
+    }
+    .beta-financing dd {
+        margin-block-end: var(--ea-sp-2);
+    }
+}

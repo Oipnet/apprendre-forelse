@@ -1,0 +1,9 @@
+id: cote-laravel
+title: Côté Laravel
+environment: laravel-13
+published: 2026-08-20
+summary: Un exercice Laravel.
+version: '13.0'
+concepts: [Eloquent]
+editable: [app/Http/Controllers/Controller.php]
+objectives: [{test: testA, label: A}]

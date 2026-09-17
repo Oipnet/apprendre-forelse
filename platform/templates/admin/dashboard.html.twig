@@ -1,0 +1,32 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Avancement par cohorte{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-primary" href="{{ ea_url().setController('App\\Controller\\Admin\\CohortCrudController').setAction('new') }}">Créer une cohorte</a>
+{% endblock %}
+
+{% block main %}
+    {% if cohorts is empty %}
+        <p>Aucune cohorte et aucun compte pour l'instant. Créez une cohorte, puis envoyez son lien d'invitation aux apprenants.</p>
+    {% endif %}
+    {% for cohort in cohorts %}
+        <section class="beta-panel">
+            <div class="beta-panel-header">
+                <h2><a href="{{ path('admin_cohort', {cohort: cohort.key}) }}">{{ cohort.label }}</a></h2>
+                <span class="badge badge-secondary">{{ cohort.users|length }} apprenant{{ cohort.users|length > 1 ? 's' }}</span>
+                <span class="badge badge-success">{{ cohort.completedExercises }} exercice{{ cohort.completedExercises > 1 ? 's' }} réussi{{ cohort.completedExercises > 1 ? 's' }}</span>
+                <span class="badge {{ cohort.unhandledFeedbacks ? 'badge-warning' : 'badge-secondary' }}">{{ cohort.unhandledFeedbacks }} retour{{ cohort.unhandledFeedbacks > 1 ? 's' }} à traiter / {{ cohort.feedbacks }}</span>
+                {% if cohort.cohort %}
+                    <span class="badge {{ cohort.cohort.active ? 'badge-info' : 'badge-secondary' }}" title="Code d'invitation">{{ cohort.cohort.active ? 'code' : 'fermée ·' }} {{ cohort.cohort.code }}</span>
+                {% endif %}
+            </div>
+            <div class="beta-panel-body">
+                {% if cohort.users is empty %}
+                    <p class="text-muted">Personne ne s'est encore inscrit. Lien d'invitation : <code>{{ url('app_register', {code: cohort.cohort.code}) }}</code></p>
+                {% endif %}
+                {{ include('admin/_cohort_progress.html.twig') }}
+            </div>
+        </section>
+    {% endfor %}
+{% endblock %}

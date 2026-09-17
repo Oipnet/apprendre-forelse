@@ -1,0 +1,6 @@
+id: e1
+title: Exercice e1
+xp: 10
+duration: 20
+editable: [src/Controller/BonjourController.php]
+objectives: [{test: testA, label: A}]

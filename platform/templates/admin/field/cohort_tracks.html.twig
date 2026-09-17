@@ -1,0 +1,6 @@
+{# Parcours disponibles d'une cohorte : badges des parcours choisis, ou « Tous » sans sélection. #}
+{% if entity.instance.hasTrackSelection %}
+    {{ include('@EasyAdmin/crud/field/choice.html.twig') }}
+{% else %}
+    <span class="badge badge-secondary">Tous</span>
+{% endif %}

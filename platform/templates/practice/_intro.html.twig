@@ -1,0 +1,25 @@
+{#
+  Ce qui décrit un exercice de Pratique, lisible sans compte : le problème, le code d'avant, la fonctionnalité
+  expliquée, la version et la date. Jamais les tests ni la solution. Variables : practice, instructions, framework.
+#}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <ol>
+        <li><a href="{{ path('app_home') }}">Accueil</a></li>
+        <li><a href="{{ path('app_practice') }}">Pratique</a></li>
+        <li aria-current="page">{{ practice.exercise.title }}</li>
+    </ol>
+</nav>
+<p class="practice-head">
+    <span class="tag framework">{{ framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
+    {% if practice.version %}<span class="tag new">Nouveauté</span>{% endif %}
+    <span class="meta">Publié le <time datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time></span>
+</p>
+<h1>{{ practice.exercise.title }}</h1>
+<p class="lead">{{ practice.summary }}</p>
+{% if practice.exercise.concepts %}
+    <p class="exercise-concepts"><span class="meta">Notions abordées :</span> {% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</p>
+{% endif %}
+<article class="lesson exercise-instructions">{{ instructions|raw }}</article>
+{% if practice.pullRequest %}
+    <p class="meta">D'où vient la fonctionnalité : <a href="{{ practice.pullRequest }}" rel="noopener">la pull request d'origine</a>.</p>
+{% endif %}

@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block body_class %}site-page organizations{% endblock %}
+
+{% block body %}
+    <main class="lp">
+        <section class="lp-hero">
+            <div class="lp-wrap narrow-hero">
+                <span class="lp-eyebrow">Écoles, organismes de formation, entreprises</span>
+                <h1 class="lp-h1">Faites coder votre groupe, <em>pas regarder</em> des vidéos.</h1>
+                <p class="lp-lead">Vos apprenants suivent les parcours dans leur navigateur, sans rien installer : pas de poste à préparer, pas d'environnement à dépanner en début de séance. Vous suivez leur progression, exercice par exercice.</p>
+                <div class="lp-cta">
+                    <a class="lp-btn lg primary" href="#demande">Parler de votre projet <span class="lp-mono">→</span></a>
+                    <a class="lp-btn lg light" href="{{ path('app_home') }}#parcours">Voir les parcours</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-section tinted">
+            <div class="lp-wrap">
+                <span class="lp-eyebrow">Ce que vous obtenez</span>
+                <h2 class="lp-h2 spaced">Un groupe, des parcours, un suivi.</h2>
+                <div class="lp-cards">
+                    <div><p><strong>Un lien d'invitation.</strong>Chaque groupe a son code : vos apprenants créent leur compte avec, et rejoignent directement la cohorte.</p></div>
+                    <div><p><strong>Les parcours de votre choix.</strong>Vous choisissez les parcours ouverts au groupe, et vous pouvez en ajouter en cours de route.</p></div>
+                    <div><p><strong>Le suivi de la progression.</strong>Un tableau par apprenant et par exercice : qui a commencé, qui a réussi, où le groupe bloque.</p></div>
+                    <div><p><strong>L'accès pris en charge.</strong>Les apprenants n'ont rien à payer : les parcours choisis leur sont ouverts pour la durée convenue, une année scolaire ou une session. Chacun peut aussi acheter au tarif du groupe, si vous préférez.</p></div>
+                    <div><p><strong>Rien à installer.</strong>Ni langage, ni base de données, ni Docker sur les postes : un navigateur récent suffit, ce qui simplifie les salles machines verrouillées.</p></div>
+                    <div><p><strong>Les supports de cours.</strong>Une fiche à la fin de chaque chapitre, en page web et en PDF. Les exercices sont corrigés par des tests automatisés, pas à la main.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-section">
+            <div class="lp-wrap">
+                <span class="lp-eyebrow">Comment ça se passe</span>
+                <h2 class="lp-h2 spaced">De la première question au premier exercice.</h2>
+                <ol class="lp-steps">
+                    <li><h3>Vous nous écrivez</h3><p>Le public, l'effectif, la période, les parcours qui vous intéressent. Le formulaire ci-dessous suffit.</p></li>
+                    <li><h3>Vous essayez</h3><p>Le premier chapitre de chaque parcours est ouvert à tous, sans compte : testez-le, seul ou avec quelques apprenants.</p></li>
+                    <li><h3>On chiffre</h3><p>Un devis selon le nombre d'apprenants, de parcours et la durée d'accès, avec un tarif dégressif pour les grands groupes.</p></li>
+                    <li><h3>Votre groupe code</h3><p>Nous créons la cohorte ; vous recevez le lien d'invitation et l'accès au suivi de la progression.</p></li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="lp-section lined" id="demande">
+            <div class="lp-wrap lp-two top">
+                <div>
+                    <span class="lp-eyebrow">Sur devis</span>
+                    <h2 class="lp-h2 sm">Parlons de votre groupe.</h2>
+                    <p class="lp-lead">Une classe de BUT, une promotion de bootcamp, une équipe de développeurs à faire monter sur un framework : décrivez votre projet, nous revenons vers vous par email avec une proposition.</p>
+                    <p class="lp-muted">Pour une question qui ne concerne pas un groupe, passez plutôt par la <a href="{{ path('app_contact') }}">page de contact</a>.</p>
+                </div>
+                {{ include('contact/_form.html.twig', {submitLabel: 'Envoyer la demande'}) }}
+            </div>
+        </section>
+    </main>
+{% endblock %}

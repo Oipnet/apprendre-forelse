@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        {# Pages publiques : balises remplies par le contrôleur (App\Seo\SeoWriter). Les autres gardent leur bloc title. #}
+        <title>{% if seo.title %}{{ seo.title }}{% else %}{% block title %}Forelse · apprendre à développer{% endblock %}{% endif %}</title>
+        {% if seo.description -%}
+            <meta name="description" content="{{ seo.description }}">
+        {% endif -%}
+        {% block robots %}{% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">{% endif %}{% endblock %}
+        {% if seo.canonical -%}
+            <link rel="canonical" href="{{ seo.canonical }}">
+            <meta property="og:type" content="{{ seo.type }}">
+            <meta property="og:site_name" content="Forelse">
+            <meta property="og:locale" content="fr_FR">
+            <meta property="og:url" content="{{ seo.canonical }}">
+            <meta property="og:title" content="{{ seo.title }}">
+            {% if seo.description %}<meta property="og:description" content="{{ seo.description }}">{% endif %}
+            {% if seo.image -%}
+                <meta property="og:image" content="{{ seo.image }}">
+            {%- else -%}
+                <meta property="og:image" content="{{ absolute_url(asset('img/og-forelse.png')) }}">
+                <meta property="og:image:width" content="1200">
+                <meta property="og:image:height" content="630">
+            {%- endif %}
+            <meta property="og:image:alt" content="{{ seo.imageAlt ?? 'Forelse : apprendre à développer en codant dans le navigateur' }}">
+            <meta name="twitter:card" content="summary_large_image">
+        {% endif -%}
+        {% for data in seo.structuredData -%}
+            <script type="application/ld+json">{{ data|json_ld }}</script>
+        {% endfor -%}
+        <link rel="icon" type="image/svg+xml" href="{{ asset('img/favicon.svg') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/favicon-32.png') }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}">
+        {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}
+        {% block stylesheets %}
+            {{ vite_entry_link_tags('site') }}
+        {% endblock %}
+        {% block javascripts %}
+            {{ vite_entry_script_tags('site') }}
+        {% endblock %}
+    </head>
+    {# data-import-url : la progression d'invité est remontée au compte après connexion (voir site.ts). #}
+    <body class="{% block body_class %}site-page{% endblock %}"{% if app.user %} data-import-url="{{ path('api_progress_import') }}"{% endif %}>
+        {% block header %}
+            <header class="lp-header">
+                <div class="lp-wrap">
+                    <a class="lp-brand" href="{{ path('app_home') }}">
+                        <img src="{{ asset('img/logo-84.png') }}" alt="" width="72" height="84">
+                        <span class="lp-serif">Forelse</span>
+                        <span class="lp-chip">apprendre</span>
+                    </a>
+                    <nav aria-label="Navigation principale">
+                        <a href="{{ path('app_home') }}#parcours">Parcours</a>
+                        <a href="{{ path('app_practice') }}">Pratique</a>
+                        <a href="{{ path('app_home') }}#questions">Questions</a>
+                        {% if app.user %}
+                            {# Tout ce qui concerne le compte et les espaces réservés, derrière le nom : sans JS, <details> s'ouvre et se ferme seul. #}
+                            <details class="lp-account" data-account-menu>
+                                <summary aria-label="Menu du compte de {{ app.user.displayName }}">
+                                    <span class="lp-user">{{ app.user.displayName }}</span>
+                                    <span class="lp-xp">{{ app.user.xp }} XP</span>
+                                    <span class="lp-account-caret" aria-hidden="true"></span>
+                                </summary>
+                                <div class="lp-account-menu">
+                                    <a href="{{ path('app_account') }}">Mon compte</a>
+                                    {% if is_granted('ROLE_AUTEUR') or is_granted('ROLE_CHEF_COHORTE') %}
+                                        <p class="lp-account-label">Espaces</p>
+                                        {% if is_granted('ROLE_AUTEUR') %}<a href="{{ path('app_studio') }}">Atelier</a>{% endif %}
+                                        {% if is_granted('ROLE_CHEF_COHORTE') %}<a href="{{ path('chef') }}">Mes cohortes</a>{% endif %}
+                                        {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin') }}">Administration</a>{% endif %}
+                                    {% endif %}
+                                    <a class="lp-account-logout" href="{{ path('app_logout') }}">Déconnexion</a>
+                                </div>
+                            </details>
+                        {% else %}
+                            <a href="{{ path('app_login') }}">Connexion</a>
+                            <a class="lp-btn" href="{{ path('app_register') }}">Créer un compte</a>
+                        {% endif %}
+                    </nav>
+                </div>
+                {# Avancée de lecture : le JS la pilote, elle reste à zéro sans lui. #}
+                <div class="lp-progress" data-progress aria-hidden="true"></div>
+            </header>
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="flash flash-{{ type }}" role="status">{{ message }}</div>
+                {% endfor %}
+            {% endfor %}
+        {% endblock %}
+        {% block body %}{% endblock %}
+        {% block footer %}{{ include('_footer.html.twig') }}{% endblock %}
+    </body>
+</html>

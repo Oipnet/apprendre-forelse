@@ -1,0 +1,25 @@
+framework:
+    rate_limiter:
+        # Le mentor (revue de code, erreurs expliquées) : chaque appel coûte, par apprenant.
+        mentor:
+            policy: sliding_window
+            limit: 40
+            interval: '1 hour'
+        # Formulaire de contact et demandes des écoles : par adresse IP.
+        contact:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+        # Liens de confirmation d'adresse (inscription, changement d'adresse) : chaque envoi est un email, par compte.
+        email_confirmation:
+            policy: fixed_window
+            limit: 5
+            interval: '1 hour'
+
+when@test:
+    framework:
+        cache:
+            pools:
+                # En mémoire : les compteurs ne survivent pas d'un test à l'autre.
+                cache.rate_limiter:
+                    adapter: cache.adapter.array

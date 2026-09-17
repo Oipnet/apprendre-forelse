@@ -1,0 +1,8 @@
+id: point-precis
+title: Un point précis
+environment: symfony-8
+published: 2026-09-01
+summary: Pas une nouveauté, mais une question qui revient.
+concepts: [Validator]
+editable: [src/Controller/BonjourController.php]
+objectives: [{test: testA, label: A}]

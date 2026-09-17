@@ -1,0 +1,35 @@
+{#
+  Prix d'un parcours et bouton « Acheter » ou « Continuer ». Variables : track, offer (TrackOffer), continueUrl (facultatif).
+  Montants toujours formatés en euros, TTC.
+#}
+{% set quote = offer.quote %}
+<div class="price-box">
+    {% if quote.free %}
+        <p class="price"><strong>Gratuit</strong></p>
+        {% if continueUrl is defined and continueUrl %}<a class="button primary" href="{{ continueUrl }}">Continuer →</a>{% endif %}
+    {% elseif offer.fullAccess %}
+        <p class="price meta">Vous avez accès à tout le parcours.</p>
+        {% if continueUrl is defined and continueUrl %}<a class="button primary" href="{{ continueUrl }}">Continuer →</a>{% endif %}
+    {% else %}
+        <p class="price">
+            {% if quote.discounted %}<s class="meta" aria-label="Prix normal">{{ quote.normalPrice|euros }}</s>{% endif %}
+            <strong>{{ quote.price|euros }}</strong> <span class="meta">TTC, accès à vie</span>
+        </p>
+        {% if quote.founder %}
+            <p class="meta">
+                Prix fondateur
+                {%- if quote.founderEndsAt %} jusqu'au {{ quote.founderEndsAt|date('d/m/Y') }}{% endif %}
+                {%- if quote.founderSeatsLeft is not null %}{{ quote.founderEndsAt ? ',' : '' }} encore {{ quote.founderSeatsLeft }} place{{ quote.founderSeatsLeft > 1 ? 's' }}{% endif %}.
+            </p>
+        {% elseif quote.cohort %}
+            <p class="meta">Tarif de votre cohorte « {{ quote.cohort.name }} ».</p>
+        {% endif %}
+        {% if offer.purchasable %}
+            <a class="button primary" href="{{ path('app_purchase', {trackId: track.id}) }}">Acheter le parcours</a>
+        {% else %}
+            {# Paiement pas encore configuré sur l'instance : le prix s'affiche, l'achat viendra. #}
+            <span class="button" aria-disabled="true">Bientôt disponible</span>
+        {% endif %}
+        <p class="meta">Premier chapitre gratuit, sans compte.</p>
+    {% endif %}
+</div>

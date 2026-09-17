@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Merci · Forelse{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Paiement pas encore confirmé par Stripe : la page se recharge seule. #}
+    {% if purchase.status.value == 'pending' %}<meta http-equiv="refresh" content="3">{% endif %}
+{% endblock %}
+
+{% block body %}
+    <main class="form-card">
+        {% if purchase.status.value == 'paid' %}
+            <h1>Merci !</h1>
+            <p>Votre accès {{ track ? 'au parcours « ' ~ track.title ~ ' »' : 'au parcours' }} est ouvert, à vie. Un email de confirmation vient de partir.</p>
+            {% if track %}<a class="button primary" href="{{ path('app_track', {trackId: track.id}) }}">Aller au parcours →</a>{% endif %}
+            {% if purchase.receiptUrl %}<p class="meta"><a href="{{ purchase.receiptUrl }}" target="_blank" rel="noopener">Voir le reçu</a></p>{% endif %}
+        {% elseif purchase.status.value == 'pending' %}
+            <h1>Paiement en cours de confirmation</h1>
+            <p role="status">Stripe nous confirme le paiement dans un instant : cette page se met à jour toute seule.</p>
+            <p class="meta">Rien ne bouge au bout d'une minute ? Si vous avez abandonné le paiement, rien n'a été débité. Sinon, <a href="{{ path('app_purchase_thanks', {id: purchase.id}) }}">rechargez la page</a> un peu plus tard : l'accès apparaîtra aussi dans <a href="{{ path('app_account') }}">votre compte</a>.</p>
+        {% else %}
+            <h1>Achat remboursé</h1>
+            <p>Cet achat a été remboursé ; l'accès au parcours est fermé, votre progression est conservée.</p>
+        {% endif %}
+    </main>
+{% endblock %}

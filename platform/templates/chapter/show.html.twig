@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ chapter.title }} · Fiche de cours · Forelse{% endblock %}
+
+{% block body %}
+    <main class="page lesson-page">
+        <p class="meta"><a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a> · Chapitre {{ number }}</p>
+        <h1>{{ chapter.title }}</h1>
+        <p class="lead">Fiche de cours : ce que ce chapitre vous a appris, à garder sous la main.</p>
+
+        <div class="lesson-summary">
+            {% if concepts %}
+                <p class="concepts">{% for concept in concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</p>
+            {% endif %}
+            <p class="meta">{{ chapter.exerciseIds|length }} exercices{% if xp %} · ⭐ {{ xp }} XP gagnés{% endif %}</p>
+            <a class="button primary small" href="{{ path('app_chapter_pdf', {trackId: track.id, chapterId: chapter.id}) }}">📄 Télécharger la fiche en PDF</a>
+        </div>
+
+        <article class="lesson">{{ html|raw }}</article>
+
+        <nav class="lesson-nav">
+            <a class="button ghost" href="{{ path('app_track', {trackId: track.id}) }}">← Retour au parcours</a>
+            {% if nextExercise %}
+                <a class="button primary" href="{{ path('app_exercise', {trackId: track.id, exerciseId: nextExercise.id}) }}">Chapitre suivant : {{ nextChapter.title }} →</a>
+            {% endif %}
+        </nav>
+    </main>
+{% endblock %}

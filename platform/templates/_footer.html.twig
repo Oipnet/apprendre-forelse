@@ -1,0 +1,45 @@
+{# Pied de page commun à toutes les pages du site (l'éditeur d'exercice et l'atelier, en plein écran, n'en ont pas). #}
+<footer class="site-footer">
+    <div class="lp-wrap">
+        <div class="ft-top">
+            <div class="ft-brand">
+                <a class="ft-logo" href="{{ path('app_home') }}">
+                    <img src="{{ asset('img/logo-84.png') }}" alt="" width="36" height="42" loading="lazy" decoding="async">
+                    <span class="lp-serif">Forelse</span>
+                    <span class="lp-chip">apprendre</span>
+                </a>
+                <p>Apprendre à développer en codant dans le navigateur, sans vidéo ni installation.</p>
+            </div>
+            <nav class="ft-cols" aria-label="Pied de page">
+                <div>
+                    <h2>Apprendre</h2>
+                    <ul>
+                        <li><a href="{{ path('app_home') }}#parcours">Les parcours</a></li>
+                        <li><a href="{{ path('app_practice') }}">Pratique</a></li>
+                        <li><a href="{{ path('app_home') }}#questions">Questions fréquentes</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h2>Forelse</h2>
+                    <ul>
+                        <li><a href="{{ path('app_organizations') }}">Écoles et entreprises</a></li>
+                        <li><a href="{{ path('app_contact') }}">Contact</a></li>
+                        <li>{% if app.user %}<a href="{{ path('app_account') }}">Mon compte</a>{% else %}<a href="{{ path('app_login') }}">Connexion</a>{% endif %}</li>
+                    </ul>
+                </div>
+                <div>
+                    <h2>Informations</h2>
+                    <ul>
+                        <li><a href="{{ path('app_legal_notice') }}">Mentions légales</a></li>
+                        <li><a href="{{ path('app_privacy') }}">Confidentialité</a></li>
+                        <li><a href="{{ path('app_terms') }}">Conditions de vente</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        <div class="ft-bottom">
+            <p>Les langages et frameworks cités sont des marques de leurs titulaires respectifs ; ce site n'est affilié à aucun d'eux.</p>
+            <p class="site-moteur">Moteur {{ moteur_version }} · <abbr title="GNU Affero General Public License v3.0 ou ultérieure">AGPL-3.0</abbr></p>
+        </div>
+    </div>
+</footer>

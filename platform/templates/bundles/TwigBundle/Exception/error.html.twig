@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+
+{#
+    Page d'erreur de toutes les réponses HTML hors debug (404, 403, 500…).
+    En-tête réduit : sur une 404 le pare-feu n'a pas tourné (l'utilisateur paraîtrait déconnecté),
+    et sur une 500 la base peut être en cause : on ne touche ni à app.user ni aux rôles.
+    Aperçu en dev : /_error/404, /_error/403, /_error/500.
+#}
+{% set messages = {
+    404: {
+        title: 'Page introuvable',
+        lead: 'Cette adresse ne mène nulle part. Le lien est peut-être ancien, ou une lettre s\'est glissée de travers.',
+    },
+    403: {
+        title: 'Accès refusé',
+        lead: 'Cette page existe, mais elle n\'est pas ouverte à votre compte.',
+    },
+    429: {
+        title: 'Trop de requêtes',
+        lead: 'Vous allez plus vite que le serveur ne l\'accepte. Patientez un instant, puis réessayez.',
+    },
+    503: {
+        title: 'Service indisponible',
+        lead: 'Le site est momentanément indisponible, sans doute le temps d\'une mise à jour. Réessayez dans quelques minutes.',
+    },
+} %}
+{% set message = messages[status_code] ?? (status_code < 500 ? {
+    title: 'Requête impossible',
+    lead: 'Le serveur n\'a pas pu traiter cette requête.',
+} : {
+    title: 'Une erreur est survenue',
+    lead: 'Quelque chose a cassé de notre côté. L\'erreur est enregistrée ; réessayez dans un moment.',
+}) %}
+
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block title %}{{ message.title }} · Forelse{% endblock %}
+
+{% block header %}
+    <header class="lp-header">
+        <div class="lp-wrap">
+            <a class="lp-brand" href="{{ path('app_home') }}">
+                <img src="{{ asset('img/logo-84.png') }}" alt="" width="72" height="84">
+                <span class="lp-serif">Forelse</span>
+                <span class="lp-chip">apprendre</span>
+            </a>
+            <nav>
+                <a href="{{ path('app_home') }}#parcours">Parcours</a>
+                <a href="{{ path('app_practice') }}">Pratique</a>
+            </nav>
+        </div>
+    </header>
+{% endblock %}
+
+{% block body %}
+    <main class="page error-page">
+        <p class="error-code lp-mono" aria-hidden="true">{{ status_code }}</p>
+        <h1 class="lp-serif">{{ message.title }}</h1>
+        <p class="lead">{{ message.lead }}</p>
+        <p class="error-request lp-mono">
+            <span>{{ app.request.method }} {{ app.request.pathInfo }}</span>
+            <span>→ {{ status_code }} {{ status_text }}</span>
+        </p>
+        <p class="error-actions">
+            <a class="lp-btn" href="{{ path('app_home') }}">Retour à l'accueil</a>
+            <a class="secondary" href="{{ path('app_home') }}#parcours">Voir les parcours</a>
+        </p>
+    </main>
+{% endblock %}

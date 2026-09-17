@@ -1,0 +1,14 @@
+id: decouverte
+title: Découverte
+description: Un avant-goût de Symfony en deux exercices.
+environment: symfony-8
+# Parcours conseillé ensuite ; ignoré s'il n'est pas installé (il vit dans un autre pack).
+next: symfony-pour-dev-php
+# Rang dans les listes, à commencer par l'accueil : le plus petit d'abord. Écart de 10 pour intercaler.
+order: 10
+chapters:
+  - id: bonjour
+    title: Bonjour Symfony
+    exercises:
+      - 01-bonjour
+      - 02-bonjour-prenom

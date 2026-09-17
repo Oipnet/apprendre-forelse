@@ -1,0 +1,19 @@
+Bonjour {{ user.displayName }},
+
+{% if change %}
+Vous avez demandé à utiliser cette adresse pour votre compte Forelse. Pour la confirmer, ouvrez ce lien :
+{% else %}
+Bienvenue sur Forelse. Pour confirmer votre adresse email, ouvrez ce lien :
+{% endif %}
+
+{{ link }}
+
+Il est valable {{ hours }} heures et ne sert qu'une fois.
+
+{% if change %}
+Si vous n'avez rien demandé, ignorez cet email : l'adresse de votre compte reste inchangée.
+{% else %}
+Si vous n'avez pas créé de compte, ignorez cet email.
+{% endif %}
+
+Forelse · apprendre

@@ -1,0 +1,78 @@
+# Production (VPS). L'image est construite et publiée sur GHCR par l'intégration continue, puis
+# ce fichier est copié dans /srv/forelse/compose.yaml et les conteneurs mis à jour (job « Déployer »
+# de .github/workflows/ci.yml). Variables : /srv/forelse/.env.
+#
+# Pour votre propre instance, partez plutôt de auto-hebergement/ (guide, compose.yaml et .env.example).
+services:
+  app:
+    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_URL: ${APP_URL:?APP_URL manquant dans .env}
+      SANDBOX_URL: ${SANDBOX_URL:?SANDBOX_URL manquant dans .env}
+      APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+      DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/formation?serverVersion=17&charset=utf8
+      REGISTRATION_INVITE_ONLY: ${REGISTRATION_INVITE_ONLY:-1}
+      SEARCH_INDEXING: ${SEARCH_INDEXING:-1}
+      GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
+      # Packs chargés (chemins dans le conteneur, séparés par des virgules). /packs = le volume ci-dessous ;
+      # ajouter /app/examples/packs pour proposer aussi le parcours de démonstration, ouvert aux visiteurs.
+      CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}
+      # Sans SMTP, les emails (mot de passe oublié) ne partent pas : à renseigner dans .env.
+      MAILER_DSN: ${MAILER_DSN:-null://null}
+      MAILER_FROM: ${MAILER_FROM:-Forelse <ne-pas-repondre@forelse.fr>}
+      REGISTRATION_ALERT_EMAIL: ${REGISTRATION_ALERT_EMAIL:-}
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Paiement des parcours : vide, pas de bouton d'achat actif (voir .env.example).
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_TAX_CODE: ${STRIPE_TAX_CODE:-txcd_10000000}
+      AI_MODEL: ${AI_MODEL:-claude-sonnet-5}
+      LEGAL_PUBLISHER_NAME: ${LEGAL_PUBLISHER_NAME:-}
+      LEGAL_PUBLISHER_LEGAL_FORM: ${LEGAL_PUBLISHER_LEGAL_FORM:-}
+      LEGAL_PUBLISHER_REGISTRATION: ${LEGAL_PUBLISHER_REGISTRATION:-}
+      LEGAL_PUBLISHER_VAT: ${LEGAL_PUBLISHER_VAT:-}
+      LEGAL_PUBLISHER_ADDRESS: ${LEGAL_PUBLISHER_ADDRESS:-}
+      LEGAL_PUBLISHER_EMAIL: ${LEGAL_PUBLISHER_EMAIL:-}
+      LEGAL_PUBLISHER_PHONE: ${LEGAL_PUBLISHER_PHONE:-}
+      LEGAL_PUBLICATION_DIRECTOR: ${LEGAL_PUBLICATION_DIRECTOR:-}
+      LEGAL_HOST_NAME: ${LEGAL_HOST_NAME:-}
+      LEGAL_HOST_ADDRESS: ${LEGAL_HOST_ADDRESS:-}
+      LEGAL_HOST_PHONE: ${LEGAL_HOST_PHONE:-}
+      LEGAL_MEDIATOR_NAME: ${LEGAL_MEDIATOR_NAME:-}
+      LEGAL_MEDIATOR_URL: ${LEGAL_MEDIATOR_URL:-}
+      LEGAL_REFUND_DAYS: ${LEGAL_REFUND_DAYS:-}
+    volumes:
+      # Secret de l'application (généré au premier démarrage) et certificats Let's Encrypt de Caddy.
+      - data:/data
+      - config:/config
+      # Packs de contenu (dépôt apprendre-forelse-contenu), déposés par rsync. Vide : pack de démonstration.
+      - ${PACKS_DIR:-./packs}:/packs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: formation
+      POSTGRES_USER: formation
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U formation -d formation"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  data:
+  config:
+  db:

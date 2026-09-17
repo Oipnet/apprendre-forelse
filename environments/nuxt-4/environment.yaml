@@ -1,0 +1,5 @@
+# Environnement d'exécution : un projet Nuxt 4 vide, servi par le simulateur Nuxt (tools/nuxt-sim), empaqueté par tools/build-env.sh
+id: nuxt-4
+title: Nuxt 4 — simulateur (pages, rendu serveur, routes serveur)
+framework: nuxt
+cache: []

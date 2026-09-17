@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ exercise.title }} · Forelse{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ vite_entry_link_tags('playground') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ vite_entry_script_tags('playground') }}
+{% endblock %}
+
+{% block body_class %}playground-page{% endblock %}
+
+{# Plein écran : le playground dessine sa propre barre (voir playground/src/app/Playground.ts). #}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block body %}
+    <div class="playground" data-playground data-config="{{ config|json_encode }}">
+        {# Remplacé par le playground dès l'exercice chargé : en attendant (ou sans JavaScript), la consigne se lit. #}
+        <main class="page playground-intro">
+            {{ include(practice is defined and practice ? 'practice/_intro.html.twig' : 'exercise/_intro.html.twig') }}
+        </main>
+    </div>
+{% endblock %}

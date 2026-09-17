@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{# Un exercice de Pratique vu sans compte : l'explication se lit, l'éditeur et la validation demandent un compte. #}
+{% block title %}{{ practice.exercise.title }} · Pratique · Forelse{% endblock %}
+
+{% block body %}
+    <main class="page practice exercise-public">
+        {{ include('practice/_intro.html.twig') }}
+
+        <aside class="exercise-access" aria-labelledby="exercise-access-title">
+            <h2 id="exercise-access-title">À vous d'écrire le code</h2>
+            {% if inviteOnly %}
+                <p>La Pratique demande un compte, et la plateforme est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
+            {% else %}
+                <p>L'éditeur, l'aperçu et les tests qui valident l'exercice demandent un compte, gratuit.</p>
+            {% endif %}
+            <p class="exercise-access-actions">
+                <a class="button primary" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Créer un compte</a>
+                {% if inviteOnly %}<a class="button" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>{% endif %}
+                <a class="button ghost" href="{{ path('app_login') }}">Se connecter</a>
+            </p>
+        </aside>
+    </main>
+{% endblock %}

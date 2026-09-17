@@ -1,0 +1,4 @@
+[
+  { "slug": "lac-noir", "nom": "Le lac Noir", "difficulte": "facile", "denivele": 450 },
+  { "slug": "breche-du-bouc", "nom": "La brèche du Bouc", "difficulte": "difficile", "denivele": 1120 }
+]

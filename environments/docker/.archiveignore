@@ -1,0 +1,8 @@
+# Le composer.lock de l'environnement (qui dépend du simulateur) n'a rien à faire dans le projet de l'apprenant :
+# chaque exercice fournit le sien quand il en a besoin.
+composer.lock
+vendor/forelse/simulateur-docker/tests/*
+vendor/forelse/simulateur-docker/vendor/*
+vendor/forelse/simulateur-docker/composer.lock
+vendor/forelse/simulateur-docker/.phpunit.cache/*
+vendor/forelse/simulateur-docker/phpunit.xml.dist

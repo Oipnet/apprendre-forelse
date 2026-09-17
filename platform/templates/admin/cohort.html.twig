@@ -1,0 +1,59 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ cohort.label }}{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-secondary" href="{{ path('admin') }}">← Avancement</a>
+    {% if cohort.cohort %}
+        <a class="btn btn-secondary" href="{{ ea_url().setController('App\\Controller\\Admin\\CohortCrudController').setAction('edit').setEntityId(cohort.cohort.id) }}">Modifier la cohorte</a>
+    {% endif %}
+{% endblock %}
+
+{% block main %}
+    {% if cohort.cohort %}
+        <p>Code d'invitation <code>{{ cohort.cohort.code }}</code> · lien : <code>{{ url('app_register', {code: cohort.cohort.code}) }}</code>{% if not cohort.cohort.active %} · <strong>inscriptions fermées</strong>{% endif %}</p>
+    {% endif %}
+    <p>
+        {{ cohort.users|length }} apprenant{{ cohort.users|length > 1 ? 's' }} ·
+        {{ cohort.feedbacks }} retour{{ cohort.feedbacks > 1 ? 's' }}, dont {{ cohort.unhandledFeedbacks }} à traiter.
+        Chaque cellule : <span class="badge badge-success">✓</span> réussi, <span class="badge badge-warning">…</span> en cours, vide jamais ouvert ; le chiffre est le nombre d'indices consultés.
+    </p>
+    {% for track in cohort.tracks %}
+        <section class="beta-panel">
+            <div class="beta-panel-header"><h2>{{ track.title }}</h2></div>
+            <div class="beta-panel-body beta-scroll">
+                <table class="beta-table beta-compact">
+                    <thead>
+                        <tr>
+                            <th>Apprenant</th>
+                            <th>Réussis</th>
+                            {% for chapter in track.chapters %}
+                                {% for exerciseId in chapter.exerciseIds %}
+                                    <th class="beta-center" title="{{ chapter.title }} · {{ track.titles[exerciseId] }}">{{ loop.parent.loop.index }}.{{ loop.index }}</th>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in cohort.users %}
+                            <tr>
+                                <td><strong>{{ user.displayName }}</strong><br><small>{{ user.email }}</small></td>
+                                <td>{{ track.completedBy(user.id) }} / {{ track.exerciseCount }}</td>
+                                {% for chapter in track.chapters %}
+                                    {% for exerciseId in chapter.exerciseIds %}
+                                        {% set p = track.progressOf(user.id, exerciseId) %}
+                                        <td class="beta-center" title="{{ track.titles[exerciseId] }}{% if p %} · {{ p.completed ? 'réussi le ' ~ p.completedAt|date('d/m H:i') : 'en cours depuis le ' ~ p.startedAt|date('d/m H:i') }}{% endif %}">
+                                            {% if p %}
+                                                <span class="badge {{ p.completed ? 'badge-success' : 'badge-warning' }}">{{ p.completed ? '✓' : '…' }}{{ p.hintsUsed ? ' ' ~ p.hintsUsed }}</span>
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    {% endfor %}
+{% endblock %}

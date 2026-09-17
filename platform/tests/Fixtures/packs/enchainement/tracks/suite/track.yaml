@@ -1,0 +1,6 @@
+id: suite
+title: La suite
+description: Le parcours conseillé après « Début ».
+environment: symfony-8
+chapters:
+  - {id: c1, title: C1, exercises: [e1]}

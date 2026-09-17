@@ -1,0 +1,7 @@
+id: debut
+title: Début
+description: Le premier parcours.
+environment: symfony-8
+next: suite
+chapters:
+  - {id: c1, title: C1, exercises: [e1]}

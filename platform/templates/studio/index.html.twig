@@ -1,0 +1,103 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Atelier des auteurs · Forelse{% endblock %}
+
+{% block body %}
+    <main class="page">
+        <h1>Atelier des auteurs</h1>
+        <p class="lead">Écrire, relire et vérifier les exercices des packs installés.</p>
+
+        {% for entree in parcours %}
+            <section class="chapter">
+                <h2>{{ entree.track.title }} <span class="tag">{{ entree.pack.title }}</span>
+                    {% if not entree.modifiable %}<span class="tag">lecture seule</span>{% endif %}
+                </h2>
+
+                {% for bloc in entree.chapitres %}
+                    <h3 class="meta">{{ bloc.chapitre.title }}
+                        <a class="lesson-edit{{ bloc.chapitre.hasLesson ? '' : ' missing' }}" href="{{ path('app_studio_lesson', {trackId: entree.track.id, chapterId: bloc.chapitre.id}) }}">
+                            {{ bloc.chapitre.hasLesson ? '📜 Fiche de cours' : '📜 Fiche de cours à écrire' }}
+                        </a>
+                    </h3>
+                    <ol class="exercises">
+                        {% for exercice in bloc.exercices %}
+                            <li>
+                                <a href="{{ path('app_studio_exercise', {trackId: entree.track.id, exerciseId: exercice.id}) }}">
+                                    <span class="state">{{ loop.index }}</span>
+                                    <span class="title">{{ exercice.title }}</span>
+                                    <span class="meta">{{ exercice.xp }} XP</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% endfor %}
+
+                {% if entree.modifiable %}
+                    <form class="nouvel-exercice" data-nouveau="{{ path('app_studio_create', {trackId: entree.track.id}) }}">
+                        <input name="id" placeholder="45-le-grand-menage" required pattern="[a-z0-9][a-z0-9-]*" aria-label="Identifiant">
+                        <input name="titre" placeholder="Le grand ménage" required aria-label="Titre">
+                        <select name="chapitre" aria-label="Chapitre">
+                            {% for bloc in entree.chapitres %}
+                                <option value="{{ bloc.chapitre.id }}">{{ bloc.chapitre.title }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if ia %}
+                            <input name="sujet" class="sujet" placeholder="Sujet confié à l'IA (facultatif) : « tester un voter avec des stubs »" aria-label="Sujet">
+                        {% endif %}
+                        <select name="base" aria-label="Part de l'exercice">
+                            <option value="">Sans base</option>
+                            {% for bloc in entree.chapitres %}{% for exercice in bloc.exercices %}
+                                <option value="{{ exercice.id }}">après {{ exercice.title }}</option>
+                            {% endfor %}{% endfor %}
+                        </select>
+                        <button type="submit" class="primary">Nouvel exercice</button>
+                        <span class="erreur" role="alert"></span>
+                        {% if not ia %}
+                            <span class="meta">Génération assistée désactivée : renseignez <code>ANTHROPIC_API_KEY</code> pour l'activer.</span>
+                        {% endif %}
+                    </form>
+                {% endif %}
+            </section>
+        {% endfor %}
+
+        <section class="chapter">
+            <h2>Pratique <span class="tag">hors parcours</span></h2>
+            {% if pratique %}
+                <ol class="exercises">
+                    {% for practice in pratique %}
+                        <li>
+                            <a href="{{ path('app_studio_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
+                                <span class="state">{{ loop.index }}</span>
+                                <span class="title">{{ practice.exercise.title }}</span>
+                                {% if practice.isRestricted %}<span class="tag">en préparation</span>{% endif %}
+                                {% if practice.isScheduled %}<span class="tag">programmé</span>{% endif %}
+                                <span class="meta">{{ practice.packId }} · {{ practice.published|date('d/m/Y') }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <p class="meta">Aucun exercice de Pratique dans les packs installés.</p>
+            {% endif %}
+
+            {% if packsModifiables %}
+                <form class="nouvel-exercice" data-nouveau="{{ path('app_studio_create_pratique') }}">
+                    <input name="id" placeholder="symfony-8-1-map-query-string" required pattern="[a-z0-9][a-z0-9-]*" aria-label="Identifiant">
+                    <input name="titre" placeholder="Lire la requête avec #[MapQueryString]" required aria-label="Titre">
+                    <select name="pack" aria-label="Pack">
+                        {% for pack in packsModifiables %}
+                            <option value="{{ pack.id }}">{{ pack.title }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="environnement" aria-label="Environnement">
+                        {% for environnement in environnements %}
+                            <option value="{{ environnement }}">{{ environnement }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="primary">Nouvel exercice de Pratique</button>
+                    <span class="erreur" role="alert"></span>
+                </form>
+            {% endif %}
+        </section>
+    </main>
+{% endblock %}

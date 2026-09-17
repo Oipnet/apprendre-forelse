@@ -1,0 +1,292 @@
+{% extends 'base.html.twig' %}
+
+{% block body_class %}site-page landing{% endblock %}
+
+{% block body %}
+    <main class="lp">
+        <section class="lp-hero">
+            <div class="lp-wrap">
+                <div class="lp-hero-grid">
+                    <div>
+                        <span class="lp-eyebrow">Apprendre à développer · sans vidéo, sans installation</span>
+                        <h1 class="lp-h1">Apprenez à développer <em>en codant</em>, directement dans votre navigateur.</h1>
+                        <p class="lp-lead">
+                            Pas de vidéo, pas d'installation. Un vrai projet tourne dans votre navigateur : vous écrivez le code,
+                            l'aperçu se met à jour, les tests valident vos objectifs.
+                        </p>
+                        <div class="lp-cta">
+                            <a class="lp-btn lg primary" href="{{ tryUrl }}">Essayer le premier exercice <span class="lp-mono">→</span></a>
+                            <span class="lp-muted">Gratuit, sans compte, en deux minutes.</span>
+                        </div>
+                    </div>
+
+                    {# Illustration : un exercice tel qu'il se présente (éditeur, aperçu, objectifs). #}
+                    <figure class="lp-demo" data-demo aria-label="Un exercice : le code, l'aperçu de la page et les objectifs validés">
+                        <div class="lp-demo-tabs">
+                            <span class="tab active">MenuController.php</span>
+                            <span class="tab">index.html.twig</span>
+                            <span class="status">Aperçu à jour</span>
+                        </div>
+<pre class="lp-code"><span class="cm">// Bruna veut une carte visible à l'adresse /menu</span>
+<span class="at">#[Route(</span><span class="st">'/menu'</span><span class="at">, name: </span><span class="st">'app_menu'</span><span class="at">)]</span>
+<span class="kw">public function</span> index(): Response
+{
+    <span class="kw">return</span> $this->render(<span class="st">'menu/index.html.twig'</span>, [
+        <span class="st">'taverne'</span>    => <span class="st">'La Taverne du Dragon Ivre'</span>,
+        <span class="st">'platDuJour'</span> => <span class="st">'Ragoût de sanglier'</span>,
+    ]);
+}<span class="cursor">▌</span></pre>
+                        <div class="lp-demo-bottom">
+                            <div class="lp-demo-preview">
+                                <span class="lp-demo-label">localhost/menu</span>
+                                <span class="name">La Taverne du Dragon Ivre</span>
+                                <span class="label">Plat du jour</span>
+                                <strong>Ragoût de sanglier</strong>
+                                <span class="row"><span>Hydromel de la maison</span><span class="price">3 po</span></span>
+                            </div>
+                            <div class="lp-demo-goals">
+                                <span class="lp-demo-label">Objectifs</span>
+                                <span class="goal done"><i>✓</i>La carte est accessible</span>
+                                <span class="goal done"><i>✓</i>Le plat du jour est affiché</span>
+                                <span class="goal" data-demo-goal><i>○</i>Les prix sont en pièces d'or</span>
+                                <span class="score"><span data-demo-score>2 / 3 validés</span><span class="xp" data-demo-xp>+ 100 XP</span></span>
+                            </div>
+                        </div>
+                    </figure>
+                </div>
+                <p class="lp-hero-note">Le code à gauche, la page à droite : changez une ligne, l'aperçu se recharge, les tests vérifient.</p>
+            </div>
+        </section>
+
+        <section class="lp-band">
+            <div class="lp-wrap">
+                <div>
+                    <h2>Pas de vidéo</h2>
+                    <p>Vous ne regardez pas quelqu'un coder : vous codez. Chaque notion s'apprend en l'écrivant, dans un éditeur avec complétion, face à un aperçu qui réagit.</p>
+                </div>
+                <div>
+                    <h2>Pas d'installation</h2>
+                    <p>Un vrai projet s'exécute dans votre navigateur. Ni Docker, ni langage à installer, ni environnement à réparer avant d'écrire la première ligne.</p>
+                </div>
+                <div>
+                    <h2>Pas d'exercices jouets</h2>
+                    <p>Chaque parcours construit un seul projet, chapitre après chapitre : pages, base de données, formulaires, sécurité, API, tests. Rien de jetable.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-section">
+            <div class="lp-wrap">
+                <span class="lp-eyebrow">Comment ça marche</span>
+                <h2 class="lp-h2 spaced">Une boucle courte : consigne, code, aperçu, validation.</h2>
+                <ol class="lp-steps">
+                    <li data-reveal><h3>Lisez la consigne</h3><p>Un besoin concret, posé par un personnage du parcours : une carte des plats, une réservation, un registre des employés.</p></li>
+                    <li data-reveal><h3>Écrivez le code</h3><p>Dans un éditeur avec complétion et coloration, sur les fichiers d'un vrai projet. La documentation officielle est à un clic.</p></li>
+                    <li data-reveal><h3>Regardez l'aperçu</h3><p>Votre page se recharge à chaque modification. Une erreur s'affiche ; avec un compte, le mentor vous l'explique en français.</p></li>
+                    <li data-reveal><h3>Validez les objectifs</h3><p>Des tests automatisés vérifient chaque objectif. Bloqué ? Un indice gradué, jamais la solution d'entrée de jeu.</p></li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="lp-section dark">
+            <div class="lp-wrap lp-two">
+                <div>
+                    <span class="lp-eyebrow">Le fil rouge</span>
+                    <h2 class="lp-h2">Chaque parcours a son fil rouge. Le premier : une taverne.</h2>
+                    <p class="lp-lead">Pas de catalogue d'exemples sans lien entre eux. Dans le parcours Symfony, Bruna vient de reprendre la Taverne du Dragon Ivre et n'a jamais eu de site. La carte, les réservations, les employés, le livre d'or : chaque chapitre répond à un besoin réel de l'auberge.</p>
+                    <p class="lp-lead">Le code du premier exercice sert encore au dernier chapitre. Vous apprenez comme on développe pour de vrai : sur un projet qui grandit, qu'on relit et qu'on fait évoluer.</p>
+                </div>
+                <div class="lp-sign-wrap">
+                    <span class="lp-candle" aria-hidden="true"></span>
+                    <div class="lp-sign" role="img" aria-label="Enseigne de la Taverne du Dragon Ivre, fil rouge du premier parcours">
+                        <img src="{{ asset('img/logo-168.png') }}" alt="" width="144" height="168" loading="lazy" decoding="async">
+                        <div class="name">La Taverne du<br>Dragon Ivre</div>
+                        <div class="since">Fondée au chapitre 1</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-section" id="parcours">
+            <div class="lp-wrap">
+                <span class="lp-eyebrow">Les parcours</span>
+                <h2 class="lp-h2 spaced">{{ tracks|length > 1 ? 'Les parcours disponibles. D\'autres suivent.' : 'Un premier parcours disponible. D\'autres suivent.' }}</h2>
+                {# Plusieurs parcours : des onglets, posés par le JS. Sans JS, les fiches restent empilées. #}
+                {% set tabbed = tracks|length > 1 %}
+                <div class="lp-parcours"{% if tabbed %} data-parcours{% endif %}>
+                    {% if tabbed %}
+                        <div class="lp-tabs" role="tablist" aria-label="Choisir un parcours">
+                            {% for item in tracks %}
+                                <button type="button" class="lp-tab" role="tab" id="lp-tab-{{ item.track.id }}" aria-controls="lp-panel-{{ item.track.id }}" aria-selected="{{ loop.first ? 'true' : 'false' }}" tabindex="{{ loop.first ? '0' : '-1' }}">
+                                    {# Le titre complet est dans la fiche : l'onglet n'en garde que le sujet (« Symfony pour les devs PHP » → « Symfony »). #}
+                                    <span class="name">{{ item.track.title|split(' pour ')|first }}</span>
+                                    <span class="meta">{{ item.chapters|length }} chap. · {{ item.exercises }} ex.</span>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% for item in tracks %}
+                        <article class="lp-track"{% if tabbed %} id="lp-panel-{{ item.track.id }}" role="tabpanel" aria-labelledby="lp-tab-{{ item.track.id }}" tabindex="0"{% endif %}>
+                            <div class="lp-track-head">
+                                <div>
+                                    <div class="head">
+                                        <h3><a href="{{ path('app_track', {trackId: item.track.id}) }}">{{ item.track.title }}</a></h3>
+                                        {% if inviteOnly %}<span class="lp-badge">En bêta</span>{% endif %}
+                                    </div>
+                                    <p>{{ item.track.description }}</p>
+                                </div>
+                                <div class="lp-track-offer">
+                                    {% set trackDuration = track_duration(item.track) %}
+                                    <span class="count">{{ item.chapters|length }} chapitre{{ item.chapters|length > 1 ? 's' }} · {{ item.exercises }} exercice{{ item.exercises > 1 ? 's' }}{% if trackDuration %} · environ {{ trackDuration|duree }}{% endif %}</span>
+                                    {% set quote = item.offer.quote %}
+                                    {# Prix et places restantes : seulement pour qui n'a pas encore tout le parcours. #}
+                                    {% if item.offer.locked %}
+                                        <span class="lp-price">
+                                            {% if quote.discounted %}<s aria-label="Prix normal">{{ quote.normalPrice|euros }}</s>{% endif %}
+                                            <strong>{{ quote.price|euros }}</strong> TTC, accès à vie
+                                        </span>
+                                        {% if quote.founder %}
+                                            <span class="lp-muted">Prix fondateur{% if quote.founderEndsAt %} jusqu'au {{ quote.founderEndsAt|date('d/m/Y') }}{% endif %}{% if quote.founderSeatsLeft is not null %}{{ quote.founderEndsAt ? ',' : '' }} encore {{ quote.founderSeatsLeft }} place{{ quote.founderSeatsLeft > 1 ? 's' }}{% endif %}</span>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if item.offer.fullAccess and app.user %}
+                                        <a class="lp-btn" href="{{ path('app_track', {trackId: item.track.id}) }}">Continuer <span class="lp-mono">→</span></a>
+                                    {% elseif item.offer.purchasable %}
+                                        <a class="lp-btn primary" href="{{ path('app_purchase', {trackId: item.track.id}) }}">Acheter</a>
+                                    {% elseif item.offer.comingSoon %}
+                                        <span class="lp-muted">Achat bientôt disponible</span>
+                                    {% endif %}
+                                    {% if item.tryUrl and not item.offer.fullAccess %}<span class="lp-muted">Premier chapitre gratuit</span>{% endif %}
+                                </div>
+                            </div>
+                            <ol class="lp-chapters">
+                                {% for row in item.chapters %}
+                                    <li data-reveal>
+                                        <div class="head">
+                                            <span class="num">{{ '%02d'|format(loop.index) }}</span>
+                                            <span class="title">{{ row.chapter.title }}</span>
+                                            {% set freeRow = loop.first and item.tryUrl and not item.offer.fullAccess %}<span class="meta{{ freeRow ? ' free' }}">{{ freeRow ? 'gratuit · ' }}{{ row.exercises }} ex.{% set chapterDuration = track_duration(item.track, row.chapter) %}{% if chapterDuration %} · ≈ {{ chapterDuration|duree }}{% endif %}</span>
+                                        </div>
+                                        {% if row.concepts %}
+                                            <div class="lp-pills">
+                                                {% for concept in row.concepts %}<span>{{ concept }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ol>
+                        </article>
+                    {% else %}
+                        <p class="lp-lead">Aucun parcours installé : ajoutez un pack de contenu (variable CONTENT_PACKS_PATHS).</p>
+                    {% endfor %}
+                </div>
+                {% if upcoming %}
+                    <div class="lp-upcoming">
+                        <h3>En préparation</h3>
+                        <ul>
+                            {% for track in upcoming %}
+                                <li>
+                                    <span class="name">{{ track.title }}</span> <span class="lp-badge">Bientôt</span>
+                                    <p>{{ track.description }}</p>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                <div class="lp-callout">
+                    <p><strong>Une fiche de cours à la fin de chaque chapitre</strong>, en page web et en PDF. À la fin du parcours, le livret complet : votre mémo, écrit à mesure que vous l'avez appris.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-section tinted">
+            <div class="lp-wrap">
+                <span class="lp-eyebrow">L'IA à sa juste place</span>
+                <h2 class="lp-h2">Elle vous aide. Elle ne code pas à votre place.</h2>
+                <p class="lp-lead spaced">Un modèle qui écrit la solution ne vous apprend rien. Ici, l'IA intervient seulement là où un bon mentor interviendrait, quel que soit le parcours. Les indices sont ouverts à tous ; la revue et les explications accompagnent les apprenants connectés.</p>
+                <div class="lp-cards">
+                    <div data-reveal><p><strong>Des indices gradués.</strong>Une piste, puis une direction, puis un extrait. Vous décidez jusqu'où aller.</p></div>
+                    <div data-reveal><p><strong>Une revue de code.</strong>Quand les tests passent, un regard sur ce qui pourrait être plus idiomatique.</p></div>
+                    <div data-reveal><p><strong>Des erreurs expliquées.</strong>Une exception traduite en cause probable, sans vous donner la correction.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-section">
+            <div class="lp-wrap">
+                <span class="lp-eyebrow">Pour qui</span>
+                <h2 class="lp-h2 spaced">Pour apprendre à développer, il faut développer.</h2>
+                <div class="lp-audience">
+                    <div data-reveal>
+                        <h3>Développeur en poste</h3>
+                        <p>Vous ajoutez une corde à votre arc, avec les bonnes pratiques d'emblée plutôt qu'en revue de code. Aujourd'hui : passer de PHP à Symfony.</p>
+                    </div>
+                    <div data-reveal>
+                        <h3>Étudiant en informatique</h3>
+                        <p>Vous avez vu la théorie en cours. Il vous manque la pratique sur un vrai projet, celle qu'on attend en stage ou en alternance.</p>
+                    </div>
+                    <div data-reveal>
+                        <h3>Équipe ou école</h3>
+                        <p>Vous formez plusieurs personnes et voulez suivre leur progression : un lien d'invitation, les parcours de votre choix, un tableau de suivi. <a href="{{ path('app_organizations') }}">L'offre écoles et entreprises</a>.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-section lined">
+            <div class="lp-wrap lp-two top">
+                <div>
+                    <span class="lp-eyebrow">Qui est derrière</span>
+                    <h2 class="lp-h2 sm">Un développeur, pas une plateforme de cours en masse.</h2>
+                </div>
+                <p class="lp-lead">Conçu par Arnaud Pointet, développeur indépendant (Forelse, Bordeaux), qui écrit chaque exercice comme il aurait voulu apprendre. Le moteur de la plateforme est sous licence open source (AGPL) : son code sera publié à l'ouverture, pour le lire, le faire tourner chez vous et y contribuer.</p>
+            </div>
+        </section>
+
+        <section class="lp-section dark" id="liste-attente">
+            <div class="lp-wrap lp-signup">
+                {% if inviteOnly %}
+                    {% set state = app.request.query.get('liste') %}
+                    <span class="lp-eyebrow">Bêta fermée cet automne</span>
+                    <h2 class="lp-h2">Soyez prévenu à l'ouverture, avec le prix fondateur.</h2>
+                    <p class="lp-lead">Le premier parcours est en bêta fermée. Laissez votre adresse : vous saurez quand il ouvre, quand les suivants arrivent, et les 100 premiers inscrits auront le prix fondateur. Achat unique par parcours, sans abonnement, remboursé sous 14 jours si ce n'est pas pour vous.</p>
+                    {% if state == 'ok' %}
+                        <p class="lp-notice ok" role="status">C'est noté : vous serez prévenu à l'ouverture.</p>
+                    {% else %}
+                        {% if state == 'invalide' %}<p class="lp-notice ko" role="alert">Cette adresse ne semble pas valide, vérifiez-la.</p>{% endif %}
+                        <form class="lp-form" method="post" action="{{ path('app_waitlist') }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                            {# Piège à robots : un humain ne voit pas ce champ. #}
+                            <input class="lp-trap" type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
+                            <input type="email" name="email" required maxlength="180" placeholder="vous@exemple.fr" aria-label="Adresse email">
+                            <button type="submit">Me prévenir</button>
+                        </form>
+                        <p class="note">Deux emails au plus : l'ouverture, et une invitation à la bêta si des places se libèrent. Rien d'autre. <a href="{{ path('app_privacy') }}">Comment vos données sont traitées</a>.</p>
+                    {% endif %}
+                {% else %}
+                    <span class="lp-eyebrow">Prêt à commencer ?</span>
+                    <h2 class="lp-h2">Le premier chapitre de chaque parcours est ouvert à tous. Un compte garde votre progression.</h2>
+                    <div class="lp-cta">
+                        <a class="lp-btn lg gold" href="{{ tryUrl }}">Essayer le premier exercice <span class="lp-mono">→</span></a>
+                        <a class="lp-btn lg outline" href="{{ path('app_register') }}">Créer un compte</a>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="lp-section" id="questions">
+            <div class="lp-wrap narrow">
+                <h2 class="lp-h2 spaced">Questions fréquentes</h2>
+                <div class="lp-faq">
+                    {% for item in faq %}
+                        <details{% if loop.first %} open{% endif %}>
+                            <summary>{{ item.question }}</summary>
+                            <p>{{ item.answer }}</p>
+                        </details>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+    </main>
+{% endblock %}

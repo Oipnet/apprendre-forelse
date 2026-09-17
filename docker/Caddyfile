@@ -1,0 +1,40 @@
+{
+	frankenphp
+}
+
+# Deux origines, une seule application : la plateforme (APP_URL) et le bac à sable (SANDBOX_URL),
+# qui sert l'aperçu du code des apprenants. Symfony cloisonne ce que chacune a le droit de servir.
+# Une adresse en https:// active le HTTPS automatique (Let's Encrypt) ; en http://, aucun certificat.
+# SERVER_NAME vaut « APP_URL, SANDBOX_URL » par défaut (voir docker-entrypoint.sh). Derrière un reverse proxy qui
+# gère déjà le HTTPS : SERVER_NAME=:80, du HTTP simple pour tous les noms d'hôte.
+{$SERVER_NAME} {
+	root /app/platform/public
+
+	# Le binaire PHP WebAssembly (≈ 19 Mo) tombe à ≈ 7 Mo compressé. Les fichiers sans type connu
+	# (données ICU .dat ≈ 29 Mo, extensions .so) sortent en application/octet-stream : compressés
+	# aussi. Les archives .zip des environnements (application/zip) ne le sont pas, inutile.
+	encode {
+		zstd
+		br
+		gzip
+		match {
+			header Content-Type text/*
+			header Content-Type application/javascript*
+			header Content-Type application/json*
+			header Content-Type application/wasm*
+			header Content-Type application/octet-stream*
+			header Content-Type image/svg+xml*
+		}
+	}
+
+	# Assets Vite (noms hashés) et archives d'environnement : cache long.
+	@immutable path /build/assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	@envs path /envs/*
+	header @envs Cache-Control "public, max-age=86400"
+	# Le Service Worker de l'aperçu doit toujours être revalidé.
+	@sw path /preview-sw.js
+	header @sw Cache-Control "no-cache"
+
+	php_server
+}

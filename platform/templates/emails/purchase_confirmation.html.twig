@@ -1,0 +1,22 @@
+{% set title = track ? track.title : purchase.trackId %}
+<p>Bonjour{{ purchase.user ? ' ' ~ purchase.user.displayName : '' }},</p>
+
+<p>Merci pour votre achat : votre accès au parcours « {{ title }} » est ouvert, à vie, avec ses mises à jour.</p>
+
+<p>Montant payé : {{ (purchase.amountPaid ?? purchase.price)|euros }} TTC, le {{ purchase.paidAt|date('d/m/Y') }}.</p>
+
+{% if track %}<p>Reprendre le parcours : <a href="{{ url('app_track', {trackId: track.id}) }}">{{ url('app_track', {trackId: track.id}) }}</a></p>{% endif %}
+
+{% if purchase.receiptUrl %}
+    <p>Votre reçu : <a href="{{ purchase.receiptUrl }}">{{ purchase.receiptUrl }}</a></p>
+{% else %}
+    <p>Votre reçu sera disponible dans votre compte : <a href="{{ url('app_account') }}">{{ url('app_account') }}</a></p>
+{% endif %}
+
+{% if purchase.stripeInvoiceId %}<p>Votre facture se télécharge depuis votre compte : <a href="{{ url('app_account') }}#achats">{{ url('app_account') }}</a></p>{% endif %}
+
+{% if purchase.termsVersion %}<p>Conditions générales de vente acceptées (version du {{ purchase.termsVersion|date('d/m/Y') }}) : <a href="{{ url('app_terms') }}">{{ url('app_terms') }}</a></p>{% endif %}
+
+<p>Vous avez demandé l'accès immédiat au parcours et renoncé à votre droit de rétractation le {{ purchase.withdrawalWaiverAcceptedAt|date('d/m/Y à H:i') }}.</p>
+
+<p>Forelse · apprendre</p>

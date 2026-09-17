@@ -1,0 +1,123 @@
+{#
+  Conditions générales de vente. Le texte décrit ce que la plateforme fait réellement (achat, accès, remboursement) ;
+  le vendeur, le médiateur et la garantie viennent de la configuration (LEGAL_* dans .env).
+  Toute modification du texte change LegalController::TERMS_VERSION : chaque achat enregistre la version acceptée.
+#}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    {% set seller = legal.publisherName ?: 'l\'éditeur du site' %}
+    {% set refundDays = legal.refundGuaranteeDays %}
+    <main class="page legal-page">
+        <p class="meta">Le site</p>
+        <h1>Conditions générales de vente</h1>
+        <p class="lead">Ce que vous achetez sur {{ siteHost }}, comment, et ce que cela vous garantit.</p>
+
+        {% if missing is not empty %}
+            <div class="legal-missing" role="alert">
+                <strong>Conditions incomplètes : les parcours ne sont pas encore en vente.</strong> L'exploitant de ce site n'a pas encore renseigné :
+                {% for variable in missing %}<code>{{ variable }}</code>{{ not loop.last ? ', ' }}{% endfor %}.
+            </div>
+        {% endif %}
+
+        <section id="objet">
+            <h2>1. Objet</h2>
+            <p>Les présentes conditions générales de vente (CGV) s'appliquent à tout achat d'un accès à un parcours de formation sur le site {{ siteHost }}, entre {{ seller }} (le « vendeur ») et toute personne qui passe commande (l'« apprenant »). Elles sont acceptées, en cochant la case prévue à cet effet, avant chaque paiement ; la version acceptée est conservée avec la commande.</p>
+            <p>Les accès ouverts à un groupe par un établissement, une école ou une entreprise (cohortes) relèvent du contrat conclu avec cet organisme, et non des présentes CGV.</p>
+        </section>
+
+        <section id="vendeur">
+            <h2>2. Vendeur</h2>
+            <dl class="legal-facts">
+                {% if legal.publisherName %}<div><dt>Dénomination</dt><dd>{{ legal.publisherName }}</dd></div>{% endif %}
+                {% if legal.publisherLegalForm %}<div><dt>Forme juridique</dt><dd>{{ legal.publisherLegalForm }}</dd></div>{% endif %}
+                {% if legal.publisherRegistration %}<div><dt>Immatriculation</dt><dd>{{ legal.publisherRegistration }}</dd></div>{% endif %}
+                {% if legal.publisherVat %}<div><dt>TVA intracommunautaire</dt><dd>{{ legal.publisherVat }}</dd></div>{% endif %}
+                {% if legal.publisherAddress %}<div><dt>Siège social</dt><dd>{{ legal.publisherAddress }}</dd></div>{% endif %}
+                {% if legal.publisherEmail %}<div><dt>Contact</dt><dd><a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a></dd></div>{% endif %}
+                {% if legal.publisherPhone %}<div><dt>Téléphone</dt><dd>{{ legal.publisherPhone }}</dd></div>{% endif %}
+            </dl>
+        </section>
+
+        <section id="offre">
+            <h2>3. Ce qui est vendu</h2>
+            <p>Un parcours est une formation en ligne composée de chapitres d'exercices interactifs : l'apprenant écrit du code dans son navigateur, qui s'exécute sur place, et des tests vérifient son travail. Le contenu de chaque parcours (chapitres, notions, nombre d'exercices) est décrit sur sa page avant l'achat.</p>
+            <p>Le premier chapitre de chaque parcours est accessible gratuitement, sans compte : il permet de vérifier, avant d'acheter, que le parcours et la plateforme conviennent.</p>
+            <p>L'utilisation demande un ordinateur avec un navigateur récent (Chrome, Firefox, Safari ou Edge à jour) et une connexion à Internet. Les petits écrans conviennent mal à l'écriture de code.</p>
+        </section>
+
+        <section id="prix">
+            <h2>4. Prix</h2>
+            <p>Les prix sont indiqués en euros, toutes taxes comprises (TTC). La TVA applicable est celle du pays de l'apprenant, déterminée à partir de l'adresse de facturation saisie au paiement ; elle est incluse dans le prix affiché et détaillée sur la facture.</p>
+            <p>Un parcours peut être proposé à un prix de lancement (« prix fondateur »), limité dans le temps ou à un nombre d'achats, ce qui est indiqué à côté du prix. Le prix appliqué est celui affiché sur la page de confirmation au moment de la commande.</p>
+        </section>
+
+        <section id="commande">
+            <h2>5. Commande</h2>
+            <p>L'achat demande un compte sur le site. Depuis la page du parcours, l'apprenant accède à une page de confirmation qui rappelle le parcours et son prix ; il accepte les présentes CGV, demande l'accès immédiat au parcours et renonce à son droit de rétractation (article 8), puis est dirigé vers la page de paiement sécurisée.</p>
+            <p>La commande est conclue à la confirmation du paiement. Un email de confirmation, avec le lien vers le reçu, est alors envoyé à l'adresse du compte ; l'achat, son reçu et sa facture figurent aussi dans la page « Mon compte ». Un professionnel peut indiquer sa raison sociale et son numéro de TVA au moment du paiement : ils apparaissent sur la facture.</p>
+        </section>
+
+        <section id="paiement">
+            <h2>6. Paiement</h2>
+            <p>Le paiement est comptant, en une fois, par les moyens proposés sur la page de paiement. Il est traité par la société Stripe, prestataire de services de paiement ; le vendeur n'a jamais connaissance des données de la carte de l'apprenant et ne les conserve pas.</p>
+        </section>
+
+        <section id="acces">
+            <h2>7. Accès au parcours</h2>
+            <p>L'accès au parcours complet est ouvert dès la confirmation du paiement, sur le compte de l'apprenant. Il est personnel : il ne peut être ni partagé, ni cédé, ni revendu.</p>
+            <p>L'accès est acquis « à vie », c'est-à-dire sans limite de durée tant que le vendeur exploite le site, et comprend les mises à jour du parcours (corrections, adaptation aux nouvelles versions des outils enseignés, exercices ajoutés au parcours). Le vendeur peut faire évoluer le contenu d'un parcours sans en réduire substantiellement l'étendue.</p>
+            <p>Le vendeur s'efforce de maintenir le site accessible en permanence, sans pouvoir le garantir : des interruptions peuvent survenir pour maintenance, mise à jour ou incident. La progression de l'apprenant est conservée.</p>
+        </section>
+
+        <section id="retractation">
+            <h2>8. Droit de rétractation</h2>
+            <p>Le consommateur dispose en principe d'un délai de quatorze jours pour se rétracter d'un contrat conclu à distance (article L221-18 du Code de la consommation). Toutefois, ce droit ne peut être exercé pour la fourniture d'un contenu numérique sans support matériel dont l'exécution a commencé après accord préalable exprès du consommateur et renoncement exprès à son droit de rétractation (article L221-28, 13°).</p>
+            <p>L'accès au parcours étant ouvert dès le paiement, l'apprenant demande expressément, en cochant la case prévue sur la page de confirmation, l'exécution immédiate du contrat et reconnaît perdre son droit de rétractation. Le texte de cette case et l'heure de son acceptation sont conservés avec la commande et rappelés dans l'email de confirmation.</p>
+        </section>
+
+        <section id="remboursement">
+            <h2>9. Garantie « satisfait ou remboursé »</h2>
+            {% if refundDays %}
+                <p>Indépendamment du droit de rétractation, le vendeur accorde une garantie commerciale : pendant {{ refundDays }} jours après l'achat, l'apprenant peut demander le remboursement intégral de son parcours, sans avoir à se justifier, en écrivant à {% if legal.publisherEmail %}<a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>{% else %}l'adresse de contact du vendeur{% endif %} depuis l'adresse de son compte.</p>
+                <p>Le remboursement est effectué sur le moyen de paiement utilisé, en général sous quelques jours ouvrés selon la banque. L'accès au parcours est fermé à la date du remboursement ; la progression reste enregistrée.</p>
+            {% else %}
+                <p>Le vendeur n'accorde pas de garantie commerciale de remboursement en plus des garanties légales ci-dessous.</p>
+            {% endif %}
+        </section>
+
+        <section id="garanties">
+            <h2>10. Garanties légales</h2>
+            <p>Le vendeur est tenu de la garantie légale de conformité des contenus et services numériques prévue aux articles L224-25-12 et suivants du Code de la consommation. En cas de défaut de conformité (contenu inaccessible, exercices qui ne fonctionnent pas comme décrit), l'apprenant le signale à {% if legal.publisherEmail %}<a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>{% else %}l'adresse de contact du vendeur{% endif %} : le vendeur le met en conformité dans un délai raisonnable ou, à défaut, l'apprenant peut obtenir une réduction du prix ou la résolution du contrat et le remboursement.</p>
+        </section>
+
+        <section id="responsabilite">
+            <h2>11. Responsabilité</h2>
+            <p>Les parcours sont des contenus d'apprentissage. Ils sont rédigés avec soin mais ne garantissent ni la réussite d'un examen, d'une certification ou d'un recrutement, ni l'adéquation du code appris à un usage professionnel particulier. La responsabilité du vendeur ne saurait être engagée pour un dommage indirect, ni pour une interruption du service due à un cas de force majeure.</p>
+        </section>
+
+        <section id="propriete">
+            <h2>12. Propriété intellectuelle</h2>
+            <p>Les parcours, exercices, fiches de cours et textes restent la propriété du vendeur ou de leurs auteurs. L'achat donne un droit d'usage personnel à des fins d'apprentissage ; toute reproduction ou diffusion demande une autorisation écrite. Le code écrit par l'apprenant dans les exercices lui appartient. Voir aussi les <a href="{{ path('app_legal_notice') }}#propriete">mentions légales</a>.</p>
+        </section>
+
+        <section id="donnees">
+            <h2>13. Données personnelles</h2>
+            <p>Les données nécessaires à la commande (compte, achat, reçu, facture) sont traitées par le vendeur pour exécuter le contrat et respecter ses obligations comptables. Leur traitement et vos droits sont décrits dans la <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
+        </section>
+
+        <section id="mediation">
+            <h2>14. Réclamations et médiation</h2>
+            <p>Toute réclamation s'adresse d'abord au vendeur, {% if legal.publisherEmail %}à <a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>{% else %}à son adresse de contact{% endif %}.</p>
+            <p>À défaut de solution, le consommateur peut recourir gratuitement au médiateur de la consommation dont relève le vendeur (articles L611-1 et suivants du Code de la consommation), dans un délai d'un an à compter de sa réclamation écrite :
+                {% if legal.mediatorName %}<strong>{{ legal.mediatorName }}</strong>{% if legal.mediatorUrl %}, <a href="{{ legal.mediatorUrl }}">{{ legal.mediatorUrl }}</a>{% endif %}{% else %}non renseigné{% endif %}.</p>
+        </section>
+
+        <section id="droit">
+            <h2>15. Droit applicable</h2>
+            <p>Les présentes CGV sont soumises au droit français. Elles ne privent pas le consommateur résidant dans un autre pays de l'Union européenne de la protection que lui assurent les dispositions impératives de la loi de son pays. En cas de litige, les tribunaux compétents sont ceux désignés par la loi.</p>
+        </section>
+
+        <p class="meta">Version du {{ termsVersion|date('d/m/Y') }}.</p>
+    </main>
+{% endblock %}

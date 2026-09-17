@@ -1,0 +1,3 @@
+id: cohortes
+title: Pack de test (parcours proposés par cohorte)
+tracks: [symfony-bases, laravel-bases, atelier-secret]

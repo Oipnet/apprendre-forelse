@@ -1,0 +1,5 @@
+# Environnement d'exécution : projet Laravel de base, empaqueté par tools/build-env.sh
+id: laravel-13
+title: Laravel 13 — Blade, Eloquent (SQLite), PHPUnit
+php: '8.4'
+framework: laravel

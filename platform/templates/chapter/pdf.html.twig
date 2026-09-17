@@ -1,0 +1,25 @@
+{# Fiche de cours d'un chapitre en PDF. #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>{{ chapter.title }} · Fiche de cours</title>
+    {{ include('chapter/_pdf_styles.html.twig') }}
+</head>
+<body>
+    <div class="cover">
+        <p class="pack">{{ pack.title }}</p>
+        <p class="track">{{ track.title }}</p>
+        <p class="number">Chapitre {{ number }}</p>
+        <h1>{{ chapter.title }}</h1>
+        {% if concepts %}
+            <p class="concepts">{% for concept in concepts %}<span>{{ concept }}</span>{% endfor %}</p>
+        {% endif %}
+        <p class="learner">
+            Fiche de cours établie pour <strong>{{ user.displayName }}</strong> le {{ date|date('d/m/Y') }},
+            après la réussite des {{ chapter.exerciseIds|length }} exercices du chapitre{% if xp %} ({{ xp }} XP){% endif %}.
+        </p>
+    </div>
+    <div class="lesson">{{ html|raw }}</div>
+</body>
+</html>

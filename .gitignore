@@ -1,0 +1,28 @@
+.idea/
+.DS_Store
+
+# Playground (îlot JS)
+playground/node_modules/
+
+# Artefacts générés par tools/build-env.sh
+platform/public/envs/
+
+# Environnements Symfony (reconstruits par composer install)
+environments/*/vendor/
+environments/*/var/
+environments/*/.phpunit.cache/
+
+# Simulateur Docker (bibliothèque du moteur, installée dans environments/docker)
+tools/docker-sim/vendor/
+tools/docker-sim/composer.lock
+tools/docker-sim/.phpunit.cache/
+
+# Simulateur Nuxt (vrai Nuxt de référence pour les tests de conformité)
+tools/nuxt-sim/node_modules/
+tools/nuxt-sim/conformite/reference/node_modules/
+tools/nuxt-sim/conformite/reference/.nuxt/
+tools/nuxt-sim/conformite/reference/.output/
+tools/nuxt-sim/conformite/reference/.data/
+tools/nuxt-sim/conformite/sans-pages/node_modules
+tools/nuxt-sim/conformite/sans-pages/.nuxt/
+tools/nuxt-sim/conformite/runner/node_modules/

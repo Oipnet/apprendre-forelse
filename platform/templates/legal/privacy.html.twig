@@ -1,0 +1,173 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <main class="page legal-page">
+        <p class="meta">Vos données</p>
+        <h1>Politique de confidentialité</h1>
+        <p class="lead">Ce que {{ siteHost }} enregistre sur vous, pourquoi, combien de temps, et comment reprendre la main. Version courte : une adresse e‑mail, votre progression, aucun traceur.</p>
+
+        {{ include('legal/_missing.html.twig') }}
+
+        <section id="responsable">
+            <h2>Responsable du traitement</h2>
+            {% if legal.publisherName %}
+                <p>{{ legal.publisherName }}{% if legal.publisherAddress %}, {{ legal.publisherAddress }}{% endif %}.
+                {% if legal.publisherEmail %}Pour toute question sur vos données : <a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>.{% endif %}</p>
+            {% endif %}
+            <p>Les coordonnées complètes figurent dans les <a href="{{ path('app_legal_notice') }}">mentions légales</a>.</p>
+        </section>
+
+        <section id="principes">
+            <h2>Ce que le site ne fait pas</h2>
+            <ul>
+                <li>Aucun traceur publicitaire, aucun outil de mesure d'audience, aucun bouton de réseau social.</li>
+                <li>Aucune revente ni cession de vos données, à personne.</li>
+                <li>Aucun profilage : la progression sert à vous, pas à vous cibler.</li>
+                <li>Votre code n'est jamais exécuté sur nos serveurs : PHP tourne dans votre navigateur, dans un bac à sable sans accès au disque ni au réseau.</li>
+            </ul>
+        </section>
+
+        <section id="donnees">
+            <h2>Ce qui est collecté, et pourquoi</h2>
+            <div class="legal-table">
+                <table>
+                    <thead>
+                        <tr><th>Quand</th><th>Quelles données</th><th>Pourquoi</th><th>Base légale</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Vous créez un compte</td>
+                            <td>Adresse e‑mail, pseudonyme, mot de passe (stocké haché, jamais en clair), date de création, date de confirmation de l'adresse{% if inviteOnly %}, cohorte d'invitation{% endif %}.</td>
+                            <td>Vous identifier, retrouver votre progression, vous écrire au sujet de votre compte.</td>
+                            <td>Exécution du contrat (le service que vous avez demandé).</td>
+                        </tr>
+                        <tr>
+                            <td>Vous faites les exercices</td>
+                            <td>Le code écrit dans chaque exercice, son état (en cours, réussi), les indices consultés, l'XP gagnée{% if aiEnabled %}, la revue de code du mentor{% endif %}.</td>
+                            <td>Sauvegarder votre travail et le reprendre d'un appareil à l'autre ; produire vos fiches de cours.</td>
+                            <td>Exécution du contrat.</td>
+                        </tr>
+                        {% if paymentsEnabled %}
+                            <tr>
+                                <td>Vous achetez un parcours</td>
+                                <td>Le parcours acheté, le prix, la date, l'adresse e‑mail du compte, l'acceptation des <a href="{{ path('app_terms') }}">conditions générales de vente</a> et de la renonciation au droit de rétractation, les références du paiement, le lien vers le reçu et la référence de la facture. L'adresse de facturation et, pour un professionnel, sa raison sociale et son numéro de TVA sont saisis chez Stripe, qui émet la facture. Les données de carte bancaire sont saisies chez Stripe et ne nous parviennent jamais.</td>
+                                <td>Ouvrir votre accès, vous envoyer la confirmation, rembourser, tenir la comptabilité.</td>
+                                <td>Exécution du contrat ; obligation légale pour les pièces comptables.</td>
+                            </tr>
+                        {% endif %}
+                        <tr>
+                            <td>Vous envoyez un avis sur un exercice</td>
+                            <td>Votre message, l'exercice concerné, le nombre d'indices utilisés et si l'exercice était réussi.</td>
+                            <td>Améliorer les exercices.</td>
+                            <td>Intérêt légitime (améliorer le service), après votre geste volontaire.</td>
+                        </tr>
+                        <tr>
+                            <td>Vous nous écrivez (page de contact, demande d'une école ou d'une entreprise)</td>
+                            <td>Votre nom, votre adresse e‑mail, votre message et, pour une demande de groupe, l'établissement et l'effectif. Le compte connecté, s'il y en a un.</td>
+                            <td>Vous répondre ; préparer une proposition pour votre groupe.</td>
+                            <td>Intérêt légitime (répondre à qui nous écrit) ; mesures précontractuelles pour une demande de devis.</td>
+                        </tr>
+                        {% if inviteOnly %}
+                            <tr>
+                                <td>Vous rejoignez la liste d'attente</td>
+                                <td>Votre adresse e‑mail et la date.</td>
+                                <td>Vous prévenir de l'ouverture et, s'il y a des places, vous inviter à la bêta. Rien d'autre.</td>
+                                <td>Consentement : vous avez laissé votre adresse pour cela.</td>
+                            </tr>
+                        {% endif %}
+                        {% if aiEnabled %}
+                            <tr>
+                                <td>Vous demandez une revue ou une explication au mentor</td>
+                                <td>Le code de l'exercice, le message d'erreur le cas échéant, et la consigne de l'exercice. Ni votre nom ni votre adresse e‑mail.</td>
+                                <td>Vous faire une revue de code ou expliquer une erreur.</td>
+                                <td>Exécution du contrat : le mentor n'intervient que si vous cliquez.</td>
+                            </tr>
+                        {% endif %}
+                        <tr>
+                            <td>Vous consultez une page</td>
+                            <td>Journaux techniques du serveur : adresse IP, page demandée, date, navigateur utilisé.</td>
+                            <td>Sécurité, détection des abus, diagnostic des pannes.</td>
+                            <td>Intérêt légitime (faire fonctionner le site et le protéger).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>Aucune donnée n'est obligatoire au‑delà de celles-ci ; les champs demandés le sont pour rendre le service, rien de plus. Le premier chapitre de chaque parcours se joue sans compte.</p>
+        </section>
+
+        <section id="cookies">
+            <h2>Cookies et stockage dans le navigateur</h2>
+            <p>Le site n'utilise que des éléments strictement nécessaires à son fonctionnement, dispensés de consentement. Il n'y a donc pas de bandeau à accepter.</p>
+            <ul>
+                <li><strong>Cookie de session</strong> : vous garde connecté d'une page à l'autre, et protège les formulaires contre les envois forgés. Il disparaît quand vous fermez le navigateur ou vous déconnectez.</li>
+                <li><strong>Stockage local (<span class="lp-mono">localStorage</span>)</strong> : sans compte, votre code sur les exercices libres est gardé dans votre navigateur, et nulle part ailleurs. Si vous créez un compte ensuite, cette progression est transférée sur votre compte puis effacée du navigateur.</li>
+                <li><strong>Bac à sable</strong> : l'aperçu de votre code s'affiche depuis <span class="lp-mono">{{ sandboxHost }}</span>, dans une page isolée. Ce domaine ne dépose aucun cookie ; il ne conserve que les fichiers techniques nécessaires à l'exécution de PHP dans votre navigateur.</li>
+            </ul>
+        </section>
+
+        <section id="destinataires">
+            <h2>Qui a accès à vos données</h2>
+            <ul>
+                <li><strong>L'équipe du site</strong>, pour administrer les comptes et lire les avis que vous envoyez.</li>
+                <li><strong>L'hébergeur</strong>{% if legal.hostName %}, {{ legal.hostName }}{% endif %}, qui fait tourner les serveurs et n'accède aux données qu'à ce titre.</li>
+                {% if paymentsEnabled %}
+                    <li><strong>Stripe</strong> (Stripe Payments Europe, Irlande), prestataire de paiement, pour un achat : il reçoit l'adresse e‑mail du compte, le montant et, directement de votre part, vos données de paiement et votre adresse de facturation, qu'il traite aussi pour ses propres obligations (lutte contre la fraude, réglementation financière). Certaines données peuvent être transférées vers les États‑Unis, dans le cadre des clauses contractuelles types de la Commission européenne.</li>
+                {% endif %}
+                {% if aiEnabled %}
+                    <li><strong>Anthropic</strong> (États‑Unis), qui fournit le modèle du mentor. Lui sont transmis, uniquement quand vous le demandez, le code de l'exercice et l'éventuelle erreur, sans nom ni adresse e‑mail. Ce transfert hors de l'Union européenne est encadré par les clauses contractuelles types de la Commission européenne. Selon les conditions de son API, Anthropic n'utilise pas ces échanges pour entraîner ses modèles et les conserve un temps limité pour la sécurité du service.</li>
+                {% endif %}
+            </ul>
+            <p>Personne d'autre. {% if not aiEnabled and not paymentsEnabled %}Aucune donnée ne quitte l'Union européenne.{% endif %}</p>
+        </section>
+
+        <section id="conservation">
+            <h2>Combien de temps</h2>
+            <dl class="legal-facts">
+                <div><dt>Compte et progression</dt><dd>Tant que votre compte existe. Vous pouvez le supprimer vous-même depuis la page « Mon compte » : compte, code, avis et XP sont effacés immédiatement. Une demande par e‑mail est traitée sous 30 jours.</dd></div>
+                {% if paymentsEnabled %}
+                    <div><dt>Achats</dt><dd>Dix ans à compter de l'achat, durée de conservation des pièces comptables. Si vous supprimez votre compte, l'achat est conservé sans lien avec lui (seule l'adresse e‑mail utilisée reste associée).</dd></div>
+                {% endif %}
+                <div><dt>Messages de contact</dt><dd>Le temps de vous répondre, puis trois ans au plus pour une demande de devis sans suite ; un an pour les autres.</dd></div>
+                <div><dt>Avis sur les exercices</dt><dd>Jusqu'à leur traitement, puis supprimés ; en tout état de cause avec le compte.</dd></div>
+                {% if inviteOnly %}
+                    <div><dt>Liste d'attente</dt><dd>Jusqu'à l'ouverture, puis l'adresse est supprimée ; douze mois au plus.</dd></div>
+                {% endif %}
+                {% if aiEnabled %}
+                    <div><dt>Échanges avec le mentor</dt><dd>La plateforme ne conserve que la revue de code affichée avec votre exercice, supprimée avec lui. Le reste n'est pas stocké de notre côté.</dd></div>
+                {% endif %}
+                <div><dt>Journaux du serveur</dt><dd>Douze mois au plus.</dd></div>
+                <div><dt>Sauvegardes</dt><dd>La base est sauvegardée chaque jour ; chaque sauvegarde est effacée après quatorze jours. Une donnée supprimée disparaît donc des sauvegardes sous deux semaines.</dd></div>
+            </dl>
+        </section>
+
+        <section id="droits">
+            <h2>Vos droits</h2>
+            <p>Vous pouvez demander l'accès à vos données, leur rectification, leur effacement, la limitation de leur traitement, vous opposer à un traitement fondé sur l'intérêt légitime, et recevoir vos données dans un format lisible par machine.</p>
+            <p>Votre pseudonyme et votre adresse se corrigent, et votre compte se supprime, directement depuis la page « Mon compte ».</p>
+            <p>Pour tout le reste, écrivez{% if legal.publisherEmail %} à <a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>{% else %} à l'adresse de contact indiquée dans les mentions légales{% endif %}, depuis l'adresse e‑mail de votre compte : c'est ce qui permet de vous reconnaître sans vous demander de justificatif. Réponse sous un mois.</p>
+            <p>Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la <a href="https://www.cnil.fr/fr/plaintes">CNIL</a>.</p>
+        </section>
+
+        <section id="securite">
+            <h2>Sécurité</h2>
+            <ul>
+                <li>Les mots de passe sont hachés avec un algorithme moderne ; personne, pas même l'équipe, ne peut les lire.</li>
+                <li>Les échanges avec le site sont chiffrés (HTTPS).</li>
+                <li>Le code des exercices s'exécute dans votre navigateur, jamais sur le serveur, et l'aperçu tourne dans un domaine isolé.</li>
+                <li>Les accès d'administration sont réservés, journalisés, et le serveur reçoit ses mises à jour de sécurité.</li>
+            </ul>
+        </section>
+
+        <section id="mineurs">
+            <h2>Mineurs</h2>
+            <p>Le site s'adresse aux personnes qui apprennent à développer, étudiants compris. Un mineur de moins de quinze ans ne peut créer de compte qu'avec l'accord d'un parent ou d'un tuteur.</p>
+        </section>
+
+        <section id="evolutions">
+            <h2>Évolutions</h2>
+            <p>Cette politique change quand le site change. La date ci‑dessous fait foi ; une modification substantielle vous sera signalée à la connexion.</p>
+        </section>
+
+        <p class="meta">Dernière mise à jour : {{ updatedAt|date('d/m/Y') }}.</p>
+    </main>
+{% endblock %}

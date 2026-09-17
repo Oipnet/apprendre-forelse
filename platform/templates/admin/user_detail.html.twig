@@ -1,0 +1,47 @@
+{# Fiche d'un apprenant : les champs EasyAdmin, puis son avancement parcours par parcours. #}
+{% extends '@EasyAdmin/crud/detail.html.twig' %}
+
+{% block main %}
+    {{ parent() }}
+
+    {% if learner %}
+        <section class="learner-progress" style="margin-top: 1.5rem">
+            <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem">Avancement</h2>
+            <p class="text-muted" style="margin-bottom: 1rem">
+                {{ learner.completedExercises }} exercice{{ learner.completedExercises > 1 ? 's' }} réussi{{ learner.completedExercises > 1 ? 's' }} ·
+                {{ learner.feedbacks }} retour{{ learner.feedbacks > 1 ? 's' }}{% if learner.unhandledFeedbacks %}, dont {{ learner.unhandledFeedbacks }} à traiter{% endif %}.
+                Pastilles : <span class="badge badge-success">✓</span> réussi, <span class="badge badge-warning">…</span> en cours, <span class="badge badge-light">·</span> jamais ouvert ; le chiffre est le nombre d'indices consultés.
+            </p>
+            {% set user = entity.instance %}
+            {% for track in learner.tracks %}
+                <div class="beta-panel">
+                    <div class="beta-panel-header">
+                        <h3>{{ track.title }}</h3>
+                        <span class="badge badge-secondary">{{ track.completedBy(user.id) }} / {{ track.exerciseCount }}</span>
+                    </div>
+                    <div class="beta-panel-body">
+                        {% for chapter in track.chapters %}
+                            <div class="beta-chapter">
+                                <div>{{ chapter.title }}</div>
+                                <div class="beta-progress" title="{{ chapter.completed }} / {{ chapter.exerciseIds|length }}">
+                                    <div class="beta-progress-bar" data-level="{{ chapter.rate >= 1 ? 'high' : chapter.rate > 0 ? 'mid' : 'low' }}" style="inline-size: {{ (chapter.rate * 100)|round }}%"></div>
+                                </div>
+                                <div class="beta-chips">
+                                    {% for exerciseId in chapter.exerciseIds %}
+                                        {% set p = track.progressOf(user.id, exerciseId) %}
+                                        {% set state = p ? (p.completed ? 'completed' : 'in_progress') : 'todo' %}
+                                        <span class="badge exercise-chip {{ state == 'completed' ? 'badge-success' : state == 'in_progress' ? 'badge-warning' : 'badge-light' }}"
+                                              data-state="{{ state }}"
+                                              title="{{ track.titles[exerciseId] }}{% if p %} · {{ p.completed ? 'réussi le ' ~ p.completedAt|date('d/m/Y H:i') : 'en cours depuis le ' ~ p.startedAt|date('d/m/Y H:i') }}{% if p.hintsUsed %} · {{ p.hintsUsed }} indice{{ p.hintsUsed > 1 ? 's' }}{% endif %}{% endif %}">
+                                            {{ loop.index }} {{ state == 'completed' ? '✓' : state == 'in_progress' ? '…' : '·' }}{{ p and p.hintsUsed ? ' ' ~ p.hintsUsed }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </section>
+    {% endif %}
+{% endblock %}

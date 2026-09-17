@@ -1,0 +1,10 @@
+{# Prix affiché aujourd'hui pour ce parcours : fondateur (normal barré) ou normal. #}
+{% set quote = field.customOptions.get('quotes')[entity.instance.trackId] ?? null %}
+{% if quote is null or quote.free %}
+    <span class="badge badge-secondary">Gratuit</span>
+{% elseif quote.discounted %}
+    <s class="text-muted">{{ quote.normalPrice|euros }}</s> <strong>{{ quote.price|euros }}</strong>
+    {% if quote.founderSeatsLeft is not null %}<span class="text-muted">· {{ quote.founderSeatsLeft }} place{{ quote.founderSeatsLeft > 1 ? 's' }}</span>{% endif %}
+{% else %}
+    {{ quote.price|euros }}
+{% endif %}

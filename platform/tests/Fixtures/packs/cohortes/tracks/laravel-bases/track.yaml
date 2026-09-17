@@ -1,0 +1,6 @@
+id: laravel-bases
+title: Bases de Laravel
+description: Un parcours Laravel.
+environment: laravel-13
+chapters:
+  - {id: c1, title: Premier chapitre Laravel, exercises: [e1]}

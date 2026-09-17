@@ -1,0 +1,6 @@
+{
+  "name": "reference-sans-pages",
+  "description": "Vrai projet Nuxt sans app/pages (app.vue seul) ; il emprunte les node_modules de ../reference.",
+  "private": true,
+  "type": "module"
+}

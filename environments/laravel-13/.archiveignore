@@ -1,0 +1,11 @@
+vendor/nesbot/carbon/src/Carbon/Lang/[a-dg-z]*.php
+vendor/nesbot/carbon/src/Carbon/Lang/e[a-mo-z]*.php
+vendor/nesbot/carbon/src/Carbon/Lang/en_*.php
+vendor/nesbot/carbon/src/Carbon/Lang/f[a-qs-z]*.php
+vendor/nesbot/carbon/src/Carbon/Lang/fr_[A-EG-Z]*.php
+vendor/fakerphp/faker/src/Faker/Provider/[a-d]*/*
+vendor/fakerphp/faker/src/Faker/Provider/e[a-mo-z]*/*
+vendor/fakerphp/faker/src/Faker/Provider/en_[A-TV-Z]*/*
+vendor/fakerphp/faker/src/Faker/Provider/f[a-qs-z]*/*
+vendor/fakerphp/faker/src/Faker/Provider/fr_[A-EG-Z]*/*
+vendor/fakerphp/faker/src/Faker/Provider/[g-z]*/*

@@ -1,0 +1,35 @@
+{
+    "name": "forelse/projet-docker",
+    "description": "Le projet PHP à conteneuriser.",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.3"
+    },
+    "require-dev": {
+        "forelse/simulateur-docker": "@dev",
+        "phpunit/phpunit": "^12.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../tools/docker-sim",
+            "options": {
+                "symlink": false
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

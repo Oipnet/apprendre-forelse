@@ -1,0 +1,29 @@
+{#
+  Formulaire de contact, partagé par /contact et /ecoles-et-entreprises. Variables : form, open, submitLabel.
+  Sans adresse de réception configurée (CONTACT_EMAIL, LEGAL_PUBLISHER_EMAIL), on ne propose pas de formulaire.
+#}
+{% if open %}
+    <div class="site-form contact-form">
+        {{ form_start(form) }}
+            {{ form_errors(form) }}
+            {% if form.subject is defined %}{{ form_row(form.subject) }}{% endif %}
+            <div class="contact-pair">
+                {{ form_row(form.name) }}
+                {{ form_row(form.email) }}
+            </div>
+            {% if form.organization is defined %}
+                <div class="contact-pair">
+                    {{ form_row(form.organization) }}
+                    {{ form_row(form.headcount) }}
+                </div>
+            {% endif %}
+            {{ form_row(form.message) }}
+            {# Piège à robots : un humain ne voit pas ce champ. #}
+            {{ form_widget(form.site) }}
+            <p class="meta">Votre message et votre adresse servent seulement à vous répondre : <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
+            <button class="button primary" type="submit">{{ submitLabel }}</button>
+        {{ form_end(form) }}
+    </div>
+{% else %}
+    <p class="meta">Le formulaire n'est pas disponible sur cette instance : consultez les <a href="{{ path('app_legal_notice') }}">mentions légales</a> pour joindre l'éditeur.</p>
+{% endif %}

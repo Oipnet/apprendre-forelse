@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ exercise.title }} · Atelier{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ vite_entry_link_tags('atelier') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ vite_entry_script_tags('atelier') }}
+{% endblock %}
+
+{% block body_class %}playground-page{% endblock %}
+
+{# Plein écran : l'atelier dessine sa propre barre. #}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block body %}
+    <div class="playground studio" data-studio data-config="{{ config|json_encode }}">
+        <header class="topbar">
+            <div class="crumbs">
+                <a class="lp-brand" href="{{ path('app_home') }}" title="Forelse · apprendre"><img src="{{ asset('img/logo-84.png') }}" alt="" width="72" height="84"><span class="lp-serif">Forelse</span><span class="lp-chip">apprendre</span></a><span>›</span>
+                <a href="{{ path('app_studio') }}">Atelier</a><span>›</span>{{ contexte }}<span>›</span>{{ exercise.title }}
+            </div>
+            <div class="status">Prêt</div>
+            <div class="actions">
+                <a class="button ghost small" href="{{ config.urls.jouer }}" target="_blank" rel="noopener">Jouer l'exercice ↗</a>
+                <button id="ajouter" class="ghost">+ Fichier</button>
+                <button id="supprimer" class="ghost">Supprimer le fichier</button>
+                <button id="supprimer-exercice" class="ghost" title="Supprimer l'exercice entier">🗑</button>
+                <button id="enregistrer" class="ghost">Enregistrer</button>
+                {% if config.ia %}<button id="corriger" class="ghost" hidden>Corriger avec l'IA</button>{% endif %}
+                <button id="verifier" class="primary">Vérifier</button>
+            </div>
+        </header>
+        <main class="workspace">
+            <section class="panel code">
+                <nav class="tabs">
+                    <span class="tabs-files" id="tabs"></span>
+                </nav>
+                <div class="code-body">
+                    <aside class="filetree" id="filetree">
+                        <div class="filetree-head">Exercice</div>
+                        <div id="filetree-body"></div>
+                    </aside>
+                    <div class="editor" id="editor"></div>
+                </div>
+            </section>
+            <section class="panel verdict">
+                <p class="aide">
+                    <strong>Vérifier</strong> enregistre puis lance <code>content:check</code> :
+                    les tests doivent être <strong>rouges</strong> sur l'état de départ, et <strong>verts</strong> avec la solution.
+                    Chaque objectif doit rester à faire au départ.
+                </p>
+                <div id="verdict" hidden></div>
+            </section>
+        </main>
+    </div>
+{% endblock %}

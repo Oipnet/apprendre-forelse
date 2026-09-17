@@ -1,0 +1,61 @@
+/* Atelier des auteurs : même mise en page que l'espace d'exercice, sans l'aperçu. */
+.studio .workspace {
+	grid-template-columns: 1fr minmax(320px, 28%);
+}
+.studio .verdict {
+	overflow-y: auto;
+	padding: 1rem 1.2rem 2rem;
+	background: var(--panel);
+}
+.studio .verdict h3 {
+	margin: 0 0 0.6rem;
+	font-size: 1rem;
+}
+.studio .verdict ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 0.4rem;
+	font-size: 13.5px;
+}
+.studio .verdict li {
+	padding-left: 1.2rem;
+	position: relative;
+	color: #d4d4dc;
+}
+.studio .verdict li::before {
+	position: absolute;
+	left: 0;
+}
+.studio .verdict li.ok::before {
+	content: '✔';
+	color: var(--ok);
+}
+.studio .verdict li.ko::before {
+	content: '✘';
+	color: var(--ko);
+}
+.studio .verdict li.attention::before {
+	content: '⚠';
+	color: var(--gold);
+}
+.studio .aide {
+	color: var(--muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+/* Éditeur de fiche de cours : l'aperçu prend la place du verdict. */
+.lesson-studio .workspace {
+	grid-template-columns: 1fr minmax(360px, 44%);
+}
+.lesson-studio .apercu {
+	overflow-y: auto;
+	padding: 1rem 1.5rem 3rem;
+	background: var(--panel);
+}
+.lesson-studio .apercu .lesson {
+	margin-top: 0.5rem;
+	max-width: none;
+}

@@ -1,0 +1,12 @@
+{{ contact.subject.label }}
+
+De : {{ contact.name }} <{{ contact.email }}>
+{% if contact.organization %}Établissement ou entreprise : {{ contact.organization }}
+{% endif %}{% if contact.headcount %}Personnes à former : {{ contact.headcount }}
+{% endif %}{% if contact.user %}Compte : {{ contact.user.displayName }} ({{ contact.user.email }})
+{% endif %}Reçu le {{ contact.createdAt|date('d/m/Y à H:i') }}
+
+{{ contact.message }}
+
+--
+Répondre à cet email écrit directement à l'expéditeur. Le message est aussi dans l'administration (Messages).

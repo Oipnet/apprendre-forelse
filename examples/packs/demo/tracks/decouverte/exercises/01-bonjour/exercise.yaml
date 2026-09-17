@@ -1,0 +1,26 @@
+id: 01-bonjour
+title: Bonjour Symfony
+concepts: [Route, Contrôleur]
+xp: 50
+
+open: src/Controller/BonjourController.php
+preview: /bonjour
+
+editable:
+  - src/Controller/BonjourController.php
+
+docs:
+  - title: 'Créer une page : route et contrôleur'
+    url: https://symfony.com/doc/current/page_creation.html
+  - title: 'Le routage'
+    url: https://symfony.com/doc/current/routing.html
+
+objectives:
+  - test: testLaPageRepond
+    label: La page /bonjour répond avec un code 200
+  - test: testLaPageDitBonjour
+    label: Elle affiche « Bonjour Symfony ! »
+
+hints:
+  - Ajoutez un attribut `#[Route('/bonjour')]` au-dessus de la méthode.
+  - "La méthode peut renvoyer `new Response('Bonjour Symfony !')`."

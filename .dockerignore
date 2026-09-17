@@ -1,0 +1,19 @@
+.git
+.idea
+.claude
+**/.DS_Store
+**/node_modules
+**/vendor
+**/var
+**/.phpunit.cache
+**/.nuxt
+**/.output
+# Vrai Nuxt de référence : sert seulement aux tests de conformité du simulateur.
+tools/nuxt-sim/conformite
+platform/public/build
+platform/public/envs
+# Configuration locale (chemins personnels, packs privés) : jamais dans l'image.
+platform/.env.local
+platform/.env.*.local
+compose.yaml
+Dockerfile

@@ -1,0 +1,18 @@
+{# Fiche d'une cohorte : les champs EasyAdmin, puis le financement et l'estimation du devis. #}
+{% extends '@EasyAdmin/crud/detail.html.twig' %}
+
+{% block main %}
+    {{ parent() }}
+
+    {% if quote %}
+        <section class="beta-panel" style="margin-top: 1.5rem">
+            <div class="beta-panel-header">
+                <h2>Financement</h2>
+                <span class="badge badge-info">{{ entity.instance.fundingMode.label }}</span>
+            </div>
+            <div class="beta-panel-body">
+                {{ include('cohorte/_financing.html.twig', {cohort: entity.instance, quote: quote}) }}
+            </div>
+        </section>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Mes cohortes{% endblock %}
+
+{% block main %}
+    {% if cohorts is empty %}
+        <p>Vous ne suivez encore aucune cohorte. Un administrateur peut vous en confier une.</p>
+    {% else %}
+        <section class="beta-panel">
+            <div class="beta-panel-body beta-scroll">
+                <table class="beta-table">
+                    <thead>
+                        <tr><th>Cohorte</th><th>Code</th><th>Lien d'invitation</th><th>Apprenants</th><th>Parcours disponibles</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for cohort in cohorts %}
+                            <tr>
+                                <td><a href="{{ path('chef_cohort', {id: cohort.id}) }}"><strong>{{ cohort.name }}</strong></a>{% if not cohort.active %}<br><small class="text-muted">inscriptions fermées</small>{% endif %}</td>
+                                <td><code>{{ cohort.code }}</code></td>
+                                <td>{{ include('cohorte/_invitation.html.twig') }}</td>
+                                <td>{{ learners[cohort.id] ?? 0 }}</td>
+                                <td>
+                                    {% if cohort.hasTrackSelection %}
+                                        <span class="beta-chips">
+                                            {% for trackId in cohort.availableTrackIds %}
+                                                <span class="badge badge-info">{{ tracks[trackId].title ?? trackId }}</span>
+                                            {% endfor %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Tous</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    {% endif %}
+{% endblock %}
+
+{% block body_javascript %}
+    {{ parent() }}
+    {{ include('cohorte/_copy_script.html.twig') }}
+{% endblock %}

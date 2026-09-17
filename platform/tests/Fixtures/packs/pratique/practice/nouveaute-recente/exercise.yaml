@@ -1,0 +1,10 @@
+id: nouveaute-recente
+title: Une nouveauté récente
+environment: symfony-8
+published: 2026-09-10
+summary: La fonctionnalité de la dernière version.
+version: '8.1'
+pull_request: https://github.com/symfony/symfony/pull/1
+concepts: [Routing]
+editable: [src/Controller/BonjourController.php]
+objectives: [{test: testA, label: A}]

@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un compte · Forelse{% endblock %}
+
+{% block body %}
+    <main class="form-card">
+        <h1>Créer un compte</h1>
+        <p class="meta">{{ inviteOnly ? 'Bêta sur invitation. ' : 'Gratuit. ' }}Votre progression et votre XP sont sauvegardées.</p>
+        {{ form_start(form) }}
+            {% if form.invitationCode is defined %}{{ form_row(form.invitationCode) }}{% endif %}
+            {{ form_row(form.displayName) }}
+            {{ form_row(form.email) }}
+            {{ form_row(form.plainPassword) }}
+            <p class="meta">Votre adresse ne sert qu'à votre compte : <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
+            <button class="primary" type="submit">Créer mon compte</button>
+        {{ form_end(form) }}
+        <p class="meta">Déjà inscrit ? <a href="{{ path('app_login') }}">Connectez-vous</a>.</p>
+        {% if inviteOnly %}
+            <p class="meta">Pas de code d'invitation ? <a href="{{ path('app_home') }}#liste-attente">Laissez votre adresse sur la liste d'attente</a> : vous serez prévenu à l'ouverture.</p>
+        {% endif %}
+    </main>
+{% endblock %}

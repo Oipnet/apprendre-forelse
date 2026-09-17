@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{#
+  Un exercice qui n'est pas ouvert au visiteur : sa consigne reste lisible (et indexable), l'éditeur est remplacé
+  par l'encart d'accès. Ni playground ni moteur WebAssembly sur cette page.
+#}
+{% block title %}{{ exercise.title }} · {{ track.title }} · Forelse{% endblock %}
+
+{% block body %}
+    <main class="page exercise-public">
+        {{ include('exercise/_intro.html.twig') }}
+
+        <aside class="exercise-access" aria-labelledby="exercise-access-title">
+            {% if app.user %}
+                <h2 id="exercise-access-title">Cet exercice fait partie du parcours complet</h2>
+                {% if not offer.locked %}
+                    <p>Ce chapitre ne vous est pas ouvert pour l'instant.</p>
+                {% else %}
+                    <p>Le premier chapitre est gratuit ; la suite demande un accès au parcours{{ offer.comingSoon ? ', dont l\'achat sera bientôt disponible' }}.</p>
+                    <p>Votre progression est conservée : si vous avez déjà travaillé ici, vous reprendrez exactement où vous en étiez.</p>
+                    {{ include('track/_price.html.twig', {continueUrl: null}) }}
+                {% endif %}
+            {% else %}
+                <h2 id="exercise-access-title">Premier chapitre gratuit, sans compte</h2>
+                {% if inviteOnly %}
+                    <p>La suite du parcours est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
+                {% else %}
+                    <p>Pour écrire le code de cet exercice, créez votre compte (ou connectez-vous) : votre progression vous suit d'un appareil à l'autre.</p>
+                {% endif %}
+                {% if not offer.quote.free %}{{ include('track/_price.html.twig', {continueUrl: null}) }}{% endif %}
+                <p class="exercise-access-actions">
+                    <a class="button primary" href="{{ path('app_register', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">Créer un compte</a>
+                    {% if inviteOnly %}<a class="button" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>{% endif %}
+                    <a class="button ghost" href="{{ path('app_login') }}">Se connecter</a>
+                    {% if firstExercise %}<a class="button ghost" href="{{ path('app_exercise', {trackId: track.id, exerciseId: firstExercise.id}) }}">Commencer le premier chapitre →</a>{% endif %}
+                </p>
+            {% endif %}
+        </aside>
+    </main>
+{% endblock %}

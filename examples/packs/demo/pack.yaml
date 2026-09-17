@@ -1,0 +1,11 @@
+id: demo
+title: Pack de démonstration
+description: Deux exercices de parcours et un exercice de Pratique, pour découvrir le format des packs et tester une installation.
+version: 1.0.0
+# Version(s) du moteur avec lesquelles ce pack fonctionne (syntaxe de Composer : ^1.2, >=1.2 <2.0).
+# Un pack distribué à part devrait la déclarer : le moteur refuse de le charger s'il ne la satisfait pas.
+# Le pack de démonstration est livré avec le moteur, donc toujours à jour : la clé est inutile ici.
+# moteur: '^1.0'
+license: AGPL-3.0-or-later
+tracks:
+  - decouverte

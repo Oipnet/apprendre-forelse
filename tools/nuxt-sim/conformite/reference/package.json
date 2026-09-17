@@ -1,0 +1,12 @@
+{
+  "name": "reference-conformite",
+  "description": "Vrai projet Nuxt : les tests de conformité comparent ses réponses à celles du simulateur.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev"
+  },
+  "dependencies": {
+    "nuxt": "4.5.2"
+  }
+}

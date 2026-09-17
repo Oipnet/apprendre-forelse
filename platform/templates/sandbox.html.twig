@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="fr" data-host-origin="{{ host_origin }}">
+    <head>
+        <meta charset="UTF-8">
+        <title>Aperçu</title>
+        <style>
+            html, body { margin: 0; height: 100%; background: #fff; }
+            iframe { border: 0; width: 100%; height: 100%; display: block; }
+        </style>
+        {{ vite_entry_script_tags('sandbox') }}
+    </head>
+    <body>
+        <iframe id="preview" title="Aperçu de l'application"></iframe>
+    </body>
+</html>

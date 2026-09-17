@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <main class="page contact-page">
+        <p class="meta">Contact</p>
+        <h1>Nous écrire</h1>
+        <p class="lead">Une question sur un parcours, un achat ou une facture, un problème sur le site, une idée : une personne lit chaque message et vous répond par email.</p>
+
+        <ul class="contact-shortcuts">
+            <li><strong>Un souci sur un exercice ?</strong> Le bouton « Un avis ? », dans l'exercice, nous l'envoie avec son contexte : c'est le plus rapide.</li>
+            <li><strong>Former une classe ou une équipe ?</strong> <a href="{{ path('app_organizations') }}">Écoles et entreprises</a> : ce qui existe, et comment demander un devis.</li>
+            {% if app.user %}<li><strong>Votre compte ?</strong> Pseudo, adresse, mot de passe, factures et suppression se gèrent depuis <a href="{{ path('app_account') }}">Mon compte</a>.</li>{% endif %}
+        </ul>
+
+        {{ include('contact/_form.html.twig', {submitLabel: 'Envoyer le message'}) }}
+    </main>
+{% endblock %}
