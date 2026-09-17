@@ -1,0 +1,20 @@
+{#
+  Chrome commun aux pages de l'atelier : la pastille « atelier » à la place d'« apprendre », et un pied de
+  page court (l'auteur n'a que faire des mentions légales entre deux exercices).
+#}
+{% extends 'base.html.twig' %}
+
+{% block brand_chip %}atelier{% endblock %}
+
+{% block footer %}
+    <footer class="site-footer st-footer">
+        <div class="lp-wrap">
+            <nav aria-label="Pied de page de l'atelier">
+                <a href="{{ path('app_studio') }}">Atelier</a>
+                <a href="{{ path('app_studio_practice') }}">Pratique</a>
+                <a href="{{ path('app_contact') }}">Contact</a>
+            </nav>
+            <p class="site-moteur">Moteur {{ moteur_version }} · <abbr title="GNU Affero General Public License v3.0 ou ultérieure">AGPL-3.0</abbr></p>
+        </div>
+    </footer>
+{% endblock %}

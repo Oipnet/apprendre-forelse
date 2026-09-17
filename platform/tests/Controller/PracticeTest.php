@@ -73,11 +73,42 @@ final class PracticeTest extends WebTestCase
         $titres = fn (string $query) => $this->client->request('GET', '/pratique?'.$query)->filter('.practice-list .title')->extract(['_text']);
 
         $this->assertSame(['Côté Laravel'], $titres('framework=laravel'));
-        $this->assertSame(['Un point précis'], $titres('notion=Validator'));
+        $this->assertSame(['Un point précis'], $titres('notions[]=Validator'));
         $this->assertSame(['Lire un en-tête avec #[MapRequestHeader]', 'Une nouveauté récente', 'Côté Laravel'], $titres('nouveautes=1'));
-        $this->assertSame(['Un point précis'], $titres('framework=symfony&notion=Validator'));
+        $this->assertSame(['Un point précis'], $titres('framework=symfony&notions[]=Validator'));
+        $this->assertSame(['Côté Laravel', 'Un point précis'], $titres('tri=titre&notions[]=Validator&notions[]=Eloquent'), 'Plusieurs notions se cumulent, et le tri par titre passe avant la date.');
+        $this->assertSame(['Une nouveauté récente'], $titres('recherche='.rawurlencode('dernière version')), 'La recherche lit aussi le résumé.');
+        $this->assertSame(['Un point précis'], $titres('recherche=validator'), 'La recherche lit aussi les notions, sans tenir compte de la casse.');
+        $this->assertCount(4, $titres('notions[]=Inconnue'), 'Une notion que le framework choisi ne connaît pas est oubliée, pas une erreur.');
         $this->assertSame([], $titres('framework=cobol'));
-        $this->assertSelectorTextContains('main', 'Aucun exercice ne correspond');
+        $this->assertSelectorTextContains('main', 'Aucun exercice avec ces filtres');
+    }
+
+    public function testLesExercicesSontRegroupesParDate(): void
+    {
+        $admin = $this->createUser('admin@example.test', 'Admin');
+        $admin->setRoles([User::ROLE_ADMIN]);
+        static::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->client->loginUser($admin);
+
+        $groupes = fn (string $query) => $this->client->request('GET', '/pratique?'.$query)->filter('.pr-set-label')->extract(['_text']);
+
+        $this->assertSame(['À venir'], $groupes('recherche='.rawurlencode('jour à venir')), 'Un exercice programmé se détache du reste.');
+        $this->assertSame(['Avant'], $groupes('framework=laravel'), 'Un exercice d\'août n\'est pas de cette semaine.');
+        $this->assertSame(['Par titre'], $groupes('tri=titre'), 'Trié par titre, la date ne regroupe plus rien.');
+    }
+
+    public function testLesNotionsAu_delaDeHuitSontRepliees(): void
+    {
+        $crawler = $this->client->request('GET', '/pratique');
+
+        $this->assertCount(8, $crawler->filter('.pr-group > .pr-chips .pr-chip'), 'Huit notions de tête, le reste derrière un dépliant.');
+        $this->assertSelectorTextContains('.pr-more summary', 'Voir les 4 autres');
+        $this->assertNull($crawler->filter('.pr-more')->attr('open'), 'Replié tant qu\'aucune notion cachée n\'est cochée.');
+
+        $crawler = $this->client->request('GET', '/pratique?notions[]=Validator');
+        $this->assertNotNull($crawler->filter('.pr-more')->attr('open'), 'Déplié quand une notion cachée est cochée, sinon on ne la verrait pas.');
+        $this->assertNotNull($crawler->filter('.pr-more input[value="Validator"]')->attr('checked'));
     }
 
     public function testUnVisiteurLitLExerciceEtEstInviteACreerUnCompte(): void

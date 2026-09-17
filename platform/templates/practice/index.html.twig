@@ -1,66 +1,174 @@
 {% extends 'base.html.twig' %}
 
-{% macro filter_link(label, query, active) %}
-    <a class="tag{{ active ? ' active' : '' }}" href="{{ path('app_practice', query|filter(v => v is not null and v is not same as(false))) }}"{% if active %} aria-current="true"{% endif %}>{{ label }}</a>
+{% block body_class %}site-page practice-page{% endblock %}
+
+{% macro card(item, frameworks) %}
+    {% set practice = item.practice %}
+    <li data-state="{{ item.state }}">
+        <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
+            <span class="practice-head">
+                <span class="tag framework">{{ frameworks[practice.framework] ?? practice.framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
+                {% if practice.version %}<span class="tag new">Nouveauté</span>{% endif %}
+                {% if practice.isRestricted %}<span class="tag">En préparation</span>{% endif %}
+                {% if practice.isScheduled %}<span class="tag">Programmé le {{ practice.published|date('d/m/Y') }}</span>{% endif %}
+                <time class="meta" datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time>
+                {% if item.state == 'completed' %}<span class="state">✓ Réussi</span>{% elseif item.state == 'in_progress' %}<span class="state">En cours</span>{% endif %}
+            </span>
+            <span class="title">{{ practice.exercise.title }}</span>
+            <span class="summary">{{ practice.summary }}</span>
+            <span class="practice-foot">
+                {% if practice.exercise.concepts %}
+                    <span class="practice-notions">{% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</span>
+                {% endif %}
+                <span class="practice-cta">{% if item.state == 'completed' %}Refaire l'exercice{% elseif item.state == 'in_progress' %}Reprendre{% else %}Faire l'exercice{% endif %} <span aria-hidden="true">→</span></span>
+            </span>
+        </a>
+    </li>
 {% endmacro %}
 
 {% block body %}
     {% import _self as ui %}
-    <main class="page practice">
-        <p class="meta">Pratique</p>
-        <h1>Se servir d'une fonctionnalité, tout de suite</h1>
-        <p class="lead">De courts exercices, à part des parcours : un code écrit à l'ancienne, à réécrire avec la fonctionnalité. Souvent une nouveauté du framework, parfois un point précis qui mérite qu'on s'y arrête.</p>
-
-        {% if total %}
-            <nav class="practice-filters" aria-label="Filtrer les exercices">
-                <div>
-                    {{ ui.filter_link('Tous', filters|merge({framework: null}), filters.framework is null) }}
-                    {% for id, label in frameworks %}
-                        {{ ui.filter_link(label, filters|merge({framework: id}), filters.framework == id) }}
-                    {% endfor %}
-                    {{ ui.filter_link('Nouveautés seulement', filters|merge({nouveautes: not filters.nouveautes}), filters.nouveautes) }}
+    {% set hasFilters = filters.framework or filters.notions or filters.nouveautes or filters.recherche %}
+    {% set filterCount = (filters.framework ? 1 : 0) + filters.notions|length + (filters.nouveautes ? 1 : 0) + (filters.recherche ? 1 : 0) %}
+    <main class="pr">
+        <div class="lp-wrap">
+            <div class="pr-hero">
+                <div class="pr-intro">
+                    <p class="pr-eyebrow">Pratique</p>
+                    <h1>Se servir d'une fonctionnalité, tout de suite</h1>
+                    <p class="lead">De courts exercices, à part des parcours : un code écrit à l'ancienne, à réécrire avec la fonctionnalité. Souvent une nouveauté du framework, parfois un point précis qui mérite qu'on s'y arrête.</p>
                 </div>
-                {% if notions %}
-                    <div>
-                        {{ ui.filter_link('Toutes les notions', filters|merge({notion: null}), filters.notion is null) }}
-                        {% for notion in notions %}
-                            {{ ui.filter_link(notion, filters|merge({notion: notion}), filters.notion == notion) }}
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </nav>
-        {% endif %}
+                <ul class="pr-kpis">
+                    <li><span class="pr-kpi-value">{{ total }}</span><span class="pr-kpi-label">exercice{{ total > 1 ? 's' }}</span></li>
+                    <li><span class="pr-kpi-value">{{ newCount }}</span><span class="pr-kpi-label">nouveauté{{ newCount > 1 ? 's' }}</span></li>
+                    {% if app.user %}
+                        <li><span class="pr-kpi-value">{{ completedCount }}</span><span class="pr-kpi-label">réussi{{ completedCount > 1 ? 's' }}</span></li>
+                    {% endif %}
+                </ul>
+            </div>
 
-        {% if items %}
-            <ol class="practice-list">
-                {% for item in items %}
-                    {% set practice = item.practice %}
-                    <li data-state="{{ item.state }}">
-                        <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
-                            <span class="practice-head">
-                                <span class="tag framework">{{ frameworks[practice.framework] ?? practice.framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
-                                {% if practice.version %}<span class="tag new">Nouveauté</span>{% endif %}
-                                {% if practice.isRestricted %}<span class="tag">En préparation</span>{% endif %}
-                                {% if practice.isScheduled %}<span class="tag">Programmé le {{ practice.published|date('d/m/Y') }}</span>{% endif %}
-                                <time class="meta" datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time>
-                                {% if item.state == 'completed' %}<span class="state">✓ Réussi</span>{% elseif item.state == 'in_progress' %}<span class="state">En cours</span>{% endif %}
-                            </span>
-                            <span class="title">{{ practice.exercise.title }}</span>
-                            <span class="summary">{{ practice.summary }}</span>
-                            {% if practice.exercise.concepts %}
-                                <span class="practice-notions">{% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</span>
-                            {% endif %}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ol>
-            {% if not app.user %}
-                <p class="meta">Chaque exercice demande un compte : <a href="{{ path('app_register') }}">créez le vôtre</a> ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
+            {% if total %}
+                <div class="pr-layout">
+                    {# Les filtres sont un formulaire GET : sans JavaScript, le bouton « Appliquer » les envoie ;
+                       avec, site.ts le masque et chaque case soumet le formulaire toute seule. Le panneau se
+                       replie sous 900 px, où il passerait sinon avant les exercices. #}
+                    <aside class="pr-aside">
+                        <form class="pr-card" method="get" action="{{ path('app_practice') }}" data-practice-filters>
+                            <input type="hidden" name="tri" value="{{ filters.tri }}">
+                            <details class="fold" data-fold open>
+                                <summary>
+                                    <span>Filtres</span>
+                                    {% if filterCount %}<span class="fold-count">{{ filterCount }} actif{{ filterCount > 1 ? 's' }}</span>{% endif %}
+                                    <span class="fold-sign" aria-hidden="true"></span>
+                                </summary>
+                                <div class="fold-body">
+                                    <label class="pr-field">
+                                        <span class="pr-legend">Rechercher</span>
+                                        <input type="search" name="recherche" value="{{ filters.recherche }}" placeholder="chunkBy, mail, validation…" autocomplete="off">
+                                    </label>
+
+                                    <div class="pr-group" role="group" aria-labelledby="pr-lbl-framework">
+                                        <span class="pr-legend" id="pr-lbl-framework">Framework</span>
+                                        <div class="pr-chips">
+                                            <label class="pr-pill">
+                                                <input type="radio" name="framework" value=""{{ filters.framework is null ? ' checked' }}>
+                                                <span>Tous</span>
+                                            </label>
+                                            {% for id, label in frameworks %}
+                                                <label class="pr-pill">
+                                                    <input type="radio" name="framework" value="{{ id }}"{{ filters.framework == id ? ' checked' }}>
+                                                    <span>{{ label }}</span>
+                                                </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <label class="pr-check">
+                                        <input type="checkbox" name="nouveautes" value="1"{{ filters.nouveautes ? ' checked' }}>
+                                        <span>
+                                            <span class="pr-check-title">Nouveautés seulement</span>
+                                            <span class="pr-check-hint">Sorties dans les dernières versions</span>
+                                        </span>
+                                    </label>
+
+                                    {% if notionCounts %}
+                                        {% set head = notionCounts|slice(0, 8) %}
+                                        {% set rest = notionCounts|slice(8) %}
+                                        <div class="pr-group" role="group" aria-labelledby="pr-lbl-notions">
+                                            <p class="pr-group-head">
+                                                <span class="pr-legend" id="pr-lbl-notions">Notions</span>
+                                                {% if filters.notions %}<span class="pr-note">{{ filters.notions|length }} retenue{{ filters.notions|length > 1 ? 's' }}</span>{% endif %}
+                                            </p>
+                                            <div class="pr-chips">
+                                                {% for notion, count in head %}
+                                                    <label class="pr-chip">
+                                                        <input type="checkbox" name="notions[]" value="{{ notion }}"{{ notion in filters.notions ? ' checked' }}>
+                                                        <span>{{ notion }}<span class="pr-chip-count">{{ count }}</span></span>
+                                                    </label>
+                                                {% endfor %}
+                                            </div>
+                                            {% if rest %}
+                                                <details class="pr-more"{{ filters.notions|filter(n => n in rest|keys)|length ? ' open' }}>
+                                                    <summary><span class="pr-more-open">Voir les {{ rest|length }} autres</span><span class="pr-more-close">Voir moins</span></summary>
+                                                    <div class="pr-chips">
+                                                        {% for notion, count in rest %}
+                                                            <label class="pr-chip">
+                                                                <input type="checkbox" name="notions[]" value="{{ notion }}"{{ notion in filters.notions ? ' checked' }}>
+                                                                <span>{{ notion }}<span class="pr-chip-count">{{ count }}</span></span>
+                                                            </label>
+                                                        {% endfor %}
+                                                    </div>
+                                                </details>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+
+                                    <button type="submit" class="pr-apply">Appliquer les filtres</button>
+                                    {% if hasFilters %}
+                                        <a class="pr-reset" href="{{ path('app_practice') }}">Réinitialiser les filtres</a>
+                                    {% endif %}
+                                </div>
+                            </details>
+                        </form>
+                    </aside>
+
+                    <div class="pr-results">
+                        <div class="pr-bar">
+                            <p class="pr-found">{{ shown ? shown ~ ' exercice' ~ (shown > 1 ? 's') : 'Aucun exercice' }}{% if filters.framework %} · {{ frameworks[filters.framework] ?? filters.framework }}{% endif %}</p>
+                            <p class="pr-sorts">
+                                <span class="meta">Trier :</span>
+                                {% for id, label in {recent: 'Récents', titre: 'Titre'} %}
+                                    <a class="pr-tab{{ filters.tri == id ? ' active' }}" href="{{ path('app_practice', filters|merge({tri: id})|filter(v => v is not empty)) }}"{% if filters.tri == id %} aria-current="true"{% endif %}>{{ label }}</a>
+                                {% endfor %}
+                            </p>
+                        </div>
+
+                        {% for group in groups %}
+                            <section class="pr-set">
+                                <div class="pr-set-head">
+                                    <h2 class="pr-set-label">{{ group.label }}</h2>
+                                    <span class="pr-rule" aria-hidden="true"></span>
+                                    <span class="pr-set-count">{{ group.items|length }}</span>
+                                </div>
+                                <ol class="practice-list">
+                                    {% for item in group.items %}{{ ui.card(item, frameworks) }}{% endfor %}
+                                </ol>
+                            </section>
+                        {% else %}
+                            <div class="pr-empty">
+                                <p>Aucun exercice avec ces filtres.</p>
+                                <a class="lp-btn" href="{{ path('app_practice') }}">Tout afficher</a>
+                            </div>
+                        {% endfor %}
+
+                        {% if shown and not app.user %}
+                            <p class="meta pr-signup">Chaque exercice demande un compte : <a href="{{ path('app_register') }}">créez le vôtre</a> ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <p class="meta">Pas encore d'exercice ici : revenez bientôt.</p>
             {% endif %}
-        {% elseif total %}
-            <p class="meta">Aucun exercice ne correspond à ces filtres. <a href="{{ path('app_practice') }}">Tout afficher</a></p>
-        {% else %}
-            <p class="meta">Pas encore d'exercice ici : revenez bientôt.</p>
-        {% endif %}
+        </div>
     </main>
 {% endblock %}

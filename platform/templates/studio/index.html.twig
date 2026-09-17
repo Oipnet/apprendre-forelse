@@ -1,103 +1,96 @@
-{% extends 'base.html.twig' %}
+{% extends 'studio/_chrome.html.twig' %}
 
 {% block title %}Atelier des auteurs · Forelse{% endblock %}
 
+{% block body_class %}site-page studio-page{% endblock %}
+
 {% block body %}
-    <main class="page">
-        <h1>Atelier des auteurs</h1>
-        <p class="lead">Écrire, relire et vérifier les exercices des packs installés.</p>
+    {% set hasFilters = filtres.etat or filtres.recherche %}
+    <main class="st">
+        <div class="lp-wrap">
+            <div class="st-hero">
+                <div class="st-intro">
+                    <p class="st-eyebrow">Atelier</p>
+                    <h1>Atelier des auteurs</h1>
+                    <p class="lead">Choisissez un parcours pour éditer ses chapitres et ses exercices.</p>
+                </div>
+            </div>
 
-        {% for entree in parcours %}
-            <section class="chapter">
-                <h2>{{ entree.track.title }} <span class="tag">{{ entree.pack.title }}</span>
-                    {% if not entree.modifiable %}<span class="tag">lecture seule</span>{% endif %}
-                </h2>
+            <ul class="st-kpis">
+                <li><span class="st-kpi-value">{{ total }}</span><span class="st-kpi-label">parcours</span></li>
+                <li><span class="st-kpi-value">{{ chapitres }}</span><span class="st-kpi-label">chapitre{{ chapitres > 1 ? 's' }}</span></li>
+                <li><span class="st-kpi-value">{{ exercices }}</span><span class="st-kpi-label">exercice{{ exercices > 1 ? 's' }}</span></li>
+                <li><span class="st-kpi-value">{{ enPreparation }}</span><span class="st-kpi-label">en préparation</span></li>
+            </ul>
 
-                {% for bloc in entree.chapitres %}
-                    <h3 class="meta">{{ bloc.chapitre.title }}
-                        <a class="lesson-edit{{ bloc.chapitre.hasLesson ? '' : ' missing' }}" href="{{ path('app_studio_lesson', {trackId: entree.track.id, chapterId: bloc.chapitre.id}) }}">
-                            {{ bloc.chapitre.hasLesson ? '📜 Fiche de cours' : '📜 Fiche de cours à écrire' }}
-                        </a>
-                    </h3>
-                    <ol class="exercises">
-                        {% for exercice in bloc.exercices %}
-                            <li>
-                                <a href="{{ path('app_studio_exercise', {trackId: entree.track.id, exerciseId: exercice.id}) }}">
-                                    <span class="state">{{ loop.index }}</span>
-                                    <span class="title">{{ exercice.title }}</span>
-                                    <span class="meta">{{ exercice.xp }} XP</span>
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ol>
-                {% endfor %}
-
-                {% if entree.modifiable %}
-                    <form class="nouvel-exercice" data-nouveau="{{ path('app_studio_create', {trackId: entree.track.id}) }}">
-                        <input name="id" placeholder="45-le-grand-menage" required pattern="[a-z0-9][a-z0-9-]*" aria-label="Identifiant">
-                        <input name="titre" placeholder="Le grand ménage" required aria-label="Titre">
-                        <select name="chapitre" aria-label="Chapitre">
-                            {% for bloc in entree.chapitres %}
-                                <option value="{{ bloc.chapitre.id }}">{{ bloc.chapitre.title }}</option>
-                            {% endfor %}
-                        </select>
-                        {% if ia %}
-                            <input name="sujet" class="sujet" placeholder="Sujet confié à l'IA (facultatif) : « tester un voter avec des stubs »" aria-label="Sujet">
-                        {% endif %}
-                        <select name="base" aria-label="Part de l'exercice">
-                            <option value="">Sans base</option>
-                            {% for bloc in entree.chapitres %}{% for exercice in bloc.exercices %}
-                                <option value="{{ exercice.id }}">après {{ exercice.title }}</option>
-                            {% endfor %}{% endfor %}
-                        </select>
-                        <button type="submit" class="primary">Nouvel exercice</button>
-                        <span class="erreur" role="alert"></span>
-                        {% if not ia %}
-                            <span class="meta">Génération assistée désactivée : renseignez <code>ANTHROPIC_API_KEY</code> pour l'activer.</span>
-                        {% endif %}
-                    </form>
-                {% endif %}
-            </section>
-        {% endfor %}
-
-        <section class="chapter">
-            <h2>Pratique <span class="tag">hors parcours</span></h2>
-            {% if pratique %}
-                <ol class="exercises">
-                    {% for practice in pratique %}
-                        <li>
-                            <a href="{{ path('app_studio_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
-                                <span class="state">{{ loop.index }}</span>
-                                <span class="title">{{ practice.exercise.title }}</span>
-                                {% if practice.isRestricted %}<span class="tag">en préparation</span>{% endif %}
-                                {% if practice.isScheduled %}<span class="tag">programmé</span>{% endif %}
-                                <span class="meta">{{ practice.packId }} · {{ practice.published|date('d/m/Y') }}</span>
-                            </a>
-                        </li>
+            {# Filtres : un formulaire GET, comme sur la Pratique, pour que l'URL porte la sélection. #}
+            <form class="st-bar" method="get" action="{{ path('app_studio') }}" data-studio-filters>
+                <div class="st-chips">
+                    {% for choix in [{id: '', label: 'Tous', count: total}, {id: 'publies', label: 'Publiés', count: total - enPreparation}, {id: 'preparation', label: 'En préparation', count: enPreparation}] %}
+                        <label class="st-pill">
+                            <input type="radio" name="etat" value="{{ choix.id }}"{{ filtres.etat == (choix.id ?: null) ? ' checked' }}>
+                            <span>{{ choix.label }}<span class="st-pill-count">{{ choix.count }}</span></span>
+                        </label>
                     {% endfor %}
-                </ol>
-            {% else %}
-                <p class="meta">Aucun exercice de Pratique dans les packs installés.</p>
-            {% endif %}
+                </div>
+                <input type="search" name="recherche" value="{{ filtres.recherche }}" placeholder="Chercher un parcours…" aria-label="Chercher un parcours" autocomplete="off">
+                <button type="submit" class="st-apply">Filtrer</button>
+            </form>
 
-            {% if packsModifiables %}
-                <form class="nouvel-exercice" data-nouveau="{{ path('app_studio_create_pratique') }}">
-                    <input name="id" placeholder="symfony-8-1-map-query-string" required pattern="[a-z0-9][a-z0-9-]*" aria-label="Identifiant">
-                    <input name="titre" placeholder="Lire la requête avec #[MapQueryString]" required aria-label="Titre">
-                    <select name="pack" aria-label="Pack">
-                        {% for pack in packsModifiables %}
-                            <option value="{{ pack.id }}">{{ pack.title }}</option>
-                        {% endfor %}
-                    </select>
-                    <select name="environnement" aria-label="Environnement">
-                        {% for environnement in environnements %}
-                            <option value="{{ environnement }}">{{ environnement }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" class="primary">Nouvel exercice de Pratique</button>
-                    <span class="erreur" role="alert"></span>
-                </form>
-            {% endif %}
-        </section>
+            <div class="st-list">
+                {% for entree in parcours %}
+                    {% set track = entree.track %}
+                    {% set prepa = track.isRestricted %}
+                    <article class="st-card{{ prepa ? ' draft' }}">
+                        <div class="st-card-main">
+                            <p class="st-card-head">
+                                <a class="st-card-title" href="{{ path('app_studio_track', {trackId: track.id}) }}">{{ track.title }}</a>
+                                <span class="tag {{ prepa ? 'draft' : 'live' }}">{{ prepa ? 'En préparation' : 'Publié' }}</span>
+                                {% if not entree.modifiable %}<span class="tag">Lecture seule</span>{% endif %}
+                            </p>
+                            <p class="st-card-desc">{{ track.description }}</p>
+                            <p class="st-card-meta">
+                                <span>{{ entree.pack.title }}</span>
+                                {% if entree.modifie %}<span>modifié le <time datetime="{{ entree.modifie|date('Y-m-d') }}">{{ entree.modifie|date('d/m/Y') }}</time></span>{% endif %}
+                            </p>
+                        </div>
+
+                        <div class="st-card-figures">
+                            <p class="st-figures">
+                                <span>{{ entree.chapitres }} chap.</span>
+                                <span>{{ entree.exercices }} ex.</span>
+                                <span class="xp">{{ entree.xp|number_format(0, ',', ' ') }} XP</span>
+                            </p>
+                            {# La barre suit ce que le moteur sait vraiment mesurer : les fiches de cours écrites. #}
+                            <span class="st-bar-track" aria-hidden="true"><span style="width: {{ entree.chapitres ? (entree.fiches / entree.chapitres * 100)|round : 0 }}%"></span></span>
+                            <p class="st-ready">
+                                {%- if entree.chapitres and entree.fiches == entree.chapitres %}Toutes les fiches de cours sont écrites
+                                {%- else %}{{ entree.fiches }} / {{ entree.chapitres }} fiche{{ entree.chapitres > 1 ? 's' }} de cours écrite{{ entree.fiches > 1 ? 's' }}{% endif %}
+                            </p>
+                        </div>
+
+                        <div class="st-card-actions">
+                            <a class="st-btn primary" href="{{ path('app_studio_track', {trackId: track.id}) }}">Éditer <span aria-hidden="true">→</span></a>
+                            <a class="st-btn" href="{{ path('app_track', {trackId: track.id}) }}">Voir</a>
+                        </div>
+                    </article>
+                {% else %}
+                    <div class="st-empty">
+                        <p>{{ total ? 'Aucun parcours ne correspond.' : 'Aucun parcours dans les packs installés.' }}</p>
+                        {% if hasFilters %}<a class="st-btn primary" href="{{ path('app_studio') }}">Tout afficher</a>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="st-aside-block">
+                <div>
+                    <h2>Exercices de pratique</h2>
+                    <p>Les courts exercices hors parcours se gèrent à part : ils n'appartiennent à aucun chapitre.</p>
+                </div>
+                <a class="st-btn outline" href="{{ path('app_studio_practice') }}">
+                    {{- pratique ? 'Gérer les ' ~ pratique ~ ' exercices' : 'Écrire le premier exercice' }} <span aria-hidden="true">→</span>
+                </a>
+            </div>
+        </div>
     </main>
 {% endblock %}

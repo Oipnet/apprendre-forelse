@@ -8,6 +8,33 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Filtres de la Pratique** : une recherche (titre, résumé, notions), des notions cumulables avec leur nombre
+  d'exercices, et un tri par date ou par titre, en plus du framework et des nouveautés. Tout tient dans l'URL
+  (`?framework=&notions[]=&nouveautes=1&recherche=&tri=`), donc la page reste partageable et fonctionne sans
+  JavaScript : avec lui, le bouton « Appliquer les filtres » disparaît et chaque case envoie le formulaire.
+  Le paramètre `?notion=` d'avant devient `?notions[]=`.
+- **Atelier des auteurs, page d'un parcours** (`/atelier/{parcours}`) : les chapitres en accordéon, leurs
+  exercices (numéro ou ★ pour un boss, identifiant, XP), la fiche de cours de chaque chapitre et le
+  formulaire de création d'exercice, replié, dans le chapitre concerné.
+- **Atelier des auteurs, page de la Pratique** (`/atelier/pratique`) : les exercices hors parcours, tous packs
+  confondus, et leur formulaire de création. `pratique` reste réservé : ce n'est pas un identifiant de parcours.
+- **Filtres de l'atelier** : publiés ou en préparation, et une recherche sur le titre et la description
+  (`?etat=&recherche=`), même formulaire GET que la Pratique.
+
+### Modifié
+
+- **Page de la Pratique** d'après sa maquette : accroche et compteurs en tête, colonne de filtres collante,
+  exercices en cartes groupées par date (à venir, cette semaine, avant) ou par titre.
+- **Sous 900 px, la colonne latérale se replie** (filtres de la Pratique, sommaire d'un parcours dans
+  l'atelier) : elle passait sinon avant ce qu'on est venu lire. Sans JavaScript, elle reste dépliée et son
+  résumé sert d'interrupteur.
+- **Atelier des auteurs** d'après sa maquette, en deux pages au lieu d'une : `/atelier` ne liste plus que les
+  parcours (une fiche chacun : état, pack, chapitres, exercices, XP, fiches de cours écrites, date de dernière
+  modification), et le détail d'un parcours a sa propre page. Les pages de l'atelier portent la pastille
+  « atelier » dans l'en-tête et un pied de page court.
+
 ## 1.0.2 — 2026-09-17
 
 Un correctif : les pages du site plus légères et plus lisibles, d'après un relevé PageSpeed mobile. Aucune

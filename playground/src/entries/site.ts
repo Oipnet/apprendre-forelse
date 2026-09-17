@@ -187,9 +187,23 @@ for (const menu of document.querySelectorAll<HTMLDetailsElement>('[data-account-
  * Carte d'un parcours : les chapitres sont des <details>. Le sommaire ouvre le chapitre visé,
  * et « Tout ouvrir / Tout fermer » n'apparaît qu'avec JavaScript (sans lui, chaque chapitre s'ouvre à la main).
  */
+/**
+ * Panneau latéral repliable (filtres de la Pratique, sommaire de l'atelier) : déplié sur un écran large,
+ * replié sur un téléphone. Sans ce script il reste déplié, comme le dit son attribut `open`.
+ */
+const ECRAN_ETROIT = matchMedia('(max-width: 900px)');
+for (const panneau of document.querySelectorAll<HTMLDetailsElement>('[data-fold]')) {
+	const suivre = () => {
+		panneau.open = !ECRAN_ETROIT.matches;
+	};
+	suivre();
+	ECRAN_ETROIT.addEventListener('change', suivre);
+}
+
+const CHAPTER_DETAILS = '.tr-chapter, .st-chapter'; // la carte d'un parcours, et la même liste dans l'atelier
 const chaptersToggle = document.querySelector<HTMLButtonElement>('[data-chapters-toggle]');
 if (chaptersToggle) {
-	const chapters = [...document.querySelectorAll<HTMLDetailsElement>('.tr-chapter')];
+	const chapters = [...document.querySelectorAll<HTMLDetailsElement>(CHAPTER_DETAILS)];
 	const label = () => {
 		chaptersToggle.textContent = chapters.every((chapter) => chapter.open) ? 'Tout fermer' : 'Tout ouvrir';
 	};
@@ -203,15 +217,69 @@ if (chaptersToggle) {
 	for (const chapter of chapters) chapter.addEventListener('toggle', label);
 	for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-open-chapter]')) {
 		link.addEventListener('click', () => {
-			const details = document.getElementById(link.dataset.openChapter!)?.querySelector<HTMLDetailsElement>('.tr-chapter');
+			const details = document.getElementById(link.dataset.openChapter!)?.querySelector<HTMLDetailsElement>(CHAPTER_DETAILS);
 			if (details) details.open = true;
 		});
 	}
 	// Arrivée par une ancre (#chapitre-3), ou ancre changée ensuite : le chapitre s'ouvre.
 	const openFromHash = () => {
-		const target = location.hash ? document.getElementById(location.hash.slice(1))?.querySelector<HTMLDetailsElement>('.tr-chapter') : null;
+		const target = location.hash ? document.getElementById(location.hash.slice(1))?.querySelector<HTMLDetailsElement>(CHAPTER_DETAILS) : null;
 		if (target) target.open = true;
 	};
 	openFromHash();
 	window.addEventListener('hashchange', openFromHash);
 }
+
+/**
+ * Filtres d'une liste (Pratique, atelier des auteurs) : un formulaire GET, qui marche sans JavaScript grâce
+ * à son bouton d'envoi. Avec JavaScript, le bouton disparaît, chaque case envoie le formulaire elle-même,
+ * la recherche attend qu'on ait fini de taper, puis reprend le curseur au rechargement.
+ */
+function filtresEnDirect(form: HTMLFormElement, cleFocus: string, parDefaut: Record<string, string> = {}) {
+	const bouton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+	const recherche = form.querySelector<HTMLInputElement>('input[type="search"]');
+	if (bouton) bouton.hidden = true;
+
+	// Ce qui vaut le défaut n'a rien à faire dans l'URL : on le débranche juste avant l'envoi.
+	form.addEventListener('submit', () => {
+		for (const champ of form.querySelectorAll<HTMLInputElement>('input[name]')) {
+			if (champ.value === '' || champ.value === parDefaut[champ.name]) champ.disabled = true;
+		}
+	});
+
+	form.addEventListener('change', (event) => {
+		if (event.target === recherche) return; // la recherche a son propre rythme
+		form.requestSubmit();
+	});
+
+	if (!recherche) return;
+	let minuteur = 0;
+	recherche.addEventListener('input', () => {
+		clearTimeout(minuteur);
+		minuteur = window.setTimeout(() => {
+			try {
+				sessionStorage.setItem(cleFocus, '1');
+			} catch {
+				// stockage indisponible : on perdra le curseur, sans plus
+			}
+			form.requestSubmit();
+		}, 450);
+	});
+
+	// La page vient d'être rechargée par la recherche : on rend le curseur là où il était.
+	try {
+		if (sessionStorage.getItem(cleFocus)) {
+			sessionStorage.removeItem(cleFocus);
+			recherche.focus();
+			recherche.setSelectionRange(recherche.value.length, recherche.value.length);
+		}
+	} catch {
+		// stockage indisponible
+	}
+}
+
+const filtresPratique = document.querySelector<HTMLFormElement>('[data-practice-filters]');
+if (filtresPratique) filtresEnDirect(filtresPratique, 'pratique:recherche', { tri: 'recent' });
+
+const filtresAtelier = document.querySelector<HTMLFormElement>('[data-studio-filters]');
+if (filtresAtelier) filtresEnDirect(filtresAtelier, 'atelier:recherche');

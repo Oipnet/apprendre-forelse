@@ -1,0 +1,76 @@
+{% extends 'studio/_chrome.html.twig' %}
+
+{% block title %}Pratique · Atelier · Forelse{% endblock %}
+
+{% block body_class %}site-page studio-page{% endblock %}
+
+{% block body %}
+    <main class="st st-track">
+        <div class="st-track-head">
+            <div class="lp-wrap">
+                <a class="st-back" href="{{ path('app_studio') }}"><span aria-hidden="true">←</span> Tous les parcours</a>
+                <div class="st-track-row">
+                    <div class="st-track-intro">
+                        <div class="st-title-line">
+                            <h1>Exercices de pratique</h1>
+                        </div>
+                        <p class="lead">Les courts exercices hors parcours : ils n'appartiennent à aucun chapitre, ne rapportent pas d'XP, et paraissent à la date qu'ils portent.</p>
+                    </div>
+                    <div class="st-track-actions">
+                        <a class="st-btn" href="{{ path('app_practice') }}">Voir la page publique</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lp-wrap st-practice">
+            {% if pratique %}
+                <ol class="st-exercises st-practice-list">
+                    {% for practice in pratique %}
+                        <li>
+                            <a href="{{ path('app_studio_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
+                                <span class="st-mark">{{ loop.index }}</span>
+                                <span class="st-ex-title">{{ practice.exercise.title }}</span>
+                                <span class="st-ex-id">{{ practice.exercise.id }}</span>
+                                {% if practice.isRestricted %}<span class="tag draft">En préparation</span>{% endif %}
+                                {% if practice.isScheduled %}<span class="tag draft">Programmé</span>{% endif %}
+                                {% if practice.version %}<span class="tag live">{{ practice.framework }} {{ practice.version }}</span>{% endif %}
+                                <span class="st-ex-xp">{{ practice.packId }} · {{ practice.published|date('d/m/Y') }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <div class="st-empty">
+                    <p>Aucun exercice de Pratique dans les packs installés.</p>
+                </div>
+            {% endif %}
+
+            {% if packsModifiables %}
+                <div class="st-chapter-foot st-practice-new">
+                    <details class="st-new"{{ pratique ? '' : ' open' }}>
+                        <summary>Ajouter un exercice <span aria-hidden="true">+</span></summary>
+                        <form class="nouvel-exercice" data-nouveau="{{ path('app_studio_create_pratique') }}">
+                            <input name="id" placeholder="symfony-8-1-map-query-string" required pattern="[a-z0-9][a-z0-9-]*" aria-label="Identifiant">
+                            <input name="titre" placeholder="Lire la requête avec #[MapQueryString]" required aria-label="Titre">
+                            <select name="pack" aria-label="Pack">
+                                {% for pack in packsModifiables %}
+                                    <option value="{{ pack.id }}">{{ pack.title }}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="environnement" aria-label="Environnement">
+                                {% for environnement in environnements %}
+                                    <option value="{{ environnement }}">{{ environnement }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="primary">Créer l'exercice</button>
+                            <span class="erreur" role="alert"></span>
+                        </form>
+                    </details>
+                </div>
+            {% else %}
+                <p class="st-hint">Aucun pack modifiable : l'atelier ne peut créer un exercice que dans un pack où il a le droit d'écrire.</p>
+            {% endif %}
+        </div>
+    </main>
+{% endblock %}

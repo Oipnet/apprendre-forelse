@@ -1,0 +1,139 @@
+{% extends 'studio/_chrome.html.twig' %}
+
+{% block title %}{{ track.title }} · Atelier · Forelse{% endblock %}
+
+{% block body_class %}site-page studio-page{% endblock %}
+
+{% block body %}
+    <main class="st st-track">
+        <div class="st-track-head">
+            <div class="lp-wrap">
+                <a class="st-back" href="{{ path('app_studio') }}"><span aria-hidden="true">←</span> Tous les parcours</a>
+                <div class="st-track-row">
+                    <div class="st-track-intro">
+                        <div class="st-title-line">
+                            <h1>{{ track.title }}</h1>
+                            <span class="tag {{ track.isRestricted ? 'draft' : 'live' }}">{{ track.isRestricted ? 'En préparation' : 'Publié' }}</span>
+                            {% if not modifiable %}<span class="tag">Lecture seule</span>{% endif %}
+                        </div>
+                        <p class="st-figures">
+                            <span>{{ pack.title }}</span>
+                            <span>{{ chapitres|length }} chapitre{{ chapitres|length > 1 ? 's' }}</span>
+                            <span>{{ exercices|length }} exercice{{ exercices|length > 1 ? 's' }}</span>
+                            <span class="xp">{{ xp|number_format(0, ',', ' ') }} XP</span>
+                            <span>{{ fiches }} / {{ chapitres|length }} fiche{{ chapitres|length > 1 ? 's' }} de cours</span>
+                            {% if modifie %}<span>modifié le <time datetime="{{ modifie|date('Y-m-d') }}">{{ modifie|date('d/m/Y') }}</time></span>{% endif %}
+                        </p>
+                    </div>
+                    <div class="st-track-actions">
+                        <a class="st-btn" href="{{ path('app_track', {trackId: track.id}) }}">Voir la page publique</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lp-wrap st-layout">
+            {# L'aside se replie sous 900 px, où il passerait sinon avant les chapitres eux-mêmes. #}
+            <aside class="st-aside">
+                <details class="fold" data-fold open>
+                    <summary>
+                        <span>Chapitres</span>
+                        <span class="fold-count">{{ chapitres|length }}</span>
+                        <span class="fold-sign" aria-hidden="true"></span>
+                    </summary>
+                    <div class="fold-body">
+                        <nav class="st-card-panel" aria-label="Chapitres du parcours">
+                            <p class="st-panel-head">
+                                <span class="st-eyebrow">Chapitres</span>
+                                {# Sans JavaScript, chaque chapitre s'ouvre à la main : ce bouton n'apparaît qu'avec lui. #}
+                                <button type="button" class="st-link" data-chapters-toggle hidden>Tout ouvrir</button>
+                            </p>
+                            <div class="st-nav">
+                                {% for bloc in chapitres %}
+                                    <a href="#chapitre-{{ loop.index }}" data-open-chapter="chapitre-{{ loop.index }}">
+                                        <span class="st-nav-num">{{ '%02d'|format(loop.index) }}</span>
+                                        <span class="st-nav-title">{{ bloc.chapitre.title }}</span>
+                                        <span class="st-nav-count">{{ bloc.exercices|length }}</span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </nav>
+                        <p class="st-hint">L'ordre des chapitres et des exercices se change dans <code>track.yaml</code> : l'atelier écrit les exercices, pas le plan du parcours.</p>
+                    </div>
+                </details>
+            </aside>
+
+            <div class="st-chapters">
+                {% for bloc in chapitres %}
+                    {% set chapitre = bloc.chapitre %}
+                    <section class="st-chapter-box" id="chapitre-{{ loop.index }}">
+                        <details class="st-chapter"{% if loop.first %} open{% endif %}>
+                            <summary>
+                                <span class="st-num">{{ '%02d'|format(loop.index) }}</span>
+                                <span class="st-chapter-text">
+                                    <span class="st-chapter-title">{{ chapitre.title }}</span>
+                                    <span class="st-chapter-meta">
+                                        {{- bloc.exercices|length }} exercice{{ bloc.exercices|length > 1 ? 's' }} · {{ bloc.xp|number_format(0, ',', ' ') }} XP
+                                        {%- if chapitre.environment %} · {{ chapitre.environment }}{% endif %}
+                                        {%- if not chapitre.hasLesson %} · fiche à écrire{% endif -%}
+                                    </span>
+                                </span>
+                                <span class="st-sign" aria-hidden="true"></span>
+                            </summary>
+
+                            <ol class="st-exercises">
+                                {% for exercice in bloc.exercices %}
+                                    <li{% if exercice.isBoss %} class="boss"{% endif %}>
+                                        <a href="{{ path('app_studio_exercise', {trackId: track.id, exerciseId: exercice.id}) }}">
+                                            <span class="st-mark">{{ exercice.isBoss ? '★' : loop.index }}</span>
+                                            <span class="st-ex-title">{{ exercice.title }}</span>
+                                            <span class="st-ex-id">{{ exercice.id }}</span>
+                                            {% if exercice.access.value == 'free' %}<span class="tag free">Sans compte</span>{% endif %}
+                                            <span class="st-ex-xp">{{ exercice.xp }} XP</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="st-none"><span>Aucun exercice dans ce chapitre.</span></li>
+                                {% endfor %}
+                            </ol>
+
+                            <div class="st-chapter-foot">
+                                <a class="st-btn outline" href="{{ path('app_studio_lesson', {trackId: track.id, chapterId: chapitre.id}) }}">
+                                    {{- chapitre.hasLesson ? 'Fiche de cours' : 'Écrire la fiche de cours' }}
+                                </a>
+                                {% if modifiable %}
+                                    <details class="st-new">
+                                        <summary>Ajouter un exercice <span aria-hidden="true">+</span></summary>
+                                        <form class="nouvel-exercice" data-nouveau="{{ path('app_studio_create', {trackId: track.id}) }}">
+                                            <input type="hidden" name="chapitre" value="{{ chapitre.id }}">
+                                            <input name="id" placeholder="45-le-grand-menage" required pattern="[a-z0-9][a-z0-9-]*" aria-label="Identifiant">
+                                            <input name="titre" placeholder="Le grand ménage" required aria-label="Titre">
+                                            {% if ia %}
+                                                <input name="sujet" class="sujet" placeholder="Sujet confié à l'IA (facultatif) : « tester un voter avec des stubs »" aria-label="Sujet">
+                                            {% endif %}
+                                            <select name="base" aria-label="Part de l'exercice">
+                                                <option value="">Sans base</option>
+                                                {% for exercice in exercices %}
+                                                    <option value="{{ exercice.id }}">après {{ exercice.title }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="primary">Créer l'exercice</button>
+                                            <span class="erreur" role="alert"></span>
+                                            {% if not ia %}
+                                                <span class="meta">Génération assistée désactivée : renseignez <code>ANTHROPIC_API_KEY</code> pour l'activer.</span>
+                                            {% endif %}
+                                        </form>
+                                    </details>
+                                {% endif %}
+                            </div>
+                        </details>
+                    </section>
+                {% else %}
+                    <div class="st-empty">
+                        <p>Ce parcours n'a pas encore de chapitre.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+{% endblock %}

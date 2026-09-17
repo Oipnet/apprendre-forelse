@@ -525,17 +525,6 @@ a.lesson-link:hover {
 	font-style: italic;
 }
 
-/* Atelier : lien vers la fiche de cours d'un chapitre */
-.lesson-edit {
-	margin-left: 0.8rem;
-	font-size: 13px;
-	font-weight: normal;
-	text-transform: none;
-	letter-spacing: 0;
-}
-.lesson-edit.missing {
-	color: var(--gold);
-}
 
 /* --- Page d'accueil (landing) ------------------------------------------------------ */
 /* Polices sous licence SIL OFL, hébergées ici (pas d'appel à Google Fonts), en fontes variables :
@@ -1150,9 +1139,6 @@ body.site-page {
 .site-page .lesson-link .meta {
 	font-family: var(--lp-mono);
 	font-size: 11px;
-}
-.site-page .lesson-edit.missing {
-	color: var(--lp-rust);
 }
 .site-page .nouvel-exercice {
 	background: var(--lp-card);
@@ -2432,48 +2418,400 @@ body.site-page {
 }
 
 /* Pratique : liste des exercices hors parcours */
-.practice-filters {
-	display: grid;
-	gap: 8px;
-	margin: 1.6rem 0 1.4rem;
+.pr {
+	padding: clamp(28px, 4vw, 52px) 0 clamp(56px, 7vw, 88px);
 }
-.practice-filters > div {
+.pr-eyebrow {
+	font-family: var(--lp-mono);
+	font-size: 11.5px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--lp-rust);
+	margin: 0 0 14px;
+}
+.pr h1 {
+	font-family: var(--lp-serif);
+	font-weight: 500;
+	font-size: clamp(34px, 4.6vw, 52px);
+	letter-spacing: -0.026em;
+	line-height: 1.05;
+	margin: 0 0 14px;
+}
+.pr .lead {
+	margin: 0;
+	font-size: clamp(15.5px, 1.2vw, 17.5px);
+	line-height: 1.6;
+	color: var(--lp-ink-2);
+	max-width: 58ch;
+	text-wrap: pretty;
+}
+
+/* En-tête : l'accroche à gauche, les compteurs à droite */
+.pr-hero {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: clamp(24px, 4vw, 56px);
+	align-items: flex-end;
+	justify-content: space-between;
+	margin-bottom: clamp(24px, 3vw, 36px);
 }
-.site-page .practice-filters .tag {
-	text-decoration: none;
-	padding: 4px 10px;
+.pr-intro {
+	flex: 1 1 460px;
+	min-width: 0;
 }
-.site-page .practice-filters .tag:hover {
+.pr-kpis {
+	flex: 0 1 340px;
+	min-width: 0;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(0, 1fr);
+	gap: 10px;
+}
+.pr-kpis li {
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-card);
+	border-radius: 11px;
+	padding: 12px 14px;
+	min-width: 0;
+}
+.pr-kpi-value {
+	display: block;
+	font-family: var(--lp-mono);
+	font-size: 21px;
+	line-height: 1.1;
+}
+.pr-kpi-label {
+	display: block;
+	font-size: 11.5px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--lp-ink-3);
+	margin-top: 5px;
+}
+
+.pr-layout {
+	display: flex;
+	flex-wrap: wrap;
+	gap: clamp(24px, 3vw, 36px);
+	align-items: flex-start;
+}
+.pr-aside {
+	min-width: 0;
+	flex: 1 1 250px;
+	max-width: 100%;
+	position: sticky;
+	top: 90px;
+}
+.pr-results {
+	min-width: 0;
+	/* Très extensible : la colonne des filtres garde sa largeur, les cartes prennent le reste. */
+	flex: 100 1 560px;
+	display: grid;
+	gap: 18px;
+	align-content: start;
+}
+
+/* Filtres : un formulaire GET, pour que l'URL porte la sélection et que tout marche sans JavaScript */
+.pr-card {
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-card);
+	border-radius: 13px;
+	padding: 18px;
+	display: grid;
+	gap: 20px;
+	align-content: start;
+}
+.pr-legend {
+	font-family: var(--lp-mono);
+	font-size: 11px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--lp-rust);
+}
+.pr-field {
+	display: grid;
+	gap: 8px;
+	min-width: 0;
+}
+.pr-field input {
+	width: 100%;
+	min-width: 0;
+	font: inherit;
+	font-size: 14.5px;
+	color: var(--lp-ink);
+	background: var(--lp-bg-2);
+	border: 1px solid var(--lp-line-2);
+	border-radius: 9px;
+	padding: 10px 12px;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
+}
+.pr-field input:focus-visible {
+	outline: none;
+	border-color: var(--lp-rust);
+	box-shadow: 0 0 0 3px rgba(216, 166, 87, 0.35);
+}
+.pr-group {
+	display: grid;
+	gap: 9px;
+	min-width: 0;
+}
+.pr-group-head {
+	display: flex;
+	gap: 10px;
+	align-items: baseline;
+	justify-content: space-between;
+	margin: 0;
+}
+.pr-note {
+	font-family: var(--lp-mono);
+	font-size: 11px;
+	color: var(--lp-ink-3);
+}
+.pr-chips {
+	display: flex;
+	gap: 7px;
+	flex-wrap: wrap;
+}
+/* Chaque pastille est un vrai bouton radio ou une vraie case : l'apparence tient dans le <span> qui suit. */
+.pr-chip input,
+.pr-pill input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+.pr-chip > span,
+.pr-pill > span {
+	display: inline-flex;
+	align-items: center;
+	cursor: pointer;
+	font-size: 13px;
+	padding: 6px 11px;
+	border-radius: 999px;
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-bg-2);
+	color: var(--lp-ink-2);
+	white-space: nowrap;
+	transition:
+		background 0.18s ease,
+		color 0.18s ease,
+		border-color 0.18s ease;
+}
+.pr-pill > span {
+	font-size: 13.5px;
+	font-weight: 500;
+	padding: 7px 13px;
+}
+.pr-chip > span:hover,
+.pr-pill > span:hover {
 	border-color: var(--lp-rust);
 	color: var(--lp-ink);
 }
-.site-page .practice-filters .tag.active {
+.pr-chip input:checked + span,
+.pr-pill input:checked + span {
 	background: var(--lp-ink);
 	border-color: var(--lp-ink);
 	color: #fbf6ec;
 }
+.pr-chip input:focus-visible + span,
+.pr-pill input:focus-visible + span {
+	outline: 2px solid var(--lp-rust);
+	outline-offset: 2px;
+}
+.pr-chip-count {
+	font-family: var(--lp-mono);
+	font-size: 11px;
+	opacity: 0.6;
+	margin-left: 6px;
+}
+.pr-check {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	cursor: pointer;
+	min-width: 0;
+}
+.pr-check input {
+	margin: 2px 0 0;
+	width: 16px;
+	height: 16px;
+	accent-color: var(--lp-rust);
+	flex: none;
+}
+.pr-check-title {
+	display: block;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--lp-ink);
+}
+.pr-check-hint {
+	display: block;
+	font-size: 12.5px;
+	color: var(--lp-ink-3);
+	margin-top: 2px;
+}
+/* Les notions au-delà des huit premières : repliées, dépliées d'office si l'une d'elles est cochée. */
+.pr-more > summary {
+	width: fit-content;
+	list-style: none;
+	cursor: pointer;
+	font-size: 13.5px;
+	font-weight: 500;
+	color: var(--lp-rust);
+}
+.pr-more > summary::-webkit-details-marker {
+	display: none;
+}
+.pr-more > summary:hover {
+	color: var(--lp-ink);
+}
+.pr-more[open] > summary {
+	margin-bottom: 9px;
+}
+.pr-more[open] .pr-more-open,
+.pr-more:not([open]) .pr-more-close {
+	display: none;
+}
+.pr-apply {
+	justify-self: start;
+	background: var(--lp-ink);
+	color: #fbf6ec;
+	border: none;
+	font: inherit;
+	font-weight: 600;
+	font-size: 14.5px;
+	padding: 11px 18px;
+	border-radius: 9px;
+	cursor: pointer;
+}
+.pr-apply:hover {
+	background: #38291a;
+}
+.site-page .pr-reset {
+	justify-self: start;
+	font-size: 13.5px;
+	font-weight: 500;
+	color: #9a3320;
+	border-bottom: 1px solid #e3c7c1;
+}
+.site-page .pr-reset:hover {
+	color: var(--lp-ink);
+	border-bottom-color: currentColor;
+}
+
+/* Barre de résultats : le compte à gauche, le tri à droite */
+.pr-bar {
+	display: flex;
+	gap: 14px;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom: 1px solid var(--lp-line);
+	padding-bottom: 12px;
+}
+.pr-found {
+	margin: 0;
+	font-size: 14.5px;
+	color: var(--lp-ink-2);
+}
+.pr-sorts {
+	margin: 0;
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+.site-page .pr-tab {
+	font-size: 13.5px;
+	font-weight: 500;
+	padding: 6px 11px;
+	border-radius: 8px;
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-bg-2);
+	color: var(--lp-ink-2);
+}
+.site-page .pr-tab:hover {
+	border-color: var(--lp-rust);
+	color: var(--lp-ink);
+}
+.site-page .pr-tab.active {
+	background: var(--lp-ink);
+	border-color: var(--lp-ink);
+	color: #fbf6ec;
+}
+
+/* Un intertitre par groupe (cette semaine, avant, à venir) */
+.pr-set {
+	display: grid;
+	gap: 12px;
+	min-width: 0;
+}
+.pr-set-head {
+	display: flex;
+	gap: 12px;
+	align-items: baseline;
+}
+.pr-set-label {
+	font-family: var(--lp-mono);
+	font-weight: 500;
+	font-size: 11.5px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--lp-ink-3);
+	margin: 0;
+}
+.pr-rule {
+	flex: 1 1 auto;
+	height: 1px;
+	background: var(--lp-line-3);
+}
+.pr-set-count {
+	font-family: var(--lp-mono);
+	font-size: 11.5px;
+	color: var(--lp-ink-3);
+}
+
 .practice-list {
 	list-style: none;
 	padding: 0;
-	margin: 0 0 1.5rem;
+	margin: 0;
 	display: grid;
-	gap: 10px;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+	gap: 12px;
+	align-items: stretch;
 }
 .practice-list a {
-	display: grid;
-	gap: 6px;
-	padding: 1rem 1.2rem;
-	border-radius: 12px;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 11px;
+	padding: 18px 20px;
+	border-radius: 13px;
 	border: 1px solid var(--lp-line-2);
 	background: var(--lp-card);
 	color: var(--lp-ink);
 	text-decoration: none;
+	transition:
+		transform 0.22s ease,
+		border-color 0.22s ease,
+		box-shadow 0.22s ease;
+}
+/* Une nouveauté se repère au trait doré de sa carte, pas seulement à son étiquette. */
+.practice-list li:has(.tag.new) > a {
+	border-color: var(--lp-rust-line);
 }
 .practice-list a:hover {
-	border-color: var(--lp-rust);
+	transform: translateY(-3px);
+	border-color: var(--lp-gold);
+	box-shadow: 0 18px 34px -28px rgba(22, 18, 14, 0.55);
 	color: var(--lp-ink);
 }
 .practice-head,
@@ -2481,42 +2819,120 @@ body.site-page {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 6px;
+	gap: 8px;
 }
 .practice-head time {
 	margin-left: auto;
 	font-family: var(--lp-mono);
-	font-size: 12px;
+	font-size: 11.5px;
+	white-space: nowrap;
 }
 .site-page .practice-list .tag.framework {
 	font-family: var(--lp-mono);
-	color: var(--lp-ink);
-	border-color: var(--lp-line-2);
+	font-size: 11.5px;
+	color: var(--lp-ink-2);
+	border: 1px solid var(--lp-line);
+	background: var(--lp-bg-2);
+	border-radius: 5px;
+	padding: 3px 8px;
 }
 .site-page .practice-list .tag.new {
+	font-family: var(--lp-mono);
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 	color: var(--lp-rust);
-	border-color: var(--lp-rust-line);
+	border: 1px solid var(--lp-rust-line);
+	background: #fbf1de;
+	border-radius: 5px;
+	padding: 3px 7px;
 }
 .practice-list .state {
-	font-size: 12px;
-	font-weight: 600;
+	font-family: var(--lp-mono);
+	font-size: 11px;
+	font-weight: 500;
 	color: var(--lp-rust);
+	white-space: nowrap;
 }
 .practice-list [data-state='completed'] .state {
 	color: var(--lp-green-ink);
 }
 .practice-list .title {
-	font-weight: 600;
-	font-size: 17px;
+	font-family: var(--lp-serif);
+	font-weight: 500;
+	font-size: 20px;
+	letter-spacing: -0.014em;
+	line-height: 1.22;
+	color: var(--lp-ink);
+	text-wrap: pretty;
 }
 .practice-list .summary {
 	color: var(--lp-ink-2);
 	font-size: 14.5px;
-	line-height: 1.5;
+	line-height: 1.55;
+	text-wrap: pretty;
+}
+.practice-foot {
+	margin-top: auto;
+	padding-top: 4px;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+.site-page .practice-list .practice-notions .tag {
+	font-size: 12px;
+	color: var(--lp-ink-3);
+	border: 1px solid var(--lp-line-3);
+	background: var(--lp-bg-2);
+	padding: 3px 9px;
+	border-radius: 999px;
+}
+.practice-cta {
+	margin-left: auto;
+	font-family: var(--lp-mono);
+	font-size: 12px;
+	color: var(--lp-rust);
+	white-space: nowrap;
+}
+
+.pr-empty {
+	border: 1px dashed #d3c7b0;
+	border-radius: 13px;
+	padding: 34px 26px;
+	display: grid;
+	gap: 14px;
+	justify-items: center;
+	text-align: center;
+}
+.pr-empty p {
+	margin: 0;
+	font-family: var(--lp-serif);
+	font-size: 21px;
+	color: var(--lp-ink);
+}
+.pr-signup {
+	margin: 0;
+}
+
+@media (max-width: 900px) {
+	.pr-aside {
+		position: static;
+	}
 }
 @media (max-width: 640px) {
 	.practice-head time {
 		margin-left: 0;
+	}
+	.practice-cta {
+		margin-left: 0;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.practice-list a,
+	.practice-list a:hover {
+		transition: none;
+		transform: none;
 	}
 }
 
@@ -3808,4 +4224,863 @@ body.site-page {
 	margin: 6px 0 0;
 	font-size: 14px;
 	line-height: 1.5;
+}
+
+/* --- Atelier des auteurs : la liste des parcours et la page d'un parcours ------------- */
+.st {
+	padding: clamp(28px, 4vw, 52px) 0 clamp(48px, 6vw, 80px);
+}
+.st-track {
+	padding-top: 0;
+}
+.st-eyebrow {
+	font-family: var(--lp-mono);
+	font-size: 11.5px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--lp-rust);
+	margin: 0 0 12px;
+}
+.st h1 {
+	font-family: var(--lp-serif);
+	font-weight: 500;
+	letter-spacing: -0.024em;
+	line-height: 1.06;
+	margin: 0;
+}
+.st-hero h1 {
+	font-size: clamp(34px, 4.6vw, 50px);
+	margin-bottom: 12px;
+}
+.st .lead {
+	margin: 0;
+	font-size: clamp(15.5px, 1.2vw, 17px);
+	line-height: 1.6;
+	color: var(--lp-ink-2);
+	max-width: 56ch;
+	text-wrap: pretty;
+}
+.st-hero {
+	margin-bottom: clamp(24px, 3vw, 36px);
+}
+.st-intro {
+	min-width: 0;
+	max-width: 62ch;
+}
+
+.st-kpis {
+	list-style: none;
+	margin: 0 0 clamp(22px, 3vw, 32px);
+	padding: 0;
+	display: grid;
+	/* 150px : quatre cartes de front sur un écran large, deux sur un téléphone plutôt qu'une pile. */
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+	gap: 12px;
+}
+.st-kpis li {
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-card);
+	border-radius: 12px;
+	padding: 15px 18px;
+	min-width: 0;
+}
+.st-kpi-value {
+	display: block;
+	font-family: var(--lp-mono);
+	font-size: 24px;
+	line-height: 1.1;
+}
+.st-kpi-label {
+	display: block;
+	font-size: 11.5px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--lp-ink-3);
+	margin-top: 6px;
+}
+
+/* Barre de filtres : formulaire GET, comme la Pratique (le bouton disparaît avec JavaScript). */
+.st-bar {
+	display: flex;
+	gap: 14px;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom: 1px solid var(--lp-line);
+	padding-bottom: 14px;
+	margin-bottom: 18px;
+}
+.st-chips {
+	display: flex;
+	gap: 7px;
+	flex-wrap: wrap;
+}
+.st-pill input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+.st-pill > span {
+	display: inline-flex;
+	align-items: center;
+	cursor: pointer;
+	font-size: 13.5px;
+	font-weight: 500;
+	padding: 8px 14px;
+	border-radius: 999px;
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-card);
+	color: var(--lp-ink-2);
+	white-space: nowrap;
+	transition:
+		background 0.18s ease,
+		color 0.18s ease,
+		border-color 0.18s ease;
+}
+.st-pill > span:hover {
+	border-color: var(--lp-rust);
+	color: var(--lp-ink);
+}
+.st-pill input:checked + span {
+	background: var(--lp-ink);
+	border-color: var(--lp-ink);
+	color: #fbf6ec;
+}
+.st-pill input:focus-visible + span {
+	outline: 2px solid var(--lp-rust);
+	outline-offset: 2px;
+}
+.st-pill-count {
+	font-family: var(--lp-mono);
+	font-size: 11px;
+	opacity: 0.6;
+	margin-left: 7px;
+}
+.st-bar input[type='search'] {
+	flex: 0 1 240px;
+	min-width: 0;
+	font: inherit;
+	font-size: 14.5px;
+	color: var(--lp-ink);
+	background: var(--lp-card);
+	border: 1px solid var(--lp-line-2);
+	border-radius: 9px;
+	padding: 10px 12px;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
+}
+.st-bar input[type='search']:focus-visible {
+	outline: none;
+	border-color: var(--lp-rust);
+	box-shadow: 0 0 0 3px rgba(216, 166, 87, 0.35);
+}
+.st-apply {
+	flex: none;
+	background: var(--lp-ink);
+	color: #fbf6ec;
+	border: none;
+	font: inherit;
+	font-weight: 600;
+	font-size: 14px;
+	padding: 10px 16px;
+	border-radius: 9px;
+	cursor: pointer;
+}
+.st-apply:hover {
+	background: #38291a;
+}
+
+/* Boutons de l'atelier : plein pour l'action principale, au trait pour le reste. */
+.site-page .st-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 600;
+	font-size: 14px;
+	padding: 10px 16px;
+	border-radius: 9px;
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-card);
+	color: var(--lp-ink-2);
+	white-space: nowrap;
+	transition:
+		background 0.2s ease,
+		border-color 0.2s ease,
+		color 0.2s ease;
+}
+.site-page .st-btn:hover {
+	background: var(--lp-bg-2);
+	border-color: var(--lp-ink);
+	color: var(--lp-ink);
+}
+.site-page .st-btn.primary {
+	background: var(--lp-ink);
+	border-color: var(--lp-ink);
+	color: #fbf6ec;
+}
+.site-page .st-btn.primary:hover {
+	background: #38291a;
+	border-color: #38291a;
+	color: #fbf6ec;
+}
+.site-page .st-btn.outline {
+	background: none;
+	border-color: var(--lp-ink);
+	color: var(--lp-ink);
+}
+.site-page .st-btn.outline:hover {
+	background: var(--lp-ink);
+	color: #fbf6ec;
+}
+.site-page .st-link {
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--lp-rust);
+}
+.site-page .st-link:hover {
+	color: var(--lp-ink);
+}
+
+/* L'état d'un parcours ou d'un exercice : publié, ou encore en préparation. */
+.studio-page .tag.live {
+	color: var(--lp-green-ink);
+	border: 1px solid #bfd9c4;
+	background: #f1f8f1;
+}
+.studio-page .tag.draft {
+	color: var(--lp-rust);
+	border: 1px solid var(--lp-rust-line);
+	background: #fbf1de;
+}
+.studio-page .tag.live,
+.studio-page .tag.draft {
+	font-family: var(--lp-mono);
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	padding: 3px 7px;
+	border-radius: 5px;
+	white-space: nowrap;
+}
+
+/* Fiche d'un parcours */
+.st-list {
+	display: grid;
+	gap: 12px;
+}
+.st-card {
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-card);
+	border-radius: 14px;
+	padding: clamp(18px, 2.2vw, 24px);
+	display: flex;
+	gap: clamp(18px, 3vw, 40px);
+	flex-wrap: wrap;
+	align-items: center;
+	transition:
+		border-color 0.22s ease,
+		box-shadow 0.22s ease,
+		transform 0.22s ease;
+}
+.st-card.draft {
+	border-color: var(--lp-rust-line);
+}
+.st-card:hover {
+	transform: translateY(-2px);
+	border-color: var(--lp-gold);
+	box-shadow: 0 18px 36px -30px rgba(22, 18, 14, 0.5);
+}
+.st-card-main {
+	min-width: 0;
+	flex: 1 1 320px;
+}
+.st-card-head {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	flex-wrap: wrap;
+	margin: 0 0 8px;
+}
+.site-page .st-card-title {
+	font-family: var(--lp-serif);
+	font-weight: 500;
+	font-size: clamp(21px, 2vw, 25px);
+	letter-spacing: -0.016em;
+	color: var(--lp-ink);
+	min-width: 0;
+}
+.site-page .st-card-title:hover {
+	color: var(--lp-rust);
+}
+.st-card-desc {
+	margin: 0 0 10px;
+	font-size: 14.5px;
+	line-height: 1.5;
+	color: var(--lp-ink-2);
+	max-width: 62ch;
+	text-wrap: pretty;
+}
+.st-card-meta,
+.st-figures {
+	display: flex;
+	gap: 8px 16px;
+	flex-wrap: wrap;
+	margin: 0;
+	font-family: var(--lp-mono);
+	font-size: 11.5px;
+	color: var(--lp-ink-3);
+}
+.st-figures {
+	font-size: 12px;
+	color: var(--lp-ink-2);
+}
+.st-figures .xp {
+	color: var(--lp-rust);
+}
+.st-card-figures {
+	flex: 0 1 260px;
+	min-width: 0;
+	display: grid;
+	gap: 8px;
+	align-content: center;
+}
+.st-bar-track {
+	display: block;
+	height: 6px;
+	border-radius: 99px;
+	background: #ede4d3;
+	overflow: hidden;
+}
+.st-bar-track > span {
+	display: block;
+	height: 100%;
+	border-radius: 99px;
+	background: linear-gradient(90deg, var(--lp-rust), var(--lp-gold));
+}
+.st-card:not(.draft) .st-bar-track > span {
+	background: linear-gradient(90deg, #2e9b4e, #4fb86c);
+}
+.st-ready {
+	margin: 0;
+	font-size: 12px;
+	color: var(--lp-ink-3);
+}
+.st-card-actions,
+.st-track-actions {
+	flex: none;
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+/* Renvoi vers la Pratique, en bas de la liste */
+.st-aside-block {
+	margin-top: clamp(32px, 4vw, 48px);
+	border-top: 1px solid var(--lp-line);
+	padding-top: clamp(24px, 3vw, 32px);
+	display: flex;
+	gap: clamp(20px, 3vw, 40px);
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+.st-aside-block h2 {
+	font-family: var(--lp-serif);
+	font-weight: 500;
+	font-size: 24px;
+	letter-spacing: -0.016em;
+	margin: 0 0 6px;
+}
+.st-aside-block p {
+	margin: 0;
+	font-size: 14.5px;
+	line-height: 1.55;
+	color: var(--lp-ink-2);
+	max-width: 54ch;
+	text-wrap: pretty;
+}
+
+/* Page d'un parcours : bandeau, colonne des chapitres, chapitres en accordéon */
+.st-track-head {
+	border-bottom: 1px solid var(--lp-line);
+	background: var(--lp-bg-2);
+	padding: clamp(20px, 3vw, 32px) 0 clamp(20px, 3vw, 28px);
+}
+.site-page .st-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	margin-bottom: 16px;
+}
+.st-track-row {
+	display: flex;
+	gap: clamp(20px, 3vw, 40px);
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+}
+.st-track-intro {
+	min-width: 0;
+	flex: 1 1 400px;
+	display: grid;
+	gap: 10px;
+}
+.st-title-line {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+.st-track-head h1 {
+	font-size: clamp(30px, 3.8vw, 44px);
+}
+.st-layout {
+	padding-top: clamp(24px, 3vw, 40px);
+	padding-bottom: clamp(56px, 7vw, 88px);
+	display: flex;
+	flex-wrap: wrap;
+	gap: clamp(22px, 3vw, 36px);
+	align-items: flex-start;
+}
+.st-aside {
+	min-width: 0;
+	flex: 1 1 240px;
+	max-width: 100%;
+	position: sticky;
+	top: 88px;
+	display: grid;
+	gap: 12px;
+	align-content: start;
+}
+.st-card-panel {
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-card);
+	border-radius: 13px;
+	padding: 16px;
+}
+.st-panel-head {
+	display: flex;
+	gap: 10px;
+	align-items: baseline;
+	justify-content: space-between;
+	margin: 0 0 12px;
+}
+.st-panel-head .st-eyebrow {
+	margin: 0;
+	font-size: 11px;
+	letter-spacing: 0.12em;
+}
+.st-nav {
+	display: grid;
+	gap: 1px;
+}
+.site-page .st-nav a {
+	display: flex;
+	gap: 9px;
+	align-items: baseline;
+	padding: 7px 8px;
+	border-radius: 7px;
+	font-size: 13.5px;
+	color: var(--lp-ink-2);
+	transition: background 0.18s ease;
+}
+.site-page .st-nav a:hover {
+	background: #f2ebde;
+	color: var(--lp-ink);
+}
+.st-nav-num {
+	flex: none;
+	font-family: var(--lp-mono);
+	font-size: 11.5px;
+	color: var(--lp-rust);
+}
+.st-nav-title {
+	min-width: 0;
+}
+.st-nav-count {
+	margin-left: auto;
+	flex: none;
+	font-family: var(--lp-mono);
+	font-size: 11px;
+	color: var(--lp-ink-3);
+}
+.st-hint {
+	margin: 0;
+	border: 1px dashed #d3c7b0;
+	border-radius: 13px;
+	padding: 16px;
+	font-size: 13px;
+	line-height: 1.55;
+	color: var(--lp-ink-3);
+	text-wrap: pretty;
+}
+.st-hint code {
+	font-family: var(--lp-mono);
+	font-size: 12px;
+}
+
+.st-chapters {
+	min-width: 0;
+	flex: 100 1 540px;
+	display: grid;
+	gap: 10px;
+}
+.st-chapter-box {
+	scroll-margin-top: 86px;
+}
+.st-chapter {
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-card);
+	border-radius: 13px;
+	transition: border-color 0.22s ease;
+}
+.st-chapter[open] {
+	border-color: var(--lp-gold);
+}
+.st-chapter summary {
+	list-style: none;
+	cursor: pointer;
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	padding: 14px 16px;
+	border-radius: 12px;
+	transition: background 0.2s ease;
+}
+.st-chapter summary::-webkit-details-marker {
+	display: none;
+}
+.st-chapter[open] summary {
+	background: var(--lp-bg-2);
+	border-radius: 12px 12px 0 0;
+}
+.st-chapter summary:hover {
+	background: #f2ebde;
+}
+.st-num {
+	flex: none;
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
+	display: grid;
+	place-items: center;
+	font-family: var(--lp-mono);
+	font-size: 12px;
+	background: #f2ebde;
+	color: var(--lp-ink-3);
+}
+.st-chapter[open] .st-num {
+	background: var(--lp-ink);
+	color: var(--lp-bg-2);
+}
+.st-chapter-text {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+.st-chapter-title {
+	display: block;
+	font-family: var(--lp-serif);
+	font-size: 20px;
+	letter-spacing: -0.014em;
+	line-height: 1.22;
+	color: var(--lp-ink);
+}
+.st-chapter-meta {
+	display: block;
+	margin-top: 3px;
+	font-family: var(--lp-mono);
+	font-size: 11.5px;
+	color: var(--lp-ink-3);
+}
+.st-sign {
+	flex: none;
+	font-family: var(--lp-mono);
+	font-size: 16px;
+	color: var(--lp-rust);
+}
+.st-sign::before {
+	content: '+';
+}
+.st-chapter[open] .st-sign::before {
+	content: '−';
+}
+
+/* Les exercices d'un chapitre, et la liste de la Pratique : mêmes lignes */
+.st-exercises {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	border-top: 1px solid #ede4d3;
+}
+.site-page .st-exercises a,
+.st-exercises .st-none span {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	padding: 11px 16px;
+	border-bottom: 1px solid #f1eadc;
+	color: var(--lp-ink);
+	font-size: 14.5px;
+	transition: background 0.18s ease;
+}
+.site-page .st-exercises a:hover {
+	background: var(--lp-bg-2);
+	color: var(--lp-rust);
+}
+.st-exercises .st-none span {
+	color: var(--lp-ink-3);
+	font-style: italic;
+}
+.st-mark {
+	flex: none;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	font-family: var(--lp-mono);
+	font-size: 10.5px;
+	border: 1px solid var(--lp-line);
+	background: var(--lp-bg-2);
+	color: var(--lp-ink-3);
+}
+.st-exercises .boss .st-mark {
+	border-color: var(--lp-gold);
+	background: #fbf1de;
+	color: var(--lp-rust);
+}
+.st-exercises .boss a {
+	background: #fdfaf2;
+}
+.st-exercises .boss .st-ex-title {
+	font-weight: 600;
+}
+.st-ex-title {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+.st-ex-id {
+	flex: none;
+	font-family: var(--lp-mono);
+	font-size: 11px;
+	color: var(--lp-ink-3);
+	white-space: nowrap;
+}
+.st-ex-xp {
+	flex: none;
+	font-family: var(--lp-mono);
+	font-size: 11.5px;
+	color: var(--lp-ink-3);
+	white-space: nowrap;
+}
+
+/* Pied d'un chapitre ouvert : la fiche de cours, et le formulaire de création replié */
+.st-chapter-foot {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	padding: 12px 16px;
+	background: var(--lp-bg-2);
+	border-radius: 0 0 12px 12px;
+}
+.st-new {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+.st-new > summary {
+	width: fit-content;
+	list-style: none;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 13.5px;
+	font-weight: 600;
+	padding: 9px 14px;
+	border-radius: 9px;
+	border: 1px solid var(--lp-line-2);
+	background: var(--lp-card);
+	color: var(--lp-ink-2);
+	transition:
+		background 0.2s ease,
+		border-color 0.2s ease,
+		color 0.2s ease;
+}
+.st-new > summary::-webkit-details-marker {
+	display: none;
+}
+.st-new > summary:hover {
+	border-color: var(--lp-ink);
+	color: var(--lp-ink);
+}
+.st-new[open] > summary {
+	background: var(--lp-ink);
+	border-color: var(--lp-ink);
+	color: #fbf6ec;
+	margin-bottom: 10px;
+}
+.site-page .st-new .nouvel-exercice {
+	margin: 0;
+}
+
+/* Pratique : la même liste, sans chapitre autour */
+.st-practice {
+	padding-top: clamp(24px, 3vw, 40px);
+	padding-bottom: clamp(56px, 7vw, 88px);
+	display: grid;
+	gap: 14px;
+}
+.st-practice-list {
+	border: 1px solid var(--lp-line-2);
+	border-radius: 13px;
+	background: var(--lp-card);
+	overflow: hidden;
+	border-top: 0;
+}
+.st-practice-list li:last-child a {
+	border-bottom: 0;
+}
+.st-practice-new {
+	border-radius: 13px;
+	border: 1px solid var(--lp-line-2);
+}
+
+.st-empty {
+	border: 1px dashed #d3c7b0;
+	border-radius: 13px;
+	padding: 34px 26px;
+	display: grid;
+	gap: 14px;
+	justify-items: center;
+	text-align: center;
+}
+.st-empty p {
+	margin: 0;
+	font-family: var(--lp-serif);
+	font-size: 21px;
+	color: var(--lp-ink);
+}
+
+/* Pied de page de l'atelier : trois liens et la version, rien de plus */
+.st-footer .lp-wrap {
+	display: flex;
+	gap: 18px;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	padding-top: 24px;
+	padding-bottom: 24px;
+}
+.st-footer nav {
+	display: flex;
+	gap: 20px;
+	flex-wrap: wrap;
+	font-size: 14px;
+}
+.st-footer .site-moteur {
+	margin: 0;
+}
+
+@media (max-width: 900px) {
+	.st-aside {
+		position: static;
+	}
+}
+@media (max-width: 640px) {
+	.st-ex-id {
+		display: none;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.st-card,
+	.st-card:hover {
+		transition: none;
+		transform: none;
+	}
+}
+
+/* --- Panneau latéral repliable (filtres de la Pratique, sommaire de l'atelier) --------- */
+/* Déplié au-dessus de 900 px, où il tient dans une colonne à part ; replié en dessous, où il passerait
+   sinon avant ce qu'on est venu lire. Sans JavaScript il reste déplié : le résumé sert alors d'interrupteur. */
+.fold > summary {
+	list-style: none;
+	cursor: pointer;
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	font-family: var(--lp-mono);
+	font-size: 11px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--lp-rust);
+}
+.fold > summary::-webkit-details-marker {
+	display: none;
+}
+.fold > summary:hover {
+	color: var(--lp-ink);
+}
+.fold[open] > summary {
+	margin-bottom: 16px;
+}
+.fold-count {
+	margin-left: auto;
+	font-family: var(--lp-mono);
+	font-size: 11px;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--lp-ink-3);
+}
+.fold-sign {
+	flex: none;
+	font-size: 15px;
+}
+.fold-sign::before {
+	content: '+';
+}
+.fold[open] .fold-sign::before {
+	content: '−';
+}
+.fold-body {
+	display: grid;
+	gap: 20px;
+	align-content: start;
+}
+.st-aside .fold-body {
+	gap: 12px;
+}
+@media (min-width: 901px) {
+	/* Le résumé n'a plus lieu d'être : le panneau est toujours ouvert (le JS s'en assure, et
+	   `::details-content` le garantit même si le JS n'a pas tourné). */
+	.fold > summary {
+		display: none;
+	}
+	.fold::details-content {
+		content-visibility: visible;
+		block-size: auto;
+	}
+}
+@media (max-width: 900px) {
+	/* Le titre du sommaire est déjà dans le résumé du repli : pas deux fois. */
+	.st-panel-head .st-eyebrow {
+		display: none;
+	}
+	.st-panel-head:not(:has(button:not([hidden]))) {
+		display: none;
+	}
 }

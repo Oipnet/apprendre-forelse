@@ -43,6 +43,12 @@ final readonly class Exercise
     ) {
     }
 
+    /** Le dernier exercice d'un chapitre, reconnaissable à son titre : le pack ne le déclare pas autrement. */
+    public function isBoss(): bool
+    {
+        return 1 === preg_match('/\bboss\b/iu', $this->title);
+    }
+
     /**
      * Les tests écrits par l'apprenant : ses fichiers éditables sous tests/.
      *

@@ -60,14 +60,38 @@ final class StudioTest extends WebTestCase
         $this->assertResponseStatusCodeSame(403, 'Un apprenant ordinaire n\'entre pas dans l\'atelier.');
     }
 
-    public function testUnAuteurVoitLesExercices(): void
+    public function testLAtelierListeLesParcoursPuisLeursExercices(): void
     {
         $client = static::createClient();
         $this->auteur($client);
-        $client->request('GET', '/atelier');
+        $crawler = $client->request('GET', '/atelier');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.exercises', 'Bonjour Symfony');
+        $this->assertSame(['Découverte'], $crawler->filter('.st-card-title')->extract(['_text']));
+        $this->assertSame('/atelier/decouverte', $crawler->filter('.st-card-title')->attr('href'));
+        $this->assertSelectorTextContains('.st-aside-block', 'Gérer les');
+
+        $crawler = $client->request('GET', '/atelier/decouverte');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.st-exercises', 'Bonjour Symfony');
+        $this->assertSelectorTextContains('.st-figures', '2 exercices');
+
+        $client->request('GET', '/atelier/inconnu');
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testLesParcoursSeFiltrentEtSeCherchent(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+        $titres = fn (string $query) => $client->request('GET', '/atelier?'.$query)->filter('.st-card-title')->extract(['_text']);
+
+        $this->assertSame(['Découverte'], $titres('etat=publies'));
+        $this->assertSame([], $titres('etat=preparation'), 'Le pack de démo n\'a aucun parcours en préparation.');
+        $this->assertSame(['Découverte'], $titres('recherche='.rawurlencode('avant-goût')), 'La recherche lit aussi la description.');
+        $this->assertSame([], $titres('recherche=cobol'));
+        $this->assertSelectorTextContains('.st-empty', 'Aucun parcours ne correspond');
+        $this->assertSame(['Découverte'], $titres('etat=nawak'), 'Un état inconnu ne filtre rien.');
     }
 
     public function testEnregistrerReecritLesFichiersDeLExercice(): void
@@ -162,9 +186,9 @@ final class StudioTest extends WebTestCase
         $this->auteur($client);
         $fiche = $this->packs.'/demo/tracks/decouverte/chapters/bonjour/lesson.md';
 
-        $crawler = $client->request('GET', '/atelier');
+        $crawler = $client->request('GET', '/atelier/decouverte');
         $this->assertResponseIsSuccessful();
-        $this->assertSame('/atelier/decouverte/chapitre/bonjour', $crawler->filter('a.lesson-edit')->attr('href'));
+        $this->assertSame('/atelier/decouverte/chapitre/bonjour', $crawler->filter('.st-chapter-foot a')->attr('href'));
 
         $crawler = $client->request('GET', '/atelier/decouverte/chapitre/bonjour');
         $this->assertResponseIsSuccessful();
@@ -193,7 +217,7 @@ final class StudioTest extends WebTestCase
         $this->assertFalse(json_decode((string) $client->getResponse()->getContent(), true)['fiche']);
         $this->assertFileDoesNotExist($fiche, 'Une fiche vide est retirée du chapitre…');
         $this->assertDirectoryDoesNotExist(\dirname($fiche), '… avec son dossier, devenu inutile.');
-        $this->assertSame('📜 Fiche de cours à écrire', trim($client->request('GET', '/atelier')->filter('a.lesson-edit')->text()));
+        $this->assertSame('Écrire la fiche de cours', trim($client->request('GET', '/atelier/decouverte')->filter('.st-chapter-foot a')->text()));
 
         $client->request('GET', '/atelier/decouverte/chapitre/inconnu');
         $this->assertResponseStatusCodeSame(404);
@@ -228,7 +252,7 @@ final class StudioTest extends WebTestCase
     {
         $client = static::createClient();
         $this->auteur($client);
-        $crawler = $client->request('GET', '/atelier');
+        $crawler = $client->request('GET', '/atelier/pratique');
         $this->assertStringContainsString('Lire un en-tête avec #[MapRequestHeader]', $crawler->filter('main')->text());
 
         $client->jsonRequest('POST', '/atelier/pratique/nouveau', ['pack' => 'demo', 'id' => 'mon-essai', 'titre' => 'Mon essai', 'environnement' => 'symfony-8']);

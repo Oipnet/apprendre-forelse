@@ -3,6 +3,6 @@ title: Un point précis
 environment: symfony-8
 published: 2026-09-01
 summary: Pas une nouveauté, mais une question qui revient.
-concepts: [Validator]
+concepts: [Validator, Cache, Formulaires, Messenger, Serializer, Sessions, Sécurité, Twig]
 editable: [src/Controller/BonjourController.php]
 objectives: [{test: testA, label: A}]

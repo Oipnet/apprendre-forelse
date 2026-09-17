@@ -52,7 +52,7 @@ final class TrackController extends AbstractController
                     'state' => $state,
                     'xpEarned' => ($progress[$exerciseId] ?? null)?->getXpEarned(),
                     // Le dernier exercice d'un chapitre titré « Boss » : mis en valeur.
-                    'boss' => null !== $exercise && 1 === preg_match('/\bboss\b/iu', $exercise->title),
+                    'boss' => null !== $exercise && $exercise->isBoss(),
                 ];
                 if (null === $current && null !== $exercise && 'completed' !== $state) {
                     $current = ['exercise' => $exercise, 'chapter' => $number + 1, 'position' => $position + 1, 'started' => 'todo' !== $state];
