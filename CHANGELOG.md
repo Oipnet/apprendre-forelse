@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 1.0.2 — 2026-09-17
+
 Un correctif : les pages du site plus légères et plus lisibles, d'après un relevé PageSpeed mobile. Aucune
 migration, rien à faire sur une instance (le `Caddyfile` suit l'image) ; les packs en `^1.0` fonctionnent tels quels.
 
