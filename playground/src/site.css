@@ -3123,6 +3123,15 @@ body.site-page {
 .organizations #demande .site-form {
 	max-width: none;
 }
+/* Auto-hébergement */
+.self-hosting .lp-hero .narrow-hero {
+	max-width: 860px;
+}
+.self-hosting .lp-code {
+	border-radius: 12px;
+	padding: 20px 22px;
+	font-size: 13px;
+}
 /* Mon compte */
 .ac-wrap {
 	max-width: 1120px;

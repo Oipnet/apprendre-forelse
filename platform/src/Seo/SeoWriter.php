@@ -197,6 +197,16 @@ final readonly class SeoWriter
             ->addStructuredData($this->breadcrumb(['Écoles et entreprises' => $url]));
     }
 
+    public function selfHosting(): void
+    {
+        $url = $this->url('app_self_hosting');
+        $this->seo
+            ->setTitle('Auto-héberger la plateforme, moteur open source | '.PageSeo::SITE_NAME, 'Auto-héberger la plateforme, moteur open source')
+            ->setDescription('Le moteur de Forelse est libre (AGPL-3.0) : installez la plateforme sur votre serveur avec Docker, écrivez vos parcours, ou utilisez ceux de Forelse sur devis.')
+            ->setCanonical($url)
+            ->addStructuredData($this->breadcrumb(['Auto-hébergement' => $url]));
+    }
+
     public function legalNotice(): void
     {
         $this->seo

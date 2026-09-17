@@ -8,6 +8,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+Une mineure, **1.1.0** visée : nouvelle page et nouvelle variable facultative, rien à faire sur une instance.
+
+### Ajouté
+
+- **Page Auto-hébergement** (`/auto-hebergement`) : le moteur libre, ce qu'il contient, l'installation, les parcours
+  de Forelse sur devis et la licence ; liée en pied de page et depuis l'accueil, dans le sitemap. Elle est propre à
+  l'instance de Forelse : nouvelle variable `SELF_HOSTING_PAGE` (`0` par défaut, `1` dans `deploy/compose.yaml`) ;
+  éteinte, la page répond 404 et l'accueil renvoie directement au dépôt.
+- L'accueil ne dit plus que le code « sera publié » : il l'est.
+
 ## 1.0.0 — 2026-09-17
 
 **Première version stable, et publication du code.** Le format de pack est désormais tenu pour stable : seule une

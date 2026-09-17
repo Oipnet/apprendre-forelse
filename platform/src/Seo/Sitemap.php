@@ -6,6 +6,7 @@ use App\Content\ContentRepository;
 use App\Content\Practice;
 use App\Content\Track;
 use App\Controller\LegalController;
+use App\Instance\SelfHostingPage;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -20,7 +21,7 @@ use Symfony\Contracts\Cache\ItemInterface;
  */
 final readonly class Sitemap
 {
-    /** Dernière révision des pages Contact et Écoles et entreprises (textes du moteur). */
+    /** Dernière révision des pages Contact, Écoles et entreprises et Auto-hébergement (textes du moteur). */
     public const string PAGES_UPDATED_AT = '2026-09-17';
 
     public function __construct(
@@ -28,6 +29,7 @@ final readonly class Sitemap
         private UrlGeneratorInterface $urls,
         #[Autowire(service: 'sitemap.cache')]
         private CacheInterface $cache,
+        private SelfHostingPage $selfHosting,
     ) {
     }
 
@@ -62,6 +64,9 @@ final readonly class Sitemap
             }
 
             $entries[] = $this->entry('app_organizations', [], self::PAGES_UPDATED_AT);
+            if ($this->selfHosting->enabled) {
+                $entries[] = $this->entry('app_self_hosting', [], self::PAGES_UPDATED_AT);
+            }
             $entries[] = $this->entry('app_contact', [], self::PAGES_UPDATED_AT);
             $entries[] = $this->entry('app_legal_notice', [], LegalController::UPDATED_AT);
             $entries[] = $this->entry('app_privacy', [], LegalController::UPDATED_AT);

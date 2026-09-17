@@ -24,6 +24,8 @@ services:
       DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/formation?serverVersion=17&charset=utf8
       CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}
       REGISTRATION_INVITE_ONLY: ${REGISTRATION_INVITE_ONLY:-0}
+      # Page de présentation propre à l'instance de Forelse : laissez-la éteinte.
+      SELF_HOSTING_PAGE: ${SELF_HOSTING_PAGE:-0}
       REGISTRATION_ALERT_EMAIL: ${REGISTRATION_ALERT_EMAIL:-}
       SEARCH_INDEXING: ${SEARCH_INDEXING:-1}
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}

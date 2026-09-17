@@ -27,6 +27,7 @@ final readonly class SearchIndexing
         'app_terms',
         'app_contact',
         'app_organizations',
+        'app_self_hosting',
         'app_robots',
         'app_sitemap',
     ];

@@ -239,7 +239,7 @@
                     <span class="lp-eyebrow">Qui est derrière</span>
                     <h2 class="lp-h2 sm">Un développeur, pas une plateforme de cours en masse.</h2>
                 </div>
-                <p class="lp-lead">Conçu par Arnaud Pointet, développeur indépendant (Forelse, Bordeaux), qui écrit chaque exercice comme il aurait voulu apprendre. Le moteur de la plateforme est sous licence open source (AGPL) : son code sera publié à l'ouverture, pour le lire, le faire tourner chez vous et y contribuer.</p>
+                <p class="lp-lead">Conçu par Arnaud Pointet, développeur indépendant (Forelse, Bordeaux), qui écrit chaque exercice comme il aurait voulu apprendre. Le moteur de la plateforme est sous licence open source (AGPL) : son code est publié, pour le lire ou <a href="{{ self_hosting.enabled ? path('app_self_hosting') : constant('App\\Instance\\SelfHostingPage::REPOSITORY') }}">le faire tourner chez vous</a>.</p>
             </div>
         </section>
 

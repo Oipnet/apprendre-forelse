@@ -6,6 +6,8 @@ twig:
         moteur_version: '@App\Version'
         # Google Search Console (méthode « balise HTML ») : vide, pas de balise.
         google_site_verification: '%env(GOOGLE_SITE_VERIFICATION)%'
+        # Page « Auto-hébergement », réservée à l'instance de Forelse (SELF_HOSTING_PAGE).
+        self_hosting: '@App\Instance\SelfHostingPage'
         # Balises de la page publique en cours (voir App\Seo\SeoWriter).
         seo: '@App\Seo\PageSeo'
 

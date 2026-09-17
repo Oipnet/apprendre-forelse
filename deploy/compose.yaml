@@ -16,6 +16,7 @@ services:
       APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
       DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/formation?serverVersion=17&charset=utf8
       REGISTRATION_INVITE_ONLY: ${REGISTRATION_INVITE_ONLY:-1}
+      SELF_HOSTING_PAGE: ${SELF_HOSTING_PAGE:-1}
       SEARCH_INDEXING: ${SEARCH_INDEXING:-1}
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
       # Packs chargés (chemins dans le conteneur, séparés par des virgules). /packs = le volume ci-dessous ;
