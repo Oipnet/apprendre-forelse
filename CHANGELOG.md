@@ -8,7 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
-Une mineure, **1.1.0** visée : nouvelle page et nouvelle variable facultative, rien à faire sur une instance.
+Un correctif : une page propre à l'instance de Forelse (éteinte ailleurs), un en-tête de sécurité et le ménage des
+images au déploiement. Aucune migration, rien à faire sur une instance ; les packs en `^1.0` fonctionnent tels quels.
 
 ### Ajouté
 
