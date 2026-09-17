@@ -53,4 +53,19 @@ final class SandboxIsolationTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(403);
     }
+
+    public function testHttpsImposeSurUnVraiDomaineSeulement(): void
+    {
+        $client = static::createClient();
+
+        // Adresses absolues : une adresse relative reprendrait le schéma de la requête précédente.
+        $client->request('GET', 'https://apprendre.example.test/mentions-legales');
+        $this->assertResponseHeaderSame('Strict-Transport-Security', 'max-age=31536000');
+
+        $client->request('GET', 'http://apprendre.example.test/mentions-legales');
+        $this->assertResponseNotHasHeader('Strict-Transport-Security', 'Rien en HTTP : le navigateur l\'ignorerait.');
+
+        $client->request('GET', 'https://localhost/mentions-legales');
+        $this->assertResponseNotHasHeader('Strict-Transport-Security', 'Jamais pour localhost.');
+    }
 }

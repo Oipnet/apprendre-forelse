@@ -17,6 +17,9 @@ Une mineure, **1.1.0** visée : nouvelle page et nouvelle variable facultative, 
   l'instance de Forelse : nouvelle variable `SELF_HOSTING_PAGE` (`0` par défaut, `1` dans `deploy/compose.yaml`) ;
   éteinte, la page répond 404 et l'accueil renvoie directement au dépôt.
 - L'accueil ne dit plus que le code « sera publié » : il l'est.
+- En-tête `Strict-Transport-Security` (un an) sur les réponses HTTPS, sauf pour une adresse locale.
+- `deploy/nettoyer-images.sh` : après chaque déploiement, le serveur ne garde que les trois images les plus récentes
+  du moteur (celle en service comprise) ; chaque image pèse ~1,6 Go.
 
 ## 1.0.0 — 2026-09-17
 

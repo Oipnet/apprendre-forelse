@@ -329,7 +329,7 @@ jobs:
           EOF
 
       - name: Fichier compose
-        run: scp deploy/compose.yaml vps:/srv/forelse/compose.yaml
+        run: scp deploy/compose.yaml deploy/nettoyer-images.sh vps:/srv/forelse/
 
       - name: Mettre à jour les conteneurs
         run: |
@@ -345,7 +345,7 @@ jobs:
             && docker tag "$APP_IMAGE" "${APP_IMAGE%@*}:edge" \
             && docker compose up -d --remove-orphans --wait --wait-timeout 180 \
             && docker logout ghcr.io \
-            && docker image prune -f > /dev/null'
+            && sh nettoyer-images.sh "${APP_IMAGE%@*}" 3'
 
       - name: Vérifier la réponse de la plateforme
         run: curl -fsSIL --retry 6 --retry-delay 5 --retry-all-errors "${{ vars.APP_URL }}" | head -1
