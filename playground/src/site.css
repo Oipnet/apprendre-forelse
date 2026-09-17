@@ -621,8 +621,9 @@ body.site-page {
 	--lp-line-3: #e7dece;
 	--lp-ink: #16120e;
 	--lp-ink-2: #4a4238;
-	--lp-ink-3: #78705f;
-	--lp-ink-4: #9a9280;
+	/* Encres secondaires : au moins 4,5:1 sur le papier (#f7f3ec, #fbf6ec), exigence WCAG AA du petit texte. */
+	--lp-ink-3: #6a6252;
+	--lp-ink-4: #736b5a;
 	--lp-rust: #9a5b18;
 	--lp-rust-line: #e0c9a4;
 	--lp-dark: #17130f;
@@ -660,6 +661,16 @@ body.site-page {
 }
 .site-page a:hover {
 	color: var(--lp-ink);
+}
+/* Un lien au fil d'un paragraphe ne se distingue pas par sa seule couleur (WCAG 1.4.1) : souligné. */
+.site-page p > a:not([class]) {
+	text-decoration: underline;
+	text-decoration-color: var(--lp-rust-line);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+}
+.site-page p > a:not([class]):hover {
+	text-decoration-color: currentColor;
 }
 .site-page .flash {
 	background: var(--lp-bg-2);
@@ -699,7 +710,7 @@ body.site-page {
 /* Animation refusée : les boucles décoratives s'arrêtent (le JS, lui, ne les lance pas). */
 @media (prefers-reduced-motion: reduce) {
 	.lp-candle,
-	.lp-demo-tabs .status::before,
+	.lp-demo-tabs .status::after,
 	.lp-code .cursor {
 		animation: none;
 	}
@@ -1339,6 +1350,7 @@ body.site-page {
 	color: var(--lp-ink);
 }
 .lp-demo-tabs .status {
+	position: relative;
 	margin-left: auto;
 	display: inline-flex;
 	align-items: center;
@@ -1351,15 +1363,29 @@ body.site-page {
 	height: 7px;
 	border-radius: 50%;
 	background: var(--lp-green);
+}
+/* L'onde autour du point : transform et opacity seulement, animés par le compositeur sans repeindre la page. */
+.lp-demo-tabs .status::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 50%;
+	width: 7px;
+	height: 7px;
+	margin-top: -3.5px;
+	border-radius: 50%;
+	background: rgba(46, 155, 78, 0.55);
 	animation: lp-pulse 2.4s ease-out infinite;
 }
 @keyframes lp-pulse {
-	0%,
-	100% {
-		box-shadow: 0 0 0 0 rgba(46, 155, 78, 0.55);
+	0% {
+		transform: scale(1);
+		opacity: 1;
 	}
-	70% {
-		box-shadow: 0 0 0 7px rgba(46, 155, 78, 0);
+	70%,
+	100% {
+		transform: scale(3);
+		opacity: 0;
 	}
 }
 .lp-code {
@@ -1713,7 +1739,11 @@ body.site-page {
 	font-family: var(--lp-mono);
 	font-size: 10.5px;
 	letter-spacing: 0.08em;
-	opacity: 0.75;
+	/* Des couleurs franches plutôt qu'une opacité : le contraste reste lisible sur les deux fonds. */
+	color: var(--lp-ink-3);
+}
+.site-page .lp-tab[aria-selected='true'] .meta {
+	color: var(--lp-dark-ink-2);
 }
 .lp-track {
 	border: 1px solid var(--lp-line-2);

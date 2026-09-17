@@ -30,6 +30,9 @@
 	# Assets Vite (noms hashés) et archives d'environnement : cache long.
 	@immutable path /build/assets/*
 	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	# Images du site (logos, favicons) : noms stables, un mois de cache. Un visuel modifié change de nom.
+	@img path /img/*
+	header @img Cache-Control "public, max-age=2592000"
 	@envs path /envs/*
 	header @envs Cache-Control "public, max-age=86400"
 	# Le Service Worker de l'aperçu doit toujours être revalidé.

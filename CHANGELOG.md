@@ -8,6 +8,20 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+Un correctif : les pages du site plus légères et plus lisibles, d'après un relevé PageSpeed mobile. Aucune
+migration, rien à faire sur une instance (le `Caddyfile` suit l'image) ; les packs en `^1.0` fonctionnent tels quels.
+
+### Corrigé
+
+- **Performances et accessibilité des pages du site** (relevé PageSpeed mobile de l'accueil) :
+  - logos en WebP (`img/logo-84.webp`, `img/logo-168.webp`, ~75 % plus légers), les PNG disparaissent ;
+  - un mois de cache pour `/img/*` dans le `Caddyfile` (les logos repartaient sans aucune durée de cache) ;
+  - l'onde du point « Aperçu à jour » n'anime plus une ombre (repeinte à chaque image) mais `transform` et
+    `opacity`, pris en charge par le compositeur ;
+  - encres secondaires assombries (`--lp-ink-3`, `--lp-ink-4`) et étiquettes des onglets de parcours sans opacité :
+    le petit texte atteint 4,5:1 (WCAG AA) ;
+  - les liens au fil d'un paragraphe sont soulignés, plus seulement colorés.
+
 ## 1.0.1 — 2026-09-17
 
 Un correctif : une page propre à l'instance de Forelse (éteinte ailleurs), un en-tête de sécurité et le ménage des
