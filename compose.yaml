@@ -17,6 +17,9 @@ services:
       SANDBOX_URL: ${SANDBOX_URL:-http://127.0.0.1:${LOCAL_PORT:-8080}}
       APP_SECRET: ${APP_SECRET:-}
       DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:-formation}@db:5432/formation?serverVersion=17&charset=utf8
+      # Mesure d'audience : rien tant que le profil « mesure » n'est pas démarré (voir plus bas).
+      ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
+      ANALYTICS_WEBSITE_ID: ${ANALYTICS_WEBSITE_ID:-}
     volumes:
       - data:/data
       - config:/config
@@ -42,6 +45,39 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+
+  # Mesure d'audience, pour l'essayer en local :  docker compose --profile mesure up --build -d
+  # Tableau de bord sur http://localhost:3000 (admin / umami), sur la boucle locale seulement, comme en
+  # production. Créez-y le site, puis relancez avec son identifiant pour voir la balise apparaître :
+  #   ANALYTICS_SCRIPT_URL=/mesure/traceur.js ANALYTICS_WEBSITE_ID=… docker compose --profile mesure up -d
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    profiles: ["mesure"]
+    depends_on:
+      umami-base:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:-formation}@db:5432/umami
+      DATABASE_TYPE: postgresql
+      TRACKER_SCRIPT_NAME: traceur.js
+      DISABLE_TELEMETRY: "1"
+      LOCALE: fr-FR
+    ports:
+      - "127.0.0.1:${UMAMI_PORT:-3000}:3000"
+
+  # Crée la base d'Umami à côté de celle de la plateforme, si elle manque, puis s'arrête.
+  umami-base:
+    image: postgres:17-alpine
+    profiles: ["mesure"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-formation}
+    entrypoint: ["sh", "-c"]
+    command:
+      - psql -h db -U formation -d formation -tAc "SELECT 1 FROM pg_database WHERE datname='umami'" | grep -q 1 || psql -h db -U formation -d formation -c 'CREATE DATABASE umami'
+    restart: "no"
 
 volumes:
   data:

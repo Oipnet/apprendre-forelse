@@ -10,6 +10,8 @@ twig:
         self_hosting: '@App\Instance\SelfHostingPage'
         # Balises de la page publique en cours (voir App\Seo\SeoWriter).
         seo: '@App\Seo\PageSeo'
+        # Mesure d'audience (Umami auto-hébergé) : sans les deux variables ANALYTICS_*, aucune balise.
+        analytics: '@App\Instance\Analytics'
 
 when@test:
     twig:

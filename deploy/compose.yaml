@@ -19,6 +19,13 @@ services:
       SELF_HOSTING_PAGE: ${SELF_HOSTING_PAGE:-1}
       SEARCH_INDEXING: ${SEARCH_INDEXING:-1}
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
+      # Mesure d'audience. Le traceur est servi par le site lui-même (docker/Caddyfile) ; l'identifiant
+      # vient du site créé dans le tableau de bord d'Umami. Vide : aucune balise, rien n'est mesuré.
+      ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
+      ANALYTICS_WEBSITE_ID: ${ANALYTICS_WEBSITE_ID:-}
+      # Nom d'hôte qui sert le tableau de bord d'Umami (ex. https://suivi.example.org, avec son enregistrement
+      # DNS). Vide : il n'est pas exposé, et se consulte par un tunnel SSH.
+      ANALYTICS_SERVER_NAME: ${ANALYTICS_SERVER_NAME:-http://127.0.0.1:9998}
       # Packs chargés (chemins dans le conteneur, séparés par des virgules). /packs = le volume ci-dessous ;
       # ajouter /app/examples/packs pour proposer aussi le parcours de démonstration, ouvert aux visiteurs.
       CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}
@@ -72,6 +79,52 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+
+  # Mesure d'audience : combien de visiteurs, sur quelles pages, venus d'où. Umami ne pose pas de cookie
+  # et ne conserve pas d'adresse IP : rien à faire accepter par un bandeau de consentement. Tout reste sur
+  # ce serveur, rien ne part chez un tiers.
+  #
+  # Première mise en route : ouvrir le tableau de bord (tunnel SSH, ou ANALYTICS_SERVER_NAME), se connecter
+  # avec admin / umami, CHANGER CE MOT DE PASSE, créer le site, puis reporter son identifiant dans
+  # ANALYTICS_WEBSITE_ID et ANALYTICS_SCRIPT_URL=/mesure/traceur.js — et `docker compose up -d`.
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    depends_on:
+      umami-base:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?}@db:5432/umami
+      DATABASE_TYPE: postgresql
+      # Pas d'APP_SECRET : Umami le dérive de DATABASE_URL. Changer le mot de passe PostgreSQL déconnecte
+      # donc du tableau de bord, sans rien perdre des mesures.
+      # Le traceur est servi sous ce nom, et non /script.js, que les bloqueurs de publicités connaissent.
+      TRACKER_SCRIPT_NAME: traceur.js
+      DISABLE_TELEMETRY: "1"
+      LOCALE: ${ANALYTICS_LOCALE:-fr-FR}
+      # Au-delà, les visites détaillées sont effacées (les totaux, eux, restent).
+      ANALYTICS_RETENTION_DAYS: ${ANALYTICS_RETENTION_DAYS:-365}
+    ports:
+      # Sur la boucle locale du serveur seulement : rien n'est exposé à l'internet (ni au pare-feu, qui
+      # ne voit pas 127.0.0.1), et le tableau de bord se consulte par un tunnel SSH :
+      #   ssh -L 8081:localhost:3000 <le serveur>   puis http://localhost:8081
+      # La collecte, elle, ne passe pas par ici : Caddy la relaie depuis le conteneur « app ».
+      - "127.0.0.1:${ANALYTICS_LOCAL_PORT:-3000}:3000"
+
+  # Umami tient ses tables dans sa propre base, sur le PostgreSQL déjà là. Le script d'initialisation de
+  # l'image officielle ne tourne qu'à la toute première création du volume : cette base-ci n'existerait
+  # donc jamais sur un serveur déjà en service. Ce conteneur la crée si elle manque, puis s'arrête.
+  umami-base:
+    image: postgres:17-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?}
+    entrypoint: ["sh", "-c"]
+    command:
+      - psql -h db -U formation -d formation -tAc "SELECT 1 FROM pg_database WHERE datname='umami'" | grep -q 1 || psql -h db -U formation -d formation -c 'CREATE DATABASE umami'
+    restart: "no"
 
 volumes:
   data:

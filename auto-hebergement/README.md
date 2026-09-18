@@ -132,9 +132,65 @@ docker compose up -d
 | Mentions légales | `LEGAL_*` | Remplissent `/mentions-legales` et `/confidentialite` ; tant qu'un champ obligatoire manque, les pages le signalent. Les textes sont écrits pour le droit français. |
 | Inscription | `REGISTRATION_INVITE_ONLY` | `1` : sur code de cohorte uniquement (cohortes créées dans `/admin`). |
 | Référencement | `SEARCH_INDEXING`, `GOOGLE_SITE_VERIFICATION` | `0` pour une instance interne ou de préproduction : robots.txt interdit l'indexation. |
+| Audience | `ANALYTICS_*` | Facultative, éteinte par défaut : voir [Savoir qui visite le site](#savoir-qui-visite-le-site). |
 | Mentor et IA | `ANTHROPIC_API_KEY`, `AI_MODEL` | Revue de code et erreurs expliquées pour les apprenants connectés, brouillons dans l'atelier. Chaque appel est facturé sur votre clé ; sans clé, les boutons n'apparaissent pas. |
 | Vente | `STRIPE_*`, `LEGAL_MEDIATOR_*`, `LEGAL_REFUND_DAYS` | Facultatif : **une instance sans tarif reste entièrement gratuite** pour les comptes. Détails dans le [README](../README.md#parcours-payants). |
 | Image | `APP_IMAGE` | Voir [Mettre à jour](#mettre-à-jour). |
+
+## Savoir qui visite le site
+
+Facultatif, et éteint par défaut : rien n'est mesuré tant que vous n'avez pas fait ce qui suit.
+
+[Umami](https://umami.is) tourne à côté de l'instance, dans ses propres tables du PostgreSQL déjà là.
+Il ne pose aucun cookie et ne conserve aucune adresse IP : rien à faire accepter par un bandeau de
+consentement, et aucune donnée ne part chez un tiers. Le traceur est servi par le site lui-même, sous
+`/mesure/traceur.js` : un bloqueur de publicités n'y voit pas un traceur tiers.
+
+1. Démarrez-le :
+
+   ```bash
+   docker compose --profile mesure up -d
+   ```
+
+2. Ouvrez le tableau de bord. Sans nom de domaine pour lui, passez par un tunnel SSH depuis votre poste :
+
+   ```bash
+   ssh -L 8081:localhost:3000 vous@votre-serveur
+   ```
+
+   puis http://localhost:8081. Le port d'Umami n'est publié que sur la boucle locale du serveur
+   (`127.0.0.1`) : il n'est pas exposé à l'internet, et votre pare-feu n'a rien à filtrer. Sans ce
+   tunnel, le tableau de bord n'est joignable que depuis le serveur lui-même.
+
+   ⚠️ Le premier compte est `admin` / `umami`. **Changez ce mot de passe** avant tout, dans *Settings →
+   Profile*.
+
+3. *Settings → Websites → Add website* : donnez un nom et le domaine de votre plateforme. Umami affiche
+   alors un bout de code ; n'en retenez que l'identifiant (`data-website-id`).
+
+4. Reportez-le dans `.env`, avec le chemin du traceur :
+
+   ```dotenv
+   ANALYTICS_SCRIPT_URL=/mesure/traceur.js
+   ANALYTICS_WEBSITE_ID=celui-affiché-par-umami
+   ```
+
+   ```bash
+   docker compose --profile mesure up -d
+   ```
+
+   Les pages publiques portent désormais la balise ; la page « Vie privée » s'adapte d'elle-même et
+   décrit ce qui est mesuré. Le bac à sable, lui, n'est jamais mesuré.
+
+Pour consulter les chiffres sans tunnel, donnez un nom d'hôte au tableau de bord : créez
+l'enregistrement DNS (ex. `suivi.example.org` vers votre serveur), puis dans `.env` :
+
+```dotenv
+ANALYTICS_SERVER_NAME=https://suivi.example.org
+```
+
+Caddy obtiendra son certificat tout seul. **À ne faire qu'une fois le mot de passe changé** : cette
+adresse expose la page de connexion d'Umami sur l'internet.
 
 ## Derrière un reverse proxy
 

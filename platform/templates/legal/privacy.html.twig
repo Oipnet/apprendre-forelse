@@ -20,7 +20,7 @@
         <section id="principes">
             <h2>Ce que le site ne fait pas</h2>
             <ul>
-                <li>Aucun traceur publicitaire, aucun outil de mesure d'audience, aucun bouton de réseau social.</li>
+                <li>Aucun traceur publicitaire, aucun bouton de réseau social{% if analytics.enabled %}, aucun outil tiers : la mesure d'audience est hébergée sur nos serveurs{% else %}, aucun outil de mesure d'audience{% endif %}.</li>
                 <li>Aucune revente ni cession de vos données, à personne.</li>
                 <li>Aucun profilage : la progression sert à vous, pas à vous cibler.</li>
                 <li>Votre code n'est jamais exécuté sur nos serveurs : PHP tourne dans votre navigateur, dans un bac à sable sans accès au disque ni au réseau.</li>
@@ -102,6 +102,14 @@
                 <li><strong>Cookie de session</strong> : vous garde connecté d'une page à l'autre, et protège les formulaires contre les envois forgés. Il disparaît quand vous fermez le navigateur ou vous déconnectez.</li>
                 <li><strong>Stockage local (<span class="lp-mono">localStorage</span>)</strong> : sans compte, votre code sur les exercices libres est gardé dans votre navigateur, et nulle part ailleurs. Si vous créez un compte ensuite, cette progression est transférée sur votre compte puis effacée du navigateur.</li>
                 <li><strong>Bac à sable</strong> : l'aperçu de votre code s'affiche depuis <span class="lp-mono">{{ sandboxHost }}</span>, dans une page isolée. Ce domaine ne dépose aucun cookie ; il ne conserve que les fichiers techniques nécessaires à l'exécution de PHP dans votre navigateur.</li>
+                {%- if analytics.enabled %}
+                <li><strong>Mesure d'audience</strong> : pour savoir combien de personnes visitent le site et par où elles
+                    arrivent, chaque page vue est comptée par un logiciel que nous hébergeons nous-mêmes
+                    (<a href="https://umami.is" rel="noopener">Umami</a>). Il ne dépose ni cookie ni identifiant de visiteur :
+                    il retient la page, celle d'où vous venez, le pays, la langue et le type d'appareil. Votre adresse IP sert
+                    au calcul puis est jetée, sans jamais être enregistrée. Rien ne permet de vous reconnaître d'une visite à
+                    l'autre, ni de vous suivre sur un autre site ; ces mesures ne sont partagées avec personne.</li>
+                {%- endif %}
             </ul>
         </section>
 

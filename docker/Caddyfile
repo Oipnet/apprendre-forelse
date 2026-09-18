@@ -39,5 +39,29 @@
 	@sw path /preview-sw.js
 	header @sw Cache-Control "no-cache"
 
-	php_server
+	# Mesure d'audience : le traceur et son point de collecte sont servis par le site lui-même, et non
+	# depuis le domaine d'Umami. Même origine = rien à autoriser côté navigateur, et un bloqueur de
+	# publicités n'y voit pas un traceur tiers. Le traceur déduit son point de collecte du dossier de son
+	# propre src : /mesure/traceur.js envoie donc à /mesure/api/send, d'où le préfixe commun, retiré ici.
+	# Seuls ces deux chemins passent : le reste d'Umami (tableau de bord, API d'administration) n'est pas
+	# exposé par cette origine. Sans conteneur « umami », ces deux chemins répondent 502 et rien d'autre
+	# ne change : une instance auto-hébergée sans mesure d'audience n'a rien à retirer d'ici.
+	@mesure path /mesure/traceur.js /mesure/api/send
+	handle @mesure {
+		uri strip_prefix /mesure
+		reverse_proxy {$ANALYTICS_UPSTREAM:umami:3000}
+	}
+
+	handle {
+		php_server
+	}
+}
+
+# Tableau de bord d'Umami, sur son propre nom d'hôte (ANALYTICS_SERVER_NAME, ex. https://suivi.example.org) :
+# l'image officielle est construite pour la racine d'un domaine, elle ne sait pas vivre sous un sous-chemin.
+# Variable absente, le cas par défaut : Caddy écoute une adresse locale inutilisée, le tableau de bord n'est
+# donc accessible que par un tunnel SSH (voir auto-hebergement/README.md). À n'ouvrir qu'après avoir changé
+# le mot de passe du compte « admin », qui vaut « umami » à la première installation.
+{$ANALYTICS_SERVER_NAME:http://127.0.0.1:9998} {
+	reverse_proxy {$ANALYTICS_UPSTREAM:umami:3000}
 }

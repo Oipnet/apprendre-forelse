@@ -8,6 +8,21 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Mesure d'audience, facultative et éteinte par défaut : [Umami](https://umami.is) tourne à côté de
+  l'instance, dans ses propres tables du PostgreSQL déjà là. Sans cookie ni adresse IP conservée : rien à
+  faire accepter par un bandeau de consentement, et rien qui parte chez un tiers. Le traceur est servi par
+  le site lui-même (`/mesure/traceur.js`, que Caddy relaie à Umami avec son point de collecte), donc dans
+  la même origine que les pages : un bloqueur de publicités n'y voit pas un traceur tiers, et seuls ces
+  deux chemins sont exposés — ni le tableau de bord, ni l'API d'administration. `ANALYTICS_SCRIPT_URL` et
+  `ANALYTICS_WEBSITE_ID` vides, le cas par défaut : aucune balise n'est posée. Le bac à sable, qui n'hérite
+  pas du gabarit du site, n'est jamais mesuré, et la page « Vie privée » décrit d'elle-même ce qui est
+  compté dès que la mesure est active. Le tableau de bord d'Umami n'est publié que sur la boucle locale
+  du serveur et se consulte par un tunnel SSH ; `ANALYTICS_SERVER_NAME` lui donne un nom d'hôte public
+  si on le souhaite, mot de passe changé d'abord. Mise en route dans
+  [auto-hebergement/README.md](auto-hebergement/README.md#savoir-qui-visite-le-site).
+
 ## 1.2.2 — 2026-09-18
 
 ### Corrigé

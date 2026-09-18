@@ -29,6 +29,10 @@ services:
       REGISTRATION_ALERT_EMAIL: ${REGISTRATION_ALERT_EMAIL:-}
       SEARCH_INDEXING: ${SEARCH_INDEXING:-1}
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
+      # Mesure d'audience (facultative, voir « Savoir qui visite le site » dans le README).
+      ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
+      ANALYTICS_WEBSITE_ID: ${ANALYTICS_WEBSITE_ID:-}
+      ANALYTICS_SERVER_NAME: ${ANALYTICS_SERVER_NAME:-http://127.0.0.1:9998}
       MAILER_DSN: ${MAILER_DSN:-null://null}
       MAILER_FROM: ${MAILER_FROM:-ne-pas-repondre@example.com}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}
@@ -76,6 +80,51 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+
+  # Mesure d'audience, facultative : combien de visiteurs, sur quelles pages, venus d'où. Umami ne pose
+  # pas de cookie et ne conserve aucune adresse IP, donc pas de bandeau de consentement à afficher, et
+  # tout reste sur votre serveur. Ces deux services ne démarrent qu'avec le profil « mesure » :
+  #   docker compose --profile mesure up -d
+  # (ou COMPOSE_PROFILES=mesure dans .env, pour ne plus avoir à le taper). Sans lui, rien ne tourne
+  # et rien n'est mesuré. Mise en route détaillée dans le README.
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    profiles: ["mesure"]
+    restart: unless-stopped
+    depends_on:
+      umami-base:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/umami
+      DATABASE_TYPE: postgresql
+      # Pas d'APP_SECRET : Umami le dérive de DATABASE_URL. Changer le mot de passe PostgreSQL déconnecte
+      # donc du tableau de bord, sans rien perdre des mesures.
+      # Le traceur est servi sous ce nom, et non /script.js, que les bloqueurs de publicités connaissent.
+      TRACKER_SCRIPT_NAME: traceur.js
+      DISABLE_TELEMETRY: "1"
+      LOCALE: ${ANALYTICS_LOCALE:-fr-FR}
+      ANALYTICS_RETENTION_DAYS: ${ANALYTICS_RETENTION_DAYS:-365}
+    ports:
+      # Sur la boucle locale du serveur seulement : rien n'est exposé à l'internet (ni au pare-feu, qui
+      # ne voit pas 127.0.0.1). Le tableau de bord se consulte par un tunnel SSH, voir le README.
+      # La collecte, elle, ne passe pas par ici : Caddy la relaie depuis le conteneur « app ».
+      - "127.0.0.1:${ANALYTICS_LOCAL_PORT:-3000}:3000"
+
+  # Umami tient ses tables dans sa propre base, sur le PostgreSQL déjà là. Le script d'initialisation de
+  # l'image officielle ne tourne qu'à la création du volume : sur une instance déjà en service, cette
+  # base n'existerait jamais. Ce conteneur la crée si elle manque, puis s'arrête.
+  umami-base:
+    image: postgres:17-alpine
+    profiles: ["mesure"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}
+    entrypoint: ["sh", "-c"]
+    command:
+      - psql -h db -U formation -d formation -tAc "SELECT 1 FROM pg_database WHERE datname='umami'" | grep -q 1 || psql -h db -U formation -d formation -c 'CREATE DATABASE umami'
+    restart: "no"
 
 volumes:
   data:
