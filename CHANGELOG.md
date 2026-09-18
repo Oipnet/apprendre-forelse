@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 1.1.0 — 2026-09-18
+
 ### Ajouté
 
 - **Filtres de la Pratique** : une recherche (titre, résumé, notions), des notions cumulables avec leur nombre
