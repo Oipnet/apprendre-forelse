@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 1.2.0 — 2026-09-18
+
 Une mineure : le simulateur Nuxt connaît les garde-fous d'une application (middlewares, cookies, page
 d'erreur, `<head>`) et sait faire écrire ses tests à l'apprenant, composants compris. Les packs existants
 fonctionnent sans changement ; un pack dont les exercices utilisent l'environnement de test `nuxt`
