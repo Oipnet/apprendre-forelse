@@ -8,6 +8,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 1.2.2 — 2026-09-18
+
+### Corrigé
+
+- Playground : la correction de la 1.2.1 était incomplète — le rappel d'un exercice déjà réussi appelait
+  d'autres fonctions déclarées plus bas, et l'exercice restait bloqué sur « Démarrage de PHP ». Ce rappel
+  est maintenant posé une fois tout déclaré, à la fin de la mise en place.
+- Playground : une erreur pendant la mise en place s'affiche à la place de l'écran de démarrage, au lieu
+  de le laisser tourner indéfiniment.
+
 ## 1.2.1 — 2026-09-18
 
 ### Corrigé

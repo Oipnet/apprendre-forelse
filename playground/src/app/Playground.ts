@@ -331,7 +331,6 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		exercise.lesson && config.progress.mode === 'api'
 			? `${before}<a class="lesson-unlocked" href="${escapeHtml(exercise.lesson.url)}">📜 Fiche de cours du chapitre « ${escapeHtml(exercise.lesson.title)} » →</a>`
 			: '';
-	if (completed) markCompleted(true);
 
 	async function onSuccess() {
 		const panel = $('#success');
@@ -404,14 +403,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			});
 		}
 	};
-	// Déclaration de fonction, et non `const` : `markCompleted` l'appelle au chargement d'un exercice déjà
-	// réussi, avant cette ligne — une fonction fléchée serait encore dans sa zone morte (ReferenceError).
-	function showReview(review: Parameters<typeof renderReview>[0]) {
+	const showReview = (review: Parameters<typeof renderReview>[0]) => {
 		const box = $('#review');
 		box.hidden = false;
 		box.innerHTML = renderReview(review, (source) => markdown(source, true));
 		bindFileLinks(box);
-	}
+	};
 	/** Demande au mentor d'expliquer une erreur, et affiche sa réponse sous les objectifs. */
 	const explain = async (button: HTMLButtonElement, error: string, source: ErrorSource) => {
 		if (!mentor) return;
@@ -589,6 +586,11 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	// --- Retour sur l'exercice (apprenant connecté) ----------------------------------------
 	if (config.feedbackUrl) new FeedbackDialog(root, $<HTMLButtonElement>('#feedback'), config.feedbackUrl, () => ({ hintsUsed, completed }));
+
+	// Rappel « déjà réussi » : posé ici, une fois tout déclaré. Il affiche la revue de code, la fiche de
+	// cours et le bouton avant/après, qui vivent plus bas dans ce fichier — appelé plus haut, il tombait
+	// sur des fonctions encore dans leur zone morte (ReferenceError, et l'exercice ne s'ouvrait plus).
+	if (completed) markCompleted(true);
 
 	// --- Prêt ----------------------------------------------------------------------------
 	runButton.disabled = false;
