@@ -1,6 +1,6 @@
 {
   "name": "@formation/playground",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Îlot TypeScript du moteur : runtime PHP WebAssembly, éditeur, aperçu isolé.",
   "scripts": {
     "dev": "vite",

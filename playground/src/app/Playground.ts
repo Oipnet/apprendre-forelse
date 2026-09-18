@@ -404,12 +404,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			});
 		}
 	};
-	const showReview = (review: Parameters<typeof renderReview>[0]) => {
+	// Déclaration de fonction, et non `const` : `markCompleted` l'appelle au chargement d'un exercice déjà
+	// réussi, avant cette ligne — une fonction fléchée serait encore dans sa zone morte (ReferenceError).
+	function showReview(review: Parameters<typeof renderReview>[0]) {
 		const box = $('#review');
 		box.hidden = false;
 		box.innerHTML = renderReview(review, (source) => markdown(source, true));
 		bindFileLinks(box);
-	};
+	}
 	/** Demande au mentor d'expliquer une erreur, et affiche sa réponse sous les objectifs. */
 	const explain = async (button: HTMLButtonElement, error: string, source: ErrorSource) => {
 		if (!mentor) return;

@@ -8,6 +8,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 1.2.1 — 2026-09-18
+
+### Corrigé
+
+- Playground : un exercice déjà réussi dont la revue de code avait été enregistrée n'ouvrait plus du tout
+  — l'écran restait sur « Démarrage de PHP », faute d'une fonction appelée avant sa déclaration
+  (`ReferenceError`). Le rappel de réussite affiche de nouveau la revue.
+
 ## 1.2.0 — 2026-09-18
 
 Une mineure : le simulateur Nuxt connaît les garde-fous d'une application (middlewares, cookies, page
