@@ -28,6 +28,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   `Classe::`, `$var->` et l'aide à la signature — avec l'ajout automatique du `use`. Une classe qui en étend une
   autre hérite de ses méthodes, y compris quand le parent vient de l'index (un contrôleur, un repository).
 
+### Corrigé
+
+- Complétion : dans les arguments d'un attribut, les noms de classes sont proposés dès la parenthèse ouverte
+  (`#[FormField(`), là où il fallait jusqu'ici avoir tapé une majuscule. Pas à l'intérieur d'un tableau
+  d'options, où l'on attend des clés et non des classes.
+
 ## 1.1.0 — 2026-09-18
 
 ### Ajouté

@@ -275,8 +275,14 @@ export function registerCompletion(
 				};
 			}
 
-			// Noms de classes (types, appels statiques) + snippets Symfony.
-			const suggestions = /^[A-Z]/.test(word.word) ? classItems(range, model, ctx, () => true) : [];
+			// Noms de classes (types, appels statiques) + snippets Symfony. Ailleurs on attend une majuscule
+			// avant de proposer les 900 classes de l'index ; dans les arguments d'un attribut, un nom de classe
+			// est si probable (#[FormField(EmailType::class)]) qu'on les propose dès la parenthèse ouverte —
+			// mais pas à l'intérieur d'un tableau d'options, où l'on attend des clés.
+			const argumentDAttribut = /#\[\s*[\w\\]+\s*\((?:[^()\[\]]*,)?\s*$/.test(line);
+			const suggestions = /^[A-Z]/.test(word.word) || (argumentDAttribut && word.word === '')
+				? classItems(range, model, ctx, () => true)
+				: [];
 			suggestions.push(...framework === 'laravel' ? laravelSnippets(range, model, ctx, useEdit) : phpSnippets(range, model, ctx, useEdit));
 			return { suggestions };
 		},
