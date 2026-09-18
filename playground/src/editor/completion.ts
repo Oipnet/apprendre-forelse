@@ -9,29 +9,10 @@
  * Twig : snippets, noms de routes dans path(), variables passées par les contrôleurs.
  */
 import { monaco, pathOf } from './monaco';
+import { projectClasses, type ClassInfo, type MethodInfo } from './project-classes';
 
 type Languages = typeof monaco.languages;
 const { CompletionItemKind: Kind, CompletionItemInsertTextRule: Rule } = monaco.languages;
-
-interface MethodInfo {
-	name: string;
-	params: string[];
-	returns: string;
-	static: boolean;
-	protected: boolean;
-	declaringClass: string;
-	doc: string;
-}
-
-interface ClassInfo {
-	short: string;
-	kind: 'class' | 'interface' | 'trait' | 'enum' | 'attribute';
-	abstract: boolean;
-	doc: string;
-	constructor: string[];
-	constants: string[];
-	methods: MethodInfo[];
-}
 
 export interface CompletionIndex {
 	classes: Record<string, ClassInfo>;
@@ -114,8 +95,31 @@ function openCall(code: string): { start: number; commas: number; current: strin
 	return top?.paren ? { start: top.start, commas: top.commas, current: code.slice(top.argStart) } : undefined;
 }
 
-export function registerCompletion(languages: Languages, index: CompletionIndex, allModels: () => monaco.editor.ITextModel[], framework: 'symfony' | 'laravel' | 'docker' | 'nuxt' = 'symfony') {
-	const classes = index.classes;
+export function registerCompletion(
+	languages: Languages,
+	index: CompletionIndex,
+	allModels: () => monaco.editor.ITextModel[],
+	framework: 'symfony' | 'laravel' | 'docker' | 'nuxt' = 'symfony',
+	/** Fichiers du projet, contenu à jour : leurs classes s'ajoutent à l'index (voir refreshProject). */
+	projectFiles: () => Record<string, string> = () => ({}),
+) {
+	const classes: Record<string, ClassInfo> = { ...index.classes };
+	let projectSnapshot = '';
+
+	/**
+	 * Les classes de l'apprenant (`App\Entity\Plat`, le DTO qu'il vient d'écrire) ne sont dans aucun index :
+	 * elles n'existent que le temps de l'exercice. On les relit de ses fichiers et on les fond dans l'index, si
+	 * bien que tout ce qui suit — `new`, types, `use`, `::`, `->`, aide à la signature — les traite comme les
+	 * autres, `use` ajouté automatiquement compris. Relu à chaque demande, analysé seulement au changement.
+	 */
+	function refreshProject() {
+		const php = Object.entries(projectFiles()).filter(([path]) => path.endsWith('.php'));
+		const snapshot = php.map(([path, code]) => `${path}\u0000${code}`).join('\u0001');
+		if (snapshot === projectSnapshot) return;
+		projectSnapshot = snapshot;
+		for (const fqcn of Object.keys(classes)) delete classes[fqcn];
+		Object.assign(classes, index.classes, projectClasses(Object.fromEntries(php), index.classes));
+	}
 
 	/** Méthode par nom, en tenant compte de l'héritage déjà aplati par l'index. */
 	const methodsOf = (fqcn: string | undefined) => (fqcn ? (classes[fqcn]?.methods ?? []) : []);
@@ -201,6 +205,7 @@ export function registerCompletion(languages: Languages, index: CompletionIndex,
 	languages.registerCompletionItemProvider('php', {
 		triggerCharacters: ['>', ':', '[', ' ', '\\'],
 		provideCompletionItems(model, position) {
+			refreshProject();
 			const line = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
 			const code = model.getValueInRange(new monaco.Range(1, 1, position.lineNumber, position.column));
 			const ctx = analyse(model.getValue());
@@ -306,6 +311,7 @@ export function registerCompletion(languages: Languages, index: CompletionIndex,
 		signatureHelpTriggerCharacters: ['(', ','],
 		signatureHelpRetriggerCharacters: [',', ':'],
 		provideSignatureHelp(model, position) {
+			refreshProject();
 			const code = model.getValueInRange(new monaco.Range(1, 1, position.lineNumber, position.column));
 			const call = openCall(code);
 			if (!call) return null;

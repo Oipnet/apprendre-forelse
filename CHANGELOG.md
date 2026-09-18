@@ -22,6 +22,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   d'EventDispatcher, les migrations et événements Doctrine, `Twig\Environment`, `ValidatorInterface`,
   `FormError`, `PropertyAccess`, plus côté Laravel `Illuminate\Foundation\Configuration`, `Queueable`,
   `Illuminate\Queue\Attributes` et Carbon.
+- L'éditeur complète les classes du projet : `App\Entity\Plat`, le DTO qu'on vient d'écrire, l'énumération du
+  dossier d'à côté. Elles n'existent que le temps de l'exercice, donc dans aucun index : elles sont relues des
+  fichiers et fondues dans celui de l'environnement, si bien que tout en profite — `new`, types, `use`,
+  `Classe::`, `$var->` et l'aide à la signature — avec l'ajout automatique du `use`. Une classe qui en étend une
+  autre hérite de ses méthodes, y compris quand le parent vient de l'index (un contrôleur, un repository).
 
 ## 1.1.0 — 2026-09-18
 

@@ -291,7 +291,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	fetch(exercise.environment.completionIndexUrl)
 		.then((r) => r.json() as Promise<CompletionIndex>)
-		.then((index) => registerCompletion(monaco.languages, index, () => monaco.editor.getModels(), framework))
+		// Les fichiers du projet, édités compris : la complétion y lit les classes de l'apprenant.
+		.then((index) => registerCompletion(monaco.languages, index, () => monaco.editor.getModels(), framework, () => ({ ...initial, ...current })))
 		.catch((e) => console.warn('Complétion indisponible', e));
 
 	// --- Tests et réussite ---------------------------------------------------------------
