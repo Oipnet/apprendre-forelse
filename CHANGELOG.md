@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 1.3.0 — 2026-09-18
+
 ### Ajouté
 
 - Mesure d'audience, facultative et éteinte par défaut : [Umami](https://umami.is) tourne à côté de
