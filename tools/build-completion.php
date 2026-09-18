@@ -46,6 +46,8 @@ const NAMESPACES = [
     'Doctrine\\DBAL\\Types\\Types',
     // Formulaires et validation
     'Symfony\\Component\\Form\\AbstractType',
+    'Symfony\\Component\\Form\\AbstractTypeExtension',
+    'Symfony\\Component\\Form\\Attribute\\',
     'Symfony\\Component\\Form\\FormBuilderInterface',
     'Symfony\\Component\\Form\\FormInterface',
     'Symfony\\Component\\Form\\Extension\\Core\\Type\\',
