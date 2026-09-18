@@ -14,6 +14,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   par attributs (`#[AsFormType]`, `#[FormField]`). Sans `symfony/security-csrf` : les formulaires de cet
   environnement n'ont pas de jeton CSRF, que rien ne poserait dans un test ni dans le bac à sable.
   La complétion de l'éditeur connaît `Symfony\Component\Form\Attribute\` et `AbstractTypeExtension`.
+- `content:check` vérifie la complétion de l'éditeur : une classe que la solution importe et que l'état de départ
+  n'a pas doit figurer dans l'index de l'environnement, sinon l'apprenant devrait l'écrire de mémoire. Les classes
+  que l'exercice fournit lui-même en sont dispensées, et les environnements sans PHP ignorés.
+- Index de complétion : 36 classes citées par des solutions existantes y manquaient. `tools/build-completion.php`
+  gagne le Workflow, Mailer, Mime, `TemplatedEmail`, l'horloge, le cache, les événements du noyau et
+  d'EventDispatcher, les migrations et événements Doctrine, `Twig\Environment`, `ValidatorInterface`,
+  `FormError`, `PropertyAccess`, plus côté Laravel `Illuminate\Foundation\Configuration`, `Queueable`,
+  `Illuminate\Queue\Attributes` et Carbon.
 
 ## 1.1.0 — 2026-09-18
 

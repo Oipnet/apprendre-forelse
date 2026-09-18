@@ -83,6 +83,30 @@ final class ExerciseCheckerTest extends TestCase
         $this->assertStringContainsString('La fonctionnalité arrive en 99.0, or l\'environnement « symfony-8 » a symfony/framework-bundle', implode("\n", $result->errors));
     }
 
+    /**
+     * Une classe que la solution importe sans que l'index de complétion la connaisse : l'apprenant devrait
+     * l'écrire de mémoire. Celles que l'exercice fournit lui-même n'ont, elles, rien à y faire.
+     */
+    public function testUnImportAbsentDeLIndexDeCompletionEstSignale(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->mirror(self::ROOT.'/examples/packs/demo', $this->tmp.'/demo');
+        $solution = $this->tmp.'/demo/tracks/decouverte/exercises/01-bonjour/solution/src';
+        $filesystem->dumpFile($solution.'/Salutation.php', "<?php\n\nnamespace App;\n\nclass Salutation\n{\n}\n");
+        $controller = $solution.'/Controller/BonjourController.php';
+        $filesystem->dumpFile($controller, str_replace(
+            'use Symfony\Component\HttpFoundation\Response;',
+            "use App\Salutation;\nuse Symfony\Component\Finder\Finder;\nuse Symfony\Component\HttpFoundation\Response;",
+            (string) file_get_contents($controller),
+        ));
+
+        [$content, $checker] = $this->checker($this->tmp);
+        $errors = implode("\n", $checker->check($content->findExercise('decouverte', '01-bonjour'))->errors);
+
+        $this->assertStringContainsString('Complétion : Symfony\Component\Finder\Finder hors de l\'index de « symfony-8 »', $errors);
+        $this->assertStringNotContainsString('App\Salutation', $errors, 'Une classe fournie par l\'exercice n\'a pas à être dans l\'index.');
+    }
+
     public function testUneSolutionQuiNePassePasEstSignalee(): void
     {
         // Copie du pack de démo, avec une « solution » identique au starter.
