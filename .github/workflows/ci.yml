@@ -229,7 +229,9 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # mode=min (les couches finales seulement) : mode=max remplissait 9,3 des 10 Go de cache du
+          # dépôt et faisait évincer le cache des environnements, reconstruits à chaque passage.
+          cache-to: type=gha,mode=min
 
       # L'empreinte plutôt qu'une étiquette : elle désigne cette image-ci et aucune autre.
       # (En minuscules : le nom du dépôt ne l'est pas forcément, un nom d'image doit l'être.)
@@ -284,12 +286,50 @@ jobs:
   # et secret CONTENU_TOKEN (jeton fine-grained : Contents → Read and write sur le dépôt de contenu).
   contenu:
     name: Revérifier le contenu
-    needs: moteur
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && vars.CONTENU_DEPOT != ''
+    # Sur une étiquette de version, le job « moteur » est ignoré (l'image de main est reprise) : d'où
+    # !cancelled() plutôt qu'un simple needs, qui ferait ignorer celui-ci avec lui.
+    needs: [reprise, moteur]
+    if: >-
+      ${{ !cancelled() && needs.reprise.result == 'success' && needs.moteur.result != 'failure' && vars.CONTENU_DEPOT != ''
+      && (((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main')
+      || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      # Revérifier tous les packs coûte une vingtaine de minutes de CI au dépôt de contenu : on ne le
+      # demande que lorsque la poussée peut changer le résultat d'un content:check. Une publication de
+      # version et un lancement manuel revérifient toujours tout, quoi qu'ils aient touché.
+      - name: Le moteur d'exercices a-t-il changé ?
+        id: portee
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AVANT: ${{ github.event.before }}
+          EVENEMENT: ${{ github.event_name }}
+          REFERENCE: ${{ github.ref }}
+        run: |
+          if [ "$EVENEMENT" != 'push' ] || [ "$REFERENCE" != 'refs/heads/main' ]; then
+            echo 'Étiquette de version ou lancement manuel : revérification complète.'
+            echo 'verifier=oui' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Une première poussée ou une réécriture d'historique laisse un « avant » nul : on ne devine pas.
+          if ! fichiers=$(gh api "repos/$GITHUB_REPOSITORY/compare/$AVANT...$GITHUB_SHA" --paginate --jq '.files[].filename'); then
+            echo "::warning::Comparaison $AVANT...$GITHUB_SHA impossible : revérification par précaution."
+            echo 'verifier=oui' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Ce qui peut faire passer un exercice du vert au rouge : les environnements d'exécution et
+          # leurs outils, la lecture des packs, la version du moteur (que pack.yaml contraint).
+          if printf '%s\n' "$fichiers" | grep -qE '^(environments/|tools/|platform/src/Content/|platform/src/Version\.php|VERSION|Dockerfile)'; then
+            echo 'Le moteur d'"'"'exercices a changé : revérification du contenu.'
+            echo 'verifier=oui' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Rien qui touche aux exercices : le contenu déjà vérifié reste valable.'
+            echo 'verifier=non' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Déclencher le workflow du dépôt de contenu
+        if: steps.portee.outputs.verifier == 'oui'
         env:
           GH_TOKEN: ${{ secrets.CONTENU_TOKEN }}
         run: gh api "repos/${{ vars.CONTENU_DEPOT }}/dispatches" -f event_type=moteur-mis-a-jour -f "client_payload[moteur]=${{ github.sha }}"
