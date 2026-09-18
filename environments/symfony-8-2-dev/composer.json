@@ -11,6 +11,7 @@
         "symfony/console": "8.2.*",
         "symfony/dotenv": "8.2.*",
         "symfony/flex": "^2.11",
+        "symfony/form": "8.2.*",
         "symfony/framework-bundle": "8.2.*",
         "symfony/property-access": "8.2.*",
         "symfony/runtime": "8.2.*",

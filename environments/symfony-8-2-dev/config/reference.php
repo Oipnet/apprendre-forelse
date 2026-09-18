@@ -186,6 +186,23 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         base_urls?: Param|string|list<scalar|Param|null>,
  *     }>,
  * }
+ * @psalm-type SerializerConfig = bool|array{
+ *     enabled?: bool|Param, // Default: true
+ *     enable_attributes?: bool|Param, // Default: true
+ *     name_converter?: scalar|Param|null,
+ *     circular_reference_handler?: scalar|Param|null,
+ *     max_depth_handler?: scalar|Param|null,
+ *     mapping?: array{
+ *         paths?: list<scalar|Param|null>,
+ *     },
+ *     default_context?: array<string, mixed>,
+ *     named_serializers?: array<string, array{ // Default: []
+ *         name_converter?: scalar|Param|null,
+ *         default_context?: array<string, mixed>,
+ *         include_built_in_normalizers?: bool|Param, // Whether to include the built-in normalizers // Default: true
+ *         include_built_in_encoders?: bool|Param, // Whether to include the built-in encoders // Default: true
+ *     }>,
+ * }
  * @psalm-type ValidationConfig = bool|array{
  *     enabled?: bool|Param, // Default: true
  *     enable_attributes?: bool|Param, // Default: true
@@ -245,7 +262,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         cookie_name?: scalar|Param|null, // The name of the cookie to use when using stateless protection. // Default: "csrf-token"
  *     },
  *     form?: bool|array{ // Form configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Default: true
  *         csrf_protection?: bool|array{
  *             enabled?: scalar|Param|null, // Default: null
  *             token_id?: scalar|Param|null, // Default: null
@@ -299,7 +316,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     asset_mapper?: mixed,
  *     translator?: mixed,
  *     validation?: ValidationConfig,
- *     serializer?: mixed,
+ *     serializer?: SerializerConfig,
  *     property_access?: PropertyAccessConfig,
  *     type_info?: TypeInfoConfig,
  *     property_info?: PropertyInfoConfig,
@@ -444,6 +461,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     router?: RouterConfig,
  *     cache?: CacheConfig,
  *     asset?: AssetConfig,
+ *     serializer?: SerializerConfig,
  *     validation?: ValidationConfig,
  *     type_info?: TypeInfoConfig,
  *     property_access?: PropertyAccessConfig,
@@ -458,6 +476,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         router?: RouterConfig,
  *         cache?: CacheConfig,
  *         asset?: AssetConfig,
+ *         serializer?: SerializerConfig,
  *         validation?: ValidationConfig,
  *         type_info?: TypeInfoConfig,
  *         property_access?: PropertyAccessConfig,
@@ -473,6 +492,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         router?: RouterConfig,
  *         cache?: CacheConfig,
  *         asset?: AssetConfig,
+ *         serializer?: SerializerConfig,
  *         validation?: ValidationConfig,
  *         type_info?: TypeInfoConfig,
  *         property_access?: PropertyAccessConfig,
@@ -488,6 +508,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         router?: RouterConfig,
  *         cache?: CacheConfig,
  *         asset?: AssetConfig,
+ *         serializer?: SerializerConfig,
  *         validation?: ValidationConfig,
  *         type_info?: TypeInfoConfig,
  *         property_access?: PropertyAccessConfig,

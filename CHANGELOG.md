@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Environnement `symfony-8-2-dev` : `symfony/form` est installé, pour les exercices de Pratique sur les formulaires
+  par attributs (`#[AsFormType]`, `#[FormField]`). Sans `symfony/security-csrf` : les formulaires de cet
+  environnement n'ont pas de jeton CSRF, que rien ne poserait dans un test ni dans le bac à sable.
+
 ## 1.1.0 — 2026-09-18
 
 ### Ajouté
