@@ -23,6 +23,19 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   si on le souhaite, mot de passe changé d'abord. Mise en route dans
   [auto-hebergement/README.md](auto-hebergement/README.md#savoir-qui-visite-le-site).
 
+### Corrigé
+
+- Environnement Laravel : tout test de fonctionnalité qui envoyait un `POST`, `PUT`, `PATCH` ou `DELETE` sur
+  une route du groupe `web` répondait 419 (« CSRF token mismatch ») dans le navigateur, alors qu'il passait en
+  PHPUnit natif. Laravel n'exempte les tests de la vérification CSRF que si `runningInConsole()` **et**
+  `runningUnitTests()` sont vrais ; or le premier se déduit de `PHP_SAPI`, qui vaut `wasm` sous php-wasm, ni
+  `cli` ni `phpdbg`. Le `APP_ENV=testing` déjà forcé dans `phpunit.xml` ne couvrait donc que la moitié de la
+  condition. `APP_RUNNING_IN_CONSOLE=true` y est ajouté, ce qui aligne le navigateur sur PHPUnit natif — où
+  cette valeur est vraie de toute façon — sans toucher à l'aperçu, qui continue de vérifier le jeton pour de
+  vrai (l'exercice « Le premier garde-fou » du parcours Laravel en dépend). À refaire suivre aux instances
+  auto-hébergées : l'archive de l'environnement est reconstruite (`tools/build-env.sh laravel-13`).
+  `content:check` ne pouvait pas voir ce décalage, puisqu'il exécute les tests en PHP natif.
+
 ## 1.2.2 — 2026-09-18
 
 ### Corrigé

@@ -22,6 +22,11 @@
              et garde, par exemple, la vérification CSRF pendant les tests. -->
         <server name="APP_ENV" value="testing" force="true"/>
         <env name="APP_ENV" value="testing" force="true"/>
+        <!-- L'exemption CSRF des tests exige les DEUX moitiés de runningInConsole() && runningUnitTests().
+             Or dans le navigateur PHP_SAPI vaut « wasm » (php-wasm), ni « cli » ni « phpdbg » : sans cela,
+             Laravel ne se croit pas en console et tout POST d'un test de fonctionnalité répond 419. -->
+        <server name="APP_RUNNING_IN_CONSOLE" value="true" force="true"/>
+        <env name="APP_RUNNING_IN_CONSOLE" value="true" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
