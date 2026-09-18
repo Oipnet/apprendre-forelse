@@ -8,6 +8,8 @@ export type HeaderValue = string | number | string[];
 export class SimulatedRequest {
 	readonly headers: Record<string, string>;
 	originalUrl?: string;
+	/** Requête faite par le serveur à lui-même ($fetch local) : `__unenv__` dans Nitro. */
+	internal?: boolean;
 	/** Corps brut, absent pour une requête sans corps. */
 	readonly rawBody?: Uint8Array;
 

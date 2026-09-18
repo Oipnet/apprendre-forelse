@@ -2,10 +2,19 @@
  * `runtimeConfig` tel que le voit `useRuntimeConfig()` côté serveur : les valeurs de nuxt.config,
  * complétées par Nuxt (app, nitro) et remplacées par les variables NUXT_… (applyEnv de Nitro).
  */
+import { ModuleLoader, type ProjectFiles } from '../compiler.ts';
 import { destr } from '../unjs/destr.ts';
 import { snakeCase } from '../unjs/scule.ts';
 
 export type RuntimeConfig = Record<string, any> & { public: Record<string, any>; app: Record<string, any> };
+
+/** L'objet passé à `defineNuxtConfig` dans nuxt.config (vide sans fichier). */
+export function readNuxtConfig(files: ProjectFiles): Record<string, any> {
+	const file = ['nuxt.config.ts', 'nuxt.config.js', 'nuxt.config.mjs'].find((name) => files.has(name));
+	if (!file) return {};
+	const loader = new ModuleLoader(files, { defineNuxtConfig: (config: unknown) => config });
+	return (loader.load(file).default ?? {}) as Record<string, any>;
+}
 
 export function buildRuntimeConfig(userConfig: Record<string, any> | undefined, env: Record<string, string | undefined>): RuntimeConfig {
 	const config: RuntimeConfig = {

@@ -16,6 +16,10 @@ export interface LoaderOptions {
 	packages?: Record<string, unknown>;
 	/** Préparation d'un fichier avant sucrase (compilation d'un .vue, auto-imports) : rend un module ES. */
 	transform?: (path: string, source: string) => string;
+	/** Source d'un module qui n'est pas un fichier du projet (les méta d'une page : `page.vue?macro=true`). */
+	virtual?: (path: string) => string | undefined;
+	/** Modules remplacés, par chemin (un composant simulé par `mockComponent` dans un test). */
+	overrides?: Map<string, Record<string, unknown>>;
 }
 
 export class ModuleLoader {
@@ -28,6 +32,10 @@ export class ModuleLoader {
 	) {}
 
 	load(path: string): Record<string, unknown> {
+		const override = this.options.overrides?.get(path);
+		if (override) {
+			return override;
+		}
 		const cached = this.cache.get(path);
 		if (cached) {
 			return cached;
@@ -63,7 +71,7 @@ export class ModuleLoader {
 	}
 
 	private evaluator(path: string, constructor: FunctionConstructor) {
-		const source = this.files.get(path);
+		const source = this.files.get(path) ?? this.options.virtual?.(path);
 		if (source === undefined) {
 			throw new Error(`Fichier introuvable : ${path}`);
 		}

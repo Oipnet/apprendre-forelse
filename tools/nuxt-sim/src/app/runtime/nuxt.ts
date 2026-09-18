@@ -23,6 +23,8 @@ export interface NuxtPayload {
 	_errors: Record<string, unknown>;
 	serverRendered?: boolean;
 	path?: string;
+	/** L'erreur montrée (showError) : la page d'erreur remplace l'application. */
+	error?: any;
 }
 
 /** Message du serveur de développement, transmis à la page dans <script data-nuxt-logs> (dev-server-logs de Nuxt). */
@@ -59,8 +61,24 @@ export interface NuxtApp {
 	_asyncData: Record<string, any>;
 	_asyncDataPromises: Record<string, Promise<any> | undefined>;
 	_once?: Record<string, unknown>;
-	/** Côté serveur : la requête rendue, et le `$fetch` de Nitro qui répond sans réseau. */
-	ssrContext?: { url: string; event: any; $fetch: any };
+	/**
+	 * Côté serveur : la requête rendue, le `$fetch` de Nitro qui répond sans réseau, le `<head>` (unhead),
+	 * l'erreur en cours de rendu (page d'erreur) et la réponse qui remplace la page (redirection).
+	 */
+	ssrContext?: {
+		url: string;
+		event: any;
+		$fetch: any;
+		head?: any;
+		error?: boolean;
+		payload?: Record<string, unknown>;
+		'~renderResponse'?: { statusCode: number; statusMessage?: string; body: string; headers: Record<string, string> };
+	};
+	_middleware: { global: ((...args: any[]) => unknown)[]; named: Record<string, (...args: any[]) => unknown> };
+	_processingMiddleware?: boolean | string;
+	_middlewareTo?: unknown;
+	_cookies?: Record<string, unknown>;
+	_cookiesChanged?: Record<string, boolean>;
 }
 
 /**
@@ -79,10 +97,17 @@ export function devWarning(nuxtApp: NuxtApp, code: string, why: string, fix?: st
 
 let currentNuxtApp: NuxtApp | undefined;
 
-/** Exécute `fn` avec l'instance Nuxt disponible hors d'un setup (plugins, middleware…), comme nuxtApp.runWithContext. */
+/**
+ * Exécute `fn` avec l'instance Nuxt disponible hors d'un setup (plugins, middleware…), comme callWithNuxt.
+ * Côté serveur, le temps de l'appel seulement ; dans le navigateur, l'instance reste posée ensuite (une
+ * seule application par page) : un gestionnaire de clic peut appeler clearError ou navigateTo.
+ */
 export function runWithContext<T>(nuxtApp: NuxtApp, fn: () => T): T {
 	const previous = currentNuxtApp;
 	currentNuxtApp = nuxtApp;
+	if (!isServer) {
+		return nuxtApp.vueApp.runWithContext(fn);
+	}
 	try {
 		return fn();
 	} finally {

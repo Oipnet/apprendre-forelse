@@ -8,31 +8,47 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+Une mineure : le simulateur Nuxt connaît les garde-fous d'une application (middlewares, cookies, page
+d'erreur, `<head>`) et sait faire écrire ses tests à l'apprenant, composants compris. Les packs existants
+fonctionnent sans changement ; un pack dont les exercices utilisent l'environnement de test `nuxt`
+(`tests/nuxt/`, `mountSuspended`, `registerEndpoint`, `mockNuxtImport`) exige `moteur: '^1.2'`.
+
 ### Ajouté
 
-- Environnement `symfony-8-2-dev` : `symfony/form` est installé, pour les exercices de Pratique sur les formulaires
-  par attributs (`#[AsFormType]`, `#[FormField]`). Sans `symfony/security-csrf` : les formulaires de cet
-  environnement n'ont pas de jeton CSRF, que rien ne poserait dans un test ni dans le bac à sable.
-  La complétion de l'éditeur connaît `Symfony\Component\Form\Attribute\` et `AbstractTypeExtension`.
-- `content:check` vérifie la complétion de l'éditeur : une classe que la solution importe et que l'état de départ
-  n'a pas doit figurer dans l'index de l'environnement, sinon l'apprenant devrait l'écrire de mémoire. Les classes
-  que l'exercice fournit lui-même en sont dispensées, et les environnements sans PHP ignorés.
-- Index de complétion : 36 classes citées par des solutions existantes y manquaient. `tools/build-completion.php`
-  gagne le Workflow, Mailer, Mime, `TemplatedEmail`, l'horloge, le cache, les événements du noyau et
-  d'EventDispatcher, les migrations et événements Doctrine, `Twig\Environment`, `ValidatorInterface`,
-  `FormError`, `PropertyAccess`, plus côté Laravel `Illuminate\Foundation\Configuration`, `Queueable`,
-  `Illuminate\Queue\Attributes` et Carbon.
-- L'éditeur complète les classes du projet : `App\Entity\Plat`, le DTO qu'on vient d'écrire, l'énumération du
-  dossier d'à côté. Elles n'existent que le temps de l'exercice, donc dans aucun index : elles sont relues des
-  fichiers et fondues dans celui de l'environnement, si bien que tout en profite — `new`, types, `use`,
-  `Classe::`, `$var->` et l'aide à la signature — avec l'ajout automatique du `use`. Une classe qui en étend une
-  autre hérite de ses méthodes, y compris quand le parent vient de l'index (un contrôleur, un repository).
+- **Simulateur Nuxt, les garde-fous d'une application**, vérifiés contre un vrai Nuxt 4.5.2.
+  - Middlewares de route de `app/middleware/` (nommés, globaux, écrits dans `definePageMeta`), `navigateTo`,
+    `abortNavigation` et `addRouteMiddleware`, côté serveur (redirection 302 ou `redirectCode`) comme dans le
+    navigateur.
+  - Middlewares serveur de `server/middleware/`, cookies de h3 (`getCookie`, `setCookie`, `deleteCookie`,
+    `parseCookies`) et `useCookie`.
+  - Page d'erreur `app/error.vue` rendue comme par `nuxi dev` (requête interne `/__nuxt_error`, statut de l'erreur),
+    avec `showError`, `clearError` et `useError` ; les erreurs d'une route serveur demandée par un navigateur y passent
+    aussi. Sans `app/error.vue`, la page d'erreur reste une page minimale.
+  - `<head>` produit par unhead (la bibliothèque de Nuxt) : `useHead`, `useSeoMeta`, `app.head` de `nuxt.config`
+    (`titleTemplate`, `htmlAttrs`…), mis à jour dans le navigateur à chaque navigation.
+  - Le journal de développement transmis à la page reprend aussi les sorties de la console pendant le rendu
+    (avertissements de vue-router, `console.log` d'une page).
+- **Environnement de test `nuxt`** (celui de `@nuxt/test-utils`) : un exercice peut demander à l'apprenant
+  d'écrire des tests de composants, et les noter par mutants comme les tests de bout en bout.
+  - Chaque fichier de test tourne dans l'environnement que Vitest lui donnerait : `vitest.config.ts` est lu
+    (`defineVitestConfig`, `defineVitestProject`, projets et motifs `include`) et `// @vitest-environment nuxt`
+    est respecté. Les fichiers de `tests/nuxt/` (ou `*.nuxt.test.ts`) montent l'application dans un DOM
+    (happy-dom), dans le navigateur comme dans `content:check`.
+  - `mountSuspended` (props, événements, `setProps`, clics), `registerEndpoint` (routes simulées, méthode,
+    `once`, erreurs de h3), `mockNuxtImport` et `mockComponent` (macros hissées, avec `vi.hoisted`), plus
+    `vi.mocked`, `vi.stubGlobal`, `vi.waitFor` et `vi.waitUntil` dans le runner. Dans cet environnement, les
+    routes de `server/` ne répondent pas : une route non enregistrée donne le 404 de h3, comme en vrai.
+  - Des tests de conformité lancent les mêmes fichiers avec le vrai Vitest et le vrai `@nuxt/test-utils` 4.3.2
+    et comparent chaque verdict.
 
 ### Corrigé
 
-- Complétion : dans les arguments d'un attribut, les noms de classes sont proposés dès la parenthèse ouverte
-  (`#[FormField(`), là où il fallait jusqu'ici avoir tapé une majuscule. Pas à l'intérieur d'un tableau
-  d'options, où l'on attend des clés et non des classes.
+- Simulateur Nuxt : le template d'un composant est compilé à part de son `script setup`, comme le fait
+  `nuxi dev` — sans quoi l'état du composant n'était pas visible (`wrapper.vm` dans un test, outils de
+  développement de Vue).
+- Tests des exercices Nuxt : le `fetch` et le `$fetch` de `@nuxt/test-utils/e2e` suivent les redirections, comme le
+  `fetch` de Node (`redirect: 'manual'` pour lire la réponse 3xx). Un test qui attendait une réponse 3xx sans cette
+  option la reçoit maintenant suivie : relancez `content:check` sur vos packs Nuxt.
 
 ## 1.1.0 — 2026-09-18
 

@@ -2,6 +2,7 @@
  * Fonctions h3 1.x auto-importées dans `server/`. Chacune reprend le code de h3 (dist/index.mjs)
  * en remplaçant Node par les imitations de ./event.ts. N'en ajouter une qu'avec un cas de conformité.
  */
+import { parse as parseCookieHeader, parseSetCookie, serialize as serializeCookie, type CookieSerializeOptions } from 'cookie-es';
 import { destr } from '../unjs/destr.ts';
 import { decode, parseQuery, searchOf, type QueryValue } from '../unjs/ufo.ts';
 import { createError, sanitizeStatusCode, sanitizeStatusMessage } from './error.ts';
@@ -222,6 +223,96 @@ function parseUrlEncodedBody(body = ''): Record<string, string | string[]> {
 		}
 	}
 	return parsed;
+}
+
+// --- Cookies (h3 1.x, cookie-es 1.2) ---
+
+export function parseCookies(event: H3Event): Record<string, string> {
+	return parseCookieHeader(event.node.req.headers.cookie || '');
+}
+
+export function getCookie(event: H3Event, name: string): string | undefined {
+	return parseCookies(event)[name];
+}
+
+export function setCookie(event: H3Event, name: string, value: string, serializeOptions: CookieSerializeOptions = {}): void {
+	if (!serializeOptions.path) {
+		serializeOptions = { path: '/', ...serializeOptions };
+	}
+	const newCookie = serializeCookie(name, value, serializeOptions);
+	const currentCookies = splitCookiesString(event.node.res.getHeader('set-cookie') as string | string[] | undefined);
+	if (currentCookies.length === 0) {
+		event.node.res.setHeader('set-cookie', newCookie);
+		return;
+	}
+	const newCookieKey = getDistinctCookieKey(name, serializeOptions);
+	const kept: string[] = [];
+	for (const cookie of currentCookies) {
+		const parsed = parseSetCookie(cookie);
+		if (getDistinctCookieKey(parsed.name, parsed) === newCookieKey) continue;
+		kept.push(cookie);
+	}
+	event.node.res.setHeader('set-cookie', [...kept, newCookie]);
+}
+
+export function deleteCookie(event: H3Event, name: string, serializeOptions?: CookieSerializeOptions): void {
+	setCookie(event, name, '', { ...serializeOptions, maxAge: 0 });
+}
+
+function getDistinctCookieKey(name: string, opts: { domain?: string; path?: string }): string {
+	return [name, opts.domain || '', opts.path || '/'].join(';');
+}
+
+export function splitCookiesString(cookiesString: string | string[] | undefined): string[] {
+	if (Array.isArray(cookiesString)) {
+		return cookiesString.flatMap((c) => splitCookiesString(c));
+	}
+	if (typeof cookiesString !== 'string') {
+		return [];
+	}
+	const cookiesStrings: string[] = [];
+	let pos = 0;
+	let start: number;
+	let ch: string;
+	let lastComma: number;
+	let nextStart: number;
+	let cookiesSeparatorFound: boolean;
+	const skipWhitespace = () => {
+		while (pos < cookiesString.length && /\s/.test(cookiesString.charAt(pos))) pos += 1;
+		return pos < cookiesString.length;
+	};
+	const notSpecialChar = () => {
+		ch = cookiesString.charAt(pos);
+		return ch !== '=' && ch !== ';' && ch !== ',';
+	};
+	while (pos < cookiesString.length) {
+		start = pos;
+		cookiesSeparatorFound = false;
+		while (skipWhitespace()) {
+			ch = cookiesString.charAt(pos);
+			if (ch === ',') {
+				lastComma = pos;
+				pos += 1;
+				skipWhitespace();
+				nextStart = pos;
+				while (pos < cookiesString.length && notSpecialChar()) pos += 1;
+				if (pos < cookiesString.length && cookiesString.charAt(pos) === '=') {
+					cookiesSeparatorFound = true;
+					pos = nextStart;
+					cookiesStrings.push(cookiesString.slice(start, lastComma));
+					start = pos;
+				} else {
+					pos = lastComma + 1;
+				}
+			} else {
+				pos += 1;
+			}
+		}
+		if (!cookiesSeparatorFound || pos >= cookiesString.length) {
+			cookiesStrings.push(cookiesString.slice(start));
+		}
+	}
+	return cookiesStrings;
 }
 
 // --- Réponse ---

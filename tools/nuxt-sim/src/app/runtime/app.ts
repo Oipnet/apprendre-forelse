@@ -3,18 +3,26 @@
  * nuxt/dist/app/entry et du plugin de routeur de pages. Une application par requête côté serveur :
  * c'est ce qui rend visibles les fuites d'état entre visiteurs (chapitre 3 du parcours).
  */
+import { createHead as createClientHead } from '@unhead/vue/client';
+import { legacyPlugins } from '@unhead/vue/legacy';
 import { parse } from 'devalue';
 import { createHooks } from 'hookable';
+import { isSamePath, withoutBase } from 'ufo';
 import {
-	Suspense, createSSRApp, defineAsyncComponent, defineComponent, h, isReactive, isRef, isShallow, provide, reactive, ref, shallowReactive, shallowRef, toRaw,
-	type Component,
+	Suspense, createApp, createSSRApp, defineAsyncComponent, defineComponent, h, isReactive, isReadonly, isRef, isShallow, onErrorCaptured, provide, reactive, ref, shallowReactive,
+	shallowRef, toRaw, type Component,
 } from 'vue';
 import { createMemoryHistory, createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { ClientOnly, NuxtLayout, NuxtLink, NuxtPage } from './components.ts';
-import { createError, isNuxtError } from './data.ts';
+import { clearError, createError, isNuxtError, showError, useError } from './data.ts';
 import { PageRouteSymbol, isServer, runWithContext, useNuxtApp, useRoute, type NuxtApp, type NuxtPayload } from './nuxt.ts';
+import { navigateTo, type RouteMiddleware } from './router.ts';
 
 type Loader = () => Promise<{ default: Component }>;
+type MiddlewareLoader = () => Promise<{ default: RouteMiddleware }>;
+
+/** Options d'unhead que Nuxt 4 passe à createHead (#build/unhead-options.mjs). */
+export const UNHEAD_OPTIONS = { disableDefaults: true, plugins: legacyPlugins };
 
 export interface ManifestRoute {
 	name?: string;
@@ -35,6 +43,12 @@ export interface AppManifest {
 	appConfig?: () => Promise<{ default?: Record<string, any> }>;
 	layouts: Record<string, Loader>;
 	routes: ManifestRoute[];
+	/** app/error.vue : la page d'erreur du projet (sinon celle de Nuxt). */
+	error?: Loader;
+	/** app/middleware : globaux (dans l'ordre des fichiers) et nommés. */
+	middleware?: { global: MiddlewareLoader[]; named: Record<string, MiddlewareLoader> };
+	/** `app.head` de nuxt.config, complété (voir head.ts). */
+	appHead?: Record<string, any>;
 }
 
 export interface CreateOptions {
@@ -44,6 +58,10 @@ export interface CreateOptions {
 	payload?: NuxtPayload;
 	/** Côté serveur : l'événement de la requête et le `$fetch` de Nitro (voir useRequestFetch). */
 	ssrContext?: NuxtApp['ssrContext'];
+	/** Journal du rendu serveur, déjà commencé par le rendu (sorties de la console). */
+	logs?: NuxtApp['logs'];
+	/** Environnement de test `nuxt` (@nuxt/test-utils) : la racine qui remplace NuxtRoot. */
+	rootComponent?: Component;
 }
 
 /** `app.vue` par défaut de Nuxt quand le projet n'en a pas (pages/runtime/app.vue, sans NuxtRouteAnnouncer). */
@@ -52,13 +70,43 @@ const DefaultApp = defineComponent({
 	setup: () => () => h(NuxtLayout, null, { default: () => h(NuxtPage) }),
 });
 
-function createNuxtRoot(appComponent: Component) {
+/** Page d'erreur de Nuxt quand le projet n'a pas de app/error.vue (simplifiée : error-404.vue et error-500.vue). */
+const DefaultErrorPage = defineComponent({
+	name: 'NuxtErrorPage',
+	props: { error: Object },
+	setup(props) {
+		return () => {
+			const error = props.error as Record<string, any>;
+			const statusCode = Number(error?.statusCode || 500);
+			return h('div', { class: 'nuxt-error-page' }, [h('h1', statusCode), h('p', error?.statusMessage || error?.message || (statusCode === 404 ? 'Page not found' : 'Internal server error'))]);
+		};
+	},
+});
+
+/** NuxtRoot (app/components/nuxt-root.vue) : la page d'erreur remplace l'application quand une erreur est montrée. */
+function createNuxtRoot(appComponent: Component, errorComponent: Component) {
 	return defineComponent({
 		name: 'NuxtRoot',
 		setup() {
 			const nuxtApp = useNuxtApp();
+			const onResolve = () => {
+				if (!nuxtApp.isHydrating) return;
+				nuxtApp.isHydrating = false;
+				nuxtApp.callHook('app:suspense:resolve');
+			};
 			provide(PageRouteSymbol, useRoute());
-			return () => h(Suspense, { onResolve: () => { nuxtApp.isHydrating = false; } }, { default: () => h(appComponent) });
+			const error = useError();
+			const abortRender = isServer && error.value && !nuxtApp.ssrContext?.error;
+			onErrorCaptured((err, target, info) => {
+				nuxtApp.hooks.callHook('vue:error', err, target, info)?.catch((hookError: unknown) => console.error('[nuxt] Error in `vue:error` hook', hookError));
+				if (isServer || (isNuxtError(err) && (err.fatal || (err as { unhandled?: boolean }).unhandled))) {
+					runWithContext(nuxtApp, () => showError(err));
+					return false;
+				}
+			});
+			return () => h(Suspense, { onResolve }, {
+				default: () => (abortRender ? h('div') : error.value ? h(errorComponent, { error: error.value }) : h(appComponent)),
+			});
 		},
 	});
 }
@@ -100,15 +148,20 @@ const payloadRevivers: Record<string, (value: any) => unknown> = {
 };
 
 export async function createNuxtApp(manifest: AppManifest, options: CreateOptions): Promise<NuxtApp> {
-	const [appModule, layoutEntries, componentEntries, appConfigModule] = await Promise.all([
+	const [appModule, layoutEntries, componentEntries, appConfigModule, errorModule, globalMiddleware] = await Promise.all([
 		manifest.app?.(),
 		Promise.all(Object.entries(manifest.layouts).map(async ([name, load]) => [name, (await load()).default] as const)),
 		Promise.all(Object.entries(manifest.components).map(async ([name, load]) => [name, (await load()).default] as const)),
 		manifest.appConfig?.(),
+		manifest.error?.(),
+		Promise.all((manifest.middleware?.global ?? []).map(async (load) => (await load()).default)),
 	]);
-	const vueApp = createSSRApp(createNuxtRoot(appModule?.default ?? DefaultApp));
+	const rootComponent = options.rootComponent ?? createNuxtRoot(appModule?.default ?? DefaultApp, errorModule?.default ?? DefaultErrorPage);
+	// entry.js : une page que le serveur n'a pas rendue (environnement de test) est montée, pas hydratée.
+	const vueApp = !isServer && options.payload?.serverRendered === false ? createApp(rootComponent) : createSSRApp(rootComponent);
+	const routerBase = options.runtimeConfig.app?.baseURL ?? '/';
 	const router = createRouter({
-		history: isServer ? createMemoryHistory(options.runtimeConfig.app?.baseURL) : createWebHistory(options.runtimeConfig.app?.baseURL),
+		history: isServer ? createMemoryHistory(routerBase) : createWebHistory(routerBase),
 		routes: manifest.pages ? toRouteRecords(manifest.routes) : [{ path: '/:pathMatch(.*)*', component: { render: () => null } }],
 	});
 	const hooks = createHooks<Record<string, any>>();
@@ -118,9 +171,10 @@ export async function createNuxtApp(manifest: AppManifest, options: CreateOption
 		isServer,
 		isHydrating: !isServer,
 		layouts: Object.fromEntries(layoutEntries),
-		payload: options.payload ?? createPayload(),
+		// Côté serveur, ce que le rendu a déjà mis dans la charge utile (l'erreur d'une page d'erreur) passe en tête.
+		payload: options.payload ?? (shallowReactive({ ...(options.ssrContext?.payload ?? {}), data: shallowReactive({}), state: reactive({}), once: new Set<string>(), _errors: shallowReactive({}) }) as unknown as NuxtPayload),
 		runtimeConfig: options.runtimeConfig,
-		logs: [],
+		logs: options.logs ?? [],
 		_state: {},
 		appConfig: appConfigModule?.default ?? {},
 		hooks,
@@ -130,6 +184,7 @@ export async function createNuxtApp(manifest: AppManifest, options: CreateOption
 		_asyncData: shallowReactive({}),
 		_asyncDataPromises: {},
 		ssrContext: options.ssrContext,
+		_middleware: { global: [], named: {} },
 	};
 	if (isServer) {
 		nuxtApp.payload.serverRendered = true;
@@ -155,13 +210,131 @@ export async function createNuxtApp(manifest: AppManifest, options: CreateOption
 		vueApp.config.warnHandler = (message, _instance, trace) => {
 			nuxtApp.logs.push({ date: new Date(), args: [`[Vue warn]: ${message}`, trace.trim()], type: 'warn', level: 1, tag: '', filename: '', stack: [] });
 		};
+		vueApp.use(options.ssrContext!.head);
+	} else {
+		installClientHead(nuxtApp, manifest.appHead ?? {});
 	}
-	vueApp.use(router);
-	if (isServer && options.url) {
-		await router.push(options.url);
-		await router.isReady();
+	await installRouter(nuxtApp, manifest, globalMiddleware, options);
+	// entry.js : les plugins sont posés, `app:created` rejoue la navigation initiale (middlewares compris).
+	try {
+		await nuxtApp.hooks.callHook('app:created', vueApp);
+	} catch (error) {
+		await nuxtApp.hooks.callHook('app:error', error);
+		nuxtApp.payload.error ||= createError(error);
 	}
 	return nuxtApp;
+}
+
+/** Plugin du routeur de pages (pages/runtime/plugins/router.js), sans transitions ni îlots. */
+async function installRouter(nuxtApp: NuxtApp, manifest: AppManifest, globalMiddleware: RouteMiddleware[], options: CreateOptions): Promise<void> {
+	const router = nuxtApp.router;
+	const routerBase = options.runtimeConfig.app?.baseURL ?? '/';
+	nuxtApp.vueApp.use(router);
+	const initialURL = isServer ? nuxtApp.ssrContext?.url ?? options.url ?? '/' : createCurrentLocation(routerBase, window.location, nuxtApp.payload.path);
+	// Les plugins de Nuxt tournent avec l'instance disponible (callWithNuxt).
+	const error = runWithContext(nuxtApp, useError);
+	router.afterEach(async (to, _from, failure) => {
+		delete nuxtApp._processingMiddleware;
+		if (isServer) delete nuxtApp._middlewareTo;
+		if (!isServer && !nuxtApp.isHydrating && error.value) await runWithContext(nuxtApp, clearError);
+		if (isServer && (failure as { type?: number } | undefined)?.type === 4) return;
+		if (isServer && to.redirectedFrom && to.fullPath !== initialURL) await runWithContext(nuxtApp, () => navigateTo(to.fullPath || '/'));
+	});
+	try {
+		if (isServer) await router.push(initialURL);
+		await router.isReady();
+	} catch (err) {
+		await runWithContext(nuxtApp, () => showError(err));
+	}
+	const resolvedInitialRoute: Record<string, any> = !isServer && initialURL !== router.currentRoute.value.fullPath ? router.resolve(initialURL) : router.currentRoute.value;
+	const prePluginRoutePath = !isServer ? router.currentRoute.value.fullPath : '';
+	if (!manifest.pages) return;
+	const initialLayout = (nuxtApp.payload.state as Record<string, any>)._layout;
+	router.beforeEach(async (to, from) => {
+		to.meta = reactive(to.meta);
+		if (nuxtApp.isHydrating && initialLayout && !isReadonly(to.meta.layout)) to.meta.layout = initialLayout;
+		nuxtApp._processingMiddleware = true;
+		if (isServer) nuxtApp._middlewareTo = to;
+		const middlewareEntries = new Set<string | RouteMiddleware>([...globalMiddleware, ...nuxtApp._middleware.global]);
+		for (const component of to.matched) {
+			const componentMiddleware = component.meta.middleware as string | RouteMiddleware | (string | RouteMiddleware)[] | undefined;
+			if (!componentMiddleware) continue;
+			for (const entry of Array.isArray(componentMiddleware) ? componentMiddleware : [componentMiddleware]) middlewareEntries.add(entry);
+		}
+		for (const entry of middlewareEntries) {
+			const middleware = typeof entry === 'string' ? nuxtApp._middleware.named[entry] || (await manifest.middleware?.named[entry]?.().then((r) => r.default || r)) : entry;
+			if (!middleware) {
+				const valid = Object.keys(manifest.middleware?.named ?? {});
+				throw new Error(`[NUXT_E2004] Unknown route middleware: '${String(entry)}'. Valid middleware: ${valid.map((name) => `'${name}'`).join(', ')}.`);
+			}
+			try {
+				nuxtApp._processingMiddleware = typeof entry === 'string' ? entry : true;
+				const result = await runWithContext(nuxtApp, () => (middleware as RouteMiddleware)(to, from));
+				if (isServer || (!nuxtApp.payload.serverRendered && nuxtApp.isHydrating)) {
+					if (result === false || result instanceof Error) {
+						const failure = result || createError({ status: 404, statusText: `Page Not Found: ${initialURL}` });
+						await runWithContext(nuxtApp, () => showError(failure));
+						return false;
+					}
+				}
+				if (result === true) continue;
+				if (result === false) return result;
+				if (result) {
+					if (isNuxtError(result) && result.fatal) await runWithContext(nuxtApp, () => showError(result));
+					return result as never;
+				}
+			} catch (err) {
+				const failure = createError(err);
+				if (failure.fatal) await runWithContext(nuxtApp, () => showError(failure));
+				return failure as never;
+			}
+		}
+	});
+	router.onError(() => {
+		delete nuxtApp._processingMiddleware;
+		if (isServer) delete nuxtApp._middlewareTo;
+	});
+	router.afterEach((to) => {
+		if (to.matched.length === 0 && !error.value) {
+			return runWithContext(nuxtApp, () => showError(createError({ status: 404, fatal: false, statusText: `Page not found: ${to.fullPath}`, data: { path: to.fullPath } })));
+		}
+	});
+	nuxtApp.hooks.hookOnce('app:created', async () => {
+		try {
+			if ('name' in resolvedInitialRoute) resolvedInitialRoute.name = undefined;
+			if (!isServer && router.currentRoute.value.fullPath !== prePluginRoutePath) {
+				// Une navigation a déjà eu lieu pendant les plugins : rien à rejouer.
+			} else {
+				await router.replace({ ...resolvedInitialRoute, force: true } as never);
+			}
+		} catch (err) {
+			await runWithContext(nuxtApp, () => showError(err));
+		}
+	});
+}
+
+function createCurrentLocation(base: string, location: Location, renderedPath?: string): string {
+	const { pathname, search, hash } = location;
+	const displayedPath = withoutBase(pathname, base);
+	const path = !renderedPath || isSamePath(displayedPath, renderedPath) ? displayedPath : renderedPath;
+	return path + (path.includes('?') ? '' : search) + hash;
+}
+
+/** install-client-head.js : la tête du document est mise à jour une fois l'hydratation terminée. */
+function installClientHead(nuxtApp: NuxtApp, appHead: Record<string, any>): void {
+	const head = createClientHead(UNHEAD_OPTIONS as never);
+	head.push(appHead);
+	nuxtApp.vueApp.use(head);
+	let pauseDOMUpdates = true;
+	const syncHead = () => {
+		pauseDOMUpdates = false;
+		head.render();
+	};
+	head.hooks?.hook('dom:beforeRender', (context: { shouldRender: boolean }) => {
+		context.shouldRender = !pauseDOMUpdates;
+	});
+	nuxtApp.hooks.hook('app:error', syncHead);
+	nuxtApp.hooks.hook('app:suspense:resolve', syncHead);
 }
 
 /**
@@ -215,6 +388,5 @@ export async function startClient(manifest: AppManifest): Promise<void> {
 	const dataElement = document.getElementById('__NUXT_DATA__');
 	const payload = dataElement?.textContent ? (parse(dataElement.textContent, payloadRevivers) as NuxtPayload) : undefined;
 	const nuxtApp = await createNuxtApp(manifest, { runtimeConfig: nuxtWindow.__NUXT__?.config ?? {}, payload });
-	await nuxtApp.router.isReady();
 	nuxtApp.vueApp.mount('#__nuxt');
 }

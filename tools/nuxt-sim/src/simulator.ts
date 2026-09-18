@@ -9,10 +9,11 @@ import { createError } from './h3/error.ts';
 import { H3Event, SimulatedRequest, SimulatedResponse } from './h3/event.ts';
 import * as h3 from './h3/utils.ts';
 import { defaultReason, type HttpRequest, type HttpResponse } from './http.ts';
-import { buildRuntimeConfig, type RuntimeConfig } from './nitro/config.ts';
+import { buildRuntimeConfig, readNuxtConfig, type RuntimeConfig } from './nitro/config.ts';
 import { respondWithError } from './nitro/errors.ts';
-import { scanServerRoutes } from './nitro/scan.ts';
+import { scanServerMiddleware, scanServerRoutes } from './nitro/scan.ts';
 import { runTests } from './testing/run.ts';
+import type { NuxtTestEnvironment } from './testing/nuxt/environment.ts';
 import type { Grading, TestRunResult } from './testing/types.ts';
 import { RadixRouter } from './unjs/radix3.ts';
 import { transform } from 'sucrase';
@@ -44,6 +45,8 @@ export interface SimulatorOptions {
 	 * `reseau.json` : le bac à sable n'a pas Internet. La conformité y branche le vrai réseau.
 	 */
 	network?: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+	/** Environnement de test `nuxt` (mountSuspended, registerEndpoint…) : sans lui, ces fichiers de test échouent. */
+	testEnvironment?: NuxtTestEnvironment;
 }
 
 /** Ce que `import { reseau, horloge } from 'bac-a-sable'` donne aux tests d'un exercice. */
@@ -71,6 +74,8 @@ interface RouteEntry {
 
 interface Build {
 	router: RadixRouter<RouteEntry>;
+	/** Fichiers de server/middleware, dans l'ordre d'exécution. */
+	middleware: string[];
 	loader: ModuleLoader;
 	/** Absent quand le projet n'a ni app/app.vue ni app/pages. */
 	app?: AppRenderer;
@@ -86,6 +91,8 @@ export class NuxtSimulator {
 	private readonly storage: Storage = createNitroStorage();
 	/** Réponses enregistrées et appels sortants (voir src/nitro/network.ts). */
 	readonly network = new SimulatedNetwork(() => parseNetworkFile(this.files.get(NETWORK_FILE)));
+	/** `app.head` de nuxt.config, lu avec la configuration. */
+	private appHead?: Record<string, any>;
 	/** Décalage de l'horloge du serveur, avancée par les tests. */
 	private clockOffset = 0;
 	/**
@@ -157,19 +164,22 @@ export class NuxtSimulator {
 			grading,
 			only,
 			createServer: (files) => new NuxtSimulator(files, { ...this.options, baseURL: '/' }),
+			nuxt: this.options.testEnvironment,
 		});
 	}
 
-	async request(request: HttpRequest): Promise<HttpResponse> {
+	async request(request: HttpRequest, options: { internal?: boolean } = {}): Promise<HttpResponse> {
 		const started = performance.now();
 		const body = typeof request.body === 'string' ? new TextEncoder().encode(request.body) : request.body;
 		const req = new SimulatedRequest(request.method, request.url, request.headers, body?.length ? body : undefined);
+		req.internal = options.internal;
 		const res = new SimulatedResponse();
 		const event = new H3Event(req, res);
 		try {
 			await this.handle(event);
 		} catch (error) {
-			await respondWithError(error, event);
+			const renderErrorPage = this.build?.app ? { baseURL: this.baseURL(), fetch: (url: string, headers: Record<string, string>) => this.localFetch(url, { headers }) } : undefined;
+			await respondWithError(error, event, renderErrorPage);
 		}
 		return toHttpResponse(req, res, performance.now() - started);
 	}
@@ -183,7 +193,7 @@ export class NuxtSimulator {
 		new Headers(init.headers).forEach((value, name) => (headers[name] = value));
 		headers.host ??= 'localhost';
 		const body = init.body == null ? undefined : typeof init.body === 'string' ? init.body : new Uint8Array(await new Response(init.body).arrayBuffer());
-		const response = await this.request({ method: (init.method ?? 'GET').toUpperCase(), url, headers, body });
+		const response = await this.request({ method: (init.method ?? 'GET').toUpperCase(), url, headers, body }, { internal: true });
 		const nullBody = [101, 204, 205, 304].includes(response.status);
 		return new Response(nullBody || init.method?.toUpperCase() === 'HEAD' ? null : (response.body as BodyInit), {
 			status: response.status,
@@ -221,6 +231,22 @@ export class NuxtSimulator {
 			h3.setResponseHeader(event, 'content-type', asset.type);
 			await h3.send(event, asset.body);
 			return;
+		}
+
+		// Les middlewares de Nitro (h3App.use) : une valeur rendue, ou une réponse déjà envoyée, termine la requête.
+		for (const file of build.middleware) {
+			const handler = build.loader.load(file).default;
+			if (typeof handler !== 'function') {
+				throw new TypeError(`Invalid lazy handler result. It should be a function: ${file}`);
+			}
+			const result = await handler(event);
+			if (result !== undefined) {
+				await h3.handleHandlerResponse(event, result, JSON_SPACE);
+				return;
+			}
+			if (event.handled) {
+				return;
+			}
 		}
 
 		const value = await this.routerHandler(build, event);
@@ -298,12 +324,12 @@ export class NuxtSimulator {
 			}
 			entry.handlers[route.method ?? 'all'] = route.file;
 		}
-		const app = hasApp(this.files.keys()) ? new AppRenderer(this.files, runtimeConfig, this.options.clientBundle, this.$fetch) : undefined;
+		const app = hasApp(this.files.keys()) ? new AppRenderer(this.files, runtimeConfig, this.options.clientBundle, this.$fetch, this.appHead) : undefined;
 		const loader = new ModuleLoader(this.files, {}, {
 			packages: { h3: nitroImports, '#imports': nitroImports, 'nitropack/runtime': nitroImports, '#nitro': nitroImports },
 			transform: (path, source) => prepareServerModule(path, source, serverImports),
 		});
-		this.build = { router, loader, app };
+		this.build = { router, middleware: scanServerMiddleware([...this.files.keys()]), loader, app };
 		return this.build;
 	}
 
@@ -313,13 +339,9 @@ export class NuxtSimulator {
 	}
 
 	private loadRuntimeConfig(): RuntimeConfig {
-		const file = ['nuxt.config.ts', 'nuxt.config.js', 'nuxt.config.mjs'].find((name) => this.files.has(name));
-		let userConfig: Record<string, any> = {};
-		if (file) {
-			const loader = new ModuleLoader(this.files, { defineNuxtConfig: (config: unknown) => config });
-			userConfig = (loader.load(file).default ?? {}) as Record<string, any>;
-		}
+		const userConfig = readNuxtConfig(this.files);
 		// Comme nuxi dev : le .env du projet, sans écraser une variable déjà définie.
+		this.appHead = userConfig.app?.head;
 		const config = buildRuntimeConfig(userConfig.runtimeConfig, { ...parseDotenv(this.files.get('.env')), ...this.options.env });
 		config.app.baseURL = this.baseURL();
 		return config;

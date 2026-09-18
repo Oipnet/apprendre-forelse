@@ -97,8 +97,44 @@ export class TestFile {
 			describe, suite: describe, it, test: it,
 			beforeAll: hook('beforeAll'), afterAll: hook('afterAll'), beforeEach: hook('beforeEach'), afterEach: hook('afterEach'),
 			expect: this.expect, assert: chai.assert,
-			vi: { fn, spyOn, isMockFunction, clearAllMocks, resetAllMocks, restoreAllMocks },
+			vi: this.vi(),
 		};
+	}
+
+	/** Globales remplacées par `vi.stubGlobal`, avec leur descripteur d'origine. */
+	private readonly stubbedGlobals = new Map<string, PropertyDescriptor | undefined>();
+
+	private vi() {
+		const utils: Record<string, unknown> = {
+			fn, spyOn, isMockFunction, clearAllMocks, resetAllMocks, restoreAllMocks,
+			/** Hissé en tête du fichier par le chargeur (voir nuxt/macros.ts) : la fabrique est appelée sur place. */
+			hoisted: (factory: () => unknown) => factory(),
+			mocked: (item: unknown) => item,
+			waitFor,
+			waitUntil,
+			stubGlobal: (name: string, value: unknown) => {
+				if (!this.stubbedGlobals.has(name)) this.stubbedGlobals.set(name, Object.getOwnPropertyDescriptor(globalThis, name));
+				Object.defineProperty(globalThis, name, { value, writable: true, configurable: true, enumerable: true });
+				return utils;
+			},
+			unstubAllGlobals: () => {
+				this.unstubAllGlobals();
+				return utils;
+			},
+			mock: () => {
+				throw new Error('vi.mock n\'est pas disponible dans le simulateur : pour une fonction de Nuxt, utilisez mockNuxtImport (@nuxt/test-utils/runtime).');
+			},
+		};
+		return utils;
+	}
+
+	/** Fin du fichier : Vitest isole chaque fichier, le simulateur remet les globales remplacées. */
+	unstubAllGlobals(): void {
+		for (const [name, original] of this.stubbedGlobals) {
+			if (!original) Reflect.deleteProperty(globalThis, name);
+			else Object.defineProperty(globalThis, name, original);
+		}
+		this.stubbedGlobals.clear();
 	}
 
 	/** Collecte, comme Vitest : les callbacks des `describe`, dans l'ordre, chacun attendu avant le suivant. */
@@ -249,6 +285,93 @@ export class TestFile {
 		}
 		return { status: isAssertion(failure) ? 'failed' : 'error', message: messageOf(failure), timeMs };
 	}
+}
+
+/** `vi.waitFor` de Vitest (sans faux minuteurs) : rappelle `callback` jusqu'à ce qu'il ne lève plus. */
+function waitFor<T>(callback: () => T | Promise<T>, options: number | { timeout?: number; interval?: number } = {}): Promise<T> {
+	const { interval = 50, timeout = 1000 } = typeof options === 'number' ? { timeout: options } : options;
+	return new Promise((resolve, reject) => {
+		let lastError: unknown;
+		let promiseStatus = 'idle';
+		let timeoutId: ReturnType<typeof setTimeout> | undefined;
+		let intervalId: ReturnType<typeof setInterval> | undefined;
+		const onResolve = (result: T) => {
+			clearTimeout(timeoutId);
+			clearInterval(intervalId);
+			resolve(result);
+		};
+		const checkCallback = () => {
+			if (promiseStatus === 'pending') return;
+			try {
+				const result = callback();
+				if (result !== null && typeof result === 'object' && typeof (result as Promise<T>).then === 'function') {
+					promiseStatus = 'pending';
+					(result as Promise<T>).then((value) => {
+						promiseStatus = 'resolved';
+						onResolve(value);
+					}, (error) => {
+						promiseStatus = 'rejected';
+						lastError = error;
+					});
+				} else {
+					onResolve(result as T);
+					return true;
+				}
+			} catch (error) {
+				lastError = error;
+			}
+		};
+		if (checkCallback() === true) return;
+		timeoutId = setTimeout(() => {
+			clearInterval(intervalId);
+			reject(lastError ?? new Error('Timed out in waitFor!'));
+		}, timeout);
+		intervalId = setInterval(checkCallback, interval);
+	});
+}
+
+/** `vi.waitUntil` : attend que `callback` rende une valeur vraie. */
+function waitUntil<T>(callback: () => T | Promise<T>, options: number | { timeout?: number; interval?: number } = {}): Promise<T> {
+	const { interval = 50, timeout = 1000 } = typeof options === 'number' ? { timeout: options } : options;
+	return new Promise((resolve, reject) => {
+		let promiseStatus = 'idle';
+		let timeoutId: ReturnType<typeof setTimeout> | undefined;
+		let intervalId: ReturnType<typeof setInterval> | undefined;
+		const onResolve = (result: T) => {
+			if (!result) return;
+			clearTimeout(timeoutId);
+			clearInterval(intervalId);
+			resolve(result);
+			return true;
+		};
+		const checkCallback = () => {
+			if (promiseStatus === 'pending') return;
+			try {
+				const result = callback();
+				if (result !== null && typeof result === 'object' && typeof (result as Promise<T>).then === 'function') {
+					promiseStatus = 'pending';
+					(result as Promise<T>).then((value) => {
+						promiseStatus = 'resolved';
+						onResolve(value);
+					}, (error) => {
+						clearInterval(intervalId);
+						reject(error);
+					});
+				} else {
+					return onResolve(result as T);
+				}
+			} catch (error) {
+				clearInterval(intervalId);
+				reject(error);
+			}
+		};
+		if (checkCallback() === true) return;
+		timeoutId = setTimeout(() => {
+			clearInterval(intervalId);
+			reject(new Error('Timed out in waitUntil!'));
+		}, timeout);
+		intervalId = setInterval(checkCallback, interval);
+	});
 }
 
 function containsOnly(suite: SuiteNode): boolean {

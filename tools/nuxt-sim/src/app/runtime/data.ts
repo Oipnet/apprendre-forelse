@@ -82,6 +82,29 @@ export function createError<DataT = unknown>(error: any): NuxtError<DataT> {
 	return nuxtError;
 }
 
+export const useError = () => toRef(useNuxtApp().payload as Record<string, any>, 'error');
+
+/** Affiche la page d'erreur (app/error.vue) : côté serveur, la page rendue est remplacée par elle. */
+export function showError(error: any): NuxtError {
+	const nuxtError = createError(error);
+	try {
+		const current = useError();
+		if (!isServer) useNuxtApp().hooks.callHook('app:error', nuxtError);
+		current.value ||= nuxtError;
+	} catch {
+		throw nuxtError;
+	}
+	return nuxtError;
+}
+
+export async function clearError(options: { redirect?: string } = {}): Promise<void> {
+	const nuxtApp = useNuxtApp();
+	const error = useError();
+	nuxtApp.callHook('app:error:cleared', options);
+	if (options.redirect) await nuxtApp.router.replace(options.redirect);
+	error.value = undefined;
+}
+
 // --- utils/hash.js, utils/debounce-tick.js ------------------------------------------------------------
 
 export function hashKey(value: unknown): string {

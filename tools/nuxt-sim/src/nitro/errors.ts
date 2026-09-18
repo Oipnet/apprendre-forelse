@@ -5,10 +5,18 @@
  */
 import { createError, isError, type H3Error } from '../h3/error.ts';
 import type { H3Event } from '../h3/event.ts';
-import { getRequestHeader, getRequestURL, getResponseHeader, send, setResponseHeader, setResponseHeaders, setResponseStatus } from '../h3/utils.ts';
+import { joinURL, withQuery, withoutBase } from 'ufo';
+import { appendResponseHeader, getRequestHeader, getRequestURL, getResponseHeader, send, setResponseHeader, setResponseHeaders, setResponseStatus } from '../h3/utils.ts';
 
-/** Même logique que le bloc catch de `toNodeListener` (h3), suivi du gestionnaire d'erreur de Nitro. */
-export async function respondWithError(thrown: unknown, event: H3Event): Promise<void> {
+export interface ErrorPageRenderer {
+	/** `app.baseURL` : retiré de l'URL de l'erreur, ajouté devant `/__nuxt_error`. */
+	baseURL: string;
+	/** Requête interne du gestionnaire d'erreur de Nuxt, servie par le simulateur lui-même. */
+	fetch(url: string, headers: Record<string, string>): Promise<Response | null>;
+}
+
+/** Même logique que le bloc catch de `toNodeListener` (h3), suivi du gestionnaire d'erreur de Nitro puis de Nuxt. */
+export async function respondWithError(thrown: unknown, event: H3Event, renderErrorPage?: ErrorPageRenderer): Promise<void> {
 	const error = createError(thrown as Error);
 	if (!isError(thrown)) {
 		error.unhandled = true;
@@ -23,7 +31,7 @@ export async function respondWithError(thrown: unknown, event: H3Event): Promise
 		setResponseStatus(event, response.status, response.statusText);
 		return send(event, JSON.stringify(response.body, null, 2));
 	}
-	return sendErrorPage(error, event);
+	return sendErrorPage(error, event, renderErrorPage);
 }
 
 export function isJsonRequest(event: H3Event): boolean {
@@ -91,19 +99,46 @@ function formatStack(error: H3Error): string[] {
 }
 
 /**
- * Nuxt rend sa page d'erreur (app/error.vue ou celle par défaut) avec la surcouche de développement.
- * Le simulateur n'a pas encore de rendu Vue : une page minimale, avec le statut et les en-têtes de Nuxt.
+ * @nuxt/nitro-server (handlers/error) : Nuxt rend sa page d'erreur par une requête interne à `/__nuxt_error`,
+ * l'erreur passée dans la query (les valeurs y deviennent des chaînes). En développement, Nuxt ajoute
+ * ensuite sa surcouche d'erreur avant `</body>` : le simulateur s'en passe.
  */
-function sendErrorPage(error: H3Error, event: H3Event): Promise<void> {
-	const response = defaultHandler(error, event, { json: true });
-	const { 'content-type': _type, 'content-security-policy': _csp, ...headers } = response.headers;
+async function sendErrorPage(error: H3Error, event: H3Event, renderErrorPage?: ErrorPageRenderer): Promise<void> {
+	const defaultRes = defaultHandler(error, event, { json: true });
+	const errorObject = defaultRes.body as Record<string, any>;
+	errorObject.stack = (errorObject.stack as string[]).join('\n');
+	const url = new URL(errorObject.url as string);
+	errorObject.url = withoutBase(url.pathname, renderErrorPage?.baseURL ?? '/') + url.search + url.hash;
+	errorObject.message = error.unhandled ? errorObject.message || 'Server Error' : error.message || errorObject.message || 'Server Error';
+	errorObject.data ||= error.data;
+	errorObject.statusText ||= (error as { statusText?: string }).statusText || error.statusMessage;
+	const { 'content-type': _type, 'content-security-policy': _csp, ...headers } = defaultRes.headers;
 	setResponseHeaders(event, headers);
-	setResponseHeader(event, 'content-type', 'text/html;charset=utf-8');
-	setResponseHeader(event, 'x-powered-by', 'Nuxt');
-	setResponseStatus(event, response.status, response.statusText);
-	const message = error.unhandled ? error.message || 'Server Error' : error.message || 'Server Error';
-	const title = `${response.status} - ${escapeHtml(message)} | Nuxt`;
-	return send(event, `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body><h1>${response.status}</h1><p>${escapeHtml(message)}</p></body></html>`);
+	const requestHeaders = { ...event.node.req.headers };
+	const res = event.path.startsWith('/__nuxt_error') || requestHeaders['x-nuxt-error'] || !renderErrorPage
+		? null
+		: await renderErrorPage.fetch(withQuery(joinURL(renderErrorPage.baseURL, '/__nuxt_error'), errorObject), { ...requestHeaders, 'x-nuxt-error': 'true' }).catch(() => null);
+	if (event.handled) {
+		return;
+	}
+	if (!res) {
+		setResponseHeader(event, 'content-type', 'text/html;charset=utf-8');
+		setResponseStatus(event, defaultRes.status, defaultRes.statusText);
+		const message = errorObject.message as string;
+		return send(event, `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${defaultRes.status} - ${escapeHtml(message)} | Nuxt</title></head><body><h1>${defaultRes.status}</h1><p>${escapeHtml(message)}</p></body></html>`);
+	}
+	const html = await res.text();
+	res.headers.forEach((value, header) => {
+		if (header === 'set-cookie') {
+			appendResponseHeader(event, header, value);
+			return;
+		}
+		if (header === 'content-length') return;
+		setResponseHeader(event, header, value);
+	});
+	// Réponse interne en 200 : sa raison est vide chez Nitro, c'est celle de l'erreur qui compte.
+	setResponseStatus(event, res.status && res.status !== 200 ? res.status : defaultRes.status, res.status !== 200 ? res.statusText : defaultRes.statusText);
+	return send(event, html);
 }
 
 function escapeHtml(text: string): string {

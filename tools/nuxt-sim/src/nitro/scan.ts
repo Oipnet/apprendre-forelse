@@ -21,6 +21,13 @@ export function scanServerRoutes(files: string[]): ServerRoute[] {
 		.filter((route) => !route.env || route.env === 'dev');
 }
 
+/** `server/middleware/` : exécutés pour chaque requête, dans l'ordre de leurs chemins (scanMiddleware de Nitro). */
+export function scanServerMiddleware(files: string[]): string[] {
+	return files
+		.filter((file) => file.startsWith('server/middleware/') && SCANNED_EXTENSIONS.test(file))
+		.sort((a, b) => a.localeCompare(b));
+}
+
 function scanDirectory(files: string[], directory: string, prefix: string): ServerRoute[] {
 	return files
 		.filter((file) => file.startsWith(`${directory}/`) && SCANNED_EXTENSIONS.test(file))

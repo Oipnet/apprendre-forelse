@@ -26,22 +26,40 @@ const UNDICI_DEFAULTS: Record<string, string> = {
 };
 
 const NULL_BODY_STATUSES = new Set([101, 204, 205, 304]);
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 export function simulatedFetch(server: SimulatedServer): typeof fetch {
 	return async (input, init) => {
 		const request = new Request(input, init);
-		const url = new URL(request.url);
-		const headers: Record<string, string> = { host: url.host, ...UNDICI_DEFAULTS };
-		request.headers.forEach((value, name) => (headers[name] = value));
-		const buffer = request.body ? new Uint8Array(await request.arrayBuffer()) : undefined;
-		if (buffer) headers['content-length'] = String(buffer.byteLength);
-		const response = await server.request({ method: request.method, url: url.pathname + url.search, headers, body: buffer });
-		const nullBody = NULL_BODY_STATUSES.has(response.status) || request.method === 'HEAD';
-		return new Response(nullBody ? null : (response.body as BodyInit), {
-			status: response.status,
-			statusText: response.statusText,
-			headers: Object.entries(response.headers).flatMap(([name, values]) => values.map((value) => [name, value] as [string, string])),
-		});
+		let url = new URL(request.url);
+		let method = request.method;
+		let buffer = request.body ? new Uint8Array(await request.arrayBuffer()) : undefined;
+		const requestHeaders: Record<string, string> = {};
+		request.headers.forEach((value, name) => (requestHeaders[name] = value));
+		// Comme le fetch de Node : une redirection est suivie (20 au plus), sauf avec `redirect: 'manual'`.
+		for (let redirects = 0; ; redirects++) {
+			const headers: Record<string, string> = { host: url.host, ...UNDICI_DEFAULTS, ...requestHeaders };
+			if (buffer) headers['content-length'] = String(buffer.byteLength);
+			const response = await server.request({ method, url: url.pathname + url.search, headers, body: buffer });
+			const location = response.headers.location?.[0];
+			if (REDIRECT_STATUSES.has(response.status) && location && request.redirect !== 'manual') {
+				if (request.redirect === 'error') throw new TypeError('fetch failed', { cause: new Error('unexpected redirect') });
+				if (redirects >= 20) throw new TypeError('fetch failed', { cause: new Error('redirect count exceeded') });
+				if (response.status === 303 || ((response.status === 301 || response.status === 302) && method === 'POST')) {
+					method = 'GET';
+					buffer = undefined;
+					for (const name of ['content-type', 'content-length', 'content-encoding', 'content-language', 'content-location']) delete requestHeaders[name];
+				}
+				url = new URL(location, url);
+				continue;
+			}
+			const nullBody = NULL_BODY_STATUSES.has(response.status) || method === 'HEAD';
+			return new Response(nullBody ? null : (response.body as BodyInit), {
+				status: response.status,
+				statusText: response.statusText,
+				headers: Object.entries(response.headers).flatMap(([name, values]) => values.map((value) => [name, value] as [string, string])),
+			});
+		}
 	};
 }
 

@@ -20,13 +20,15 @@ export function compileSfc(path: string, source: string, ssr: boolean): string {
 	if (descriptor.script || descriptor.scriptSetup) {
 		const script = compileScript(descriptor, {
 			id,
-			inlineTemplate: !!descriptor.scriptSetup,
+			// Comme @vitejs/plugin-vue en développement : le template n'est pas inliné dans le setup, qui
+			// rend ses liaisons (c'est ce que lisent les outils de développement et `wrapper.vm` des tests).
+			inlineTemplate: false,
 			templateOptions: { ssr, ssrCssVars: descriptor.cssVars },
 			genDefaultAs: '_sfc_main',
 		});
 		parts.push(script.content);
 		bindings = script.bindings;
-		inlined = !!descriptor.scriptSetup && !!descriptor.template;
+		inlined = false;
 	} else {
 		parts.push('const _sfc_main = {}');
 	}

@@ -3,7 +3,9 @@
  * @nuxt/nitro-server) et sert sous /_nuxt/ les modules que le navigateur charge pour hydrater la page
  * (comme Vite). Toutes les requêtes de l'aperçu passent par le simulateur : c'est lui qui répond aux deux.
  */
+import { createHead, renderSSRHead } from '@unhead/vue/server';
 import { stringify, uneval } from 'devalue';
+import { encodePath, getQuery } from 'ufo';
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';
 import { transform } from 'sucrase';
 import * as vue from 'vue';
@@ -13,18 +15,23 @@ import * as vueRouter from 'vue-router';
 import { ModuleLoader, cannotFindModule, resolveProjectImport, type ProjectFiles } from '../compiler.ts';
 import { createError } from '../h3/error.ts';
 import type { H3Event } from '../h3/event.ts';
-import { setResponseHeader } from '../h3/utils.ts';
+import { setResponseHeader, setResponseHeaders, setResponseStatus } from '../h3/utils.ts';
+import { destr } from '../unjs/destr.ts';
 import type { RuntimeConfig } from '../nitro/config.ts';
 import { NUXT_AUTO_IMPORTS, VUE_AUTO_IMPORTS, addStateKeys, importTable, injectAutoImports, type ImportTable } from './auto-imports.ts';
 import { scanApp, type AppStructure, type PageRoute } from './pages.ts';
 import { scanComponents, scanImports, type ScannedComponent } from './scan.ts';
-import { createNuxtApp, payloadReducers, type AppManifest, type ManifestRoute } from './runtime/app.ts';
+import { UNHEAD_OPTIONS, createNuxtApp, payloadReducers, type AppManifest, type ManifestRoute } from './runtime/app.ts';
+import { resolveAppHead } from './runtime/head.ts';
+import type { NuxtLog } from './runtime/nuxt.ts';
 import * as nuxtComposables from './runtime/composables.ts';
 import { compileSfc } from './sfc.ts';
 
 const ASSETS = '/_nuxt/';
 const APP_CONFIG = 'app/app.config.ts';
 const RUNTIME = `${ASSETS}@nuxt-sim/`;
+/** Les méta d'une page (definePageMeta), servies à part comme dans Nuxt : `app/pages/x.vue?macro=true`. */
+const MACRO = '?macro=true';
 
 export interface Asset {
 	type: string;
@@ -39,6 +46,7 @@ export class AppRenderer {
 	private readonly components: ScannedComponent[];
 	private readonly serverImports: ImportTable;
 	private readonly clientImports: ImportTable;
+	private readonly appHead: Record<string, any>;
 
 	constructor(
 		private readonly files: ProjectFiles,
@@ -46,8 +54,11 @@ export class AppRenderer {
 		private readonly clientBundle?: string,
 		/** Le `$fetch` de Nitro : côté serveur, l'application appelle les routes sans réseau. */
 		private readonly serverFetch?: unknown,
+		/** `app.head` de nuxt.config. */
+		appHead?: Record<string, any>,
 	) {
 		this.structure = scanApp(files);
+		this.appHead = resolveAppHead(appHead);
 		this.assetsUrl = `${runtimeConfig.app.baseURL}${ASSETS.slice(1)}`;
 		this.components = scanComponents(files.keys());
 		const projectImports = scanImports(files);
@@ -61,48 +72,104 @@ export class AppRenderer {
 		this.serverLoader = new ModuleLoader(files, {}, {
 			packages: { vue, 'vue/server-renderer': serverRenderer, 'vue-router': vueRouter, '#imports': imports, '#app': imports },
 			transform: (path, source) => prepareModule(path, source, true, this.serverImports),
+			virtual: (path) => this.macroSource(path),
 		});
 	}
 
-	/** Rend la page demandée ; une URL sans page correspondante donne l'erreur 404 de Nuxt. */
+	/** Module des méta d'une page : l'objet de definePageMeta, avec ses auto-imports (un middleware en ligne en a). */
+	private macroSource(path: string): string | undefined {
+		return pageMetaSource(this.structure, path);
+	}
+
+	/**
+	 * Rend la page demandée (handlers/renderer de @nuxt/nitro-server). Une erreur montrée pendant le rendu est
+	 * levée : le gestionnaire d'erreur la fait rendre par `/__nuxt_error`, requête interne qui arrive ici avec
+	 * l'erreur dans sa query. Une redirection (navigateTo) remplace la page.
+	 */
 	async render(event: H3Event): Promise<string> {
-		const url = event.path;
-		const nuxtApp = await createNuxtApp(this.serverManifest(), {
-			url,
-			runtimeConfig: this.runtimeConfig,
-			ssrContext: { url, event, $fetch: this.serverFetch },
-		});
-		const route = nuxtApp.router.currentRoute.value;
-		if (this.structure.pages && route.matched.length === 0) {
-			const message = `Page not found: ${route.fullPath}`;
-			throw createError({ statusCode: 404, statusMessage: message, message, data: { path: route.fullPath } });
+		const internal = !!event.node.req.internal;
+		let ssrError: Record<string, any> | null = null;
+		if (event.path.startsWith('/__nuxt_error')) {
+			if (!internal) {
+				throw createError({ status: 404, statusText: 'Page Not Found: /__nuxt_error', message: 'Page Not Found: /__nuxt_error' });
+			}
+			ssrError = getQuery(event.path) as Record<string, any>;
 		}
-		// Comme Nuxt (app.config.errorHandler, puis showError) : une erreur de rendu est recueillie, pas laissée
-		// filer en promesse rejetée, et la page d'erreur remplace la page.
-		let renderError: unknown;
-		nuxtApp.vueApp.config.errorHandler = (error) => {
-			renderError ??= error;
+		const head = createHead(UNHEAD_OPTIONS as never);
+		head.push(this.appHead);
+		const ssrContext: NonNullable<Parameters<typeof createNuxtApp>[1]['ssrContext']> = {
+			url: encodeEventPath(event.path),
+			event,
+			$fetch: this.serverFetch,
+			head,
+			error: false,
+			payload: {},
 		};
-		const appHtml = await renderToString(nuxtApp.vueApp, {}).catch((error) => {
-			renderError ??= error;
-			return '';
-		});
-		if (renderError !== undefined) {
-			throw renderError;
+		if (ssrError) {
+			const status = ssrError.status || ssrError.statusCode;
+			if (status) ssrError.status = ssrError.statusCode = Number.parseInt(status);
+			if (typeof ssrError.data === 'string') {
+				try {
+					ssrError.data = destr(ssrError.data);
+				} catch {
+					// Données illisibles : gardées telles quelles.
+				}
+			}
+			ssrContext.error = true;
+			ssrContext.payload = { error: ssrError };
+			ssrContext.url = ssrError.url;
+		}
+		const logs: NuxtLog[] = [];
+		const restoreConsole = captureConsole(logs);
+		let nuxtApp: Awaited<ReturnType<typeof createNuxtApp>>;
+		let appHtml: string;
+		try {
+			nuxtApp = await createNuxtApp(this.serverManifest(), { url: ssrContext.url, runtimeConfig: this.runtimeConfig, ssrContext, logs });
+			if (ssrContext['~renderResponse']) {
+				return this.sendRenderResponse(event, ssrContext['~renderResponse']);
+			}
+			appHtml = await renderToString(nuxtApp.vueApp, ssrContext).catch(async (error) => {
+				const failure = (!ssrError && nuxtApp.payload.error) || error;
+				await nuxtApp.hooks.callHook('app:error', failure);
+				throw failure;
+			});
+		} finally {
+			restoreConsole();
+		}
+		await nuxtApp.hooks.callHook('app:rendered', { ssrContext, renderResult: { html: appHtml } });
+		if (ssrContext['~renderResponse']) {
+			return this.sendRenderResponse(event, ssrContext['~renderResponse']);
+		}
+		if (nuxtApp.payload.error && !ssrError) {
+			throw nuxtApp.payload.error;
 		}
 		const config = {
 			public: this.runtimeConfig.public,
 			app: { baseURL: this.runtimeConfig.app.baseURL, buildId: 'dev', buildAssetsDir: this.runtimeConfig.app.buildAssetsDir, cdnURL: this.runtimeConfig.app.cdnURL },
 		};
+		head.push({
+			script: [
+				{ 'type': 'application/json', 'innerHTML': stringify(nuxtApp.payload, payloadReducers).replaceAll('/', '\\u002F'), 'data-nuxt-data': 'nuxt-app', 'data-ssr': true, 'id': '__NUXT_DATA__' },
+				{ innerHTML: `window.__NUXT__={};window.__NUXT__.config=${uneval(config)}` },
+			],
+		}, { tagPosition: 'bodyClose', tagPriority: 'high' });
+		head.push({ script: [{ type: 'module', src: `${this.assetsUrl}@nuxt-sim/entry.js`, tagPosition: 'head', crossorigin: '' }] });
+		const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = await renderSSRHead(head, { omitLineBreaks: true });
+		const joinAttrs = (chunks: string[]) => (chunks.length === 0 ? '' : ` ${chunks.join(' ')}`);
+		const chunks = (list: (string | undefined)[]) => list.map((chunk) => chunk?.trim()).filter((chunk): chunk is string => !!chunk);
+		// Le plugin dev-server-logs de Nuxt place le journal du rendu en tête de la fin du document.
+		const logsScript = `<script type="application/json" data-nuxt-logs="nuxt-app">${stringify(nuxtApp.logs)}</script>`;
 		setResponseHeader(event, 'content-type', 'text/html;charset=utf-8');
 		setResponseHeader(event, 'x-powered-by', 'Nuxt');
-		return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-			+ `<script type="module" src="${this.assetsUrl}@nuxt-sim/entry.js" crossorigin></script></head>`
-			+ `<body><div id="__nuxt">${appHtml}</div><div id="teleports"></div>`
-			+ `<script type="application/json" data-nuxt-logs="nuxt-app">${stringify(nuxtApp.logs)}</script>`
-			+ `<script>window.__NUXT__={};window.__NUXT__.config=${uneval(config)}</script>`
-			+ `<script type="application/json" data-nuxt-data="nuxt-app" data-ssr="true" id="__NUXT_DATA__">${stringify(nuxtApp.payload, payloadReducers).replaceAll('/', '\\u002F')}</script>`
-			+ '</body></html>';
+		return `<!DOCTYPE html><html${joinAttrs(htmlAttrs ? [htmlAttrs] : [])}><head>${chunks([headTags]).join('')}</head><body${joinAttrs(bodyAttrs ? [bodyAttrs] : [])}>`
+			+ `${chunks([bodyTagsOpen]).join('')}<div id="__nuxt">${appHtml}</div><div id="teleports"></div>${logsScript}${bodyTags}</body></html>`;
+	}
+
+	/** Réponse posée par navigateTo côté serveur : en-têtes, statut et corps remplacent la page (defineRenderHandler). */
+	private sendRenderResponse(event: H3Event, response: { statusCode: number; statusMessage?: string; body: string; headers: Record<string, string> }): string {
+		if (response.headers) setResponseHeaders(event, response.headers);
+		if (response.statusCode || response.statusMessage) setResponseStatus(event, response.statusCode, response.statusMessage);
+		return response.body;
 	}
 
 	/** Module demandé sous /_nuxt/, ou `undefined` s'il n'existe pas. */
@@ -128,7 +195,12 @@ export class AppRenderer {
 			case `${RUNTIME}imports.js`:
 				return javascript(reexport({ __vue: VUE_AUTO_IMPORTS, __nuxt: NUXT_AUTO_IMPORTS }));
 		}
-		const file = decodeURIComponent(path.slice(ASSETS.length).split('?')[0]);
+		const requested = decodeURIComponent(path.slice(ASSETS.length));
+		if (requested.endsWith(MACRO)) {
+			const source = this.macroSource(requested);
+			return source === undefined ? undefined : javascript(await this.clientModule(requested, source));
+		}
+		const file = requested.split('?')[0];
 		const source = this.files.get(file);
 		if (source === undefined) {
 			return undefined;
@@ -140,30 +212,27 @@ export class AppRenderer {
 	}
 
 	private serverManifest(): AppManifest {
-		const load = (file: string) => async () => this.serverLoader.load(file) as { default: vue.Component };
-		const toRoutes = (routes: PageRoute[]): ManifestRoute[] => routes.map((route) => ({
-			name: route.name,
-			path: route.path,
-			meta: route.meta ? (new Function(`return (${route.meta})`)() as Record<string, unknown>) : {},
-			component: load(route.file),
-			children: toRoutes(route.children),
-		}));
-		return {
-			pages: this.structure.pages,
-			app: this.structure.app ? load(this.structure.app) : undefined,
-			layouts: Object.fromEntries(Object.entries(this.structure.layouts).map(([name, file]) => [name, load(file)])),
-			routes: toRoutes(this.structure.routes),
-			components: Object.fromEntries(this.components.map((component) => [component.pascalName, load(component.file)])),
-			appConfig: this.files.has(APP_CONFIG) ? async () => this.serverLoader.load(APP_CONFIG) : undefined,
-		};
+		return buildManifest(this.structure, this.components, this.files.has(APP_CONFIG), this.appHead, this.serverLoader);
 	}
 
 	private clientManifest(): string {
-		const importer = (file: string) => `() => import(${JSON.stringify(this.assetsUrl + encodeURI(file))})`;
-		const routes = (list: PageRoute[]): string => `[${list.map((route) => `{ name: ${JSON.stringify(route.name)}, path: ${JSON.stringify(route.path)}, meta: ${route.meta ?? '{}'}, component: ${importer(route.file)}, children: ${routes(route.children)} }`).join(', ')}]`;
+		const url = (file: string) => JSON.stringify(this.assetsUrl + encodeURI(file));
+		const importer = (file: string) => `() => import(${url(file)})`;
+		// Les méta des pages sont importées d'emblée : un middleware en ligne est une fonction, pas du JSON.
+		const metaImports: string[] = [];
+		const routes = (list: PageRoute[]): string => `[${list.map((route) => {
+			let meta = '{}';
+			if (route.meta) {
+				meta = `meta${metaImports.length}`;
+				metaImports.push(`import ${meta} from ${JSON.stringify(this.assetsUrl + encodeURI(route.file) + MACRO)};`);
+			}
+			return `{ name: ${JSON.stringify(route.name)}, path: ${JSON.stringify(route.path)}, meta: ${meta}, component: ${importer(route.file)}, children: ${routes(route.children)} }`;
+		}).join(', ')}]`;
+		const routeList = routes(this.structure.routes);
 		const layouts = Object.entries(this.structure.layouts).map(([name, file]) => `${JSON.stringify(name)}: ${importer(file)}`).join(', ');
 		const components = this.components.map((component) => `${JSON.stringify(component.pascalName)}: ${importer(component.file)}`).join(', ');
-		return `export default {\n\tpages: ${this.structure.pages},\n\tapp: ${this.structure.app ? importer(this.structure.app) : 'undefined'},\n\tlayouts: { ${layouts} },\n\troutes: ${routes(this.structure.routes)},\n\tcomponents: { ${components} },\n\tappConfig: ${this.files.has(APP_CONFIG) ? importer(APP_CONFIG) : 'undefined'},\n};\n`;
+		const namedMiddleware = Object.entries(this.structure.middleware.named).map(([name, file]) => `${JSON.stringify(name)}: ${importer(file)}`).join(', ');
+		return `${metaImports.join('\n')}\nexport default {\n\tpages: ${this.structure.pages},\n\tapp: ${this.structure.app ? importer(this.structure.app) : 'undefined'},\n\tlayouts: { ${layouts} },\n\troutes: ${routeList},\n\tcomponents: { ${components} },\n\tappConfig: ${this.files.has(APP_CONFIG) ? importer(APP_CONFIG) : 'undefined'},\n\terror: ${this.structure.error ? importer(this.structure.error) : 'undefined'},\n\tmiddleware: { global: [${this.structure.middleware.global.map(importer).join(', ')}], named: { ${namedMiddleware} } },\n\tappHead: ${JSON.stringify(this.appHead)},\n};\n`;
 	}
 
 	/** Module navigateur d'un fichier du projet : imports réécrits vers des URL servies par le simulateur. */
@@ -181,8 +250,74 @@ export class AppRenderer {
 	}
 }
 
+/** Manifeste de l'application dont les modules sont chargés par `loader` (côté serveur, ou dans un fichier de test). */
+export function buildManifest(structure: AppStructure, components: ScannedComponent[], hasAppConfig: boolean, appHead: Record<string, any>, loader: ModuleLoader): AppManifest {
+	const load = (file: string) => async () => loader.load(file) as { default: vue.Component };
+	const toRoutes = (routes: PageRoute[]): ManifestRoute[] => routes.map((route) => ({
+		name: route.name,
+		path: route.path,
+		meta: route.meta ? ((loader.load(route.file + MACRO).default ?? {}) as Record<string, unknown>) : {},
+		component: load(route.file),
+		children: toRoutes(route.children),
+	}));
+	return {
+		pages: structure.pages,
+		app: structure.app ? load(structure.app) : undefined,
+		layouts: Object.fromEntries(Object.entries(structure.layouts).map(([name, file]) => [name, load(file)])),
+		routes: toRoutes(structure.routes),
+		components: Object.fromEntries(components.map((component) => [component.pascalName, load(component.file)])),
+		appConfig: hasAppConfig ? async () => loader.load(APP_CONFIG) : undefined,
+		error: structure.error ? load(structure.error) : undefined,
+		middleware: {
+			global: structure.middleware.global.map((file) => load(file) as never),
+			named: Object.fromEntries(Object.entries(structure.middleware.named).map(([name, file]) => [name, load(file) as never])),
+		},
+		appHead,
+	};
+}
+
+/** Module des méta d'une page (`app/pages/x.vue?macro=true`) : l'objet de definePageMeta. */
+export function pageMetaSource(structure: AppStructure, path: string): string | undefined {
+	if (!path.endsWith(MACRO)) return undefined;
+	const route = findRoute(structure.routes, path.slice(0, -MACRO.length));
+	return `export default (${route?.meta ?? '{}'})\n`;
+}
+
+/**
+ * Plugin dev-server-logs de Nuxt : ce que le serveur écrit dans la console pendant un rendu (avertissements de
+ * vue-router, console.log d'une page…) rejoint le journal transmis à la page. La console affiche toujours.
+ */
+const CONSOLE_LEVELS = { error: 0, warn: 1, log: 2, info: 3 } as const;
+
+function captureConsole(logs: NuxtLog[]): () => void {
+	const originals = Object.fromEntries(Object.keys(CONSOLE_LEVELS).map((type) => [type, console[type as keyof typeof CONSOLE_LEVELS]])) as Record<keyof typeof CONSOLE_LEVELS, (...args: unknown[]) => void>;
+	for (const type of Object.keys(CONSOLE_LEVELS) as (keyof typeof CONSOLE_LEVELS)[]) {
+		console[type] = (...args: unknown[]) => {
+			logs.push({ date: new Date(), args, type, level: CONSOLE_LEVELS[type], tag: '', filename: '', stack: [] });
+			originals[type](...args);
+		};
+	}
+	return () => Object.assign(console, originals);
+}
+
+function findRoute(routes: PageRoute[], file: string): PageRoute | undefined {
+	for (const route of routes) {
+		if (route.file === file) return route;
+		const child = findRoute(route.children, file);
+		if (child) return child;
+	}
+	return undefined;
+}
+
+/** Chemin de l'événement encodé comme par Nuxt (createSSRContext) : la query est gardée telle quelle. */
+function encodeEventPath(path: string): string {
+	const queryIndex = path.indexOf('?');
+	if (queryIndex === -1) return encodePath(path);
+	return encodePath(path.slice(0, queryIndex)) + path.slice(queryIndex);
+}
+
 /** Compilation d'un .vue si besoin, `import.meta.*` de Nuxt, retrait des types, clés de useState, auto-imports. */
-function prepareModule(path: string, source: string, ssr: boolean, imports: ImportTable): string {
+export function prepareModule(path: string, source: string, ssr: boolean, imports: ImportTable): string {
 	let code = path.endsWith('.vue') ? compileSfc(path, source, ssr) : source;
 	code = code
 		.replace(/\bimport\.meta\.server\b|\bprocess\.server\b/g, String(ssr))

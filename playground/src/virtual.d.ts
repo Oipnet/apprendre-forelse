@@ -3,3 +3,8 @@ declare module 'virtual:nuxt-sim-client' {
 	const code: string;
 	export default code;
 }
+
+declare module 'virtual:nuxt-sim-test-runtime' {
+	const code: string;
+	export default code;
+}

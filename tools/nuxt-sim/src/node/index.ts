@@ -20,3 +20,16 @@ export function loadProject(directory: string): Record<string, string> {
 }
 
 export { buildClientBundle } from './client-bundle.ts';
+export { buildTestRuntimeBundle } from './test-runtime-bundle.ts';
+
+import type { NuxtTestEnvironment } from '../testing/nuxt/environment.ts';
+import { buildTestRuntimeBundle } from './test-runtime-bundle.ts';
+
+/** Environnement de test `nuxt` sous Node : le runtime construit une fois par processus, happy-dom tel quel. */
+export function nodeTestEnvironment(): NuxtTestEnvironment {
+	let runtime: Promise<string> | undefined;
+	return {
+		runtime: () => (runtime ??= buildTestRuntimeBundle()),
+		happyDom: () => import('happy-dom') as never,
+	};
+}

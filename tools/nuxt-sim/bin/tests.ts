@@ -6,7 +6,7 @@
  */
 import { join } from 'node:path';
 import { NuxtSimulator } from '../src/index.ts';
-import { loadProject } from '../src/node/index.ts';
+import { loadProject, nodeTestEnvironment } from '../src/node/index.ts';
 
 const [directory, ...only] = process.argv.slice(2);
 if (!directory) {
@@ -14,7 +14,7 @@ if (!directory) {
 	process.exit(2);
 }
 
-const simulator = new NuxtSimulator(loadProject(directory));
+const simulator = new NuxtSimulator(loadProject(directory), { testEnvironment: nodeTestEnvironment() });
 const result = await simulator.runTests(undefined, only.length > 0 ? only : undefined);
 process.stdout.write(`${JSON.stringify({
 	exitCode: result.exitCode,

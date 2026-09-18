@@ -5,6 +5,8 @@
  */
 import { ModuleLoader, type ProjectFiles } from '../compiler.ts';
 import { createE2E, type SimulatedServer } from './e2e.ts';
+import { resolveEnvironments } from './environment.ts';
+import { loadNuxtTestFile, type NuxtTestEnvironment } from './nuxt/environment.ts';
 import type { Grading, TestCaseResult, TestRunResult } from './types.ts';
 import { TestFile } from './vitest.ts';
 
@@ -16,6 +18,8 @@ export interface RunOptions {
 	createServer: (files: ProjectFiles) => SimulatedServer;
 	/** Fichiers de test à lancer (tous par défaut). */
 	only?: string[];
+	/** Environnement `nuxt` (mountSuspended…) : runtime de test et happy-dom, fournis par l'hôte. */
+	nuxt?: NuxtTestEnvironment;
 }
 
 export function testFiles(files: ProjectFiles): string[] {
@@ -43,8 +47,30 @@ interface RawRun {
 async function runFiles(files: ProjectFiles, options: RunOptions, paths: string[]): Promise<RawRun> {
 	const cases: TestCaseResult[] = [];
 	const fileErrors: RawRun['fileErrors'] = [];
+	let environments: Map<string, string>;
+	try {
+		environments = await resolveEnvironments(files, paths);
+	} catch (error) {
+		const message = `vitest.config : ${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}`;
+		return { exitCode: 1, cases, fileErrors: paths.map((file) => ({ file, message })), output: '', durationMs: 0 };
+	}
 	for (const path of paths) {
 		const testFile = new TestFile(path);
+		if (environments.get(path) === 'nuxt') {
+			if (!options.nuxt) {
+				fileErrors.push({ file: path, message: 'Error: l\'environnement de test « nuxt » n\'est pas disponible ici.' });
+				continue;
+			}
+			let loaded;
+			try {
+				loaded = await loadNuxtTestFile(files, path, testFile, options.nuxt);
+			} catch (error) {
+				fileErrors.push({ file: path, message: error instanceof Error ? `${error.name}: ${error.message}` : String(error) });
+				continue;
+			}
+			cases.push(...(await loaded.run()));
+			continue;
+		}
 		const server = options.createServer(files);
 		const e2e = createE2E(server);
 		const loader = new ModuleLoader(files, {}, {
@@ -57,7 +83,11 @@ async function runFiles(files: ProjectFiles, options: RunOptions, paths: string[
 			fileErrors.push({ file: path, message: error instanceof Error ? `${error.name}: ${error.message}` : String(error) });
 			continue;
 		}
-		cases.push(...(await testFile.run()));
+		try {
+			cases.push(...(await testFile.run()));
+		} finally {
+			testFile.unstubAllGlobals();
+		}
 	}
 	const failed = fileErrors.length > 0 || cases.some((c) => c.status === 'failed' || c.status === 'error' || (c.status === 'skipped' && c.message));
 	return { exitCode: failed || cases.length === 0 ? 1 : 0, cases, fileErrors, output: '', durationMs: 0 };

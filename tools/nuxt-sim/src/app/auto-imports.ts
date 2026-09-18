@@ -22,6 +22,8 @@ export const NUXT_AUTO_IMPORTS = [
 	'useNuxtApp', 'useRoute', 'useRouter', 'definePageMeta', 'useRuntimeConfig', 'useState', 'clearNuxtState', 'useAppConfig', 'defineAppConfig',
 	'useAsyncData', 'useLazyAsyncData', 'useNuxtData', 'refreshNuxtData', 'clearNuxtData', 'useFetch', 'useLazyFetch', 'callOnce', '$fetch',
 	'createError', 'isNuxtError', 'useRequestEvent', 'useRequestFetch',
+	'useError', 'showError', 'clearError', 'defineNuxtRouteMiddleware', 'addRouteMiddleware', 'navigateTo', 'abortNavigation',
+	'useCookie', 'refreshCookie', 'useHead', 'useHeadSafe', 'useSeoMeta', 'useServerHead', 'useServerSeoMeta',
 ];
 
 /** Pour chaque nom auto-importé : le module et le nom exporté. */

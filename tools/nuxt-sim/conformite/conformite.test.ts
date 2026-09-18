@@ -200,7 +200,9 @@ function normalize(observed: Observed, cas: Cas): Observed {
 			.replace(/"\$f[0-9a-z]{6,16}"/g, '"$f(clé automatique)"')
 			.replace(/"\$[\w-]{10}"/g, '"$(clé automatique)"')
 			.replace(/(id="__NUXT_DATA__">)([\s\S]*?)(<\/script>)/, (_, open, payload, close) => `${open}${normalizePayload(payload)}${close}`)
-			.replace(/(<script type="application\/json" data-nuxt-logs="nuxt-app">)([\s\S]*?)(<\/script>)/, (_, open, logs, close) => `${open}${normalizeLogs(logs)}${close}`);
+			.replace(/(<script type="application\/json" data-nuxt-logs="nuxt-app">)([\s\S]*?)(<\/script>)/, (_, open, logs, close) => `${open}${normalizeLogs(logs)}${close}`)
+			// Surcouche d'erreur de nuxi dev, ajoutée avant </body> d'une page d'erreur : le simulateur s'en passe.
+			.replace(/(id="__NUXT_DATA__">[\s\S]*?<\/script>)[\s\S]*?(?=<\/body>)/, '$1');
 		return { ...observed, headers, body: { head, body } };
 	}
 	// Chemins absolus du projet de référence (messages de vite-node) : le simulateur place le projet à la racine.
@@ -240,7 +242,7 @@ function normalizePayload(serialized: string): string {
 	const revivers = Object.fromEntries(['ShallowReactive', 'Reactive', 'ShallowRef', 'Ref', 'EmptyRef', 'EmptyShallowRef', 'NuxtError'].map((name) => [name, tag(name)]));
 	const value = devalueParse(serialized.replaceAll('\\u002F', '/'), revivers);
 	return JSON.stringify(value, (key, item) => {
-		if (key === 'stack' && Array.isArray(item)) return '(pile)';
+		if (key === 'stack' && (Array.isArray(item) || typeof item === 'string')) return '(pile)';
 		if (item instanceof Set) return { Set: [...item] };
 		return item === undefined ? '(undefined)' : item;
 	});

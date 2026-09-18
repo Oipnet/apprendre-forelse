@@ -5,6 +5,7 @@
  */
 import { unzipSync } from 'fflate';
 import clientBundle from 'virtual:nuxt-sim-client';
+import { prepareHappyDom } from './happy-dom-node';
 import { NuxtSimulator } from '../../../tools/nuxt-sim/src/index.ts';
 import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from './Runtime';
 import type { WorkerCall, WorkerMessage } from './protocol';
@@ -31,7 +32,18 @@ const api: Runtime = {
 				.map(([path, content]) => [path, decoder.decode(content)]),
 		);
 		progress({ step: 'boot', ratio: null, label: 'Démarrage du simulateur Nuxt…' });
-		simulator = new NuxtSimulator(files, { clientBundle, baseURL: `${env.previewBasePath}/` });
+		simulator = new NuxtSimulator(files, {
+			clientBundle,
+			baseURL: `${env.previewBasePath}/`,
+			// Tests qui montent des composants : chargés à la demande, ils pèsent plus que le simulateur lui-même.
+			testEnvironment: {
+				runtime: async () => (await import('virtual:nuxt-sim-test-runtime')).default,
+				happyDom: async () => {
+					prepareHappyDom();
+					return import('happy-dom') as never;
+				},
+			},
+		});
 	},
 
 	async writeFile(path, content) {
