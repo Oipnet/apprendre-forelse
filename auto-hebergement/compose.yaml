@@ -23,6 +23,7 @@ services:
       APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
       DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/formation?serverVersion=17&charset=utf8
       CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}
+      DOWNLOADS_DIR: ${DOWNLOADS_DIR:-/downloads}
       REGISTRATION_INVITE_ONLY: ${REGISTRATION_INVITE_ONLY:-0}
       # Page de présentation propre à l'instance de Forelse : laissez-la éteinte.
       SELF_HOSTING_PAGE: ${SELF_HOSTING_PAGE:-0}
@@ -61,6 +62,8 @@ services:
       - config:/config
       # Packs de contenu, en lecture seule. Dossier vide : le pack de démonstration est chargé.
       - ${PACKS_DIR:-./packs}:/packs:ro
+      # Archives à télécharger (facultatif) : déposez-y vos .zip, servis par /telechargements.
+      - ${DOWNLOADS_HOST_DIR:-./downloads}:/downloads:ro
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"

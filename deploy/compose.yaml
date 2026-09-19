@@ -29,6 +29,9 @@ services:
       # Packs chargés (chemins dans le conteneur, séparés par des virgules). /packs = le volume ci-dessous ;
       # ajouter /app/examples/packs pour proposer aussi le parcours de démonstration, ouvert aux visiteurs.
       CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}
+      # Fichiers à télécharger (archives déposées par la CI du dépôt de contenu, ex. la boutique
+      # vulnérable). /downloads = le volume ci-dessous ; servis par /telechargements aux comptes connectés.
+      DOWNLOADS_DIR: ${DOWNLOADS_DIR:-/downloads}
       # Sans SMTP, les emails (mot de passe oublié) ne partent pas : à renseigner dans .env.
       MAILER_DSN: ${MAILER_DSN:-null://null}
       MAILER_FROM: ${MAILER_FROM:-Forelse <ne-pas-repondre@forelse.fr>}
@@ -60,6 +63,8 @@ services:
       - config:/config
       # Packs de contenu (dépôt apprendre-forelse-contenu), déposés par rsync. Vide : pack de démonstration.
       - ${PACKS_DIR:-./packs}:/packs:ro
+      # Archives à télécharger (déposées par rsync depuis la CI du contenu). Vide : aucun téléchargement.
+      - ${DOWNLOADS_HOST_DIR:-./downloads}:/downloads:ro
     ports:
       - "80:80"
       - "443:443"
