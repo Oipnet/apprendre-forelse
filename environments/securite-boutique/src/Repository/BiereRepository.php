@@ -34,9 +34,8 @@ class BiereRepository extends ServiceEntityRepository
      */
     public function rechercher(string $q, string $tri = 'nom'): array
     {
-        $sql = "SELECT id, slug, nom, style, prix FROM biere
-                WHERE actif = 1 AND (nom LIKE '%$q%' OR description LIKE '%$q%')
-                ORDER BY $tri";
+        // Tout sur une ligne : la charge « \' OR 1=1 -- » commente la fin de la requête.
+        $sql = "SELECT id, slug, nom, style, prix FROM biere WHERE actif = 1 AND nom LIKE '%$q%' ORDER BY $tri";
 
         /** @var list<array{id:int, slug:string, nom:string, style:string, prix:string}> $lignes */
         $lignes = $this->getEntityManager()->getConnection()->executeQuery($sql)->fetchAllAssociative();
