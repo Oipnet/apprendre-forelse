@@ -471,7 +471,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  *     disallow_search_engine_index?: bool|Param, // Enabled by default when debug is enabled. // Default: true
  *     http_client?: bool|array{ // HTTP Client configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Default: true
  *         max_host_connections?: int|Param, // The maximum number of connections to a single host.
  *         default_options?: array{
  *             headers?: array<string, mixed>,
@@ -629,7 +629,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         }>,
  *     },
  *     rate_limiter?: bool|array{ // Rate limiter configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Default: true
  *         limiters?: array<string, array{ // Default: []
  *             lock_factory?: scalar|Param|null, // The service ID of the lock factory used by this limiter (or null to disable locking). // Default: "auto"
  *             cache_pool?: scalar|Param|null, // The cache pool to use for storing the current limiter state. // Default: "cache.rate_limiter"
@@ -687,10 +687,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         signing_algorithm?: scalar|Param|null, // Default: "sha256"
  *         routing?: array<string, array{ // Default: []
  *             service?: scalar|Param|null,
- *             secret?: scalar|Param|null, // Default: ""
+ *             secret?: scalar|Param|null, // The secret used to verify incoming request signatures. It must be set in production: with an empty value, requests from any sender are accepted. // Default: ""
  *         }>,
  *     },
- *     remote-event?: bool|array{ // RemoteEvent configuration
+ *     remote_event?: bool|array{ // RemoteEvent configuration
  *         enabled?: bool|Param, // Default: false
  *     },
  *     json_streamer?: bool|array{ // JSON streamer configuration
@@ -995,11 +995,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     enable_profiler?: bool|Param, // Whether or not to enable the profiler collector to calculate and visualize migration status. This adds some queries overhead. // Default: false
  *     transactional?: bool|Param, // Whether or not to wrap migrations in a single transaction. // Default: true
  * }
- * @psalm-type MakerConfig = array{
- *     root_namespace?: scalar|Param|null, // Default: "App"
- *     generate_final_classes?: bool|Param, // Default: true
- *     generate_final_entities?: bool|Param, // Default: false
- * }
  * @psalm-type SecurityConfig = array{
  *     access_denied_url?: scalar|Param|null, // Default: null
  *     session_fixation_strategy?: "none"|"migrate"|"invalidate"|Param, // Default: "migrate"
@@ -1287,9 +1282,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             lifetime?: int|Param, // Default: 31536000
  *             path?: scalar|Param|null, // Default: "/"
  *             domain?: scalar|Param|null, // Default: null
- *             secure?: true|false|"auto"|Param, // Default: "auto"
+ *             secure?: true|false|"auto"|Param, // Default: false
  *             httponly?: bool|Param, // Default: true
- *             samesite?: null|"lax"|"strict"|"none"|Param, // Default: "lax"
+ *             samesite?: null|"lax"|"strict"|"none"|Param, // Default: null
  *             always_remember_me?: bool|Param, // Default: false
  *             remember_me_parameter?: scalar|Param|null, // Default: "_remember_me"
  *         },
@@ -1309,6 +1304,164 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     }>,
  *     role_hierarchy?: array<string, Param|string|list<scalar|Param|null>>,
  * }
+ * @psalm-type MonologConfig = array{
+ *     use_microseconds?: scalar|Param|null, // Default: true
+ *     timezone?: string|Param, // The timezone used for the timestamp of every log record (e.g. "UTC" or "Europe/Paris"). Defaults to the PHP default timezone. // Default: null
+ *     channels?: list<scalar|Param|null>,
+ *     handlers?: array<string, array{ // Default: []
+ *         type?: scalar|Param|null,
+ *         id?: scalar|Param|null,
+ *         enabled?: bool|Param, // Default: true
+ *         priority?: scalar|Param|null, // Default: 0
+ *         level?: scalar|Param|null, // Default: "DEBUG"
+ *         bubble?: bool|Param, // Default: true
+ *         interactive_only?: bool|Param, // Default: false
+ *         app_name?: scalar|Param|null, // Default: null
+ *         include_stacktraces?: bool|Param, // Default: false
+ *         base_path?: scalar|Param|null, // Default: null
+ *         process_psr_3_messages?: array{
+ *             enabled?: bool|Param|null, // Default: null
+ *             date_format?: scalar|Param|null,
+ *             remove_used_context_fields?: bool|Param,
+ *             ...<string, mixed>
+ *         },
+ *         path?: scalar|Param|null, // Default: "%kernel.logs_dir%/%kernel.environment%.log"
+ *         file_permission?: scalar|Param|null, // Default: null
+ *         use_locking?: bool|Param, // Default: false
+ *         filename_format?: scalar|Param|null, // Default: "{filename}-{date}"
+ *         date_format?: scalar|Param|null, // Default: "Y-m-d"
+ *         ident?: scalar|Param|null, // Default: "php"
+ *         logopts?: scalar|Param|null, // Default: 1
+ *         facility?: scalar|Param|null, // Default: "user"
+ *         max_files?: scalar|Param|null, // Default: 0
+ *         action_level?: scalar|Param|null, // Default: "WARNING"
+ *         activation_strategy?: scalar|Param|null, // Default: null
+ *         stop_buffering?: bool|Param, // Default: true
+ *         passthru_level?: scalar|Param|null, // Default: null
+ *         excluded_http_codes?: list<array{ // Default: []
+ *             code?: scalar|Param|null,
+ *             urls?: list<scalar|Param|null>,
+ *         }>,
+ *         accepted_levels?: list<scalar|Param|null>,
+ *         min_level?: scalar|Param|null, // Default: "DEBUG"
+ *         max_level?: scalar|Param|null, // Default: "EMERGENCY"
+ *         buffer_size?: scalar|Param|null, // Default: 0
+ *         flush_on_overflow?: bool|Param, // Default: false
+ *         handler?: scalar|Param|null,
+ *         url?: scalar|Param|null,
+ *         exchange?: scalar|Param|null,
+ *         exchange_name?: scalar|Param|null, // Default: "log"
+ *         channel?: scalar|Param|null, // Default: null
+ *         bot_name?: scalar|Param|null, // Default: "Monolog"
+ *         use_attachment?: scalar|Param|null, // Default: true
+ *         use_short_attachment?: scalar|Param|null, // Default: false
+ *         include_extra?: scalar|Param|null, // Default: false
+ *         icon_emoji?: scalar|Param|null, // Default: null
+ *         webhook_url?: scalar|Param|null,
+ *         exclude_fields?: list<scalar|Param|null>,
+ *         token?: scalar|Param|null,
+ *         region?: scalar|Param|null,
+ *         source?: scalar|Param|null,
+ *         use_ssl?: bool|Param, // Default: true
+ *         user?: mixed,
+ *         title?: scalar|Param|null, // Default: null
+ *         host?: scalar|Param|null, // Default: null
+ *         port?: scalar|Param|null, // Default: 514
+ *         rfc?: scalar|Param|null, // Default: 1
+ *         config?: list<scalar|Param|null>,
+ *         members?: list<scalar|Param|null>,
+ *         connection_string?: scalar|Param|null,
+ *         timeout?: scalar|Param|null,
+ *         time?: scalar|Param|null, // Default: 60
+ *         deduplication_level?: scalar|Param|null, // Default: 400
+ *         store?: scalar|Param|null, // Default: null
+ *         connection_timeout?: scalar|Param|null,
+ *         persistent?: bool|Param,
+ *         message_type?: scalar|Param|null, // Default: 0
+ *         expand_newlines?: bool|Param, // Default: false
+ *         parse_mode?: scalar|Param|null, // Default: null
+ *         disable_webpage_preview?: bool|Param|null, // Default: null
+ *         disable_notification?: bool|Param|null, // Default: null
+ *         split_long_messages?: bool|Param, // Default: false
+ *         delay_between_messages?: bool|Param, // Default: false
+ *         topic?: int|Param, // Default: null
+ *         factor?: int|Param, // Default: 1
+ *         tags?: Param|string|list<scalar|Param|null>,
+ *         console_formatter_options?: mixed, // Default: []
+ *         formatter?: scalar|Param|null,
+ *         nested?: bool|Param, // Default: false
+ *         publisher?: Param|string|array{
+ *             id?: scalar|Param|null,
+ *             hostname?: scalar|Param|null,
+ *             port?: scalar|Param|null, // Default: 12201
+ *             chunk_size?: scalar|Param|null, // Default: 1420
+ *             encoder?: "json"|"compressed_json"|Param,
+ *         },
+ *         mongodb?: Param|string|array{
+ *             id?: scalar|Param|null, // ID of a MongoDB\Client service
+ *             uri?: scalar|Param|null,
+ *             username?: scalar|Param|null,
+ *             password?: scalar|Param|null,
+ *             database?: scalar|Param|null, // Default: "monolog"
+ *             collection?: scalar|Param|null, // Default: "logs"
+ *         },
+ *         elasticsearch?: Param|string|array{
+ *             id?: scalar|Param|null,
+ *             hosts?: list<scalar|Param|null>,
+ *             host?: scalar|Param|null,
+ *             port?: scalar|Param|null, // Default: 9200
+ *             transport?: scalar|Param|null, // Default: "Http"
+ *             user?: scalar|Param|null, // Default: null
+ *             password?: scalar|Param|null, // Default: null
+ *         },
+ *         index?: scalar|Param|null, // Default: "monolog"
+ *         document_type?: scalar|Param|null, // Default: "logs"
+ *         ignore_error?: scalar|Param|null, // Default: false
+ *         redis?: Param|string|array{
+ *             id?: scalar|Param|null,
+ *             host?: scalar|Param|null,
+ *             password?: scalar|Param|null, // Default: null
+ *             port?: scalar|Param|null, // Default: 6379
+ *             database?: scalar|Param|null, // Default: 0
+ *             key_name?: scalar|Param|null, // Default: "monolog_redis"
+ *         },
+ *         predis?: Param|string|array{ // Deprecated: The "predis" option is deprecated and ignored, use the "redis" option to configure the Predis client.
+ *             id?: scalar|Param|null,
+ *             host?: scalar|Param|null,
+ *         },
+ *         from_email?: scalar|Param|null,
+ *         to_email?: Param|string|list<scalar|Param|null>,
+ *         subject?: scalar|Param|null,
+ *         content_type?: scalar|Param|null, // Default: null
+ *         headers?: list<scalar|Param|null>,
+ *         parameters?: list<scalar|Param|null>,
+ *         mailer?: scalar|Param|null, // Default: null
+ *         email_prototype?: Param|string|array{
+ *             id?: scalar|Param|null,
+ *             method?: scalar|Param|null, // Default: null
+ *         },
+ *         verbosity_levels?: array{
+ *             VERBOSITY_QUIET?: scalar|Param|null, // Default: "ERROR"
+ *             VERBOSITY_NORMAL?: scalar|Param|null, // Default: "WARNING"
+ *             VERBOSITY_VERBOSE?: scalar|Param|null, // Default: "NOTICE"
+ *             VERBOSITY_VERY_VERBOSE?: scalar|Param|null, // Default: "INFO"
+ *             VERBOSITY_DEBUG?: scalar|Param|null, // Default: "DEBUG"
+ *         },
+ *         channels?: Param|string|array{
+ *             type?: scalar|Param|null,
+ *             elements?: list<scalar|Param|null>,
+ *             ...<string, mixed>
+ *         },
+ *     }>,
+ * }
+ * @psalm-type WebProfilerConfig = array{
+ *     toolbar?: bool|array{ // Profiler toolbar configuration
+ *         enabled?: bool|Param, // Default: false
+ *         ajax_replace?: bool|Param, // Replace toolbar on AJAX requests // Default: false
+ *     },
+ *     intercept_redirects?: bool|Param, // Default: false
+ *     excluded_ajax_paths?: scalar|Param|null, // Default: "^/((index|app(_[\\w]+)?)\\.php/)?_wdt"
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1319,6 +1472,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     doctrine?: DoctrineConfig,
  *     doctrine_migrations?: DoctrineMigrationsConfig,
  *     security?: SecurityConfig,
+ *     monolog?: MonologConfig,
+ *     web_profiler?: WebProfilerConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1328,8 +1483,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_extra?: TwigExtraConfig,
  *         doctrine?: DoctrineConfig,
  *         doctrine_migrations?: DoctrineMigrationsConfig,
- *         maker?: MakerConfig,
  *         security?: SecurityConfig,
+ *         monolog?: MonologConfig,
+ *         web_profiler?: WebProfilerConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1341,6 +1497,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         doctrine?: DoctrineConfig,
  *         doctrine_migrations?: DoctrineMigrationsConfig,
  *         security?: SecurityConfig,
+ *         monolog?: MonologConfig,
+ *         web_profiler?: WebProfilerConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1352,6 +1510,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         doctrine?: DoctrineConfig,
  *         doctrine_migrations?: DoctrineMigrationsConfig,
  *         security?: SecurityConfig,
+ *         monolog?: MonologConfig,
+ *         web_profiler?: WebProfilerConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,
