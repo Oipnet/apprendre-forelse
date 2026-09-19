@@ -46,7 +46,8 @@ final class DownloadTest extends WebTestCase
         $client->request('GET', '/telechargements/boutique-lacombe.zip');
 
         $this->assertResponseIsSuccessful();
-        $this->assertResponseHeaderContains('Content-Disposition', 'boutique-lacombe.zip');
+        $disposition = (string) $client->getResponse()->headers->get('Content-Disposition');
+        $this->assertStringContainsString('boutique-lacombe.zip', $disposition);
     }
 
     public function testUnFichierAbsentDonneUne404(): void
