@@ -19,7 +19,7 @@
        C'est ce qui laisse la charge de Houblon Noir défigurer l'accueil. #}
     {% for avis in avis_recents %}
         <div class="avis">
-            <span class="note">{{ '★'|repeat(avis.note) }}</span>
+            <span class="note">{% for _etoile in 1..avis.note %}★{% endfor %}</span>
             <strong>{{ avis.titre }}</strong> — {{ avis.auteurNom|raw }}
             <div>{{ avis.corps|raw }}</div>
         </div>

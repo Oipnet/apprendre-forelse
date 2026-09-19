@@ -73,11 +73,14 @@ class Commande
     /** La somme réelle des lignes. L'écart avec getTotal() trahit la faille du chapitre 5. */
     public function totalCalcule(): string
     {
-        $somme = '0.00';
+        // Ce que la commande DEVRAIT coûter, au tarif du catalogue : c'est l'écart
+        // avec le total enregistré (recopié de la requête) qui trahit la fraude,
+        // y compris quand le prix d'une ligne a été forcé à 0 (chapitre 5).
+        $somme = 0.0;
         foreach ($this->lignes as $ligne) {
-            $somme = bcadd($somme, bcmul($ligne->getPrixUnitaire(), (string) $ligne->getQuantite(), 2), 2);
+            $somme += (float) ($ligne->getBiere()?->getPrix() ?? '0') * $ligne->getQuantite();
         }
 
-        return $somme;
+        return number_format($somme, 2, '.', '');
     }
 }

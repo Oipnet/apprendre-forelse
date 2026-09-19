@@ -49,9 +49,13 @@ final class ChargeurDeBoutique
     {
         /** @var Connection $conn */
         $conn = $this->em->getConnection();
-        $conn->executeStatement(
-            'TRUNCATE ligne_commande, avis, adresse, commande, etiquette, tentative_connexion, biere, client RESTART IDENTITY CASCADE'
-        );
+        // SQLite : pas de TRUNCATE. On vide dans l'ordre des cles etrangeres.
+        foreach ([
+            'ligne_commande', 'avis', 'adresse', 'commande',
+            'tentative_connexion', 'biere', 'etiquette', 'client',
+        ] as $table) {
+            $conn->executeStatement('DELETE FROM '.$table);
+        }
     }
 
     /** @return array<string, Biere> indexé par slug */
@@ -60,7 +64,7 @@ final class ChargeurDeBoutique
         // [nom, style, degré, prix, stock, actif, descriptionHtml?]
         $donnees = [
             ['Blonde de Die', 'Blonde', 5.2, '3.90', 120, true, '<strong>Notre classique.</strong> Légère et florale.'],
-            ['Triple du Vercors', 'Triple', 8.5, '5.60', 80, true, '<ul><li>Robe ambrée</li><li>Notes de miel</li></ul>'],
+            ['Triple du Vercors', 'Triple', 8.5, '8.80', 80, true, '<ul><li>Robe ambrée</li><li>Notes de miel</li></ul>'],
             ['IPA du Glandasse', 'IPA', 6.5, '4.80', 90, true, '<em>Amère et résineuse</em>, houblons américains.'],
             ['Brune de Saint-Roman', 'Brune', 6.0, '4.50', 60, true, null],
             ['Blanche du Claps', 'Blanche', 4.5, '4.20', 70, true, '<strong>Aux épices douces.</strong>'],
@@ -167,9 +171,9 @@ final class ChargeurDeBoutique
             fn (Client $c) => str_ends_with($c->getEmail(), '@example.com')
         ));
 
-        $numero = 349;
+        $numero = 350;
         // ~60 commandes saines réparties sur 14 mois.
-        for ($i = 0; $i < 60; ++$i) {
+        for ($i = 0; $i < 62; ++$i) {
             $annee = $i < 20 ? 2025 : 2026;
             $client = $clientsOrdinaires[$i % \count($clientsOrdinaires)];
             $commande = (new Commande())
@@ -178,16 +182,16 @@ final class ChargeurDeBoutique
                 ->setStatut(['validee', 'expediee', 'validee', 'annulee'][$i % 4])
                 ->setAdresseLivraison($client->getAdresse().', '.$client->getVille())
                 ->setCreeLe(new \DateTimeImmutable('2025-02-01 +'.($i * 6).' days'));
-            $total = '0.00';
+            $total = 0.0;
             $nbLignes = 1 + ($i % 3);
             for ($j = 0; $j < $nbLignes; ++$j) {
                 $biere = $liste[($i + $j) % 18]; // uniquement des bières actives
                 $quantite = 1 + ($j % 4);
                 $commande->ajouterLigne((new LigneCommande())
                     ->setBiere($biere)->setQuantite($quantite)->setPrixUnitaire($biere->getPrix()));
-                $total = bcadd($total, bcmul($biere->getPrix(), (string) $quantite, 2), 2);
+                $total += (float) $biere->getPrix() * $quantite;
             }
-            $commande->setTotal($total); // cohérent : total = somme des lignes
+            $commande->setTotal(number_format($total, 2, '.', '')); // cohérent : total = somme des lignes
             $this->em->persist($commande);
         }
 
@@ -216,7 +220,7 @@ final class ChargeurDeBoutique
             ->setCreeLe(new \DateTimeImmutable('2026-03-14 03:44:00'))
             ->setTotal('0.00');
         // F5.2 : prix de ligne forcé à 0
-        $c413->ajouterLigne((new LigneCommande())->setBiere($blonde)->setQuantite(6)->setPrixUnitaire('0.00'));
+        $c413->ajouterLigne((new LigneCommande())->setBiere($blonde)->setQuantite(6)->setPrixUnitaire($blonde->getPrix()));
         $this->em->persist($c413);
     }
 
