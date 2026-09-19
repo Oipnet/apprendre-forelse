@@ -1,0 +1,9 @@
+{# FAILLE (chapitre 3, F3.2) : autoescape désactivé autour du descriptionHtml.
+   Correction : supprimer ce bloc et passer par un filtre « sain » (liste blanche). #}
+{% if biere.descriptionHtml %}
+    {% autoescape false %}
+        <div class="description">{{ biere.descriptionHtml }}</div>
+    {% endautoescape %}
+{% else %}
+    <p class="description">{{ biere.description }}</p>
+{% endif %}

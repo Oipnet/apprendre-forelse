@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+{% block title %}Panier — Brasserie Lacombe{% endblock %}
+{% block body %}
+    <h1>Votre panier</h1>
+    {% if lignes is empty %}
+        <p>Votre panier est vide. <a href="{{ path('app_catalogue') }}">Voir le catalogue</a></p>
+    {% else %}
+        <form action="{{ path('app_commande_valider') }}" method="post">
+            {# FAILLE (chapitre 5, F5.1/F5.2) : le prix unitaire et le total sont des
+               champs du formulaire, donc pilotables par le client. Un attaquant les
+               met à 0. FAILLE (chapitre 4, F4.1) : aucun jeton CSRF. #}
+            <table>
+                <tr><th>Bière</th><th>Prix</th><th>Quantité</th><th>Sous-total</th></tr>
+                {% for ligne in lignes %}
+                    <tr>
+                        <td>{{ ligne.biere.nom }}</td>
+                        <td>
+                            {{ ligne.biere.prix|prix }}
+                            <input type="hidden" name="prix_{{ ligne.biere.id }}" value="{{ ligne.biere.prix }}">
+                        </td>
+                        <td>{{ ligne.quantite }}</td>
+                        <td>{{ ligne.sousTotal|prix }}</td>
+                    </tr>
+                {% endfor %}
+                <tr><th colspan="3">Total</th><th>{{ total|prix }}</th></tr>
+            </table>
+            <input type="hidden" name="total" value="{{ total }}">
+            <label>Adresse de livraison<br><textarea name="adresseLivraison" rows="3"></textarea></label>
+            <p><button class="btn">Valider la commande</button></p>
+        </form>
+    {% endif %}
+{% endblock %}

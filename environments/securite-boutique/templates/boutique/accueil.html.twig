@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% block title %}Brasserie Lacombe — bières artisanales de la Drôme{% endblock %}
+{% block body %}
+    <h1>Nos bières artisanales</h1>
+    <p>Brassées à Die, dans la Drôme, depuis 2011.</p>
+
+    <div class="grille">
+        {% for biere in bieres %}
+            <div class="carte">
+                <strong><a href="{{ path('app_biere', {slug: biere.slug}) }}">{{ biere.nom }}</a></strong>
+                <span class="style">{{ biere.style }} · {{ biere.degre }}°</span>
+                <span class="prix">{{ biere.prix|prix }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h2>Derniers avis</h2>
+    {# FAILLE (chapitre 3, F3.1) : le corps des avis récents est rendu avec |raw.
+       C'est ce qui laisse la charge de Houblon Noir défigurer l'accueil. #}
+    {% for avis in avis_recents %}
+        <div class="avis">
+            <span class="note">{{ '★'|repeat(avis.note) }}</span>
+            <strong>{{ avis.titre }}</strong> — {{ avis.auteurNom|raw }}
+            <div>{{ avis.corps|raw }}</div>
+        </div>
+    {% endfor %}
+{% endblock %}

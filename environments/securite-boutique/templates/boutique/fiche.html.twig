@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ biere.nom }} — Brasserie Lacombe{% endblock %}
+{% block body %}
+    <h1>{{ biere.nom }}</h1>
+    <p class="style">{{ biere.style }} · {{ biere.degre }}° · <span class="prix">{{ biere.prix|prix }}</span></p>
+
+    {% include 'boutique/_description.html.twig' %}
+
+    <form action="{{ path('app_panier_ajouter') }}" method="post" class="pile">
+        {# FAILLE (chapitre 4, F4.1) : aucun jeton CSRF. #}
+        <input type="hidden" name="biere" value="{{ biere.id }}">
+        <label>Quantité <input type="number" name="quantite" value="1" min="1"></label>
+        <button class="btn">Ajouter au panier</button>
+    </form>
+
+    <h2>Avis ({{ avis|length }})</h2>
+    {% for a in avis %}
+        {% include 'boutique/_avis.html.twig' with {avis: a} %}
+    {% else %}
+        <p>Aucun avis pour l'instant.</p>
+    {% endfor %}
+
+    <h3>Laisser un avis</h3>
+    <form action="{{ path('app_avis_deposer', {slug: biere.slug}) }}" method="post" class="pile">
+        {# FAILLE (chapitre 4, F4.1/F4.2) : formulaire à la main, sans jeton CSRF. #}
+        <label>Votre nom <input type="text" name="auteurNom"></label>
+        <label>Note (1 à 5) <input type="number" name="note" value="5"></label>
+        <label>Titre <input type="text" name="titre"></label>
+        <label>Votre avis <textarea name="corps" rows="4"></textarea></label>
+        <label>Votre site (facultatif) <input type="text" name="siteAuteur"></label>
+        <button class="btn">Publier</button>
+    </form>
+{% endblock %}

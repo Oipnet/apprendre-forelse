@@ -1,0 +1,8 @@
+# FAILLE (chapitre 11, F11.3) : configuration du profiler hors « when@dev ».
+web_profiler:
+    toolbar: true
+    intercept_redirects: false
+
+framework:
+    profiler:
+        only_exceptions: false

@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+{% block title %}Clients — admin{% endblock %}
+{% block body %}
+    {% include 'admin/_menu.html.twig' %}
+    <h1>Clients</h1>
+    <table>
+        <tr><th>E-mail</th><th>Nom</th><th>Rôles</th><th>Créé le</th><th>Hachage du mot de passe</th></tr>
+        {% for client in clients %}
+            <tr>
+                <td>{{ client.email }}</td>
+                <td>{{ client.nom }}</td>
+                <td>{{ client.roles|join(', ') }}</td>
+                <td>{{ client.creeLe|date('d/m/Y H:i') }}</td>
+                <td><code>{{ client.motDePasse }}</code></td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

@@ -1,23 +1,57 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Brasserie Lacombe{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('theme.css') }}">
+</head>
+<body>
+<header>
+    <div class="bandeau">
+        <a class="logo" href="{{ path('app_accueil') }}">🍺 Brasserie Lacombe</a>
+        <form class="recherche" action="{{ path('app_recherche') }}" method="get">
+            <input type="search" name="q" placeholder="Rechercher une bière…" value="{{ app.request.query.get('q') }}">
+        </form>
+        <nav>
+            <a href="{{ path('app_catalogue') }}">Catalogue</a>
+            <a href="{{ path('app_panier') }}">Panier ({{ nb_panier() }})</a>
+            {% if app.user %}
+                <a href="{{ path('app_compte') }}">Mon compte</a>
+                {% if is_granted('ROLE_VENDEUR') or is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_admin') }}">Admin</a>
+                {% endif %}
+                <a href="{{ path('app_deconnexion') }}">Déconnexion</a>
+            {% else %}
+                <a href="{{ path('app_connexion') }}">Connexion</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
 
-        {% block javascripts %}
-        {% endblock %}
+<main>
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="flash flash-{{ type }}">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
 
-        {% set frankenphp_hot_reload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
-        {% if frankenphp_hot_reload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphp_hot_reload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-        {% endif %}
-    </head>
-    <body>
-        {% block body %}{% endblock %}
-    </body>
+    {% block body %}{% endblock %}
+</main>
+
+<footer>
+    <p>Brasserie Lacombe — Die (Drôme). Application de démonstration pédagogique.</p>
+</footer>
+
+{# FAILLE (chapitre 3, F3.4) : données injectées telles quelles dans un <script>.
+   Le panier et le terme de recherche viennent de l'utilisateur. #}
+<script>
+    var panier = {{ panier_json()|raw }};
+    var recherche = "{{ terme_recherche() }}";
+    // Compteur de panier (script légitime de la boutique).
+    document.addEventListener('DOMContentLoaded', function () {
+        var total = Object.values(panier).reduce(function (a, b) { return a + b; }, 0);
+    });
+</script>
+</body>
 </html>

@@ -1,0 +1,8 @@
+{# FAILLE (chapitre 3, F3.6) : href non validé (schéma javascript:), titre dans un
+   attribut NON entouré de guillemets, corps et nom d'auteur rendus avec |raw. #}
+<div class="avis">
+    <span class="note">{{ '★'|repeat(avis.note) }}</span>
+    <span title={{ avis.titre }}><strong>{{ avis.titre }}</strong></span>
+    — {% if avis.siteAuteur %}<a href="{{ avis.siteAuteur }}">{{ avis.auteurNom|raw }}</a>{% else %}{{ avis.auteurNom|raw }}{% endif %}
+    <div>{{ avis.corps|raw }}</div>
+</div>

@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+{% block title %}Modifier {{ biere.nom }}{% endblock %}
+{% block body %}
+    {% include 'admin/_menu.html.twig' %}
+    <h1>Modifier : {{ biere.nom }}</h1>
+    <form action="{{ path('app_admin_biere_modifier', {id: biere.id}) }}" method="post" class="pile">
+        <label>Nom <input type="text" name="nom" value="{{ biere.nom }}"></label>
+        <label>Prix <input type="text" name="prix" value="{{ biere.prix }}"></label>
+        <label>Stock <input type="number" name="stock" value="{{ biere.stock }}"></label>
+        <label>Description <textarea name="description" rows="3">{{ biere.description }}</textarea></label>
+        <label>Description HTML (mise en forme) <textarea name="descriptionHtml" rows="3">{{ biere.descriptionHtml }}</textarea></label>
+        <button class="btn">Enregistrer</button>
+    </form>
+{% endblock %}
