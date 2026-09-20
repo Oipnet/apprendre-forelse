@@ -8,6 +8,7 @@ use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
+use App\Content\Framework\FrameworkProfile;
 use App\Content\Pack;
 use App\Content\Track;
 use Symfony\Component\Filesystem\Filesystem;
@@ -166,12 +167,12 @@ final class ExerciseStudio
     }
 
     /** @return array<string, string> */
-    private function squelette(string $id, string $titre, ?string $base, string $framework): array
+    private function squelette(string $id, string $titre, ?string $base, FrameworkProfile $framework): array
     {
-        if ('docker' === $framework) {
+        if ('docker' === $framework->id) {
             return $this->squeletteDocker($id, $titre, $base);
         }
-        $laravel = 'laravel' === $framework;
+        $laravel = 'laravel' === $framework->id;
         $controleur = $laravel ? 'app/Http/Controllers/MonControleur.php' : 'src/Controller/MonControleur.php';
         $yaml = <<<YAML
             id: {$id}
@@ -214,7 +215,7 @@ final class ExerciseStudio
      *
      * @return array<string, string>
      */
-    private function squelettePratique(string $id, string $titre, string $environment, string $framework): array
+    private function squelettePratique(string $id, string $titre, string $environment, FrameworkProfile $framework): array
     {
         $cles = sprintf("environment: %s\npublished: %s\nsummary: À écrire, en une phrase.\n# version: '8.1'\n# pull_request: https://github.com/…\n# Retirez cette ligne pour publier l'exercice.\nvisibility: admin\n", $environment, date('Y-m-d'));
         $fichiers = [];

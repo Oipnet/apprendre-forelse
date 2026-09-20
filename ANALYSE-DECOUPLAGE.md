@@ -325,8 +325,8 @@ Aucune de ces trois-là ne touche au format d'exercice : elles peuvent partir av
 | 3 | `ENV_ARTIFACTS_DIR` + service des archives de pack (C) ; repli sur `public/envs`. | 1.6.0 | non |
 | 4 | `completion.namespaces` dans `environment.yaml` (D), la liste en dur devient le socle Symfony. | 1.6.0 | non |
 | 5 | **Déménagement** : `securite-boutique` → `houblon-noir/environments/securite-boutique`, fusionné avec `boutique-lacombe` (une seule source, l'archive téléchargeable en dérive). | 1.7.0 côté moteur, pack côté contenu | non (l'ancien id reste résolu, déprécié) |
-| 6 | `FrameworkProfile` (E), table servie au playground. | 1.8.0 | non |
-| 6 bis | `showcase:` dans `pack.yaml`, atelier et messages neutralisés (G) — indépendante, déplaçable en tête. | 1.5.0 | non |
+| 6 | ~~`FrameworkProfile` (E), table servie au playground.~~ **Fait** (voir le journal). | 1.8.0 | non |
+| 6 bis | ~~`showcase:`, atelier et messages neutralisés (G).~~ **Fait** : `home.showcase` vient de `marque.yaml`, pas de `pack.yaml` — le fil rouge de l'accueil parle de l'instance, pas d'un pack. | 1.5.0 | non |
 | 7 | Retrait des identifiants d'environnement du contrat (F) ; le moteur ne garde que la bibliothèque générique. | **2.0.0** | contrat |
 
 L'étape 5 est la seule qui demande un vrai arbitrage éditorial : réconcilier les deux copies divergentes

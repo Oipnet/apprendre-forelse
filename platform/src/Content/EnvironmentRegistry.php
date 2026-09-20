@@ -2,6 +2,7 @@
 
 namespace App\Content;
 
+use App\Content\Framework\FrameworkRegistry;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Yaml\Yaml;
 
@@ -10,10 +11,14 @@ final class EnvironmentRegistry
     /** @var array<string, Environment> */
     private array $environments = [];
 
+    private readonly FrameworkRegistry $frameworks;
+
     public function __construct(
         #[Autowire(env: 'resolve:ENVIRONMENTS_DIR')]
         private readonly string $directory,
+        ?FrameworkRegistry $frameworks = null,
     ) {
+        $this->frameworks = $frameworks ?? new FrameworkRegistry();
     }
 
     public function has(string $id): bool
@@ -32,26 +37,22 @@ final class EnvironmentRegistry
 
         $directory = $this->directory.'/'.$id;
         $meta = Yaml::parseFile($directory.'/environment.yaml');
-        $framework = (string) ($meta['framework'] ?? 'symfony');
-        if (!\in_array($framework, Environment::FRAMEWORKS, true)) {
-            throw new ContentException(sprintf('Environnement « %s » : framework « %s » inconnu (%s).', $id, $framework, implode(', ', Environment::FRAMEWORKS)));
+        $name = (string) ($meta['framework'] ?? FrameworkRegistry::DEFAULT);
+        if (!$this->frameworks->has($name)) {
+            throw new ContentException(sprintf('Environnement « %s » : framework « %s » inconnu (%s).', $id, $name, implode(', ', $this->frameworks->ids())));
         }
-        // Symfony compile son container dans var/cache ; Laravel, ses vues Blade dans storage/framework/views ;
-        // le simulateur Docker n'a pas de cache dans le projet (son état vit dans un dossier temporaire).
-        $cacheDirs = $meta['cache'] ?? match ($framework) {
-            'laravel' => ['storage/framework/views'],
-            'docker', 'nuxt' => [],
-            default => ['var/cache'],
-        };
+        $framework = $this->frameworks->get($name);
 
         return $this->environments[$id] = new Environment(
             id: $id,
             title: $meta['title'] ?? $id,
-            // Le simulateur Nuxt tourne en JavaScript : pas de PHP à déclarer.
-            phpVersion: (string) ($meta['php'] ?? ('nuxt' === $framework ? '' : throw new ContentException(sprintf('Environnement « %s » : clé « php » manquante.', $id)))),
+            // Un environnement sans PHP (Nuxt, joué par le simulateur du navigateur) n'a pas de version à déclarer.
+            phpVersion: (string) ($meta['php'] ?? ($framework->runsPhpunit() ? throw new ContentException(sprintf('Environnement « %s » : clé « php » manquante.', $id)) : '')),
             directory: $directory,
             framework: $framework,
-            cacheDirs: array_values(array_map('strval', (array) $cacheDirs)),
+            // Symfony compile son container dans var/cache, Laravel ses vues Blade : le profil le sait,
+            // et « cache: » dans environment.yaml a le dernier mot pour un projet arrangé autrement.
+            cacheDirs: array_values(array_map('strval', (array) ($meta['cache'] ?? $framework->cacheDirs))),
         );
     }
 }

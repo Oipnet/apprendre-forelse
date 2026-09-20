@@ -32,9 +32,10 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		return;
 	}
 	const exercise = (await response.json()) as ExercisePayload;
-	const framework = exercise.environment.framework ?? 'symfony';
+	// Ce que le moteur sait du framework : le playground le lit, il ne le redéclare pas (voir FrameworkProfile).
+	const framework = exercise.environment.framework;
 	/** La console du projet, telle qu'un développeur la tape dans son terminal. */
-	const consoleName = CONSOLE_NAMES[framework];
+	const consoleName = framework.console;
 	// Un invité ne joue que des exercices de parcours (la Pratique demande un compte) : la clé locale a toujours son parcours.
 	const progress: ProgressStore =
 		config.progress.mode === 'api' ? new ApiProgressStore(config.progress.url) : new LocalProgressStore(`formation:${exercise.trackId}/${exercise.id}`, exercise.xp);
@@ -67,7 +68,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	$('.small-screen-note button').addEventListener('click', () => ($('.small-screen-note').style.display = 'none'));
 
 	// --- Runtime et aperçu isolé ---------------------------------------------------------
-	const runtime = framework === 'nuxt' ? new NuxtRuntime() : new WasmRuntime();
+	const runtime = 'nuxt' === framework.id ? new NuxtRuntime() : new WasmRuntime();
 	const urlInput = $<HTMLInputElement>('#url');
 	// La console est créée plus bas : les messages de l'aperçu arrivés avant sont gardés en attente.
 	let messagesDeLApercu: ((level: 'warn' | 'error', message: string) => void) | undefined;
@@ -102,7 +103,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			},
 		);
 	} catch (error) {
-		$('#boot-label').textContent = `Impossible de démarrer ${framework === 'nuxt' ? 'le simulateur Nuxt' : 'PHP'} : ${error instanceof Error ? error.message.split('\n')[0] : error}`;
+		$('#boot-label').textContent = `Impossible de démarrer ${'nuxt' === framework.id ? 'le simulateur Nuxt' : 'PHP'} : ${error instanceof Error ? error.message.split('\n')[0] : error}`;
 		throw error;
 	}
 	mark('runtimeReady');
@@ -292,7 +293,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	fetch(exercise.environment.completionIndexUrl)
 		.then((r) => r.json() as Promise<CompletionIndex>)
 		// Les fichiers du projet, édités compris : la complétion y lit les classes de l'apprenant.
-		.then((index) => registerCompletion(monaco.languages, index, () => monaco.editor.getModels(), framework, () => ({ ...initial, ...current })))
+		.then((index) => registerCompletion(monaco.languages, index, () => monaco.editor.getModels(), framework.id, () => ({ ...initial, ...current })))
 		.catch((e) => console.warn('Complétion indisponible', e));
 
 	// --- Tests et réussite ---------------------------------------------------------------
@@ -600,20 +601,9 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	Object.assign(window, { playground: { metrics, runtime, editor: editor.instance, monaco } }); // debug / mesures
 }
 
-/** La console du projet, telle qu'un développeur la tape dans son terminal. */
-const CONSOLE_NAMES = { symfony: 'bin/console', laravel: 'php artisan', docker: 'docker', nuxt: 'npx nuxi' } as const;
-const FRAMEWORK_NAMES = { symfony: 'Symfony', laravel: 'Laravel', docker: 'Docker', nuxt: 'Nuxt' } as const;
-const CONSOLE_PLACEHOLDERS = { symfony: 'debug:router', laravel: 'route:list', docker: 'compose up -d', nuxt: 'info' } as const;
-const BOOT_NOTES = {
-	symfony: 'Symfony tourne entièrement dans votre navigateur, grâce à PHP compilé en WebAssembly.',
-	laravel: 'Laravel tourne entièrement dans votre navigateur, grâce à PHP compilé en WebAssembly.',
-	docker: 'Docker est simulé dans votre navigateur : images, conteneurs et Compose, et le PHP de vos conteneurs s\'exécute pour de vrai en WebAssembly.',
-	nuxt: 'Nuxt est simulé dans votre navigateur : vos pages sont rendues côté serveur puis hydratées, comme avec nuxi dev.',
-} as const;
-
 function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
-	const framework = exercise.environment.framework ?? 'symfony';
-	const consoleName = CONSOLE_NAMES[framework];
+	const framework = exercise.environment.framework;
+	const consoleName = framework.console;
 	return `
 	<header class="topbar">
 		<div class="crumbs">
@@ -642,7 +632,7 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 	<main class="workspace" data-pane="code">
 		<aside class="panel brief">
 			<div class="already-done" id="already-done" hidden></div>
-			<div class="xp">${exercise.concepts.map((c) => `<span class="chip">${escapeHtml(c)}</span>`).join('')}${exercise.xp > 0 ? `<span class="chip gold">${exercise.xp} XP</span>` : ''}${exercise.practice?.version ? `<span class="chip gold">${escapeHtml(FRAMEWORK_NAMES[framework])} ${escapeHtml(exercise.practice.version)}</span>` : ''}</div>
+			<div class="xp">${exercise.concepts.map((c) => `<span class="chip">${escapeHtml(c)}</span>`).join('')}${exercise.xp > 0 ? `<span class="chip gold">${exercise.xp} XP</span>` : ''}${exercise.practice?.version ? `<span class="chip gold">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</span>` : ''}</div>
 			<article class="instructions">${markdown(exercise.instructions)}</article>
 			<h3>Objectifs</h3>
 			<ul class="objectives">
@@ -660,7 +650,7 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 			<div id="solution-note" class="solution-note" hidden></div>
 			<div class="hints" id="hints"></div>
 			<button id="hint" class="ghost small">💡 Un indice ?</button>
-			<details class="output" id="output-box" hidden><summary>Sortie ${framework === 'nuxt' ? 'Vitest' : 'PHPUnit'} <button id="explain-tests" class="ghost small" hidden title="Demander au mentor ce que signifie cette erreur">🩺 Expliquer l'erreur</button></summary><pre id="output"></pre></details>
+			<details class="output" id="output-box" hidden><summary>Sortie ${'vitest' === framework.testRunner ? 'Vitest' : 'PHPUnit'} <button id="explain-tests" class="ghost small" hidden title="Demander au mentor ce que signifie cette erreur">🩺 Expliquer l'erreur</button></summary><pre id="output"></pre></details>
 		</aside>
 		<section class="panel code">
 			<nav class="tabs">
@@ -692,7 +682,7 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 			</div>
 			<div class="pane-console" hidden>
 				<div class="console-output" id="console-output"></div>
-				<label class="console-input"><span class="prompt">$ ${consoleName}</span><input id="console-cmd" spellcheck="false" autocomplete="off" placeholder="${CONSOLE_PLACEHOLDERS[framework]}" aria-label="Commande ${consoleName}" /><button id="explain-console" class="ghost small" hidden title="Demander au mentor ce que signifie cette erreur">🩺 Expliquer</button></label>
+				<label class="console-input"><span class="prompt">$ ${consoleName}</span><input id="console-cmd" spellcheck="false" autocomplete="off" placeholder="${escapeHtml(framework.consoleExample)}" aria-label="Commande ${consoleName}" /><button id="explain-console" class="ghost small" hidden title="Demander au mentor ce que signifie cette erreur">🩺 Expliquer</button></label>
 			</div>
 			<div class="pane-requests" hidden>
 				<div class="req-examples" id="req-examples" hidden></div>
@@ -716,7 +706,7 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 			<div class="logo">🐉</div>
 			<p id="boot-label">Préparation de l'environnement…</p>
 			<div class="bar"><div id="boot-bar"></div></div>
-			<small>${BOOT_NOTES[framework]}</small>
+			<small>${escapeHtml(framework.bootNote)}</small>
 		</div>
 	</div>`;
 }

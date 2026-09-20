@@ -1,3 +1,5 @@
+import type { FrameworkProfile } from '../app/types.ts';
+
 /**
  * Contrat d'exécution indépendant de la technologie : aujourd'hui php-wasm dans
  * le navigateur (WasmRuntime), demain un conteneur serveur pour les parcours
@@ -8,11 +10,11 @@
 export interface EnvironmentSpec {
 	id: string;
 	/**
-	 * Symfony par défaut ; Laravel a sa console (artisan), ses dossiers et ses caches ; Docker a le simulateur
-	 * (console docker, et un aperçu qui visite les ports publiés par les conteneurs) ; Nuxt, le simulateur Nuxt
-	 * (rendu des pages, routes serveur, modules de l'aperçu).
+	 * Ce que le moteur déclare du framework : console, dossiers du projet, caches, namespaces
+	 * (voir App\Content\Framework\FrameworkProfile). Son `id` choisit le runtime : php-wasm pour
+	 * Symfony, Laravel et le simulateur Docker ; le simulateur Nuxt pour Nuxt.
 	 */
-	framework?: 'symfony' | 'laravel' | 'docker' | 'nuxt';
+	framework: FrameworkProfile;
 	/** Vide pour Nuxt (simulateur JavaScript, sans PHP). */
 	phpVersion: '8.4' | '';
 	/** Archive zip du projet (vendor inclus). */

@@ -196,11 +196,15 @@ Deux décisions à prendre **avant** de créer les dépôts, parce qu'elles ne s
 
 ## 8. L'ordre que je propose
 
-1. **Niveau 2, l'habillage** — le plus petit, le plus visible, zéro risque architectural. Sans lui, rien
-   ne mérite le nom de marque blanche.
+1. ~~**Niveau 2, l'habillage**~~ — **fait** : `marque.yaml`, les deux thèmes, les images, les gabarits
+   de l'instance. Voir le journal des modifications.
 2. **Les environnements dans les packs** (doc 1, étapes 1 à 5) — c'est littéralement « créer ses
    parcours sans toucher au moteur ».
-3. **`FrameworkProfile`** (doc 1, chantier E) — condition technique du niveau 3, utile même sans lui.
+3. ~~**`FrameworkProfile`**~~ (doc 1, chantier E) — **fait** : un profil par runtime
+   (`platform/src/Content/Framework/`), servi au navigateur, et un point d'extension
+   (`FrameworkProfileProvider`) qui est la **moitié serveur** du contrat du §5. Reste la moitié
+   navigateur : tant que `playground/vite.config.ts` importe le simulateur Nuxt en profondeur, un
+   runtime ne s'installe pas, il se recompile (voir §4).
 4. **Décision de licence** (§7) — avant l'étape 5, pas après.
 5. **Extraction des simulateurs en dépôts**, avec le contrat de plugin (§5) et son critère de réussite.
 

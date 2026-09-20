@@ -2,14 +2,15 @@
 
 namespace App\Content;
 
+use App\Content\Framework\FrameworkProfile;
+
 /** Environnement d'exécution (projet de base) décrit par environments/<id>/environment.yaml. */
 final readonly class Environment
 {
-    public const array FRAMEWORKS = ['symfony', 'laravel', 'docker', 'nuxt'];
-
     /**
-     * @param string       $framework symfony, laravel, docker ou nuxt : dicte la console (bin/console, artisan, docker) et l'organisation du projet
-     * @param list<string> $cacheDirs dossiers de cache à vider entre deux runs de tests, relatifs au projet
+     * @param FrameworkProfile $framework ce que le moteur sait de ce framework : console, dossiers,
+     *                                    lanceur de tests, conventions (voir FrameworkRegistry)
+     * @param list<string>     $cacheDirs dossiers de cache à vider entre deux runs de tests, relatifs au projet
      */
     public function __construct(
         public string $id,
@@ -17,8 +18,8 @@ final readonly class Environment
         /** Vide pour un environnement sans PHP (nuxt). */
         public string $phpVersion,
         public string $directory,
-        public string $framework = 'symfony',
-        public array $cacheDirs = ['var/cache'],
+        public FrameworkProfile $framework,
+        public array $cacheDirs,
     ) {
     }
 

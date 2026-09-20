@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Api\PlaygroundConfigFactory;
 use App\Content\LessonRenderer;
 use App\Content\Practice;
+use App\Content\Framework\FrameworkRegistry;
 use App\Content\PracticeVisibility;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
@@ -21,13 +22,12 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 final class PracticeController extends AbstractController
 {
-    public const array FRAMEWORKS = ['symfony' => 'Symfony', 'laravel' => 'Laravel', 'docker' => 'Docker', 'nuxt' => 'Nuxt'];
-
     /** Au-delà, les exercices passent dans le groupe « Avant ». */
     private const int JOURS_RECENTS = 7;
 
     public function __construct(
         private readonly PracticeVisibility $practices,
+        private readonly FrameworkRegistry $frameworks,
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private readonly bool $inviteOnly,
     ) {
@@ -77,7 +77,7 @@ final class PracticeController extends AbstractController
         return $this->render('practice/index.html.twig', [
             'groups' => $this->group($this->sort($shown, $tri), $tri, $progress),
             'shown' => \count($shown),
-            'frameworks' => array_intersect_key(self::FRAMEWORKS, array_flip(array_map(static fn (Practice $p) => $p->framework, $all))),
+            'frameworks' => array_intersect_key($this->frameworks->labels(), array_flip(array_map(static fn (Practice $p) => $p->framework, $all))),
             'notionCounts' => $notionCounts,
             'filters' => ['framework' => $framework, 'notions' => $notions, 'nouveautes' => $nouveautes, 'recherche' => $recherche, 'tri' => $tri],
             'total' => \count($all),
@@ -94,7 +94,7 @@ final class PracticeController extends AbstractController
         $seo->practice($practice);
         $context = [
             'practice' => $practice,
-            'framework' => self::FRAMEWORKS[$practice->framework] ?? ucfirst($practice->framework),
+            'framework' => $this->frameworks->has($practice->framework) ? $this->frameworks->get($practice->framework)->label : ucfirst($practice->framework),
             'instructions' => $markdown->toHtmlUnderTitle($practice->exercise->instructions),
         ];
 

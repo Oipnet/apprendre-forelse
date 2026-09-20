@@ -7,6 +7,7 @@ use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
+use App\Content\Framework\FrameworkProfile;
 use App\Content\Track;
 
 /**
@@ -108,7 +109,7 @@ final class ExerciseDrafter
      *
      * @return array<string, string>
      */
-    private function demander(array $messages, string $framework): array
+    private function demander(array $messages, FrameworkProfile $framework): array
     {
         $entree = $this->modele->appeler($this->consignes($framework), $messages, self::OUTIL);
         if (!\is_array($entree['fichiers'] ?? null)) {
@@ -167,7 +168,7 @@ final class ExerciseDrafter
         return sprintf("Parcours « %s » : %s\n\n%s", $track->title, $track->description, implode("\n", $chapitres));
     }
 
-    private function etatDeLApplication(Exercise $base, string $framework): string
+    private function etatDeLApplication(Exercise $base, FrameworkProfile $framework): string
     {
         $interessants = [];
         foreach ($this->content->solvedFiles($base) as $chemin => $contenu) {
@@ -217,15 +218,9 @@ final class ExerciseDrafter
     }
 
     /** Le code qui décrit l'état de l'application, hors tests, assets et fichiers de départ du framework. */
-    public static function estDuCode(string $chemin, string $framework): bool
+    public static function estDuCode(string $chemin, FrameworkProfile $framework): bool
     {
-        $dossiers = match ($framework) {
-            'laravel' => ['app/', 'routes/', 'resources/views/', 'database/migrations/', 'database/seeders/', 'database/factories/', 'config/'],
-            // Pour Docker, « le code », ce sont les fichiers d'infrastructure autant que l'application.
-            'docker' => ['Dockerfile', 'compose.', 'docker-compose.', '.dockerignore', 'docker/', 'public/', 'src/', '.env'],
-            default => ['src/', 'config/packages/', 'templates/'],
-        };
-        foreach ($dossiers as $dossier) {
+        foreach ($framework->codeDirs as $dossier) {
             if (str_starts_with($chemin, $dossier)) {
                 return true;
             }
@@ -234,12 +229,14 @@ final class ExerciseDrafter
         return false;
     }
 
-    private function consignes(string $framework): string
+    private function consignes(FrameworkProfile $framework): string
     {
-        $nom = match ($framework) { 'laravel' => 'Laravel', 'docker' => 'Docker', default => 'Symfony' };
-        $conventions = match ($framework) { 'laravel' => self::CONVENTIONS_LARAVEL, 'docker' => self::CONVENTIONS_DOCKER, default => self::CONVENTIONS_SYMFONY };
+        // Un profil sans conventions est un framework que l'atelier ne sait pas encore faire rédiger :
+        // le dire vaut mieux que produire un exercice écrit avec les conventions d'un autre.
+        $conventions = $framework->drafting
+            ?? throw new ContentException(sprintf('L\'atelier ne sait pas rédiger d\'exercice pour « %s » : ce profil ne déclare pas de conventions.', $framework->label));
 
-        return str_replace(['{framework}', '{conventions}'], [$nom, $conventions], <<<'TEXTE'
+        return str_replace(['{framework}', '{conventions}'], [$framework->label, $conventions], <<<'TEXTE'
             Tu écris un exercice pour une formation {framework} où l'apprenant code dans son navigateur
             (PHP 8.4 compilé en WebAssembly). Tu réponds uniquement en appelant l'outil ecrire_exercice.
 
@@ -272,60 +269,4 @@ final class ExerciseDrafter
             {conventions}
             TEXTE);
     }
-
-    private const string CONVENTIONS_SYMFONY = <<<'TEXTE'
-            Conventions de ce projet (Symfony 8.1), à respecter même si tu connais d'autres façons de faire :
-            - Attributs PHP, autowiring, services ; pas de YAML de routage.
-            - Les commandes console sont **invocables** : une classe `final` avec `#[AsCommand]` et une
-              méthode `__invoke(SymfonyStyle $io, ...)`. Elles n'étendent jamais `Command` et n'ont ni
-              `configure()` ni `execute()`. Les entrées se déclarent en arguments de `__invoke` :
-              `#[Argument('Description')] ?string $guilde = null` et `#[Option('Description')] int $jours = 7`
-              (`Symfony\Component\Console\Attribute\Argument` et `…\Attribute\Option`). Le retour est
-              `Command::SUCCESS`.
-            - Les dépendances arrivent par le constructeur, en propriétés promues `private readonly`.
-            - Dans les tests, `enregistrer(...$objets)` vide l'EntityManager après coup : enregistre des
-              entités liées entre elles **en un seul appel**, sinon Doctrine refuse une association vers
-              une entité détachée.
-            TEXTE;
-
-    private const string CONVENTIONS_DOCKER = <<<'TEXTE'
-            Conventions de ce projet (Docker simulé), à respecter même si tu connais d'autres façons de faire :
-            - Docker ne tourne pas vraiment : un simulateur en PHP (Forelse\DockerSim) construit les images,
-              lance les conteneurs et exécute pour de vrai le PHP qu'ils servent (Apache, nginx + php-fpm,
-              php -S). Catalogue d'images fermé : php (cli, fpm, apache, alpine), composer, nginx, postgres,
-              mysql, mariadb, redis, node, alpine, debian, caddy, axllent/mailpit, adminer. Les paquets apk/apt
-              et les extensions PHP (docker-php-ext-install, pecl) sont simulés avec leurs dépendances.
-            - Les fichiers de l'apprenant : Dockerfile, compose.yaml, .dockerignore, .env, docker/ (configuration
-              nginx, php.ini, scripts d'entrée), et la petite application PHP (public/, src/).
-            - Les tests cachés étendent `Forelse\DockerSim\Testing\DockerTestCase` : `$this->build('tag')`
-              (BuildResult : success, output, image, steps, warnings), `$this->dockerOk('run -d -p 8080:80 tag')`
-              ou `$this->dockerOk('compose up -d')` (n'importe quelle commande docker), `$this->http('localhost:8080/')`
-              (HttpResponse : status, body, error, trace), `$this->container('nom')`, `$this->service('web')`,
-              `$this->image('tag')`, `$this->exec($conteneur, 'commande shell')`, `$this->dockerfile()` et
-              `$this->instructions('COPY')` pour lire le Dockerfile, `$this->compose()` pour le projet compose.
-              Assertions : assertBuildSucceeded, assertImageHasFile, assertImageLacksFile, assertImageSizeBelow,
-              assertRunning, assertPageContains. Chaque test part d'un démon vierge.
-            - Le code PHP servi par les conteneurs s'exécute dans le processus des tests : pas d'exit(), pas de
-              fonction globale déclarée dans public/index.php (utilise des classes autoloadées).
-            - `preview:` est l'adresse visitée dans l'aperçu : `/localhost:8080/`. `setup:` liste des commandes
-              docker (`build -t criee .`) jouées au chargement.
-            - Documentation : https://docs.docker.com/reference/dockerfile/, https://docs.docker.com/reference/compose-file/,
-              https://hub.docker.com/_/php.
-            TEXTE;
-
-    private const string CONVENTIONS_LARAVEL = <<<'TEXTE'
-            Conventions de ce projet (Laravel 13), à respecter même si tu connais d'autres façons de faire :
-            - Routes dans `routes/web.php` (`Route::get('/x', [XController::class, 'index'])->name('x.index')`),
-              contrôleurs dans `app/Http/Controllers`, vues Blade dans `resources/views`, modèles Eloquent
-              dans `app/Models`, migrations dans `database/migrations`, validation par `$request->validate()`
-              ou une Form Request.
-            - Les tests cachés étendent `Tests\TestCase` : `$this->get()`, `$this->post()`, `(string) $this->view()`,
-              `route('nom', absolute: false)`, `Symfony\Component\DomCrawler\Crawler` sur `$response->content()`
-              pour la structure HTML, `RefreshDatabase` dès qu'il y a une base (SQLite en mémoire). La
-              vérification CSRF est désactivée pendant les tests par Laravel lui-même.
-            - `setup:` liste des commandes artisan (`migrate --force`, `db:seed`) lancées à chaque chargement
-              de l'aperçu, sur une base vide. Pas de `proc_open` ni de réseau dans le navigateur.
-            - Documentation : https://laravel.com/docs/13.x/<page> (routing, controllers, blade, requests,
-              validation, eloquent, migrations…). Messages de validation déjà traduits en français.
-            TEXTE;
 }

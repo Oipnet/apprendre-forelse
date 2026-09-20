@@ -3,6 +3,8 @@
  * il couvre aussi les fichiers qu'une commande console va créer. `*` ne franchit pas un « / »,
  * comme côté plateforme (Exercise::isEditable).
  */
+import type { FrameworkProfile } from './types.ts';
+
 const motifs = new Map<string, RegExp>();
 
 function enExpression(motif: string): RegExp {
@@ -31,13 +33,13 @@ export function cheminsExplicites(editable: string[]): string[] {
  * Le contenu d'un fichier créé par l'apprenant : de quoi démarrer sans se tromper de namespace.
  * src/Entity/Soiree.php donne « namespace App\Entity; class Soiree », un template Twig hérite de la base.
  */
-export function contenuDeDepart(chemin: string, framework: string): string {
+export function contenuDeDepart(chemin: string, framework: FrameworkProfile): string {
 	const nom = chemin.split('/').pop()!;
 	if (chemin.endsWith('.php')) {
 		const dossiers = chemin.split('/').slice(0, -1);
 		const classe = nom.slice(0, -'.php'.length);
-		const racines: Record<string, string> = { src: 'App', app: 'App', tests: framework === 'laravel' ? 'Tests' : 'App\\Tests', migrations: 'DoctrineMigrations', database: 'Database' };
-		const racine = racines[dossiers[0] ?? ''];
+		// Les racines de namespace sont déclarées par le moteur, une fois, par framework.
+		const racine = framework.namespaceRoots[dossiers[0] ?? ''];
 		if (!racine || !/^[A-Za-z_]\w*$/.test(classe)) return '<?php\n\n';
 		const namespace = [racine, ...dossiers.slice(1)].join('\\');
 		return `<?php\n\nnamespace ${namespace};\n\nclass ${classe}\n{\n}\n`;

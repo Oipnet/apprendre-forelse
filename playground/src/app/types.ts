@@ -33,8 +33,8 @@ export interface ExercisePayload {
 	environment: {
 		id: string;
 		phpVersion: '8.4' | '';
-		/** Dicte la console (bin/console ou artisan), l'organisation du projet et les caches à vider. */
-		framework: 'symfony' | 'laravel' | 'docker' | 'nuxt';
+		/** Ce que le moteur sait de ce framework (voir App\Content\Framework\FrameworkProfile). */
+		framework: FrameworkProfile;
 		archiveUrl: string;
 		completionIndexUrl: string;
 	};
@@ -56,6 +56,36 @@ export interface ExampleRequest {
 	headers: Record<string, string>;
 	/** Peut contenir {{ date:+N }} (date du jour + N jours). */
 	body: string | null;
+}
+
+/** Les identifiants de framework que le playground sait exécuter : à chacun son runtime. */
+export type FrameworkId = 'symfony' | 'laravel' | 'docker' | 'nuxt';
+
+/**
+ * Ce que le moteur déclare d'un framework, servi dans la charge utile de l'exercice : le playground ne
+ * redéclare plus rien de son côté. Le code, lui (worker, snippets, script de console), reste ici.
+ */
+export interface FrameworkProfile {
+	id: FrameworkId;
+	/** Nom affiché (« Symfony »). */
+	label: string;
+	/** La console du projet, telle qu'un développeur la tape (« bin/console »). */
+	console: string;
+	/** Commande d'exemple, en filigrane du champ de la console. */
+	consoleExample: string;
+	/** Ce qu'on explique à l'apprenant pendant le démarrage. */
+	bootNote: string;
+	/** Étape de démarrage : « Décompression du projet Symfony ». */
+	unpackLabel: string;
+	testRunner: 'phpunit' | 'vitest';
+	/** Dossiers du projet, visibles dans l'explorateur. */
+	projectDirs: string[];
+	/** Caches à vider entre deux runs de tests. */
+	testCaches: string[];
+	/** Dossiers masqués dans l'explorateur. */
+	hidden: string[];
+	/** Premier dossier d'un chemin => racine de namespace (« src » => « App »). */
+	namespaceRoots: Record<string, string>;
 }
 
 /** Configuration passée par la page Twig (attribut data-config). */

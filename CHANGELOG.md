@@ -48,6 +48,20 @@ tel quel.
   l'échappatoire de l'habillage : ce que `marque.yaml` ne règle pas se réécrit sans toucher au moteur. En
   production, les gabarits sont compilés une fois : redémarrez le conteneur après en avoir déposé un.
 
+- **Un profil par runtime** (`platform/src/Content/Framework/`) : ce que le moteur sait d'un framework —
+  nom, console, dossiers du projet et du code, caches, dossiers masqués, racines de namespace, lanceur de
+  tests, paquet dont la version fait foi, langages des fiches, conventions données au modèle — est
+  déclaré **une fois**, dans une classe par framework. C'était la même connaissance recopiée dans une
+  dizaine d'endroits : un `match` dans le vérificateur, un autre dans chaque rédacteur, une table de
+  libellés dans un contrôleur, quatre tables de plus dans le playground. Le navigateur **reçoit**
+  désormais le profil dans la charge utile de l'exercice au lieu de le réécrire ; il ne garde que ce qui
+  est du code (le worker, les snippets, le script de la console).
+
+  Ajouter un framework, c'est fournir un `FrameworkProfileProvider`, découvert par son étiquette de
+  service — pas retoucher une énumération fermée et neuf `match`. C'est la moitié serveur du contrat
+  d'un paquet de plateforme (voir [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md), « niveau 3 ») ;
+  le contrat reste jeune et bougera tant qu'un paquet tiers ne l'aura pas essayé.
+
 ### Modifié
 
 - Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement
@@ -58,6 +72,11 @@ tel quel.
   au lieu de `tests/Taverne/` : le squelette servait à tous les packs, il ne porte plus le nom du fil
   rouge d'un seul. Les exercices existants ne sont pas touchés.
 - Le message affiché après un changement de mot de passe ne souhaite plus la bienvenue « à la taverne ».
+- L'atelier refuse désormais de faire **rédiger** un exercice pour un framework dont le profil ne déclare
+  pas de conventions (Nuxt aujourd'hui), et le dit. Il produisait jusqu'ici un brouillon écrit avec les
+  conventions de Symfony, en annonçant au modèle une « formation Symfony ».
+- L'environnement d'un exercice porte le profil de son framework et non plus son seul identifiant
+  (`Environment::$framework`). Détail interne : le code du moteur n'est pas une API publique.
 - Le halo derrière l'enseigne du fil rouge (`.lp-candle`, la bougie de la taverne) devient `.lp-sign-glow`
   et prend la seconde couleur de la marque au lieu d'un or codé en dur.
 

@@ -4,12 +4,12 @@ namespace App\Seo;
 
 use App\Content\Chapter;
 use App\Content\ContentRepository;
+use App\Content\Framework\FrameworkRegistry;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
 use App\Content\LessonRenderer;
 use App\Content\Practice;
 use App\Content\Track;
-use App\Controller\PracticeController;
 use App\Instance\Branding;
 use App\Payment\TrackOfferFactory;
 use App\Twig\DurationExtension;
@@ -35,6 +35,7 @@ final readonly class SeoWriter
         private TrackSeoText $trackText,
         private ContentRepository $content,
         private Branding $branding,
+        private FrameworkRegistry $frameworks,
     ) {
     }
 
@@ -243,7 +244,9 @@ final readonly class SeoWriter
     /** « Symfony », « Laravel »… d'après l'environnement d'exécution. */
     public function framework(string $environmentId): string
     {
-        return $this->frameworkLabel($this->environments->has($environmentId) ? $this->environments->get($environmentId)->framework : 'symfony');
+        return $this->environments->has($environmentId)
+            ? $this->environments->get($environmentId)->framework->label
+            : $this->frameworks->default()->label;
     }
 
     /** Le premier paragraphe de la consigne, en texte brut : le besoin posé par le personnage. */
@@ -321,7 +324,7 @@ final readonly class SeoWriter
 
     private function frameworkLabel(string $framework): string
     {
-        return PracticeController::FRAMEWORKS[$framework] ?? ucfirst($framework);
+        return $this->frameworks->has($framework) ? $this->frameworks->get($framework)->label : ucfirst($framework);
     }
 
     /** « Lire un en-tête » → « lire un en-tête », mais « PHP 8.4 » reste tel quel. */

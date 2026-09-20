@@ -513,7 +513,7 @@ final class ContentRepository
         $this->practices[$exercise->id] = new Practice(
             exercise: $exercise,
             packId: $pack->id,
-            framework: $this->environments->get($exercise->environment)->framework,
+            framework: $this->environments->get($exercise->environment)->framework->id,
             published: $published,
             summary: $this->required($meta, 'summary', $file),
             version: $version,

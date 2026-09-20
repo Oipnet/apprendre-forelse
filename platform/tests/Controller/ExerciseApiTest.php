@@ -32,6 +32,31 @@ final class ExerciseApiTest extends WebTestCase
         $this->assertSame('/parcours/decouverte/02-bonjour-prenom', $payload['next']['url']);
     }
 
+    /**
+     * Le navigateur ne redéclare plus rien du framework : tout ce qu'il en sait arrive ici. Les clés de
+     * ce bloc sont le contrat avec playground/src/app/types.ts (FrameworkProfile) — les changer casse
+     * l'éditeur en silence, d'où ce test.
+     */
+    public function testLaChargeUtilePorteLeProfilDuFramework(): void
+    {
+        $client = static::createClient();
+        $framework = $this->json($client, 'GET', '/api/exercises/decouverte/01-bonjour')['environment']['framework'];
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame([
+            'id', 'label', 'console', 'consoleExample', 'bootNote', 'unpackLabel',
+            'testRunner', 'projectDirs', 'testCaches', 'hidden', 'namespaceRoots',
+        ], array_keys($framework));
+        $this->assertSame('symfony', $framework['id']);
+        $this->assertSame('Symfony', $framework['label']);
+        $this->assertSame('bin/console', $framework['console']);
+        $this->assertSame('phpunit', $framework['testRunner']);
+        $this->assertContains('src', $framework['projectDirs']);
+        $this->assertContains('vendor', $framework['hidden']);
+        $this->assertSame('App', $framework['namespaceRoots']['src']);
+        $this->assertSame('App\\Tests', $framework['namespaceRoots']['tests']);
+    }
+
     public function testUnExerciceAvecCompteEstRefuseAUnInvite(): void
     {
         $this->usePaidPack();

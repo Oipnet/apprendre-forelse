@@ -85,7 +85,9 @@ final readonly class ExercisePayloadFactory
             'environment' => [
                 'id' => $environment->id,
                 'phpVersion' => $environment->phpVersion,
-                'framework' => $environment->framework,
+                // Ce que le navigateur sait du framework vient d'ici : console, dossiers du projet,
+                // caches, namespaces… Il ne redéclare plus rien de son côté (voir FrameworkProfile).
+                'framework' => $environment->framework->forBrowser(),
                 'archiveUrl' => $versioned($environment->archivePath()),
                 'completionIndexUrl' => $versioned($environment->completionIndexPath()),
             ],

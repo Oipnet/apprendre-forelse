@@ -5,6 +5,7 @@ namespace App\Content\Check;
 use App\Content\ContentRepository;
 use App\Content\Environment;
 use App\Content\EnvironmentRegistry;
+use App\Content\Framework\FrameworkProfile;
 use App\Content\Exercise;
 use App\Content\Objective;
 use Composer\Semver\Comparator;
@@ -35,8 +36,8 @@ final class ExerciseChecker
     private array $failures = [];
     /** @var list<string> caches du projet en cours de vérification (voir Environment::$cacheDirs) */
     private array $cacheDirs = [];
-    /** Framework du projet en cours de vérification : les tests d'un projet Nuxt sont des tests Vitest. */
-    private string $framework = 'symfony';
+    /** Profil du projet en cours de vérification : il dit comment ses tests se lancent et se nomment. */
+    private ?FrameworkProfile $framework = null;
 
     public function __construct(
         private readonly ContentRepository $content,
@@ -67,7 +68,7 @@ final class ExerciseChecker
         if (!$result->isOk()) {
             return $result;
         }
-        if ('nuxt' === $environment->framework) {
+        if (!$environment->framework->runsPhpunit()) {
             if (null === $this->nodeBinary()) {
                 $result->error('Exercice Nuxt : Node.js est introuvable, impossible de lancer les tests Vitest.');
 
@@ -130,9 +131,6 @@ final class ExerciseChecker
         return $result;
     }
 
-    /** Paquet dont la version fait foi, par framework (lu dans le composer.lock de l'environnement). */
-    private const array FRAMEWORK_PACKAGES = ['symfony' => 'symfony/framework-bundle', 'laravel' => 'laravel/framework'];
-
     /**
      * Un exercice de Pratique qui annonce une nouveauté (`version: '8.1'`) doit tourner sur un framework qui l'a :
      * sinon l'apprenant chercherait une fonctionnalité absente de son projet.
@@ -143,9 +141,10 @@ final class ExerciseChecker
         if (null === $version) {
             return;
         }
-        $package = self::FRAMEWORK_PACKAGES[$environment->framework] ?? null;
+        // Le paquet dont la version fait foi est déclaré par le profil ; certains n'en ont pas (Docker, Nuxt).
+        $package = $environment->framework->versionPackage;
         if (null === $package) {
-            $result->error(sprintf('« version » n\'a pas de sens pour l\'environnement « %s » (%s) : retirez-la.', $environment->id, $environment->framework));
+            $result->error(sprintf('« version » n\'a pas de sens pour l\'environnement « %s » (%s) : retirez-la.', $environment->id, $environment->framework->label));
 
             return;
         }
@@ -184,11 +183,12 @@ final class ExerciseChecker
         $testCode = implode("\n", $tests);
         foreach (array_filter($exercise->objectives, static fn (Objective $o) => $o->isHiddenTest()) as $objective) {
             // PHPUnit : une méthode du nom de l'objectif ; Vitest : un it() ou test() de ce titre.
-            $pattern = 'nuxt' === $this->framework
-                ? '/\b(?:it|test)(?:\.\w+)*\s*\(\s*([\'"`])'.preg_quote($objective->test, '/').'\1/u'
-                : '/function\s+'.preg_quote($objective->test, '/').'\s*\(/';
+            $phpunit = $this->framework?->runsPhpunit() ?? true;
+            $pattern = $phpunit
+                ? '/function\s+'.preg_quote($objective->test, '/').'\s*\(/'
+                : '/\b(?:it|test)(?:\.\w+)*\s*\(\s*([\'"`])'.preg_quote($objective->test, '/').'\1/u';
             if (!preg_match($pattern, $testCode)) {
-                $result->error(sprintf('Objectif « %s » : aucun %s de ce nom dans tests/.', $objective->test, 'nuxt' === $this->framework ? 'test it()' : 'méthode de test'));
+                $result->error(sprintf('Objectif « %s » : aucun %s de ce nom dans tests/.', $objective->test, $phpunit ? 'méthode de test' : 'test it()'));
             }
         }
         // Un motif (migrations/*.php) désigne des fichiers qui n'existent pas encore : rien à vérifier.
@@ -399,7 +399,7 @@ final class ExerciseChecker
      */
     private function runTests(string $workdir, array $paths = []): ?array
     {
-        if ('nuxt' === $this->framework) {
+        if (!($this->framework?->runsPhpunit() ?? true)) {
             return $this->runVitest($workdir, $paths);
         }
         $junit = $workdir.'/var/junit.xml';
