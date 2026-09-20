@@ -6,7 +6,7 @@ use App\Content\Framework\FrameworkProfile;
 use App\Content\Framework\FrameworkProfileProvider;
 
 /**
- * Docker, simulé en PHP pur par tools/docker-sim : images, conteneurs et Compose, et le PHP servi par
+ * Docker, simulé en PHP pur par packages/simulateur-docker : images, conteneurs et Compose, et le PHP servi par
  * les conteneurs s'exécute pour de vrai. Pour la rédaction, « le code » comprend l'infrastructure.
  */
 final class DockerProfile implements FrameworkProfileProvider

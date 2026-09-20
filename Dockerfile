@@ -12,10 +12,10 @@ FROM node:24-slim AS playground
 COPY packages/runtime-contract /src/packages/runtime-contract
 
 # Le simulateur Nuxt est un paquet de runtime : le playground le découvre parmi ses dépendances.
-WORKDIR /src/tools/nuxt-sim
-COPY tools/nuxt-sim/package.json tools/nuxt-sim/package-lock.json ./
+WORKDIR /src/packages/simulateur-nuxt
+COPY packages/simulateur-nuxt/package.json packages/simulateur-nuxt/package-lock.json ./
 RUN npm ci --no-audit --no-fund
-COPY tools/nuxt-sim/src ./src
+COPY packages/simulateur-nuxt/src ./src
 
 WORKDIR /src/playground
 COPY playground/package.json playground/package-lock.json ./
@@ -55,7 +55,7 @@ FROM php_base AS environments
 RUN apt-get update && apt-get install -y --no-install-recommends zip && rm -rf /var/lib/apt/lists/*
 COPY environments/ /app/environments/
 # Le simulateur Docker : dépôt Composer « path » de l'environnement docker (voir environments/README.md).
-COPY tools/ /app/tools/
+COPY packages/simulateur-docker/ /app/packages/simulateur-docker/
 # Écrit /app/platform/public/envs/<id>.zip et <id>.completion.json, pour tous les environnements.
 RUN mkdir -p /app/platform/public && /app/environments/bin/build-env.sh
 

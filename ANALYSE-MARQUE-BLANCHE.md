@@ -67,11 +67,11 @@ actuel :
 Les deux simulateurs sont **déjà des paquets en tout sauf le dépôt** :
 
 ```jsonc
-// tools/docker-sim/composer.json
+// packages/simulateur-docker/composer.json
 { "name": "forelse/simulateur-docker", "type": "library", "license": "AGPL-3.0-or-later",
   "autoload": { "psr-4": { "Forelse\\DockerSim\\": "src/" } }, "bin": ["bin/docker"] }
 
-// tools/nuxt-sim/package.json
+// packages/simulateur-nuxt/package.json
 { "name": "@forelse/simulateur-nuxt", "license": "AGPL-3.0-or-later",
   "exports": { ".": "./src/index.ts", "./node": "./src/node/index.ts" } }
 ```
@@ -85,8 +85,8 @@ réinstaller les dépôts Composer de type `path`. L'extraction est un déménag
 `playground/vite.config.ts` importe le simulateur Nuxt **en profondeur** :
 
 ```ts
-import { buildClientBundle }      from '../tools/nuxt-sim/src/node/client-bundle.ts';
-import { buildTestRuntimeBundle } from '../tools/nuxt-sim/src/node/test-runtime-bundle.ts';
+import { buildClientBundle }      from '../packages/simulateur-nuxt/src/node/client-bundle.ts';
+import { buildTestRuntimeBundle } from '../packages/simulateur-nuxt/src/node/test-runtime-bundle.ts';
 ```
 
 plus deux modules virtuels (`virtual:nuxt-sim-client`, `virtual:nuxt-sim-test-runtime`), une liste de
@@ -132,8 +132,8 @@ Slim ou Express.
 ```
 forelse/moteur                 AGPL   plateforme Symfony + coquille du playground + format + content:check
 forelse/runtime-php            ?      worker php-wasm + profils symfony/laravel (une seule base wasm)
-forelse/simulateur-docker      ?      déjà un paquet : tools/docker-sim
-forelse/simulateur-nuxt        ?      déjà un paquet : tools/nuxt-sim
+forelse/simulateur-docker      ?      déjà un paquet : packages/simulateur-docker
+forelse/simulateur-nuxt        ?      déjà un paquet : packages/simulateur-nuxt
 forelse/environnements         ?      projets de base génériques (symfony-8, laravel-13, nuxt-4, docker)
 ```
 

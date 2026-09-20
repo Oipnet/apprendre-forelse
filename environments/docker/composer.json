@@ -13,7 +13,7 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../../tools/docker-sim",
+            "url": "../../packages/simulateur-docker",
             "options": {
                 "symlink": false
             }

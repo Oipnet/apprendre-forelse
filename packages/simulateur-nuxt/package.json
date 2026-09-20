@@ -10,7 +10,8 @@
 		"./node": "./src/node/index.ts",
 		"./browser": "./src/browser/forelse.ts",
 		"./vite": "./src/node/vite.ts",
-		"./package.json": "./package.json"
+		"./package.json": "./package.json",
+		"./tests": "./bin/tests.ts"
 	},
 	"scripts": {
 		"test": "vitest run tests/",

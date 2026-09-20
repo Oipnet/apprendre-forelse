@@ -24,8 +24,23 @@ Le playground découvre les paquets qui portent ce champ parmi ses dépendances 
 **Ajouter un runtime, c'est installer un paquet** : aucun fichier du moteur n'est touché. Le navigateur
 restant un bundle, il faut reconstruire le playground — mais rien à y modifier.
 
-## Ce qu'il ne couvre pas encore
+## Les tests côté serveur
+
+`content:check` rejoue les tests d'un exercice sur le serveur, avec le même runner que le navigateur —
+sinon les deux verdicts divergeraient. Un framework dont les tests ne sont pas du PHPUnit déclare son
+lanceur dans son profil, comme un **spécificateur de paquet** :
+
+```php
+testModule: '@forelse/simulateur-nuxt/tests',
+```
+
+Le moteur le fait résoudre par Node depuis `playground/` : il ne sait ni où ce paquet est installé, ni
+qu'il existe. Le module reçoit le dossier du projet puis les fichiers de test, et écrit sur la sortie
+standard `{cases: [{name, status, file, message}], output}`.
+
+## Ce qu'il ne couvre pas
 
 - La moitié serveur (profil du framework) passe par un paquet Composer et l'étiquette de service
   `app.framework` : c'est un autre contrat, déjà en place.
-- Le lanceur de tests côté serveur (`content:check`) appelle encore directement le simulateur Nuxt.
+- Un runtime qui aurait besoin d'autre chose que d'un worker — une origine à part, un service distant —
+  demanderait d'élargir le contrat. Il bougera au premier paquet tiers.

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Exécute une commande docker (le simulateur de tools/docker-sim) dans le projet /app, instance « aperçu »,
+ * Exécute une commande docker (le simulateur de packages/simulateur-docker) dans le projet /app, instance « aperçu »,
  * et imprime le code de sortie après le marqueur. Pendant de console.php pour les environnements Docker.
  */
 

@@ -67,6 +67,17 @@ final readonly class FrameworkProfile
         public string $runtime = self::PHP_WASM,
         public array $snippets = [],
         public array $consoleAliases = [],
+        /**
+         * Le module Node qui lance les tests de ce framework pour `content:check`, quand ce ne sont pas
+         * des tests PHPUnit.
+         *
+         * Un **spécificateur de paquet**, jamais un chemin : le moteur le résout depuis le playground
+         * (`node --input-type=module -e "import.meta.resolve(…)"`). Un runtime livré par un paquet
+         * déclare ainsi son lanceur sans que le moteur sache où ce paquet est installé — ni qu'il
+         * existe. Le module reçoit le dossier du projet puis les fichiers de test, et écrit sur la
+         * sortie standard un JSON `{cases: [{name, status, file, message}], output}`.
+         */
+        public ?string $testModule = null,
     ) {
     }
 

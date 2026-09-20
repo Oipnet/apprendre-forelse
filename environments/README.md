@@ -134,11 +134,11 @@ squelettes génériques ; ce qui raconte une histoire vit dans le pack qui la ra
 
 ## Ce qui n'est pas ici, et pourquoi
 
-- **Les simulateurs** (`tools/docker-sim`, `tools/nuxt-sim`) sont des **runtimes**, pas des
+- **Les simulateurs** (`packages/simulateur-docker`, `packages/simulateur-nuxt`) sont des **runtimes**, pas des
   environnements : c'est ce que le moteur fournit pour exécuter un projet, pas le projet. Ils restent au
   moteur, qui les livre — le playground importe le simulateur Nuxt à la construction de son bundle, et
   `content:check` lance ses tests Vitest. `environments/docker` dépend du simulateur Docker comme d'une
-  bibliothèque (dépôt Composer `path` vers `../../tools/docker-sim`) ; le jour de l'extraction, ce
+  bibliothèque (dépôt Composer `path` vers `../../packages/simulateur-docker`) ; le jour de l'extraction, ce
   chemin devient une contrainte de version, rien de plus.
 - **`securite-boutique`** est ici pour l'instant, mais c'est du **contenu** : la boutique de la Brasserie
   Lacombe n'existe que pour le parcours `houblon-noir`. Sa place est dans son pack (voir

@@ -6,7 +6,7 @@ use App\Content\Framework\FrameworkProfile;
 use App\Content\Framework\FrameworkProfileProvider;
 
 /**
- * Nuxt, simulé en TypeScript par tools/nuxt-sim : le seul framework sans PHP. Ses tests sont des tests
+ * Nuxt, simulé en TypeScript par packages/simulateur-nuxt : le seul framework sans PHP. Ses tests sont des tests
  * Vitest, lancés sous Node par content:check et dans le worker du simulateur par le navigateur.
  */
 final class NuxtProfile implements FrameworkProfileProvider
@@ -38,6 +38,9 @@ final class NuxtProfile implements FrameworkProfileProvider
             runtime: FrameworkProfile::NUXT_SIM,
             snippets: [],
             consoleAliases: [],
+            // content:check lance les mêmes tests que le navigateur, par le même simulateur. Le moteur
+            // ne sait pas où ce paquet est installé : il demande à Node de le résoudre.
+            testModule: '@forelse/simulateur-nuxt/tests',
         );
     }
 }

@@ -12,7 +12,7 @@
 	"private": true,
 	"dependencies": {
 		"@forelse/runtime-contract": "file:../packages/runtime-contract",
-		"@forelse/simulateur-nuxt": "file:../tools/nuxt-sim",
+		"@forelse/simulateur-nuxt": "file:../packages/simulateur-nuxt",
 		"@php-wasm/universal": "^3.1.53",
 		"@php-wasm/util": "^3.1.53",
 		"@php-wasm/web": "^3.1.53",

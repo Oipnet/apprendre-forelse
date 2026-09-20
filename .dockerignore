@@ -9,7 +9,7 @@
 **/.nuxt
 **/.output
 # Vrai Nuxt de référence : sert seulement aux tests de conformité du simulateur.
-tools/nuxt-sim/conformite
+packages/simulateur-nuxt/conformite
 platform/public/build
 platform/public/envs
 # Configuration locale (chemins personnels, packs privés) : jamais dans l'image.

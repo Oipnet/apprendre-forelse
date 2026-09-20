@@ -142,14 +142,30 @@ tel quel.
     le `Runtime`, le protocole du worker, le profil du framework, le manifeste, et la plomberie
     `WorkerRuntime` que les deux côtés partagent. Ni le moteur ni un runtime n'ont plus à connaître
     l'autre.
-  - **`@forelse/simulateur-nuxt`** (l'ancien `tools/nuxt-sim`) porte désormais son runtime, son worker
-    et ses greffons Vite. `playground/vite.config.ts` ne nomme plus Nuxt nulle part, et les 192 fichiers
-    du simulateur ne sont plus une dépendance en chemin relatif du moteur. L'archive produite est
-    **identique au bit près** à celle d'avant l'extraction.
+  - **`@forelse/simulateur-nuxt`** (l'ancien `tools/nuxt-sim`, désormais `packages/simulateur-nuxt`)
+    porte son runtime, son worker et ses greffons Vite. `playground/vite.config.ts` ne nomme plus Nuxt
+    nulle part, et les 192 fichiers du simulateur ne sont plus une dépendance en chemin relatif du
+    moteur. L'archive produite est **identique au bit près** à celle d'avant l'extraction.
 
   Le runtime PHP livré avec le moteur est écrit comme le serait un paquet tiers : même manifeste, même
   enregistrement. `FrameworkId` cesse d'être une énumération fermée — un framework apporté par un tiers
   n'a pas à figurer dans une liste du moteur.
+
+  **Le lanceur de tests côté serveur** suit la même règle. `content:check` rejoue les tests d'un
+  exercice avec le même runner que le navigateur ; un framework dont les tests ne sont pas du PHPUnit
+  déclare désormais `testModule` dans son profil — un spécificateur de paquet
+  (`@forelse/simulateur-nuxt/tests`), jamais un chemin. Le moteur le fait résoudre par Node depuis
+  `playground/` : il ne sait ni où ce paquet est installé, ni qu'il existe. `ExerciseChecker` ne nomme
+  plus Nuxt.
+
+  **Les simulateurs rejoignent `packages/`** : `tools/nuxt-sim` devient `packages/simulateur-nuxt`,
+  `tools/docker-sim` devient `packages/simulateur-docker`. `tools/` ne garde que `release.sh`. Le
+  dossier dit maintenant ce qu'il contient : ce qui peut vivre hors du moteur. 280 fichiers de moins
+  dans l'arborescence du moteur proprement dit, pour six fois la taille du playground.
+
+  Le simulateur Docker reste une **bibliothèque du runtime php-wasm**, pas un runtime : il est chargé
+  dans PHP, et `environments/docker` en dépend par un dépôt Composer `path`. Son extraction passera par
+  Composer, le jour où `forelse/simulateur-docker` sera publié.
 
 - **Un registre de runtimes** : le playground résout le runtime par une table
   (`playground/src/runtime/registry.ts`) au lieu d'un `'nuxt' === framework.id ? … : …`. Le profil du

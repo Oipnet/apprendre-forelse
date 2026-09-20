@@ -74,13 +74,16 @@ final class ExerciseChecker
             return $result;
         }
         if (!$environment->framework->runsPhpunit()) {
+            // Les tests sont lancés par le module que le framework déclare : il faut Node, et le paquet
+            // qui fournit ce module. Ni l'un ni l'autre ne nomme un framework en particulier.
+            $module = $environment->framework->testModule;
             if (null === $this->nodeBinary()) {
-                $result->error('Exercice Nuxt : Node.js est introuvable, impossible de lancer les tests Vitest.');
+                $result->error(sprintf('Framework « %s » : Node.js est introuvable, impossible de lancer ses tests.', $environment->framework->id));
 
                 return $result;
             }
-            if (!is_dir($this->nuxtSimulatorDir().'/node_modules')) {
-                $result->error(sprintf('Exercice Nuxt : le simulateur n\'est pas installé (npm ci dans %s).', $this->nuxtSimulatorDir()));
+            if (null === $module || null === $this->resolveTestModule($module)) {
+                $result->error(sprintf('Framework « %s » : le module de test %s est introuvable (npm install, dans playground/).', $environment->framework->id, null === $module ? 'n\'est pas déclaré' : sprintf('« %s »', $module)));
 
                 return $result;
             }
@@ -407,7 +410,7 @@ final class ExerciseChecker
     private function runTests(string $workdir, array $paths = []): ?array
     {
         if (!($this->framework?->runsPhpunit() ?? true)) {
-            return $this->runVitest($workdir, $paths);
+            return $this->runExternalTests($workdir, $paths);
         }
         $junit = $workdir.'/var/junit.xml';
         $this->filesystem->remove($junit);
@@ -448,20 +451,37 @@ final class ExerciseChecker
     }
 
     /**
-     * Tests Vitest d'un projet Nuxt, lancés par le simulateur (tools/nuxt-sim/bin/tests.ts) : le même runner
-     * que dans le navigateur, donc le même verdict.
+     * Tests lancés par le module que le framework déclare (`testModule`) : le même runner que dans le
+     * navigateur, donc le même verdict.
+     *
+     * Le moteur ne connaît ni le module ni son emplacement — il demande à Node de résoudre le
+     * spécificateur depuis le playground, là où les paquets de runtime sont installés. Ajouter un
+     * runtime avec son propre lanceur ne demande donc rien ici.
      *
      * @param list<string> $paths fichiers de test à lancer (tous par défaut)
      *
      * @return array<string, array{status: string, file: string}>|null par titre de test, null si aucun test n'a tourné
      */
-    private function runVitest(string $workdir, array $paths): ?array
+    private function runExternalTests(string $workdir, array $paths): ?array
     {
-        $process = new Process([(string) $this->nodeBinary(), '--experimental-transform-types', '--no-warnings', $this->nuxtSimulatorDir().'/bin/tests.ts', $workdir, ...$paths], $workdir, ['NODE_ENV' => false], timeout: 120);
+        $module = $this->framework?->testModule;
+        if (null === $module) {
+            $this->failures = ['*' => sprintf('Le framework « %s » ne lance pas PHPUnit et ne déclare aucun module de test (voir FrameworkProfile::$testModule).', $this->framework?->id ?? '?')];
+
+            return null;
+        }
+        $script = $this->resolveTestModule($module);
+        if (null === $script) {
+            $this->failures = ['*' => sprintf('Module de test « %s » introuvable : installez le paquet qui le fournit (npm install, dans playground/).', $module)];
+
+            return null;
+        }
+
+        $process = new Process([(string) $this->nodeBinary(), '--experimental-transform-types', '--no-warnings', $script, $workdir, ...$paths], $workdir, ['NODE_ENV' => false], timeout: 120);
         $process->run();
         $report = json_decode($process->getOutput(), true);
         if (!\is_array($report) || !\is_array($report['cases'] ?? null)) {
-            $this->failures = ['*' => trim($process->getErrorOutput()) ?: 'le simulateur Nuxt n\'a rien rapporté.'];
+            $this->failures = ['*' => trim($process->getErrorOutput()) ?: sprintf('« %s » n\'a rien rapporté.', $module)];
 
             return null;
         }
@@ -484,9 +504,27 @@ final class ExerciseChecker
         return $results;
     }
 
-    private function nuxtSimulatorDir(): string
+    /**
+     * Le fichier derrière un spécificateur de module, résolu par Node depuis le playground.
+     *
+     * C'est `node_modules` qui sait où vit un paquet, pas le moteur : un runtime peut être un lien
+     * local, une dépendance publiée ou un dossier tiers, cela ne regarde personne ici.
+     */
+    private function resolveTestModule(string $module): ?string
     {
-        return $this->platformDir.'/../tools/nuxt-sim';
+        $node = $this->nodeBinary();
+        if (null === $node) {
+            return null;
+        }
+        $process = new Process(
+            [$node, '--input-type=module', '-e', sprintf('process.stdout.write(import.meta.resolve(%s))', json_encode($module, \JSON_THROW_ON_ERROR))],
+            $this->platformDir.'/../playground',
+            timeout: 30,
+        );
+        $process->run();
+        $url = trim($process->getOutput());
+
+        return $process->isSuccessful() && str_starts_with($url, 'file://') ? (string) parse_url($url, \PHP_URL_PATH) : null;
     }
 
     private function nodeBinary(): ?string

@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3f7095bd2bb7bf3521d6a40800a4df5e",
+    "content-hash": "879632ab355ad883ac775b5ecdf624c8",
     "packages": [],
     "packages-dev": [
         {
             "name": "forelse/simulateur-docker",
-            "version": "dev-main",
+            "version": "dev-claude/engine-content-decoupling-9uzezs",
             "dist": {
                 "type": "path",
-                "url": "../../tools/docker-sim",
+                "url": "../../packages/simulateur-docker",
                 "reference": "ca08ae0a7acd1fe6a26df6130bf8f13ef776046f"
             },
             "require": {

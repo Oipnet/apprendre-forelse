@@ -4,7 +4,7 @@
 install: ## Dépendances, environnements d'exécution et bases de données (PostgreSQL : voir README)
 	cd platform && composer install
 	cd playground && npm install
-	cd tools/nuxt-sim && npm install
+	cd packages/simulateur-nuxt && npm install
 	environments/bin/build-env.sh
 	cd platform && php bin/console doctrine:database:create --if-not-exists
 	cd platform && php bin/console doctrine:migrations:migrate --no-interaction
@@ -30,13 +30,13 @@ dev-mail:
 
 test: ## Tests du moteur
 	cd platform && php -d xdebug.mode=off bin/phpunit
-	cd tools/docker-sim && composer install --quiet && php -d xdebug.mode=off vendor/bin/phpunit
+	cd packages/simulateur-docker && composer install --quiet && php -d xdebug.mode=off vendor/bin/phpunit
 	cd playground && npm run typecheck
-	cd tools/nuxt-sim && npm run typecheck && npm test
+	cd packages/simulateur-nuxt && npm run typecheck && npm test
 
 conformite-nuxt: ## Compare le simulateur Nuxt au vrai Nuxt (installe Nuxt dans conformite/reference)
-	cd tools/nuxt-sim/conformite/reference && npm install
-	cd tools/nuxt-sim && npm run conformite
+	cd packages/simulateur-nuxt/conformite/reference && npm install
+	cd packages/simulateur-nuxt && npm run conformite
 
 check: ## Vérifie les packs de contenu (exécute leur PHP : packs de confiance uniquement)
 	cd platform && php bin/console content:check

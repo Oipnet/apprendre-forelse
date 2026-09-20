@@ -66,7 +66,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "--prefix",
-        "tools/nuxt-sim",
+        "packages/simulateur-nuxt",
         "run",
         "demo"
       ],

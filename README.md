@@ -22,8 +22,10 @@ de Forelse ne sont pas dans ce dépôt ; une école ou une entreprise peut les u
 platform/         Application Symfony 8.1 : pages, comptes, progression, API, content:check
     src/Content/Framework/   Ce que le moteur sait de chaque framework (un profil par runtime)
 playground/       Îlot TypeScript : runtime PHP WebAssembly, éditeur Monaco, aperçu isolé
-packages/
+packages/           Ce qui peut vivre hors du moteur : contrat et simulateurs
   runtime-contract/  Ce qu'un runtime doit remplir, et ce que le moteur lui fournit (types seuls)
+  simulateur-nuxt/   Le runtime Nuxt : simulateur, worker, greffons de build, lanceur de tests
+  simulateur-docker/ Le simulateur Docker, bibliothèque PHP du runtime php-wasm
 environments/     Projets de base dans lesquels s'exécutent les exercices, et de quoi les empaqueter
                   (bin/build-env.sh) — destiné à devenir son propre dépôt, voir environments/README.md
 tools/            Simulateurs Docker (docker-sim) et Nuxt (nuxt-sim), publication d'une version
@@ -225,8 +227,23 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
   arrive par l'étiquette de service `app.framework`.
 
   Le simulateur Nuxt est le premier à passer par ce chemin : `@forelse/simulateur-nuxt` porte son
-  runtime, son worker et ses greffons Vite, et `playground/vite.config.ts` ne nomme plus Nuxt nulle
-  part. Les types que les deux côtés partagent vivent dans `@forelse/runtime-contract`.
+  runtime, son worker, ses greffons Vite **et son lanceur de tests**, et `playground/vite.config.ts` ne
+  nomme plus Nuxt nulle part. Les types que les deux côtés partagent vivent dans
+  `@forelse/runtime-contract`.
+
+  **Les tests côté serveur** suivent la même règle. `content:check` doit rejouer les tests d'un exercice
+  avec le même runner que le navigateur, sinon les deux verdicts divergent. Un framework dont les tests
+  ne sont pas du PHPUnit déclare donc `testModule` dans son profil — un **spécificateur de paquet**,
+  jamais un chemin :
+
+  ```php
+  testModule: '@forelse/simulateur-nuxt/tests',
+  ```
+
+  Le moteur demande à Node de le résoudre depuis `playground/`, là où les paquets de runtime sont
+  installés : il ne sait ni où ce paquet vit, ni qu'il existe. Le module reçoit le dossier du projet
+  puis les fichiers de test, et écrit sur la sortie standard un JSON
+  `{cases: [{name, status, file, message}], output}`.
 
   Ce qui ne changera pas : **le navigateur est un bundle**, donc ajouter un runtime demandera toujours
   de reconstruire le playground. C'est le niveau 3 de
@@ -236,7 +253,7 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
   Le profil déclare aussi ce que le navigateur devinait auparavant : `snippets` (les familles d'extraits
   que l'éditeur propose) et `consoleAliases` (les préfixes tolérés — `php bin/console …`,
   `docker-compose up`). L'éditeur et la console ne connaissent plus aucun framework par son nom.
-- **Simulateur Docker** (`framework: docker`, environnement `environments/docker`) : Docker ne tourne évidemment pas dans le navigateur. `tools/docker-sim` le simule en PHP pur — images (catalogue fermé : php, composer, nginx, postgres, mysql, mariadb, redis, node, alpine, debian, caddy, mailpit, adminer…), construction d'images à la façon de BuildKit (étapes numérotées, cache par couche, « build checks »), conteneurs, réseaux, volumes, `docker compose` — et **exécute pour de vrai le PHP servi par les conteneurs** : Apache et son `.htaccess`, nginx devant php-fpm, `php -S`. Les erreurs sont celles de Docker (`port is already allocated`, `Unable to locate package`, `host not found in upstream`, `File not found.`), et une suppression de fichiers dans une couche ultérieure ne rend pas la place, comme dans une vraie image. La console du playground devient `docker` (`sh lancer.sh` rejoue un script de commandes), et l'aperçu visite les ports publiés : `preview: /localhost:8080/`. Les tests des exercices étendent `Forelse\DockerSim\Testing\DockerTestCase` (`build()`, `docker()`, `runScript()`, `http()`, `container()`, `service()`, `image()`, `exec()`, et les assertions `assertBuildSucceeded`, `assertImageLacksFile`, `assertImageSizeBelow`, `assertPageContains`…). Le simulateur est un **runtime du moteur**, pas un environnement : il reste dans `tools/`, et `environments/docker` en dépend comme d'une bibliothèque (dépôt Composer `path`). Il a sa propre suite de tests (`cd tools/docker-sim && vendor/bin/phpunit`), lancée par `make test` et la CI. Limites assumées : pas de registre (`docker push`), pas de terminal interactif (`-it`), `RUN` interprété et non exécuté, montages imbriqués non pris en charge, temps comprimé (un healthcheck est rejoué à chaque fois qu'on regarde l'état d'un conteneur, sans phase `starting`, et un échec y vaut tous les essais) ; le PHP des conteneurs s'exécute dans le processus des tests (pas d'`exit()`, pas de fonction globale redéclarée), et n'est donc pas soumis aux droits Unix — ceux-ci s'appliquent aux commandes du shell (`docker exec -u www-data … touch`, un montage `:ro`), qui sont le bon moyen de les vérifier.
+- **Simulateur Docker** (`framework: docker`, environnement `environments/docker`) : Docker ne tourne évidemment pas dans le navigateur. `packages/simulateur-docker` le simule en PHP pur — images (catalogue fermé : php, composer, nginx, postgres, mysql, mariadb, redis, node, alpine, debian, caddy, mailpit, adminer…), construction d'images à la façon de BuildKit (étapes numérotées, cache par couche, « build checks »), conteneurs, réseaux, volumes, `docker compose` — et **exécute pour de vrai le PHP servi par les conteneurs** : Apache et son `.htaccess`, nginx devant php-fpm, `php -S`. Les erreurs sont celles de Docker (`port is already allocated`, `Unable to locate package`, `host not found in upstream`, `File not found.`), et une suppression de fichiers dans une couche ultérieure ne rend pas la place, comme dans une vraie image. La console du playground devient `docker` (`sh lancer.sh` rejoue un script de commandes), et l'aperçu visite les ports publiés : `preview: /localhost:8080/`. Les tests des exercices étendent `Forelse\DockerSim\Testing\DockerTestCase` (`build()`, `docker()`, `runScript()`, `http()`, `container()`, `service()`, `image()`, `exec()`, et les assertions `assertBuildSucceeded`, `assertImageLacksFile`, `assertImageSizeBelow`, `assertPageContains`…). Le simulateur est un **runtime du moteur**, pas un environnement : il reste dans `tools/`, et `environments/docker` en dépend comme d'une bibliothèque (dépôt Composer `path`). Il a sa propre suite de tests (`cd packages/simulateur-docker && vendor/bin/phpunit`), lancée par `make test` et la CI. Limites assumées : pas de registre (`docker push`), pas de terminal interactif (`-it`), `RUN` interprété et non exécuté, montages imbriqués non pris en charge, temps comprimé (un healthcheck est rejoué à chaque fois qu'on regarde l'état d'un conteneur, sans phase `starting`, et un échec y vaut tous les essais) ; le PHP des conteneurs s'exécute dans le processus des tests (pas d'`exit()`, pas de fonction globale redéclarée), et n'est donc pas soumis aux droits Unix — ceux-ci s'appliquent aux commandes du shell (`docker exec -u www-data … touch`, un montage `:ro`), qui sont le bon moyen de les vérifier.
 - `visibility: admin` (dans `track.yaml`) réserve un parcours en préparation aux administrateurs : absent de l'accueil, introuvable (404) pour les autres, jamais conseillé comme suite. Il reste vérifié par `content:check` et modifiable dans l'atelier. Retirez la clé (ou `visibility: public`) pour l'ouvrir. Un administrateur peut aussi l'ouvrir à une seule cohorte en le cochant dans ses parcours disponibles.
 - `order: <entier>` (dans `track.yaml`) fixe le rang du parcours dans les listes, à commencer par l'accueil, dont l'onglet ouvert par défaut est le premier : le plus petit d'abord. Les parcours sans rang viennent après, dans l'ordre de chargement (chemins de `CONTENT_PACKS_PATHS`, puis dossiers de packs par ordre alphabétique, puis liste `tracks:` du pack). Laissez de l'écart entre les rangs (10, 20, 30) pour intercaler un parcours d'un autre pack sans renuméroter.
 - `next: <parcours>` (dans `track.yaml`) conseille un parcours à suivre ensuite : proposé à la fin du dernier exercice et sur la carte du parcours. Il peut vivre dans un autre pack ; s'il n'est pas installé, il est ignoré.
