@@ -23,7 +23,7 @@ final readonly class Environment
     ) {
     }
 
-    /** Archive servie au navigateur, produite par tools/build-env.sh. */
+    /** Archive servie au navigateur, produite par environments/bin/build-env.sh. */
     public function archivePath(): string
     {
         return 'envs/'.$this->id.'.zip';

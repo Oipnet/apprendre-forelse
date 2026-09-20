@@ -131,11 +131,11 @@ jobs:
           path: |
             environments/*/vendor
             platform/public/envs
-          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'tools/build-env.sh', 'tools/build-completion.php', 'tools/docker-sim/composer.json', 'tools/docker-sim/src/**', 'tools/docker-sim/bin/**', 'environments/nuxt-*/**') }}
+          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'environments/bin/**', 'tools/docker-sim/composer.json', 'tools/docker-sim/src/**', 'tools/docker-sim/bin/**', 'environments/nuxt-*/**') }}
 
       - name: Construire les environnements
         if: steps.cache-environnements.outputs.cache-hit != 'true'
-        run: for env in environments/*/; do tools/build-env.sh "$(basename "$env")"; done
+        run: environments/bin/build-env.sh
 
       - name: Dépendances du simulateur Docker
         uses: ramsey/composer-install@v3

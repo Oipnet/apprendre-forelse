@@ -4,7 +4,7 @@
 # Playground (îlot JS)
 playground/node_modules/
 
-# Artefacts générés par tools/build-env.sh
+# Artefacts générés par environments/bin/build-env.sh
 platform/public/envs/
 
 # Environnements Symfony (reconstruits par composer install)
@@ -12,7 +12,7 @@ environments/*/vendor/
 environments/*/var/
 environments/*/.phpunit.cache/
 
-# Simulateur Docker (bibliothèque du moteur, installée dans environments/docker)
+# Simulateur Docker (runtime du moteur, installé dans environments/docker par build-env.sh)
 tools/docker-sim/vendor/
 tools/docker-sim/composer.lock
 tools/docker-sim/.phpunit.cache/

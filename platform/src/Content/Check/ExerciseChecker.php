@@ -80,7 +80,7 @@ final class ExerciseChecker
                 return $result;
             }
         } elseif (!is_file($environment->directory.'/vendor/autoload.php')) {
-            $result->error(sprintf('Environnement « %s » sans vendor/ : lancez tools/build-env.sh %s.', $environment->id, $environment->id));
+            $result->error(sprintf('Environnement « %s » sans vendor/ : lancez environments/bin/build-env.sh %s.', $environment->id, $environment->id));
 
             return $result;
         }
@@ -220,7 +220,7 @@ final class ExerciseChecker
      * Les classes que l'apprenant doit importer lui-même — citées par la solution, absentes de l'état de départ —
      * doivent figurer dans l'index de complétion de l'environnement. Sinon l'éditeur ne les propose pas, alors que
      * l'exercice demande précisément de les écrire. La liste des namespaces indexés est dans
-     * tools/build-completion.php ; l'index lui-même est produit par tools/build-env.sh.
+     * environments/bin/build-completion.php ; l'index lui-même est produit par build-env.sh.
      *
      * @param array<string, string> $starting
      * @param array<string, string> $tests
@@ -230,7 +230,7 @@ final class ExerciseChecker
     {
         $indexPath = $this->platformDir.'/public/'.$environment->completionIndexPath();
         if (!is_file($indexPath)) {
-            $result->warning(sprintf('Index de complétion absent (%s) : les imports de la solution n\'ont pas été vérifiés. Lancez tools/build-env.sh %s.', $environment->completionIndexPath(), $environment->id));
+            $result->warning(sprintf('Index de complétion absent (%s) : les imports de la solution n\'ont pas été vérifiés. Lancez environments/bin/build-env.sh %s.', $environment->completionIndexPath(), $environment->id));
 
             return;
         }
@@ -266,7 +266,7 @@ final class ExerciseChecker
         }
         if ($missing) {
             $result->error(sprintf(
-                'Complétion : %s hors de l\'index de « %s ». L\'apprenant doit écrire ces imports, l\'éditeur ne les lui proposera pas : ajoutez leur namespace à tools/build-completion.php.',
+                'Complétion : %s hors de l\'index de « %s ». L\'apprenant doit écrire ces imports, l\'éditeur ne les lui proposera pas : ajoutez leur namespace à environments/bin/build-completion.php.',
                 implode(', ', array_keys($missing)),
                 $environment->id,
             ));

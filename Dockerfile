@@ -50,9 +50,10 @@ FROM php_base AS environments
 
 RUN apt-get update && apt-get install -y --no-install-recommends zip && rm -rf /var/lib/apt/lists/*
 COPY environments/ /app/environments/
+# Le simulateur Docker : dépôt Composer « path » de l'environnement docker (voir environments/README.md).
 COPY tools/ /app/tools/
-# Écrit /app/platform/public/envs/<id>.zip et <id>.completion.json
-RUN mkdir -p /app/platform/public && for dir in /app/environments/*/; do /app/tools/build-env.sh "$(basename "$dir")"; done
+# Écrit /app/platform/public/envs/<id>.zip et <id>.completion.json, pour tous les environnements.
+RUN mkdir -p /app/platform/public && /app/environments/bin/build-env.sh
 
 
 # --- 5. Image finale --------------------------------------------------------------------

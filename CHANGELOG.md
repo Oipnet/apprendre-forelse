@@ -62,6 +62,20 @@ tel quel.
   d'un paquet de plateforme (voir [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md), « niveau 3 ») ;
   le contrat reste jeune et bougera tant qu'un paquet tiers ne l'aura pas essayé.
 
+- **Tout ce qui concerne les environnements est réuni dans `environments/`** : les projets de base, et
+  désormais leur empaquetage (`bin/build-env.sh`, `bin/build-completion.php`, qui vivaient dans
+  `tools/`). Le dossier ne dépend d'aucun code du moteur, et le moteur n'y entre que par deux portes :
+  la variable `ENVIRONMENTS_DIR` et ce script. Il est prêt à partir dans son propre dépôt ; ce qu'il
+  restera à faire ce jour-là est écrit dans [environments/README.md](environments/README.md).
+
+  `build-env.sh` sans argument empaquette **tous** les environnements (un dossier en est un s'il
+  contient un `environment.yaml`, comme un pack en est un s'il contient un `pack.yaml`), et sa sortie se
+  choisit par argument ou par `ENVIRONMENTS_OUT` au lieu d'être clouée au `public/` du moteur.
+
+  Les simulateurs Docker et Nuxt **restent** dans `tools/` : ce sont des runtimes, ce que le moteur
+  fournit pour exécuter un projet, pas des projets. `environments/docker` dépend du premier comme d'une
+  bibliothèque, ce qui deviendra une contrainte de version le jour de l'extraction.
+
 ### Modifié
 
 - Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement

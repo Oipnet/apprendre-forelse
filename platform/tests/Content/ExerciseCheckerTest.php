@@ -18,7 +18,7 @@ final class ExerciseCheckerTest extends TestCase
     protected function setUp(): void
     {
         if (!is_file(self::ROOT.'/environments/symfony-8/vendor/autoload.php')) {
-            $message = 'Environnement symfony-8 non installé (tools/build-env.sh symfony-8).';
+            $message = 'Environnement symfony-8 non installé (environments/bin/build-env.sh symfony-8).';
             // En intégration continue, s'ignorer reviendrait à croire qu'on teste : on échoue.
             if (filter_var(getenv('CI'), \FILTER_VALIDATE_BOOL)) {
                 $this->fail($message);

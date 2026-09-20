@@ -5,7 +5,7 @@ install: ## Dépendances, environnements d'exécution et bases de données (Post
 	cd platform && composer install
 	cd playground && npm install
 	cd tools/nuxt-sim && npm install
-	for env in environments/*/; do tools/build-env.sh "$$(basename "$$env")"; done
+	environments/bin/build-env.sh
 	cd platform && php bin/console doctrine:database:create --if-not-exists
 	cd platform && php bin/console doctrine:migrations:migrate --no-interaction
 	cd platform && php bin/console doctrine:database:create --if-not-exists --env=test

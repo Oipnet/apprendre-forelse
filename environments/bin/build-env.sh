@@ -1,12 +1,28 @@
 #!/usr/bin/env bash
-# Empaquette un environnement (ex. symfony-8) en archive zip servie au navigateur.
-# Usage : tools/build-env.sh symfony-8
+# Empaquette un environnement (ex. symfony-8) en archive zip servie au navigateur, avec son index de
+# complétion. Sans argument, empaquette tous les environnements de ce dossier.
+#
+# Usage : environments/bin/build-env.sh [environnement] [dossier de sortie]
+#
+# La sortie se choisit par argument, par ENVIRONMENTS_OUT, ou retombe sur le public/ du moteur tant
+# que les deux vivent dans le même dépôt (voir environments/README.md).
 set -euo pipefail
 
-ENV_NAME="${1:?usage: $0 <environnement>}"
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ENV_DIR="$ROOT/environments/$ENV_NAME"
-OUT_DIR="$ROOT/platform/public/envs"
+BIN="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$BIN/.." && pwd)"
+
+# Sans nom d'environnement : tous ceux qui déclarent un environment.yaml (bin/ n'en est donc pas un).
+if [ $# -eq 0 ]; then
+    for manifeste in "$ROOT"/*/environment.yaml; do
+        [ -e "$manifeste" ] || { echo "Aucun environnement dans $ROOT." >&2; exit 1; }
+        "$0" "$(basename "$(dirname "$manifeste")")"
+    done
+    exit 0
+fi
+
+ENV_NAME="$1"
+ENV_DIR="$ROOT/$ENV_NAME"
+OUT_DIR="${2:-${ENVIRONMENTS_OUT:-$ROOT/../platform/public/envs}}"
 OUT="$OUT_DIR/$ENV_NAME.zip"
 
 [ -d "$ENV_DIR" ] || { echo "Environnement introuvable : $ENV_DIR" >&2; exit 1; }
@@ -36,7 +52,7 @@ EXCLUDES=(-x 'var/*' '.phpunit.cache/*' '.git/*' 'CLAUDE.md' 'AGENTS.md' 'enviro
 [ -f "$ENV_DIR/.archiveignore" ] && EXCLUDES+=("-x@$ENV_DIR/.archiveignore")
 (cd "$ENV_DIR" && zip -qr9X "$OUT" . "${EXCLUDES[@]}")
 
-php "$ROOT/tools/build-completion.php" "$ENV_DIR" "$OUT_DIR/$ENV_NAME.completion.json"
+php "$BIN/build-completion.php" "$ENV_DIR" "$OUT_DIR/$ENV_NAME.completion.json"
 
 echo "$(du -h "$OUT" | cut -f1)  $OUT"
 echo "$(du -h "$OUT_DIR/$ENV_NAME.completion.json" | cut -f1)  $OUT_DIR/$ENV_NAME.completion.json"
