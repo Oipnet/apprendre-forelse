@@ -32,6 +32,17 @@ if [ "$1" = 'frankenphp' ]; then
 	# Cache compilé avec les variables d'environnement réelles du conteneur.
 	php bin/console cache:clear --no-interaction
 	php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
+
+	# Environnements déclarés par les packs (clé « environments » de pack.yaml) : installés au démarrage
+	# si l'instance l'a demandé. En tâche de fond, volontairement : cloner puis lancer composer dure des
+	# minutes, et un dépôt injoignable n'a pas à empêcher la plateforme de servir ses pages. Les exercices
+	# concernés attendent leur environnement ; les autres tournent tout de suite. Suivi dans
+	# /admin → Environnements, et dans les journaux du conteneur.
+	if [ "${ENVIRONMENTS_AUTO_INSTALL:-0}" = "1" ]; then
+		echo "Environnements des packs : installation des manquants en tâche de fond (ENVIRONMENTS_AUTO_INSTALL=1)."
+		php bin/console app:environnement:synchroniser --no-interaction &
+	fi
+
 	echo "Plateforme : $APP_URL — bac à sable : $SANDBOX_URL"
 fi
 

@@ -2,6 +2,8 @@
 
 namespace App\Instance;
 
+use App\Content\RepositoryUrl;
+
 /**
  * Un environnement installé depuis un dépôt Git : d'où il vient, où il en est.
  *
@@ -30,6 +32,12 @@ final readonly class InstalledEnvironment
         public string $message,
         public \DateTimeImmutable $updatedAt,
     ) {
+    }
+
+    /** L'adresse telle qu'on peut l'afficher : sans le jeton d'un dépôt privé. */
+    public function displayUrl(): string
+    {
+        return RepositoryUrl::withoutCredentials($this->url);
     }
 
     public function isReady(): bool

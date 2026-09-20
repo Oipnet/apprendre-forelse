@@ -32,6 +32,9 @@ services:
       INSTALLED_ENVIRONMENTS_DIR: ${INSTALLED_ENVIRONMENTS_DIR:-/environnements}
       # Hôtes acceptés pour ces dépôts, séparés par des virgules. Vide : tous les hôtes en https.
       ENVIRONMENT_SOURCES_ALLOWLIST: ${ENVIRONMENT_SOURCES_ALLOWLIST:-}
+      # 1 : au démarrage, installer les environnements que les packs déclarent et qui manquent.
+      # En tâche de fond : la plateforme sert ses pages pendant ce temps.
+      ENVIRONMENTS_AUTO_INSTALL: ${ENVIRONMENTS_AUTO_INSTALL:-0}
       # Devis de cohorte : prix par apprenant et par parcours (TTC, en centimes), puis barème dégressif.
       COHORT_UNIT_PRICE: ${COHORT_UNIT_PRICE:-3000}
       COHORT_TIERS: ${COHORT_TIERS:-1:100,10:70,30:50}

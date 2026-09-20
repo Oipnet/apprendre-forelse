@@ -300,6 +300,49 @@ page lance en tâche de fond, parce qu'un `composer install` dure plus longtemps
 Guide pas à pas dans
 [auto-hebergement/README.md](auto-hebergement/README.md#ajouter-un-environnement-dexécution).
 
+### Un pack apporte ses environnements
+
+Mieux qu'une adresse collée à la main : **le pack dit de quoi il a besoin**, et le moteur va le chercher.
+Dans son `pack.yaml` :
+
+```yaml
+environments:
+  - id: ma-boutique
+    depot: https://github.com/mon-org/env-ma-boutique.git
+    ref: v1.2.0        # facultatif : branche ou étiquette
+```
+
+Un pack ne porte plus son décor, il le **déclare** — comme `moteur:` déclare la version du moteur qu'il
+lui faut, à ceci près que celle-ci se résout au lieu de se contenter d'échouer. Déposez le pack,
+l'instance installe ce qui manque :
+
+```bash
+bin/console app:environnement:synchroniser            # installe les manquants
+bin/console app:environnement:synchroniser --simuler  # dit seulement ce qu'il ferait
+```
+
+`/admin` → **Environnements** montre la même chose, avec un bouton pour tout installer d'un coup ; et
+`ENVIRONMENTS_AUTO_INSTALL=1` le fait au démarrage du conteneur, en tâche de fond, sans retarder les
+pages. `content:check` signale ce qui manque plutôt que de laisser un exercice échouer sans expliquer
+pourquoi.
+
+Ce que le moteur ne fait **jamais** :
+
+- installer pendant une requête web. Cloner puis lancer Composer dure des minutes et exécute du code :
+  cela n'arrive que sur un geste d'exploitation — la commande, le bouton, ou le démarrage si l'instance
+  l'a demandé. La visite d'un apprenant ne déclenche rien.
+- toucher à ce qui est déjà là. Un environnement présent — livré par le moteur ou installé à la main —
+  est utilisé tel quel. « Si je ne l'ai pas » est la seule condition.
+- installer un environnement qui ne porte pas le nom demandé. Le dépôt se nomme lui-même, dans son
+  `environment.yaml` ; s'il ne répond pas à l'`id` que le pack déclare, c'est dit, pas contourné.
+- charger un pack dont la déclaration est mal formée. Un identifiant qui n'en est pas un, une adresse
+  qui n'est pas en `https://` : le pack est refusé à la lecture, en nommant l'entrée fautive. En
+  revanche un dépôt **injoignable** ne fait rien tomber — c'est l'affaire de la synchronisation, et les
+  autres environnements s'installent quand même.
+
+Deux packs peuvent demander le même environnement, c'est même l'intérêt ; deux adresses différentes pour
+un seul identifiant sont refusées, en nommant les deux packs.
+
 ## Sécurité
 
 - **Aperçu isolé** : le HTML/JS produit par l'apprenant s'affiche sur une origine distincte (`SANDBOX_ORIGIN`), sans cookie ni accès à la plateforme. Chaque origine ne sert que ses propres pages (`OriginIsolationListener`).

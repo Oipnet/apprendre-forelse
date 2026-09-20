@@ -3,6 +3,7 @@
 namespace App\Instance;
 
 use App\Content\ContentException;
+use App\Content\RepositoryUrl;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -103,7 +104,7 @@ final class InstalledEnvironments
     /**
      * Les installations en cours ou échouées, de la plus récente à la plus ancienne.
      *
-     * @return list<array{url: string, ref: string, state: string, message: string, startedAt: string, key: string}>
+     * @return list<array{url: string, displayUrl: string, ref: string, state: string, message: string, startedAt: string, key: string}>
      */
     public function jobs(): array
     {
@@ -113,6 +114,8 @@ final class InstalledEnvironments
             if (\is_array($data)) {
                 $jobs[] = [
                     'url' => (string) ($data['url'] ?? ''),
+                    // Affichable : une adresse peut porter le jeton d'un dépôt privé.
+                    'displayUrl' => RepositoryUrl::withoutCredentials((string) ($data['url'] ?? '')),
                     'ref' => (string) ($data['ref'] ?? ''),
                     'state' => (string) ($data['state'] ?? InstalledEnvironment::FAILED),
                     'message' => (string) ($data['message'] ?? ''),

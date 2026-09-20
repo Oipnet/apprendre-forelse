@@ -7,5 +7,13 @@ version: 1.0.0
 # Le pack de démonstration est livré avec le moteur, donc toujours à jour : la clé est inutile ici.
 # moteur: '^1.0'
 license: AGPL-3.0-or-later
+# Environnements d'exécution dont ce pack a besoin, et où les prendre. Le moteur installe ceux qui lui
+# manquent (voir README, « Un pack apporte ses environnements »). Le dépôt doit porter un
+# environment.yaml dont l'« id » est celui déclaré ici. Le pack de démonstration n'utilise que les
+# environnements livrés avec le moteur : la clé est inutile ici.
+# environments:
+#   - id: ma-boutique
+#     depot: https://github.com/mon-org/env-ma-boutique.git
+#     ref: v1.2.0          # facultatif : branche ou étiquette, sinon la branche par défaut
 tracks:
   - decouverte

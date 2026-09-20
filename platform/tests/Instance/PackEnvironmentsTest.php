@@ -1,0 +1,224 @@
+<?php
+
+namespace App\Tests\Instance;
+
+use App\Content\ContentRepository;
+use App\Content\EnvironmentRegistry;
+use App\Instance\EnvironmentInstaller;
+use App\Instance\InstalledEnvironments;
+use App\Instance\PackEnvironments;
+use App\Version;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
+
+/**
+ * Un pack déclare le décor dont il a besoin ; le moteur va le chercher s'il ne l'a pas.
+ *
+ * L'essentiel tient dans le « s'il ne l'a pas » : ce qui est déjà là n'est jamais retouché, et ce qui
+ * n'est pas ce que le pack a demandé est dit plutôt qu'installé en silence.
+ */
+final class PackEnvironmentsTest extends TestCase
+{
+    private const string ROOT = __DIR__.'/../../..';
+
+    private string $tmp;
+    private Filesystem $filesystem;
+    private string|false $home;
+
+    protected function setUp(): void
+    {
+        if (null === (new ExecutableFinder())->find('git')) {
+            $this->markTestSkipped('git est introuvable.');
+        }
+        $this->filesystem = new Filesystem();
+        $this->tmp = sys_get_temp_dir().'/pack-envs-'.bin2hex(random_bytes(6));
+        $this->filesystem->mkdir([$this->tmp.'/installes', $this->tmp.'/packs', $this->tmp.'/maison']);
+        // Un socle minuscule plutôt que symfony-8 : les assertions portent sur l'enchaînement
+        // « pack → environnement manquant → dépôt », pas sur le squelette de Symfony, et empaqueter
+        // 97 Mo de vendor/ coûterait une minute par test. Il ne déclare aucun composer.json, ce qui
+        // couvre au passage la chaîne composée sans Composer.
+        $this->filesystem->dumpFile($this->tmp.'/socle/base-test/environment.yaml', "id: base-test\nphp: '8.4'\ntitle: Socle\n");
+        $this->filesystem->dumpFile($this->tmp.'/socle/base-test/src/Socle.php', '<?php // du socle');
+
+        // Un « chez-soi » par test : la redirection de git posée plus bas ne doit pas lui survivre.
+        $this->home = getenv('HOME');
+        putenv('HOME='.$this->tmp.'/maison');
+        putenv('XDG_CONFIG_HOME='.$this->tmp.'/maison');
+    }
+
+    protected function tearDown(): void
+    {
+        putenv(false === $this->home ? 'HOME' : 'HOME='.$this->home);
+        putenv('XDG_CONFIG_HOME');
+        $this->filesystem->remove($this->tmp);
+    }
+
+    /** Ce que le moteur livre déjà n'est pas réinstallé : le pack s'en sert tel quel. */
+    public function testUnEnvironnementDejaLaNestPasReinstalle(): void
+    {
+        $this->pack('p', ['base-test' => 'https://exemple.test/depot.git']);
+        $packEnvironments = $this->service();
+
+        $etat = $packEnvironments->state();
+        $this->assertCount(1, $etat);
+        $this->assertSame(PackEnvironments::FOREIGN, $etat[0]['state']);
+        $this->assertSame([], $packEnvironments->toInstall(), 'Rien à faire : cet environnement est déjà là.');
+    }
+
+    public function testUnEnvironnementManquantEstSignaleAvantDEtreInstalle(): void
+    {
+        $this->pack('p', ['ma-boutique' => 'https://exemple.test/depot.git']);
+        $packEnvironments = $this->service();
+
+        $this->assertSame(PackEnvironments::MISSING, $packEnvironments->state()[0]['state']);
+        $aFaire = $packEnvironments->toInstall();
+        $this->assertCount(1, $aFaire);
+        $this->assertSame('ma-boutique', $aFaire[0]->id);
+        $this->assertSame('p', $aFaire[0]->packId);
+    }
+
+    /** Le chemin complet : un pack arrive, son décor n'est pas là, il est cloné et empaqueté. */
+    public function testUnEnvironnementManquantEstCloneEtInstalle(): void
+    {
+        $depot = $this->depot([
+            'environment.yaml' => "id: ma-boutique\nextends: base-test\ntitle: Ma boutique\n",
+            'src/Controller/BoutiqueController.php' => '<?php // à moi',
+        ]);
+        $this->pack('p', ['ma-boutique' => 'https://exemple.test/depot.git']);
+        $this->redirige($depot);
+        $environments = $this->registry();
+        $packEnvironments = $this->service($environments);
+
+        $resultat = $packEnvironments->synchronize();
+
+        $this->assertSame(['ma-boutique'], $resultat['installed']);
+        $this->assertSame([], $resultat['failed']);
+
+        // Le moteur le charge, et il prolonge bien l'environnement déjà présent.
+        $environments->reset();
+        $environnement = $environments->get('ma-boutique');
+        $this->assertTrue($environnement->isComposed());
+        $this->assertNotNull($environnement->file('src/Socle.php'), 'Les fichiers viennent du socle.');
+        $this->assertNotNull($environnement->file('src/Controller/BoutiqueController.php'));
+
+        // Et l'archive servie au navigateur porte elle aussi la superposition, pas seulement le dépôt.
+        $this->assertSame(
+            ['src/Controller/BoutiqueController.php', 'src/Socle.php'],
+            $this->contenuDe($this->tmp.'/installes/.artefacts/ma-boutique.zip'),
+        );
+
+        // Et il ne se réinstalle pas au passage suivant.
+        $this->assertSame(PackEnvironments::PRESENT, $packEnvironments->state()[0]['state']);
+        $this->assertSame([], $packEnvironments->toInstall());
+    }
+
+    /** Le dépôt se nomme lui-même : s'il ne porte pas le nom attendu, le pack ne trouverait rien. */
+    public function testUnDepotQuiNePortePasLIdentifiantAttenduEstSignale(): void
+    {
+        $depot = $this->depot(['environment.yaml' => "id: autre-chose\nextends: base-test\n"]);
+        $this->pack('p', ['ma-boutique' => 'https://exemple.test/depot.git']);
+        $this->redirige($depot);
+        $packEnvironments = $this->service();
+
+        $resultat = $packEnvironments->synchronize();
+
+        $this->assertSame([], $resultat['installed']);
+        $this->assertArrayHasKey('ma-boutique', $resultat['failed']);
+        $this->assertStringContainsString('fournit l\'environnement « autre-chose »', $resultat['failed']['ma-boutique']);
+    }
+
+    /** Un dépôt injoignable n'emporte pas les autres : ce qui peut s'installer s'installe. */
+    public function testUnDepotInjoignableNempechePasLesAutres(): void
+    {
+        $depot = $this->depot(['environment.yaml' => "id: ma-boutique\nextends: base-test\n"]);
+        $this->pack('p', [
+            'ma-boutique' => 'https://exemple.test/depot.git',
+            'introuvable' => 'https://github.invalid/absent.git',
+        ]);
+        $this->redirige($depot);
+        $packEnvironments = $this->service();
+
+        $resultat = $packEnvironments->synchronize();
+
+        $this->assertSame(['ma-boutique'], $resultat['installed']);
+        $this->assertArrayHasKey('introuvable', $resultat['failed']);
+        $this->assertStringContainsString('Clonage', $resultat['failed']['introuvable']);
+    }
+
+    /** @param array<string, string> $environnements identifiant => adresse du dépôt */
+    private function pack(string $id, array $environnements): void
+    {
+        $lignes = ["id: {$id}", "title: {$id}", 'environments:'];
+        foreach ($environnements as $environnement => $depot) {
+            $lignes[] = "  - id: {$environnement}";
+            $lignes[] = "    depot: '{$depot}'";
+        }
+        $this->filesystem->dumpFile($this->tmp.'/packs/'.$id.'/pack.yaml', implode("\n", $lignes)."\n");
+    }
+
+    /** @param array<string, string> $fichiers */
+    private function depot(array $fichiers): string
+    {
+        $depot = $this->tmp.'/depot';
+        foreach ($fichiers as $chemin => $contenu) {
+            $this->filesystem->dumpFile($depot.'/'.$chemin, $contenu);
+        }
+        foreach ([
+            ['git', 'init', '--quiet', '--initial-branch=main'],
+            ['git', 'config', 'user.email', 'test@example.test'],
+            ['git', 'config', 'user.name', 'Test'],
+            ['git', 'add', '-A'],
+            ['git', 'commit', '--quiet', '-m', 'environnement'],
+        ] as $commande) {
+            (new Process($commande, $depot))->mustRun();
+        }
+
+        return $depot;
+    }
+
+    /** Fait pointer « https://exemple.test/depot.git » sur un dépôt du disque, via la configuration de git. */
+    private function redirige(string $depot): void
+    {
+        (new Process(['git', 'config', '--global', 'url.'.$depot.'.insteadOf', 'https://exemple.test/depot.git']))->mustRun();
+        (new Process(['git', 'config', '--global', 'protocol.file.allow', 'always']))->mustRun();
+    }
+
+    /** Les fichiers d'une archive, triés : de quoi vérifier ce que l'apprenant recevrait. */
+    private function contenuDe(string $archive): array
+    {
+        $zip = new \ZipArchive();
+        $this->assertTrue(true === $zip->open($archive), 'Archive illisible : '.$archive);
+        $fichiers = [];
+        for ($i = 0; $i < $zip->numFiles; ++$i) {
+            $nom = (string) $zip->getNameIndex($i);
+            if (!str_ends_with($nom, '/')) {
+                $fichiers[] = $nom;
+            }
+        }
+        $zip->close();
+        sort($fichiers);
+
+        return $fichiers;
+    }
+
+    private function registry(): EnvironmentRegistry
+    {
+        return new EnvironmentRegistry([$this->tmp.'/socle', $this->tmp.'/installes']);
+    }
+
+    private function service(?EnvironmentRegistry $environments = null): PackEnvironments
+    {
+        $environments ??= $this->registry();
+        $installed = new InstalledEnvironments($this->tmp.'/installes');
+        $content = new ContentRepository([$this->tmp.'/packs'], $environments, new Version(self::ROOT.'/VERSION'));
+
+        return new PackEnvironments($content, $environments, $installed, new EnvironmentInstaller(
+            $installed,
+            $environments,
+            $this->tmp.'/socle,'.$this->tmp.'/installes',
+            self::ROOT.'/environments/bin/build-env.sh',
+        ));
+    }
+}

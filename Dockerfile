@@ -79,6 +79,7 @@ ENV APP_ENV=prod \
     CONTENT_PACKS_PATHS=/packs \
     ENVIRONMENTS_DIR=/app/environments,/environnements \
     INSTALLED_ENVIRONMENTS_DIR=/environnements \
+    ENVIRONMENTS_AUTO_INSTALL=0 \
     BRANDING_DIR=/marque
 
 # Utilisateur non privilégié ; le binaire peut tout de même écouter sur 80/443.

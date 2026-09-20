@@ -116,6 +116,30 @@ tel quel.
   laisse `INSTALLED_ENVIRONMENTS_DIR` vide : la fonctionnalité est absente et la page le dit. Guide dans
   [auto-hebergement/README.md](auto-hebergement/README.md#ajouter-un-environnement-dexécution).
 
+- **Un pack déclare les environnements dont il a besoin** (clé `environments:` de `pack.yaml`, avec
+  `id`, `depot` et `ref` facultative), et le moteur va les chercher s'il ne les a pas. Un pack ne porte
+  plus son décor, il le **déclare** — comme `moteur:` déclare la version du moteur qu'il lui faut, à
+  ceci près que celle-ci se résout au lieu de se contenter d'échouer. Déposer un pack suffit ; il n'y a
+  plus d'adresse à retrouver ni à coller.
+
+  Trois façons de le faire, une seule mécanique : `bin/console app:environnement:synchroniser`
+  (`--simuler` pour voir sans agir, `--mettre-a-jour` pour suivre un changement d'adresse ou de
+  référence), un bouton « Installer ce qui manque » dans `/admin` → **Environnements**, et
+  `ENVIRONMENTS_AUTO_INSTALL=1` au démarrage du conteneur — en tâche de fond, pour qu'un dépôt
+  injoignable ne retarde pas les pages. `content:check` signale ce qui manque et rappelle la commande,
+  au lieu de laisser un exercice échouer sans dire pourquoi.
+
+  Ce que le moteur ne fait jamais : installer pendant une requête web (la visite d'un apprenant ne
+  déclenche rien) ; retoucher ce qui est déjà là (un pack qui demande `symfony-8` prend celui du moteur,
+  sans cloner personne) ; installer un environnement qui ne porte pas le nom demandé — le dépôt se nomme
+  lui-même dans son `environment.yaml`, et un désaccord est dit, pas contourné. Un dépôt injoignable
+  n'emporte pas les autres : ce qui peut s'installer s'installe, le reste est rapporté.
+
+  Une déclaration mal formée — identifiant qui n'en est pas un, adresse qui n'est pas en `https://` —
+  refuse le pack à la lecture en nommant l'entrée fautive. Deux packs peuvent demander le même
+  environnement, c'est l'intérêt ; deux adresses pour un seul identifiant sont refusées, en nommant les
+  deux packs.
+
 ### Modifié
 
 - Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement
@@ -140,6 +164,18 @@ tel quel.
   environnements installés — hors de l'arborescence publique. Les URL et la mise en cache ne changent pas.
 - Le halo derrière l'enseigne du fil rouge (`.lp-candle`, la bougie de la taverne) devient `.lp-sign-glow`
   et prend la seconde couleur de la marque au lieu d'un or codé en dur.
+
+### Corrigé
+
+- `build-env.sh` : un environnement qui **prolonge une base sans `composer.json`** (un projet Nuxt, ou
+  un socle qui n'apporte que des fichiers) n'empaquetait que ses propres fichiers — la superposition
+  était sautée avec l'installation des dépendances. La chaîne se superpose désormais dans tous les cas ;
+  seuls Composer et l'index de complétion sont omis quand il n'y a pas de PHP à installer. Aucun
+  environnement livré n'était concerné : c'est le cas qui attendait le premier décor de pack.
+- L'état d'un environnement installé (`.forelse.json`, qui porte l'adresse du dépôt et donc le jeton
+  d'un dépôt privé) n'est plus empaqueté dans l'archive téléchargée par les apprenants. Les adresses
+  affichées dans l'administration sont elles aussi expurgées de leurs identifiants.
+
 
 ## 1.3.0 — 2026-09-18
 

@@ -6,6 +6,7 @@ use App\Content\ContentException;
 use App\Content\EnvironmentRegistry;
 use App\Instance\InstalledEnvironment;
 use App\Instance\InstalledEnvironments;
+use App\Instance\PackEnvironments;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -28,6 +29,7 @@ final class EnvironmentController extends AbstractController
     public function __construct(
         private readonly EnvironmentRegistry $environments,
         private readonly InstalledEnvironments $installed,
+        private readonly PackEnvironments $packEnvironments,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
     ) {
@@ -36,8 +38,20 @@ final class EnvironmentController extends AbstractController
     #[AdminRoute('/environnements', name: 'environments', options: ['methods' => ['GET']], allowedDashboards: [DashboardController::class])]
     public function index(): Response
     {
+        // Un pack mal déclaré ne doit pas emporter la page : c'est justement ici qu'on vient le lire.
+        try {
+            $demandes = $this->packEnvironments->state();
+            $manquants = \count($this->packEnvironments->toInstall());
+        } catch (ContentException $e) {
+            $demandes = [];
+            $manquants = 0;
+            $this->addFlash('error', $e->getMessage());
+        }
+
         return $this->render('admin/environments.html.twig', [
             'disponibles' => $this->available(),
+            'demandes' => $demandes,
+            'manquants' => $manquants,
             'installations' => $this->installed->isEnabled() ? $this->installed->jobs() : [],
             'activable' => $this->installed->isEnabled(),
             'dossier' => $this->installed->directory(),
@@ -61,6 +75,29 @@ final class EnvironmentController extends AbstractController
             $this->lancer([$depot, ...('' === $ref ? [] : ['--ref='.$ref])]);
             $this->addFlash('success', 'Installation lancée. Elle dure quelques minutes : rafraîchissez cette page pour suivre.');
         }
+
+        return $this->redirectToRoute('admin_environments');
+    }
+
+    /**
+     * Installe d'un coup ce que les packs demandent et que l'instance n'a pas.
+     *
+     * Même tâche de fond que pour une installation seule : la commande enchaîne les dépôts, et la page
+     * les voit arriver un par un au fil des rafraîchissements.
+     */
+    #[AdminRoute('/environnements/synchroniser', name: 'environments_sync', options: ['methods' => ['POST']], allowedDashboards: [DashboardController::class])]
+    public function sync(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('environments', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->installed->isEnabled()) {
+            $this->addFlash('error', sprintf('Aucun dossier d\'environnements installables : %s n\'existe pas ou n\'est pas écrivable.', $this->installed->directory()));
+
+            return $this->redirectToRoute('admin_environments');
+        }
+        $this->lancer([], 'app:environnement:synchroniser');
+        $this->addFlash('success', 'Installation des environnements demandés par les packs lancée. Rafraîchissez cette page pour suivre.');
 
         return $this->redirectToRoute('admin_environments');
     }
@@ -138,10 +175,10 @@ final class EnvironmentController extends AbstractController
      *
      * @param list<string> $arguments
      */
-    private function lancer(array $arguments): void
+    private function lancer(array $arguments, string $commandeConsole = 'app:environnement:installer'): void
     {
         $php = (new PhpExecutableFinder())->find() ?: 'php';
-        $commande = [$php, $this->projectDir.'/bin/console', 'app:environnement:installer', ...$arguments];
+        $commande = [$php, $this->projectDir.'/bin/console', $commandeConsole, ...$arguments];
 
         // Detacher pour de vrai. Le destructeur de Process **tue** le processus lancé : à la fin de
         // cette méthode, une installation démarrée par `start()` seul serait coupée net. `setsid --fork`

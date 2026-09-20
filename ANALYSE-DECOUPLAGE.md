@@ -93,6 +93,11 @@ Conséquence opérationnelle : **un pack peut être déployé sans redéployer l
 non.** Le déploiement du contenu (rsync des packs sur le VPS, workflow `contenu.yml`) ne peut rien faire
 pour un décor : il faut reconstruire et republier l'image.
 
+**Réglé** (voir le journal) : un pack déclare ses environnements et le dépôt où les prendre
+(`environments:` dans `pack.yaml`), et le moteur installe ceux qui manquent. Un décor se déploie
+désormais comme un pack — sans image à reconstruire. Ce qui reste de 4.2 : les environnements que le
+moteur **livre** sont toujours figés dans l'image, ce qui est normal tant qu'ils sont à lui.
+
 ### 4.3 L'archive et l'index de complétion sont des chemins statiques du moteur
 
 `Environment.php:26-33` :
@@ -346,6 +351,12 @@ projection de l'environnement plutôt qu'un jumeau.
 Étape 0, gratuite et utile tout de suite : donner au pack de démonstration
 (`examples/packs/demo`) son propre environnement local, pour que le moteur teste le chemin « environnement
 fourni par un pack » à chaque passage de CI.
+
+**Mise à jour** : le chemin « environnement fourni par un pack » existe désormais sous une autre forme —
+le pack ne *porte* pas son environnement, il le *déclare* et le moteur va le chercher (`environments:`
+dans `pack.yaml`). C'est testé de bout en bout (`PackEnvironmentsTest`), avec un vrai dépôt Git. Reste
+ouverte la question de l'environnement **embarqué** dans le dossier du pack, qui éviterait un dépôt
+séparé pour un décor minuscule ; les deux ne s'excluent pas.
 
 ## 8. Comment on saura que c'est fait
 

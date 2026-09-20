@@ -20,6 +20,12 @@ final readonly class Pack
         public ?string $engine = null,
         /** @var list<string> exercices de Pratique (dossiers de practice/) */
         public array $practiceIds = [],
+        /**
+         * Les environnements que ce pack déclare nécessaires, et où les chercher (clé « environments »).
+         *
+         * @var list<PackEnvironment>
+         */
+        public array $environments = [],
     ) {
     }
 }

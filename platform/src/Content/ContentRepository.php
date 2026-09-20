@@ -350,6 +350,7 @@ final class ContentRepository
             directory: $directory,
             engine: isset($meta['moteur']) ? (string) $meta['moteur'] : null,
             practiceIds: array_map('basename', $practiceDirectories),
+            environments: $this->packEnvironmentsOf($id, $meta, $directory.'/pack.yaml'),
         );
         $this->checkEngine($pack, $directory.'/pack.yaml');
         $this->packs[$id] = $pack;
@@ -360,6 +361,82 @@ final class ContentRepository
         foreach ($practiceDirectories as $practiceDirectory) {
             $this->loadPractice($pack, $practiceDirectory);
         }
+    }
+
+
+    /**
+     * Les environnements déclarés par un pack (clé « environments » de pack.yaml).
+     *
+     * Ce qui est vérifié ici, c'est la **forme** : un identifiant utilisable comme nom de dossier, une
+     * adresse https. Qu'ils soient installés ou non ne regarde pas le chargement du contenu — sinon un
+     * dépôt injoignable éteindrait toute la plateforme. C'est App\Instance\PackEnvironments qui s'en
+     * occupe, et content:check qui le signale.
+     *
+     * @param array<string, mixed> $meta
+     *
+     * @return list<PackEnvironment>
+     */
+    private function packEnvironmentsOf(string $packId, array $meta, string $file): array
+    {
+        $declared = $meta['environments'] ?? [];
+        if (!\is_array($declared)) {
+            throw new ContentException(sprintf('%s : « environments » doit être une liste d\'environnements (id, depot).', $file));
+        }
+
+        $environments = [];
+        foreach (array_values($declared) as $rank => $entry) {
+            $where = sprintf('%s : « environments », entrée %d', $file, $rank + 1);
+            if (!\is_array($entry)) {
+                throw new ContentException(sprintf('%s : chaque entrée est une table (id, depot, ref).', $where));
+            }
+            $id = (string) ($entry['id'] ?? '');
+            $depot = trim((string) ($entry['depot'] ?? ''));
+            if ('' === $id || '' === $depot) {
+                throw new ContentException(sprintf('%s : « id » et « depot » sont obligatoires.', $where));
+            }
+            if (1 !== preg_match('/^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$/', $id)) {
+                throw new ContentException(sprintf('%s : identifiant « %s » invalide (minuscules, chiffres et tirets, 64 caractères au plus).', $where, $id));
+            }
+            if (!str_starts_with($depot, 'https://')) {
+                throw new ContentException(sprintf('%s : l\'adresse du dépôt doit commencer par « https:// » (lue : %s).', $where, $depot));
+            }
+            $environments[] = new PackEnvironment($id, $depot, trim((string) ($entry['ref'] ?? '')), $packId);
+        }
+
+        return $environments;
+    }
+
+    /**
+     * Tout ce que les packs demandent, par identifiant.
+     *
+     * Deux packs peuvent avoir besoin du même environnement — c'est même le but —, à condition de le
+     * demander au même endroit : deux adresses pour un seul identifiant, ce serait un décor différent
+     * selon le pack qu'on regarde, et le moteur n'en installerait qu'un.
+     *
+     * @return array<string, PackEnvironment>
+     */
+    public function packEnvironments(): array
+    {
+        $wanted = [];
+        foreach ($this->packs() as $pack) {
+            foreach ($pack->environments as $environment) {
+                $known = $wanted[$environment->id] ?? null;
+                if (null !== $known && !$known->sameSourceAs($environment)) {
+                    throw new ContentException(sprintf(
+                        'Environnement « %s » demandé à deux endroits différents : %s par le pack « %s », %s par le pack « %s ». Alignez les deux packs.',
+                        $environment->id,
+                        $known->describeSource(),
+                        $known->packId,
+                        $environment->describeSource(),
+                        $environment->packId,
+                    ));
+                }
+                $wanted[$environment->id] ??= $environment;
+            }
+        }
+        ksort($wanted);
+
+        return $wanted;
     }
 
     /**

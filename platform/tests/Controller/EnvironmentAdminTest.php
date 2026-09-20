@@ -96,6 +96,15 @@ final class EnvironmentAdminTest extends WebTestCase
         $this->assertSame([], static::getContainer()->get(InstalledEnvironments::class)->jobs());
     }
 
+    public function testSansJetonCsrfLaSynchronisationEstRefusee(): void
+    {
+        $this->connecteUnAdmin();
+        $this->client->request('POST', '/admin/environnements/synchroniser');
+
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame([], static::getContainer()->get(InstalledEnvironments::class)->jobs());
+    }
+
     /** Les archives passent par un contrôleur : un nom qui n'en est pas un ne descend pas dans le disque. */
     public function testLesArchivesNeServentQueDesNomsDArchives(): void
     {

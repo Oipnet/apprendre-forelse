@@ -69,22 +69,18 @@ for dossier in "${CHAINE[@]}"; do
     [ -f "$dossier/composer.json" ] && INSTALL_DIR="$dossier"
 done
 
-# Environnement sans PHP (Nuxt, servi par le simulateur du navigateur) : ni Composer ni index de complétion PHP.
-if [ -z "$INSTALL_DIR" ]; then
-    rm -f "$OUT"
-    (cd "$ENV_DIR" && zip -qr9X "$OUT" . -x 'node_modules/*' '.nuxt/*' '.output/*' '.git/*' 'environment.yaml' '*.DS_Store' '*/.gitkeep')
-    echo '{"classes":{}}' > "$OUT_DIR/$ENV_NAME.completion.json"
-    echo "$(du -h "$OUT" | cut -f1)  $OUT"
-    exit 0
-fi
-
-(cd "$INSTALL_DIR" && composer install --no-interaction --no-scripts --quiet && composer dump-autoload --optimize --quiet)
-# Paquets locaux (dépôts « path » copiés, comme le simulateur Docker) : recopiés à chaque empaquetage,
-# sinon une modification de tools/ n'atteindrait pas l'environnement.
-PATH_PACKAGES=$(cd "$INSTALL_DIR" && php -r '$lock = json_decode((string) @file_get_contents("composer.lock"), true) ?: []; foreach ([...($lock["packages"] ?? []), ...($lock["packages-dev"] ?? [])] as $p) { if (($p["dist"]["type"] ?? "") === "path") echo $p["name"], " "; }')
-if [ -n "$PATH_PACKAGES" ]; then
-    # shellcheck disable=SC2086
-    (cd "$INSTALL_DIR" && composer reinstall --no-interaction --quiet $PATH_PACKAGES && composer dump-autoload --optimize --quiet)
+# Un environnement sans Composer nulle part dans sa chaîne (Nuxt, servi par le simulateur du
+# navigateur) n'a ni dépendances à installer ni index de complétion PHP à extraire. Il se superpose
+# quand même : un environnement qui prolonge une base sans PHP garde les fichiers de sa base.
+if [ -n "$INSTALL_DIR" ]; then
+    (cd "$INSTALL_DIR" && composer install --no-interaction --no-scripts --quiet && composer dump-autoload --optimize --quiet)
+    # Paquets locaux (dépôts « path » copiés, comme le simulateur Docker) : recopiés à chaque empaquetage,
+    # sinon une modification de tools/ n'atteindrait pas l'environnement.
+    PATH_PACKAGES=$(cd "$INSTALL_DIR" && php -r '$lock = json_decode((string) @file_get_contents("composer.lock"), true) ?: []; foreach ([...($lock["packages"] ?? []), ...($lock["packages-dev"] ?? [])] as $p) { if (($p["dist"]["type"] ?? "") === "path") echo $p["name"], " "; }')
+    if [ -n "$PATH_PACKAGES" ]; then
+        # shellcheck disable=SC2086
+        (cd "$INSTALL_DIR" && composer reinstall --no-interaction --quiet $PATH_PACKAGES && composer dump-autoload --optimize --quiet)
+    fi
 fi
 
 # Un environnement seul s'empaquette depuis son dossier ; une chaîne se superpose d'abord dans un
@@ -99,16 +95,27 @@ if [ "${#CHAINE[@]}" -gt 1 ]; then
         cp -a "$dossier/." "$SOURCE/"
     done
     rm -rf "$SOURCE/vendor"
-    [ -d "$INSTALL_DIR/vendor" ] && cp -a "$INSTALL_DIR/vendor" "$SOURCE/vendor"
+    [ -n "$INSTALL_DIR" ] && [ -d "$INSTALL_DIR/vendor" ] && cp -a "$INSTALL_DIR/vendor" "$SOURCE/vendor"
 fi
 
 rm -f "$OUT"
-EXCLUDES=(-x 'var/*' '.phpunit.cache/*' '.git/*' 'CLAUDE.md' 'AGENTS.md' 'environment.yaml' '.archiveignore' '.editorconfig' '*.DS_Store')
+# .forelse.json est l'état que le moteur dépose dans un environnement installé depuis un dépôt : il
+# porte l'adresse de ce dépôt, jeton d'accès compris le cas échéant. Il n'a rien à faire dans une
+# archive téléchargée par chaque apprenant.
+if [ -z "$INSTALL_DIR" ]; then
+    EXCLUDES=(-x 'node_modules/*' '.nuxt/*' '.output/*' '.git/*' 'environment.yaml' '.forelse.json' '*.DS_Store' '*/.gitkeep')
+else
+    EXCLUDES=(-x 'var/*' '.phpunit.cache/*' '.git/*' 'CLAUDE.md' 'AGENTS.md' 'environment.yaml' '.forelse.json' '.archiveignore' '.editorconfig' '*.DS_Store')
+fi
 # .archiveignore : motifs zip supplémentaires, un par ligne (ex. traductions de vendor/ inutiles à l'apprenant).
 [ -f "$SOURCE/.archiveignore" ] && EXCLUDES+=("-x@$SOURCE/.archiveignore")
 (cd "$SOURCE" && zip -qr9X "$OUT" . "${EXCLUDES[@]}")
 
-php "$BIN/build-completion.php" "$INSTALL_DIR" "$OUT_DIR/$ENV_NAME.completion.json"
+if [ -z "$INSTALL_DIR" ]; then
+    echo '{"classes":{}}' > "$OUT_DIR/$ENV_NAME.completion.json"
+else
+    php "$BIN/build-completion.php" "$INSTALL_DIR" "$OUT_DIR/$ENV_NAME.completion.json"
+fi
 
 echo "$(du -h "$OUT" | cut -f1)  $OUT"
 echo "$(du -h "$OUT_DIR/$ENV_NAME.completion.json" | cut -f1)  $OUT_DIR/$ENV_NAME.completion.json"

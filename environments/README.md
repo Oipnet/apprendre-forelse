@@ -118,6 +118,23 @@ Ce que cela coûte : empaqueter exécute `composer install`, donc le code du dé
 est réservée aux administrateurs, seules les adresses `https://` sont acceptées, et
 `ENVIRONMENT_SOURCES_ALLOWLIST` limite les hôtes.
 
+Et le pack peut le demander lui-même, sans qu'un administrateur ait à coller quoi que ce soit :
+
+```yaml
+# pack.yaml
+environments:
+  - id: ma-boutique
+    depot: https://github.com/mon-org/env-ma-boutique.git
+    ref: v1.2.0
+```
+
+`bin/console app:environnement:synchroniser` installe ce qui manque, l'administration le propose d'un
+bouton, et `ENVIRONMENTS_AUTO_INSTALL=1` le fait au démarrage du conteneur. Ce qui est déjà là n'est
+jamais retouché : un pack qui demande `symfony-8` prend celui de ce dossier, sans cloner personne.
+
+C'est ce qui rend l'extraction de ce dossier possible sans rien casser : le jour où un environnement
+d'ici vit ailleurs, un pack le désigne par son dépôt et rien d'autre ne change.
+
 ## Ce qui n'est pas ici, et pourquoi
 
 - **Les simulateurs** (`tools/docker-sim`, `tools/nuxt-sim`) sont des **runtimes**, pas des

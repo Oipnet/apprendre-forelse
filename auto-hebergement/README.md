@@ -203,6 +203,34 @@ docker compose exec app bin/console app:environnement:installer https://github.c
 docker compose exec app bin/console app:environnement:installer mon-environnement   # mise à jour
 ```
 
+### Laisser le pack le demander
+
+Plus simple encore : c'est le **pack** qui dit de quel décor il a besoin. Dans son `pack.yaml` :
+
+```yaml
+environments:
+  - id: ma-boutique
+    depot: https://github.com/mon-org/env-ma-boutique.git
+    ref: v1.2.0        # facultatif
+```
+
+Déposez le pack dans `packs/`, et l'instance installe ce qui lui manque :
+
+```bash
+docker compose exec app bin/console app:environnement:synchroniser --simuler   # ce qui serait installé
+docker compose exec app bin/console app:environnement:synchroniser
+```
+
+`/admin` → **Environnements** affiche un tableau « Demandés par les packs » et un bouton qui installe
+tout ce qui manque. Et si vous préférez ne rien avoir à lancer, `ENVIRONMENTS_AUTO_INSTALL=1` dans `.env`
+le fait à chaque démarrage du conteneur : en tâche de fond, sans retarder les pages, et sans rien faire
+si tout est déjà là.
+
+Ce qui est déjà présent n'est jamais retouché — y compris les environnements livrés avec le moteur : un
+pack qui demande `symfony-8` utilise celui du moteur, aucun dépôt n'est cloné. Rien ne s'installe non
+plus pendant la visite d'un apprenant : seuls la commande, le bouton et le démarrage déclenchent une
+installation.
+
 ## Réglages
 
 Tout se règle dans `.env`, commenté ligne à ligne. Après chaque modification :
@@ -223,7 +251,7 @@ docker compose up -d
 | Audience | `ANALYTICS_*` | Facultative, éteinte par défaut : voir [Savoir qui visite le site](#savoir-qui-visite-le-site). |
 | Mentor et IA | `ANTHROPIC_API_KEY`, `AI_MODEL` | Revue de code et erreurs expliquées pour les apprenants connectés, brouillons dans l'atelier. Chaque appel est facturé sur votre clé ; sans clé, les boutons n'apparaissent pas. |
 | Vente | `STRIPE_*`, `LEGAL_MEDIATOR_*`, `LEGAL_REFUND_DAYS` | Facultatif : **une instance sans tarif reste entièrement gratuite** pour les comptes. Détails dans le [README](../README.md#parcours-payants). |
-| Environnements | `INSTALLED_ENVIRONMENTS_DIR`, `ENVIRONMENT_SOURCES_ALLOWLIST` | Installer un environnement d'exécution depuis un dépôt Git. **Exécute le code du dépôt sur ce serveur** : voir [Ajouter un environnement d'exécution](#ajouter-un-environnement-dexécution). |
+| Environnements | `INSTALLED_ENVIRONMENTS_DIR`, `ENVIRONMENT_SOURCES_ALLOWLIST`, `ENVIRONMENTS_AUTO_INSTALL` | Installer un environnement d'exécution depuis un dépôt Git. **Exécute le code du dépôt sur ce serveur** : voir [Ajouter un environnement d'exécution](#ajouter-un-environnement-dexécution). |
 | Marque | `BRANDING_HOST_DIR`, `COHORT_*` | Votre nom, vos couleurs, vos images, vos tarifs de cohorte : voir [Votre marque](#votre-marque). |
 | Image | `APP_IMAGE` | Voir [Mettre à jour](#mettre-à-jour). |
 
