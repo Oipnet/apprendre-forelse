@@ -44,11 +44,47 @@ title: Symfony 8.1 — Twig, PHPUnit
 php: '8.4'          # obligatoire, sauf pour un environnement sans PHP (Nuxt)
 framework: symfony  # symfony (défaut), laravel, docker, nuxt
 cache: [var/cache]  # facultatif : les caches à vider entre deux runs, si ceux du framework ne conviennent pas
+extends: <id>       # facultatif : prolonge un autre environnement (voir « Fusionner »)
 ```
 
 `framework:` choisit le **runtime**, c'est-à-dire ce que le moteur sait faire tourner : la console du
 projet, l'organisation de ses dossiers, ses caches, son lanceur de tests. Chaque runtime est déclaré
 côté moteur (`platform/src/Content/Framework/Profiles/`) ; un environnement ne fait que le désigner.
+
+## Fusionner : `extends:`
+
+Un environnement peut en **prolonger** un autre. Il ne contient alors que ce qu'il ajoute ou remplace, et
+le projet joué est la superposition de la chaîne, **du plus général au plus particulier** :
+
+```yaml
+# symfony-8-app/environment.yaml
+id: symfony-8-app
+extends: symfony-8
+title: Symfony 8.1 — Twig, Doctrine (SQLite), Form, Validator, Security…
+```
+
+`symfony-8-app` pesait 45 fichiers, dont 19 copies à l'octet près de `symfony-8` ; il en porte 26, et
+plus une seule copie. `symfony-8-doctrine` est passé de 33 à 14.
+
+Les règles, toutes vérifiables dans `EnvironmentAssemblerTest` :
+
+- **les fichiers se superposent** — à chemin égal, celui du plus particulier l'emporte, quelles que
+  soient les dates (un dépôt fraîchement cloné a des dates toutes voisines : s'y fier serait un tirage
+  au sort) ;
+- **les clés d'`environment.yaml` s'héritent** (`php`, `framework`, `cache`), sauf `title`, qu'un
+  environnement ne partage avec personne ;
+- **`vendor/` ne se superpose pas** : il vient du seul dossier de la chaîne qui déclare un
+  `composer.json`, le plus particulier. Un environnement qui n'ajoute aucune dépendance hérite donc du
+  `vendor/` de sa base et n'a ni `composer.json` ni `composer.lock` à porter ;
+- **une chaîne qui tourne en rond** ou une base introuvable arrêtent le chargement avec un message qui
+  nomme le coupable.
+
+Ce qu'un `composer.json` ne fait **pas**, c'est fusionner : un verrou est le résultat d'une résolution,
+pas une addition. Un environnement qui ajoute des paquets déclare son `composer.json` et son
+`composer.lock` complets, comme avant.
+
+C'est le mécanisme qui rendra un décor de pack abordable : « le Symfony complet, plus mes trois
+entités » se dira en quelques fichiers au lieu d'une copie de tout un squelette.
 
 ## Les deux portes du moteur
 

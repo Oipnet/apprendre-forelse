@@ -76,6 +76,20 @@ tel quel.
   fournit pour exécuter un projet, pas des projets. `environments/docker` dépend du premier comme d'une
   bibliothèque, ce qui deviendra une contrainte de version le jour de l'extraction.
 
+- **Fusionner des environnements** : `extends:` dans `environment.yaml`. Un environnement en prolonge un
+  autre et ne porte plus que sa différence — le projet joué est la superposition de la chaîne, du plus
+  général au plus particulier. `symfony-8-app` passe de 45 fichiers à 26, `symfony-8-doctrine` de 33 à
+  14, sans qu'un seul octet du projet servi à l'apprenant ne change.
+
+  Les clés d'`environment.yaml` s'héritent (`php`, `framework`, `cache`), sauf `title`. `vendor/`, lui,
+  ne se superpose pas : il vient du seul dossier de la chaîne qui déclare un `composer.json`, sinon les
+  paquets qu'un enfant a retirés traîneraient dans le projet. Un environnement qui n'ajoute aucune
+  dépendance n'a donc ni `composer.json` ni `composer.lock` à porter. Une chaîne qui tourne en rond ou
+  une base introuvable arrêtent le chargement en nommant le coupable.
+
+  C'est le mécanisme qui rendra un décor de pack abordable : « le Symfony complet, plus mes trois
+  entités » se dira en quelques fichiers au lieu d'une copie de squelette.
+
 ### Modifié
 
 - Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement

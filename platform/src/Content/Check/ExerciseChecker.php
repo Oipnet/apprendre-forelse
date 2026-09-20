@@ -4,6 +4,7 @@ namespace App\Content\Check;
 
 use App\Content\ContentRepository;
 use App\Content\Environment;
+use App\Content\EnvironmentAssembler;
 use App\Content\EnvironmentRegistry;
 use App\Content\Framework\FrameworkProfile;
 use App\Content\Exercise;
@@ -13,7 +14,6 @@ use Composer\Semver\VersionParser;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 use Symfony\Component\Process\Exception\ProcessSignaledException;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
@@ -45,6 +45,8 @@ final class ExerciseChecker
         /** Dossier de la plateforme : son .env déclare les variables à cacher au projet testé. */
         #[Autowire('%kernel.project_dir%')]
         private readonly string $platformDir = __DIR__.'/../../..',
+        /** Reconstitue le projet : la chaîne d'environnements superposée (voir EnvironmentAssembler). */
+        private readonly EnvironmentAssembler $assembler = new EnvironmentAssembler(),
     ) {
         $this->filesystem = new Filesystem();
     }
@@ -62,7 +64,7 @@ final class ExerciseChecker
         $this->cacheDirs = $environment->cacheDirs;
         $this->framework = $environment->framework;
 
-        $this->checkStructure($exercise, $starting, $tests, $solution, $environment->directory, $result);
+        $this->checkStructure($exercise, $starting, $tests, $solution, $environment, $result);
         $this->checkPracticeVersion($exercise, $environment, $result);
         $this->checkCompletion($starting, $tests, $solution, $environment, $result);
         if (!$result->isOk()) {
@@ -79,7 +81,7 @@ final class ExerciseChecker
 
                 return $result;
             }
-        } elseif (!is_file($environment->directory.'/vendor/autoload.php')) {
+        } elseif (null === $environment->file('vendor/autoload.php')) {
             $result->error(sprintf('Environnement « %s » sans vendor/ : lancez environments/bin/build-env.sh %s.', $environment->id, $environment->id));
 
             return $result;
@@ -87,7 +89,7 @@ final class ExerciseChecker
 
         $workdir = sys_get_temp_dir().'/content-check-'.bin2hex(random_bytes(6));
         try {
-            $this->filesystem->mirror($environment->directory, $workdir, (new Finder())->in($environment->directory)->ignoreDotFiles(false)->exclude(['var', '.phpunit.cache', 'node_modules', '.nuxt', '.output']));
+            $this->assembler->assemble($environment, $workdir);
             $this->write($workdir, [...$starting, ...$tests]);
 
             $before = $this->grade($exercise, $workdir);
@@ -148,7 +150,7 @@ final class ExerciseChecker
 
             return;
         }
-        $lock = json_decode((string) @file_get_contents($environment->directory.'/composer.lock'), true);
+        $lock = json_decode((string) @file_get_contents((string) $environment->file('composer.lock')), true);
         $installed = null;
         foreach ($lock['packages'] ?? [] as $candidate) {
             if (($candidate['name'] ?? null) === $package) {
@@ -172,7 +174,7 @@ final class ExerciseChecker
      * @param array<string, string> $tests
      * @param array<string, string> $solution
      */
-    private function checkStructure(Exercise $exercise, array $starting, array $tests, array $solution, string $environmentDir, CheckResult $result): void
+    private function checkStructure(Exercise $exercise, array $starting, array $tests, array $solution, Environment $environment, CheckResult $result): void
     {
         if (!$tests && !$exercise->ownTests()) {
             $result->error('Aucun test dans tests/.');
@@ -193,7 +195,7 @@ final class ExerciseChecker
         }
         // Un motif (migrations/*.php) désigne des fichiers qui n'existent pas encore : rien à vérifier.
         foreach ([...$exercise->editablePaths(), ...$exercise->readonly] as $path) {
-            if (!isset($starting[$path]) && !is_file($environmentDir.'/'.$path)) {
+            if (!isset($starting[$path]) && null === $environment->file($path)) {
                 $result->error(sprintf('Fichier « %s » introuvable (ni dans starter/, ni dans une base, ni dans l\'environnement).', $path));
             }
         }
@@ -203,7 +205,8 @@ final class ExerciseChecker
         }
         foreach ($exercise->mutants as $mutant) {
             foreach ($mutant->changes as $change) {
-                $code = $solution[$change['file']] ?? $starting[$change['file']] ?? (is_file($environmentDir.'/'.$change['file']) ? (string) file_get_contents($environmentDir.'/'.$change['file']) : null);
+                $depuisLEnvironnement = $environment->file($change['file']);
+                $code = $solution[$change['file']] ?? $starting[$change['file']] ?? (null === $depuisLEnvironnement ? null : (string) file_get_contents($depuisLEnvironnement));
                 if (null === $code || !str_contains($code, $change['search'])) {
                     $result->error(sprintf('Mutant « %s » : texte à remplacer introuvable dans %s (%s).', $mutant->id, $change['file'], $change['search']));
                 }

@@ -188,9 +188,11 @@ final class ExerciseDrafter
     private function outilsDeTest(string $environnement): string
     {
         $outils = [];
-        $dossier = $this->environments->get($environnement)->directory.'/tests/Formation';
-        foreach (glob($dossier.'/*.php') ?: [] as $fichier) {
-            $outils['tests/Formation/'.basename($fichier)] = (string) file_get_contents($fichier);
+        // Superposés le long de la chaîne d'environnements : un enfant peut en ajouter ou en remplacer.
+        foreach ($this->environments->get($environnement)->filesIn('tests/Formation') as $nom => $fichier) {
+            if (str_ends_with($nom, '.php')) {
+                $outils['tests/Formation/'.$nom] = (string) file_get_contents($fichier);
+            }
         }
 
         return $outils ? "Outils de test fournis par l'environnement, utilisables dans tests/ :\n\n".$this->enFichiers($outils) : '';
