@@ -2,6 +2,7 @@
 
 > Analyse d'architecture — état des lieux au moteur **1.4.0**, dépôt de contenu au commit `c81ca9a`.
 > Ce document ne change aucun code : il pose le diagnostic, la frontière visée et un chemin de migration.
+> Suite — objectif marque blanche et extraction des plateformes : [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md).
 
 ## 1. Le problème, en une phrase
 
