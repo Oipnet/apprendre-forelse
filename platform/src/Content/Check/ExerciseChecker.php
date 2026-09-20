@@ -9,6 +9,7 @@ use App\Content\EnvironmentRegistry;
 use App\Content\Framework\FrameworkProfile;
 use App\Content\Exercise;
 use App\Content\Objective;
+use App\Instance\EnvironmentArtifacts;
 use Composer\Semver\Comparator;
 use Composer\Semver\VersionParser;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -47,6 +48,8 @@ final class ExerciseChecker
         private readonly string $platformDir = __DIR__.'/../../..',
         /** Reconstitue le projet : la chaîne d'environnements superposée (voir EnvironmentAssembler). */
         private readonly EnvironmentAssembler $assembler = new EnvironmentAssembler(),
+        /** Où vivent les archives et les index : le public/ du moteur, ou les environnements installés. */
+        private readonly ?EnvironmentArtifacts $artifacts = null,
     ) {
         $this->filesystem = new Filesystem();
     }
@@ -231,7 +234,8 @@ final class ExerciseChecker
      */
     private function checkCompletion(array $starting, array $tests, array $solution, Environment $environment, CheckResult $result): void
     {
-        $indexPath = $this->platformDir.'/public/'.$environment->completionIndexPath();
+        $indexPath = $this->artifacts?->path(basename($environment->completionIndexPath()))
+            ?? $this->platformDir.'/public/'.$environment->completionIndexPath();
         if (!is_file($indexPath)) {
             $result->warning(sprintf('Index de complétion absent (%s) : les imports de la solution n\'ont pas été vérifiés. Lancez environments/bin/build-env.sh %s.', $environment->completionIndexPath(), $environment->id));
 

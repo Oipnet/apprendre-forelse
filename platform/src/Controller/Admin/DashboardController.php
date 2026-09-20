@@ -65,6 +65,8 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(TrackPricingCrudController::class, 'Tarifs', 'fa fa-tag');
         yield MenuItem::linkTo(PurchaseCrudController::class, 'Achats', 'fa fa-receipt');
         yield MenuItem::linkTo(TrackAccessCrudController::class, 'Accès', 'fa fa-key');
+        yield MenuItem::section('Instance');
+        yield MenuItem::linkToRoute('Environnements', 'fa fa-cubes', 'admin_environments');
         yield MenuItem::section('Lancement');
         yield MenuItem::linkTo(TrackSeoCrudController::class, 'Référencement', 'fa fa-magnifying-glass');
         yield MenuItem::linkTo(WaitlistEntryCrudController::class, 'Liste d\'attente', 'fa fa-envelope');

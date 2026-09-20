@@ -91,11 +91,32 @@ entités » se dira en quelques fichiers au lieu d'une copie de tout un squelett
 C'est tout ce qui lie ce dossier au reste, et c'est ce qui rendra l'extraction simple :
 
 1. **`ENVIRONMENTS_DIR`** — le moteur lit les `environment.yaml` de ce dossier
-   (`App\Content\EnvironmentRegistry`). Une instance peut le faire pointer ailleurs.
+   (`App\Content\EnvironmentRegistry`). C'est une **liste** de dossiers séparés par des virgules, lue
+   dans l'ordre : ceux du moteur, puis ceux de l'instance. Une instance peut la faire pointer ailleurs,
+   ou n'en garder aucun.
 2. **`bin/build-env.sh`** — appelé par le `Makefile`, par le `Dockerfile`, par l'intégration continue du
-   moteur, et par celle du dépôt de contenu (qui vérifie ses packs contre de vrais environnements).
+   moteur, par celle du dépôt de contenu (qui vérifie ses packs contre de vrais environnements), et par
+   l'administration du moteur quand elle installe un environnement depuis un dépôt Git. Le script cherche
+   ses environnements dans `ENVIRONMENTS_PATH` (même format, défaut : ce dossier) et écrit où on lui dit.
 
 Rien d'autre : pas d'`include` du code du moteur, pas de classe partagée.
+
+### Un environnement peut déjà vivre dans son propre dépôt
+
+C'est la porte que ce dossier empruntera. Un administrateur colle une adresse `https://` dans
+`/admin` → **Environnements** (ou lance `bin/console app:environnement:installer <adresse>`) : le moteur
+clone, lit l'`id:` de l'`environment.yaml` pour nommer l'environnement, dépose le dossier dans
+`INSTALLED_ENVIRONMENTS_DIR` — qui fait partie d'`ENVIRONMENTS_DIR` — puis appelle `bin/build-env.sh`.
+Rien de particulier n'est demandé au dépôt : un `environment.yaml` à sa racine, et le format décrit
+plus haut. `extends:` traverse les dossiers, donc un environnement installé peut prolonger `symfony-8`
+sans emporter de `vendor/`.
+
+Ses archives ne vont pas dans `public/` : elles sont servies depuis le dossier des installations par
+`/envs/<id>.zip`, la même URL que pour un environnement du moteur.
+
+Ce que cela coûte : empaqueter exécute `composer install`, donc le code du dépôt, sur le serveur. La page
+est réservée aux administrateurs, seules les adresses `https://` sont acceptées, et
+`ENVIRONMENT_SOURCES_ALLOWLIST` limite les hôtes.
 
 ## Ce qui n'est pas ici, et pourquoi
 
@@ -114,8 +135,10 @@ Rien d'autre : pas d'`include` du code du moteur, pas de classe partagée.
 
 Ce dossier devient la racine d'un dépôt. Il faudra alors :
 
-- publier les archives construites quelque part que le moteur sache lire (un volume monté à côté des
-  packs, comme `/packs` et `/marque` — voir `ANALYSE-DECOUPLAGE.md`, chantier C) ;
+- ~~publier les archives construites quelque part que le moteur sache lire~~ — **fait** : un dépôt
+  d'environnements s'installe déjà dans `INSTALLED_ENVIRONMENTS_DIR`, archives comprises (voir plus
+  haut). Restera à décider si le moteur continue d'en livrer par défaut, ou si une instance neuve part
+  sans aucun environnement et les installe tous ;
 - remplacer le dépôt Composer `path` de `environments/docker` par une contrainte de version sur
   `forelse/simulateur-docker` ;
 - reprendre, dans le nouveau dépôt, le job d'intégration continue qui construit et met en cache les

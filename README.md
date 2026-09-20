@@ -267,6 +267,39 @@ une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
 Ce qui reste du moteur dans tous les cas : le pied de page dit la version et la licence AGPL du moteur,
 comme l'exige la licence.
 
+## Ajouter un environnement depuis un dépôt Git
+
+Un environnement d'exécution n'a pas à vivre dans ce dépôt. `/admin` → **Environnements** en installe un
+depuis une adresse `https://` : le moteur clone, vérifie, puis empaquette (archive du projet, index de
+complétion) sans reconstruire l'image. C'est le pendant, pour les runtimes, de ce que `CONTENT_PACKS_PATHS`
+fait pour le contenu et `BRANDING_DIR` pour l'habillage.
+
+> ⚠️ **Empaqueter exécute le code du dépôt sur ce serveur** (`composer install`, ses scripts et ses
+> greffons). Même confiance que pour un pack passé à `content:check`. La page est réservée aux
+> administrateurs, `ENVIRONMENT_SOURCES_ALLOWLIST` restreint les hôtes acceptés, et une instance qui ne
+> veut pas de la fonctionnalité laisse `INSTALLED_ENVIRONMENTS_DIR` vide : la page reste, sans formulaire.
+
+- **Le dépôt se nomme lui-même** : l'identifiant vient de l'`id:` de son `environment.yaml`, pas de
+  l'adresse ni de l'administrateur. Un identifiant déjà porté par un environnement du moteur est refusé —
+  un environnement installé n'en masque jamais un autre.
+- `extends: symfony-8` fonctionne d'un dépôt à l'autre : un environnement installé peut prolonger un
+  environnement du moteur, et n'a alors ni `composer.json` ni `vendor/` à porter.
+- `ENVIRONMENTS_DIR` accepte **plusieurs** dossiers séparés par des virgules (ceux du moteur, puis ceux
+  de l'instance) ; `INSTALLED_ENVIRONMENTS_DIR` désigne celui, écrivable, où l'administration installe.
+- Les archives d'un environnement installé ne sont pas dans `public/` : elles sont servies par
+  `/envs/<id>.zip` depuis le dossier des installations. Les archives du moteur restent des fichiers
+  statiques sur la même URL.
+- Garde-fous : `https://` seulement (ni `file://`, ni `git@`, ni `git://`), clone superficiel, minuterie,
+  plafond de taille avant toute exécution, et jamais de shell — les commandes sont des tableaux
+  d'arguments.
+
+En ligne de commande : `bin/console app:environnement:installer <adresse> [--ref=<branche>]`, ou le même
+avec l'identifiant d'un environnement déjà installé pour le mettre à jour. C'est cette commande que la
+page lance en tâche de fond, parce qu'un `composer install` dure plus longtemps qu'une requête HTTP.
+
+Guide pas à pas dans
+[auto-hebergement/README.md](auto-hebergement/README.md#ajouter-un-environnement-dexécution).
+
 ## Sécurité
 
 - **Aperçu isolé** : le HTML/JS produit par l'apprenant s'affiche sur une origine distincte (`SANDBOX_ORIGIN`), sans cookie ni accès à la plateforme. Chaque origine ne sert que ses propres pages (`OriginIsolationListener`).

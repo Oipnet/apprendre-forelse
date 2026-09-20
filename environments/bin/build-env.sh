@@ -6,22 +6,44 @@
 #
 # La sortie se choisit par argument, par ENVIRONMENTS_OUT, ou retombe sur le public/ du moteur tant
 # que les deux vivent dans le même dépôt (voir environments/README.md).
+#
+# ENVIRONMENTS_PATH (dossiers séparés par des virgules) élargit la recherche : un environnement
+# installé ailleurs — par exemple cloné depuis un dépôt Git par l'administration — peut ainsi
+# prolonger un environnement livré avec le moteur. Même ordre et mêmes règles que côté PHP
+# (App\Content\EnvironmentRegistry).
 set -euo pipefail
 
 BIN="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$BIN/.." && pwd)"
 
+IFS=',' read -ra ROOTS <<< "${ENVIRONMENTS_PATH:-$ROOT}"
+
+# Le dossier d'un environnement, cherché dans l'ordre des racines.
+dossier_de() {
+    local id="$1" racine
+    for racine in "${ROOTS[@]}"; do
+        [ -f "$racine/$id/environment.yaml" ] && { echo "$racine/$id"; return 0; }
+    done
+    echo "Environnement introuvable : $id (cherché dans ${ROOTS[*]})" >&2
+    return 1
+}
+
 # Sans nom d'environnement : tous ceux qui déclarent un environment.yaml (bin/ n'en est donc pas un).
 if [ $# -eq 0 ]; then
-    for manifeste in "$ROOT"/*/environment.yaml; do
-        [ -e "$manifeste" ] || { echo "Aucun environnement dans $ROOT." >&2; exit 1; }
-        "$0" "$(basename "$(dirname "$manifeste")")"
+    trouve=0
+    for racine in "${ROOTS[@]}"; do
+        for manifeste in "$racine"/*/environment.yaml; do
+            [ -e "$manifeste" ] || continue
+            trouve=1
+            "$0" "$(basename "$(dirname "$manifeste")")"
+        done
     done
+    [ "$trouve" -eq 1 ] || { echo "Aucun environnement dans ${ROOTS[*]}." >&2; exit 1; }
     exit 0
 fi
 
 ENV_NAME="$1"
-ENV_DIR="$ROOT/$ENV_NAME"
+ENV_DIR="$(dossier_de "$ENV_NAME")"
 OUT_DIR="${2:-${ENVIRONMENTS_OUT:-$ROOT/../platform/public/envs}}"
 OUT="$OUT_DIR/$ENV_NAME.zip"
 
@@ -31,20 +53,20 @@ mkdir -p "$OUT_DIR"
 # La chaîne d'héritage, de la base la plus lointaine à cet environnement (voir « extends: » dans
 # environment.yaml). Un fichier du plus particulier l'emporte sur le même fichier du plus général.
 chaine() {
-    local id="$1" vus="${2:-}" parent
-    case " $vus " in *" $id "*) echo "« extends » tourne en ligne fermée : $vus $id" >&2; exit 1;; esac
-    [ -f "$ROOT/$id/environment.yaml" ] || { echo "Environnement introuvable : $ROOT/$id" >&2; exit 1; }
-    parent=$(sed -n 's/^extends:[[:space:]]*\([^[:space:]#]*\).*/\1/p' "$ROOT/$id/environment.yaml" | head -1)
+    local id="$1" vus="${2:-}" dossier parent
+    case " $vus " in *" $id "*) echo "« extends » tourne en rond : $vus $id" >&2; exit 1;; esac
+    dossier=$(dossier_de "$id")
+    parent=$(sed -n 's/^extends:[[:space:]]*\([^[:space:]#]*\).*/\1/p' "$dossier/environment.yaml" | head -1)
     [ -n "$parent" ] && chaine "$parent" "$vus $id"
-    echo "$id"
+    echo "$dossier"
 }
 mapfile -t CHAINE < <(chaine "$ENV_NAME")
 
 # Le dossier qui installe : le plus particulier de la chaîne qui déclare un composer.json. Un
 # environnement qui n'ajoute aucune dépendance hérite du vendor/ de sa base.
 INSTALL_DIR=""
-for id in "${CHAINE[@]}"; do
-    [ -f "$ROOT/$id/composer.json" ] && INSTALL_DIR="$ROOT/$id"
+for dossier in "${CHAINE[@]}"; do
+    [ -f "$dossier/composer.json" ] && INSTALL_DIR="$dossier"
 done
 
 # Environnement sans PHP (Nuxt, servi par le simulateur du navigateur) : ni Composer ni index de complétion PHP.
@@ -73,8 +95,8 @@ SOURCE="$ENV_DIR"
 if [ "${#CHAINE[@]}" -gt 1 ]; then
     SOURCE="$(mktemp -d)"
     trap 'rm -rf "$SOURCE"' EXIT
-    for id in "${CHAINE[@]}"; do
-        cp -a "$ROOT/$id/." "$SOURCE/"
+    for dossier in "${CHAINE[@]}"; do
+        cp -a "$dossier/." "$SOURCE/"
     done
     rm -rf "$SOURCE/vendor"
     [ -d "$INSTALL_DIR/vendor" ] && cp -a "$INSTALL_DIR/vendor" "$SOURCE/vendor"

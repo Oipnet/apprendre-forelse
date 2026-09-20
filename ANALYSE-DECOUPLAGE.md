@@ -243,10 +243,18 @@ Le contenu construit ses archives en CI et les dépose sur le serveur, exactemen
 `Environment::archivePath()` devient une URL résolue par le registre (`/envs/<pack>/<id>.zip`), horodatée
 comme aujourd'hui. Les en-têtes de cache de Caddy (`docker/Caddyfile:36`) couvrent déjà ce préfixe.
 
-**Alternative écartée** : construire les environnements des packs au démarrage du conteneur. Cela
+**Alternative écartée** : construire les environnements des packs **au démarrage du conteneur**. Cela
 demanderait Composer et le réseau en production, rallongerait le boot, et ferait exécuter du code de pack
 sur le serveur — ce que le README interdit déjà en substance (« `content:check` exécute le PHP des packs
 sur votre machine : ne l'utilisez qu'avec des packs de confiance »).
+
+**Ce qui a été fait à la place, et en quoi c'est différent** (voir le journal, « Installer un
+environnement depuis un dépôt Git ») : le moteur sait construire un environnement sur le serveur, mais
+seulement quand un **administrateur le demande**, dépôt par dépôt, en connaissance de cause. Les trois
+objections tombent : rien au boot, rien pour un environnement qu'on n'a pas installé, et l'exécution de
+code tiers est un acte administratif explicite — le même que `content:check`, dont le README dit déjà
+qu'il demande un pack de confiance. Ce qui reste écarté est bien l'automatisme : aucun pack ne fait
+construire quoi que ce soit du seul fait d'être monté.
 
 ### D. Complétion : l'environnement déclare ses espaces de noms
 
@@ -320,9 +328,9 @@ Aucune de ces trois-là ne touche au format d'exercice : elles peuvent partir av
 
 | # | Étape | Version | Casse ? |
 | --- | --- | --- | --- |
-| 1 | Chaîne de fournisseurs (A) + `ENVIRONMENTS_DIR` en CSV. Le moteur continue de livrer ses environnements. | 1.5.0 | non |
+| 1 | Chaîne de fournisseurs (A) + `ENVIRONMENTS_DIR` en CSV. Le moteur continue de livrer ses environnements. **CSV : fait.** La chaîne locale au pack reste à faire. | 1.5.0 | non |
 | 2 | `content:env-build` (B) ; le dépôt de contenu l'appelle au lieu de `tools/build-env.sh`. | 1.5.0 | non |
-| 3 | `ENV_ARTIFACTS_DIR` + service des archives de pack (C) ; repli sur `public/envs`. | 1.6.0 | non |
+| 3 | `ENV_ARTIFACTS_DIR` + service des archives de pack (C) ; repli sur `public/envs`. **Fait, sous une autre forme** : `/envs/<fichier>` sert aussi les archives des environnements installés, repli sur `public/envs` compris — reste à l'ouvrir aux archives livrées par un pack. | 1.6.0 | non |
 | 4 | `completion.namespaces` dans `environment.yaml` (D), la liste en dur devient le socle Symfony. | 1.6.0 | non |
 | 5 | **Déménagement** : `securite-boutique` → `houblon-noir/environments/securite-boutique`, fusionné avec `boutique-lacombe` (une seule source, l'archive téléchargeable en dérive). | 1.7.0 côté moteur, pack côté contenu | non (l'ancien id reste résolu, déprécié) |
 | 6 | ~~`FrameworkProfile` (E), table servie au playground.~~ **Fait** (voir le journal). | 1.8.0 | non |

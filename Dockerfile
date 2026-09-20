@@ -77,15 +77,19 @@ ENV APP_ENV=prod \
     APP_DEBUG=0 \
     APP_TIMEZONE=UTC \
     CONTENT_PACKS_PATHS=/packs \
-    ENVIRONMENTS_DIR=/app/environments \
+    ENVIRONMENTS_DIR=/app/environments,/environnements \
+    INSTALLED_ENVIRONMENTS_DIR=/environnements \
     BRANDING_DIR=/marque
 
 # Utilisateur non privilégié ; le binaire peut tout de même écouter sur 80/443.
-RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin && rm -rf /var/lib/apt/lists/* \
+# git et zip : l'administration installe un environnement depuis un dépôt et l'empaquette ici même
+# (voir README, « Ajouter un environnement depuis un dépôt Git »). util-linux fournit setsid, qui détache
+# l'installation de la requête HTTP qui la lance.
+RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin git zip util-linux && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 1000 --home /app formation \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
-    && mkdir -p /data/app /config /packs /marque /app/platform/var \
-    && chown -R formation:formation /data /config /app/platform/var
+    && mkdir -p /data/app /config /packs /marque /environnements /app/platform/var \
+    && chown -R formation:formation /data /config /environnements /app/platform/var
 USER formation
 
 VOLUME ["/data"]

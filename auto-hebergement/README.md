@@ -159,6 +159,50 @@ gabarits sont compilés une fois : après en avoir déposé un, `docker compose 
 Ce qui reste du moteur dans tous les cas : le pied de page indique sa version et sa licence AGPL, comme
 la licence l'exige.
 
+## Ajouter un environnement d'exécution
+
+Un **environnement** est le projet de base qu'un exercice ouvre dans le navigateur : un Symfony 8 nu, un
+Symfony avec Doctrine, un Laravel. Le moteur en livre plusieurs ; un pack de contenu peut avoir besoin du
+sien — « le Symfony complet, plus mes trois entités ». `/admin` → **Environnements** l'installe depuis un
+dépôt Git, sans reconstruire l'image.
+
+> ⚠️ **Empaqueter un environnement exécute le code du dépôt sur ce serveur** : le moteur y lance
+> `composer install`, qui exécute les scripts et les greffons déclarés par ce dépôt. C'est exactement la
+> même confiance que pour un pack de contenu passé à `content:check`. N'installez que des dépôts que vous
+> contrôlez ou dont vous connaissez l'auteur. `ENVIRONMENT_SOURCES_ALLOWLIST=github.com` limite les
+> adresses acceptées à un hôte ; videz `INSTALLED_ENVIRONMENTS_DIR` pour retirer la fonctionnalité — la
+> page reste, sans formulaire.
+
+Ce qu'il faut dans le dépôt : un `environment.yaml` à sa racine. C'est lui qui **nomme** l'environnement
+(`id:`), pas l'adresse ni l'administrateur, et cet identifiant est celui que les exercices désignent par
+`environment:`. Un environnement qui en prolonge un autre (`extends: symfony-8`) ne porte que sa
+différence, et n'a le plus souvent ni `composer.json` ni `vendor/` à installer. Le format est décrit dans
+[environments/README.md](../environments/README.md).
+
+Collez l'adresse `https://…` du dépôt, éventuellement une branche ou une étiquette, puis **Installer**.
+Le moteur clone, vérifie, puis empaquette (archive du projet et index de complétion) : comptez quelques
+minutes. La page ne vous fait pas attendre — rafraîchissez-la pour voir l'avancement, y compris après un
+redémarrage du conteneur. Un échec reste affiché avec la sortie de `git` ou de `composer`, jusqu'à ce que
+vous l'effaciez.
+
+Ensuite :
+
+- **Mettre à jour** rejoue l'installation depuis l'adresse enregistrée : c'est ainsi qu'on suit une
+  nouvelle version du dépôt.
+- **Retirer** supprime l'environnement et ses archives. Les exercices qui le désignaient ne se chargent
+  plus : retirez-les, ou réinstallez.
+- Un environnement installé ne peut **jamais** masquer un environnement du moteur : un identifiant déjà
+  pris est refusé, avec le nom à changer dans `environment.yaml`.
+- Le tout vit dans le volume `environnements`, à sauvegarder comme `data` (voir
+  [Sauvegarder et restaurer](#sauvegarder-et-restaurer)).
+
+En ligne de commande, sans passer par l'administration :
+
+```bash
+docker compose exec app bin/console app:environnement:installer https://github.com/…/mon-environnement.git
+docker compose exec app bin/console app:environnement:installer mon-environnement   # mise à jour
+```
+
 ## Réglages
 
 Tout se règle dans `.env`, commenté ligne à ligne. Après chaque modification :
@@ -179,6 +223,7 @@ docker compose up -d
 | Audience | `ANALYTICS_*` | Facultative, éteinte par défaut : voir [Savoir qui visite le site](#savoir-qui-visite-le-site). |
 | Mentor et IA | `ANTHROPIC_API_KEY`, `AI_MODEL` | Revue de code et erreurs expliquées pour les apprenants connectés, brouillons dans l'atelier. Chaque appel est facturé sur votre clé ; sans clé, les boutons n'apparaissent pas. |
 | Vente | `STRIPE_*`, `LEGAL_MEDIATOR_*`, `LEGAL_REFUND_DAYS` | Facultatif : **une instance sans tarif reste entièrement gratuite** pour les comptes. Détails dans le [README](../README.md#parcours-payants). |
+| Environnements | `INSTALLED_ENVIRONMENTS_DIR`, `ENVIRONMENT_SOURCES_ALLOWLIST` | Installer un environnement d'exécution depuis un dépôt Git. **Exécute le code du dépôt sur ce serveur** : voir [Ajouter un environnement d'exécution](#ajouter-un-environnement-dexécution). |
 | Marque | `BRANDING_HOST_DIR`, `COHORT_*` | Votre nom, vos couleurs, vos images, vos tarifs de cohorte : voir [Votre marque](#votre-marque). |
 | Image | `APP_IMAGE` | Voir [Mettre à jour](#mettre-à-jour). |
 
@@ -341,7 +386,9 @@ signale ; retéléchargez-le alors avec la commande `curl` de l'installation.
 
 Ce qui compte : **la base** (comptes, progression, achats) et, dans une moindre mesure, le volume `data`
 (secret de l'application, sessions, certificats). Vos packs et votre `.env` sont des fichiers ordinaires, à
-sauvegarder comme tels.
+sauvegarder comme tels. Le volume `environnements` se reconstitue en réinstallant depuis les dépôts —
+l'administration en garde l'adresse —, mais le sauvegarder évite un `composer install` par environnement
+le jour où vous restaurez.
 
 ```bash
 # Sauvegarde de la base

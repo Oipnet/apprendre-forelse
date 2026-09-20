@@ -35,6 +35,11 @@ services:
       # Identité de l'instance : nom, couleurs, images, gabarits (voir README, « Habiller son instance »).
       # /marque = le volume ci-dessous. Vide : la marque du moteur.
       BRANDING_DIR: ${BRANDING_DIR:-/marque}
+      # Environnements installés depuis un dépôt Git par l'administration (/admin → Environnements).
+      # Vide : la fonctionnalité est absente. Empaqueter exécute le code du dépôt sur ce serveur.
+      INSTALLED_ENVIRONMENTS_DIR: ${INSTALLED_ENVIRONMENTS_DIR:-/environnements}
+      # Hôtes acceptés pour ces dépôts, séparés par des virgules. Vide : tous les hôtes en https.
+      ENVIRONMENT_SOURCES_ALLOWLIST: ${ENVIRONMENT_SOURCES_ALLOWLIST:-}
       # Sans SMTP, les emails (mot de passe oublié) ne partent pas : à renseigner dans .env.
       MAILER_DSN: ${MAILER_DSN:-null://null}
       MAILER_FROM: ${MAILER_FROM:-Forelse <ne-pas-repondre@forelse.fr>}
@@ -73,6 +78,8 @@ services:
       - ${DOWNLOADS_HOST_DIR:-./downloads}:/downloads:ro
       # Identité de l'instance (marque.yaml, images, gabarits). Vide : la marque du moteur.
       - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
+      # Environnements installés depuis un dépôt Git, et leurs archives.
+      - environnements:/environnements
     ports:
       - "80:80"
       - "443:443"
@@ -141,5 +148,6 @@ services:
 
 volumes:
   data:
+  environnements:
   config:
   db:

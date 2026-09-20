@@ -6,6 +6,7 @@ use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
 use App\Content\TrackVisibility;
+use App\Instance\EnvironmentArtifacts;
 use App\Security\TrackAccessChecker;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -26,6 +27,7 @@ final readonly class ExercisePayloadFactory
         private UrlGeneratorInterface $urls,
         private ExerciseUrls $exerciseUrls,
         private TrackAccessChecker $access,
+        private EnvironmentArtifacts $artifacts,
         #[Autowire('%kernel.environment%')] private string $kernelEnvironment,
         #[Autowire('%kernel.project_dir%/public')] private string $publicDir = __DIR__.'/../../public',
     ) {
@@ -39,7 +41,9 @@ final readonly class ExercisePayloadFactory
         // Les archives et index des environnements gardent la même URL d'une version à l'autre, et le navigateur
         // les garde un jour en cache : leur date de construction les distingue.
         $versioned = function (string $path) use ($absolute): string {
-            $built = @filemtime($this->publicDir.'/'.$path);
+            // L'archive est soit dans public/envs, soit dans les environnements installés : sa date
+            // vient de là où elle est réellement, sinon une archive installée n'aurait pas de version.
+            $built = @filemtime($this->artifacts->path(basename($path)) ?? $this->publicDir.'/'.$path);
 
             return $absolute($path).(false === $built ? '' : '?v='.$built);
         };

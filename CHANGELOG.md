@@ -90,6 +90,32 @@ tel quel.
   C'est le mécanisme qui rendra un décor de pack abordable : « le Symfony complet, plus mes trois
   entités » se dira en quelques fichiers au lieu d'une copie de squelette.
 
+- **Installer un environnement depuis un dépôt Git**, depuis `/admin` → **Environnements** ou par
+  `bin/console app:environnement:installer <adresse> [--ref=<branche>]`. Un environnement d'exécution
+  n'a plus à vivre dans ce dépôt : le moteur clone, vérifie, empaquette (archive et index de complétion)
+  et le rend disponible aux exercices, sans reconstruire l'image. C'est, pour les runtimes, ce que
+  `CONTENT_PACKS_PATHS` est au contenu et `BRANDING_DIR` à l'habillage — et c'est la porte par laquelle
+  `environments/` pourra partir dans son propre dépôt.
+
+  **Le dépôt se nomme lui-même** : l'identifiant vient de l'`id:` de son `environment.yaml`, jamais de
+  l'adresse ni de l'administrateur, et un identifiant déjà porté par un environnement du moteur est
+  refusé — un environnement installé n'en masque aucun autre. `extends:` traverse les dépôts : un
+  environnement installé peut prolonger `symfony-8` sans emporter de `vendor/`.
+
+  L'installation dure des minutes : la page la lance en tâche de fond et rend la main. L'état vit sur
+  disque, donc un rafraîchissement suffit à voir où elle en est, même après un redémarrage du conteneur,
+  et un échec reste affiché avec la sortie de `git` ou de `composer` jusqu'à ce qu'on l'efface.
+  **Mettre à jour** rejoue l'installation depuis l'adresse enregistrée ; **Retirer** supprime
+  l'environnement et ses archives.
+
+  ⚠️ **Empaqueter exécute le code du dépôt sur ce serveur** (`composer install`, ses scripts et ses
+  greffons) : même confiance que pour un pack passé à `content:check`. La page est réservée aux
+  administrateurs ; seules les adresses `https://` sont acceptées (ni `file://`, ni `git@`, ni `git://`) ;
+  `ENVIRONMENT_SOURCES_ALLOWLIST` restreint les hôtes ; le clone est superficiel, minuté et plafonné en
+  taille avant toute exécution ; aucune commande ne passe par un shell. Une instance qui n'en veut pas
+  laisse `INSTALLED_ENVIRONMENTS_DIR` vide : la fonctionnalité est absente et la page le dit. Guide dans
+  [auto-hebergement/README.md](auto-hebergement/README.md#ajouter-un-environnement-dexécution).
+
 ### Modifié
 
 - Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement
@@ -105,6 +131,13 @@ tel quel.
   conventions de Symfony, en annonçant au modèle une « formation Symfony ».
 - L'environnement d'un exercice porte le profil de son framework et non plus son seul identifiant
   (`Environment::$framework`). Détail interne : le code du moteur n'est pas une API publique.
+- `ENVIRONMENTS_DIR` accepte désormais **plusieurs** dossiers séparés par des virgules, lus dans l'ordre,
+  comme `CONTENT_PACKS_PATHS` : ceux du moteur, puis ceux que l'instance installe. Un identifiant déclaré
+  deux fois arrête le chargement en nommant les deux dossiers, plutôt que d'en masquer un au hasard. Une
+  valeur unique continue de fonctionner telle quelle.
+- Les archives d'environnement (`<id>.zip`, `<id>.completion.json`) sont servies par `/envs/<fichier>`,
+  qui reste un fichier statique pour celles du moteur et passe par un contrôleur pour celles des
+  environnements installés — hors de l'arborescence publique. Les URL et la mise en cache ne changent pas.
 - Le halo derrière l'enseigne du fil rouge (`.lp-candle`, la bougie de la taverne) devient `.lp-sign-glow`
   et prend la seconde couleur de la marque au lieu d'un or codé en dur.
 
