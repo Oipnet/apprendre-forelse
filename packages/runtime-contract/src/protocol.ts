@@ -1,4 +1,4 @@
-import type { BootProgress, Runtime } from './Runtime';
+import type { BootProgress, Runtime } from './runtime';
 
 /** Méthodes exposées par le worker PHP : exactement celles du Runtime. */
 export type WorkerMethod = keyof Runtime;

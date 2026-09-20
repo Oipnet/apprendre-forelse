@@ -1,4 +1,4 @@
-import type { HttpRequest } from '../runtime/Runtime';
+import type { HttpRequest } from '@forelse/runtime-contract';
 
 /** Messages du relais (bac à sable) vers la plateforme. */
 export type RelayToHost =

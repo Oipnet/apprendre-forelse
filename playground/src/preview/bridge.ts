@@ -1,4 +1,4 @@
-import type { HttpRequest, HttpResponse, Runtime } from '../runtime/Runtime';
+import type { HttpRequest, HttpResponse, Runtime } from '@forelse/runtime-contract';
 import type { HostToRelay, RelayToHost } from './protocol';
 
 /**

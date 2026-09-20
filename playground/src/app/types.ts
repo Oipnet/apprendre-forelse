@@ -1,4 +1,4 @@
-import type { Grading } from '../runtime/Runtime';
+import type { FrameworkProfile, Grading } from '@forelse/runtime-contract';
 
 /** Exercice tel que servi par GET /api/exercises/{track}/{exercise} (ou /api/exercises/pratique/{exercise}). */
 export interface ExercisePayload {
@@ -58,44 +58,8 @@ export interface ExampleRequest {
 	body: string | null;
 }
 
-/** Les identifiants de framework que le playground sait exécuter : à chacun son runtime. */
-export type FrameworkId = 'symfony' | 'laravel' | 'docker' | 'nuxt';
-
-/**
- * Ce que le moteur déclare d'un framework, servi dans la charge utile de l'exercice : le playground ne
- * redéclare plus rien de son côté. Le code, lui (worker, snippets, script de console), reste ici.
- */
-export interface FrameworkProfile {
-	id: FrameworkId;
-	/** Nom affiché (« Symfony »). */
-	label: string;
-	/** La console du projet, telle qu'un développeur la tape (« bin/console »). */
-	console: string;
-	/** Commande d'exemple, en filigrane du champ de la console. */
-	consoleExample: string;
-	/** Ce qu'on explique à l'apprenant pendant le démarrage. */
-	bootNote: string;
-	/** Étape de démarrage : « Décompression du projet Symfony ». */
-	unpackLabel: string;
-	testRunner: 'phpunit' | 'vitest';
-	/**
-	 * Qui l'exécute dans le navigateur : « php-wasm », « nuxt-sim », ou un runtime ajouté.
-	 * Résolu par src/runtime/registry.ts — le playground ne connaît plus les frameworks par leur nom.
-	 */
-	runtime: string;
-	/** Familles d'extraits que l'éditeur propose (« php », « laravel », « docker »). */
-	snippets: string[];
-	/** Préfixes tolérés au début d'une commande => ce qui les remplace (chaîne vide : retiré). */
-	consoleAliases: Record<string, string>;
-	/** Dossiers du projet, visibles dans l'explorateur. */
-	projectDirs: string[];
-	/** Caches à vider entre deux runs de tests. */
-	testCaches: string[];
-	/** Dossiers masqués dans l'explorateur. */
-	hidden: string[];
-	/** Premier dossier d'un chemin => racine de namespace (« src » => « App »). */
-	namespaceRoots: Record<string, string>;
-}
+// Le profil du framework fait partie du contrat des runtimes : réexporté pour les appelants d'ici.
+export type { FrameworkId, FrameworkProfile } from '@forelse/runtime-contract';
 
 /** Configuration passée par la page Twig (attribut data-config). */
 export interface PlaygroundConfig {

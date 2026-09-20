@@ -7,7 +7,10 @@
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
-		"./node": "./src/node/index.ts"
+		"./node": "./src/node/index.ts",
+		"./browser": "./src/browser/forelse.ts",
+		"./vite": "./src/node/vite.ts",
+		"./package.json": "./package.json"
 	},
 	"scripts": {
 		"test": "vitest run tests/",
@@ -16,16 +19,19 @@
 		"demo": "node --experimental-transform-types demo/serveur.ts"
 	},
 	"dependencies": {
+		"@forelse/runtime-contract": "file:../../packages/runtime-contract",
 		"@unhead/vue": "3.4.1",
 		"@vitest/expect": "5.0.1",
 		"@vitest/spy": "5.0.1",
 		"@vue/test-utils": "2.4.6",
 		"acorn": "8.18.0",
+		"buffer": "6.0.3",
 		"chai": "^6.2.2",
 		"cookie-es": "1.2.3",
 		"cookie-es-nuxt": "npm:cookie-es@3.1.1",
 		"devalue": "5.9.2",
 		"es-module-lexer": "^2.3.2",
+		"fflate": "^0.8.3",
 		"fnv1a-64": "0.1.2",
 		"happy-dom": "20.14.5",
 		"hookable": "6.1.1",
@@ -46,5 +52,9 @@
 		"rolldown": "^1.2.9",
 		"typescript": "^7.0.2",
 		"vitest": "^5.0.1"
+	},
+	"forelse": {
+		"runtime": "./src/browser/forelse.ts",
+		"vite": "./src/node/vite.ts"
 	}
 }

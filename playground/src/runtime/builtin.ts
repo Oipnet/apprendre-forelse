@@ -1,12 +1,12 @@
-import { NuxtRuntime } from './NuxtRuntime';
+import discovered from 'virtual:forelse-runtimes';
+import phpWasm from './php-wasm';
 import { registerRuntime } from './registry';
-import { WasmRuntime } from './WasmRuntime';
 
 /**
- * Les runtimes livrés avec le moteur.
+ * Les runtimes disponibles : celui du moteur, et ceux qu'apportent les paquets installés.
  *
- * Importé une fois, au démarrage du playground. Un runtime ajouté s'enregistrerait de la même façon,
- * depuis son propre module.
+ * `virtual:forelse-runtimes` est construit au build à partir des dépendances qui déclarent un champ
+ * `forelse` (voir discover-runtimes.ts). Cette liste ne se modifie donc jamais : installer un paquet
+ * de runtime suffit.
  */
-registerRuntime({ id: 'php-wasm', label: 'PHP', create: () => new WasmRuntime() });
-registerRuntime({ id: 'nuxt-sim', label: 'le simulateur Nuxt', create: () => new NuxtRuntime() });
+for (const manifest of [phpWasm, ...discovered]) registerRuntime(manifest);

@@ -7,7 +7,11 @@
 # --- 1. Playground : build Vite (îlot JS, runtime WebAssembly) -------------------------
 FROM node:24-slim AS playground
 
-# Le worker Nuxt du playground importe le simulateur (tools/nuxt-sim) et ses dépendances.
+# Le contrat des runtimes : le playground et chaque paquet de runtime en dépendent (lien npm « file: »),
+# il doit donc être présent avant le moindre « npm ci ».
+COPY packages/runtime-contract /src/packages/runtime-contract
+
+# Le simulateur Nuxt est un paquet de runtime : le playground le découvre parmi ses dépendances.
 WORKDIR /src/tools/nuxt-sim
 COPY tools/nuxt-sim/package.json tools/nuxt-sim/package-lock.json ./
 RUN npm ci --no-audit --no-fund

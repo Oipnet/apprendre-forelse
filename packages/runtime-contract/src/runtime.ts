@@ -1,4 +1,4 @@
-import type { FrameworkProfile } from '../app/types.ts';
+import type { FrameworkProfile } from './framework';
 
 /**
  * Contrat d'exécution indépendant de la technologie : aujourd'hui php-wasm dans

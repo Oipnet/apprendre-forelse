@@ -128,16 +128,34 @@ tel quel.
   s'approprier un identifiant déjà pris : déclaré deux fois, le chargement s'arrête en nommant les deux
   dossiers.
 
-- **Ajouter un runtime** : le playground résout désormais le runtime par un **registre**
+- **Un runtime s'ajoute en installant un paquet**, sans modifier un fichier du moteur. Un paquet déclare
+  `{"forelse": {"runtime": "…", "vite": "…"}}` dans son `package.json` ; le playground parcourt ses
+  dépendances au build, trouve ceux qui portent ce champ et les enregistre seuls. Aucune liste à tenir
+  à jour, aucun `if` à rallonger. Le navigateur restant un bundle, il faut toujours **reconstruire** le
+  playground — mais plus rien à y modifier. C'est le niveau 3 de
+  [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md), côté navigateur ; côté serveur, l'étiquette de
+  service `app.framework` jouait déjà ce rôle.
+
+  Deux paquets naissent de là :
+
+  - **`@forelse/runtime-contract`** : ce qu'un runtime doit remplir et ce que le moteur lui fournit —
+    le `Runtime`, le protocole du worker, le profil du framework, le manifeste, et la plomberie
+    `WorkerRuntime` que les deux côtés partagent. Ni le moteur ni un runtime n'ont plus à connaître
+    l'autre.
+  - **`@forelse/simulateur-nuxt`** (l'ancien `tools/nuxt-sim`) porte désormais son runtime, son worker
+    et ses greffons Vite. `playground/vite.config.ts` ne nomme plus Nuxt nulle part, et les 192 fichiers
+    du simulateur ne sont plus une dépendance en chemin relatif du moteur. L'archive produite est
+    **identique au bit près** à celle d'avant l'extraction.
+
+  Le runtime PHP livré avec le moteur est écrit comme le serait un paquet tiers : même manifeste, même
+  enregistrement. `FrameworkId` cesse d'être une énumération fermée — un framework apporté par un tiers
+  n'a pas à figurer dans une liste du moteur.
+
+- **Un registre de runtimes** : le playground résout le runtime par une table
   (`playground/src/runtime/registry.ts`) au lieu d'un `'nuxt' === framework.id ? … : …`. Le profil du
   framework déclare `runtime` (`php-wasm`, `nuxt-sim`, ou un runtime ajouté) ; le navigateur le reçoit
   dans la charge utile et va chercher la fabrique correspondante. Un runtime s'enregistre en une ligne,
   depuis son propre module.
-
-  Ce qui ne changera pas : le navigateur est un bundle, donc ajouter un runtime demandera toujours de
-  reconstruire le playground — c'est le niveau 3 de
-  [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md). Ce qui change, c'est le nombre de fichiers du
-  moteur à toucher pour le faire.
 
   Le profil déclare aussi deux choses que le navigateur devinait : `snippets` (les familles d'extraits
   que l'éditeur propose — « php », « laravel », « docker ») et `consoleAliases` (les préfixes tolérés

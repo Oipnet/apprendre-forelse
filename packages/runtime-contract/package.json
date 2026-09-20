@@ -1,0 +1,12 @@
+{
+	"name": "@forelse/runtime-contract",
+	"version": "0.1.0",
+	"description": "Le contrat qu'un runtime de Forelse doit remplir : exécuter un projet dans le navigateur, répondre aux requêtes de l'aperçu, lancer les tests.",
+	"license": "AGPL-3.0-or-later",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./package.json": "./package.json"
+	}
+}

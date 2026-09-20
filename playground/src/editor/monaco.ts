@@ -12,7 +12,7 @@ import 'monaco-editor/languages/definitions/html/register';
 import 'monaco-editor/languages/definitions/javascript/register';
 import 'monaco-editor/languages/definitions/typescript/register';
 import editorWorkerUrl from 'monaco-editor/editor/editor.worker?worker&url';
-import { createModuleWorker } from '../util/worker';
+import { createModuleWorker } from '@forelse/runtime-contract';
 
 self.MonacoEnvironment = { getWorker: () => createModuleWorker(editorWorkerUrl, 'monaco') };
 

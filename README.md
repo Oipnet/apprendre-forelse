@@ -22,6 +22,8 @@ de Forelse ne sont pas dans ce dépôt ; une école ou une entreprise peut les u
 platform/         Application Symfony 8.1 : pages, comptes, progression, API, content:check
     src/Content/Framework/   Ce que le moteur sait de chaque framework (un profil par runtime)
 playground/       Îlot TypeScript : runtime PHP WebAssembly, éditeur Monaco, aperçu isolé
+packages/
+  runtime-contract/  Ce qu'un runtime doit remplir, et ce que le moteur lui fournit (types seuls)
 environments/     Projets de base dans lesquels s'exécutent les exercices, et de quoi les empaqueter
                   (bin/build-env.sh) — destiné à devenir son propre dépôt, voir environments/README.md
 tools/            Simulateurs Docker (docker-sim) et Nuxt (nuxt-sim), publication d'une version
@@ -208,19 +210,28 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
   étiquette de service. Rien d'autre, tant qu'il s'exécute avec un runtime existant — Laravel et le
   simulateur Docker tournent tous deux sur `php-wasm`, comme Symfony.
 
-  **Ajouter un runtime** — une autre façon d'exécuter un projet dans le navigateur — demande les deux
-  moitiés. Côté serveur, le profil déclare `runtime: 'mon-runtime'`. Côté navigateur, on enregistre une
-  fabrique dans `playground/src/runtime/registry.ts` :
+  **Ajouter un runtime** — une autre façon d'exécuter un projet dans le navigateur — se fait en
+  **installant un paquet**, sans modifier un fichier du moteur. Le paquet déclare dans son
+  `package.json` :
 
-  ```ts
-  registerRuntime({ id: 'mon-runtime', label: 'mon moteur', create: () => new MonRuntime() });
+  ```json
+  { "forelse": { "runtime": "./src/browser/forelse.ts", "vite": "./src/node/vite.ts" } }
   ```
 
-  Le playground résout alors le runtime par cette table, sans connaître un seul nom de framework. Ce qui
-  ne changera pas : **le navigateur est un bundle**, donc ajouter un runtime demandera toujours de
-  reconstruire le playground. C'est le niveau 3 de
-  [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md). Ce qui a changé, c'est le nombre de fichiers
-  du moteur à toucher pour le faire : une table, au lieu d'une dizaine de `if`.
+  `runtime` exporte le manifeste (identifiant, libellé, fabrique) ; `vite`, facultatif, ce que le
+  runtime demande au build — greffons, constantes, alias. Le playground parcourt ses dépendances au
+  build, trouve les paquets qui portent ce champ et les enregistre seuls (`discover-runtimes.ts`).
+  Aucune liste à tenir à jour. Côté serveur, le profil du framework déclare `runtime: 'mon-runtime'` et
+  arrive par l'étiquette de service `app.framework`.
+
+  Le simulateur Nuxt est le premier à passer par ce chemin : `@forelse/simulateur-nuxt` porte son
+  runtime, son worker et ses greffons Vite, et `playground/vite.config.ts` ne nomme plus Nuxt nulle
+  part. Les types que les deux côtés partagent vivent dans `@forelse/runtime-contract`.
+
+  Ce qui ne changera pas : **le navigateur est un bundle**, donc ajouter un runtime demandera toujours
+  de reconstruire le playground. C'est le niveau 3 de
+  [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md). Ce qui a changé, c'est qu'il n'y a plus rien
+  à y modifier.
 
   Le profil déclare aussi ce que le navigateur devinait auparavant : `snippets` (les familles d'extraits
   que l'éditeur propose) et `consoleAliases` (les préfixes tolérés — `php bin/console …`,

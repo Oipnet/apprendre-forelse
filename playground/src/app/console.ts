@@ -1,4 +1,4 @@
-import type { CommandResult, Runtime } from '../runtime/Runtime';
+import type { CommandResult, Runtime } from '@forelse/runtime-contract';
 
 /**
  * Découpe une ligne de commande en arguments (guillemets simples ou doubles respectés).

@@ -1,14 +1,14 @@
 /**
  * Worker Nuxt : le « serveur » de l'aperçu pour les parcours Nuxt. Il tient les fichiers du projet et
- * répond aux requêtes de l'aperçu avec le simulateur (tools/nuxt-sim) : pages rendues côté serveur,
+ * répond aux requêtes de l'aperçu avec le simulateur : pages rendues côté serveur,
  * modules qui les hydratent dans l'iframe, routes de server/ ; et lance les tests Vitest de l'exercice.
  */
 import { unzipSync } from 'fflate';
 import clientBundle from 'virtual:nuxt-sim-client';
 import { prepareHappyDom } from './happy-dom-node';
-import { NuxtSimulator } from '../../../tools/nuxt-sim/src/index.ts';
-import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from './Runtime';
-import type { WorkerCall, WorkerMessage } from './protocol';
+import { NuxtSimulator } from '../index.ts';
+import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
+import type { WorkerCall, WorkerMessage } from '@forelse/runtime-contract';
 
 let simulator: NuxtSimulator | undefined;
 

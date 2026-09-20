@@ -3,6 +3,7 @@
 
 # Playground (îlot JS)
 playground/node_modules/
+packages/*/node_modules/
 
 # Artefacts générés par environments/bin/build-env.sh
 platform/public/envs/

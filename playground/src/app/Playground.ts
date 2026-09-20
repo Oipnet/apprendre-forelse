@@ -3,7 +3,7 @@ import { marked } from 'marked';
 import { registerCompletion, type CompletionIndex } from '../editor/completion';
 import { EditorPanel, monaco } from '../editor/monaco';
 import { PreviewBridge } from '../preview/bridge';
-import type { CommandResult, TestRunResult } from '../runtime/Runtime';
+import type { CommandResult, TestRunResult } from '@forelse/runtime-contract';
 import '../runtime/builtin';
 import { createRuntime, runtimeLabel } from '../runtime/registry';
 import { ConsolePanel } from './console';

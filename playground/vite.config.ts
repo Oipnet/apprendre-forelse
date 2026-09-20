@@ -1,9 +1,7 @@
-import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import symfonyPlugin from 'vite-plugin-symfony';
-import { buildClientBundle } from '../tools/nuxt-sim/src/node/client-bundle.ts';
-import { buildTestRuntimeBundle } from '../tools/nuxt-sim/src/node/test-runtime-bundle.ts';
+import { discoverRuntimes, runtimesVirtualModule } from './discover-runtimes.ts';
 
 /**
  * Les paquets @php-wasm importent leurs binaires (`import url from './php.wasm'`)
@@ -17,48 +15,6 @@ function phpWasmAssets(): Plugin {
 			if (!/\.(wasm|so|dat)$/.test(source) || !importer?.includes('@php-wasm')) return null;
 			const resolved = await this.resolve(`${source}?url`, importer, { skipSelf: true });
 			return resolved?.id ?? null;
-		},
-	};
-}
-
-/**
- * Module navigateur du simulateur Nuxt (Vue, vue-router et runtime de Nuxt en un fichier), que le worker
- * Nuxt sert à l'aperçu pour hydrater les pages : construit par rolldown, livré au worker comme une chaîne.
- */
-const nuxtSimRuntime = fileURLToPath(new URL('../tools/nuxt-sim/src/app/runtime', import.meta.url));
-const nuxtSimTesting = fileURLToPath(new URL('../tools/nuxt-sim/src/testing', import.meta.url));
-
-function nuxtSimClient(): Plugin {
-	const id = 'virtual:nuxt-sim-client';
-	return {
-		name: 'nuxt-sim-client',
-		resolveId: (source) => (source === id ? `\0${id}` : null),
-		async load(resolved) {
-			if (resolved !== `\0${id}`) return null;
-			// Sans cela, le serveur de dev garderait le module construit au démarrage après une modification du runtime.
-			for (const file of readdirSync(nuxtSimRuntime, { recursive: true, encoding: 'utf8' })) {
-				if (file.endsWith('.ts')) this.addWatchFile(`${nuxtSimRuntime}/${file}`);
-			}
-			return `export default ${JSON.stringify(await buildClientBundle())};`;
-		},
-	};
-}
-
-/**
- * Runtime de l'environnement de test `nuxt` (Vue, vue-router, Nuxt et @vue/test-utils), évalué à neuf pour
- * chaque fichier de test qui monte des composants : livré au worker comme une chaîne, chargée à la demande.
- */
-function nuxtSimTestRuntime(): Plugin {
-	const id = 'virtual:nuxt-sim-test-runtime';
-	return {
-		name: 'nuxt-sim-test-runtime',
-		resolveId: (source) => (source === id ? `\0${id}` : null),
-		async load(resolved) {
-			if (resolved !== `\0${id}`) return null;
-			for (const file of readdirSync(nuxtSimTesting, { recursive: true, encoding: 'utf8' })) {
-				if (file.endsWith('.ts')) this.addWatchFile(`${nuxtSimTesting}/${file}`);
-			}
-			return `export default ${JSON.stringify(await buildTestRuntimeBundle())};`;
 		},
 	};
 }
@@ -88,33 +44,42 @@ const unusedPhpVersions = {
 	replacement: fileURLToPath(new URL('./stubs/php-wasm-unused/index.js', import.meta.url)),
 };
 
+/**
+ * Les runtimes installés, et ce qu'ils demandent au build.
+ *
+ * Le moteur ne nomme aucun d'eux : il lit ses dépendances, et chaque paquet dit lui-même de quoi il a
+ * besoin (greffons, constantes, alias). Ajouter un runtime, c'est `npm install` puis reconstruire.
+ */
+const runtimes = await discoverRuntimes();
+const runtimePlugins = () => runtimes.flatMap((r) => (r.build?.plugins?.() ?? []) as Plugin[]);
+const runtimeDefine = Object.assign({}, ...runtimes.map((r) => r.build?.define ?? {})) as Record<string, string>;
+const runtimeAlias = runtimes.flatMap((r) => r.build?.alias ?? []);
+
 export default defineConfig({
 	// Le build est servi par Symfony (platform/public/build), via pentatrion/vite-bundle.
 	base: '/build/',
 	publicDir: false,
-	// nuxtSimClient ici aussi : en dev, Vite transforme les modules des workers avec les plugins principaux.
-	plugins: [phpWasmAssets(), nuxtSimClient(), nuxtSimTestRuntime(), symfonyPlugin({ servePublic: false })],
-	resolve: { alias: [unusedPhpVersions, ...nodeShims] },
-	// Drapeaux de compilation de Vue, que le simulateur Nuxt embarque dans son worker (rendu serveur).
-	define: {
-		__VUE_OPTIONS_API__: 'true',
-		__VUE_PROD_DEVTOOLS__: 'false',
-		__VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
-	},
+	// Les greffons des runtimes ici aussi : en dev, Vite transforme les modules des workers avec les
+	// plugins principaux.
+	plugins: [phpWasmAssets(), runtimesVirtualModule(runtimes), ...runtimePlugins(), symfonyPlugin({ servePublic: false })],
+	resolve: { alias: [unusedPhpVersions, ...nodeShims, ...runtimeAlias] },
+	define: runtimeDefine,
 	server: {
 		port: 5173,
 		strictPort: true,
 		cors: true, // les pages Symfony (autre origine) chargent les modules en dev
-		// Le worker Nuxt importe le simulateur depuis tools/nuxt-sim, hors du dossier du playground.
+		// Les paquets de runtime vivent hors du dossier du playground (liens npm vers ../tools, ../packages).
 		fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] },
 	},
 	optimizeDeps: {
 		// Le pré-bundling casse les imports relatifs des binaires php-wasm…
-		exclude: ['@php-wasm/web', '@php-wasm/universal', '@php-wasm/web-8-4'],
+		// …et, pour un paquet de runtime, la directive `?worker` de son worker : Vite l'empaquetterait
+		// comme une dépendance ordinaire, et le worker ne serait jamais émis.
+		exclude: ['@php-wasm/web', '@php-wasm/universal', '@php-wasm/web-8-4', ...runtimes.map((r) => r.name)],
 		// …mais leurs dépendances CommonJS doivent, elles, être converties en ESM.
 		include: ['@php-wasm/universal > ini'],
 	},
-	worker: { format: 'es', plugins: () => [phpWasmAssets(), nuxtSimClient(), nuxtSimTestRuntime()] },
+	worker: { format: 'es', plugins: () => [phpWasmAssets(), runtimesVirtualModule(runtimes), ...runtimePlugins()] },
 	build: {
 		target: 'es2022',
 		outDir: '../platform/public/build',
