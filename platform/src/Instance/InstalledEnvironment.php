@@ -25,6 +25,8 @@ final readonly class InstalledEnvironment
         public string $url,
         /** Branche ou étiquette demandée ; vide : la branche par défaut du dépôt. */
         public string $ref,
+        /** Sous-dossier du dépôt d'où il vient ; vide : la racine. */
+        public string $dossier,
         /** L'empreinte du commit installé, si le clone a abouti. */
         public string $commit,
         public string $state,
@@ -57,6 +59,7 @@ final readonly class InstalledEnvironment
             'id' => $this->id,
             'url' => $this->url,
             'ref' => $this->ref,
+            'dossier' => $this->dossier,
             'commit' => $this->commit,
             'state' => $this->state,
             'message' => $this->message,
@@ -71,6 +74,7 @@ final readonly class InstalledEnvironment
             id: (string) ($data['id'] ?? ''),
             url: (string) ($data['url'] ?? ''),
             ref: (string) ($data['ref'] ?? ''),
+            dossier: (string) ($data['dossier'] ?? ''),
             commit: (string) ($data['commit'] ?? ''),
             state: (string) ($data['state'] ?? self::FAILED),
             message: (string) ($data['message'] ?? ''),

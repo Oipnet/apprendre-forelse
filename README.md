@@ -310,6 +310,7 @@ environments:
   - id: ma-boutique
     depot: https://github.com/mon-org/env-ma-boutique.git
     ref: v1.2.0        # facultatif : branche ou étiquette
+    dossier: symfony   # facultatif : si le dépôt porte plusieurs environnements
 ```
 
 Un pack ne porte plus son décor, il le **déclare** — comme `moteur:` déclare la version du moteur qu'il
@@ -342,6 +343,12 @@ Ce que le moteur ne fait **jamais** :
 
 Deux packs peuvent demander le même environnement, c'est même l'intérêt ; deux adresses différentes pour
 un seul identifiant sont refusées, en nommant les deux packs.
+
+**Un dépôt peut porter plusieurs environnements**, un par sous-dossier (`dossier:`) — c'est ce qui
+permet de sortir une famille qui bouge ensemble, comme les quatre Symfony, dans un seul dépôt plutôt
+qu'en quatre. Chacun s'installe séparément, et ne reçoit que son dossier. Si l'un d'eux en prolonge un
+autre du même lot, l'ordre ne vous concerne pas : `extends:` n'est lisible qu'une fois le dépôt cloné,
+donc la synchronisation rejoue les échecs tant qu'une passe en installe au moins un.
 
 ## Sécurité
 

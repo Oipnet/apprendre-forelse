@@ -212,6 +212,7 @@ environments:
   - id: ma-boutique
     depot: https://github.com/mon-org/env-ma-boutique.git
     ref: v1.2.0        # facultatif
+    dossier: symfony   # facultatif : si le dépôt porte plusieurs environnements
 ```
 
 Déposez le pack dans `packs/`, et l'instance installe ce qui lui manque :

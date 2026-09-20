@@ -53,19 +53,21 @@ final readonly class EnvironmentInstaller
     /**
      * Installe ou réinstalle un environnement. Rend son identifiant.
      *
+     * @param string                      $dossier  sous-dossier du dépôt ; vide : la racine
      * @param callable(string): void|null $progress appelé à chaque étape, pour un retour en console
      */
-    public function install(string $url, string $ref = '', ?callable $progress = null): string
+    public function install(string $url, string $ref = '', string $dossier = '', ?callable $progress = null): string
     {
         $say = $progress ?? static fn (string $message) => null;
         $url = $this->checkUrl($url);
+        $dossier = $this->checkSubdirectory($dossier);
         if (!$this->installed->isEnabled()) {
             throw new ContentException(sprintf('Aucun dossier d\'environnements installables : %s n\'existe pas ou n\'est pas écrivable (voir INSTALLED_ENVIRONMENTS_DIR).', $this->installed->directory()));
         }
 
         // Noté avant le clone : tant que le dépôt n'est pas lu, on ignore quel environnement en sortira,
         // et un clone qui échoue doit laisser une trace visible dans l'administration.
-        $this->installed->startJob($url, $ref);
+        $this->installed->startJob($url, $ref, $dossier);
 
         $clone = sys_get_temp_dir().'/env-clone-'.bin2hex(random_bytes(6));
         try {
@@ -73,7 +75,14 @@ final readonly class EnvironmentInstaller
             $this->clone($url, $ref, $clone);
             $commit = $this->commitOf($clone);
 
-            $id = $this->readId($clone);
+            // Un dépôt peut porter plusieurs environnements : on n'installe que le dossier demandé,
+            // mais la taille se mesure sur le clone entier — c'est lui qu'on a rapatrié.
+            $source = '' === $dossier ? $clone : $clone.'/'.$dossier;
+            if (!is_dir($source)) {
+                throw new ContentException(sprintf('Le dépôt ne contient pas de dossier « %s ».', $dossier));
+            }
+
+            $id = $this->readId($source);
             $this->checkSize($clone, $id);
             $this->checkAvailable($id);
             $say(sprintf('Environnement « %s » (%s).', $id, substr($commit, 0, 8)));
@@ -82,22 +91,22 @@ final readonly class EnvironmentInstaller
             // pouvoir dire ce qui se passe entre-temps plutôt que d'afficher un dossier muet.
             $destination = $this->installed->directoryOf($id);
             $this->filesystem->remove($destination);
-            $this->filesystem->mirror($clone, $destination, options: ['override' => true]);
+            $this->filesystem->mirror($source, $destination, options: ['override' => true]);
             $this->filesystem->remove($destination.'/.git');
-            $this->record($id, $url, $ref, $commit, InstalledEnvironment::INSTALLING, 'Empaquetage en cours.');
+            $this->record($id, $url, $ref, $dossier, $commit, InstalledEnvironment::INSTALLING, 'Empaquetage en cours.');
 
             $say('Empaquetage (composer install, archive, index de complétion)…');
             $this->build($id);
-            $this->record($id, $url, $ref, $commit, InstalledEnvironment::READY, 'Installé.');
-            $this->installed->finishJob($url, $ref);
+            $this->record($id, $url, $ref, $dossier, $commit, InstalledEnvironment::READY, 'Installé.');
+            $this->installed->finishJob($url, $ref, $dossier);
             $say('Terminé.');
 
             return $id;
         } catch (\Throwable $e) {
             if (isset($id) && $this->installed->has($id)) {
-                $this->record($id, $url, $ref, $commit ?? '', InstalledEnvironment::FAILED, $e->getMessage());
+                $this->record($id, $url, $ref, $dossier, $commit ?? '', InstalledEnvironment::FAILED, $e->getMessage());
             }
-            $this->installed->finishJob($url, $ref, $e->getMessage());
+            $this->installed->finishJob($url, $ref, $dossier, $e->getMessage());
 
             throw $e;
         } finally {
@@ -111,7 +120,7 @@ final readonly class EnvironmentInstaller
         $source = $this->installed->read(InstalledEnvironments::id($id))
             ?? throw new ContentException(sprintf('Environnement « %s » : aucune source connue, il n\'a pas été installé depuis un dépôt.', $id));
 
-        return $this->install($source->url, $source->ref, $progress);
+        return $this->install($source->url, $source->ref, $source->dossier, $progress);
     }
 
     private function checkUrl(string $url): string
@@ -130,6 +139,22 @@ final readonly class EnvironmentInstaller
         }
 
         return $url;
+    }
+
+    /** Un chemin relatif dans le dépôt, vérifié plutôt que nettoyé : il compose un chemin sur le disque. */
+    private function checkSubdirectory(string $dossier): string
+    {
+        $dossier = trim(trim($dossier), '/');
+        if ('' === $dossier) {
+            return '';
+        }
+        foreach (explode('/', $dossier) as $segment) {
+            if (1 !== preg_match('/^[A-Za-z0-9._-]+$/', $segment) || '.' === $segment || '..' === $segment) {
+                throw new ContentException(sprintf('Sous-dossier « %s » invalide : un chemin relatif dans le dépôt, sans remontée.', $dossier));
+            }
+        }
+
+        return $dossier;
     }
 
     private function clone(string $url, string $ref, string $destination): void
@@ -220,9 +245,9 @@ final readonly class EnvironmentInstaller
         return $process->getOutput();
     }
 
-    private function record(string $id, string $url, string $ref, string $commit, string $state, string $message): void
+    private function record(string $id, string $url, string $ref, string $dossier, string $commit, string $state, string $message): void
     {
-        $this->installed->write(new InstalledEnvironment($id, $url, $ref, $commit, $state, $message, new \DateTimeImmutable()));
+        $this->installed->write(new InstalledEnvironment($id, $url, $ref, $dossier, $commit, $state, $message, new \DateTimeImmutable()));
         $this->environments->reset();
     }
 }

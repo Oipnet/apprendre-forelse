@@ -147,15 +147,114 @@ final class PackEnvironmentsTest extends TestCase
         $this->assertStringContainsString('Clonage', $resultat['failed']['introuvable']);
     }
 
-    /** @param array<string, string> $environnements identifiant => adresse du dépôt */
+    /**
+     * @param array<string, string|array{0: string, 1: string}> $environnements identifiant => adresse,
+     *                                                                         ou [adresse, sous-dossier]
+     */
     private function pack(string $id, array $environnements): void
     {
         $lignes = ["id: {$id}", "title: {$id}", 'environments:'];
-        foreach ($environnements as $environnement => $depot) {
+        foreach ($environnements as $environnement => $source) {
+            [$depot, $dossier] = \is_array($source) ? $source : [$source, ''];
             $lignes[] = "  - id: {$environnement}";
             $lignes[] = "    depot: '{$depot}'";
+            if ('' !== $dossier) {
+                $lignes[] = "    dossier: '{$dossier}'";
+            }
         }
         $this->filesystem->dumpFile($this->tmp.'/packs/'.$id.'/pack.yaml', implode("\n", $lignes)."\n");
+    }
+
+    /** Un dépôt peut porter plusieurs environnements : « dossier: » dit lequel installer. */
+    public function testUnDepotPeutPorterPlusieursEnvironnements(): void
+    {
+        $depot = $this->depot([
+            'symfony/environment.yaml' => "id: mon-symfony\nextends: base-test\n",
+            'symfony/src/Mon.php' => '<?php // symfony',
+            'laravel/environment.yaml' => "id: mon-laravel\nextends: base-test\n",
+            'laravel/src/Autre.php' => '<?php // laravel',
+        ]);
+        $this->pack('p', [
+            'mon-symfony' => ['https://exemple.test/depot.git', 'symfony'],
+            'mon-laravel' => ['https://exemple.test/depot.git', 'laravel'],
+        ]);
+        $this->redirige($depot);
+        $environments = $this->registry();
+
+        $resultat = $this->service($environments)->synchronize();
+
+        $this->assertSame([], $resultat['failed']);
+        $this->assertEqualsCanonicalizing(['mon-symfony', 'mon-laravel'], $resultat['installed']);
+
+        // Chacun n'a reçu que son dossier, pas le dépôt entier.
+        $environments->reset();
+        $this->assertNotNull($environments->get('mon-symfony')->file('src/Mon.php'));
+        $this->assertNull($environments->get('mon-symfony')->file('src/Autre.php'), 'Le voisin n\'est pas venu avec.');
+        $this->assertNotNull($environments->get('mon-laravel')->file('src/Autre.php'));
+    }
+
+    /**
+     * Un environnement peut en prolonger un autre qui s'installe dans la même passe.
+     *
+     * L'ordre est alphabétique et « aa-appli » passe avant sa base « zz-socle » : la première tentative
+     * échoue forcément. C'est le cas que la seconde passe existe pour rattraper — et on ne peut pas
+     * l'éviter en triant, puisque « extends: » n'est lisible qu'une fois le dépôt cloné.
+     */
+    public function testUnEnvironnementQuiProlongeUnAutreDeLaMemePasseFinitParSInstaller(): void
+    {
+        $depot = $this->depot([
+            'appli/environment.yaml' => "id: aa-appli\nextends: zz-socle\n",
+            'appli/src/Appli.php' => '<?php // appli',
+            'socle/environment.yaml' => "id: zz-socle\nphp: '8.4'\n",
+            'socle/src/Base.php' => '<?php // base',
+        ]);
+        $this->pack('p', [
+            'aa-appli' => ['https://exemple.test/depot.git', 'appli'],
+            'zz-socle' => ['https://exemple.test/depot.git', 'socle'],
+        ]);
+        $this->redirige($depot);
+        $environments = $this->registry();
+
+        $resultat = $this->service($environments)->synchronize();
+
+        $this->assertSame([], $resultat['failed']);
+        $this->assertSame(['zz-socle', 'aa-appli'], $resultat['installed'], 'La base d\'abord, l\'enfant à la passe suivante.');
+
+        $environments->reset();
+        $this->assertNotNull($environments->get('aa-appli')->file('src/Base.php'), 'L\'enfant a bien hérité du socle.');
+    }
+
+    /**
+     * Une base introuvable arrête l'empaquetage, au lieu de livrer une archive amputée.
+     *
+     * Le cas mérite son test : la chaîne se résolvait dans une fonction appelée depuis une liste
+     * « && », où bash désactive « set -e ». L'échec ne faisait qu'écrire sur stderr et l'archive
+     * partait sans sa base, code de sortie 0 — un Symfony sans Symfony dedans.
+     */
+    public function testUneBaseIntrouvableArreteLEmpaquetage(): void
+    {
+        $depot = $this->depot(['environment.yaml' => "id: ma-boutique\nextends: base-qui-nexiste-pas\n"]);
+        $this->pack('p', ['ma-boutique' => 'https://exemple.test/depot.git']);
+        $this->redirige($depot);
+
+        $resultat = $this->service()->synchronize();
+
+        $this->assertSame([], $resultat['installed']);
+        $this->assertStringContainsString('base-qui-nexiste-pas', $resultat['failed']['ma-boutique']);
+        $this->assertFileDoesNotExist($this->tmp.'/installes/.artefacts/ma-boutique.zip');
+    }
+
+    /** Un sous-dossier absent du dépôt est une erreur nommée, pas un environnement vide. */
+    public function testUnSousDossierAbsentEstSignale(): void
+    {
+        $depot = $this->depot(['environment.yaml' => "id: ma-boutique\nextends: base-test\n"]);
+        $this->pack('p', ['ma-boutique' => ['https://exemple.test/depot.git', 'nulle-part']]);
+        $this->redirige($depot);
+
+        $resultat = $this->service()->synchronize();
+
+        $this->assertSame([], $resultat['installed']);
+        $this->assertStringContainsString('ne contient pas de dossier « nulle-part »', $resultat['failed']['ma-boutique']);
     }
 
     /** @param array<string, string> $fichiers */

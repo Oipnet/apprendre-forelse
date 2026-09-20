@@ -104,7 +104,7 @@ final class InstalledEnvironments
     /**
      * Les installations en cours ou échouées, de la plus récente à la plus ancienne.
      *
-     * @return list<array{url: string, displayUrl: string, ref: string, state: string, message: string, startedAt: string, key: string}>
+     * @return list<array{url: string, displayUrl: string, ref: string, dossier: string, state: string, message: string, startedAt: string, key: string}>
      */
     public function jobs(): array
     {
@@ -117,6 +117,7 @@ final class InstalledEnvironments
                     // Affichable : une adresse peut porter le jeton d'un dépôt privé.
                     'displayUrl' => RepositoryUrl::withoutCredentials((string) ($data['url'] ?? '')),
                     'ref' => (string) ($data['ref'] ?? ''),
+                    'dossier' => (string) ($data['dossier'] ?? ''),
                     'state' => (string) ($data['state'] ?? InstalledEnvironment::FAILED),
                     'message' => (string) ($data['message'] ?? ''),
                     'startedAt' => (string) ($data['startedAt'] ?? ''),
@@ -130,12 +131,13 @@ final class InstalledEnvironments
     }
 
     /** Note qu'une installation commence, avant même de savoir quel environnement en sortira. */
-    public function startJob(string $url, string $ref): string
+    public function startJob(string $url, string $ref, string $dossier = ''): string
     {
-        $key = substr(sha1($url.'#'.$ref), 0, 16);
+        $key = self::jobKey($url, $ref, $dossier);
         $this->writeJob($key, [
             'url' => $url,
             'ref' => $ref,
+            'dossier' => $dossier,
             'state' => InstalledEnvironment::INSTALLING,
             'message' => 'Clonage du dépôt…',
             'startedAt' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
@@ -145,16 +147,22 @@ final class InstalledEnvironments
     }
 
     /** Une installation aboutie s'efface : l'environnement lui-même prend le relais dans la liste. */
-    public function finishJob(string $url, string $ref, ?string $error = null): void
+    public function finishJob(string $url, string $ref, string $dossier = '', ?string $error = null): void
     {
-        $key = substr(sha1($url.'#'.$ref), 0, 16);
+        $key = self::jobKey($url, $ref, $dossier);
         if (null === $error) {
             $this->forgetJob($key);
 
             return;
         }
-        $job = $this->jobData($key) ?? ['url' => $url, 'ref' => $ref, 'startedAt' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM)];
+        $job = $this->jobData($key) ?? ['url' => $url, 'ref' => $ref, 'dossier' => $dossier, 'startedAt' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM)];
         $this->writeJob($key, [...$job, 'state' => InstalledEnvironment::FAILED, 'message' => $error]);
+    }
+
+    /** Deux environnements d'un même dépôt s'installent séparément : le dossier fait partie de la clé. */
+    private static function jobKey(string $url, string $ref, string $dossier): string
+    {
+        return substr(sha1($url.'#'.$ref.'#'.$dossier), 0, 16);
     }
 
     public function forgetJob(string $key): void

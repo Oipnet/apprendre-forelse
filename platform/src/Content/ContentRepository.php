@@ -400,10 +400,37 @@ final class ContentRepository
             if (!str_starts_with($depot, 'https://')) {
                 throw new ContentException(sprintf('%s : l\'adresse du dépôt doit commencer par « https:// » (lue : %s).', $where, $depot));
             }
-            $environments[] = new PackEnvironment($id, $depot, trim((string) ($entry['ref'] ?? '')), $packId);
+            $environments[] = new PackEnvironment(
+                $id,
+                $depot,
+                trim((string) ($entry['ref'] ?? '')),
+                $this->subdirectory(trim((string) ($entry['dossier'] ?? '')), $where),
+                $packId,
+            );
         }
 
         return $environments;
+    }
+
+    /**
+     * Le sous-dossier d'un dépôt où vit un environnement : un chemin relatif, et rien d'autre.
+     *
+     * Il sert à composer un chemin de fichier sur le serveur, à partir d'un fichier que n'importe quel
+     * pack apporte : il est vérifié, jamais nettoyé. Pas de remontée, pas de racine, pas de lien.
+     */
+    private function subdirectory(string $dossier, string $where): string
+    {
+        $dossier = trim($dossier, '/');
+        if ('' === $dossier) {
+            return '';
+        }
+        foreach (explode('/', $dossier) as $segment) {
+            if (1 !== preg_match('/^[A-Za-z0-9._-]+$/', $segment) || '.' === $segment || '..' === $segment) {
+                throw new ContentException(sprintf('%s : « dossier » doit être un chemin relatif dans le dépôt (lu : %s).', $where, $dossier));
+            }
+        }
+
+        return $dossier;
     }
 
     /**

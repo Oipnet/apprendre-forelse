@@ -140,6 +140,16 @@ tel quel.
   environnement, c'est l'intérêt ; deux adresses pour un seul identifiant sont refusées, en nommant les
   deux packs.
 
+  **Un dépôt peut porter plusieurs environnements** (`dossier:`, un sous-dossier par environnement) :
+  une famille qui bouge ensemble — les quatre Symfony, par exemple — se versionne mieux d'un seul tenant
+  qu'en quatre dépôts. Chacun s'installe séparément et ne reçoit que son dossier. Disponible aussi dans
+  la commande (`--dossier`) et dans le formulaire d'administration.
+
+  L'ordre d'installation ne regarde personne : `extends:` n'est lisible qu'une fois le dépôt cloné, donc
+  impossible de trier à l'avance. La synchronisation procède par **passes** — tant qu'une passe installe
+  au moins un environnement, elle rejoue ceux qui ont échoué, la base qui manquait étant peut-être
+  arrivée entre-temps. Rien de neuf installé : on s'arrête, et les échecs restants sont de vrais échecs.
+
 ### Modifié
 
 - Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement
@@ -167,6 +177,13 @@ tel quel.
 
 ### Corrigé
 
+- `build-env.sh` : une base introuvable (`extends:` pointant sur un environnement absent) **n'arrêtait
+  pas l'empaquetage**. L'archive partait sans sa base — un Symfony sans Symfony dedans — avec un code de
+  sortie 0 et une seule ligne sur la sortie d'erreur. En cause, une subtilité de bash : `set -e` est
+  désactivé dans une fonction appelée depuis une liste `&&`, ce qui était le cas de la résolution
+  récursive de la chaîne. Les échecs sont désormais traités explicitement. Corollaire du même défaut :
+  la chaîne repartait avec un maillon vide, et `cp -a "$dossier/."` devenait `cp -a "/."` — la racine du
+  serveur recopiée dans un dossier temporaire. Un garde-fou s'y ajoute.
 - `build-env.sh` : un environnement qui **prolonge une base sans `composer.json`** (un projet Nuxt, ou
   un socle qui n'apporte que des fichiers) n'empaquetait que ses propres fichiers — la superposition
   était sautée avec l'installation des dépendances. La chaîne se superpose désormais dans tous les cas ;

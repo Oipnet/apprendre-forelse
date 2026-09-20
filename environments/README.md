@@ -126,6 +126,7 @@ environments:
   - id: ma-boutique
     depot: https://github.com/mon-org/env-ma-boutique.git
     ref: v1.2.0
+    dossier: symfony   # facultatif : un dépôt peut porter plusieurs environnements
 ```
 
 `bin/console app:environnement:synchroniser` installe ce qui manque, l'administration le propose d'un

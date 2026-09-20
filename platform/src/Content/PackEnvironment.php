@@ -19,6 +19,13 @@ final readonly class PackEnvironment
         public string $depot,
         /** Branche ou étiquette. Vide : la branche par défaut du dépôt. */
         public string $ref,
+        /**
+         * Sous-dossier du dépôt où vit cet environnement. Vide : la racine.
+         *
+         * C'est ce qui permet à un dépôt de porter plusieurs environnements — une famille qui bouge
+         * ensemble, comme les quatre Symfony, se versionne mieux d'un seul tenant qu'en quatre dépôts.
+         */
+        public string $dossier,
         /** Le pack qui le demande, pour que les messages disent à qui s'adresser. */
         public string $packId,
     ) {
@@ -27,7 +34,7 @@ final readonly class PackEnvironment
     /** Deux packs peuvent demander le même environnement, à condition de le demander au même endroit. */
     public function sameSourceAs(self $other): bool
     {
-        return $this->depot === $other->depot && $this->ref === $other->ref;
+        return $this->depot === $other->depot && $this->ref === $other->ref && $this->dossier === $other->dossier;
     }
 
     /** L'adresse telle qu'on peut l'afficher : sans le jeton d'un dépôt privé. */
@@ -38,6 +45,8 @@ final readonly class PackEnvironment
 
     public function describeSource(): string
     {
-        return $this->displayDepot().('' === $this->ref ? '' : ' ('.$this->ref.')');
+        return $this->displayDepot()
+            .('' === $this->ref ? '' : ' ('.$this->ref.')')
+            .('' === $this->dossier ? '' : ' → '.$this->dossier);
     }
 }

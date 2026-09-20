@@ -34,6 +34,8 @@ final class EnvironmentInstallCommand
         string $depot,
         #[Option('Branche ou étiquette à installer (défaut : la branche par défaut du dépôt)')]
         string $ref = '',
+        #[Option('Sous-dossier du dépôt où vit l\'environnement (défaut : la racine)')]
+        string $dossier = '',
     ): int {
         if (!$this->installed->isEnabled()) {
             $io->error(sprintf('Aucun dossier d\'environnements installables : %s n\'existe pas ou n\'est pas écrivable.', $this->installed->directory()));
@@ -44,7 +46,7 @@ final class EnvironmentInstallCommand
 
         try {
             $id = str_starts_with($depot, 'https://')
-                ? $this->installer->install($depot, $ref, $io->writeln(...))
+                ? $this->installer->install($depot, $ref, $dossier, $io->writeln(...))
                 : $this->installer->update($depot, $io->writeln(...));
         } catch (\Throwable $e) {
             $io->error($e->getMessage());

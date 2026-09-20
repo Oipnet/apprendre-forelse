@@ -15,5 +15,6 @@ license: AGPL-3.0-or-later
 #   - id: ma-boutique
 #     depot: https://github.com/mon-org/env-ma-boutique.git
 #     ref: v1.2.0          # facultatif : branche ou étiquette, sinon la branche par défaut
+#     dossier: symfony     # facultatif : sous-dossier, si le dépôt porte plusieurs environnements
 tracks:
   - decouverte

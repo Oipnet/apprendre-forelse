@@ -66,13 +66,18 @@ final class EnvironmentController extends AbstractController
         }
         $depot = trim((string) $request->request->get('depot'));
         $ref = trim((string) $request->request->get('ref'));
+        $dossier = trim((string) $request->request->get('dossier'));
 
         if (!$this->installed->isEnabled()) {
             $this->addFlash('error', sprintf('Aucun dossier d\'environnements installables : %s n\'existe pas ou n\'est pas écrivable.', $this->installed->directory()));
         } elseif (!str_starts_with($depot, 'https://')) {
             $this->addFlash('error', 'L\'adresse du dépôt doit commencer par « https:// ».');
         } else {
-            $this->lancer([$depot, ...('' === $ref ? [] : ['--ref='.$ref])]);
+            $this->lancer([
+                $depot,
+                ...('' === $ref ? [] : ['--ref='.$ref]),
+                ...('' === $dossier ? [] : ['--dossier='.$dossier]),
+            ]);
             $this->addFlash('success', 'Installation lancée. Elle dure quelques minutes : rafraîchissez cette page pour suivre.');
         }
 

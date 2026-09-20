@@ -87,6 +87,12 @@ final readonly class PackEnvironments
      * Un échec n'arrête pas les autres : trois packs dont un dépôt est injoignable, c'est deux
      * environnements installés et un message, pas rien du tout.
      *
+     * **Plusieurs passes**, et c'est nécessaire : un environnement peut en prolonger un autre
+     * (`extends:`), et on ne l'apprend qu'après l'avoir cloné — c'est écrit dans son environment.yaml,
+     * pas dans la déclaration du pack. Impossible, donc, de trier à l'avance. Tant qu'une passe en
+     * installe au moins un, on rejoue ceux qui ont échoué : la base qui manquait est peut-être arrivée
+     * entre-temps. Rien de neuf installé, on s'arrête, et les échecs restants sont de vrais échecs.
+     *
      * @param callable(string): void|null $progress
      *
      * @return array{installed: list<string>, failed: array<string, string>}
@@ -96,27 +102,49 @@ final readonly class PackEnvironments
         $say = $progress ?? static fn (string $message) => null;
         $installed = [];
         $failed = [];
+        $restants = $this->toInstall($update);
 
-        foreach ($this->toInstall($update) as $wanted) {
-            $say(sprintf('Pack « %s » : environnement « %s » depuis %s', $wanted->packId, $wanted->id, $wanted->describeSource()));
-            try {
-                $obtenu = $this->installer->install($wanted->depot, $wanted->ref, $say);
-                // Le dépôt se nomme lui-même : s'il ne porte pas le nom attendu, le pack ne trouvera
-                // toujours pas son décor. Mieux vaut le dire que laisser un environnement orphelin.
-                if ($obtenu !== $wanted->id) {
-                    throw new ContentException(sprintf('le dépôt fournit l\'environnement « %s », alors que le pack « %s » attend « %s ». « %s » est installé, mais le pack ne le trouvera pas : alignez l\'« id » de l\'environment.yaml du dépôt, ou celui que le pack déclare.', $obtenu, $wanted->packId, $wanted->id, $obtenu));
+        while ([] !== $restants) {
+            $echoues = [];
+            $failed = [];
+            foreach ($restants as $wanted) {
+                $say(sprintf('Pack « %s » : environnement « %s » depuis %s', $wanted->packId, $wanted->id, $wanted->describeSource()));
+                try {
+                    $installed[] = $this->installOne($wanted, $say);
+                } catch (\Throwable $e) {
+                    $echoues[] = $wanted;
+                    $failed[$wanted->id] = $e->getMessage();
                 }
-                $installed[] = $wanted->id;
-            } catch (\Throwable $e) {
-                $failed[$wanted->id] = $e->getMessage();
+            }
+            // Aucun progrès dans cette passe : rejouer les mêmes donnerait les mêmes erreurs.
+            if (\count($echoues) === \count($restants)) {
+                break;
+            }
+            $restants = $echoues;
+            if ([] !== $restants) {
+                $say(sprintf('Nouvelle passe pour %d environnement(s) : leur base vient peut-être d\'être installée.', \count($restants)));
             }
         }
+
         if ([] !== $installed) {
             $this->environments->reset();
             $this->content->reset();
         }
 
         return ['installed' => $installed, 'failed' => $failed];
+    }
+
+    /** @param callable(string): void $say */
+    private function installOne(PackEnvironment $wanted, callable $say): string
+    {
+        $obtenu = $this->installer->install($wanted->depot, $wanted->ref, $wanted->dossier, $say);
+        // Le dépôt se nomme lui-même : s'il ne porte pas le nom attendu, le pack ne trouvera toujours
+        // pas son décor. Mieux vaut le dire que laisser un environnement orphelin.
+        if ($obtenu !== $wanted->id) {
+            throw new ContentException(sprintf('le dépôt fournit l\'environnement « %s », alors que le pack « %s » attend « %s ». « %s » est installé, mais le pack ne le trouvera pas : alignez l\'« id » de l\'environment.yaml du dépôt, ou celui que le pack déclare.', $obtenu, $wanted->packId, $wanted->id, $obtenu));
+        }
+
+        return $obtenu;
     }
 
     private function stateOf(PackEnvironment $wanted, ?InstalledEnvironment $source): string
@@ -134,6 +162,8 @@ final readonly class PackEnvironments
             return self::MISSING;
         }
 
-        return $source->url === $wanted->depot && $source->ref === $wanted->ref ? self::PRESENT : self::OUTDATED;
+        return $source->url === $wanted->depot && $source->ref === $wanted->ref && $source->dossier === $wanted->dossier
+            ? self::PRESENT
+            : self::OUTDATED;
     }
 }

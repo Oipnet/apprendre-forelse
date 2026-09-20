@@ -19,6 +19,7 @@
                                 {% if ligne.source %}
                                     <code>{{ ligne.source.displayUrl }}</code>
                                     {% if ligne.source.ref %}<span class="text-muted">({{ ligne.source.ref }})</span>{% endif %}
+                                    {% if ligne.source.dossier %}<span class="text-muted">→ {{ ligne.source.dossier }}</span>{% endif %}
                                     {% if ligne.source.commit %}<code class="text-muted">{{ ligne.source.commit[:8] }}</code>{% endif %}
                                     {% if not ligne.source.isReady %}
                                         <div class="{{ ligne.source.hasFailed ? 'text-danger' : 'text-muted' }}">{{ ligne.source.message }}</div>
@@ -74,6 +75,7 @@
                             <td>
                                 <code>{{ ligne.environment.displayDepot }}</code>
                                 {% if ligne.environment.ref %}<span class="text-muted">({{ ligne.environment.ref }})</span>{% endif %}
+                                {% if ligne.environment.dossier %}<span class="text-muted">→ {{ ligne.environment.dossier }}</span>{% endif %}
                             </td>
                             <td class="{{ etats[ligne.state].classe }}">
                                 {{ etats[ligne.state].libelle }}
@@ -156,8 +158,13 @@
                         <label class="form-label" for="ref">Branche ou étiquette</label>
                         <input class="form-control" id="ref" name="ref" placeholder="par défaut : celle du dépôt">
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button class="btn btn-primary w-100">Installer</button>
+                    <div class="col-md-2">
+                        <label class="form-label" for="dossier">Sous-dossier</label>
+                        <input class="form-control" id="dossier" name="dossier" placeholder="racine du dépôt"
+                               pattern="[A-Za-z0-9._/-]*" title="Un chemin relatif dans le dépôt, sans remontée">
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary">Installer</button>
                     </div>
                 </form>
             {% else %}

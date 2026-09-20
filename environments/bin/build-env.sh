@@ -55,12 +55,21 @@ mkdir -p "$OUT_DIR"
 chaine() {
     local id="$1" vus="${2:-}" dossier parent
     case " $vus " in *" $id "*) echo "« extends » tourne en rond : $vus $id" >&2; exit 1;; esac
-    dossier=$(dossier_de "$id")
+    # « || exit 1 » explicite, et non « set -e » : bash **désactive** set -e dans une fonction appelée
+    # depuis une liste « && », ce qui était le cas de l'appel récursif ci-dessous. Une base introuvable
+    # n'écrivait donc que sur stderr ; la chaîne repartait avec un dossier vide, l'archive était
+    # produite sans sa base, et le script sortait en 0. Pire, « cp -a "$dossier/." » plus bas devenait
+    # « cp -a "/." » : la racine du serveur recopiée dans un dossier temporaire.
+    dossier=$(dossier_de "$id") || exit 1
     parent=$(sed -n 's/^extends:[[:space:]]*\([^[:space:]#]*\).*/\1/p' "$dossier/environment.yaml" | head -1)
-    [ -n "$parent" ] && chaine "$parent" "$vus $id"
+    if [ -n "$parent" ]; then
+        chaine "$parent" "$vus $id" || exit 1
+    fi
     echo "$dossier"
 }
-mapfile -t CHAINE < <(chaine "$ENV_NAME")
+# Substitution de commande, et non « < <(…) » : le statut d'une substitution de processus est perdu.
+CHAINE_TEXTE="$(chaine "$ENV_NAME")" || exit 1
+mapfile -t CHAINE <<< "$CHAINE_TEXTE"
 
 # Le dossier qui installe : le plus particulier de la chaîne qui déclare un composer.json. Un
 # environnement qui n'ajoute aucune dépendance hérite du vendor/ de sa base.
@@ -92,6 +101,8 @@ if [ "${#CHAINE[@]}" -gt 1 ]; then
     SOURCE="$(mktemp -d)"
     trap 'rm -rf "$SOURCE"' EXIT
     for dossier in "${CHAINE[@]}"; do
+        # Ceinture et bretelles : un maillon vide ferait de « cp -a "$dossier/." » un « cp -a "/." ».
+        [ -n "$dossier" ] && [ -d "$dossier" ] || { echo "Chaîne d'environnements incohérente pour $ENV_NAME." >&2; exit 1; }
         cp -a "$dossier/." "$SOURCE/"
     done
     rm -rf "$SOURCE/vendor"
