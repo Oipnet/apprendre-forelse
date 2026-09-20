@@ -1,0 +1,10 @@
+{# Un avis client. Écrit par le prestataire : le |raw « pour garder le gras et l'italique »
+   désactive l'échappement de Twig sur des données fournies par les visiteurs. #}
+<article class="avis">
+    <header>
+        <strong class="avis-auteur">{{ avis.auteurNom|raw }}</strong>
+        <span class="avis-note">{{ avis.note }}/5</span>
+    </header>
+    <div class="avis-corps">{{ avis.corps|raw }}</div>
+    <footer><time>{{ avis.publieLe|date('d/m/Y') }}</time></footer>
+</article>

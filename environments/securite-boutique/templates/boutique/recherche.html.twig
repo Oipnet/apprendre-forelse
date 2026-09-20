@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+{% block title %}Recherche — Brasserie Lacombe{% endblock %}
+{% block body %}
+    <h1>Recherche</h1>
+    <form action="{{ path('app_recherche') }}" method="get" class="pile">
+        {# FAILLE (chapitre 3, F3.3) : q réinjecté avec |raw dans un attribut. #}
+        <input type="search" name="q" value="{{ q|raw }}">
+        <button class="btn">Rechercher</button>
+    </form>
+
+    {% if q is not empty %}
+        {% if resultats is empty %}
+            {# FAILLE (chapitre 3, F3.3) : XSS réfléchie. #}
+            <p>Aucun résultat pour {{ q|raw }}.</p>
+        {% else %}
+            <table>
+                <tr><th>Nom</th><th>Style</th><th>Prix</th></tr>
+                {% for ligne in resultats %}
+                    <tr>
+                        <td>{{ ligne.slug }}</td>
+                        <td>{{ ligne.nom }} / {{ ligne.style }}</td>
+                        <td>{{ ligne.prix }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+    {% endif %}
+{% endblock %}

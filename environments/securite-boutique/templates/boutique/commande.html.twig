@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+{% block title %}Commande {{ commande.reference }}{% endblock %}
+{% block body %}
+    <h1>Commande {{ commande.reference }}</h1>
+    <p>Client : {{ commande.client.nom }} ({{ commande.client.email }})</p>
+    <p>Statut : {{ commande.statut }} · Passée le {{ commande.creeLe|date('d/m/Y H:i') }}</p>
+    <table>
+        <tr><th>Bière</th><th>Prix unitaire</th><th>Quantité</th></tr>
+        {% for ligne in commande.lignes %}
+            <tr><td>{{ ligne.biere.nom }}</td><td>{{ ligne.prixUnitaire|prix }}</td><td>{{ ligne.quantite }}</td></tr>
+        {% endfor %}
+    </table>
+    <p>Total enregistré : <strong>{{ commande.total|prix }}</strong> (somme des lignes : {{ commande.totalCalcule|prix }})</p>
+    <p><a class="btn btn-secondaire" href="{{ path('app_commande_facture', {id: commande.id}) }}">Télécharger la facture</a></p>
+{% endblock %}

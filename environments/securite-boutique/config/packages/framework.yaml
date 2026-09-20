@@ -1,0 +1,17 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+
+    # Session volontairement NON durcie (chapitre 9, F9.1/F9.4) :
+    # cookie_secure/httponly/samesite laissés ouverts, durée de vie démesurée.
+    session:
+        cookie_secure: false
+        cookie_httponly: false
+        cookie_samesite: null
+        gc_maxlifetime: 2592000
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

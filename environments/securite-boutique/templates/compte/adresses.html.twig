@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mes adresses{% endblock %}
+{% block body %}
+    <h1>Mes adresses</h1>
+    <table>
+        <tr><th>Libellé</th><th>Adresse</th><th></th></tr>
+        {% for adresse in adresses %}
+            <tr>
+                <td>{{ adresse.libelle }}</td>
+                <td>{{ adresse.rue }}, {{ adresse.codePostal }} {{ adresse.ville }}</td>
+                {# FAILLE (chapitre 4, F4.3) : suppression par un simple lien GET, sans jeton. #}
+                <td><a href="{{ path('app_compte_adresse_supprimer', {id: adresse.id}) }}">Supprimer</a></td>
+            </tr>
+        {% else %}
+            <tr><td colspan="3">Aucune adresse enregistrée.</td></tr>
+        {% endfor %}
+    </table>
+
+    <h3>Ajouter une adresse</h3>
+    <form action="{{ path('app_compte_adresses') }}" method="post" class="pile">
+        <label>Libellé <input type="text" name="libelle"></label>
+        <label>Rue <input type="text" name="rue"></label>
+        <label>Code postal <input type="text" name="codePostal"></label>
+        <label>Ville <input type="text" name="ville"></label>
+        <button class="btn">Ajouter</button>
+    </form>
+{% endblock %}

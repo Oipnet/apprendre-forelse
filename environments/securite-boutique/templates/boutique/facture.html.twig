@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+{% block title %}Facture {{ commande.reference }} — Brasserie Lacombe{% endblock %}
+{% block body %}
+    <h1>Facture {{ commande.reference }}</h1>
+    <p>Client : {{ commande.client.nom }}</p>
+    <p>Passée le {{ commande.creeLe ? commande.creeLe|date('d/m/Y') : '' }}</p>
+    <table>
+        <tr><th>Bière</th><th>Quantité</th><th>Prix unitaire</th></tr>
+        {% for ligne in commande.lignes %}
+            <tr>
+                <td>{{ ligne.biere.nom }}</td>
+                <td>{{ ligne.quantite }}</td>
+                <td>{{ ligne.prixUnitaire|prix }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <p><strong>Total : {{ commande.total|prix }}</strong></p>
+{% endblock %}

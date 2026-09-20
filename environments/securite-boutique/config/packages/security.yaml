@@ -1,0 +1,43 @@
+security:
+    # Aucune configuration de password_hashers : le hachage est fait « à la main »
+    # en MD5 sans sel (chapitre 7, F7.1), dans src/Security/HachageDuPrestataire.php.
+
+    providers:
+        clients:
+            entity:
+                class: App\Entity\Client
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        main:
+            lazy: true
+            provider: clients
+            # Authentificateur écrit à la main (chapitre 7). Il NE migre pas la
+            # session à la connexion (F9.2) et journalise le mot de passe (F17.4).
+            custom_authenticators:
+                - App\Security\AuthentificateurBoutique
+            # FAILLE (chapitre 9, F9.3) : pas de logout de pare-feu configuré ;
+            # la déconnexion est un simple contrôleur qui n'invalide pas la session.
+            # FAILLE (chapitre 7, F7.3) : aucun login_throttling.
+            # FAILLE (chapitre 7, F7.4) : pas de remember_me signé ; à la place,
+            # un cookie « souvenir » maison est posé par le contrôleur.
+
+    # FAILLE (chapitre 8, F8.3) : aucune role_hierarchy. ROLE_ADMIN n'implique
+    # donc pas ROLE_VENDEUR, et certains contrôles testent des rôles qui n'existent
+    # pas (ROLE_ADMINISTRATEUR), donc ne protègent rien.
+
+    access_control:
+        # FAILLE (chapitre 8, F8.2) : une SEULE règle. /admin et /api ne sont pas
+        # protégés ici — seul le menu cache les liens. Correction : ajouter
+        # « ^/admin » et « ^/api » AVANT toute règle plus large.
+        - { path: ^/compte, roles: ROLE_USER }
+
+when@test:
+    security:
+        password_hashers:
+            App\Entity\Client:
+                algorithm: auto
+                cost: 4

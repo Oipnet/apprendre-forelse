@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+{% block title %}Inscription{% endblock %}
+{% block body %}
+    <h1>Créer un compte</h1>
+    <form action="{{ path('app_inscription') }}" method="post" class="pile">
+        <label>E-mail <input type="email" name="email" required></label>
+        <label>Nom <input type="text" name="nom" required></label>
+        <label>Mot de passe <input type="password" name="motDePasse" required></label>
+        <label>Téléphone <input type="text" name="telephone"></label>
+        <label>Adresse <input type="text" name="adresse"></label>
+        <label>Code postal <input type="text" name="codePostal"></label>
+        <label>Ville <input type="text" name="ville"></label>
+        <button class="btn">S'inscrire</button>
+    </form>
+{% endblock %}

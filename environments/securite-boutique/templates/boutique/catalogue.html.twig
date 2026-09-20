@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+{% block title %}Catalogue — Brasserie Lacombe{% endblock %}
+{% block body %}
+    <h1>Catalogue{% if style %} — {{ style }}{% endif %}</h1>
+    <div class="grille">
+        {% for biere in bieres %}
+            <div class="carte">
+                <strong><a href="{{ path('app_biere', {slug: biere.slug}) }}">{{ biere.nom }}</a></strong>
+                <span class="style">{{ biere.style }} · {{ biere.degre }}°</span>
+                <span class="prix">{{ biere.prix|prix }}</span>
+                <span class="style">Stock : {{ biere.stock }}</span>
+            </div>
+        {% else %}
+            <p>Aucune bière.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

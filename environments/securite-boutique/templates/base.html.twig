@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Brasserie Lacombe{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('theme.css') }}">
+</head>
+<body>
+    <header>
+        <a href="{{ path('app_accueil') }}" class="logo">Brasserie Lacombe</a>
+        <nav>
+            <a href="{{ path('app_bieres') }}">Nos bières</a>
+            <a href="{{ path('app_panier') }}">Panier</a>
+        </nav>
+    </header>
+
+    <main>{% block body %}{% endblock %}</main>
+
+    <footer>Brasserie Lacombe — Die (Drôme)</footer>
+
+    <script>
+        // Garde la dernière recherche pour l'afficher dans l'en-tête.
+        // Le terme est collé directement dans le JavaScript : mauvais contexte d'échappement.
+        var derniereRecherche = "{{ app.request.query.get('q')|raw }}";
+        if (derniereRecherche) {
+            document.querySelector('.logo').title = 'Dernière recherche : ' + derniereRecherche;
+        }
+    </script>
+</body>
+</html>

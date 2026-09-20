@@ -1,0 +1,6 @@
+{# Formulaire d'ajout au panier. Écrit à la main par le prestataire, sans jeton CSRF. #}
+<form method="post" action="{{ path('app_panier_ajouter') }}">
+    <input type="hidden" name="slug" value="{{ biere.slug }}">
+    <input type="number" name="quantite" value="1" min="1">
+    <button type="submit">Ajouter au panier</button>
+</form>

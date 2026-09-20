@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mon profil{% endblock %}
+{% block body %}
+    <h1>Mon profil</h1>
+    <form action="{{ path('app_compte_profil') }}" method="post" class="pile">
+        <label>Nom <input type="text" name="nom" value="{{ client.nom }}"></label>
+        <label>Téléphone <input type="text" name="telephone" value="{{ client.telephone }}"></label>
+        <label>Adresse <input type="text" name="adresse" value="{{ client.adresse }}"></label>
+        <label>Code postal <input type="text" name="codePostal" value="{{ client.codePostal }}"></label>
+        <label>Ville <input type="text" name="ville" value="{{ client.ville }}"></label>
+        <button class="btn">Enregistrer</button>
+    </form>
+{% endblock %}

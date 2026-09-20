@@ -1,0 +1,1 @@
+<?php /* Houblon Noir */ echo 'bonjour depuis ' . __FILE__;

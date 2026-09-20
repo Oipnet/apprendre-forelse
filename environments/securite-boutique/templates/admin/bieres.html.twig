@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+{% block title %}Bières — admin{% endblock %}
+{% block body %}
+    {% include 'admin/_menu.html.twig' %}
+    <h1>Bières</h1>
+    <table>
+        <tr><th>Nom</th><th>Style</th><th>Prix</th><th>Stock</th><th>Actif</th><th></th></tr>
+        {% for biere in bieres %}
+            <tr>
+                <td>{{ biere.nom }}</td><td>{{ biere.style }}</td><td>{{ biere.prix|prix }}</td>
+                <td>{{ biere.stock }}</td><td>{{ biere.actif ? 'oui' : 'non' }}</td>
+                <td><a href="{{ path('app_admin_biere_modifier', {id: biere.id}) }}">Modifier</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

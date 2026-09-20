@@ -1,0 +1,5 @@
+{# La description « riche » d'une bière. Le prestataire a désactivé l'échappement
+   sur tout le bloc, ce qui va bien au-delà de ce qu'il voulait. #}
+{% autoescape false %}
+<div class="biere-description">{{ biere.descriptionHtml }}</div>
+{% endautoescape %}
