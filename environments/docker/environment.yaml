@@ -1,4 +1,4 @@
-# Environnement d'exécution : un petit projet PHP et le simulateur Docker (tools/docker-sim), empaqueté par tools/build-env.sh
+# Environnement d'exécution : un petit projet PHP et le simulateur Docker (tools/docker-sim), empaqueté par environments/bin/build-env.sh
 id: docker
 title: Docker — simulateur (Dockerfile, Compose) et PHP 8.4
 php: '8.4'
