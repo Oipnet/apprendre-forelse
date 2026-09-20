@@ -11,7 +11,7 @@
         </div>
         {% if showcase.sign is defined %}
             <div class="lp-sign-wrap">
-                <span class="lp-candle" aria-hidden="true"></span>
+                <span class="lp-sign-glow" aria-hidden="true"></span>
                 <div class="lp-sign" role="img" aria-label="{{ showcase.sign.alt|default(showcase.sign.name|replace({"\n": ' '})) }}">
                     {% if marque.logoLargeUrl %}<img src="{{ marque.logoLargeUrl }}" alt="" width="144" height="168" loading="lazy" decoding="async">{% endif %}
                     <div class="name">{{ showcase.sign.name|nl2br }}</div>

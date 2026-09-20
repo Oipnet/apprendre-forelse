@@ -140,7 +140,8 @@ Le fichier d'exemple est commenté ligne à ligne. En résumé :
 | `name` (obligatoire) | En-tête, pied de page, titres des pages, **emails**, balises de partage |
 | `chip`, `tagline`, `title`, `url` | La puce à côté du nom, la phrase du pied de page, le titre de l'accueil, votre site |
 | `logo`, `icon`, `share` | Vos images, déposées dans ce dossier (jamais un chemin) |
-| `colors`, `fonts` | Les couleurs et polices du thème clair |
+| `colors`, `fonts` | Les couleurs et polices du thème clair (les pages du site) |
+| `editor` | Les couleurs du thème sombre (l'éditeur d'exercice et l'atelier) |
 | `home.showcase`, `home.author`, `home.demo` | Les trois sections de l'accueil qui parlent de vous ; non déclarées, elles n'apparaissent pas |
 
 Une couleur mal écrite ou une clé inconnue **arrête la page** avec un message qui dit quoi corriger :

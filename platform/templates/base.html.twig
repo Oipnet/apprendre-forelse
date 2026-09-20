@@ -32,7 +32,14 @@
         {% for data in seo.structuredData -%}
             <script type="application/ld+json">{{ data|json_ld }}</script>
         {% endfor -%}
-        {% if marque.iconUrl %}<link rel="icon" type="image/svg+xml" href="{{ marque.iconUrl }}">{% endif %}
+        {%- if marque.iconUrl %}
+        <link rel="icon" type="image/svg+xml" href="{{ marque.iconUrl }}">
+        {%- if not marque.default %}<link rel="apple-touch-icon" href="{{ marque.iconUrl }}">{% endif %}
+        {%- elseif not marque.default %}
+        {# Sans icône déclarée, le navigateur irait chercher /favicon.ico — celle du moteur. Une icône
+           vide vaut mieux que la marque de quelqu'un d'autre dans l'onglet. #}
+        <link rel="icon" href="data:,">
+        {%- endif %}
         {%- if marque.default %}
         <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/favicon-32.png') }}">
         <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}">

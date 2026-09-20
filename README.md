@@ -230,12 +230,15 @@ une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
   les emails (confirmation d'adresse, mot de passe oublié, achat), les balises Open Graph et les données
   structurées. `chip` est la petite puce à côté, `tagline` la phrase du pied de page, `title` le `<title>`
   de l'accueil, `url` le site de la marque.
-- `colors` et `fonts` écrivent les variables CSS du thème clair (`--lp-rust`, `--lp-bg`…), posées après
-  la feuille de styles. Hexadécimal seulement ; une valeur mal écrite **arrête la page** avec un message
-  qui dit laquelle — une instance à moitié habillée est pire qu'une erreur. Le thème sombre de l'éditeur
-  reste celui du moteur.
+- `colors` et `fonts` écrivent les variables CSS du **thème clair** (les pages du site : `--lp-rust`,
+  `--lp-bg`…), `editor` celles du **thème sombre** (l'éditeur d'exercice et l'atelier : `--accent`,
+  `--bg`…). Toutes sont posées après la feuille de styles. Hexadécimal seulement ; une valeur mal écrite
+  **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire qu'une
+  erreur. Les deux palettes se déclarent séparément et l'une n'est jamais déduite de l'autre : une
+  couleur claire assombrie automatiquement, c'est un contraste perdu au hasard.
 - `logo`, `icon` et `share` nomment des fichiers **de ce dossier** (jamais un chemin), servis sur
-  `/marque/<rôle>` avec la date du fichier dans l'URL : une image remplacée change d'URL.
+  `/marque/<rôle>` avec la date du fichier dans l'URL : une image remplacée change d'URL. Sans `icon`,
+  l'onglet n'affiche aucune icône plutôt que celle du moteur : mieux vaut rien que la marque d'un autre.
 - `home.showcase`, `home.author` et `home.demo` remplissent les trois sections de l'accueil qui parlent
   de la marque (le fil rouge, « qui est derrière », l'illustration du bandeau). Une section non déclarée
   n'apparaît pas, et la page reste cohérente sans elle. Leur forme est vérifiée à la lecture, avec le

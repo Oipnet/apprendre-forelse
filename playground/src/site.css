@@ -698,7 +698,7 @@ body.site-page {
 
 /* Animation refusée : les boucles décoratives s'arrêtent (le JS, lui, ne les lance pas). */
 @media (prefers-reduced-motion: reduce) {
-	.lp-candle,
+	.lp-sign-glow,
 	.lp-demo-tabs .status::after,
 	.lp-code .cursor {
 		animation: none;
@@ -1617,21 +1617,26 @@ body.site-page {
 	text-wrap: pretty;
 }
 
-/* Fil rouge : l'enseigne de la taverne */
+/* Fil rouge : l'enseigne du parcours mis en avant (voir marque.yaml, « home.showcase.sign ») */
 .lp-sign-wrap {
 	display: flex;
 	justify-content: center;
 	position: relative;
 }
-.lp-candle {
+/* Halo chaud derrière l'enseigne, dans la seconde couleur de la marque (--lp-gold). */
+.lp-sign-glow {
 	position: absolute;
-	/* Elle déborde en hauteur, jamais en largeur : la colonne touche déjà le bord de la page. */
+	/* Il déborde en hauteur, jamais en largeur : la colonne touche déjà le bord de la page. */
 	inset: -10% 0;
-	background: radial-gradient(circle at 50% 42%, rgba(216, 166, 87, 0.22), rgba(216, 166, 87, 0) 62%);
-	animation: lp-candle 5.5s ease-in-out infinite;
+	background: radial-gradient(
+		circle at 50% 42%,
+		color-mix(in srgb, var(--lp-gold) 22%, transparent),
+		transparent 62%
+	);
+	animation: lp-sign-glow 5.5s ease-in-out infinite;
 	pointer-events: none;
 }
-@keyframes lp-candle {
+@keyframes lp-sign-glow {
 	0%,
 	100% {
 		opacity: 0.5;

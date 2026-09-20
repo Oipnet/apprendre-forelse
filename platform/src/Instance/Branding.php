@@ -28,7 +28,7 @@ final class Branding
     public const string FILE = 'marque.yaml';
 
     /** Les clés acceptées à la racine de marque.yaml. */
-    private const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'colors', 'fonts', 'logo', 'icon', 'share', 'home'];
+    private const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'colors', 'editor', 'fonts', 'logo', 'icon', 'share', 'home'];
 
     /**
      * La forme attendue de chaque section de « home: » : clé => type, un « * » marquant l'obligatoire.
@@ -69,6 +69,24 @@ final class Branding
         'dark' => '--lp-dark',
         'dark-ink' => '--lp-dark-ink',
         'success' => '--lp-green',
+    ];
+
+    /**
+     * Les couleurs du thème sombre, celui de l'éditeur d'exercice et de l'atelier (:root dans site.css).
+     * Déclarées à part du thème clair, et jamais déduites de lui : une couleur claire assombrie
+     * automatiquement, c'est un contraste perdu au hasard. Absentes, celles du moteur restent.
+     */
+    private const array EDITOR_COLORS = [
+        'accent' => '--accent',
+        'gold' => '--gold',
+        'background' => '--bg',
+        'surface' => '--panel',
+        'surface-2' => '--panel-2',
+        'line' => '--border',
+        'ink' => '--text',
+        'muted' => '--muted',
+        'success' => '--ok',
+        'error' => '--ko',
     ];
 
     private const array FONTS = ['serif' => '--lp-serif', 'sans' => '--lp-sans', 'mono' => '--lp-mono'];
@@ -160,18 +178,30 @@ final class Branding
     public function styles(): string
     {
         $colors = $this->map('colors', self::COLORS);
-        $declarations = [];
-        foreach ([...$colors, ...$this->map('fonts', self::FONTS)] as $variable => $value) {
-            $declarations[] = $variable.':'.$value;
+        $css = self::rule('body.site-page', [...$colors, ...$this->map('fonts', self::FONTS)]);
+        // Le fond de la page est aussi posé sur <html> (pas d'éclair blanc au chargement) : il suit.
+        if (null !== ($background = $colors['--lp-bg'] ?? null)) {
+            $css .= 'html:has(> body.site-page){background:'.$background.'}';
         }
+
+        // Le thème sombre, que les pages du site redéfinissent pour elles : seuls l'éditeur et l'atelier le portent.
+        return $css.self::rule(':root', $this->map('editor', self::EDITOR_COLORS));
+    }
+
+    /**
+     * @param array<string, string> $declarations variable CSS => valeur
+     */
+    private static function rule(string $selector, array $declarations): string
+    {
         if ([] === $declarations) {
             return '';
         }
-        $css = 'body.site-page{'.implode(';', $declarations).'}';
-        // Le fond de la page est aussi posé sur <html> (pas d'éclair blanc au chargement) : il suit.
-        $background = $colors['--lp-bg'] ?? null;
+        $body = [];
+        foreach ($declarations as $variable => $value) {
+            $body[] = $variable.':'.$value;
+        }
 
-        return null === $background ? $css : $css.'html:has(> body.site-page){background:'.$background.'}';
+        return $selector.'{'.implode(';', $body).'}';
     }
 
     /**
@@ -324,13 +354,13 @@ final class Branding
                 throw $this->error(sprintf('« %s.%s » inconnue (acceptées : %s).', $block, \is_string($key) ? $key : '?', implode(', ', array_keys($allowed))));
             }
             $value = \is_string($value) ? trim($value) : '';
-            $valid = 'colors' === $block
+            $valid = 'fonts' !== $block
                 ? 1 === preg_match('/^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i', $value)
                 : 1 === preg_match('/^[a-z0-9 ,.\'"-]+$/i', $value);
             if (!$valid) {
-                throw $this->error('colors' === $block
-                    ? sprintf('« colors.%s » : une couleur hexadécimale est attendue (#9a5b18).', $key)
-                    : sprintf('« fonts.%s » : une pile de polices est attendue (\'Newsreader\', Georgia, serif).', $key));
+                throw $this->error('fonts' === $block
+                    ? sprintf('« fonts.%s » : une pile de polices est attendue (\'Newsreader\', Georgia, serif).', $key)
+                    : sprintf('« %s.%s » : une couleur hexadécimale est attendue (#9a5b18).', $block, $key));
             }
             $resolved[$allowed[$key]] = $value;
         }

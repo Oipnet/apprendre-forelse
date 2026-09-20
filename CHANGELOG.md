@@ -38,7 +38,11 @@ tel quel.
   Le thème sombre de l'éditeur reste celui du moteur.
 - **Images de marque** servies sur `/marque/logo`, `/marque/icon` et `/marque/share`, avec la date du
   fichier dans l'URL : une image remplacée change d'URL. Le nom du fichier vient du manifeste, jamais de
-  l'URL, et un chemin y est refusé.
+  l'URL, et un chemin y est refusé. Une instance qui ne déclare pas d'`icon` n'affiche **aucune** icône
+  d'onglet, plutôt que celle du moteur que le navigateur serait allé chercher sur `/favicon.ico`.
+- **Thème sombre de l'éditeur** (`editor:`) : l'éditeur d'exercice et l'atelier suivent eux aussi la
+  marque. Palette déclarée à part du thème clair et jamais déduite de lui — une couleur claire assombrie
+  automatiquement, c'est un contraste perdu au hasard. Absente, celle du moteur reste.
 - **Gabarits de l'instance** : un fichier Twig déposé dans `<marque>/templates/` remplace celui du moteur
   qui porte le même nom (`home.html.twig`, `_footer.html.twig`, `legal/notice.html.twig`…). C'est
   l'échappatoire de l'habillage : ce que `marque.yaml` ne règle pas se réécrit sans toucher au moteur. En
@@ -54,6 +58,8 @@ tel quel.
   au lieu de `tests/Taverne/` : le squelette servait à tous les packs, il ne porte plus le nom du fil
   rouge d'un seul. Les exercices existants ne sont pas touchés.
 - Le message affiché après un changement de mot de passe ne souhaite plus la bienvenue « à la taverne ».
+- Le halo derrière l'enseigne du fil rouge (`.lp-candle`, la bougie de la taverne) devient `.lp-sign-glow`
+  et prend la seconde couleur de la marque au lieu d'un or codé en dur.
 
 ## 1.3.0 — 2026-09-18
 

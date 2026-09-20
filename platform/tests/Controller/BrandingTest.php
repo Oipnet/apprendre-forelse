@@ -120,6 +120,27 @@ final class BrandingTest extends WebTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
+    /** Sans icône déclarée, l'onglet ne doit pas afficher celle du moteur (servie sur /favicon.ico). */
+    public function testLIconeDuMoteurNApparaitPasChezUneAutreMarque(): void
+    {
+        $client = $this->clientAvecMarque("name: Atelier Bigorneau\n");
+        $crawler = $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('data:,', $crawler->filter('link[rel="icon"]')->attr('href'));
+        $this->assertSelectorNotExists('link[rel="apple-touch-icon"]');
+    }
+
+    /** Le thème sombre de l'éditeur suit aussi la marque, sur la page d'exercice. */
+    public function testLeThemeDeLEditeurSuitLaMarque(): void
+    {
+        $client = $this->clientAvecMarque("name: Atelier Bigorneau\neditor:\n  accent: '#5ab0cc'\n");
+        $client->request('GET', '/parcours/decouverte/01-bonjour');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringContainsString(':root{--accent:#5ab0cc}', (string) $client->getResponse()->getContent());
+    }
+
     /** L'échappatoire : ce que marque.yaml ne règle pas, un gabarit déposé le remplace. */
     public function testUnGabaritDeposeRemplaceCeluiDuMoteur(): void
     {

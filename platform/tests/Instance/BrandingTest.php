@@ -110,6 +110,28 @@ final class BrandingTest extends TestCase
         $this->assertStringContainsString('html:has(> body.site-page){background:#f6f7f9}', $styles);
     }
 
+    /** L'éditeur a son propre thème sombre : le moteur garde le sien tant que l'instance n'en déclare pas. */
+    public function testLeThemeSombreDeLEditeurSuitLaMarqueQuandElleLeDeclare(): void
+    {
+        $this->write("name: A\ncolors:\n  accent: '#1f6f8b'\n");
+        $this->assertStringNotContainsString(':root{', self::branding($this->tmp)->styles());
+
+        $this->write("name: A\neditor:\n  accent: '#5ab0cc'\n  background: '#12171b'\n");
+        $styles = self::branding($this->tmp)->styles();
+        $this->assertStringContainsString(':root{--accent:#5ab0cc;--bg:#12171b}', $styles);
+        // Les pages du site redéfinissent ces variables pour elles : le thème clair n'est pas touché.
+        $this->assertStringNotContainsString('body.site-page{', $styles);
+    }
+
+    public function testUneCouleurDEditeurQuiNEnEstPasUneEstRefusee(): void
+    {
+        $this->write("name: A\neditor:\n  accent: bleu\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« editor.accent » : une couleur hexadécimale est attendue');
+        self::branding($this->tmp)->styles();
+    }
+
     public function testUneCouleurQuiNEnEstPasUneEstRefusee(): void
     {
         $this->write("name: A\ncolors:\n  accent: 'red; } body { display: none'\n");
@@ -173,6 +195,7 @@ final class BrandingTest extends TestCase
 
         $this->assertSame('Atelier Bigorneau', $marque->name());
         $this->assertStringContainsString('--lp-rust:#1f6f8b', $marque->styles());
+        $this->assertStringContainsString(':root{--accent:#5ab0cc', $marque->styles());
         $this->assertNotNull($marque->logoUrl());
         $this->assertNotNull($marque->home()['demo']);
     }

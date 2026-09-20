@@ -41,6 +41,20 @@ colors:
   dark-ink: '#eef2f6'      # texte des sections sombres
   success: '#2e9b4e'       # exercice réussi
 
+# Couleurs du thème sombre : l'éditeur d'exercice et l'atelier. Absentes, celles du moteur restent.
+# Elles ne sont jamais déduites du thème clair : une couleur assombrie au jugé, c'est un contraste perdu.
+editor:
+  accent: '#5ab0cc'        # boutons, liens, onglet actif
+  gold: '#e0b04a'          # seconde couleur (XP, badges)
+  background: '#12171b'    # fond de l'éditeur
+  surface: '#1a2026'       # panneaux
+  surface-2: '#222a32'     # panneaux en relief
+  line: '#2e3840'          # filets
+  ink: '#e8edf1'           # texte
+  muted: '#93a1ab'         # texte secondaire (au moins 4,5:1 sur le fond)
+  success: '#3fbf7f'       # test vert
+  error: '#ef5a5a'         # test rouge
+
 # Polices : une pile CSS, sans @import. Chargez-les depuis un gabarit si elles ne sont pas locales.
 fonts:
   serif: "'Iowan Old Style', Georgia, serif"
