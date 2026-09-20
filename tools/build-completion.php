@@ -61,16 +61,20 @@ const NAMESPACES = [
     'Symfony\\Bridge\\Doctrine\\Form\\Type\\EntityType',
     'Symfony\\Component\\OptionsResolver\\OptionsResolver',
     'Symfony\\Component\\Validator\\Constraints\\',
+    'Symfony\\Component\\Validator\\Constraint',
+    'Symfony\\Component\\Validator\\ConstraintValidator',
+    'Symfony\\Component\\Validator\\Context\\ExecutionContextInterface',
+    'Symfony\\Component\\Validator\\Exception\\',
     'Symfony\\Component\\Validator\\Validator\\ValidatorInterface',
     'Symfony\\Bridge\\Doctrine\\Validator\\Constraints\\UniqueEntity',
     'Symfony\\Bridge\\Doctrine\\Attribute\\MapEntity',
     // Sécurité
-    'Symfony\\Component\\Security\\Core\\User\\UserInterface',
-    'Symfony\\Component\\Security\\Core\\User\\PasswordAuthenticatedUserInterface',
+    'Symfony\\Component\\Security\\Core\\User\\',
     'Symfony\\Component\\PasswordHasher\\Hasher\\UserPasswordHasherInterface',
     'Symfony\\Component\\Security\\Core\\Authorization\\Voter\\',
     'Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface',
     'Symfony\\Component\\Security\\Http\\Attribute\\',
+    'Symfony\\Component\\Security\\Http\\Event\\',
     'Symfony\\Component\\Security\\Http\\Authentication\\AuthenticationUtils',
     'Symfony\\Bundle\\SecurityBundle\\Security',
     'Symfony\\Component\\Security\\Core\\Validator\\Constraints\\UserPassword',
@@ -80,6 +84,7 @@ const NAMESPACES = [
     'Symfony\\Component\\Messenger\\Envelope',
     'Symfony\\Component\\Messenger\\Stamp\\',
     'Symfony\\Component\\Messenger\\Exception\\',
+    'Symfony\\Component\\RateLimiter\\',
     'Symfony\\Component\\Messenger\\Transport\\InMemory\\InMemoryTransport',
     'Symfony\\Component\\Scheduler\\Attribute\\',
     'Symfony\\Component\\Scheduler\\Schedule',
@@ -87,6 +92,7 @@ const NAMESPACES = [
     'Symfony\\Component\\Scheduler\\ScheduleProviderInterface',
     // API JSON : sérialisation, jetons d'accès
     'Symfony\\Component\\Serializer\\Attribute\\',
+    'Symfony\\Component\\Serializer\\Encoder\\',
     'Symfony\\Component\\Serializer\\SerializerInterface',
     'Symfony\\Component\\Serializer\\Normalizer\\NormalizerInterface',
     'Symfony\\Component\\Serializer\\Normalizer\\AbstractNormalizer',
@@ -334,6 +340,23 @@ foreach (array_keys($classmap) as $fqcn) {
         )),
         'methods' => array_values(array_filter($methods, static fn ($m) => '__construct' !== $m['name'])),
     ];
+}
+
+// Les imports de namespace (use X\\Constraints; puis Constraints\\NotBlank) sont
+// des cibles de complétion valides : on indexe aussi chaque préfixe de namespace.
+foreach (NAMESPACES as $ns) {
+    if (str_ends_with($ns, '\\')) {
+        $nom = rtrim($ns, '\\');
+        $index['classes'][$nom] ??= [
+            'short' => substr($nom, strrpos($nom, '\\') + 1),
+            'kind' => 'namespace',
+            'abstract' => false,
+            'doc' => '',
+            'constructor' => [],
+            'constants' => [],
+            'methods' => [],
+        ];
+    }
 }
 
 ksort($index['classes']);

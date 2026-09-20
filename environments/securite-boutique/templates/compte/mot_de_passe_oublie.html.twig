@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mot de passe oublié{% endblock %}
+{% block body %}
+    <h1>Mot de passe oublié</h1>
+    <form action="{{ path('app_mot_de_passe_oublie') }}" method="post" class="pile">
+        <label>Votre e-mail <input type="email" name="email" required></label>
+        <button class="btn">Envoyer le lien</button>
+    </form>
+{% endblock %}

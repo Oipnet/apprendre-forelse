@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <h1>Connexion</h1>
+    {% if erreur %}
+        {# Affiche le message brut de l'exception : distingue « introuvable » de « mot de passe faux ». #}
+        <p class="erreur">{{ erreur.messageKey|trans(erreur.messageData, 'security') }}</p>
+    {% endif %}
+    <form method="post">
+        <input type="email" name="_username" value="{{ dernier_identifiant }}" placeholder="E-mail">
+        <input type="password" name="_password" placeholder="Mot de passe">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        <button type="submit">Se connecter</button>
+    </form>
+{% endblock %}

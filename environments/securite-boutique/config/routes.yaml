@@ -1,0 +1,11 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+faux:
+    resource:
+        path: ../src/Faux/
+        namespace: App\Faux
+    type: attribute

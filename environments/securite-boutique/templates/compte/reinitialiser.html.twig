@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+{% block title %}Nouveau mot de passe{% endblock %}
+{% block body %}
+    <h1>Choisir un nouveau mot de passe</h1>
+    <form action="{{ path('app_mot_de_passe_reinitialiser', {jeton: jeton}) }}" method="post" class="pile">
+        <label>Nouveau mot de passe <input type="password" name="motDePasse" required></label>
+        <button class="btn">Changer</button>
+    </form>
+{% endblock %}

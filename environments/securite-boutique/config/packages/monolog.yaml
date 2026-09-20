@@ -1,0 +1,8 @@
+# FAILLE (chapitre 17) : un seul handler, tout en « debug », aucun canal « securite »,
+# aucun masquage des données sensibles.
+monolog:
+    handlers:
+        principal:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.log"
+            level: debug

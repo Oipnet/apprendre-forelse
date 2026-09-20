@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+{% block title %}Administration{% endblock %}
+{% block body %}
+    {% include 'admin/_menu.html.twig' %}
+    <h1>Tableau de bord</h1>
+    <div class="badges">
+        <div><div class="badge-nombre">{{ nb_bieres }}</div>bières</div>
+        <div><div class="badge-nombre">{{ nb_commandes }}</div>commandes</div>
+        <div><div class="badge-nombre">{{ nb_clients }}</div>clients</div>
+    </div>
+{% endblock %}

@@ -1,0 +1,6 @@
+# Environnement d'exécution : la boutique volontairement vulnérable de la Brasserie Lacombe,
+# support du parcours « Sécuriser une application Symfony » (pack houblon-noir).
+# Voir houblon-noir/SPEC-BOUTIQUE.md dans le dépôt de contenu.
+id: securite-boutique
+title: Symfony 8.1 — boutique vulnérable (Security, Doctrine SQLite, Form, Serializer, Monolog)
+php: '8.4'

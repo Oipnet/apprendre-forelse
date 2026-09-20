@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+{% block title %}Commandes — admin{% endblock %}
+{% block body %}
+    {% include 'admin/_menu.html.twig' %}
+    <h1>Commandes</h1>
+    <form action="{{ path('app_admin_commandes') }}" method="get" class="pile">
+        <label>Référence <input type="text" name="reference" value="{{ reference }}"></label>
+        <button class="btn">Filtrer</button>
+    </form>
+    <p><a class="btn btn-secondaire" href="{{ path('app_export_commandes') }}">Exporter en CSV</a></p>
+    <table>
+        <tr><th>Référence</th><th>Client</th><th>Total</th><th>Statut</th></tr>
+        {% for commande in commandes %}
+            <tr>
+                <td>{{ commande.reference }}</td>
+                <td>{{ commande.client.nom }}</td>
+                <td>{{ commande.total|prix }}</td>
+                <td>{{ commande.statut }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

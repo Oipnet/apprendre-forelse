@@ -1,0 +1,10 @@
+<div class="admin-menu">
+    <a href="{{ path('app_admin') }}">Tableau de bord</a>
+    <a href="{{ path('app_admin_bieres') }}">Bières</a>
+    <a href="{{ path('app_admin_commandes') }}">Commandes</a>
+    {# FAILLE (chapitre 8, F8.3) : rôle inexistant → lien caché pour tout le monde,
+       mais l'URL /admin/clients reste ouverte côté serveur. #}
+    {% if is_granted('ROLE_ADMINISTRATEUR') %}<a href="{{ path('app_admin_clients') }}">Clients</a>{% endif %}
+    <a href="{{ path('app_admin_etiquettes') }}">Étiquettes</a>
+    <a href="{{ path('app_admin_import') }}">Import</a>
+</div>

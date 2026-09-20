@@ -1,0 +1,24 @@
+parameters:
+    dossier_etiquettes: '%kernel.project_dir%/public/uploads/etiquettes'
+    # Valeur par défaut si la variable d'environnement n'est pas fournie (tests, CLI).
+    env(DEFAULT_URI): 'http://localhost'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: true   # les services métier sont récupérables depuis le conteneur de test
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Fixture\ChargeurDeBoutique:
+        public: true
+
+    # SSRF (chapitre 15) : le client HTTP de l'import est un MockHttpClient câblé
+    # sur le faux réseau interne de l'hébergeur (src/Faux/ReseauDeLHebergeur.php).
+    Symfony\Contracts\HttpClient\HttpClientInterface:
+        factory: ['@App\Faux\ReseauDeLHebergeur', 'client']
