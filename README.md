@@ -202,11 +202,29 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
   Vitest), paquet dont la version fait foi pour `version:`, langages des fiches de cours et conventions
   données au modèle qui rédige. Le navigateur le **reçoit** dans la charge utile de l'exercice au lieu
   de le réécrire : l'éditeur ne contient plus de table de frameworks, seulement le code propre à chaque
-  runtime (le worker, les snippets, le script de la console). Ajouter un framework, c'est fournir un
-  `FrameworkProfileProvider` — une classe, découverte par son étiquette de service — et, s'il s'agit
-  d'une nouvelle famille, son worker côté navigateur. C'est la moitié serveur du contrat décrit dans
-  [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md) ; il reste jeune, et bougera tant qu'un paquet
-  tiers ne l'aura pas essayé.
+  runtime (le worker, les snippets, le script de la console).
+
+  **Ajouter un framework** : fournir un `FrameworkProfileProvider`, une classe découverte par son
+  étiquette de service. Rien d'autre, tant qu'il s'exécute avec un runtime existant — Laravel et le
+  simulateur Docker tournent tous deux sur `php-wasm`, comme Symfony.
+
+  **Ajouter un runtime** — une autre façon d'exécuter un projet dans le navigateur — demande les deux
+  moitiés. Côté serveur, le profil déclare `runtime: 'mon-runtime'`. Côté navigateur, on enregistre une
+  fabrique dans `playground/src/runtime/registry.ts` :
+
+  ```ts
+  registerRuntime({ id: 'mon-runtime', label: 'mon moteur', create: () => new MonRuntime() });
+  ```
+
+  Le playground résout alors le runtime par cette table, sans connaître un seul nom de framework. Ce qui
+  ne changera pas : **le navigateur est un bundle**, donc ajouter un runtime demandera toujours de
+  reconstruire le playground. C'est le niveau 3 de
+  [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md). Ce qui a changé, c'est le nombre de fichiers
+  du moteur à toucher pour le faire : une table, au lieu d'une dizaine de `if`.
+
+  Le profil déclare aussi ce que le navigateur devinait auparavant : `snippets` (les familles d'extraits
+  que l'éditeur propose) et `consoleAliases` (les préfixes tolérés — `php bin/console …`,
+  `docker-compose up`). L'éditeur et la console ne connaissent plus aucun framework par son nom.
 - **Simulateur Docker** (`framework: docker`, environnement `environments/docker`) : Docker ne tourne évidemment pas dans le navigateur. `tools/docker-sim` le simule en PHP pur — images (catalogue fermé : php, composer, nginx, postgres, mysql, mariadb, redis, node, alpine, debian, caddy, mailpit, adminer…), construction d'images à la façon de BuildKit (étapes numérotées, cache par couche, « build checks »), conteneurs, réseaux, volumes, `docker compose` — et **exécute pour de vrai le PHP servi par les conteneurs** : Apache et son `.htaccess`, nginx devant php-fpm, `php -S`. Les erreurs sont celles de Docker (`port is already allocated`, `Unable to locate package`, `host not found in upstream`, `File not found.`), et une suppression de fichiers dans une couche ultérieure ne rend pas la place, comme dans une vraie image. La console du playground devient `docker` (`sh lancer.sh` rejoue un script de commandes), et l'aperçu visite les ports publiés : `preview: /localhost:8080/`. Les tests des exercices étendent `Forelse\DockerSim\Testing\DockerTestCase` (`build()`, `docker()`, `runScript()`, `http()`, `container()`, `service()`, `image()`, `exec()`, et les assertions `assertBuildSucceeded`, `assertImageLacksFile`, `assertImageSizeBelow`, `assertPageContains`…). Le simulateur est un **runtime du moteur**, pas un environnement : il reste dans `tools/`, et `environments/docker` en dépend comme d'une bibliothèque (dépôt Composer `path`). Il a sa propre suite de tests (`cd tools/docker-sim && vendor/bin/phpunit`), lancée par `make test` et la CI. Limites assumées : pas de registre (`docker push`), pas de terminal interactif (`-it`), `RUN` interprété et non exécuté, montages imbriqués non pris en charge, temps comprimé (un healthcheck est rejoué à chaque fois qu'on regarde l'état d'un conteneur, sans phase `starting`, et un échec y vaut tous les essais) ; le PHP des conteneurs s'exécute dans le processus des tests (pas d'`exit()`, pas de fonction globale redéclarée), et n'est donc pas soumis aux droits Unix — ceux-ci s'appliquent aux commandes du shell (`docker exec -u www-data … touch`, un montage `:ro`), qui sont le bon moyen de les vérifier.
 - `visibility: admin` (dans `track.yaml`) réserve un parcours en préparation aux administrateurs : absent de l'accueil, introuvable (404) pour les autres, jamais conseillé comme suite. Il reste vérifié par `content:check` et modifiable dans l'atelier. Retirez la clé (ou `visibility: public`) pour l'ouvrir. Un administrateur peut aussi l'ouvrir à une seule cohorte en le cochant dans ses parcours disponibles.
 - `order: <entier>` (dans `track.yaml`) fixe le rang du parcours dans les listes, à commencer par l'accueil, dont l'onglet ouvert par défaut est le premier : le plus petit d'abord. Les parcours sans rang viennent après, dans l'ordre de chargement (chemins de `CONTENT_PACKS_PATHS`, puis dossiers de packs par ordre alphabétique, puis liste `tracks:` du pack). Laissez de l'écart entre les rangs (10, 20, 30) pour intercaler un parcours d'un autre pack sans renuméroter.

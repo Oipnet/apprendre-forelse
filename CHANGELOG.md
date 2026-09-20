@@ -128,6 +128,27 @@ tel quel.
   s'approprier un identifiant déjà pris : déclaré deux fois, le chargement s'arrête en nommant les deux
   dossiers.
 
+- **Ajouter un runtime** : le playground résout désormais le runtime par un **registre**
+  (`playground/src/runtime/registry.ts`) au lieu d'un `'nuxt' === framework.id ? … : …`. Le profil du
+  framework déclare `runtime` (`php-wasm`, `nuxt-sim`, ou un runtime ajouté) ; le navigateur le reçoit
+  dans la charge utile et va chercher la fabrique correspondante. Un runtime s'enregistre en une ligne,
+  depuis son propre module.
+
+  Ce qui ne changera pas : le navigateur est un bundle, donc ajouter un runtime demandera toujours de
+  reconstruire le playground — c'est le niveau 3 de
+  [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md). Ce qui change, c'est le nombre de fichiers du
+  moteur à toucher pour le faire.
+
+  Le profil déclare aussi deux choses que le navigateur devinait : `snippets` (les familles d'extraits
+  que l'éditeur propose — « php », « laravel », « docker ») et `consoleAliases` (les préfixes tolérés
+  au début d'une commande : `php bin/console …`, `artisan …`, `docker-compose up` devenant
+  `compose up`). L'éditeur et la console ne comparent plus aucun identifiant de framework. Le worker
+  PHP non plus : il refuse un environnement dont le `runtime` n'est pas le sien, au lieu de nommer Nuxt.
+
+  Restent dans le worker PHP deux branches `docker` — le script HTTP du simulateur et le routage de ses
+  requêtes. Elles y sont à leur place : le simulateur Docker **est** servi par `php-wasm`, c'est une
+  affaire interne à ce runtime, pas un couplage du moteur.
+
 ### Modifié
 
 - Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement

@@ -56,6 +56,11 @@ final class DockerProfile implements FrameworkProfileProvider
                 - Documentation : https://docs.docker.com/reference/dockerfile/, https://docs.docker.com/reference/compose-file/,
                   https://hub.docker.com/_/php.
                 TEXTE,
+            runtime: FrameworkProfile::PHP_WASM,
+            // Les extraits PHP, plus les squelettes de Dockerfile et de compose.yaml.
+            snippets: ['php', 'docker'],
+            // « docker compose up » et « docker-compose up » mènent au même endroit.
+            consoleAliases: ['docker' => '', 'docker-compose' => 'compose'],
         );
     }
 }

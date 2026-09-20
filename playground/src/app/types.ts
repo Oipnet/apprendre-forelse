@@ -78,6 +78,15 @@ export interface FrameworkProfile {
 	/** Étape de démarrage : « Décompression du projet Symfony ». */
 	unpackLabel: string;
 	testRunner: 'phpunit' | 'vitest';
+	/**
+	 * Qui l'exécute dans le navigateur : « php-wasm », « nuxt-sim », ou un runtime ajouté.
+	 * Résolu par src/runtime/registry.ts — le playground ne connaît plus les frameworks par leur nom.
+	 */
+	runtime: string;
+	/** Familles d'extraits que l'éditeur propose (« php », « laravel », « docker »). */
+	snippets: string[];
+	/** Préfixes tolérés au début d'une commande => ce qui les remplace (chaîne vide : retiré). */
+	consoleAliases: Record<string, string>;
 	/** Dossiers du projet, visibles dans l'explorateur. */
 	projectDirs: string[];
 	/** Caches à vider entre deux runs de tests. */

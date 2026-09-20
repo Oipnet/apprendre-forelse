@@ -45,9 +45,15 @@ final class ExerciseApiTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSame([
             'id', 'label', 'console', 'consoleExample', 'bootNote', 'unpackLabel',
-            'testRunner', 'projectDirs', 'testCaches', 'hidden', 'namespaceRoots',
+            'testRunner', 'runtime', 'snippets', 'consoleAliases',
+            'projectDirs', 'testCaches', 'hidden', 'namespaceRoots',
         ], array_keys($framework));
         $this->assertSame('symfony', $framework['id']);
+        // C'est « runtime » qui décide qui exécute le projet dans le navigateur, et non l'identifiant
+        // du framework : le playground le résout par son registre (playground/src/runtime/registry.ts).
+        $this->assertSame('php-wasm', $framework['runtime']);
+        $this->assertSame(['php'], $framework['snippets']);
+        $this->assertSame(['php' => '', 'bin/console' => ''], (array) $framework['consoleAliases']);
         $this->assertSame('Symfony', $framework['label']);
         $this->assertSame('bin/console', $framework['console']);
         $this->assertSame('phpunit', $framework['testRunner']);

@@ -304,7 +304,11 @@ async function dockerRequest(req: HttpRequest, url: URL, start: number): Promise
 const api: Runtime = {
 	async boot(spec) {
 		env = spec;
-		if ('nuxt' === spec.framework.id) throw new Error('Un environnement Nuxt se joue avec NuxtRuntime, pas avec PHP.');
+		// Le garde porte sur le runtime demandé, pas sur le nom du framework : ce worker sert tous ceux
+		// qui s'exécutent en PHP, quel que soit leur nombre, et aucun autre.
+		if ('php-wasm' !== spec.framework.runtime) {
+			throw new Error(`Un environnement « ${spec.framework.runtime} » ne se joue pas avec PHP (voir src/runtime/registry.ts).`);
+		}
 		profile = spec.framework;
 		const archive = await download(spec.archiveUrl);
 		progress({ step: 'unpack', ratio: null, label: spec.framework.unpackLabel });

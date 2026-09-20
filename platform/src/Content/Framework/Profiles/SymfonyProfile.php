@@ -41,6 +41,11 @@ final class SymfonyProfile implements FrameworkProfileProvider
                   entités liées entre elles **en un seul appel**, sinon Doctrine refuse une association vers
                   une entité détachée.
                 TEXTE,
+            // Exécuté par PHP compilé en WebAssembly, comme Laravel et le simulateur Docker.
+            runtime: FrameworkProfile::PHP_WASM,
+            snippets: ['php'],
+            // « php bin/console cache:clear », « bin/console … » : on tolère les habitudes du terminal.
+            consoleAliases: ['php' => '', 'bin/console' => ''],
         );
     }
 }

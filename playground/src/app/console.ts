@@ -1,17 +1,27 @@
 import type { CommandResult, Runtime } from '../runtime/Runtime';
 
-/** Découpe une ligne de commande en arguments (guillemets simples ou doubles respectés). */
-export function parseCommandLine(line: string): string[] {
+/**
+ * Découpe une ligne de commande en arguments (guillemets simples ou doubles respectés).
+ *
+ * Les `aliases` tolèrent les habitudes du terminal — « php bin/console … », « docker-compose up » —
+ * et viennent du profil du framework : un préfixe reconnu est retiré, ou remplacé quand la valeur
+ * n'est pas vide (« docker-compose » devient « compose »). Deux tours au plus, parce que « php » et
+ * « bin/console » s'enchaînent.
+ */
+export function parseCommandLine(line: string, aliases: Record<string, string> = {}): string[] {
 	const args: string[] = [];
 	const pattern = /"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+)/g;
 	for (const match of line.matchAll(pattern)) args.push(match[1]?.replace(/\\(.)/g, '$1') ?? match[2] ?? match[3]);
-	// Tolère les habitudes du terminal : « php bin/console … », « bin/console … », « php artisan … », « docker … ».
-	if (args[0] === 'docker' || args[0] === 'docker-compose') {
-		if (args.shift() === 'docker-compose') args.unshift('compose');
-		return args;
+	for (let tour = 0; tour < 2; tour++) {
+		const premier = args[0];
+		if (premier === undefined || !(premier in aliases)) break;
+		args.shift();
+		const remplacement = aliases[premier]!;
+		if (remplacement) {
+			args.unshift(remplacement);
+			break;
+		}
 	}
-	if (args[0] === 'php') args.shift();
-	if (args[0] === 'bin/console' || args[0] === 'artisan') args.shift();
 	return args;
 }
 
@@ -79,6 +89,8 @@ export class ConsolePanel {
 		private readonly onCommandRan: (result: CommandResult) => void,
 		/** Nom de la console, tel qu'on la tape dans un terminal. */
 		private readonly consoleName = 'bin/console',
+		/** Préfixes tolérés au début d'une commande, déclarés par le profil du framework. */
+		private readonly aliases: Record<string, string> = {},
 	) {
 		input.addEventListener('keydown', (event) => {
 			if (event.key === 'Enter') {
@@ -104,7 +116,7 @@ export class ConsolePanel {
 
 	async run(commandLine: string, { quiet = false } = {}): Promise<CommandResult | null> {
 		const line = commandLine.trim();
-		const args = parseCommandLine(line);
+		const args = parseCommandLine(line, this.aliases);
 		if (!args.length || this.busy) return null;
 		this.busy = true;
 		this.input.disabled = true;

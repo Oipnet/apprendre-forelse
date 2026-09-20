@@ -11,8 +11,9 @@ export interface EnvironmentSpec {
 	id: string;
 	/**
 	 * Ce que le moteur déclare du framework : console, dossiers du projet, caches, namespaces
-	 * (voir App\Content\Framework\FrameworkProfile). Son `id` choisit le runtime : php-wasm pour
-	 * Symfony, Laravel et le simulateur Docker ; le simulateur Nuxt pour Nuxt.
+	 * (voir App\Content\Framework\FrameworkProfile). C'est son champ `runtime` qui dit qui l'exécute
+	 * — `php-wasm` pour Symfony, Laravel et le simulateur Docker, `nuxt-sim` pour Nuxt —, résolu par
+	 * src/runtime/registry.ts.
 	 */
 	framework: FrameworkProfile;
 	/** Vide pour Nuxt (simulateur JavaScript, sans PHP). */

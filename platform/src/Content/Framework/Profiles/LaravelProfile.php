@@ -43,6 +43,9 @@ final class LaravelProfile implements FrameworkProfileProvider
                 - Documentation : https://laravel.com/docs/13.x/<page> (routing, controllers, blade, requests,
                   validation, eloquent, migrations…). Messages de validation déjà traduits en français.
                 TEXTE,
+            runtime: FrameworkProfile::PHP_WASM,
+            snippets: ['laravel'],
+            consoleAliases: ['php' => '', 'artisan' => ''],
         );
     }
 }

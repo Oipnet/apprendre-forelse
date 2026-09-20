@@ -99,7 +99,12 @@ export function registerCompletion(
 	languages: Languages,
 	index: CompletionIndex,
 	allModels: () => monaco.editor.ITextModel[],
-	framework: 'symfony' | 'laravel' | 'docker' | 'nuxt' = 'symfony',
+	/**
+	 * Les familles d'extraits à proposer, déclarées par le profil du framework (« php », « laravel »,
+	 * « docker »). L'éditeur n'a pas à savoir qu'il existe un Symfony ou un Laravel : il sait proposer
+	 * des extraits PHP, des extraits Laravel et des squelettes Docker, et on lui dit lesquels.
+	 */
+	snippets: string[] = ['php'],
 	/** Fichiers du projet, contenu à jour : leurs classes s'ajoutent à l'index (voir refreshProject). */
 	projectFiles: () => Record<string, string> = () => ({}),
 ) {
@@ -283,7 +288,9 @@ export function registerCompletion(
 			const suggestions = /^[A-Z]/.test(word.word) || (argumentDAttribut && word.word === '')
 				? classItems(range, model, ctx, () => true)
 				: [];
-			suggestions.push(...framework === 'laravel' ? laravelSnippets(range, model, ctx, useEdit) : phpSnippets(range, model, ctx, useEdit));
+			suggestions.push(...snippets.includes('laravel')
+				? laravelSnippets(range, model, ctx, useEdit)
+				: phpSnippets(range, model, ctx, useEdit));
 			return { suggestions };
 		},
 	});
@@ -349,7 +356,7 @@ export function registerCompletion(
 	});
 
 	// Dockerfile et compose.yaml : quelques squelettes, pour ne pas partir d'une page blanche.
-	if (framework === 'docker') {
+	if (snippets.includes('docker')) {
 		languages.registerCompletionItemProvider('dockerfile', {
 			provideCompletionItems(model, position) {
 				const word = model.getWordUntilPosition(position);

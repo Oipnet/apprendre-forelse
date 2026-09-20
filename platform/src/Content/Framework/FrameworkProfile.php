@@ -20,6 +20,10 @@ final readonly class FrameworkProfile
     public const string PHPUNIT = 'phpunit';
     public const string VITEST = 'vitest';
 
+    /** Runtimes du navigateur : PHP compilé en WebAssembly, et le simulateur Nuxt. */
+    public const string PHP_WASM = 'php-wasm';
+    public const string NUXT_SIM = 'nuxt-sim';
+
     /**
      * @param string                $id              identifiant écrit dans environment.yaml (« symfony »)
      * @param string                $label           nom affiché (« Symfony »)
@@ -38,6 +42,9 @@ final readonly class FrameworkProfile
      * @param array<string, string> $namespaceRoots  premier dossier => racine de namespace (« src » => « App »)
      * @param string                $lessonLanguages langages des blocs de code d'une fiche de cours
      * @param string|null           $drafting        conventions du projet, données au modèle qui rédige (null : il ne sait pas)
+     * @param string                $runtime         qui l'exécute dans le navigateur (PHP_WASM, NUXT_SIM, ou un runtime ajouté)
+     * @param list<string>          $snippets        familles d'extraits proposés par l'éditeur (« php », « laravel », « docker »)
+     * @param array<string, string> $consoleAliases  préfixes tolérés dans la console => ce qui les remplace (« » : retiré)
      */
     public function __construct(
         public string $id,
@@ -57,6 +64,9 @@ final readonly class FrameworkProfile
         public array $namespaceRoots,
         public string $lessonLanguages,
         public ?string $drafting,
+        public string $runtime = self::PHP_WASM,
+        public array $snippets = [],
+        public array $consoleAliases = [],
     ) {
     }
 
@@ -81,6 +91,9 @@ final readonly class FrameworkProfile
             'bootNote' => $this->bootNote,
             'unpackLabel' => $this->unpackLabel,
             'testRunner' => $this->testRunner,
+            'runtime' => $this->runtime,
+            'snippets' => $this->snippets,
+            'consoleAliases' => (object) $this->consoleAliases,
             'projectDirs' => $this->projectDirs,
             'testCaches' => $this->testCaches,
             'hidden' => $this->hidden,

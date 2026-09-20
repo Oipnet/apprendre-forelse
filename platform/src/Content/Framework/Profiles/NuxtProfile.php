@@ -34,6 +34,10 @@ final class NuxtProfile implements FrameworkProfileProvider
             lessonLanguages: '```vue, ```ts, ```bash',
             // L'atelier ne sait pas encore échafauder ni faire rédiger un exercice Nuxt : voir ExerciseDrafter.
             drafting: null,
+            // Pas de PHP : c'est le simulateur Nuxt qui joue le projet, dans son propre worker.
+            runtime: FrameworkProfile::NUXT_SIM,
+            snippets: [],
+            consoleAliases: [],
         );
     }
 }

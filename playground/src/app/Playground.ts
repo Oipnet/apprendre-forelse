@@ -4,8 +4,8 @@ import { registerCompletion, type CompletionIndex } from '../editor/completion';
 import { EditorPanel, monaco } from '../editor/monaco';
 import { PreviewBridge } from '../preview/bridge';
 import type { CommandResult, TestRunResult } from '../runtime/Runtime';
-import { NuxtRuntime } from '../runtime/NuxtRuntime';
-import { WasmRuntime } from '../runtime/WasmRuntime';
+import '../runtime/builtin';
+import { createRuntime, runtimeLabel } from '../runtime/registry';
 import { ConsolePanel } from './console';
 import { BeforeAfterDialog } from './diff';
 import { FeedbackDialog } from './feedback';
@@ -68,7 +68,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	$('.small-screen-note button').addEventListener('click', () => ($('.small-screen-note').style.display = 'none'));
 
 	// --- Runtime et aperçu isolé ---------------------------------------------------------
-	const runtime = 'nuxt' === framework.id ? new NuxtRuntime() : new WasmRuntime();
+	const runtime = createRuntime(framework.runtime);
 	const urlInput = $<HTMLInputElement>('#url');
 	// La console est créée plus bas : les messages de l'aperçu arrivés avant sont gardés en attente.
 	let messagesDeLApercu: ((level: 'warn' | 'error', message: string) => void) | undefined;
@@ -103,7 +103,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			},
 		);
 	} catch (error) {
-		$('#boot-label').textContent = `Impossible de démarrer ${'nuxt' === framework.id ? 'le simulateur Nuxt' : 'PHP'} : ${error instanceof Error ? error.message.split('\n')[0] : error}`;
+		$('#boot-label').textContent = `Impossible de démarrer ${runtimeLabel(framework.runtime)} : ${error instanceof Error ? error.message.split('\n')[0] : error}`;
 		throw error;
 	}
 	mark('runtimeReady');
@@ -140,7 +140,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		lastConsoleError = result.exitCode === 0 ? null : stripAnsi(result.output);
 		$('#explain-console').hidden = !mentor || !lastConsoleError;
 		reload();
-	}, consoleName);
+	}, consoleName, framework.consoleAliases);
 	messagesDeLApercu = (level, message) => {
 		consolePanel.logFromPreview(level, message);
 		// Le badge signale un message qu'on n'a pas encore vu, sauf si la console est déjà affichée.
@@ -293,7 +293,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	fetch(exercise.environment.completionIndexUrl)
 		.then((r) => r.json() as Promise<CompletionIndex>)
 		// Les fichiers du projet, édités compris : la complétion y lit les classes de l'apprenant.
-		.then((index) => registerCompletion(monaco.languages, index, () => monaco.editor.getModels(), framework.id, () => ({ ...initial, ...current })))
+		.then((index) => registerCompletion(monaco.languages, index, () => monaco.editor.getModels(), framework.snippets, () => ({ ...initial, ...current })))
 		.catch((e) => console.warn('Complétion indisponible', e));
 
 	// --- Tests et réussite ---------------------------------------------------------------
