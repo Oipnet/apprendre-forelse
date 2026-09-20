@@ -617,7 +617,7 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 	return `
 	<header class="topbar">
 		<div class="crumbs">
-			<a class="lp-brand" href="/" title="Forelse · apprendre">${config.logoUrl ? `<img src="${escapeHtml(config.logoUrl)}" alt="" width="240" height="280">` : ''}<span class="lp-serif">Forelse</span><span class="lp-chip">apprendre</span></a>
+			<a class="lp-brand" href="/" title="${escapeHtml(config.brand.title)}">${config.brand.logoUrl ? `<img src="${escapeHtml(config.brand.logoUrl)}" alt="" width="240" height="280">` : ''}<span class="lp-serif">${escapeHtml(config.brand.name)}</span>${config.brand.chip ? `<span class="lp-chip">${escapeHtml(config.brand.chip)}</span>` : ''}</a>
 			<span class="sep">›</span><a class="crumb-track" href="${escapeHtml(config.back.url)}">${escapeHtml(config.back.title)}</a><span class="sep crumb-track">›</span><span class="crumb-current">${escapeHtml(exercise.title)}</span><span class="done-chip" id="done-chip" hidden title="Exercice réussi">✓ Réussi</span>
 		</div>
 		<nav class="pane-switch" aria-label="Volet affiché">

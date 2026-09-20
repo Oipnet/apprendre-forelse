@@ -10,6 +10,7 @@ un petit serveur suffit, même pour beaucoup d'apprenants.
 - [Installation](#installation)
 - [Premier administrateur](#premier-administrateur)
 - [Contenu : les packs](#contenu--les-packs)
+- [Votre marque](#votre-marque)
 - [Réglages](#réglages)
 - [Derrière un reverse proxy](#derrière-un-reverse-proxy)
 - [Essai sur votre poste](#essai-sur-votre-poste)
@@ -115,6 +116,48 @@ packs/
   ⚠️ `content:check` **exécute le PHP des packs** sur votre serveur : ne le lancez que sur des packs de
   confiance. Les apprenants, eux, n'exécutent rien sur le serveur.
 
+## Votre marque
+
+Sans rien, l'instance s'appelle « Forelse » et son accueil raconte la Taverne du Dragon Ivre. Pour poser
+votre marque, créez un dossier `marque/` à côté de `compose.yaml` — il est déjà monté :
+
+```bash
+mkdir -p marque
+curl -fsSL -o marque/marque.yaml \
+  https://raw.githubusercontent.com/oipnet/apprendre-forelse/main/examples/marque/marque.yaml
+# éditez marque/marque.yaml, déposez vos images à côté, puis :
+docker compose up -d
+```
+
+**Dès que `marque/marque.yaml` existe, plus rien de la marque du moteur n'est servi** : ni le nom, ni le
+logo, ni la favicon, ni l'image de partage, ni les textes d'accueil de Forelse. Vous ne risquez pas de
+laisser traîner « Forelse » dans un coin de page ou dans un email.
+
+Le fichier d'exemple est commenté ligne à ligne. En résumé :
+
+| Clé | Ce qu'elle habille |
+| --- | --- |
+| `name` (obligatoire) | En-tête, pied de page, titres des pages, **emails**, balises de partage |
+| `chip`, `tagline`, `title`, `url` | La puce à côté du nom, la phrase du pied de page, le titre de l'accueil, votre site |
+| `logo`, `icon`, `share` | Vos images, déposées dans ce dossier (jamais un chemin) |
+| `colors`, `fonts` | Les couleurs et polices du thème clair |
+| `home.showcase`, `home.author`, `home.demo` | Les trois sections de l'accueil qui parlent de vous ; non déclarées, elles n'apparaissent pas |
+
+Une couleur mal écrite ou une clé inconnue **arrête la page** avec un message qui dit quoi corriger :
+mieux vaut une erreur franche qu'une instance à moitié habillée. Vérifiez après coup :
+
+```bash
+docker compose logs --tail 50 app
+```
+
+**Aller plus loin : vos propres pages.** Un gabarit Twig déposé dans `marque/templates/` remplace celui
+du moteur qui porte le même nom — `home.html.twig` pour refaire l'accueil, `_footer.html.twig` pour le
+pied de page, `legal/notice.html.twig` pour vos mentions. Vous ne copiez que le fichier à changer. Les
+gabarits sont compilés une fois : après en avoir déposé un, `docker compose restart app`.
+
+Ce qui reste du moteur dans tous les cas : le pied de page indique sa version et sa licence AGPL, comme
+la licence l'exige.
+
 ## Réglages
 
 Tout se règle dans `.env`, commenté ligne à ligne. Après chaque modification :
@@ -135,6 +178,7 @@ docker compose up -d
 | Audience | `ANALYTICS_*` | Facultative, éteinte par défaut : voir [Savoir qui visite le site](#savoir-qui-visite-le-site). |
 | Mentor et IA | `ANTHROPIC_API_KEY`, `AI_MODEL` | Revue de code et erreurs expliquées pour les apprenants connectés, brouillons dans l'atelier. Chaque appel est facturé sur votre clé ; sans clé, les boutons n'apparaissent pas. |
 | Vente | `STRIPE_*`, `LEGAL_MEDIATOR_*`, `LEGAL_REFUND_DAYS` | Facultatif : **une instance sans tarif reste entièrement gratuite** pour les comptes. Détails dans le [README](../README.md#parcours-payants). |
+| Marque | `BRANDING_HOST_DIR`, `COHORT_*` | Votre nom, vos couleurs, vos images, vos tarifs de cohorte : voir [Votre marque](#votre-marque). |
 | Image | `APP_IMAGE` | Voir [Mettre à jour](#mettre-à-jour). |
 
 ## Savoir qui visite le site

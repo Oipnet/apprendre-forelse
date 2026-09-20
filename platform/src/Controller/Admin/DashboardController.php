@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Admin\BetaStats;
+use App\Instance\Branding;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
@@ -15,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 #[AdminDashboard(routePath: '/admin', routeName: 'admin')]
 final class DashboardController extends AbstractDashboardController
 {
-    public function __construct(private readonly BetaStats $stats)
+    public function __construct(private readonly BetaStats $stats, private readonly Branding $branding)
     {
     }
 
@@ -39,8 +40,8 @@ final class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('Forelse · apprendre')
-            ->setFaviconPath('img/favicon.svg')
+            ->setTitle($this->branding->signature())
+            ->setFaviconPath($this->branding->iconUrl() ?? 'img/favicon.svg')
             ->renderContentMaximized();
     }
 

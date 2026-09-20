@@ -26,6 +26,7 @@ tools/            Empaquetage des environnements (archive + index de complétion
 auto-hebergement/ Guide, compose.yaml et .env.example d'une instance auto-hébergée
 deploy/           compose.yaml de l'instance de Forelse, copié sur son serveur par l'intégration continue
 examples/packs/   Pack de démonstration (format de contenu, tests du moteur)
+examples/marque/  Exemple d'identité d'instance (marque blanche) : marque.yaml commenté et ses images
 ```
 
 Dans le navigateur :
@@ -204,6 +205,51 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
 ⚠️ `content:check` exécute le PHP des packs sur votre machine : ne l'utilisez qu'avec des packs de confiance.
 
 **Écarts entre PHP natif et navigateur.** `content:check` s'exécute avec le PHP de la machine, alors que l'apprenant utilise php-wasm, qui n'a **pas l'extension `intl`** : la locale y reste `en`. Évitez donc ce qui dépend d'`intl` (`NumberType` sans `'html5' => true`, `MoneyType`, dates localisées…), sous peine de voir des exercices validés par `content:check` se comporter autrement dans le navigateur. La traduction (messages de validation en français) n'est pas concernée.
+
+## Habiller son instance
+
+Le moteur ne s'appelle « Forelse » que **tant qu'on ne lui dit rien**. Une instance pose sa marque en
+montant un dossier (`BRANDING_DIR`, `/marque` dans l'image) à côté des packs — aucun fork, aucune image
+à reconstruire, rien à republier au titre de l'AGPL : c'est de la configuration, pas du code.
+
+```
+marque/
+  marque.yaml     nom, puce, accroche, site, couleurs, polices, images, textes de l'accueil
+  logo.svg  favicon.svg  partage.png      les images, nommées dans marque.yaml
+  templates/      (facultatif) des gabarits Twig qui remplacent ceux du moteur
+```
+
+Un exemple complet et commenté, à copier : [examples/marque/marque.yaml](examples/marque/marque.yaml).
+
+**La règle à retenir** : dès que `marque.yaml` existe, **plus rien de la marque du moteur n'est servi**.
+Ni le nom, ni le logo, ni la favicon, ni l'image de partage, ni les textes d'accueil qui parlent de la
+Taverne du Dragon Ivre et de l'auteur de Forelse. Une instance ne peut donc pas se retrouver à vendre
+une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
+
+- `name` (obligatoire) s'affiche dans l'en-tête, le pied de page, les `<title>` (« Mon compte · … »),
+  les emails (confirmation d'adresse, mot de passe oublié, achat), les balises Open Graph et les données
+  structurées. `chip` est la petite puce à côté, `tagline` la phrase du pied de page, `title` le `<title>`
+  de l'accueil, `url` le site de la marque.
+- `colors` et `fonts` écrivent les variables CSS du thème clair (`--lp-rust`, `--lp-bg`…), posées après
+  la feuille de styles. Hexadécimal seulement ; une valeur mal écrite **arrête la page** avec un message
+  qui dit laquelle — une instance à moitié habillée est pire qu'une erreur. Le thème sombre de l'éditeur
+  reste celui du moteur.
+- `logo`, `icon` et `share` nomment des fichiers **de ce dossier** (jamais un chemin), servis sur
+  `/marque/<rôle>` avec la date du fichier dans l'URL : une image remplacée change d'URL.
+- `home.showcase`, `home.author` et `home.demo` remplissent les trois sections de l'accueil qui parlent
+  de la marque (le fil rouge, « qui est derrière », l'illustration du bandeau). Une section non déclarée
+  n'apparaît pas, et la page reste cohérente sans elle. Leur forme est vérifiée à la lecture, avec le
+  piège du YAML en tête : **une phrase qui contient « : » doit être entre guillemets**, sinon elle
+  devient un tableau — le message le dit plutôt que de laisser la page échouer à l'affichage.
+- **L'échappatoire** : un fichier déposé dans `marque/templates/` remplace le gabarit de même nom du
+  moteur (`home.html.twig`, `_footer.html.twig`, `legal/notice.html.twig`…). Il n'y a rien à copier
+  d'autre que le fichier à changer. En production les gabarits sont compilés une fois : après en avoir
+  déposé un, redémarrez le conteneur.
+- Les tarifs de cohorte (`COHORT_UNIT_PRICE`, `COHORT_TIERS`) sont des variables d'environnement, comme
+  les mentions légales (`LEGAL_*`) : aucune instance n'a à reconstruire l'image pour ses prix.
+
+Ce qui reste du moteur dans tous les cas : le pied de page dit la version et la licence AGPL du moteur,
+comme l'exige la licence.
 
 ## Sécurité
 

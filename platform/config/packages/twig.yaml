@@ -8,6 +8,8 @@ twig:
         google_site_verification: '%env(GOOGLE_SITE_VERIFICATION)%'
         # Page « Auto-hébergement », réservée à l'instance de Forelse (SELF_HOSTING_PAGE).
         self_hosting: '@App\Instance\SelfHostingPage'
+        # Identité de l'instance : nom, puce, couleurs, images, textes de l'accueil (voir App\Instance\Branding).
+        marque: '@App\Instance\Branding'
         # Balises de la page publique en cours (voir App\Seo\SeoWriter).
         seo: '@App\Seo\PageSeo'
         # Mesure d'audience (Umami auto-hébergé) : sans les deux variables ANALYTICS_*, aucune balise.

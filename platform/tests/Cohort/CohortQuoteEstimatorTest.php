@@ -19,7 +19,19 @@ final class CohortQuoteEstimatorTest extends TestCase
         return new CohortQuoteEstimator(
             new ContentRepository([__DIR__.'/../Fixtures/packs/cohortes'], new EnvironmentRegistry(self::ROOT.'/environments'), new Version(self::ROOT.'/VERSION')),
             3000,
-            [['from' => 30, 'percent' => 50], ['from' => 1, 'percent' => 100], ['from' => 10, 'percent' => 70]],
+            '30:50, 1:100, 10:70',
+        );
+    }
+
+    public function testUnBaremeMalEcritEstRefuse(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('COHORT_TIERS');
+
+        new CohortQuoteEstimator(
+            new ContentRepository([__DIR__.'/../Fixtures/packs/cohortes'], new EnvironmentRegistry(self::ROOT.'/environments'), new Version(self::ROOT.'/VERSION')),
+            3000,
+            '1:100,dix:70',
         );
     }
 

@@ -22,7 +22,7 @@
     <div class="playground studio lesson-studio" data-studio-lesson data-config="{{ config|json_encode }}">
         <header class="topbar">
             <div class="crumbs">
-                <a class="lp-brand" href="{{ path('app_home') }}" title="Forelse · apprendre"><img src="{{ asset('img/logo-84.webp') }}" alt="" width="72" height="84"><span class="lp-serif">Forelse</span><span class="lp-chip">apprendre</span></a><span>›</span>
+                <a class="lp-brand" href="{{ path('app_home') }}" title="{{ marque.title }}">{% if marque.logoUrl %}<img src="{{ marque.logoUrl }}" alt="" width="72" height="84">{% endif %}<span class="lp-serif">{{ marque.name }}</span>{% if marque.chip %}<span class="lp-chip">{{ marque.chip }}</span>{% endif %}</a><span>›</span>
                 <a href="{{ path('app_studio') }}">Atelier</a><span>›</span>{{ track.title }}<span>›</span>Fiche de cours · {{ chapter.title }}
             </div>
             <div class="status">Prêt</div>

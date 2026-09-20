@@ -62,8 +62,8 @@ export interface ExampleRequest {
 export interface PlaygroundConfig {
 	exerciseUrl: string;
 	sandboxUrl: string;
-	/** Logo de la marque, pour la barre du haut. */
-	logoUrl?: string;
+	/** L'identité de l'instance, pour la barre du haut (voir App\Instance\Branding). */
+	brand: { name: string; chip: string; title: string; logoUrl: string | null };
 	/** Exercice d'un parcours, ou de la Pratique (sans suite, sans XP, sans fiche de cours). */
 	context: 'track' | 'practice';
 	/** Le lien de retour de la barre : le parcours, ou la liste de la Pratique. */

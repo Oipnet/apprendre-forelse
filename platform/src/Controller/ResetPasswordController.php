@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\ChangePasswordFormType;
 use App\Form\ResetPasswordRequestFormType;
+use App\Instance\Branding;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -40,6 +41,7 @@ final class ResetPasswordController extends AbstractController
         /** Expéditeur des emails (« Nom <adresse> »), voir MAILER_FROM dans .env. */
         #[Autowire(env: 'MAILER_FROM')]
         private readonly string $mailerFrom,
+        private readonly Branding $branding,
     ) {
     }
 
@@ -118,7 +120,7 @@ final class ResetPasswordController extends AbstractController
             // L'apprenant vient de prouver qu'il contrôle l'adresse du compte : inutile de lui redemander
             // le mot de passe qu'il vient de choisir.
             $security->login($user, 'form_login', 'main');
-            $this->addFlash('success', 'Mot de passe modifié. Bon retour à la taverne !');
+            $this->addFlash('success', 'Mot de passe modifié. Bon retour !');
 
             return $this->redirectToRoute('app_home');
         }
@@ -139,7 +141,7 @@ final class ResetPasswordController extends AbstractController
         $mailer->send((new TemplatedEmail())
             ->from(Address::create($this->mailerFrom))
             ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
-            ->subject('Votre nouveau mot de passe Forelse')
+            ->subject(sprintf('Votre nouveau mot de passe %s', $this->branding->name()))
             ->htmlTemplate('emails/reset_password.html.twig')
             ->textTemplate('emails/reset_password.txt.twig')
             ->context(['resetToken' => $resetToken, 'user' => $user]));

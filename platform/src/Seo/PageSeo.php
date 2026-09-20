@@ -14,7 +14,6 @@ final class PageSeo implements ResetInterface
 {
     public const int TITLE_MAX = 60;
     public const int DESCRIPTION_MAX = 155;
-    public const string SITE_NAME = 'Forelse';
 
     private ?string $title = null;
     private ?string $description = null;

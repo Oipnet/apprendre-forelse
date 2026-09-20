@@ -1,0 +1,37 @@
+{# Illustration du bandeau d'accueil : un exercice tel qu'il se présente (éditeur, aperçu, objectifs).
+   Le contenu vient de la marque de l'instance (marque.yaml, « home.demo ») : sans elle, pas d'illustration,
+   et le bandeau occupe toute la largeur. #}
+<figure class="lp-demo" data-demo aria-label="Un exercice : le code, l'aperçu de la page et les objectifs validés">
+    <div class="lp-demo-tabs">
+        {% for file in demo.files|default([]) %}
+            <span class="tab{{ loop.first ? ' active' : '' }}">{{ file }}</span>
+        {% endfor %}
+        <span class="status">Aperçu à jour</span>
+    </div>
+<pre class="lp-code">{{ demo.code|default('')|raw }}</pre>
+    <div class="lp-demo-bottom">
+        <div class="lp-demo-preview">
+            <span class="lp-demo-label">{{ demo.preview.url|default('localhost/') }}</span>
+            <span class="name">{{ demo.preview.name|default('') }}</span>
+            <span class="label">{{ demo.preview.label|default('') }}</span>
+            <strong>{{ demo.preview.value|default('') }}</strong>
+            {% if demo.preview.row is defined %}
+                <span class="row"><span>{{ demo.preview.row[0] }}</span><span class="price">{{ demo.preview.row[1] }}</span></span>
+            {% endif %}
+        </div>
+        <div class="lp-demo-goals">
+            <span class="lp-demo-label">Objectifs</span>
+            {% for goal in demo.goals|default([]) %}
+                {# Le dernier objectif est celui qui se valide sous les yeux du visiteur (animé par site.ts). #}
+                {% if loop.last %}
+                    <span class="goal" data-demo-goal><i>○</i>{{ goal }}</span>
+                {% else %}
+                    <span class="goal done"><i>✓</i>{{ goal }}</span>
+                {% endif %}
+            {% endfor %}
+            {% if demo.goals|default([])|length %}
+                <span class="score"><span data-demo-score>{{ demo.goals|length - 1 }} / {{ demo.goals|length }} validés</span><span class="xp" data-demo-xp>+ 100 XP</span></span>
+            {% endif %}
+        </div>
+    </div>
+</figure>

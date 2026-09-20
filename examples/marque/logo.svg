@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Logo d'exemple : un bigorneau stylisé. Remplacez-le par le vôtre. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 84" width="72" height="84" role="img" aria-label="Atelier Bigorneau">
+    <path d="M36 6 C18 6 8 20 8 38 c0 22 14 40 28 40 s28-18 28-40 C64 20 54 6 36 6 Z" fill="#1f6f8b"/>
+    <path d="M36 18 c-10 0-16 8-16 18 0 12 8 24 16 24 s16-12 16-24 c0-10-6-18-16-18 Z" fill="#f6f7f9"/>
+    <circle cx="36" cy="40" r="7" fill="#d8a657"/>
+</svg>

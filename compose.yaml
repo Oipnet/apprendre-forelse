@@ -25,6 +25,8 @@ services:
       - config:/config
       # Packs de contenu, en lecture seule (vide : pack de démonstration).
       - ${PACKS_DIR:-./examples/packs}:/packs:ro
+      # Identité de l'instance (vide : la marque du moteur). Voir examples/marque/ pour un exemple complet.
+      - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
     ports:
       # Caddy écoute sur le port indiqué dans les URL : même port des deux côtés.
       - "${LOCAL_PORT:-8080}:${LOCAL_PORT:-8080}"

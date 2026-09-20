@@ -1,0 +1,95 @@
+# Identité d'une instance : montez ce dossier sur /marque (voir auto-hebergement/compose.yaml).
+#
+# Ce fichier suffit à habiller la plateforme : nom, puce, accroche, couleurs, images. Ce qu'il ne
+# règle pas se réécrit en déposant un gabarit dans templates/ (voir README, « Habiller son instance »).
+#
+# Une règle à connaître : dès que ce fichier existe, la marque du moteur disparaît entièrement.
+# Le nom, les images et les textes d'accueil de Forelse ne sont plus servis — déclarez les vôtres.
+
+# Obligatoire : le nom affiché partout (en-tête, pied de page, titres, emails, balises de partage).
+name: Atelier Bigorneau
+
+# La petite puce à côté du nom. Vide ou absente : pas de puce.
+chip: coder
+
+# Le <title> de l'accueil. Les autres pages ajoutent « · <name> » au leur.
+title: Atelier Bigorneau · apprendre à coder en ligne
+
+# Une phrase : pied de page et texte alternatif des aperçus de partage.
+tagline: Apprendre à développer en codant dans le navigateur, avec les outils de l'atelier.
+
+# Le site de la marque, publié dans les données structurées. Absent : la plateforme parle d'elle-même.
+url: https://atelier-bigorneau.example
+
+# Les images, prises dans ce dossier. Absentes : ni logo, ni favicon, ni image de partage.
+logo: logo.svg
+icon: favicon.svg
+# share: partage.png        # 1200 × 630, déposée dans ce dossier
+
+# Couleurs du thème clair (le thème sombre de l'éditeur reste celui du moteur).
+# Hexadécimal uniquement ; une valeur mal écrite arrête la page avec un message qui dit laquelle.
+colors:
+  accent: '#1f6f8b'        # liens, boutons, accents
+  accent-line: '#bcd6de'   # filets et bordures de la couleur d'accent
+  gold: '#d8a657'          # seconde couleur (badges, boutons secondaires)
+  background: '#f6f7f9'    # fond des pages
+  background-2: '#eef1f5'  # fond des bandeaux
+  surface: '#ffffff'       # fond des cartes
+  line: '#dde3ea'          # filets
+  ink: '#10161c'           # texte
+  dark: '#111820'          # fond des sections sombres
+  dark-ink: '#eef2f6'      # texte des sections sombres
+  success: '#2e9b4e'       # exercice réussi
+
+# Polices : une pile CSS, sans @import. Chargez-les depuis un gabarit si elles ne sont pas locales.
+fonts:
+  serif: "'Iowan Old Style', Georgia, serif"
+  sans: "system-ui, -apple-system, 'Segoe UI', sans-serif"
+  mono: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+
+# Les sections de l'accueil qui parlent de vous. Chacune est facultative : absente, elle n'apparaît pas.
+home:
+  # L'illustration du bandeau : un exercice tel qu'il se présente.
+  demo:
+    files: [PortController.php, index.html.twig]
+    # Du HTML, pour la coloration : cm (commentaire), at (attribut), kw (mot-clé), st (chaîne).
+    code: |
+      <span class="cm">// Gaston veut la liste des bateaux à quai</span>
+      <span class="at">#[Route(</span><span class="st">'/quai'</span><span class="at">)]</span>
+      <span class="kw">public function</span> index(): Response
+      {
+          <span class="kw">return</span> $this->render(<span class="st">'quai/index.html.twig'</span>, [
+              <span class="st">'port'</span> => <span class="st">'Port-Bigorneau'</span>,
+          ]);
+      }<span class="cursor">▌</span>
+    preview:
+      url: localhost/quai
+      name: Port-Bigorneau
+      label: À quai ce matin
+      value: Le Grand Bigorneau
+      row: ['Chalutier Marie-Jeanne', 'quai 3']
+    # Le dernier objectif est celui qui se valide sous les yeux du visiteur.
+    goals:
+      - La page /quai répond
+      - Le nom du port est affiché
+      - Les bateaux viennent du contrôleur
+
+  # Le fil rouge de vos parcours.
+  showcase:
+    eyebrow: Le fil rouge
+    title: 'Chaque parcours a son fil rouge. Le premier : un port de pêche.'
+    # ⚠️ En YAML, une phrase qui contient « : » doit être entre guillemets, sinon elle devient un tableau.
+    lead:
+      - "Pas de catalogue d'exemples sans lien entre eux : un seul projet, qui grandit chapitre après chapitre."
+      - Le code du premier exercice sert encore au dernier. Vous apprenez comme on développe pour de vrai.
+    # L'enseigne de droite, facultative : sans elle, le texte occupe toute la largeur.
+    sign:
+      name: "Port-\nBigorneau"
+      note: Fondé au chapitre 1
+      alt: Enseigne de Port-Bigorneau, fil rouge du premier parcours
+
+  # Qui publie la plateforme.
+  author:
+    eyebrow: Qui est derrière
+    title: Une équipe de formateurs, pas une plateforme de cours en masse.
+    lead: Écrit par les formateurs de l'Atelier Bigorneau, qui enseignent ces sujets en salle depuis dix ans.

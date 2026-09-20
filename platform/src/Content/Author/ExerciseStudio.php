@@ -205,7 +205,7 @@ final class ExerciseStudio
             'starter/'.$controleur => "<?php\n\nnamespace App\\".($laravel ? 'Http\\Controllers' : 'Controller').";\n\n// TODO : le code de départ de l'apprenant\n",
             'solution/'.$controleur => "<?php\n\nnamespace App\\".($laravel ? 'Http\\Controllers' : 'Controller').";\n\n// TODO : la solution\n",
             ...($laravel ? ['tests/Formation/MonTest.php' => "<?php\n\nnamespace Tests\\Formation;\n\nuse Tests\\TestCase;\n\nclass MonTest extends TestCase\n{\n    public function testLaPageRepond(): void\n    {\n        \$this->get('/')->assertOk();\n    }\n}\n"] : []),
-            ...($laravel ? [] : ['tests/Taverne/MonTest.php' => "<?php\n\nnamespace App\\Tests\\Taverne;\n\nuse Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase;\n\nclass MonTest extends WebTestCase\n{\n    public function testLaPageRepond(): void\n    {\n        \$client = static::createClient();\n        \$client->request('GET', '/');\n\n        \$this->assertResponseIsSuccessful();\n    }\n}\n"]),
+            ...($laravel ? [] : ['tests/Exercice/MonTest.php' => "<?php\n\nnamespace App\\Tests\\Exercice;\n\nuse Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase;\n\nclass MonTest extends WebTestCase\n{\n    public function testLaPageRepond(): void\n    {\n        \$client = static::createClient();\n        \$client->request('GET', '/');\n\n        \$this->assertResponseIsSuccessful();\n    }\n}\n"]),
         ];
     }
 
@@ -219,8 +219,8 @@ final class ExerciseStudio
         $cles = sprintf("environment: %s\npublished: %s\nsummary: À écrire, en une phrase.\n# version: '8.1'\n# pull_request: https://github.com/…\n# Retirez cette ligne pour publier l'exercice.\nvisibility: admin\n", $environment, date('Y-m-d'));
         $fichiers = [];
         foreach ($this->squelette($id, $titre, null, $framework) as $chemin => $contenu) {
-            $contenu = str_replace(['App\\Tests\\Taverne', 'namespace Tests\\Formation;'], ['App\\Tests\\Pratique', 'namespace Tests\\Pratique;'], $contenu);
-            $fichiers[str_replace(['tests/Taverne/', 'tests/Formation/'], 'tests/Pratique/', $chemin)] = 'exercise.yaml' === $chemin ? str_replace("xp: 200\n", $cles, $contenu) : $contenu;
+            $contenu = str_replace(['App\\Tests\\Exercice', 'namespace Tests\\Formation;'], ['App\\Tests\\Pratique', 'namespace Tests\\Pratique;'], $contenu);
+            $fichiers[str_replace(['tests/Exercice/', 'tests/Formation/'], 'tests/Pratique/', $chemin)] = 'exercise.yaml' === $chemin ? str_replace("xp: 200\n", $cles, $contenu) : $contenu;
         }
 
         return $fichiers;

@@ -6,9 +6,9 @@ use App\Ai\Mentor;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Entity\User;
+use App\Instance\Branding;
 use App\Security\SandboxOrigin;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\Asset\Packages;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -24,7 +24,7 @@ final readonly class PlaygroundConfigFactory
         private UrlGeneratorInterface $urls,
         private SandboxOrigin $sandbox,
         private Mentor $mentor,
-        private Packages $assets,
+        private Branding $branding,
         private Security $security,
         /** Bêta fermée : l'inscription exige un code de cohorte, l'invité sans code est orienté vers la liste d'attente. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
@@ -44,7 +44,12 @@ final readonly class PlaygroundConfigFactory
             'exerciseUrl' => $this->exerciseUrls->generate('api_exercise', $exercise),
             'sandboxUrl' => $this->sandbox->relayUrl(),
             // La marque, comme dans l'en-tête du site (la page n'a pas cet en-tête : le playground dessine sa barre).
-            'logoUrl' => $this->assets->getUrl('img/logo.png'),
+            'brand' => [
+                'name' => $this->branding->name(),
+                'chip' => $this->branding->chip(),
+                'title' => $this->branding->title(),
+                'logoUrl' => $this->branding->logoLargeUrl(),
+            ],
             // Le lien de retour de la barre : le parcours, ou la liste de la Pratique.
             'back' => null === $track
                 ? ['title' => 'Pratique', 'url' => $this->urls->generate('app_practice')]

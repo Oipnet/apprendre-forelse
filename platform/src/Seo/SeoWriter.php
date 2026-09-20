@@ -10,6 +10,7 @@ use App\Content\LessonRenderer;
 use App\Content\Practice;
 use App\Content\Track;
 use App\Controller\PracticeController;
+use App\Instance\Branding;
 use App\Payment\TrackOfferFactory;
 use App\Twig\DurationExtension;
 use Symfony\Component\Asset\Packages;
@@ -33,6 +34,7 @@ final readonly class SeoWriter
         private Packages $packages,
         private TrackSeoText $trackText,
         private ContentRepository $content,
+        private Branding $branding,
     ) {
     }
 
@@ -41,16 +43,20 @@ final readonly class SeoWriter
     {
         $home = $this->url('app_home');
         $this->seo
-            ->setTitle('Apprendre à développer en codant dans le navigateur | '.PageSeo::SITE_NAME, 'Apprendre à développer en codant dans le navigateur')
+            ->setTitle('Apprendre à développer en codant dans le navigateur | '.$this->branding->name(), 'Apprendre à développer en codant dans le navigateur')
             ->setDescription('Apprenez à développer en codant dans votre navigateur, sans vidéo ni installation : un vrai projet, des tests automatiques, le premier chapitre gratuit.')
             ->setCanonical($home)
             ->addStructuredData(['@graph' => [
-                [...$this->organization(), 'logo' => $this->asset('img/logo.png'), 'sameAs' => ['https://forelse.fr']],
+                [
+                    ...$this->organization(),
+                    ...(null === ($logo = $this->branding->logoLargeUrl()) ? [] : ['logo' => $this->absolute($logo)]),
+                    ...('' === $this->branding->url() ? [] : ['sameAs' => [$this->branding->url()]]),
+                ],
                 [
                     '@type' => 'WebSite',
                     '@id' => $home.'#site',
-                    'name' => PageSeo::SITE_NAME,
-                    'alternateName' => 'Forelse · apprendre',
+                    'name' => $this->branding->name(),
+                    'alternateName' => $this->branding->signature(),
                     'url' => $home,
                     'inLanguage' => 'fr-FR',
                     'publisher' => ['@id' => $home.'#organisation'],
@@ -84,7 +90,7 @@ final readonly class SeoWriter
                 'url' => $url,
                 'inLanguage' => 'fr',
                 'provider' => $this->organization(),
-                'image' => $this->asset('img/og-forelse.png'),
+                ...(null === ($image = $this->branding->shareUrl()) ? [] : ['image' => $this->absolute($image)]),
                 'hasCourseInstance' => [
                     '@type' => 'CourseInstance',
                     'courseMode' => 'Online',
@@ -137,7 +143,7 @@ final readonly class SeoWriter
 
         $this->seo
             ->setTitle(
-                sprintf('Nouveautés %s en exercices courts | %s', $subject, PageSeo::SITE_NAME),
+                sprintf('Nouveautés %s en exercices courts | %s', $subject, $this->branding->name()),
                 sprintf('Nouveautés %s en exercices courts', $subject),
                 'Nouveautés des frameworks en exercices courts',
             )
@@ -166,11 +172,14 @@ final readonly class SeoWriter
                 'url' => $url,
                 'mainEntityOfPage' => $url,
                 'inLanguage' => 'fr',
-                'image' => $this->asset('img/og-forelse.png'),
+                ...(null === ($image = $this->branding->shareUrl()) ? [] : ['image' => $this->absolute($image)]),
                 'datePublished' => $practice->published->format('Y-m-d'),
                 'dateModified' => Sitemap::practiceModified($practice),
                 'author' => $this->author(),
-                'publisher' => [...$this->organization(), 'logo' => ['@type' => 'ImageObject', 'url' => $this->asset('img/logo.png')]],
+                'publisher' => [
+                    ...$this->organization(),
+                    ...(null === ($logo = $this->branding->logoLargeUrl()) ? [] : ['logo' => ['@type' => 'ImageObject', 'url' => $this->absolute($logo)]]),
+                ],
                 'keywords' => implode(', ', [$this->frameworkLabel($practice->framework), ...$practice->exercise->concepts]),
             ])
             ->addStructuredData($this->breadcrumb([
@@ -182,7 +191,7 @@ final readonly class SeoWriter
     public function contact(): void
     {
         $this->seo
-            ->setTitle('Contact | '.PageSeo::SITE_NAME)
+            ->setTitle('Contact | '.$this->branding->name())
             ->setDescription('Une question sur un parcours, un achat ou une facture, un problème sur le site : écrivez-nous, une personne lit chaque message et vous répond par email.')
             ->setCanonical($this->url('app_contact'));
     }
@@ -191,7 +200,7 @@ final readonly class SeoWriter
     {
         $url = $this->url('app_organizations');
         $this->seo
-            ->setTitle('Former une classe ou une équipe au développement | '.PageSeo::SITE_NAME, 'Former une classe ou une équipe au développement')
+            ->setTitle('Former une classe ou une équipe au développement | '.$this->branding->name(), 'Former une classe ou une équipe au développement')
             ->setDescription('Écoles, organismes de formation, entreprises : vos apprenants codent dans le navigateur, sans rien installer, et vous suivez leur progression exercice par exercice. Sur devis.')
             ->setCanonical($url)
             ->addStructuredData($this->breadcrumb(['Écoles et entreprises' => $url]));
@@ -201,8 +210,8 @@ final readonly class SeoWriter
     {
         $url = $this->url('app_self_hosting');
         $this->seo
-            ->setTitle('Auto-héberger la plateforme, moteur open source | '.PageSeo::SITE_NAME, 'Auto-héberger la plateforme, moteur open source')
-            ->setDescription('Le moteur de Forelse est libre (AGPL-3.0) : installez la plateforme sur votre serveur avec Docker, écrivez vos parcours, ou utilisez ceux de Forelse sur devis.')
+            ->setTitle('Auto-héberger la plateforme, moteur open source | '.$this->branding->name(), 'Auto-héberger la plateforme, moteur open source')
+            ->setDescription(sprintf('Le moteur de %s est libre (AGPL-3.0) : installez la plateforme sur votre serveur avec Docker, écrivez vos parcours, ou utilisez les siens sur devis.', $this->branding->name()))
             ->setCanonical($url)
             ->addStructuredData($this->breadcrumb(['Auto-hébergement' => $url]));
     }
@@ -210,7 +219,7 @@ final readonly class SeoWriter
     public function legalNotice(): void
     {
         $this->seo
-            ->setTitle('Mentions légales | '.PageSeo::SITE_NAME)
+            ->setTitle('Mentions légales | '.$this->branding->name())
             ->setDescription('Mentions légales du site : éditeur, directeur de la publication, hébergeur de la plateforme et du bac à sable où s\'exécute le code des apprenants.')
             ->setCanonical($this->url('app_legal_notice'));
     }
@@ -218,7 +227,7 @@ final readonly class SeoWriter
     public function terms(): void
     {
         $this->seo
-            ->setTitle('Conditions générales de vente | '.PageSeo::SITE_NAME)
+            ->setTitle('Conditions générales de vente | '.$this->branding->name())
             ->setDescription('Conditions générales de vente des parcours : prix TTC, commande et paiement, accès aux contenus, droit de rétractation, garanties et médiation.')
             ->setCanonical($this->url('app_terms'));
     }
@@ -226,7 +235,7 @@ final readonly class SeoWriter
     public function privacy(): void
     {
         $this->seo
-            ->setTitle('Politique de confidentialité | '.PageSeo::SITE_NAME)
+            ->setTitle('Politique de confidentialité | '.$this->branding->name())
             ->setDescription('Politique de confidentialité : données collectées, finalités, durées de conservation, sous-traitants et exercice de vos droits sur vos données.')
             ->setCanonical($this->url('app_privacy'));
     }
@@ -254,20 +263,35 @@ final readonly class SeoWriter
     /** @return array<string, mixed> l'éditeur du site */
     private function organization(): array
     {
-        return ['@type' => 'Organization', '@id' => $this->url('app_home').'#organisation', 'name' => PageSeo::SITE_NAME, 'url' => $this->url('app_home')];
+        return ['@type' => 'Organization', '@id' => $this->url('app_home').'#organisation', 'name' => $this->branding->name(), 'url' => $this->url('app_home')];
     }
 
-    /** @return array<string, mixed> l'auteur des parcours et des exercices */
+    /**
+     * L'auteur des parcours et des exercices. La personne derrière Forelse ne vaut que pour Forelse :
+     * une autre instance publie son organisation.
+     *
+     * @return array<string, mixed>
+     */
     private function author(): array
     {
+        if (!$this->branding->isDefault()) {
+            return ['@id' => $this->url('app_home').'#organisation'];
+        }
+
         return [
             '@type' => 'Person',
             '@id' => $this->url('app_home').'#auteur',
             'name' => 'Arnaud Pointet',
             'jobTitle' => 'Développeur indépendant',
             'worksFor' => ['@id' => $this->url('app_home').'#organisation'],
-            'url' => 'https://forelse.fr',
+            'url' => $this->branding->url(),
         ];
+    }
+
+    /** Une URL du site (chemin absolu) vue de l'extérieur, pour les données structurées. */
+    private function absolute(string $path): string
+    {
+        return str_starts_with($path, 'http') ? $path : rtrim($this->url('app_home'), '/').$path;
     }
 
     /**

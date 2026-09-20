@@ -4,17 +4,6 @@
 # Files in the packages/ subdirectory configure your dependencies.
 # See also https://symfony.com/doc/current/service_container/import.html
 
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
-parameters:
-    # Estimation des devis de cohorte (mode « établissement ») : prix par apprenant et par parcours (TTC, en centimes),
-    # puis pourcentage appliqué à partir de chaque effectif. Estimation seulement : le devis signé est saisi dans /admin.
-    app.cohort_quote.unit_price: 3000
-    app.cohort_quote.tiers:
-        - { from: 1, percent: 100 }
-        - { from: 10, percent: 70 }
-        - { from: 30, percent: 50 }
-
 services:
     # default configuration for services in *this* file
     _defaults:

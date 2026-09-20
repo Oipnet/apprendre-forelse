@@ -8,6 +8,53 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+Premier chantier de la marque blanche (voir [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md),
+« niveau 2 ») : **l'habillage**. Ce qui parlait de Forelse en dur dans le moteur devient de la
+configuration montée à côté des packs. Une instance change de nom, de couleurs, d'images et de pages
+sans fork, sans reconstruire l'image, et sans rien avoir à republier au titre de l'AGPL — parce qu'elle
+ne modifie pas de code. Les instances existantes ne changent pas : sans dossier de marque, tout reste
+tel quel.
+
+### Ajouté
+
+- **Identité de l'instance** (`BRANDING_DIR`, `/marque` dans l'image) : un dossier monté qui contient
+  `marque.yaml` et ses images. Il habille l'en-tête, le pied de page, les `<title>`, la barre de
+  l'éditeur, les tableaux de bord, **les emails** (confirmation d'adresse, mot de passe oublié, achat,
+  alerte d'inscription), les balises Open Graph et les données structurées. Clés : `name` (obligatoire),
+  `chip`, `title`, `tagline`, `url`, `logo`, `icon`, `share`, `colors`, `fonts` et `home`. Exemple
+  commenté à copier dans [examples/marque/](examples/marque/marque.yaml), guide dans le
+  [README](README.md#habiller-son-instance) et dans
+  [auto-hebergement/README.md](auto-hebergement/README.md#votre-marque).
+- **Règle « tout ou rien »** : dès qu'un `marque.yaml` existe, plus rien de la marque du moteur n'est
+  servi — ni le nom, ni le logo, ni la favicon, ni l'image de partage, ni les trois sections d'accueil
+  qui parlent de la Taverne du Dragon Ivre et de l'auteur de Forelse. Une instance ne peut pas se
+  retrouver à afficher une marque qui n'est pas la sienne parce qu'elle a oublié une clé. Elle déclare
+  les siennes sous `home.showcase`, `home.author` et `home.demo` ; non déclarée, une section n'apparaît
+  pas et la page reste cohérente sans elle.
+- **Couleurs et polices** (`colors`, `fonts`) : les variables CSS du thème clair, posées après la feuille
+  de styles. Les valeurs sont vérifiées à la lecture (hexadécimal, pile de polices) — rien de ce fichier
+  ne peut refermer la balise `<style>`. Une valeur mal écrite ou une clé inconnue **arrête la page** avec
+  un message qui dit quoi corriger : une instance à moitié habillée serait pire qu'une erreur franche.
+  Le thème sombre de l'éditeur reste celui du moteur.
+- **Images de marque** servies sur `/marque/logo`, `/marque/icon` et `/marque/share`, avec la date du
+  fichier dans l'URL : une image remplacée change d'URL. Le nom du fichier vient du manifeste, jamais de
+  l'URL, et un chemin y est refusé.
+- **Gabarits de l'instance** : un fichier Twig déposé dans `<marque>/templates/` remplace celui du moteur
+  qui porte le même nom (`home.html.twig`, `_footer.html.twig`, `legal/notice.html.twig`…). C'est
+  l'échappatoire de l'habillage : ce que `marque.yaml` ne règle pas se réécrit sans toucher au moteur. En
+  production, les gabarits sont compilés une fois : redémarrez le conteneur après en avoir déposé un.
+
+### Modifié
+
+- Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement
+  (`COHORT_UNIT_PRICE`, `COHORT_TIERS`, au format « effectif:pourcentage ») : une instance a ses prix
+  sans reconstruire l'image. Les valeurs par défaut sont inchangées (30 €, puis 70 % à partir de 10 et
+  50 % à partir de 30).
+- L'atelier échafaude les tests d'un nouvel exercice Symfony dans `tests/Exercice/` (`App\Tests\Exercice`)
+  au lieu de `tests/Taverne/` : le squelette servait à tous les packs, il ne porte plus le nom du fil
+  rouge d'un seul. Les exercices existants ne sont pas touchés.
+- Le message affiché après un changement de mot de passe ne souhaite plus la bienvenue « à la taverne ».
+
 ## 1.3.0 — 2026-09-18
 
 ### Ajouté

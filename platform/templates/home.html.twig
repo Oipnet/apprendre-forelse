@@ -20,41 +20,9 @@
                         </div>
                     </div>
 
-                    {# Illustration : un exercice tel qu'il se présente (éditeur, aperçu, objectifs). #}
-                    <figure class="lp-demo" data-demo aria-label="Un exercice : le code, l'aperçu de la page et les objectifs validés">
-                        <div class="lp-demo-tabs">
-                            <span class="tab active">MenuController.php</span>
-                            <span class="tab">index.html.twig</span>
-                            <span class="status">Aperçu à jour</span>
-                        </div>
-<pre class="lp-code"><span class="cm">// Bruna veut une carte visible à l'adresse /menu</span>
-<span class="at">#[Route(</span><span class="st">'/menu'</span><span class="at">, name: </span><span class="st">'app_menu'</span><span class="at">)]</span>
-<span class="kw">public function</span> index(): Response
-{
-    <span class="kw">return</span> $this->render(<span class="st">'menu/index.html.twig'</span>, [
-        <span class="st">'taverne'</span>    => <span class="st">'La Taverne du Dragon Ivre'</span>,
-        <span class="st">'platDuJour'</span> => <span class="st">'Ragoût de sanglier'</span>,
-    ]);
-}<span class="cursor">▌</span></pre>
-                        <div class="lp-demo-bottom">
-                            <div class="lp-demo-preview">
-                                <span class="lp-demo-label">localhost/menu</span>
-                                <span class="name">La Taverne du Dragon Ivre</span>
-                                <span class="label">Plat du jour</span>
-                                <strong>Ragoût de sanglier</strong>
-                                <span class="row"><span>Hydromel de la maison</span><span class="price">3 po</span></span>
-                            </div>
-                            <div class="lp-demo-goals">
-                                <span class="lp-demo-label">Objectifs</span>
-                                <span class="goal done"><i>✓</i>La carte est accessible</span>
-                                <span class="goal done"><i>✓</i>Le plat du jour est affiché</span>
-                                <span class="goal" data-demo-goal><i>○</i>Les prix sont en pièces d'or</span>
-                                <span class="score"><span data-demo-score>2 / 3 validés</span><span class="xp" data-demo-xp>+ 100 XP</span></span>
-                            </div>
-                        </div>
-                    </figure>
+                    {% if marque.home.demo %}{{ include('home/_demo.html.twig', {demo: marque.home.demo}) }}{% endif %}
                 </div>
-                <p class="lp-hero-note">Le code à gauche, la page à droite : changez une ligne, l'aperçu se recharge, les tests vérifient.</p>
+                {% if marque.home.demo %}<p class="lp-hero-note">Le code à gauche, la page à droite : changez une ligne, l'aperçu se recharge, les tests vérifient.</p>{% endif %}
             </div>
         </section>
 
@@ -88,24 +56,7 @@
             </div>
         </section>
 
-        <section class="lp-section dark">
-            <div class="lp-wrap lp-two">
-                <div>
-                    <span class="lp-eyebrow">Le fil rouge</span>
-                    <h2 class="lp-h2">Chaque parcours a son fil rouge. Le premier : une taverne.</h2>
-                    <p class="lp-lead">Pas de catalogue d'exemples sans lien entre eux. Dans le parcours Symfony, Bruna vient de reprendre la Taverne du Dragon Ivre et n'a jamais eu de site. La carte, les réservations, les employés, le livre d'or : chaque chapitre répond à un besoin réel de l'auberge.</p>
-                    <p class="lp-lead">Le code du premier exercice sert encore au dernier chapitre. Vous apprenez comme on développe pour de vrai : sur un projet qui grandit, qu'on relit et qu'on fait évoluer.</p>
-                </div>
-                <div class="lp-sign-wrap">
-                    <span class="lp-candle" aria-hidden="true"></span>
-                    <div class="lp-sign" role="img" aria-label="Enseigne de la Taverne du Dragon Ivre, fil rouge du premier parcours">
-                        <img src="{{ asset('img/logo-168.webp') }}" alt="" width="144" height="168" loading="lazy" decoding="async">
-                        <div class="name">La Taverne du<br>Dragon Ivre</div>
-                        <div class="since">Fondée au chapitre 1</div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        {% if marque.home.showcase %}{{ include('home/_showcase.html.twig', {showcase: marque.home.showcase}) }}{% endif %}
 
         <section class="lp-section" id="parcours">
             <div class="lp-wrap">
@@ -233,15 +184,17 @@
             </div>
         </section>
 
-        <section class="lp-section lined">
-            <div class="lp-wrap lp-two top">
-                <div>
-                    <span class="lp-eyebrow">Qui est derrière</span>
-                    <h2 class="lp-h2 sm">Un développeur, pas une plateforme de cours en masse.</h2>
+        {% if marque.home.author %}
+            <section class="lp-section lined">
+                <div class="lp-wrap lp-two top">
+                    <div>
+                        {% if marque.home.author.eyebrow is defined %}<span class="lp-eyebrow">{{ marque.home.author.eyebrow }}</span>{% endif %}
+                        <h2 class="lp-h2 sm">{{ marque.home.author.title }}</h2>
+                    </div>
+                    <p class="lp-lead">{{ marque.home.author.lead }} Le moteur de la plateforme est sous licence open source (AGPL) : son code est publié, pour le lire ou <a href="{{ self_hosting.enabled ? path('app_self_hosting') : constant('App\\Instance\\SelfHostingPage::REPOSITORY') }}">le faire tourner chez vous</a>.</p>
                 </div>
-                <p class="lp-lead">Conçu par Arnaud Pointet, développeur indépendant (Forelse, Bordeaux), qui écrit chaque exercice comme il aurait voulu apprendre. Le moteur de la plateforme est sous licence open source (AGPL) : son code est publié, pour le lire ou <a href="{{ self_hosting.enabled ? path('app_self_hosting') : constant('App\\Instance\\SelfHostingPage::REPOSITORY') }}">le faire tourner chez vous</a>.</p>
-            </div>
-        </section>
+            </section>
+        {% endif %}
 
         <section class="lp-section dark" id="liste-attente">
             <div class="lp-wrap lp-signup">
