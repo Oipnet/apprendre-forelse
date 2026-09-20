@@ -203,9 +203,23 @@ docker compose exec app bin/console app:environnement:installer https://github.c
 docker compose exec app bin/console app:environnement:installer mon-environnement   # mise à jour
 ```
 
-### Laisser le pack le demander
+### Le plus souvent, le pack apporte son décor
 
-Plus simple encore : c'est le **pack** qui dit de quel décor il a besoin. Dans son `pack.yaml` :
+Un pack peut porter ses environnements lui-même, dans `environments/<id>/` à côté de ses parcours. Vous
+n'avez rien à déclarer ni à installer : déposez le pack, le moteur trouve le décor. Il reste seulement à
+l'empaqueter :
+
+```bash
+docker compose exec app bin/console app:environnement:synchroniser
+```
+
+(ou le bouton dans `/admin` → Environnements, ou `ENVIRONMENTS_AUTO_INSTALL=1` pour que ce soit fait au
+démarrage). L'archive va dans le volume `environnements`, pas dans l'image.
+
+### Ou le pack désigne un dépôt
+
+Quand le décor est trop gros pour vivre dans le pack, ou qu'il sert à plusieurs packs, le `pack.yaml`
+peut se contenter de dire où le prendre :
 
 ```yaml
 environments:

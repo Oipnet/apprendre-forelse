@@ -38,7 +38,31 @@ final readonly class PackEnvironments
         private EnvironmentRegistry $environments,
         private InstalledEnvironments $installed,
         private EnvironmentInstaller $installer,
+        private EnvironmentArtifacts $artifacts,
     ) {
+    }
+
+    /**
+     * Les environnements que les packs **portent** (`<pack>/environments/<id>/`) et dont l'archive
+     * manque encore.
+     *
+     * Rien à cloner ici : les fichiers sont arrivés avec le pack. Il reste à les empaqueter — composer
+     * install, archive, index de complétion —, ce qui est exactement la seconde moitié d'une
+     * installation depuis un dépôt.
+     *
+     * @return list<string> identifiants, dans l'ordre alphabétique
+     */
+    public function toBuild(): array
+    {
+        $aFaire = [];
+        foreach ($this->environments->carried() as $id => $directory) {
+            if (null === $this->artifacts->path($id.'.zip')) {
+                $aFaire[] = $id;
+            }
+        }
+        sort($aFaire);
+
+        return $aFaire;
     }
 
     /**
@@ -123,6 +147,22 @@ final readonly class PackEnvironments
             $restants = $echoues;
             if ([] !== $restants) {
                 $say(sprintf('Nouvelle passe pour %d environnement(s) : leur base vient peut-être d\'être installée.', \count($restants)));
+            }
+        }
+
+        // Puis les environnements que les packs portent : rien à cloner, seulement à empaqueter. Après
+        // les clonages, pour qu'un environnement porté puisse prolonger un environnement tout juste
+        // installé — et l'inverse vaut par les passes ci-dessus.
+        if ([] !== $installed) {
+            $this->environments->reset();
+        }
+        foreach ($this->toBuild() as $id) {
+            $say(sprintf('Environnement « %s », porté par un pack : empaquetage…', $id));
+            try {
+                $this->installer->build($id);
+                $installed[] = $id;
+            } catch (\Throwable $e) {
+                $failed[$id] = $e->getMessage();
             }
         }
 

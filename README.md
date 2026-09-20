@@ -302,8 +302,33 @@ Guide pas à pas dans
 
 ### Un pack apporte ses environnements
 
-Mieux qu'une adresse collée à la main : **le pack dit de quoi il a besoin**, et le moteur va le chercher.
-Dans son `pack.yaml` :
+Le cas ordinaire : **le décor vit dans le pack**, à côté des parcours qu'il sert.
+
+```
+mon-pack/
+  pack.yaml
+  tracks/…
+  environments/ma-boutique/environment.yaml    ← l'environnement, porté par le pack
+  environments/ma-boutique/src/…
+```
+
+Rien à déclarer, rien à installer : le moteur le trouve du seul fait que le pack est monté. Un décor
+appartient au contenu qui le met en scène — il se déplace avec lui, se versionne avec lui, et disparaît
+avec lui. `extends: symfony-8` fonctionne depuis un pack comme depuis ailleurs, ce qui rend « le Symfony
+complet, plus mes trois entités » tenable en une poignée de fichiers.
+
+Il reste à l'**empaqueter** — `composer install`, archive, index de complétion —, ce que fait
+`bin/console app:environnement:synchroniser` (ou le bouton de `/admin` → Environnements, ou
+`ENVIRONMENTS_AUTO_INSTALL=1` au démarrage). Les archives vont dans `INSTALLED_ENVIRONMENTS_DIR`, hors
+de l'arborescence publique.
+
+Un pack ne peut pas s'approprier un identifiant déjà pris : `symfony-8` déclaré deux fois arrête le
+chargement en nommant les deux dossiers, plutôt que d'en masquer un au hasard.
+
+#### Ou bien : le pack désigne un dépôt
+
+Quand le décor est trop gros pour vivre dans le pack, ou qu'il sert à plusieurs packs, le pack peut se
+contenter de **dire où le prendre**. Dans son `pack.yaml` :
 
 ```yaml
 environments:
@@ -313,8 +338,8 @@ environments:
     dossier: symfony   # facultatif : si le dépôt porte plusieurs environnements
 ```
 
-Un pack ne porte plus son décor, il le **déclare** — comme `moteur:` déclare la version du moteur qu'il
-lui faut, à ceci près que celle-ci se résout au lieu de se contenter d'échouer. Déposez le pack,
+Le pack ne porte alors pas son décor, il le **déclare** — comme `moteur:` déclare la version du moteur
+qu'il lui faut, à ceci près que celle-ci se résout au lieu de se contenter d'échouer. Déposez le pack,
 l'instance installe ce qui manque :
 
 ```bash

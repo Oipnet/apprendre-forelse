@@ -6,6 +6,7 @@ use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Instance\EnvironmentInstaller;
 use App\Instance\InstalledEnvironments;
+use App\Instance\EnvironmentArtifacts;
 use App\Instance\PackEnvironments;
 use App\Version;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +41,7 @@ final class PackEnvironmentsTest extends TestCase
         // 97 Mo de vendor/ coûterait une minute par test. Il ne déclare aucun composer.json, ce qui
         // couvre au passage la chaîne composée sans Composer.
         $this->filesystem->dumpFile($this->tmp.'/socle/base-test/environment.yaml', "id: base-test\nphp: '8.4'\ntitle: Socle\n");
-        $this->filesystem->dumpFile($this->tmp.'/socle/base-test/src/Socle.php', '<?php // du socle');
+        $this->filesystem->dumpFile($this->tmp.'/socle/base-test/src/Base.php', '<?php // du socle');
 
         // Un « chez-soi » par test : la redirection de git posée plus bas ne doit pas lui survivre.
         $this->home = getenv('HOME');
@@ -100,12 +101,12 @@ final class PackEnvironmentsTest extends TestCase
         $environments->reset();
         $environnement = $environments->get('ma-boutique');
         $this->assertTrue($environnement->isComposed());
-        $this->assertNotNull($environnement->file('src/Socle.php'), 'Les fichiers viennent du socle.');
+        $this->assertNotNull($environnement->file('src/Base.php'), 'Les fichiers viennent du socle.');
         $this->assertNotNull($environnement->file('src/Controller/BoutiqueController.php'));
 
         // Et l'archive servie au navigateur porte elle aussi la superposition, pas seulement le dépôt.
         $this->assertSame(
-            ['src/Controller/BoutiqueController.php', 'src/Socle.php'],
+            ['src/Base.php', 'src/Controller/BoutiqueController.php'],
             $this->contenuDe($this->tmp.'/installes/.artefacts/ma-boutique.zip'),
         );
 
@@ -148,7 +149,33 @@ final class PackEnvironmentsTest extends TestCase
     }
 
     /**
-     * @param array<string, string|array{0: string, 1: string}> $environnements identifiant => adresse,
+     * Un environnement que le pack porte : rien à cloner, seulement à empaqueter.
+     *
+     * C'est le cas ordinaire depuis que le décor appartient au contenu — le pack arrive avec ses
+     * fichiers, et il ne leur manque que l'archive que le navigateur téléchargera.
+     */
+    public function testUnEnvironnementPorteParUnPackEstEmpaquete(): void
+    {
+        $this->filesystem->dumpFile($this->tmp.'/packs/houblon/pack.yaml', "id: houblon\ntitle: Houblon\n");
+        $this->filesystem->dumpFile($this->tmp.'/packs/houblon/environments/ma-boutique/environment.yaml', "id: ma-boutique\nextends: base-test\n");
+        $this->filesystem->dumpFile($this->tmp.'/packs/houblon/environments/ma-boutique/src/Boutique.php', '<?php // à moi');
+        $packEnvironments = $this->service();
+
+        $this->assertSame(['ma-boutique'], $packEnvironments->toBuild(), 'Présent, mais pas encore empaqueté.');
+
+        $resultat = $packEnvironments->synchronize();
+
+        $this->assertSame([], $resultat['failed']);
+        $this->assertSame(['ma-boutique'], $resultat['installed']);
+        // L'archive porte la superposition : les fichiers du pack et ceux du socle qu'il prolonge.
+        $this->assertSame(
+            ['src/Base.php', 'src/Boutique.php'],
+            $this->contenuDe($this->tmp.'/installes/.artefacts/ma-boutique.zip'),
+        );
+        $this->assertSame([], $packEnvironments->toBuild(), 'Empaqueté : plus rien à faire.');
+    }
+
+    /** @param array<string, string|array{0: string, 1: string}> $environnements identifiant => adresse,
      *                                                                         ou [adresse, sous-dossier]
      */
     private function pack(string $id, array $environnements): void
@@ -304,7 +331,7 @@ final class PackEnvironmentsTest extends TestCase
 
     private function registry(): EnvironmentRegistry
     {
-        return new EnvironmentRegistry([$this->tmp.'/socle', $this->tmp.'/installes']);
+        return new EnvironmentRegistry([$this->tmp.'/socle', $this->tmp.'/installes'], packPaths: [$this->tmp.'/packs']);
     }
 
     private function service(?EnvironmentRegistry $environments = null): PackEnvironments
@@ -312,12 +339,8 @@ final class PackEnvironmentsTest extends TestCase
         $environments ??= $this->registry();
         $installed = new InstalledEnvironments($this->tmp.'/installes');
         $content = new ContentRepository([$this->tmp.'/packs'], $environments, new Version(self::ROOT.'/VERSION'));
+        $installer = new EnvironmentInstaller($installed, $environments, self::ROOT.'/environments/bin/build-env.sh');
 
-        return new PackEnvironments($content, $environments, $installed, new EnvironmentInstaller(
-            $installed,
-            $environments,
-            $this->tmp.'/socle,'.$this->tmp.'/installes',
-            self::ROOT.'/environments/bin/build-env.sh',
-        ));
+        return new PackEnvironments($content, $environments, $installed, $installer, new EnvironmentArtifacts($this->tmp.'/rien-de-public', $installed));
     }
 }

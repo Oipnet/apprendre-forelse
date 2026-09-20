@@ -116,11 +116,23 @@ tel quel.
   laisse `INSTALLED_ENVIRONMENTS_DIR` vide : la fonctionnalité est absente et la page le dit. Guide dans
   [auto-hebergement/README.md](auto-hebergement/README.md#ajouter-un-environnement-dexécution).
 
-- **Un pack déclare les environnements dont il a besoin** (clé `environments:` de `pack.yaml`, avec
-  `id`, `depot` et `ref` facultative), et le moteur va les chercher s'il ne les a pas. Un pack ne porte
-  plus son décor, il le **déclare** — comme `moteur:` déclare la version du moteur qu'il lui faut, à
-  ceci près que celle-ci se résout au lieu de se contenter d'échouer. Déposer un pack suffit ; il n'y a
-  plus d'adresse à retrouver ni à coller.
+- **Un pack porte son environnement** : `<pack>/environments/<id>/environment.yaml`, à côté de ses
+  parcours. Rien à déclarer, rien à installer — le moteur le trouve du seul fait que le pack est monté.
+  Un décor appartient au contenu qui le met en scène : il se déplace avec lui, se versionne avec lui, et
+  disparaît avec lui. `extends: symfony-8` fonctionne depuis un pack, ce qui rend « le Symfony complet,
+  plus mes trois entités » tenable en une poignée de fichiers.
+
+  Il reste à l'empaqueter (`composer install`, archive, index de complétion) :
+  `app:environnement:synchroniser` s'en charge, comme pour un environnement venu d'un dépôt, et les
+  archives vont dans `INSTALLED_ENVIRONMENTS_DIR`, hors de l'arborescence publique. Un pack ne peut pas
+  s'approprier un identifiant déjà pris : déclaré deux fois, le chargement s'arrête en nommant les deux
+  dossiers.
+
+- **Un pack peut aussi se contenter de désigner un dépôt** (clé `environments:` de `pack.yaml`, avec
+  `id`, `depot` et `ref` facultative), pour un décor trop gros pour vivre dans le pack ou partagé entre
+  plusieurs packs. Le pack le **déclare** alors — comme `moteur:` déclare la version du moteur qu'il lui
+  faut, à ceci près que celle-ci se résout au lieu de se contenter d'échouer. Déposer un pack suffit ;
+  il n'y a pas d'adresse à retrouver ni à coller.
 
   Trois façons de le faire, une seule mécanique : `bin/console app:environnement:synchroniser`
   (`--simuler` pour voir sans agir, `--mettre-a-jour` pour suivre un changement d'adresse ou de

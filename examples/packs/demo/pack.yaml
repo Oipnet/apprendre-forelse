@@ -7,10 +7,14 @@ version: 1.0.0
 # Le pack de démonstration est livré avec le moteur, donc toujours à jour : la clé est inutile ici.
 # moteur: '^1.0'
 license: AGPL-3.0-or-later
-# Environnements d'exécution dont ce pack a besoin, et où les prendre. Le moteur installe ceux qui lui
-# manquent (voir README, « Un pack apporte ses environnements »). Le dépôt doit porter un
-# environment.yaml dont l'« id » est celui déclaré ici. Le pack de démonstration n'utilise que les
-# environnements livrés avec le moteur : la clé est inutile ici.
+# Le plus souvent, un pack porte son décor : <pack>/environments/<id>/environment.yaml, à côté des
+# parcours. Rien à déclarer — le moteur le trouve parce que le pack est monté.
+#
+# La clé ci-dessous sert à l'autre cas : un décor trop gros pour vivre dans le pack, ou partagé entre
+# plusieurs packs, que le moteur va chercher dans un dépôt Git (voir README, « Un pack apporte ses
+# environnements »). Le dépôt doit porter un environment.yaml dont l'« id » est celui déclaré ici.
+# Le pack de démonstration n'utilise que les environnements livrés avec le moteur : rien de tout cela
+# ne lui sert.
 # environments:
 #   - id: ma-boutique
 #     depot: https://github.com/mon-org/env-ma-boutique.git

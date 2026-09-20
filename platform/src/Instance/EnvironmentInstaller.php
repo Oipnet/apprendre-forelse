@@ -37,9 +37,6 @@ final readonly class EnvironmentInstaller
     public function __construct(
         private InstalledEnvironments $installed,
         private EnvironmentRegistry $environments,
-        /** Dossiers d'environnements, dans l'ordre de recherche : passés à build-env.sh. */
-        #[Autowire(env: 'ENVIRONMENTS_DIR')]
-        private string $environmentsPath,
         /** Le script d'empaquetage, livré avec les environnements du moteur. */
         #[Autowire('%kernel.project_dir%/../environments/bin/build-env.sh')]
         private string $buildScript,
@@ -214,10 +211,22 @@ final readonly class EnvironmentInstaller
         }
     }
 
-    private function build(string $id): void
+    /**
+     * Empaquette un environnement déjà présent sur le disque : archive et index de complétion.
+     *
+     * Public parce que ce n'est pas réservé aux environnements clonés : un environnement que son pack
+     * porte est déjà là, il ne lui manque que son archive (voir PackEnvironments).
+     *
+     * Les racines viennent du registre, pas d'une variable recopiée : le script doit résoudre
+     * exactement les mêmes chaînes `extends:` que le moteur, packs compris.
+     */
+    public function build(string $id): void
     {
         if (!is_file($this->buildScript)) {
             throw new ContentException(sprintf('Script d\'empaquetage introuvable (%s).', $this->buildScript));
+        }
+        if (!$this->installed->isEnabled()) {
+            throw new ContentException(sprintf('Aucun dossier où déposer les archives : %s n\'existe pas ou n\'est pas écrivable (voir INSTALLED_ENVIRONMENTS_DIR).', $this->installed->directory()));
         }
         $this->filesystem->mkdir($this->installed->artifactsDirectory());
         $this->run(
@@ -225,7 +234,7 @@ final readonly class EnvironmentInstaller
             null,
             self::BUILD_TIMEOUT,
             'Empaquetage',
-            ['ENVIRONMENTS_PATH' => $this->environmentsPath, 'COMPOSER_ALLOW_SUPERUSER' => '1'],
+            ['ENVIRONMENTS_PATH' => implode(',', $this->environments->roots()), 'COMPOSER_ALLOW_SUPERUSER' => '1'],
         );
     }
 

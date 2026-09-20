@@ -217,7 +217,6 @@ final class EnvironmentInstallerTest extends TestCase
         $installer = new EnvironmentInstaller(
             $installed,
             $environments,
-            self::ROOT.'/environments,'.$this->tmp.'/installes',
             self::ROOT.'/environments/bin/build-env.sh',
             $allowlist,
         );

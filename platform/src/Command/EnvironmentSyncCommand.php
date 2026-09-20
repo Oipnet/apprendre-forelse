@@ -42,30 +42,37 @@ final class EnvironmentSyncCommand
         }
 
         $aFaire = $this->packEnvironments->toInstall($mettreAJour);
-        if ([] === $aFaire) {
-            $io->success('Rien à installer : les packs ont tous leurs environnements.');
+        $aEmpaqueter = $this->packEnvironments->toBuild();
+        if ([] === $aFaire && [] === $aEmpaqueter) {
+            $io->success('Rien à faire : les packs ont tous leurs environnements, et tous sont empaquetés.');
 
             return Command::SUCCESS;
         }
 
-        $io->listing(array_map(
-            static fn ($environment) => sprintf('%s — %s (pack « %s »)', $environment->id, $environment->describeSource(), $environment->packId),
-            $aFaire,
-        ));
+        $io->listing([
+            ...array_map(
+                static fn ($environment) => sprintf('%s — à installer depuis %s (pack « %s »)', $environment->id, $environment->describeSource(), $environment->packId),
+                $aFaire,
+            ),
+            ...array_map(
+                static fn (string $id) => sprintf('%s — porté par un pack, à empaqueter', $id),
+                $aEmpaqueter,
+            ),
+        ]);
         if ($simuler) {
-            $io->note(sprintf('%d à installer. Relancez sans --simuler pour le faire.', \count($aFaire)));
+            $io->note(sprintf('%d au total. Relancez sans --simuler pour le faire.', \count($aFaire) + \count($aEmpaqueter)));
 
             return Command::SUCCESS;
         }
 
-        $io->warning('Empaqueter exécute le code de ces dépôts sur ce serveur (composer install).');
+        $io->warning('Empaqueter exécute le code de ces environnements sur ce serveur (composer install).');
         $resultat = $this->packEnvironments->synchronize($mettreAJour, $io->writeln(...));
 
         foreach ($resultat['failed'] as $id => $message) {
             $io->error(sprintf('Environnement « %s » : %s', $id, $message));
         }
         if ([] !== $resultat['installed']) {
-            $io->success(sprintf('Installé : %s.', implode(', ', $resultat['installed'])));
+            $io->success(sprintf('Prêt : %s.', implode(', ', $resultat['installed'])));
         }
 
         return [] === $resultat['failed'] ? Command::SUCCESS : Command::FAILURE;
