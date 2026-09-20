@@ -325,55 +325,20 @@ de l'arborescence publique.
 Un pack ne peut pas s'approprier un identifiant déjà pris : `symfony-8` déclaré deux fois arrête le
 chargement en nommant les deux dossiers, plutôt que d'en masquer un au hasard.
 
-#### Ou bien : le pack désigne un dépôt
-
-Quand le décor est trop gros pour vivre dans le pack, ou qu'il sert à plusieurs packs, le pack peut se
-contenter de **dire où le prendre**. Dans son `pack.yaml` :
-
-```yaml
-environments:
-  - id: ma-boutique
-    depot: https://github.com/mon-org/env-ma-boutique.git
-    ref: v1.2.0        # facultatif : branche ou étiquette
-    dossier: symfony   # facultatif : si le dépôt porte plusieurs environnements
-```
-
-Le pack ne porte alors pas son décor, il le **déclare** — comme `moteur:` déclare la version du moteur
-qu'il lui faut, à ceci près que celle-ci se résout au lieu de se contenter d'échouer. Déposez le pack,
-l'instance installe ce qui manque :
-
-```bash
-bin/console app:environnement:synchroniser            # installe les manquants
-bin/console app:environnement:synchroniser --simuler  # dit seulement ce qu'il ferait
-```
-
-`/admin` → **Environnements** montre la même chose, avec un bouton pour tout installer d'un coup ; et
-`ENVIRONMENTS_AUTO_INSTALL=1` le fait au démarrage du conteneur, en tâche de fond, sans retarder les
-pages. `content:check` signale ce qui manque plutôt que de laisser un exercice échouer sans expliquer
-pourquoi.
-
 Ce que le moteur ne fait **jamais** :
 
-- installer pendant une requête web. Cloner puis lancer Composer dure des minutes et exécute du code :
+- empaqueter pendant une requête web. `composer install` dure des minutes et exécute le code du pack :
   cela n'arrive que sur un geste d'exploitation — la commande, le bouton, ou le démarrage si l'instance
   l'a demandé. La visite d'un apprenant ne déclenche rien.
-- toucher à ce qui est déjà là. Un environnement présent — livré par le moteur ou installé à la main —
-  est utilisé tel quel. « Si je ne l'ai pas » est la seule condition.
-- installer un environnement qui ne porte pas le nom demandé. Le dépôt se nomme lui-même, dans son
-  `environment.yaml` ; s'il ne répond pas à l'`id` que le pack déclare, c'est dit, pas contourné.
-- charger un pack dont la déclaration est mal formée. Un identifiant qui n'en est pas un, une adresse
-  qui n'est pas en `https://` : le pack est refusé à la lecture, en nommant l'entrée fautive. En
-  revanche un dépôt **injoignable** ne fait rien tomber — c'est l'affaire de la synchronisation, et les
-  autres environnements s'installent quand même.
+- refaire ce qui est déjà fait. Un environnement dont l'archive existe est laissé tel quel.
+- laisser un pack s'approprier un identifiant. `symfony-8` déclaré deux fois arrête le chargement en
+  nommant les deux dossiers, plutôt que d'en masquer un au hasard.
+- livrer une archive amputée. Un `extends:` qui pointe sur une base absente arrête l'empaquetage ; et un
+  décor qui ne compile pas n'empêche pas les autres d'être empaquetés.
 
-Deux packs peuvent demander le même environnement, c'est même l'intérêt ; deux adresses différentes pour
-un seul identifiant sont refusées, en nommant les deux packs.
-
-**Un dépôt peut porter plusieurs environnements**, un par sous-dossier (`dossier:`) — c'est ce qui
-permet de sortir une famille qui bouge ensemble, comme les quatre Symfony, dans un seul dépôt plutôt
-qu'en quatre. Chacun s'installe séparément, et ne reçoit que son dossier. Si l'un d'eux en prolonge un
-autre du même lot, l'ordre ne vous concerne pas : `extends:` n'est lisible qu'une fois le dépôt cloné,
-donc la synchronisation rejoue les échecs tant qu'une passe en installe au moins un.
+Un décor trop gros pour vivre dans un pack, ou partagé entre plusieurs, s'installe à part depuis un
+dépôt Git — voir la section précédente ; c'est alors un geste d'administrateur, pas une déclaration du
+pack.
 
 ## Sécurité
 

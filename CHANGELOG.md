@@ -128,40 +128,6 @@ tel quel.
   s'approprier un identifiant déjà pris : déclaré deux fois, le chargement s'arrête en nommant les deux
   dossiers.
 
-- **Un pack peut aussi se contenter de désigner un dépôt** (clé `environments:` de `pack.yaml`, avec
-  `id`, `depot` et `ref` facultative), pour un décor trop gros pour vivre dans le pack ou partagé entre
-  plusieurs packs. Le pack le **déclare** alors — comme `moteur:` déclare la version du moteur qu'il lui
-  faut, à ceci près que celle-ci se résout au lieu de se contenter d'échouer. Déposer un pack suffit ;
-  il n'y a pas d'adresse à retrouver ni à coller.
-
-  Trois façons de le faire, une seule mécanique : `bin/console app:environnement:synchroniser`
-  (`--simuler` pour voir sans agir, `--mettre-a-jour` pour suivre un changement d'adresse ou de
-  référence), un bouton « Installer ce qui manque » dans `/admin` → **Environnements**, et
-  `ENVIRONMENTS_AUTO_INSTALL=1` au démarrage du conteneur — en tâche de fond, pour qu'un dépôt
-  injoignable ne retarde pas les pages. `content:check` signale ce qui manque et rappelle la commande,
-  au lieu de laisser un exercice échouer sans dire pourquoi.
-
-  Ce que le moteur ne fait jamais : installer pendant une requête web (la visite d'un apprenant ne
-  déclenche rien) ; retoucher ce qui est déjà là (un pack qui demande `symfony-8` prend celui du moteur,
-  sans cloner personne) ; installer un environnement qui ne porte pas le nom demandé — le dépôt se nomme
-  lui-même dans son `environment.yaml`, et un désaccord est dit, pas contourné. Un dépôt injoignable
-  n'emporte pas les autres : ce qui peut s'installer s'installe, le reste est rapporté.
-
-  Une déclaration mal formée — identifiant qui n'en est pas un, adresse qui n'est pas en `https://` —
-  refuse le pack à la lecture en nommant l'entrée fautive. Deux packs peuvent demander le même
-  environnement, c'est l'intérêt ; deux adresses pour un seul identifiant sont refusées, en nommant les
-  deux packs.
-
-  **Un dépôt peut porter plusieurs environnements** (`dossier:`, un sous-dossier par environnement) :
-  une famille qui bouge ensemble — les quatre Symfony, par exemple — se versionne mieux d'un seul tenant
-  qu'en quatre dépôts. Chacun s'installe séparément et ne reçoit que son dossier. Disponible aussi dans
-  la commande (`--dossier`) et dans le formulaire d'administration.
-
-  L'ordre d'installation ne regarde personne : `extends:` n'est lisible qu'une fois le dépôt cloné, donc
-  impossible de trier à l'avance. La synchronisation procède par **passes** — tant qu'une passe installe
-  au moins un environnement, elle rejoue ceux qui ont échoué, la base qui manquait étant peut-être
-  arrivée entre-temps. Rien de neuf installé : on s'arrête, et les échecs restants sont de vrais échecs.
-
 ### Modifié
 
 - Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement

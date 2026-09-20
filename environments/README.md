@@ -118,23 +118,19 @@ Ce que cela coûte : empaqueter exécute `composer install`, donc le code du dé
 est réservée aux administrateurs, seules les adresses `https://` sont acceptées, et
 `ENVIRONMENT_SOURCES_ALLOWLIST` limite les hôtes.
 
-Et le pack peut le demander lui-même, sans qu'un administrateur ait à coller quoi que ce soit :
+### Ou bien le pack porte le sien
 
-```yaml
-# pack.yaml
-environments:
-  - id: ma-boutique
-    depot: https://github.com/mon-org/env-ma-boutique.git
-    ref: v1.2.0
-    dossier: symfony   # facultatif : un dépôt peut porter plusieurs environnements
-```
+Le cas ordinaire, pour un décor propre à un parcours : `<pack>/environments/<id>/environment.yaml`, à
+côté des parcours. Rien à déclarer ni à installer — le moteur le trouve du seul fait que le pack est
+monté, et `bin/console app:environnement:synchroniser` lui fabrique son archive.
 
-`bin/console app:environnement:synchroniser` installe ce qui manque, l'administration le propose d'un
-bouton, et `ENVIRONMENTS_AUTO_INSTALL=1` le fait au démarrage du conteneur. Ce qui est déjà là n'est
-jamais retouché : un pack qui demande `symfony-8` prend celui de ce dossier, sans cloner personne.
+`extends:` traverse la frontière : un décor de pack prolonge `symfony-8` sans emporter de `vendor/`, ce
+qui rend « le Symfony complet, plus mes trois entités » tenable en une poignée de fichiers. Un pack ne
+peut pas s'approprier un identifiant déjà pris : déclaré deux fois, le chargement s'arrête en nommant
+les deux dossiers.
 
-C'est ce qui rend l'extraction de ce dossier possible sans rien casser : le jour où un environnement
-d'ici vit ailleurs, un pack le désigne par son dépôt et rien d'autre ne change.
+C'est ce qui rend l'extraction de ce dossier possible sans rien casser : ce qui reste ici, ce sont les
+squelettes génériques ; ce qui raconte une histoire vit dans le pack qui la raconte.
 
 ## Ce qui n'est pas ici, et pourquoi
 

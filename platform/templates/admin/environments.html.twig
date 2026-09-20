@@ -48,59 +48,39 @@
         </div>
     </div>
 
-{% set etats = {
-    'present': {'libelle': 'Installé', 'classe': 'text-success'},
-    'missing': {'libelle': 'Manquant', 'classe': 'text-danger'},
-    'outdated': {'libelle': 'Autre version', 'classe': 'text-warning'},
-    'foreign': {'libelle': 'Déjà là', 'classe': 'text-muted'},
-    'busy': {'libelle': 'Installation en cours', 'classe': 'text-muted'},
-} %}
-
-{% if demandes %}
+{% if portes %}
     <div class="beta-panel">
-        <div class="beta-panel-header"><h2>Demandés par les packs</h2></div>
+        <div class="beta-panel-header"><h2>Portés par les packs</h2></div>
         <div class="beta-panel-body beta-scroll">
             <p class="text-muted">
-                Un pack déclare les environnements dont ses exercices ont besoin, et où les prendre
-                (<code>environments:</code> dans son <code>pack.yaml</code>). Ce qui manque s'installe d'un
-                seul geste — et n'exécute, là encore, que du code venu de ces dépôts.
+                Un pack peut apporter son propre décor, dans <code>environments/&lt;id&gt;/</code> à côté de
+                ses parcours. Il arrive avec le pack ; il ne lui manque que son archive — celle que le
+                navigateur télécharge. L'empaquetage exécute <code>composer install</code> sur ce serveur.
             </p>
             <table class="table">
-                <thead><tr><th>Identifiant</th><th>Demandé par</th><th>Dépôt</th><th>État</th></tr></thead>
+                <thead><tr><th>Identifiant</th><th>Dossier</th><th>État</th></tr></thead>
                 <tbody>
-                    {% for ligne in demandes %}
+                    {% for ligne in portes %}
                         <tr>
-                            <td><code>{{ ligne.environment.id }}</code></td>
-                            <td>{{ ligne.environment.packId }}</td>
-                            <td>
-                                <code>{{ ligne.environment.displayDepot }}</code>
-                                {% if ligne.environment.ref %}<span class="text-muted">({{ ligne.environment.ref }})</span>{% endif %}
-                                {% if ligne.environment.dossier %}<span class="text-muted">→ {{ ligne.environment.dossier }}</span>{% endif %}
-                            </td>
-                            <td class="{{ etats[ligne.state].classe }}">
-                                {{ etats[ligne.state].libelle }}
-                                {% if ligne.state == 'outdated' and ligne.source %}
-                                    <div class="text-muted">installé depuis {{ ligne.source.displayUrl }}{% if ligne.source.ref %} ({{ ligne.source.ref }}){% endif %}</div>
-                                {% elseif ligne.state == 'foreign' %}
-                                    <div class="text-muted">présent sans venir d'un dépôt : le moteur le livre, ou il a été installé à la main. Le pack s'en sert tel quel.</div>
-                                {% elseif ligne.state == 'busy' and ligne.source %}
-                                    <div class="text-muted">{{ ligne.source.message }}</div>
-                                {% endif %}
+                            <td><code>{{ ligne.id }}</code></td>
+                            <td class="text-muted">{{ ligne.directory }}</td>
+                            <td class="{{ ligne.built ? 'text-success' : 'text-danger' }}">
+                                {{ ligne.built ? 'Empaqueté' : 'Pas encore empaqueté' }}
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
-            {% if manquants and activable %}
+            {% if aEmpaqueter and activable %}
                 <form method="post" action="{{ path('admin_environments_sync') }}"
-                      onsubmit="return confirm('Installer {{ manquants }} environnement(s) depuis leurs dépôts ? Le code de ces dépôts sera exécuté sur ce serveur.')">
+                      onsubmit="return confirm('Empaqueter {{ aEmpaqueter }} environnement(s) ? Leur code sera exécuté sur ce serveur.')">
                     <input type="hidden" name="_token" value="{{ csrf_token('environments') }}">
-                    <button class="btn btn-primary">Installer ce qui manque ({{ manquants }})</button>
+                    <button class="btn btn-primary">Empaqueter ce qui manque ({{ aEmpaqueter }})</button>
                 </form>
-            {% elseif manquants %}
+            {% elseif aEmpaqueter %}
                 <p class="text-danger">
-                    {{ manquants }} environnement(s) manquent, et cette instance n'a pas de dossier
-                    d'environnements installables : voir plus bas.
+                    {{ aEmpaqueter }} environnement(s) sans archive, et cette instance n'a pas de dossier
+                    où les déposer : voir plus bas.
                 </p>
             {% endif %}
         </div>

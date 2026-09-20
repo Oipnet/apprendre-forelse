@@ -38,20 +38,20 @@ final class EnvironmentController extends AbstractController
     #[AdminRoute('/environnements', name: 'environments', options: ['methods' => ['GET']], allowedDashboards: [DashboardController::class])]
     public function index(): Response
     {
-        // Un pack mal déclaré ne doit pas emporter la page : c'est justement ici qu'on vient le lire.
+        // Un pack mal formé ne doit pas emporter la page : c'est justement ici qu'on vient le lire.
         try {
-            $demandes = $this->packEnvironments->state();
-            $manquants = \count($this->packEnvironments->toInstall());
+            $portes = $this->packEnvironments->state();
+            $aEmpaqueter = \count($this->packEnvironments->toBuild());
         } catch (ContentException $e) {
-            $demandes = [];
-            $manquants = 0;
+            $portes = [];
+            $aEmpaqueter = 0;
             $this->addFlash('error', $e->getMessage());
         }
 
         return $this->render('admin/environments.html.twig', [
             'disponibles' => $this->available(),
-            'demandes' => $demandes,
-            'manquants' => $manquants,
+            'portes' => $portes,
+            'aEmpaqueter' => $aEmpaqueter,
             'installations' => $this->installed->isEnabled() ? $this->installed->jobs() : [],
             'activable' => $this->installed->isEnabled(),
             'dossier' => $this->installed->directory(),
@@ -85,10 +85,10 @@ final class EnvironmentController extends AbstractController
     }
 
     /**
-     * Installe d'un coup ce que les packs demandent et que l'instance n'a pas.
+     * Empaquette d'un coup les environnements que les packs portent et qui n'ont pas d'archive.
      *
-     * Même tâche de fond que pour une installation seule : la commande enchaîne les dépôts, et la page
-     * les voit arriver un par un au fil des rafraîchissements.
+     * Même tâche de fond que pour une installation seule : la commande les enchaîne, et la page les
+     * voit arriver un par un au fil des rafraîchissements.
      */
     #[AdminRoute('/environnements/synchroniser', name: 'environments_sync', options: ['methods' => ['POST']], allowedDashboards: [DashboardController::class])]
     public function sync(Request $request): Response
@@ -102,7 +102,7 @@ final class EnvironmentController extends AbstractController
             return $this->redirectToRoute('admin_environments');
         }
         $this->lancer([], 'app:environnement:synchroniser');
-        $this->addFlash('success', 'Installation des environnements demandés par les packs lancée. Rafraîchissez cette page pour suivre.');
+        $this->addFlash('success', 'Empaquetage des environnements portés par les packs lancé. Rafraîchissez cette page pour suivre.');
 
         return $this->redirectToRoute('admin_environments');
     }

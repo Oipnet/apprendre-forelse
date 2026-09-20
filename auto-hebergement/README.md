@@ -216,36 +216,6 @@ docker compose exec app bin/console app:environnement:synchroniser
 (ou le bouton dans `/admin` → Environnements, ou `ENVIRONMENTS_AUTO_INSTALL=1` pour que ce soit fait au
 démarrage). L'archive va dans le volume `environnements`, pas dans l'image.
 
-### Ou le pack désigne un dépôt
-
-Quand le décor est trop gros pour vivre dans le pack, ou qu'il sert à plusieurs packs, le `pack.yaml`
-peut se contenter de dire où le prendre :
-
-```yaml
-environments:
-  - id: ma-boutique
-    depot: https://github.com/mon-org/env-ma-boutique.git
-    ref: v1.2.0        # facultatif
-    dossier: symfony   # facultatif : si le dépôt porte plusieurs environnements
-```
-
-Déposez le pack dans `packs/`, et l'instance installe ce qui lui manque :
-
-```bash
-docker compose exec app bin/console app:environnement:synchroniser --simuler   # ce qui serait installé
-docker compose exec app bin/console app:environnement:synchroniser
-```
-
-`/admin` → **Environnements** affiche un tableau « Demandés par les packs » et un bouton qui installe
-tout ce qui manque. Et si vous préférez ne rien avoir à lancer, `ENVIRONMENTS_AUTO_INSTALL=1` dans `.env`
-le fait à chaque démarrage du conteneur : en tâche de fond, sans retarder les pages, et sans rien faire
-si tout est déjà là.
-
-Ce qui est déjà présent n'est jamais retouché — y compris les environnements livrés avec le moteur : un
-pack qui demande `symfony-8` utilise celui du moteur, aucun dépôt n'est cloné. Rien ne s'installe non
-plus pendant la visite d'un apprenant : seuls la commande, le bouton et le démarrage déclenchent une
-installation.
-
 ## Réglages
 
 Tout se règle dans `.env`, commenté ligne à ligne. Après chaque modification :

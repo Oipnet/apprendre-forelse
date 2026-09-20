@@ -104,11 +104,11 @@ final class ContentCheckCommand
     }
 
     /**
-     * Ce que les packs déclarent avoir besoin (clé « environments » de pack.yaml), et ce qui manque.
+     * Les environnements que les packs portent (`<pack>/environments/<id>/`), et lesquels sont prêts.
      *
-     * Signalé, jamais installé : `content:check` vérifie, il ne déploie pas. Un exercice dont
-     * l'environnement manque échouera de toute façon plus bas — autant dire tout de suite pourquoi, et
-     * quelle commande y remédie.
+     * Signalé, jamais empaqueté : `content:check` vérifie, il ne déploie pas. Un exercice dont
+     * l'environnement n'a pas d'archive échouera de toute façon plus bas — autant dire tout de suite
+     * pourquoi, et quelle commande y remédie.
      */
     private function reportPackEnvironments(SymfonyStyle $io): void
     {
@@ -119,21 +119,20 @@ final class ContentCheckCommand
 
         $manquants = [];
         foreach ($lignes as $ligne) {
-            $environment = $ligne['environment'];
-            [$marque, $etat] = match ($ligne['state']) {
-                PackEnvironments::PRESENT, PackEnvironments::FOREIGN => ['<info>✔</info>', 'présent'],
-                PackEnvironments::BUSY => ['<fg=yellow>!</>', 'installation en cours'],
-                PackEnvironments::OUTDATED => ['<fg=yellow>!</>', 'installé depuis une autre source'],
-                default => ['<error>✘</error>', 'absent'],
-            };
-            if (PackEnvironments::MISSING === $ligne['state']) {
-                $manquants[] = $environment->id;
+            if (!$ligne['built']) {
+                $manquants[] = $ligne['id'];
             }
-            $io->writeln(sprintf(' %s environnement %s — %s (pack « %s »), %s', $marque, $environment->id, $environment->describeSource(), $environment->packId, $etat));
+            $io->writeln(sprintf(
+                ' %s environnement %s, porté par un pack (%s), %s',
+                $ligne['built'] ? '<info>✔</info>' : '<error>✘</error>',
+                $ligne['id'],
+                $ligne['directory'],
+                $ligne['built'] ? 'empaqueté' : 'pas encore empaqueté',
+            ));
         }
 
         if ([] !== $manquants) {
-            $io->writeln(sprintf('     <fg=yellow>Pour les installer : bin/console app:environnement:synchroniser (%s)</>', implode(', ', $manquants)));
+            $io->writeln(sprintf('     <fg=yellow>Pour les empaqueter : bin/console app:environnement:synchroniser (%s)</>', implode(', ', $manquants)));
         }
     }
 }
