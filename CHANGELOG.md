@@ -15,6 +15,21 @@ sans fork, sans reconstruire l'image, et sans rien avoir à republier au titre d
 ne modifie pas de code. Les instances existantes ne changent pas : sans dossier de marque, tout reste
 tel quel.
 
+### Cassant
+
+- **Un pack doit accepter le moteur 2.** La contrainte `moteur:` d'un `pack.yaml` est vérifiée au
+  chargement : un pack resté en `^1.x` n'est plus chargé du tout, et la plateforme ne sert plus son
+  contenu. Élargissez la borne haute (`'^1.0'` → `'>=1.0 <3'`) **avant** de mettre le moteur à jour —
+  une contrainte élargie fonctionne avec le moteur 1 comme avec le 2, l'inverse n'est pas vrai. Les
+  packs de Forelse le sont déjà.
+- **L'empaquetage des environnements a déménagé** : `tools/build-env.sh` et `tools/build-completion.php`
+  deviennent `environments/bin/build-env.sh` et `environments/bin/build-completion.php`. Tout ce qui
+  concerne les environnements vit désormais dans `environments/`, prêt à partir dans son propre dépôt.
+  Une intégration continue qui appelait l'ancien chemin doit suivre.
+- **Les simulateurs ont quitté `tools/`** : `tools/docker-sim` devient `packages/simulateur-docker` et
+  `tools/nuxt-sim` devient `packages/simulateur-nuxt`. Le dépôt Composer `path` des environnements
+  Docker et les dépendances du playground pointent sur les nouveaux chemins.
+
 ### Ajouté
 
 - **Identité de l'instance** (`BRANDING_DIR`, `/marque` dans l'image) : un dossier monté qui contient
@@ -232,6 +247,13 @@ tel quel.
 - L'état d'un environnement installé (`.forelse.json`, qui porte l'adresse du dépôt et donc le jeton
   d'un dépôt privé) n'est plus empaqueté dans l'archive téléchargée par les apprenants. Les adresses
   affichées dans l'administration sont elles aussi expurgées de leurs identifiants.
+- `build-env.sh` n'utilise plus `mapfile`, une nouveauté de bash 4 : macOS ne livre que le 3.2 en
+  `/bin/bash`, et l'empaquetage y échouait à la première chaîne d'environnements — donc `make install`
+  ne produisait aucune archive. Invisible depuis l'intégration continue, qui tourne sous Linux.
+- Le lanceur de tests d'un runtime est de nouveau trouvé quand le **chemin du projet contient une
+  espace** : `import.meta.resolve` répond une URL percent-encodée, que `parse_url` ne décode pas.
+- `EnvironmentAdminTest` crée le dossier `INSTALLED_ENVIRONMENTS_DIR` qu'il vérifie, au lieu de le
+  supposer monté : rien ne le crée sur un dépôt fraîchement cloné.
 
 
 ## 1.3.0 — 2026-09-18
