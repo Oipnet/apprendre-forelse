@@ -196,7 +196,7 @@ final readonly class SeoWriter
     {
         $url = $this->url('app_concepts');
         $this->seo
-            ->setTitle('Les notions travaillées en exercices | '.PageSeo::SITE_NAME, 'Les notions travaillées en exercices')
+            ->setTitle('Les notions travaillées en exercices | '.$this->branding->name(), 'Les notions travaillées en exercices')
             ->setDescription(sprintf(
                 '%d notions de développement, et pour chacune les exercices qui la font pratiquer : on écrit le code dans le navigateur, des tests disent s\'il est juste.',
                 \count($concepts),
@@ -215,7 +215,7 @@ final readonly class SeoWriter
         $count = \count($concept['exercises']) + \count($concept['practices']);
         $this->seo
             ->setTitle(
-                sprintf('%s : %d exercices pour la pratiquer | %s', $concept['name'], $count, PageSeo::SITE_NAME),
+                sprintf('%s : %d exercices pour la pratiquer | %s', $concept['name'], $count, $this->branding->name()),
                 sprintf('%s : %d exercices pour la pratiquer', $concept['name'], $count),
                 sprintf('%s en exercices', $concept['name']),
                 $concept['name'],
