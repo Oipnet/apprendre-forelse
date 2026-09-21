@@ -231,7 +231,7 @@ docker compose up -d
 | Fuseau | `APP_TIMEZONE` | Les dates sont stockées sans fuseau : choisissez-le avant les premiers comptes. |
 | Emails | `MAILER_DSN`, `MAILER_FROM`, `CONTACT_EMAIL`, `REGISTRATION_ALERT_EMAIL` | Sans `MAILER_DSN`, aucun email ne part : ni confirmation d'adresse, ni mot de passe oublié. Test : `docker compose exec app bin/console mailer:test vous@example.org`. |
 | Mentions légales | `LEGAL_*` | Remplissent `/mentions-legales` et `/confidentialite` ; tant qu'un champ obligatoire manque, les pages le signalent. Les textes sont écrits pour le droit français. |
-| Inscription | `REGISTRATION_INVITE_ONLY` | `1` : sur code de cohorte uniquement (cohortes créées dans `/admin`). |
+| Inscription | `REGISTRATION_INVITE_ONLY` | `1` : sur code de cohorte uniquement (cohortes créées dans `/admin`), et la Pratique demande un compte. `0` : inscription libre, et la Pratique s'écrit sans compte. |
 | Référencement | `SEARCH_INDEXING`, `GOOGLE_SITE_VERIFICATION` | `0` pour une instance interne ou de préproduction : robots.txt interdit l'indexation. |
 | Audience | `ANALYTICS_*` | Facultative, éteinte par défaut : voir [Savoir qui visite le site](#savoir-qui-visite-le-site). |
 | Mentor et IA | `ANTHROPIC_API_KEY`, `AI_MODEL` | Revue de code et erreurs expliquées pour les apprenants connectés, brouillons dans l'atelier. Chaque appel est facturé sur votre clé ; sans clé, les boutons n'apparaissent pas. |

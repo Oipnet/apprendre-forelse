@@ -12,6 +12,7 @@ use App\Repository\CohortRepository;
 use App\Repository\TrackAccessRepository;
 use App\Repository\TrackPricingRepository;
 use Psr\Clock\ClockInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -20,7 +21,8 @@ use Symfony\Contracts\Service\ResetInterface;
  * obtenu. Toute page ou API de contenu (exercice, progression, mentor, fiche, livret) passe par lui.
  *
  * Règles, dans l'ordre :
- *  1. sans compte, rien : le contenu se lit (consigne, notions), il ne se joue pas ;
+ *  1. sans compte : la Pratique se joue (progression gardée dans le navigateur, reprise sur le compte à
+ *     l'inscription), les parcours se lisent seulement. Sur une instance sur invitation, rien ne se joue ;
  *  2. le premier chapitre d'un parcours public est ouvert à tout compte connecté, gratuitement ;
  *  3. un administrateur ou un auteur (qui relit le contenu) ouvre tout ;
  *  4. un parcours gratuit (sans tarif, ou à 0 €) est ouvert à tout compte ;
@@ -42,6 +44,9 @@ final class TrackAccessChecker implements ResetInterface
         private readonly ContentRepository $content,
         private readonly RoleHierarchyInterface $roleHierarchy,
         private readonly ClockInterface $clock,
+        /** Instance privée (école, entreprise) : la Pratique aussi demande un compte. */
+        #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
+        private readonly bool $inviteOnly = false,
     ) {
     }
 
@@ -66,11 +71,17 @@ final class TrackAccessChecker implements ResetInterface
         };
     }
 
-    /** Un exercice de parcours suit la règle de son chapitre ; la Pratique demande un compte. */
+    /**
+     * Un exercice de parcours suit la règle de son chapitre. Un exercice de Pratique est ouvert à tous, sans
+     * compte : c'est par lui qu'on découvre la plateforme, et demander l'inscription avant d'avoir rien montré
+     * fait fuir. Le mentor, les retours et la progression en base exigent un compte de leur côté (leurs API
+     * répondent 401 avant même d'arriver ici), donc rien de coûteux ne s'ouvre avec lui. Une instance sur
+     * invitation (REGISTRATION_INVITE_ONLY) reste fermée de bout en bout : école, entreprise, préproduction.
+     */
     public function canAccessExercise(?User $user, Exercise $exercise): bool
     {
         if (null === $exercise->trackId) {
-            return null !== $user;
+            return null !== $user || !$this->inviteOnly;
         }
         $track = $this->content->findTrack($exercise->trackId);
         $chapter = null === $track ? null : $this->content->chapterOf($exercise);

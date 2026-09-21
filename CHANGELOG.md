@@ -8,6 +8,18 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **La Pratique s'écrit sans compte.** Un visiteur ouvre l'éditeur, écrit son code, lance les tests et voit
+  s'il a réussi — l'inscription n'est proposée qu'après, pour garder la progression. Elle était jusqu'ici
+  demandée avant d'avoir rien montré, au moment exact où le visiteur est le plus motivé. Ses essais sont
+  gardés dans son navigateur et remontent sur son compte s'il en crée un (mécanique déjà en place). Ce qui
+  coûte ou engage reste fermé : le mentor (facturé sur la clé de l'instance), les retours et la progression
+  en base répondent 401 sans compte. La consigne reste servie dans le HTML de la page, donc rien ne change
+  pour les moteurs de recherche. Une instance sur invitation (`REGISTRATION_INVITE_ONLY=1` : école,
+  entreprise, préproduction) garde la Pratique fermée comme avant.
+
+
 ## 2.0.0 — 2026-09-21
 
 Premier chantier de la marque blanche (voir [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md),

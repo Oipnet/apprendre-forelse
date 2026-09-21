@@ -10,15 +10,16 @@ use App\Content\PracticeVisibility;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
 use App\Seo\SeoWriter;
+use App\Security\TrackAccessChecker;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * La Pratique : de courts exercices, à part des parcours, pour se servir d'une fonctionnalité d'un framework.
- * La liste et l'explication de chaque exercice sont publiques ; le faire demande un compte.
+ * Tout y est public, jusqu'à l'éditeur : c'est la porte d'entrée de la plateforme, et rien n'y est demandé
+ * avant d'avoir montré quelque chose. Le compte sert à garder la progression, appeler le mentor, donner un avis.
  */
 final class PracticeController extends AbstractController
 {
@@ -28,8 +29,6 @@ final class PracticeController extends AbstractController
     public function __construct(
         private readonly PracticeVisibility $practices,
         private readonly FrameworkRegistry $frameworks,
-        #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
-        private readonly bool $inviteOnly,
     ) {
     }
 
@@ -86,9 +85,13 @@ final class PracticeController extends AbstractController
         ]);
     }
 
-    /** Avec un compte : le playground. Sans compte : la page publique de l'exercice (le problème, la fonctionnalité expliquée). */
+    /**
+     * Le playground, avec ou sans compte : un visiteur écrit le code, ses essais sont gardés dans son navigateur
+     * et remontent sur son compte s'il en crée un. Seule une instance sur invitation le renvoie vers la page
+     * publique de l'exercice — le problème et la fonctionnalité expliquée, sans éditeur (TrackAccessChecker).
+     */
     #[Route('/pratique/{exerciseId}', name: 'app_exercise_pratique', methods: ['GET'])]
-    public function play(string $exerciseId, PlaygroundConfigFactory $configs, SeoWriter $seo, LessonRenderer $markdown): Response
+    public function play(string $exerciseId, PlaygroundConfigFactory $configs, SeoWriter $seo, LessonRenderer $markdown, TrackAccessChecker $access): Response
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
         $seo->practice($practice);
@@ -98,8 +101,9 @@ final class PracticeController extends AbstractController
             'instructions' => $markdown->toHtmlUnderTitle($practice->exercise->instructions),
         ];
 
-        if (!$this->getUser()) {
-            return $this->render('practice/show.html.twig', [...$context, 'inviteOnly' => $this->inviteOnly]);
+        $user = $this->getUser();
+        if (!$access->canAccessExercise($user instanceof User ? $user : null, $practice->exercise)) {
+            return $this->render('practice/show.html.twig', $context);
         }
 
         return $this->render('exercise/play.html.twig', [...$context, 'exercise' => $practice->exercise, 'config' => $configs->create($practice->exercise)]);

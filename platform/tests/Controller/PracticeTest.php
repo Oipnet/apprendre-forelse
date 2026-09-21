@@ -111,17 +111,57 @@ final class PracticeTest extends WebTestCase
         $this->assertNotNull($crawler->filter('.pr-more input[value="Validator"]')->attr('checked'));
     }
 
-    public function testUnVisiteurLitLExerciceEtEstInviteACreerUnCompte(): void
+    /** La porte d'entrée de la plateforme : un visiteur écrit le code sans rien demander à personne. */
+    public function testUnVisiteurEcritLeCodeSansCompte(): void
     {
-        $this->client->request('GET', '/pratique/point-precis');
+        $crawler = $this->client->request('GET', '/pratique/point-precis');
 
         $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('[data-playground]');
+        // La consigne reste dans le HTML servi : c'est elle que les moteurs de recherche indexent.
         $this->assertSelectorCount(1, 'h1');
         $this->assertSelectorExists('.exercise-instructions');
-        $this->assertSelectorNotExists('[data-playground]');
-        $this->assertSelectorExists('.exercise-access a[href="/inscription?suite=/pratique/point-precis"]');
+
+        $config = json_decode((string) $crawler->filter('[data-playground]')->attr('data-config'), true);
+        $this->assertSame(['mode' => 'local'], $config['progress'], 'Sans compte, la progression reste dans le navigateur.');
+        $this->assertNull($config['user']);
+        $this->assertSame('/inscription', parse_url((string) $config['registerUrl'], \PHP_URL_PATH), 'Le compte est proposé après la réussite, pas avant.');
+
         $this->json($this->client, 'GET', '/api/exercises/pratique/point-precis');
+        $this->assertResponseIsSuccessful();
+    }
+
+    /** Ce qui reste fermé sans compte : ce qui coûte de l'argent, écrit en base, ou engage l'apprenant. */
+    public function testSansCompteLeMentorLesRetoursEtLaProgressionRestentFermes(): void
+    {
+        $config = json_decode((string) $this->client->request('GET', '/pratique/point-precis')->filter('[data-playground]')->attr('data-config'), true);
+        $this->assertNull($config['mentor'], 'Le mentor est facturé sur la clé de l\'instance : jamais proposé à un visiteur.');
+        $this->assertNull($config['feedbackUrl']);
+
+        // Le playground ne les propose pas ; les API refusent quand même d'elles-mêmes (voir MentorApiTest,
+        // FeedbackApiTest). Ici, celle que le mode « local » remplace.
+        $this->json($this->client, 'GET', '/api/progress/pratique/point-precis');
         $this->assertResponseStatusCodeSame(401);
+    }
+
+    /** Une instance sur invitation (école, entreprise) ne s'ouvre pas, Pratique comprise. */
+    public function testUneInstanceSurInvitationGardeLaPratiqueFermee(): void
+    {
+        $initial = $_SERVER['REGISTRATION_INVITE_ONLY'] ?? '0';
+        $_SERVER['REGISTRATION_INVITE_ONLY'] = $_ENV['REGISTRATION_INVITE_ONLY'] = '1';
+        try {
+            self::ensureKernelShutdown();
+            $client = static::createClient();
+            $client->request('GET', '/pratique/point-precis');
+
+            $this->assertResponseIsSuccessful();
+            $this->assertSelectorNotExists('[data-playground]');
+            $this->assertSelectorExists('.exercise-access a[href="/inscription?suite=/pratique/point-precis"]');
+            $this->json($client, 'GET', '/api/exercises/pratique/point-precis');
+            $this->assertResponseStatusCodeSame(401);
+        } finally {
+            $_SERVER['REGISTRATION_INVITE_ONLY'] = $_ENV['REGISTRATION_INVITE_ONLY'] = $initial;
+        }
     }
 
     public function testUnExerciceEnPreparationOuInconnuEstIntrouvable(): void

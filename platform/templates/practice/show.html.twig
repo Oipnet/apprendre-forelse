@@ -1,6 +1,9 @@
 {% extends 'base.html.twig' %}
 
-{# Un exercice de Pratique vu sans compte : l'explication se lit, l'éditeur et la validation demandent un compte. #}
+{#
+  Un exercice de Pratique sur une instance sur invitation (REGISTRATION_INVITE_ONLY) : l'explication se lit,
+  l'éditeur demande un compte. Ailleurs, tout le monde écrit le code sans compte et voit exercise/play.html.twig.
+#}
 {% block title %}{{ practice.exercise.title }} · Pratique · {{ marque.name }}{% endblock %}
 
 {% block body %}
@@ -9,14 +12,11 @@
 
         <aside class="exercise-access" aria-labelledby="exercise-access-title">
             <h2 id="exercise-access-title">À vous d'écrire le code</h2>
-            {% if inviteOnly %}
-                <p>La Pratique demande un compte, et la plateforme est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
-            {% else %}
-                <p>L'éditeur, l'aperçu et les tests qui valident l'exercice demandent un compte, gratuit.</p>
-            {% endif %}
+            <p>Cette plateforme est réservée à ses membres : créez votre compte avec votre code d'invitation,
+                ou laissez votre adresse sur la liste d'attente.</p>
             <p class="exercise-access-actions">
                 <a class="button primary" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Créer un compte</a>
-                {% if inviteOnly %}<a class="button" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>{% endif %}
+                <a class="button" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>
                 <a class="button ghost" href="{{ path('app_login') }}">Se connecter</a>
             </p>
         </aside>
