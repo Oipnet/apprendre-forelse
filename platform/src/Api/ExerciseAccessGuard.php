@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Le contrôle d'accès des API d'un exercice (contenu, progression, mentor) : 404 pour un parcours invisible,
- * 401 sans compte, 403 pour un chapitre fermé. Les pages HTML font la même chose avec redirection et page d'achat.
+ * 401 sans compte, 403 pour un chapitre fermé. Les pages HTML font la même chose avec la page publique de l'exercice.
  */
 final readonly class ExerciseAccessGuard
 {

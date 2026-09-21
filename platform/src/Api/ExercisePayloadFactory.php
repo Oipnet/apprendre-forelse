@@ -63,8 +63,8 @@ final readonly class ExercisePayloadFactory
             'title' => $exercise->title,
             'concepts' => $exercise->concepts,
             'xp' => $exercise->xp,
-            // « free » : jouable sans compte (premier chapitre), progression gardée dans le navigateur de l'invité.
-            'access' => $this->access->canAccessExercise(null, $exercise) ? 'free' : 'account',
+            // « free » : le premier chapitre d'un parcours, gratuit pour tout compte ; « account » : le reste, qui demande un accès.
+            'access' => $this->access->isFreeExercise($exercise) ? 'free' : 'account',
             'open' => $exercise->open,
             'preview' => $exercise->preview,
             'editable' => $exercise->editable,

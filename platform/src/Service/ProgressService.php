@@ -83,7 +83,8 @@ final readonly class ProgressService
     }
 
     /**
-     * Reprend la progression d'invité (exercices jouables sans compte : le premier chapitre) sans écraser celle du compte.
+     * Reprend la progression laissée dans le navigateur par les versions où le premier chapitre se jouait sans compte,
+     * sans écraser celle du compte.
      *
      * @param list<GuestProgressInput> $items
      */
@@ -91,9 +92,9 @@ final readonly class ProgressService
     {
         $imported = 0;
         foreach ($items as $item) {
-            // Seuls les parcours ont des exercices sans compte : la Pratique n'a rien à importer.
+            // On ne reprend que ce que le compte peut ouvrir : la Pratique n'a de toute façon rien à importer.
             $exercise = $this->content->findExercise($item->trackId, $item->exerciseId);
-            if (!$exercise || !$this->access->canAccessExercise(null, $exercise) || $this->find($user, $exercise)) {
+            if (!$exercise || !$this->access->canAccessExercise($user, $exercise) || $this->find($user, $exercise)) {
                 continue;
             }
             $this->saveDraft($user, $exercise, $item->files, $item->hintsUsed);

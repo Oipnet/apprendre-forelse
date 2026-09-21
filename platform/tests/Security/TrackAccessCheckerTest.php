@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Security\Core\Role\RoleHierarchy;
 
-/** Pack de test « payant » : chapitre « libre » (e1), puis « complet » (e2, e3) ; « cohortes » a un parcours en préparation. */
+/** Pack de test « payant » : chapitre gratuit (e1), puis « complet » (e2, e3) ; « cohortes » a un parcours en préparation. */
 final class TrackAccessCheckerTest extends TestCase
 {
     private const string ROOT = __DIR__.'/../../..';
@@ -63,17 +63,26 @@ final class TrackAccessCheckerTest extends TestCase
         return [$track, $track->chapters[0], $track->chapters[1]];
     }
 
-    public function testLePremierChapitreEstLibreMemeSansCompte(): void
+    public function testLePremierChapitreEstGratuitMaisDemandeUnCompte(): void
     {
         [$track, $libre, $complet] = $this->payant();
         $checker = $this->checker();
 
-        $this->assertTrue($checker->canAccess(null, $track, $libre));
         $this->assertTrue($checker->canAccess(self::user(), $track, $libre));
+        $this->assertFalse($checker->canAccess(null, $track, $libre), 'Gratuit ne veut pas dire sans compte.');
         $this->assertFalse($checker->canAccess(null, $track, $complet));
         $this->assertFalse($checker->canAccess(self::user(), $track, $complet), 'Parcours payant, aucun accès.');
-        $this->assertTrue($checker->canAccessExercise(null, $this->content->findExercise('payant', 'e1')));
-        $this->assertFalse($checker->canAccessExercise(null, $this->content->findExercise('payant', 'e3')));
+        $this->assertTrue($checker->canAccessExercise(self::user(), $this->content->findExercise('payant', 'e1')));
+        $this->assertFalse($checker->canAccessExercise(null, $this->content->findExercise('payant', 'e1')));
+        $this->assertFalse($checker->canAccessExercise(self::user(), $this->content->findExercise('payant', 'e3')));
+    }
+
+    public function testUnExerciceDuPremierChapitreResteMarqueGratuit(): void
+    {
+        $checker = $this->checker();
+
+        $this->assertTrue($checker->isFreeExercise($this->content->findExercise('payant', 'e1')));
+        $this->assertFalse($checker->isFreeExercise($this->content->findExercise('payant', 'e3')));
     }
 
     public function testLePremierChapitreDUnParcoursEnPreparationNEstPasLibre(): void
@@ -81,6 +90,7 @@ final class TrackAccessCheckerTest extends TestCase
         $track = $this->content->findTrack('atelier-secret');
 
         $this->assertFalse($this->checker()->canAccess(null, $track, $track->chapters[0]));
+        $this->assertFalse($this->checker()->canAccess(self::user(), $track, $track->chapters[0]), 'Même avec un compte.');
     }
 
     public function testUnAccesActifOuvreLeParcours(): void

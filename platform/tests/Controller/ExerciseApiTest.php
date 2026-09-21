@@ -6,6 +6,7 @@ use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Tests\DatabaseTrait;
 use App\Tests\PacksTrait;
+use App\Tests\PaymentTrait;
 use App\Version;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -13,10 +14,13 @@ final class ExerciseApiTest extends WebTestCase
 {
     use DatabaseTrait;
     use PacksTrait;
+    use PaymentTrait;
 
-    public function testUnExerciceLibreEstServiSansSolution(): void
+    public function testUnExerciceGratuitEstServiSansSolution(): void
     {
         $client = static::createClient();
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
         $payload = $this->json($client, 'GET', '/api/exercises/decouverte/01-bonjour');
 
         $this->assertResponseIsSuccessful();
@@ -40,6 +44,8 @@ final class ExerciseApiTest extends WebTestCase
     public function testLaChargeUtilePorteLeProfilDuFramework(): void
     {
         $client = static::createClient();
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
         $framework = $this->json($client, 'GET', '/api/exercises/decouverte/01-bonjour')['environment']['framework'];
 
         $this->assertResponseIsSuccessful();
@@ -63,14 +69,22 @@ final class ExerciseApiTest extends WebTestCase
         $this->assertSame('App\\Tests', $framework['namespaceRoots']['tests']);
     }
 
-    public function testUnExerciceAvecCompteEstRefuseAUnInvite(): void
+    public function testUnInviteNObtientAucunExerciceMemeGratuit(): void
     {
         $this->usePaidPack();
         try {
             $client = static::createClient();
             $this->json($client, 'GET', '/api/exercises/payant/e2');
             $this->assertResponseStatusCodeSame(401, 'Hors du premier chapitre, un compte est demandé.');
-            $this->assertSame('free', $this->json($client, 'GET', '/api/exercises/payant/e1')['access'], 'Le premier chapitre est libre.');
+            $this->json($client, 'GET', '/api/exercises/payant/e1');
+            $this->assertResponseStatusCodeSame(401, 'Le premier chapitre est gratuit, pas anonyme.');
+
+            $this->resetDatabase();
+            $this->setPrice('payant', 4900);
+            $client->loginUser($this->createUser());
+            $this->assertSame('free', $this->json($client, 'GET', '/api/exercises/payant/e1')['access'], 'Un compte suffit pour le premier chapitre.');
+            $this->json($client, 'GET', '/api/exercises/payant/e2');
+            $this->assertResponseStatusCodeSame(403, 'La suite demande un accès au parcours.');
         } finally {
             $this->restorePacks();
         }
@@ -98,6 +112,8 @@ final class ExerciseApiTest extends WebTestCase
             new Version(__DIR__.'/../../../VERSION'),
         ));
 
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
         $payload = $this->json($client, 'GET', '/api/exercises/debut/e1');
 
         $this->assertResponseIsSuccessful();

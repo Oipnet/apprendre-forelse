@@ -2,7 +2,8 @@
 
 {#
   Un exercice qui n'est pas ouvert au visiteur : sa consigne reste lisible (et indexable), l'éditeur est remplacé
-  par l'encart d'accès. Ni playground ni moteur WebAssembly sur cette page.
+  par l'encart d'accès. Ni playground ni moteur WebAssembly sur cette page. Deux cas : le premier chapitre, gratuit,
+  où il suffit de créer un compte ; la suite du parcours, qui demande un accès.
 #}
 {% block title %}{{ exercise.title }} · {{ track.title }} · {{ marque.name }}{% endblock %}
 
@@ -21,18 +22,28 @@
                     {{ include('track/_price.html.twig', {continueUrl: null}) }}
                 {% endif %}
             {% else %}
-                <h2 id="exercise-access-title">Premier chapitre gratuit, sans compte</h2>
-                {% if inviteOnly %}
-                    <p>La suite du parcours est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
+                {% if freeChapter %}
+                    <h2 id="exercise-access-title">Cet exercice est gratuit : créez votre compte pour l'écrire</h2>
+                    {% if inviteOnly %}
+                        <p>Le premier chapitre du parcours ne coûte rien. La plateforme est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
+                    {% else %}
+                        <p>Tout le premier chapitre du parcours ne coûte rien : il faut seulement un compte pour ouvrir l'éditeur, exécuter le projet et lancer les tests.</p>
+                        <p>Votre progression et votre code sont gardés sur votre compte : vous reprenez où vous en étiez, d'un appareil à l'autre.</p>
+                    {% endif %}
                 {% else %}
-                    <p>Pour écrire le code de cet exercice, créez votre compte (ou connectez-vous) : votre progression vous suit d'un appareil à l'autre.</p>
+                    <h2 id="exercise-access-title">Cet exercice fait partie du parcours complet</h2>
+                    {% if inviteOnly %}
+                        <p>La suite du parcours est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
+                    {% else %}
+                        <p>Le premier chapitre est gratuit avec un compte ; la suite demande un accès au parcours.</p>
+                    {% endif %}
+                    {% if not offer.quote.free %}{{ include('track/_price.html.twig', {continueUrl: null}) }}{% endif %}
                 {% endif %}
-                {% if not offer.quote.free %}{{ include('track/_price.html.twig', {continueUrl: null}) }}{% endif %}
                 <p class="exercise-access-actions">
                     <a class="button primary" href="{{ path('app_register', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">Créer un compte</a>
                     {% if inviteOnly %}<a class="button" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>{% endif %}
                     <a class="button ghost" href="{{ path('app_login') }}">Se connecter</a>
-                    {% if firstExercise %}<a class="button ghost" href="{{ path('app_exercise', {trackId: track.id, exerciseId: firstExercise.id}) }}">Commencer le premier chapitre →</a>{% endif %}
+                    {% if firstExercise and not freeChapter %}<a class="button ghost" href="{{ path('app_exercise', {trackId: track.id, exerciseId: firstExercise.id}) }}">Commencer le premier chapitre →</a>{% endif %}
                 </p>
             {% endif %}
         </aside>

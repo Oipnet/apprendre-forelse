@@ -90,7 +90,7 @@
                                 <span class="tr-chapter-text">
                                     <h2>
                                         {{ item.chapter.title }}
-                                        {% if item.free and not offer.fullAccess %}<span class="tag free">Gratuit{{ app.user ? '' : ', sans compte' }}</span>{% elseif item.locked %}<span class="tag">🔒 Parcours complet</span>{% endif %}
+                                        {% if item.free and not offer.fullAccess %}<span class="tag free">Gratuit</span>{% elseif item.locked %}<span class="tag">🔒 Parcours complet</span>{% endif %}
                                     </h2>
                                     <span class="tr-chapter-meta">
                                         {{- app.user ? chapterDone ~ ' / ' : '' }}{{ item.items|length }} exercice{{ item.items|length > 1 ? 's' }} · {{ item.xp|number_format(0, ',', ' ') }} XP

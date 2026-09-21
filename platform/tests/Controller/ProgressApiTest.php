@@ -103,9 +103,9 @@ final class ProgressApiTest extends WebTestCase
         $user = $this->login();
         $result = $this->json($this->client, 'POST', '/api/progress/import', [
             ['trackId' => 'decouverte', 'exerciseId' => '01-bonjour', 'files' => ['src/Controller/BonjourController.php' => '<?php // invité'], 'hintsUsed' => 0, 'completed' => true],
-            // Tout le premier chapitre se joue sans compte : repris aussi.
+            // Tout le premier chapitre : repris aussi.
             ['trackId' => 'decouverte', 'exerciseId' => '02-bonjour-prenom', 'files' => [], 'hintsUsed' => 0, 'completed' => true],
-            // Parcours inconnu (un invité n'a pas pu jouer hors du premier chapitre) : ignoré.
+            // Exercice inconnu : ignoré.
             ['trackId' => 'decouverte', 'exerciseId' => 'inexistant', 'completed' => true],
         ]);
 

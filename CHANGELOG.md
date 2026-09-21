@@ -185,6 +185,13 @@ tel quel.
 
 ### Modifié
 
+- **Le premier chapitre demande un compte.** Il reste gratuit — rien à acheter — mais il ne se joue plus
+  en visiteur : l'éditeur, l'exécution du projet et les tests s'ouvrent une fois le compte créé. La page
+  de l'exercice reste publique et indexable (consigne, notions, fil d'Ariane) et propose de créer un
+  compte ou de se connecter, au lieu de proposer le parcours à l'achat. Conséquences : plus de
+  progression d'invité dans le navigateur (celle qui y est déjà est reprise à la première connexion),
+  et le discours du site (accueil, fiche parcours, CGV, confidentialité, page écoles) dit désormais
+  « gratuit avec un compte » plutôt que « gratuit, sans compte ».
 - Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement
   (`COHORT_UNIT_PRICE`, `COHORT_TIERS`, au format « effectif:pourcentage ») : une instance a ses prix
   sans reconstruire l'image. Les valeurs par défaut sont inchangées (30 €, puis 70 % à partir de 10 et

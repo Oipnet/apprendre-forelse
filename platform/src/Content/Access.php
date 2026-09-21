@@ -7,7 +7,7 @@ namespace App\Content;
  */
 enum Access: string
 {
-    /** Jouable sans compte (porte d'entrée d'un parcours). */
+    /** Gratuit : jouable avec un simple compte, sans acheter le parcours (porte d'entrée d'un parcours). */
     case Free = 'free';
     /** Demande un compte connecté. */
     case Account = 'account';

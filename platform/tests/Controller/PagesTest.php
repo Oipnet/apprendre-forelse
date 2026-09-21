@@ -29,7 +29,7 @@ final class PagesTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.lp-parcours', 'Découverte');
         $this->assertSelectorTextContains('.lp-chapters li:first-child', 'Bonjour Symfony');
-        $this->assertSelectorExists('.lp-hero a.primary[href="/parcours/decouverte/01-bonjour"]', 'Le bouton principal mène au premier exercice, jouable sans compte.');
+        $this->assertSelectorExists('.lp-hero a.primary[href="/parcours/decouverte/01-bonjour"]', 'Le bouton principal mène au premier exercice du premier parcours.');
         $this->assertSelectorExists('#liste-attente a[href="/inscription"]', 'Inscription libre : pas de liste d\'attente.');
         $this->assertSelectorNotExists('form.lp-form');
     }
@@ -72,25 +72,40 @@ final class PagesTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorCount(2, '.exercises li[data-state]', 'Deux exercices, plus la fiche de cours.');
-        $this->assertSelectorTextContains('.chapter h2 .tag', 'Gratuit, sans compte', 'Le premier chapitre est libre.');
+        $this->assertSelectorTextContains('.chapter h2 .tag', 'Gratuit', 'Le premier chapitre est gratuit.');
         // L'infobulle liste les notions abordées par l'exercice, reliée au lien pour les lecteurs d'écran.
         $this->assertSelectorExists('.exercises li:first-child a[aria-describedby="notions-01-bonjour"] #notions-01-bonjour[role="tooltip"]');
         $this->assertSelectorTextContains('.exercises li:first-child .hint', 'Notions abordées');
         $this->assertSelectorTextContains('.exercises li:first-child .hint .tag', 'Route');
     }
 
-    public function testUnInviteJoueUnExerciceLibre(): void
+    public function testUnInviteLitLePremierChapitreMaisNeLeJouePas(): void
     {
         $client = static::createClient();
+        $client->request('GET', '/parcours/decouverte/01-bonjour');
+
+        $this->assertResponseIsSuccessful('La page reste publique : la consigne se lit, et s\'indexe…');
+        $this->assertSelectorExists('.exercise-instructions');
+        $this->assertSelectorNotExists('[data-playground]', '… mais l\'éditeur demande un compte.');
+        $this->assertSelectorTextContains('.exercise-access h2', 'gratuit');
+        $this->assertSelectorExists('.exercise-access a[href="/inscription?suite=/parcours/decouverte/01-bonjour"]', 'L\'inscription ramène à cet exercice.');
+        $this->assertSelectorExists('.exercise-access a[href="/connexion"]');
+        $this->assertSelectorNotExists('.exercise-access .price-box', 'Le premier chapitre ne se vend pas : il se déverrouille avec un compte.');
+    }
+
+    public function testUnCompteJoueLePremierChapitreSansRienAcheter(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
         $crawler = $client->request('GET', '/parcours/decouverte/01-bonjour');
 
         $this->assertResponseIsSuccessful();
         $config = json_decode($crawler->filter('[data-playground]')->attr('data-config'), true);
-        $this->assertSame('local', $config['progress']['mode']);
+        $this->assertSame('api', $config['progress']['mode']);
         $this->assertSame('http://127.0.0.1:8001/sandbox', $config['sandboxUrl']);
-        $this->assertSame('/inscription?suite=/parcours/decouverte/02-bonjour-prenom', urldecode($config['registerUrl']));
-        $this->assertNull($config['user'], 'Un invité n\'a pas de compte à afficher…');
-        $this->assertSame('/connexion', $config['loginUrl'], '… mais le playground lui propose de se connecter.');
+        $this->assertSame(['name' => 'Ada', 'xp' => 0], $config['user']);
+        $this->assertNull($config['loginUrl'], 'Déjà connecté : rien à proposer.');
     }
 
     public function testUnInviteLitLaConsigneDUnExerciceFermeSansEditeur(): void
@@ -106,9 +121,10 @@ final class PagesTest extends WebTestCase
         $this->assertSelectorNotExists('[data-playground]', '… mais ni l\'éditeur…');
         $this->assertStringNotContainsString('build/assets/playground', (string) $client->getResponse()->getContent(), '… ni le moteur WebAssembly.');
         $this->assertSelectorExists('.exercise-access a[href="/inscription?suite=/parcours/payant/e2"]');
-        $this->assertSelectorExists('.exercise-access a[href="/parcours/payant/e1"]', 'Le premier chapitre, libre, est proposé.');
+        $this->assertSelectorExists('.exercise-access a[href="/parcours/payant/e1"]', 'Le premier chapitre, gratuit, est proposé.');
         $client->request('GET', '/parcours/payant/e1');
-        $this->assertResponseIsSuccessful('Tout le premier chapitre se joue sans compte.');
+        $this->assertResponseIsSuccessful('Le premier chapitre se lit aussi sans compte.');
+        $this->assertSelectorNotExists('.exercise-access a[href="/parcours/payant/e1"]', 'Inutile de renvoyer vers l\'exercice qu\'on lit déjà.');
     }
 
     public function testEnBetaFermeeLInviteSansCodeEstOrienteVersLaListeDAttente(): void
@@ -123,9 +139,9 @@ final class PagesTest extends WebTestCase
             $this->assertSelectorTextContains('.exercise-access', 'liste d\'attente', 'Le message ne promet pas un compte « gratuit » que l\'invité sans code ne peut pas créer.');
             $this->assertSelectorExists('.exercise-access a[href="/#liste-attente"]');
 
-            $crawler = $client->request('GET', '/parcours/payant/e1');
-            $config = json_decode($crawler->filter('[data-playground]')->attr('data-config'), true);
-            $this->assertSame('/#liste-attente', $config['waitlistUrl'], 'Le playground propose la liste d\'attente à la fin de l\'exercice libre.');
+            $client->request('GET', '/parcours/payant/e1');
+            $this->assertSelectorTextContains('.exercise-access', 'liste d\'attente', 'Même sur le chapitre gratuit : sans code, il n\'y a pas de compte à créer.');
+            $this->assertSelectorExists('.exercise-access a[href="/#liste-attente"]');
         } finally {
             [$_ENV['REGISTRATION_INVITE_ONLY'], $_SERVER['REGISTRATION_INVITE_ONLY']] = $original;
         }

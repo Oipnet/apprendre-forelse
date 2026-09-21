@@ -159,6 +159,7 @@ final class PracticeTest extends WebTestCase
 
     public function testLeParcoursGardeSaConfiguration(): void
     {
+        $this->client->loginUser($this->createUser());
         $crawler = $this->client->request('GET', '/parcours/decouverte/01-bonjour');
 
         $config = json_decode($crawler->filter('[data-playground]')->attr('data-config'), true);

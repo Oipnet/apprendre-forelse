@@ -118,7 +118,9 @@ Les indices, eux, sont écrits par l'auteur dans `exercise.yaml` et ne coûtent 
 Une seule question décide de ce qu'un apprenant ouvre : **a-t-il accès à ce chapitre ?** (`TrackAccessChecker`,
 utilisé par les pages, les API de l'exercice, de la progression et du mentor, les fiches et le livret).
 
-1. Le **premier chapitre** d'un parcours public est ouvert à tous, sans compte.
+0. **Sans compte, rien ne se joue** : la page d'un exercice reste publique et lisible (consigne, notions),
+   mais l'éditeur, l'exécution et les tests demandent un compte.
+1. Le **premier chapitre** d'un parcours public est ouvert, gratuitement, à tout compte connecté.
 2. Un administrateur ou un auteur ouvre tout.
 3. Un parcours **sans tarif, ou à 0 €**, est ouvert à tout compte : une instance qui ne fixe aucun prix reste gratuite.
 4. Un chef de cohorte ouvre les parcours de ses cohortes.
@@ -187,7 +189,7 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
   avec la syntaxe de Composer (`^0.1`, `>=1.2 <2.0`). Un moteur qui ne la satisfait pas refuse de charger le
   pack et le dit, plutôt que de le casser en silence. La clé est facultative — un pack livré avec le moteur
   n'en a pas besoin — mais un pack distribué à part a tout intérêt à la déclarer (voir « Versionnage »).
-- `access` est **dépréciée** (sans effet depuis la 0.8.0, signalée par `content:check`) : le premier chapitre de chaque parcours public se joue sans compte, la suite dépend de l'accès au parcours (voir « Parcours payants »).
+- `access` est **dépréciée** (sans effet depuis la 0.8.0, signalée par `content:check`) : le premier chapitre de chaque parcours public est gratuit pour tout compte, la suite dépend de l'accès au parcours (voir « Parcours payants »).
 - `editable:` accepte des **motifs** (`migrations/*.php` ; `*` ne franchit pas un « / ») pour les fichiers qu'une commande va créer, dont le nom est imprévisible. Tout ce qu'une commande de la console crée, modifie ou supprime sous `src/`, `migrations/`, `templates/`, `config/`, `tests/` ou `translations/` (par exemple `doctrine:migrations:diff`) est reporté dans l'éditeur — un fichier modifiable s'ouvre aussitôt —, dans l'explorateur, dans l'instance de tests et dans le brouillon. « Réinitialiser » retire ces fichiers générés. Quand l'exercice a un motif, le bouton **＋** de l'explorateur crée un fichier qu'il couvre, avec le bon namespace. Les fichiers déjà présents qu'un motif couvre (`src/Entity/*.php`) ne s'ouvrent pas tous au démarrage : l'apprenant les ouvre depuis l'explorateur. `open:` doit toujours désigner un fichier, jamais un motif ; ce fichier peut être couvert par un motif s'il existe au départ (`content:check` le vérifie). Les commandes externes lancées par PHP (`proc_open`, comme le php-cs-fixer de MakerBundle) se terminent sans rien faire : `make:entity`, `make:controller`… fonctionnent dans la console du navigateur.
 - Les tests d'exercices disposent d'outils fournis par l'environnement, dans `tests/Formation/` : `BaseDeDonnees` (recréer la base depuis les entités, enregistrer des objets), `FileDeMessages` (file Messenger, worker) et `MigrationsDeLaBase` (vider la base, jouer les migrations jusqu'à une version, comparer le schéma aux entités).
 - `setup:` liste des commandes `bin/console` lancées au chargement de l'aperçu, par exemple `doctrine:schema:update --force` : la base de l'aperçu (SQLite) vit en mémoire et repart de zéro à chaque chargement.

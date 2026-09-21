@@ -42,7 +42,7 @@ final class TrackPricingCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('Tarif')
             ->setEntityLabelInPlural('Tarifs des parcours')
             ->setDefaultSort(['trackId' => 'ASC'])
-            ->setHelp(Crud::PAGE_INDEX, 'Prix TTC. Sans tarif, ou à 0 €, un parcours est gratuit pour tout compte. Le premier chapitre de chaque parcours reste libre, même sans compte.');
+            ->setHelp(Crud::PAGE_INDEX, 'Prix TTC. Sans tarif, ou à 0 €, un parcours entier est gratuit pour tout compte. Quel que soit le prix, le premier chapitre reste gratuit : il demande un compte, pas un achat.');
     }
 
     public function configureFields(string $pageName): iterable
