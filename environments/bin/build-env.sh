@@ -69,7 +69,11 @@ chaine() {
 }
 # Substitution de commande, et non « < <(…) » : le statut d'une substitution de processus est perdu.
 CHAINE_TEXTE="$(chaine "$ENV_NAME")" || exit 1
-mapfile -t CHAINE <<< "$CHAINE_TEXTE"
+# « mapfile » demande bash 4 ; macOS n'a que le 3.2 en /bin/bash. Boucle de lecture, portable.
+CHAINE=()
+while IFS= read -r ligne; do
+    [ -n "$ligne" ] && CHAINE+=("$ligne")
+done <<< "$CHAINE_TEXTE"
 
 # Le dossier qui installe : le plus particulier de la chaîne qui déclare un composer.json. Un
 # environnement qui n'ajoute aucune dépendance hérite du vendor/ de sa base.
