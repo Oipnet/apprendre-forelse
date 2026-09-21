@@ -8,6 +8,39 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Un sommaire public par chapitre**, `/parcours/<parcours>/chapitre/<chapitre>/sommaire` : ce que le
+  chapitre fait apprendre, ses notions, et une entrée par exercice avec le besoin qu'il pose. C'est le
+  niveau qui manquait entre un parcours et ses exercices — un parcours de 74 exercices n'avait qu'une page
+  pour les annoncer tous, et chaque page d'exercice ne ramenait qu'à elle. Rien de ce qui résout un
+  exercice n'y figure, pas même le texte des objectifs, que des tests vérifient. La **fiche de cours** du
+  chapitre ne bouge pas : même adresse, toujours réservée à qui a réussi le chapitre.
+- **Des pages de notions**, `/notions` et `/notions/<notion>` : les `concepts:` que les packs déclarent
+  déjà ne servaient qu'à afficher des pastilles. Ils deviennent des pages, qui rapprochent un exercice de
+  parcours d'un exercice de Pratique paru des mois plus tard — et qui répondent à ce qu'un visiteur cherche
+  réellement (« Boucle Twig »), là où le titre d'un exercice ne répond à aucune requête. Une notion vue sur
+  un seul exercice ne relie rien : elle reste une pastille, sans page à elle. Aucune clé de pack à ajouter,
+  et un pack qui ne déclare aucun `concepts:` n'a simplement pas ces pages.
+- La page publique d'un exercice mène aux **autres exercices de son chapitre**, à son sommaire et au
+  parcours ; son fil d'Ariane passe désormais par le chapitre.
+- **Environnement `securite-boutique`** : la boutique volontairement vulnérable de la Brasserie Lacombe
+  (Symfony 8.1 — Security, Doctrine SQLite, Form, Serializer, Monolog), support du parcours « Sécuriser une
+  application Symfony ».
+- **`/telechargements/<fichier>`** sert les archives déposées par l'intégration continue du dépôt de
+  contenu dans `DOWNLOADS_DIR` (nouvelle variable, `var/downloads` par défaut), réservé aux comptes
+  connectés. Par exemple l'archive de la boutique vulnérable ci-dessus.
+
+### Modifié
+
+- Le **title** d'un exercice et d'un sommaire de chapitre est mené par ses notions, puis fermé par son
+  libellé narratif : « Les prix en pièces d'or – exercice Symfony : Boucle Twig » devient « Boucle Twig en
+  Symfony – exercice : Les prix en pièces d'or ». C'est la notion que l'on cherche dans un moteur ; le
+  libellé ferme le titre parce que seul il distingue deux pages d'une même notion. Un `seo_title` saisi
+  dans l'administration passe toujours avant.
+- Le sitemap gagne les sommaires de chapitre et les pages de notions : sur le contenu de Forelse, il passe
+  de 92 à 143 adresses.
+
 ## 1.3.0 — 2026-09-18
 
 ### Ajouté
