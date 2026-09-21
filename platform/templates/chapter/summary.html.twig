@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{#
+  Le sommaire public d'un chapitre : ce qu'il fait apprendre, et les exercices qui y mènent. Lisible sans compte,
+  et indexable. Jamais ce qui résout un exercice (indices, tests, solution, texte des objectifs) ; la fiche de
+  cours, elle, se lit ailleurs, une fois le chapitre réussi.
+  Variables : track, chapter, number, exercises, concepts, xp, duration, previous, next, free.
+#}
+{% block title %}{{ chapter.title }} · Chapitre {{ number }} · {{ track.title }} · Forelse{% endblock %}
+
+{% block body %}
+    <main class="page chapter-outline">
+        <nav class="breadcrumb" aria-label="Fil d'Ariane">
+            <ol>
+                <li><a href="{{ path('app_home') }}">Accueil</a></li>
+                <li><a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></li>
+                <li aria-current="page">Chapitre {{ number }}</li>
+            </ol>
+        </nav>
+
+        <p class="meta">Chapitre {{ number }} du parcours <a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></p>
+        <h1>{{ chapter.title }}</h1>
+        <p class="meta chapter-outline-facts">
+            {{ exercises|length }} exercice{{ exercises|length > 1 ? 's' }}
+            · {{ xp|number_format(0, ',', ' ') }} XP
+            {%- if duration %} · environ {{ duration|duree }}{% endif %}
+            {%- if free %} · <span class="tag free">premier chapitre gratuit</span>{% endif %}
+        </p>
+
+        {{ include('_concepts.html.twig', {concepts: concepts, label: 'Ce chapitre fait travailler :'}) }}
+
+        <h2 class="chapter-outline-title">Les exercices du chapitre</h2>
+        <ol class="chapter-outline-list">
+            {% for row in exercises %}
+                <li>
+                    <h3><a href="{{ path('app_exercise', {trackId: track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a></h3>
+                    <p class="meta">
+                        Exercice {{ row.position }}
+                        · {{ row.exercise.xp }} XP
+                        · {{ row.exercise.objectives|length }} objectif{{ row.exercise.objectives|length > 1 ? 's' }} vérifié{{ row.exercise.objectives|length > 1 ? 's' }} par des tests
+                    </p>
+                    {% if row.story %}<p class="chapter-outline-story">{{ row.story }}</p>{% endif %}
+                    {{ include('_concepts.html.twig', {concepts: row.exercise.concepts, label: null}) }}
+                </li>
+            {% endfor %}
+        </ol>
+
+        <nav class="lesson-nav" aria-label="Chapitres voisins">
+            {% if previous %}
+                <a class="button ghost" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: previous.chapter.id}) }}">← Chapitre {{ previous.number }} : {{ previous.chapter.title }}</a>
+            {% else %}
+                <a class="button ghost" href="{{ path('app_track', {trackId: track.id}) }}">← Retour au parcours</a>
+            {% endif %}
+            {% if next %}
+                <a class="button ghost" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: next.chapter.id}) }}">Chapitre {{ next.number }} : {{ next.chapter.title }} →</a>
+            {% endif %}
+        </nav>
+    </main>
+{% endblock %}

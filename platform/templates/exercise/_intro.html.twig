@@ -6,7 +6,7 @@
     <ol>
         <li><a href="{{ path('app_home') }}">Accueil</a></li>
         <li><a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></li>
-        <li>Chapitre {{ chapterNumber }} : {{ chapter.title }}</li>
+        <li><a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: chapter.id}) }}">Chapitre {{ chapterNumber }} : {{ chapter.title }}</a></li>
         <li aria-current="page">{{ exercise.title }}</li>
     </ol>
 </nav>
@@ -16,7 +16,5 @@
     · {{ exercise.xp }} XP
     · {{ exercise.objectives|length }} objectif{{ exercise.objectives|length > 1 ? 's' }} vérifié{{ exercise.objectives|length > 1 ? 's' }} par des tests
 </p>
-{% if exercise.concepts %}
-    <p class="exercise-concepts"><span class="meta">Notions abordées :</span> {% for concept in exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</p>
-{% endif %}
+{{ include('_concepts.html.twig', {concepts: exercise.concepts, label: 'Notions abordées :'}) }}
 <article class="lesson exercise-instructions">{{ instructions|raw }}</article>

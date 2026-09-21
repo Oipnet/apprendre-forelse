@@ -74,10 +74,13 @@ final class SearchIndexingTest extends WebTestCase
         $this->assertSame([
             'http://localhost/',
             'http://localhost/parcours/decouverte',
+            'http://localhost/parcours/decouverte/chapitre/bonjour/sommaire',
             'http://localhost/parcours/decouverte/01-bonjour',
             'http://localhost/parcours/decouverte/02-bonjour-prenom',
             'http://localhost/pratique',
             'http://localhost/pratique/exemple-map-request-header',
+            'http://localhost/notions',
+            'http://localhost/notions/controleur',
             'http://localhost/ecoles-et-entreprises',
             'http://localhost/contact',
             'http://localhost/mentions-legales',

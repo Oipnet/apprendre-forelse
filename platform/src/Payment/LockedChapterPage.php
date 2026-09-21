@@ -3,6 +3,7 @@
 namespace App\Payment;
 
 use App\Content\Chapter;
+use App\Content\ChapterOutline;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Content\LessonRenderer;
@@ -38,11 +39,31 @@ final readonly class LockedChapterPage
         return [
             'track' => $track,
             'chapter' => $chapter,
-            'chapterNumber' => (int) array_search($chapter->id, array_map(static fn (Chapter $c) => $c->id, $track->chapters), true) + 1,
+            'chapterNumber' => ChapterOutline::numberOf($track, $chapter),
             'exercise' => $exercise,
             'position' => (int) array_search($exercise->id, $chapter->exerciseIds, true) + 1,
             'instructions' => $this->markdown->toHtmlUnderTitle($exercise->instructions),
+            'siblings' => $this->siblings($track, $chapter, $exercise),
         ];
+    }
+
+    /**
+     * Les autres exercices du chapitre. Une page d'exercice n'avait qu'un lien interne sortant, celui du parcours :
+     * les 74 exercices pendaient tous d'une seule page, sans se relier entre eux.
+     *
+     * @return list<array{exercise: Exercise, position: int}>
+     */
+    private function siblings(Track $track, Chapter $chapter, Exercise $exercise): array
+    {
+        $siblings = [];
+        foreach ($chapter->exerciseIds as $position => $exerciseId) {
+            $sibling = $exerciseId === $exercise->id ? null : $this->content->findExercise($track->id, $exerciseId);
+            if (null !== $sibling) {
+                $siblings[] = ['exercise' => $sibling, 'position' => $position + 1];
+            }
+        }
+
+        return $siblings;
     }
 
     public function exercise(Track $track, Chapter $chapter, Exercise $exercise, ?User $user): Response
