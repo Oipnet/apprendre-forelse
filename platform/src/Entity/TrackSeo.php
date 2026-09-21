@@ -25,7 +25,7 @@ class TrackSeo
     #[Assert\NotBlank]
     private ?string $trackId = null;
 
-    /** Title de la page, sans le suffixe « | Forelse » (ajouté au rendu). Vide : title généré. */
+    /** Title de la page, sans le suffixe « | <marque> » (ajouté au rendu). Vide : title généré. */
     #[ORM\Column(length: 60, nullable: true)]
     #[Assert\Length(max: 60)]
     private ?string $seoTitle = null;

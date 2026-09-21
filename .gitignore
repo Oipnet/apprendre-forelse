@@ -3,8 +3,9 @@
 
 # Playground (îlot JS)
 playground/node_modules/
+packages/*/node_modules/
 
-# Artefacts générés par tools/build-env.sh
+# Artefacts générés par environments/bin/build-env.sh
 platform/public/envs/
 
 # Environnements Symfony (reconstruits par composer install)
@@ -12,17 +13,17 @@ environments/*/vendor/
 environments/*/var/
 environments/*/.phpunit.cache/
 
-# Simulateur Docker (bibliothèque du moteur, installée dans environments/docker)
-tools/docker-sim/vendor/
-tools/docker-sim/composer.lock
-tools/docker-sim/.phpunit.cache/
+# Simulateur Docker (runtime du moteur, installé dans environments/docker par build-env.sh)
+packages/simulateur-docker/vendor/
+packages/simulateur-docker/composer.lock
+packages/simulateur-docker/.phpunit.cache/
 
 # Simulateur Nuxt (vrai Nuxt de référence pour les tests de conformité)
-tools/nuxt-sim/node_modules/
-tools/nuxt-sim/conformite/reference/node_modules/
-tools/nuxt-sim/conformite/reference/.nuxt/
-tools/nuxt-sim/conformite/reference/.output/
-tools/nuxt-sim/conformite/reference/.data/
-tools/nuxt-sim/conformite/sans-pages/node_modules
-tools/nuxt-sim/conformite/sans-pages/.nuxt/
-tools/nuxt-sim/conformite/runner/node_modules/
+packages/simulateur-nuxt/node_modules/
+packages/simulateur-nuxt/conformite/reference/node_modules/
+packages/simulateur-nuxt/conformite/reference/.nuxt/
+packages/simulateur-nuxt/conformite/reference/.output/
+packages/simulateur-nuxt/conformite/reference/.data/
+packages/simulateur-nuxt/conformite/sans-pages/node_modules
+packages/simulateur-nuxt/conformite/sans-pages/.nuxt/
+packages/simulateur-nuxt/conformite/runner/node_modules/

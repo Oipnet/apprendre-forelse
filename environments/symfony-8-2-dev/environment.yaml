@@ -1,5 +1,5 @@
 # Environnement d'exécution : Symfony 8.2 en développement (8.2.x-dev, figé par composer.lock), empaqueté par
-# tools/build-env.sh. Pour les exercices de Pratique sur les nouveautés annoncées avant la sortie ; à retirer
+# environments/bin/build-env.sh. Pour les exercices de Pratique sur les nouveautés annoncées avant la sortie ; à retirer
 # quand symfony-8 passera en 8.2.
 id: symfony-8-2-dev
 title: Symfony 8.2 en développement — Console, Twig, Form, PHPUnit

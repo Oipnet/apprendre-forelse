@@ -41,13 +41,13 @@ final class HomeController extends AbstractController
                     'exercises' => \count($chapter->exerciseIds),
                     'concepts' => $this->concepts($content, $track, $chapter),
                 ], $track->chapters),
-                // Porte d'entrée du parcours : son premier chapitre est libre, sans compte (sauf parcours en préparation).
+                // Porte d'entrée du parcours : son premier chapitre est gratuit pour tout compte (sauf parcours en préparation).
                 'tryUrl' => $first && !$track->isRestricted() ? $this->generateUrl('app_exercise', ['trackId' => $track->id, 'exerciseId' => $first->id]) : null,
                 'offer' => $offers->create($track, $user instanceof User ? $user : null),
             ];
         }
 
-        // Le bouton principal mène au premier exercice libre ; à défaut, à l'inscription.
+        // Le bouton principal mène au premier exercice du premier parcours ; à défaut, à l'inscription.
         $try = array_values(array_filter(array_column($tracks, 'tryUrl')))[0] ?? null;
 
         // Les parcours en préparation s'annoncent (« bientôt »), sans lien : leur page n'existe pas pour le visiteur.
@@ -88,7 +88,7 @@ final class HomeController extends AbstractController
         return [
             ['question' => 'Ça tourne vraiment dans le navigateur ?', 'answer' => 'Oui. Le langage et le framework du parcours s\'exécutent en WebAssembly, dans un onglet. Rien ne part sur un serveur pour exécuter votre code.'],
             ['question' => 'Quels parcours ?', 'answer' => $tracks],
-            ['question' => 'Combien ça coûte ?', 'answer' => 'Le premier chapitre de chaque parcours est gratuit, sans compte. Le parcours complet s\'achète une fois, prix TTC affiché, pour un accès à vie et à ses mises à jour : pas d\'abonnement. Une école ou une entreprise peut aussi ouvrir l\'accès à tout un groupe, sur devis.'],
+            ['question' => 'Combien ça coûte ?', 'answer' => 'Le premier chapitre de chaque parcours est gratuit : il suffit de créer un compte. Le parcours complet s\'achète une fois, prix TTC affiché, pour un accès à vie et à ses mises à jour : pas d\'abonnement. Une école ou une entreprise peut aussi ouvrir l\'accès à tout un groupe, sur devis.'],
             ['question' => 'Je bloque sur un exercice, que se passe-t-il ?', 'answer' => 'Vous demandez un indice, puis un deuxième, plus précis. Avec un compte, la solution complète est consultable, mais elle ne rapporte pas l\'XP de l\'exercice.'],
             ['question' => 'Quelle différence avec les tutoriels vidéo ?', 'answer' => 'Vous ne regardez rien : vous écrivez tout le code vous-même, sur un projet qui grandit exercice après exercice. Le temps passé est du temps de pratique.'],
             ['question' => 'Est-ce à jour ?', 'answer' => 'Chaque parcours cible les versions actuelles (Symfony 8 et PHP 8.4 pour le premier), et les exercices sont vérifiés automatiquement à chaque mise à jour du moteur.'],

@@ -362,6 +362,7 @@ final class ContentRepository
         }
     }
 
+
     /**
      * Un pack peut exiger une version du moteur (clé « moteur » de pack.yaml, syntaxe Composer).
      * Le contrat est le format de pack : voir la section « Versionnage » du README.
@@ -513,7 +514,7 @@ final class ContentRepository
         $this->practices[$exercise->id] = new Practice(
             exercise: $exercise,
             packId: $pack->id,
-            framework: $this->environments->get($exercise->environment)->framework,
+            framework: $this->environments->get($exercise->environment)->framework->id,
             published: $published,
             summary: $this->required($meta, 'summary', $file),
             version: $version,
@@ -533,8 +534,8 @@ final class ContentRepository
         $meta ??= $this->parse($file);
         $id = $this->required($meta, 'id', $file);
         if (null !== $trackId && \array_key_exists('access', $meta)) {
-            // Depuis la 0.8.0, le moteur ouvre tout le premier chapitre d'un parcours sans compte : la clé n'a plus d'effet.
-            $this->deprecations[$trackId.'/'.$id] = '« access » est dépréciée et sans effet : le premier chapitre de chaque parcours est libre, sans compte, et la suite dépend de l\'accès au parcours. Retirez la clé ; elle sera refusée dans une version majeure.';
+            // Depuis la 0.8.0, le moteur ouvre tout le premier chapitre d'un parcours à tout compte : la clé n'a plus d'effet.
+            $this->deprecations[$trackId.'/'.$id] = '« access » est dépréciée et sans effet : le premier chapitre de chaque parcours est gratuit pour tout compte, et la suite dépend de l\'accès au parcours. Retirez la clé ; elle sera refusée dans une version majeure.';
         }
         if (basename($directory) !== $id) {
             throw new ContentException(sprintf('%s : l\'id « %s » doit correspondre au nom du dossier.', $file, $id));

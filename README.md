@@ -20,12 +20,19 @@ de Forelse ne sont pas dans ce dépôt ; une école ou une entreprise peut les u
 
 ```
 platform/         Application Symfony 8.1 : pages, comptes, progression, API, content:check
+    src/Content/Framework/   Ce que le moteur sait de chaque framework (un profil par runtime)
 playground/       Îlot TypeScript : runtime PHP WebAssembly, éditeur Monaco, aperçu isolé
-environments/     Projets de base dans lesquels s'exécutent les exercices (symfony-8, symfony-8-doctrine, symfony-8-app, symfony-8-2-dev, laravel-13, docker, nuxt-4)
-tools/            Empaquetage des environnements (archive + index de complétion), simulateurs Docker (docker-sim) et Nuxt (nuxt-sim)
+packages/           Ce qui peut vivre hors du moteur : contrat et simulateurs
+  runtime-contract/  Ce qu'un runtime doit remplir, et ce que le moteur lui fournit (types seuls)
+  simulateur-nuxt/   Le runtime Nuxt : simulateur, worker, greffons de build, lanceur de tests
+  simulateur-docker/ Le simulateur Docker, bibliothèque PHP du runtime php-wasm
+environments/     Projets de base dans lesquels s'exécutent les exercices, et de quoi les empaqueter
+                  (bin/build-env.sh) — destiné à devenir son propre dépôt, voir environments/README.md
+tools/            Simulateurs Docker (docker-sim) et Nuxt (nuxt-sim), publication d'une version
 auto-hebergement/ Guide, compose.yaml et .env.example d'une instance auto-hébergée
 deploy/           compose.yaml de l'instance de Forelse, copié sur son serveur par l'intégration continue
 examples/packs/   Pack de démonstration (format de contenu, tests du moteur)
+examples/marque/  Exemple d'identité d'instance (marque blanche) : marque.yaml commenté et ses images
 ```
 
 Dans le navigateur :
@@ -111,7 +118,9 @@ Les indices, eux, sont écrits par l'auteur dans `exercise.yaml` et ne coûtent 
 Une seule question décide de ce qu'un apprenant ouvre : **a-t-il accès à ce chapitre ?** (`TrackAccessChecker`,
 utilisé par les pages, les API de l'exercice, de la progression et du mentor, les fiches et le livret).
 
-1. Le **premier chapitre** d'un parcours public est ouvert à tous, sans compte.
+0. **Sans compte, rien ne se joue** : la page d'un exercice reste publique et lisible (consigne, notions),
+   mais l'éditeur, l'exécution et les tests demandent un compte.
+1. Le **premier chapitre** d'un parcours public est ouvert, gratuitement, à tout compte connecté.
 2. Un administrateur ou un auteur ouvre tout.
 3. Un parcours **sans tarif, ou à 0 €**, est ouvert à tout compte : une instance qui ne fixe aucun prix reste gratuite.
 4. Un chef de cohorte ouvre les parcours de ses cohortes.
@@ -180,7 +189,7 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
   avec la syntaxe de Composer (`^0.1`, `>=1.2 <2.0`). Un moteur qui ne la satisfait pas refuse de charger le
   pack et le dit, plutôt que de le casser en silence. La clé est facultative — un pack livré avec le moteur
   n'en a pas besoin — mais un pack distribué à part a tout intérêt à la déclarer (voir « Versionnage »).
-- `access` est **dépréciée** (sans effet depuis la 0.8.0, signalée par `content:check`) : le premier chapitre de chaque parcours public se joue sans compte, la suite dépend de l'accès au parcours (voir « Parcours payants »).
+- `access` est **dépréciée** (sans effet depuis la 0.8.0, signalée par `content:check`) : le premier chapitre de chaque parcours public est gratuit pour tout compte, la suite dépend de l'accès au parcours (voir « Parcours payants »).
 - `editable:` accepte des **motifs** (`migrations/*.php` ; `*` ne franchit pas un « / ») pour les fichiers qu'une commande va créer, dont le nom est imprévisible. Tout ce qu'une commande de la console crée, modifie ou supprime sous `src/`, `migrations/`, `templates/`, `config/`, `tests/` ou `translations/` (par exemple `doctrine:migrations:diff`) est reporté dans l'éditeur — un fichier modifiable s'ouvre aussitôt —, dans l'explorateur, dans l'instance de tests et dans le brouillon. « Réinitialiser » retire ces fichiers générés. Quand l'exercice a un motif, le bouton **＋** de l'explorateur crée un fichier qu'il couvre, avec le bon namespace. Les fichiers déjà présents qu'un motif couvre (`src/Entity/*.php`) ne s'ouvrent pas tous au démarrage : l'apprenant les ouvre depuis l'explorateur. `open:` doit toujours désigner un fichier, jamais un motif ; ce fichier peut être couvert par un motif s'il existe au départ (`content:check` le vérifie). Les commandes externes lancées par PHP (`proc_open`, comme le php-cs-fixer de MakerBundle) se terminent sans rien faire : `make:entity`, `make:controller`… fonctionnent dans la console du navigateur.
 - Les tests d'exercices disposent d'outils fournis par l'environnement, dans `tests/Formation/` : `BaseDeDonnees` (recréer la base depuis les entités, enregistrer des objets), `FileDeMessages` (file Messenger, worker) et `MigrationsDeLaBase` (vider la base, jouer les migrations jusqu'à une version, comparer le schéma aux entités).
 - `setup:` liste des commandes `bin/console` lancées au chargement de l'aperçu, par exemple `doctrine:schema:update --force` : la base de l'aperçu (SQLite) vit en mémoire et repart de zéro à chaque chargement.
@@ -192,8 +201,61 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
   Chaque mutant est appliqué, testé puis retiré, de la même façon dans le navigateur et dans `content:check`. `content:check` vérifie que chaque texte à remplacer existe, et que la solution détecte chaque mutant.
 - `docs:` liste la documentation qui aide à résoudre l'exercice, `{title, url}` (URL http(s) uniquement), affichée sous les objectifs. `bin/console content:links [pack|parcours|parcours/exercice|pratique|pratique/exercice]` vérifie que chaque page répond et que chaque ancre (`#…`) existe encore (accès réseau requis). Les liens des fiches de cours et les `pull_request` de la Pratique sont vérifiés en même temps.
 - **Fiche de cours** : `chapters/<chapitre>/lesson.md` résume ce qu'un chapitre a enseigné ; l'apprenant y accède une fois le chapitre réussi. Elle commence à `##` (le moteur affiche le titre du chapitre en `#`), utilise des blocs de code avec leur langue (`php`, `twig`, `yaml`…) et des liens `https://` ; le HTML brut n'est pas rendu. Structure conseillée : « Ce que vous avez appris », une section par concept avec l'extrait de code clé, « Les pièges », « Pour aller plus loin ». `content:check` signale (sans échouer) les chapitres qui n'en ont pas. Pour ne pas partir d'une page blanche, `bin/console content:lesson-draft <parcours>/<chapitre>` écrit un squelette assemblé à partir des exercices du chapitre (concepts, sections « Rappel » des consignes, liens de documentation) ; avec `--ia` et une clé d'API (voir l'atelier), le modèle rédige un brouillon complet, à relire. `--force` remplace une fiche existante. La fiche se lit en HTML (`/parcours/<parcours>/chapitre/<chapitre>`) et se télécharge en PDF, établi au nom de l'apprenant (dompdf, en PHP pur : aucune dépendance système). Une fois le parcours terminé, `/parcours/<parcours>/livret.pdf` regroupe toutes ses fiches derrière une page de garde et un sommaire.
-- **Environnements** : `environments/<id>/environment.yaml` décrit un projet de base (`id`, `title`, `php`), empaqueté par `tools/build-env.sh <id>` en archive zip servie au navigateur, avec un index de complétion généré par Reflection. `framework: docker` bascule le moteur sur le **simulateur Docker** (voir plus bas). `framework: laravel` (Symfony par défaut) bascule le moteur sur les conventions de Laravel : console `artisan`, dossiers du projet (`app/`, `routes/`, `resources/`…), vues Blade compilées dans `storage/framework/views` vidées entre deux runs de tests (`cache:` pour un autre dossier). Un fichier `.archiveignore` (motifs `zip -x`, un par ligne) allège l'archive, par exemple des traductions de `vendor/` inutiles à l'apprenant. Les environnements Laravel forcent `APP_ENV=testing` **et** `APP_RUNNING_IN_CONSOLE=true` dans `phpunit.xml` : Laravel n'exempte les tests de la vérification CSRF que si les deux moitiés de `runningInConsole() && runningUnitTests()` sont vraies, et la première se déduit de `PHP_SAPI`, qui vaut `wasm` dans le navigateur (ni `cli` ni `phpdbg`) — sans cela, tout `POST` d'un test de fonctionnalité répond 419. L'aperçu, lui, vérifie le jeton pour de vrai. Leur `.env` est livré tel quel : rien n'y est secret, le projet ne quitte jamais le bac à sable.
-- **Simulateur Docker** (`framework: docker`, environnement `environments/docker`) : Docker ne tourne évidemment pas dans le navigateur. `tools/docker-sim` le simule en PHP pur — images (catalogue fermé : php, composer, nginx, postgres, mysql, mariadb, redis, node, alpine, debian, caddy, mailpit, adminer…), construction d'images à la façon de BuildKit (étapes numérotées, cache par couche, « build checks »), conteneurs, réseaux, volumes, `docker compose` — et **exécute pour de vrai le PHP servi par les conteneurs** : Apache et son `.htaccess`, nginx devant php-fpm, `php -S`. Les erreurs sont celles de Docker (`port is already allocated`, `Unable to locate package`, `host not found in upstream`, `File not found.`), et une suppression de fichiers dans une couche ultérieure ne rend pas la place, comme dans une vraie image. La console du playground devient `docker` (`sh lancer.sh` rejoue un script de commandes), et l'aperçu visite les ports publiés : `preview: /localhost:8080/`. Les tests des exercices étendent `Forelse\DockerSim\Testing\DockerTestCase` (`build()`, `docker()`, `runScript()`, `http()`, `container()`, `service()`, `image()`, `exec()`, et les assertions `assertBuildSucceeded`, `assertImageLacksFile`, `assertImageSizeBelow`, `assertPageContains`…). Le simulateur a sa propre suite de tests (`cd tools/docker-sim && vendor/bin/phpunit`), lancée par `make test` et la CI. Limites assumées : pas de registre (`docker push`), pas de terminal interactif (`-it`), `RUN` interprété et non exécuté, montages imbriqués non pris en charge, temps comprimé (un healthcheck est rejoué à chaque fois qu'on regarde l'état d'un conteneur, sans phase `starting`, et un échec y vaut tous les essais) ; le PHP des conteneurs s'exécute dans le processus des tests (pas d'`exit()`, pas de fonction globale redéclarée), et n'est donc pas soumis aux droits Unix — ceux-ci s'appliquent aux commandes du shell (`docker exec -u www-data … touch`, un montage `:ro`), qui sont le bon moyen de les vérifier.
+- **Environnements** : `environments/<id>/environment.yaml` décrit un projet de base (`id`, `title`, `php`), empaqueté par `environments/bin/build-env.sh [<id>]` (sans argument : tous) en archive zip servie au navigateur, avec un index de complétion généré par Reflection. **Tout ce qui concerne les environnements vit dans ce dossier** — les projets et leur empaquetage —, prêt à partir dans son propre dépôt : il ne dépend d'aucun code du moteur, et le moteur n'y entre que par `ENVIRONMENTS_DIR` et ce script (voir [environments/README.md](environments/README.md)). `framework:` choisit le **runtime** (`symfony` par défaut, `laravel`, `docker`, `nuxt`) : sa console, l'organisation de son projet, ses caches, son lanceur de tests. `framework: docker` bascule sur le **simulateur Docker** (voir plus bas) ; `framework: laravel` sur les conventions de Laravel : console `artisan`, dossiers (`app/`, `routes/`, `resources/`…), vues Blade compilées dans `storage/framework/views` vidées entre deux runs de tests (`cache:` pour un autre dossier). `extends: <id>` **prolonge** un autre environnement : le projet joué est la superposition de la chaîne, du plus général au plus particulier, et l'environnement ne porte que ce qu'il ajoute ou remplace (`symfony-8-app` est passé de 45 à 26 fichiers, `symfony-8-doctrine` de 33 à 14). Les clés d'`environment.yaml` s'héritent sauf `title` ; `vendor/` ne se superpose pas — il vient du seul dossier de la chaîne qui déclare un `composer.json`, si bien qu'un environnement sans dépendance propre n'a ni `composer.json` ni `composer.lock` à porter. Détails et règles dans [environments/README.md](environments/README.md). Un fichier `.archiveignore` (motifs `zip -x`, un par ligne) allège l'archive, par exemple des traductions de `vendor/` inutiles à l'apprenant. Les environnements Laravel forcent `APP_ENV=testing` **et** `APP_RUNNING_IN_CONSOLE=true` dans `phpunit.xml` : Laravel n'exempte les tests de la vérification CSRF que si les deux moitiés de `runningInConsole() && runningUnitTests()` sont vraies, et la première se déduit de `PHP_SAPI`, qui vaut `wasm` dans le navigateur (ni `cli` ni `phpdbg`) — sans cela, tout `POST` d'un test de fonctionnalité répond 419. L'aperçu, lui, vérifie le jeton pour de vrai. Leur `.env` est livré tel quel : rien n'y est secret, le projet ne quitte jamais le bac à sable.
+- **Runtimes** : tout ce que le moteur sait d'un framework est déclaré **une fois**, dans un profil
+  (`platform/src/Content/Framework/Profiles/`) : nom, console et commande d'exemple, dossiers du projet
+  et du code, caches à vider, dossiers masqués, racines de namespace, lanceur de tests (PHPUnit ou
+  Vitest), paquet dont la version fait foi pour `version:`, langages des fiches de cours et conventions
+  données au modèle qui rédige. Le navigateur le **reçoit** dans la charge utile de l'exercice au lieu
+  de le réécrire : l'éditeur ne contient plus de table de frameworks, seulement le code propre à chaque
+  runtime (le worker, les snippets, le script de la console).
+
+  **Ajouter un framework** : fournir un `FrameworkProfileProvider`, une classe découverte par son
+  étiquette de service. Rien d'autre, tant qu'il s'exécute avec un runtime existant — Laravel et le
+  simulateur Docker tournent tous deux sur `php-wasm`, comme Symfony.
+
+  **Ajouter un runtime** — une autre façon d'exécuter un projet dans le navigateur — se fait en
+  **installant un paquet**, sans modifier un fichier du moteur. Le paquet déclare dans son
+  `package.json` :
+
+  ```json
+  { "forelse": { "runtime": "./src/browser/forelse.ts", "vite": "./src/node/vite.ts" } }
+  ```
+
+  `runtime` exporte le manifeste (identifiant, libellé, fabrique) ; `vite`, facultatif, ce que le
+  runtime demande au build — greffons, constantes, alias. Le playground parcourt ses dépendances au
+  build, trouve les paquets qui portent ce champ et les enregistre seuls (`discover-runtimes.ts`).
+  Aucune liste à tenir à jour. Côté serveur, le profil du framework déclare `runtime: 'mon-runtime'` et
+  arrive par l'étiquette de service `app.framework`.
+
+  Le simulateur Nuxt est le premier à passer par ce chemin : `@forelse/simulateur-nuxt` porte son
+  runtime, son worker, ses greffons Vite **et son lanceur de tests**, et `playground/vite.config.ts` ne
+  nomme plus Nuxt nulle part. Les types que les deux côtés partagent vivent dans
+  `@forelse/runtime-contract`.
+
+  **Les tests côté serveur** suivent la même règle. `content:check` doit rejouer les tests d'un exercice
+  avec le même runner que le navigateur, sinon les deux verdicts divergent. Un framework dont les tests
+  ne sont pas du PHPUnit déclare donc `testModule` dans son profil — un **spécificateur de paquet**,
+  jamais un chemin :
+
+  ```php
+  testModule: '@forelse/simulateur-nuxt/tests',
+  ```
+
+  Le moteur demande à Node de le résoudre depuis `playground/`, là où les paquets de runtime sont
+  installés : il ne sait ni où ce paquet vit, ni qu'il existe. Le module reçoit le dossier du projet
+  puis les fichiers de test, et écrit sur la sortie standard un JSON
+  `{cases: [{name, status, file, message}], output}`.
+
+  Ce qui ne changera pas : **le navigateur est un bundle**, donc ajouter un runtime demandera toujours
+  de reconstruire le playground. C'est le niveau 3 de
+  [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md). Ce qui a changé, c'est qu'il n'y a plus rien
+  à y modifier.
+
+  Le profil déclare aussi ce que le navigateur devinait auparavant : `snippets` (les familles d'extraits
+  que l'éditeur propose) et `consoleAliases` (les préfixes tolérés — `php bin/console …`,
+  `docker-compose up`). L'éditeur et la console ne connaissent plus aucun framework par son nom.
+- **Simulateur Docker** (`framework: docker`, environnement `environments/docker`) : Docker ne tourne évidemment pas dans le navigateur. `packages/simulateur-docker` le simule en PHP pur — images (catalogue fermé : php, composer, nginx, postgres, mysql, mariadb, redis, node, alpine, debian, caddy, mailpit, adminer…), construction d'images à la façon de BuildKit (étapes numérotées, cache par couche, « build checks »), conteneurs, réseaux, volumes, `docker compose` — et **exécute pour de vrai le PHP servi par les conteneurs** : Apache et son `.htaccess`, nginx devant php-fpm, `php -S`. Les erreurs sont celles de Docker (`port is already allocated`, `Unable to locate package`, `host not found in upstream`, `File not found.`), et une suppression de fichiers dans une couche ultérieure ne rend pas la place, comme dans une vraie image. La console du playground devient `docker` (`sh lancer.sh` rejoue un script de commandes), et l'aperçu visite les ports publiés : `preview: /localhost:8080/`. Les tests des exercices étendent `Forelse\DockerSim\Testing\DockerTestCase` (`build()`, `docker()`, `runScript()`, `http()`, `container()`, `service()`, `image()`, `exec()`, et les assertions `assertBuildSucceeded`, `assertImageLacksFile`, `assertImageSizeBelow`, `assertPageContains`…). Le simulateur est un **runtime du moteur**, pas un environnement : il reste dans `tools/`, et `environments/docker` en dépend comme d'une bibliothèque (dépôt Composer `path`). Il a sa propre suite de tests (`cd packages/simulateur-docker && vendor/bin/phpunit`), lancée par `make test` et la CI. Limites assumées : pas de registre (`docker push`), pas de terminal interactif (`-it`), `RUN` interprété et non exécuté, montages imbriqués non pris en charge, temps comprimé (un healthcheck est rejoué à chaque fois qu'on regarde l'état d'un conteneur, sans phase `starting`, et un échec y vaut tous les essais) ; le PHP des conteneurs s'exécute dans le processus des tests (pas d'`exit()`, pas de fonction globale redéclarée), et n'est donc pas soumis aux droits Unix — ceux-ci s'appliquent aux commandes du shell (`docker exec -u www-data … touch`, un montage `:ro`), qui sont le bon moyen de les vérifier.
 - `visibility: admin` (dans `track.yaml`) réserve un parcours en préparation aux administrateurs : absent de l'accueil, introuvable (404) pour les autres, jamais conseillé comme suite. Il reste vérifié par `content:check` et modifiable dans l'atelier. Retirez la clé (ou `visibility: public`) pour l'ouvrir. Un administrateur peut aussi l'ouvrir à une seule cohorte en le cochant dans ses parcours disponibles.
 - `order: <entier>` (dans `track.yaml`) fixe le rang du parcours dans les listes, à commencer par l'accueil, dont l'onglet ouvert par défaut est le premier : le plus petit d'abord. Les parcours sans rang viennent après, dans l'ordre de chargement (chemins de `CONTENT_PACKS_PATHS`, puis dossiers de packs par ordre alphabétique, puis liste `tracks:` du pack). Laissez de l'écart entre les rangs (10, 20, 30) pour intercaler un parcours d'un autre pack sans renuméroter.
 - `next: <parcours>` (dans `track.yaml`) conseille un parcours à suivre ensuite : proposé à la fin du dernier exercice et sur la carte du parcours. Il peut vivre dans un autre pack ; s'il n'est pas installé, il est ignoré.
@@ -204,6 +266,127 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
 ⚠️ `content:check` exécute le PHP des packs sur votre machine : ne l'utilisez qu'avec des packs de confiance.
 
 **Écarts entre PHP natif et navigateur.** `content:check` s'exécute avec le PHP de la machine, alors que l'apprenant utilise php-wasm, qui n'a **pas l'extension `intl`** : la locale y reste `en`. Évitez donc ce qui dépend d'`intl` (`NumberType` sans `'html5' => true`, `MoneyType`, dates localisées…), sous peine de voir des exercices validés par `content:check` se comporter autrement dans le navigateur. La traduction (messages de validation en français) n'est pas concernée.
+
+## Habiller son instance
+
+Le moteur ne s'appelle « Forelse » que **tant qu'on ne lui dit rien**. Une instance pose sa marque en
+montant un dossier (`BRANDING_DIR`, `/marque` dans l'image) à côté des packs — aucun fork, aucune image
+à reconstruire, rien à republier au titre de l'AGPL : c'est de la configuration, pas du code.
+
+```
+marque/
+  marque.yaml     nom, puce, accroche, site, couleurs, polices, images, textes de l'accueil
+  logo.svg  favicon.svg  partage.png      les images, nommées dans marque.yaml
+  templates/      (facultatif) des gabarits Twig qui remplacent ceux du moteur
+```
+
+Un exemple complet et commenté, à copier : [examples/marque/marque.yaml](examples/marque/marque.yaml).
+
+**La règle à retenir** : dès que `marque.yaml` existe, **plus rien de la marque du moteur n'est servi**.
+Ni le nom, ni le logo, ni la favicon, ni l'image de partage, ni les textes d'accueil qui parlent de la
+Taverne du Dragon Ivre et de l'auteur de Forelse. Une instance ne peut donc pas se retrouver à vendre
+une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
+
+- `name` (obligatoire) s'affiche dans l'en-tête, le pied de page, les `<title>` (« Mon compte · … »),
+  les emails (confirmation d'adresse, mot de passe oublié, achat), les balises Open Graph et les données
+  structurées. `chip` est la petite puce à côté, `tagline` la phrase du pied de page, `title` le `<title>`
+  de l'accueil, `url` le site de la marque.
+- `colors` et `fonts` écrivent les variables CSS du **thème clair** (les pages du site : `--lp-rust`,
+  `--lp-bg`…), `editor` celles du **thème sombre** (l'éditeur d'exercice et l'atelier : `--accent`,
+  `--bg`…). Toutes sont posées après la feuille de styles. Hexadécimal seulement ; une valeur mal écrite
+  **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire qu'une
+  erreur. Les deux palettes se déclarent séparément et l'une n'est jamais déduite de l'autre : une
+  couleur claire assombrie automatiquement, c'est un contraste perdu au hasard.
+- `logo`, `icon` et `share` nomment des fichiers **de ce dossier** (jamais un chemin), servis sur
+  `/marque/<rôle>` avec la date du fichier dans l'URL : une image remplacée change d'URL. Sans `icon`,
+  l'onglet n'affiche aucune icône plutôt que celle du moteur : mieux vaut rien que la marque d'un autre.
+- `home.showcase`, `home.author` et `home.demo` remplissent les trois sections de l'accueil qui parlent
+  de la marque (le fil rouge, « qui est derrière », l'illustration du bandeau). Une section non déclarée
+  n'apparaît pas, et la page reste cohérente sans elle. Leur forme est vérifiée à la lecture, avec le
+  piège du YAML en tête : **une phrase qui contient « : » doit être entre guillemets**, sinon elle
+  devient un tableau — le message le dit plutôt que de laisser la page échouer à l'affichage.
+- **L'échappatoire** : un fichier déposé dans `marque/templates/` remplace le gabarit de même nom du
+  moteur (`home.html.twig`, `_footer.html.twig`, `legal/notice.html.twig`…). Il n'y a rien à copier
+  d'autre que le fichier à changer. En production les gabarits sont compilés une fois : après en avoir
+  déposé un, redémarrez le conteneur.
+- Les tarifs de cohorte (`COHORT_UNIT_PRICE`, `COHORT_TIERS`) sont des variables d'environnement, comme
+  les mentions légales (`LEGAL_*`) : aucune instance n'a à reconstruire l'image pour ses prix.
+
+Ce qui reste du moteur dans tous les cas : le pied de page dit la version et la licence AGPL du moteur,
+comme l'exige la licence.
+
+## Ajouter un environnement depuis un dépôt Git
+
+Un environnement d'exécution n'a pas à vivre dans ce dépôt. `/admin` → **Environnements** en installe un
+depuis une adresse `https://` : le moteur clone, vérifie, puis empaquette (archive du projet, index de
+complétion) sans reconstruire l'image. C'est le pendant, pour les runtimes, de ce que `CONTENT_PACKS_PATHS`
+fait pour le contenu et `BRANDING_DIR` pour l'habillage.
+
+> ⚠️ **Empaqueter exécute le code du dépôt sur ce serveur** (`composer install`, ses scripts et ses
+> greffons). Même confiance que pour un pack passé à `content:check`. La page est réservée aux
+> administrateurs, `ENVIRONMENT_SOURCES_ALLOWLIST` restreint les hôtes acceptés, et une instance qui ne
+> veut pas de la fonctionnalité laisse `INSTALLED_ENVIRONMENTS_DIR` vide : la page reste, sans formulaire.
+
+- **Le dépôt se nomme lui-même** : l'identifiant vient de l'`id:` de son `environment.yaml`, pas de
+  l'adresse ni de l'administrateur. Un identifiant déjà porté par un environnement du moteur est refusé —
+  un environnement installé n'en masque jamais un autre.
+- `extends: symfony-8` fonctionne d'un dépôt à l'autre : un environnement installé peut prolonger un
+  environnement du moteur, et n'a alors ni `composer.json` ni `vendor/` à porter.
+- `ENVIRONMENTS_DIR` accepte **plusieurs** dossiers séparés par des virgules (ceux du moteur, puis ceux
+  de l'instance) ; `INSTALLED_ENVIRONMENTS_DIR` désigne celui, écrivable, où l'administration installe.
+- Les archives d'un environnement installé ne sont pas dans `public/` : elles sont servies par
+  `/envs/<id>.zip` depuis le dossier des installations. Les archives du moteur restent des fichiers
+  statiques sur la même URL.
+- Garde-fous : `https://` seulement (ni `file://`, ni `git@`, ni `git://`), clone superficiel, minuterie,
+  plafond de taille avant toute exécution, et jamais de shell — les commandes sont des tableaux
+  d'arguments.
+
+En ligne de commande : `bin/console app:environnement:installer <adresse> [--ref=<branche>]`, ou le même
+avec l'identifiant d'un environnement déjà installé pour le mettre à jour. C'est cette commande que la
+page lance en tâche de fond, parce qu'un `composer install` dure plus longtemps qu'une requête HTTP.
+
+Guide pas à pas dans
+[auto-hebergement/README.md](auto-hebergement/README.md#ajouter-un-environnement-dexécution).
+
+### Un pack apporte ses environnements
+
+Le cas ordinaire : **le décor vit dans le pack**, à côté des parcours qu'il sert.
+
+```
+mon-pack/
+  pack.yaml
+  tracks/…
+  environments/ma-boutique/environment.yaml    ← l'environnement, porté par le pack
+  environments/ma-boutique/src/…
+```
+
+Rien à déclarer, rien à installer : le moteur le trouve du seul fait que le pack est monté. Un décor
+appartient au contenu qui le met en scène — il se déplace avec lui, se versionne avec lui, et disparaît
+avec lui. `extends: symfony-8` fonctionne depuis un pack comme depuis ailleurs, ce qui rend « le Symfony
+complet, plus mes trois entités » tenable en une poignée de fichiers.
+
+Il reste à l'**empaqueter** — `composer install`, archive, index de complétion —, ce que fait
+`bin/console app:environnement:synchroniser` (ou le bouton de `/admin` → Environnements, ou
+`ENVIRONMENTS_AUTO_INSTALL=1` au démarrage). Les archives vont dans `INSTALLED_ENVIRONMENTS_DIR`, hors
+de l'arborescence publique.
+
+Un pack ne peut pas s'approprier un identifiant déjà pris : `symfony-8` déclaré deux fois arrête le
+chargement en nommant les deux dossiers, plutôt que d'en masquer un au hasard.
+
+Ce que le moteur ne fait **jamais** :
+
+- empaqueter pendant une requête web. `composer install` dure des minutes et exécute le code du pack :
+  cela n'arrive que sur un geste d'exploitation — la commande, le bouton, ou le démarrage si l'instance
+  l'a demandé. La visite d'un apprenant ne déclenche rien.
+- refaire ce qui est déjà fait. Un environnement dont l'archive existe est laissé tel quel.
+- laisser un pack s'approprier un identifiant. `symfony-8` déclaré deux fois arrête le chargement en
+  nommant les deux dossiers, plutôt que d'en masquer un au hasard.
+- livrer une archive amputée. Un `extends:` qui pointe sur une base absente arrête l'empaquetage ; et un
+  décor qui ne compile pas n'empêche pas les autres d'être empaquetés.
+
+Un décor trop gros pour vivre dans un pack, ou partagé entre plusieurs, s'installe à part depuis un
+dépôt Git — voir la section précédente ; c'est alors un geste d'administrateur, pas une déclaration du
+pack.
 
 ## Pages publiques et référencement
 
@@ -251,7 +434,7 @@ dépannage.
 Pour essayer l'image construite depuis ce dépôt, avec le pack de démonstration : `docker compose up --build` à la
 racine (plateforme http://localhost:8080, bac à sable http://127.0.0.1:8080).
 
-Sans Docker : `make build`, puis servez `platform/public` sur les deux origines (`DEFAULT_URI` et `SANDBOX_ORIGIN`) avec `APP_ENV=prod` et `date.timezone` réglé dans `php.ini`. Les archives de `tools/build-env.sh` doivent être dans `platform/public/envs`.
+Sans Docker : `make build`, puis servez `platform/public` sur les deux origines (`DEFAULT_URI` et `SANDBOX_ORIGIN`) avec `APP_ENV=prod` et `date.timezone` réglé dans `php.ini`. Les archives de `environments/bin/build-env.sh` doivent être dans `platform/public/envs`.
 
 ## Versionnage
 

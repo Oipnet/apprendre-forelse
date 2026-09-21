@@ -33,15 +33,15 @@
 }) %}
 
 {% block robots %}<meta name="robots" content="noindex">{% endblock %}
-{% block title %}{{ message.title }} · Forelse{% endblock %}
+{% block title %}{{ message.title }} · {{ marque.name }}{% endblock %}
 
 {% block header %}
     <header class="lp-header">
         <div class="lp-wrap">
             <a class="lp-brand" href="{{ path('app_home') }}">
-                <img src="{{ asset('img/logo-84.webp') }}" alt="" width="72" height="84">
-                <span class="lp-serif">Forelse</span>
-                <span class="lp-chip">apprendre</span>
+                {% if marque.logoUrl %}<img src="{{ marque.logoUrl }}" alt="" width="72" height="84">{% endif %}
+                <span class="lp-serif">{{ marque.name }}</span>
+                {% if marque.chip %}<span class="lp-chip">{{ marque.chip }}</span>{% endif %}
             </a>
             <nav>
                 <a href="{{ path('app_home') }}#parcours">Parcours</a>

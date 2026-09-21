@@ -1,4 +1,4 @@
-import type { HttpResponse, Runtime } from '../runtime/Runtime';
+import type { HttpResponse, Runtime } from '@forelse/runtime-contract';
 import type { ExampleRequest } from './types';
 
 /** {{ date:+N }} → date du jour + N jours (AAAA-MM-JJ), pour des exemples qui ne se périment pas. */

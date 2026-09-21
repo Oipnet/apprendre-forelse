@@ -4,11 +4,11 @@
         <div class="ft-top">
             <div class="ft-brand">
                 <a class="ft-logo" href="{{ path('app_home') }}">
-                    <img src="{{ asset('img/logo-84.webp') }}" alt="" width="36" height="42" loading="lazy" decoding="async">
-                    <span class="lp-serif">Forelse</span>
-                    <span class="lp-chip">apprendre</span>
+                    {% if marque.logoUrl %}<img src="{{ marque.logoUrl }}" alt="" width="36" height="42" loading="lazy" decoding="async">{% endif %}
+                    <span class="lp-serif">{{ marque.name }}</span>
+                    {% if marque.chip %}<span class="lp-chip">{{ marque.chip }}</span>{% endif %}
                 </a>
-                <p>Apprendre à développer en codant dans le navigateur, sans vidéo ni installation.</p>
+                <p>{{ marque.tagline }}</p>
             </div>
             <nav class="ft-cols" aria-label="Pied de page">
                 <div>
@@ -21,7 +21,7 @@
                     </ul>
                 </div>
                 <div>
-                    <h2>Forelse</h2>
+                    <h2>{{ marque.name }}</h2>
                     <ul>
                         <li><a href="{{ path('app_organizations') }}">Écoles et entreprises</a></li>
                         {% if self_hosting.enabled %}<li><a href="{{ path('app_self_hosting') }}">Auto-hébergement</a></li>{% endif %}

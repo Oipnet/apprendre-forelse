@@ -7,5 +7,8 @@ version: 1.0.0
 # Le pack de démonstration est livré avec le moteur, donc toujours à jour : la clé est inutile ici.
 # moteur: '^1.0'
 license: AGPL-3.0-or-later
+# Un pack peut porter son décor : <pack>/environments/<id>/environment.yaml, à côté des parcours. Rien
+# à déclarer — le moteur le trouve parce que le pack est monté, et app:environnement:synchroniser lui
+# fabrique son archive. Le pack de démonstration n'utilise que les environnements livrés avec le moteur.
 tracks:
   - decouverte

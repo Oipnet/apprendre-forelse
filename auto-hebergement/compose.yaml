@@ -24,6 +24,20 @@ services:
       DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/formation?serverVersion=17&charset=utf8
       CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}
       DOWNLOADS_DIR: ${DOWNLOADS_DIR:-/downloads}
+      # Identité de l'instance : nom, couleurs, images, gabarits (voir README, « Habiller son instance »).
+      # /marque = le volume ci-dessous. Vide : la marque du moteur.
+      BRANDING_DIR: ${BRANDING_DIR:-/marque}
+      # Environnements installés depuis un dépôt Git par l'administration (/admin → Environnements).
+      # Vide : la fonctionnalité est absente. Empaqueter exécute le code du dépôt sur ce serveur.
+      INSTALLED_ENVIRONMENTS_DIR: ${INSTALLED_ENVIRONMENTS_DIR:-/environnements}
+      # Hôtes acceptés pour ces dépôts, séparés par des virgules. Vide : tous les hôtes en https.
+      ENVIRONMENT_SOURCES_ALLOWLIST: ${ENVIRONMENT_SOURCES_ALLOWLIST:-}
+      # 1 : au démarrage, installer les environnements que les packs déclarent et qui manquent.
+      # En tâche de fond : la plateforme sert ses pages pendant ce temps.
+      ENVIRONMENTS_AUTO_INSTALL: ${ENVIRONMENTS_AUTO_INSTALL:-0}
+      # Devis de cohorte : prix par apprenant et par parcours (TTC, en centimes), puis barème dégressif.
+      COHORT_UNIT_PRICE: ${COHORT_UNIT_PRICE:-3000}
+      COHORT_TIERS: ${COHORT_TIERS:-1:100,10:70,30:50}
       REGISTRATION_INVITE_ONLY: ${REGISTRATION_INVITE_ONLY:-0}
       # Page de présentation propre à l'instance de Forelse : laissez-la éteinte.
       SELF_HOSTING_PAGE: ${SELF_HOSTING_PAGE:-0}
@@ -64,6 +78,10 @@ services:
       - ${PACKS_DIR:-./packs}:/packs:ro
       # Archives à télécharger (facultatif) : déposez-y vos .zip, servis par /telechargements.
       - ${DOWNLOADS_HOST_DIR:-./downloads}:/downloads:ro
+      # Votre marque (facultatif) : marque.yaml, vos images, vos gabarits. Vide : la marque du moteur.
+      - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
+      # Environnements installés depuis un dépôt Git, et leurs archives.
+      - environnements:/environnements
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
@@ -131,5 +149,6 @@ services:
 
 volumes:
   data:
+  environnements:
   config:
   db:

@@ -1,4 +1,4 @@
-import type { Grading } from '../runtime/Runtime';
+import type { FrameworkProfile, Grading } from '@forelse/runtime-contract';
 
 /** Exercice tel que servi par GET /api/exercises/{track}/{exercise} (ou /api/exercises/pratique/{exercise}). */
 export interface ExercisePayload {
@@ -33,8 +33,8 @@ export interface ExercisePayload {
 	environment: {
 		id: string;
 		phpVersion: '8.4' | '';
-		/** Dicte la console (bin/console ou artisan), l'organisation du projet et les caches à vider. */
-		framework: 'symfony' | 'laravel' | 'docker' | 'nuxt';
+		/** Ce que le moteur sait de ce framework (voir App\Content\Framework\FrameworkProfile). */
+		framework: FrameworkProfile;
 		archiveUrl: string;
 		completionIndexUrl: string;
 	};
@@ -58,12 +58,15 @@ export interface ExampleRequest {
 	body: string | null;
 }
 
+// Le profil du framework fait partie du contrat des runtimes : réexporté pour les appelants d'ici.
+export type { FrameworkId, FrameworkProfile } from '@forelse/runtime-contract';
+
 /** Configuration passée par la page Twig (attribut data-config). */
 export interface PlaygroundConfig {
 	exerciseUrl: string;
 	sandboxUrl: string;
-	/** Logo de la marque, pour la barre du haut. */
-	logoUrl?: string;
+	/** L'identité de l'instance, pour la barre du haut (voir App\Instance\Branding). */
+	brand: { name: string; chip: string; title: string; logoUrl: string | null };
 	/** Exercice d'un parcours, ou de la Pratique (sans suite, sans XP, sans fiche de cours). */
 	context: 'track' | 'practice';
 	/** Le lien de retour de la barre : le parcours, ou la liste de la Pratique. */

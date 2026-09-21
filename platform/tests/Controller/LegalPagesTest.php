@@ -4,12 +4,15 @@ namespace App\Tests\Controller;
 
 use App\Ai\ModelClient;
 use App\Legal\LegalInfo;
+use App\Tests\DatabaseTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 
 /** Les pages légales décrivent l'instance (.env.test : une instance configurée, sans IA, inscription libre). */
 final class LegalPagesTest extends WebTestCase
 {
+    use DatabaseTrait;
+
     public function testLesMentionsLegalesViennentDeLaConfiguration(): void
     {
         $client = static::createClient();
@@ -96,6 +99,8 @@ final class LegalPagesTest extends WebTestCase
         $this->assertSelectorExists('form a[href="/confidentialite"]', 'Informé au moment où l\'adresse est demandée.');
         $this->assertSelectorExists('.site-footer a[href="/mentions-legales"]');
 
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
         $client->request('GET', '/parcours/decouverte/01-bonjour');
         $this->assertSelectorNotExists('.site-footer', 'Le playground est en plein écran.');
     }

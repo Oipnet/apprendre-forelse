@@ -1,4 +1,4 @@
-# Environnement d'exécution : projet Symfony de base, empaqueté par tools/build-env.sh
+# Environnement d'exécution : projet Symfony de base, empaqueté par environments/bin/build-env.sh
 id: symfony-8
 title: Symfony 8.1 — Twig, PHPUnit
 php: '8.4'

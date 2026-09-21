@@ -55,11 +55,11 @@
         <section class="lp-section dark">
             <div class="lp-wrap lp-two top">
                 <div>
-                    <span class="lp-eyebrow">Les parcours de Forelse</span>
+                    <span class="lp-eyebrow">Les parcours de {{ marque.name }}</span>
                     <h2 class="lp-h2">Le moteur est libre. Les parcours, sur devis.</h2>
                 </div>
                 <div>
-                    <p class="lp-lead">Les parcours proposés sur ce site ne sont pas inclus dans le code libre : leur écriture est ce qui finance le projet. Vous pouvez écrire les vôtres, ou utiliser ceux de Forelse sur votre propre instance, avec une licence adaptée à votre groupe.</p>
+                    <p class="lp-lead">Les parcours proposés sur ce site ne sont pas inclus dans le code libre : leur écriture est ce qui finance le projet. Vous pouvez écrire les vôtres, ou utiliser ceux de {{ marque.name }} sur votre propre instance, avec une licence adaptée à votre groupe.</p>
                     <div class="lp-cta">
                         <a class="lp-btn lg gold" href="{{ path('app_organizations') }}#demande">Demander un devis <span class="lp-mono">→</span></a>
                         <a class="lp-btn lg outline" href="{{ path('app_home') }}#parcours">Voir les parcours</a>

@@ -1,6 +1,6 @@
 {% extends 'studio/_chrome.html.twig' %}
 
-{% block title %}{{ track.title }} · Atelier · Forelse{% endblock %}
+{% block title %}{{ track.title }} · Atelier · {{ marque.name }}{% endblock %}
 
 {% block body_class %}site-page studio-page{% endblock %}
 
@@ -88,7 +88,7 @@
                                             <span class="st-mark">{{ exercice.isBoss ? '★' : loop.index }}</span>
                                             <span class="st-ex-title">{{ exercice.title }}</span>
                                             <span class="st-ex-id">{{ exercice.id }}</span>
-                                            {% if exercice.access.value == 'free' %}<span class="tag free">Sans compte</span>{% endif %}
+                                            {% if exercice.access.value == 'free' %}<span class="tag free">Clé « access » (dépréciée)</span>{% endif %}
                                             <span class="st-ex-xp">{{ exercice.xp }} XP</span>
                                         </a>
                                     </li>

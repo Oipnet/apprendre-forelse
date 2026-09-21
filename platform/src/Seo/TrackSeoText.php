@@ -3,6 +3,7 @@
 namespace App\Seo;
 
 use App\Content\Track;
+use App\Instance\Branding;
 use App\Repository\TrackPricingRepository;
 use App\Repository\TrackSeoRepository;
 use Psr\Log\LoggerInterface;
@@ -10,12 +11,13 @@ use Psr\Log\LoggerInterface;
 /**
  * Title et description d'une page de parcours. Ce qui est saisi dans l'admin (TrackSeo) passe avant la génération :
  *  - title : « Formation Symfony en ligne pour les devs PHP », tiré du titre du parcours quand il commence par le
- *    framework suivi de « pour … » ; sinon « Formation Symfony en ligne : Découverte ». Toujours suivi de « | Forelse » ;
+ *    framework suivi de « pour … » ; sinon « Formation Symfony en ligne : Découverte ». Toujours suivi du nom
+ *    de l'instance (« | Forelse ») ;
  *  - description : le résumé du parcours, puis les chiffres (« 12 chapitres, 74 exercices, premier chapitre gratuit. »).
  */
 final readonly class TrackSeoText
 {
-    /** Longueur conseillée du title, sans « | Forelse ». */
+    /** Longueur conseillée du title, sans le « | <marque> » ajouté à l'affichage. */
     public const int TITLE_MAX = 60;
     /** En deçà, une description en phrases entières est jugée trop maigre : on coupe plutôt sur un mot. */
     public const int DESCRIPTION_MIN = 120;
@@ -24,6 +26,7 @@ final readonly class TrackSeoText
         private TrackSeoRepository $overrides,
         private TrackPricingRepository $pricings,
         private LoggerInterface $logger,
+        private Branding $branding,
     ) {
     }
 
@@ -32,11 +35,11 @@ final readonly class TrackSeoText
         $title = $this->overrides->findOneByTrack($track->id)?->getSeoTitle() ?? self::generatedTitle($track->title, $framework);
         if (mb_strlen($title) > self::TITLE_MAX) {
             $this->logger->warning('Title du parcours « {track} » trop long : {length} caractères, {max} au plus sans « | {site} ».', [
-                'track' => $track->id, 'length' => mb_strlen($title), 'max' => self::TITLE_MAX, 'site' => PageSeo::SITE_NAME, 'title' => $title,
+                'track' => $track->id, 'length' => mb_strlen($title), 'max' => self::TITLE_MAX, 'site' => $this->branding->name(), 'title' => $title,
             ]);
         }
 
-        return $title.' | '.PageSeo::SITE_NAME;
+        return $title.' | '.$this->branding->name();
     }
 
     public function description(Track $track): string

@@ -10,6 +10,7 @@ use App\Entity\Cohort;
 use App\Entity\User;
 use App\Form\CohortHeadcountType;
 use App\Form\CohortTracksType;
+use App\Instance\Branding;
 use App\Repository\CohortRepository;
 use App\Security\CohortVoter;
 use Doctrine\ORM\EntityManagerInterface;
@@ -38,6 +39,7 @@ final class ChefDashboardController extends AbstractDashboardController
         private readonly ContentRepository $content,
         private readonly CohortQuoteEstimator $estimator,
         private readonly CohortAccessSync $cohortAccess,
+        private readonly Branding $branding,
     ) {
     }
 
@@ -129,8 +131,8 @@ final class ChefDashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('Forelse · cohortes')
-            ->setFaviconPath('img/favicon.svg')
+            ->setTitle($this->branding->name().' · cohortes')
+            ->setFaviconPath($this->branding->iconUrl() ?? 'img/favicon.svg')
             ->renderContentMaximized();
     }
 

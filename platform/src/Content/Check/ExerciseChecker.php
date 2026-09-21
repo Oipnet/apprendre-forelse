@@ -4,15 +4,17 @@ namespace App\Content\Check;
 
 use App\Content\ContentRepository;
 use App\Content\Environment;
+use App\Content\EnvironmentAssembler;
 use App\Content\EnvironmentRegistry;
+use App\Content\Framework\FrameworkProfile;
 use App\Content\Exercise;
 use App\Content\Objective;
+use App\Instance\EnvironmentArtifacts;
 use Composer\Semver\Comparator;
 use Composer\Semver\VersionParser;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 use Symfony\Component\Process\Exception\ProcessSignaledException;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
@@ -35,8 +37,8 @@ final class ExerciseChecker
     private array $failures = [];
     /** @var list<string> caches du projet en cours de vérification (voir Environment::$cacheDirs) */
     private array $cacheDirs = [];
-    /** Framework du projet en cours de vérification : les tests d'un projet Nuxt sont des tests Vitest. */
-    private string $framework = 'symfony';
+    /** Profil du projet en cours de vérification : il dit comment ses tests se lancent et se nomment. */
+    private ?FrameworkProfile $framework = null;
 
     public function __construct(
         private readonly ContentRepository $content,
@@ -44,6 +46,10 @@ final class ExerciseChecker
         /** Dossier de la plateforme : son .env déclare les variables à cacher au projet testé. */
         #[Autowire('%kernel.project_dir%')]
         private readonly string $platformDir = __DIR__.'/../../..',
+        /** Reconstitue le projet : la chaîne d'environnements superposée (voir EnvironmentAssembler). */
+        private readonly EnvironmentAssembler $assembler = new EnvironmentAssembler(),
+        /** Où vivent les archives et les index : le public/ du moteur, ou les environnements installés. */
+        private readonly ?EnvironmentArtifacts $artifacts = null,
     ) {
         $this->filesystem = new Filesystem();
     }
@@ -61,32 +67,35 @@ final class ExerciseChecker
         $this->cacheDirs = $environment->cacheDirs;
         $this->framework = $environment->framework;
 
-        $this->checkStructure($exercise, $starting, $tests, $solution, $environment->directory, $result);
+        $this->checkStructure($exercise, $starting, $tests, $solution, $environment, $result);
         $this->checkPracticeVersion($exercise, $environment, $result);
         $this->checkCompletion($starting, $tests, $solution, $environment, $result);
         if (!$result->isOk()) {
             return $result;
         }
-        if ('nuxt' === $environment->framework) {
+        if (!$environment->framework->runsPhpunit()) {
+            // Les tests sont lancés par le module que le framework déclare : il faut Node, et le paquet
+            // qui fournit ce module. Ni l'un ni l'autre ne nomme un framework en particulier.
+            $module = $environment->framework->testModule;
             if (null === $this->nodeBinary()) {
-                $result->error('Exercice Nuxt : Node.js est introuvable, impossible de lancer les tests Vitest.');
+                $result->error(sprintf('Framework « %s » : Node.js est introuvable, impossible de lancer ses tests.', $environment->framework->id));
 
                 return $result;
             }
-            if (!is_dir($this->nuxtSimulatorDir().'/node_modules')) {
-                $result->error(sprintf('Exercice Nuxt : le simulateur n\'est pas installé (npm ci dans %s).', $this->nuxtSimulatorDir()));
+            if (null === $module || null === $this->resolveTestModule($module)) {
+                $result->error(sprintf('Framework « %s » : le module de test %s est introuvable (npm install, dans playground/).', $environment->framework->id, null === $module ? 'n\'est pas déclaré' : sprintf('« %s »', $module)));
 
                 return $result;
             }
-        } elseif (!is_file($environment->directory.'/vendor/autoload.php')) {
-            $result->error(sprintf('Environnement « %s » sans vendor/ : lancez tools/build-env.sh %s.', $environment->id, $environment->id));
+        } elseif (null === $environment->file('vendor/autoload.php')) {
+            $result->error(sprintf('Environnement « %s » sans vendor/ : lancez environments/bin/build-env.sh %s.', $environment->id, $environment->id));
 
             return $result;
         }
 
         $workdir = sys_get_temp_dir().'/content-check-'.bin2hex(random_bytes(6));
         try {
-            $this->filesystem->mirror($environment->directory, $workdir, (new Finder())->in($environment->directory)->ignoreDotFiles(false)->exclude(['var', '.phpunit.cache', 'node_modules', '.nuxt', '.output']));
+            $this->assembler->assemble($environment, $workdir);
             $this->write($workdir, [...$starting, ...$tests]);
 
             $before = $this->grade($exercise, $workdir);
@@ -130,9 +139,6 @@ final class ExerciseChecker
         return $result;
     }
 
-    /** Paquet dont la version fait foi, par framework (lu dans le composer.lock de l'environnement). */
-    private const array FRAMEWORK_PACKAGES = ['symfony' => 'symfony/framework-bundle', 'laravel' => 'laravel/framework'];
-
     /**
      * Un exercice de Pratique qui annonce une nouveauté (`version: '8.1'`) doit tourner sur un framework qui l'a :
      * sinon l'apprenant chercherait une fonctionnalité absente de son projet.
@@ -143,13 +149,14 @@ final class ExerciseChecker
         if (null === $version) {
             return;
         }
-        $package = self::FRAMEWORK_PACKAGES[$environment->framework] ?? null;
+        // Le paquet dont la version fait foi est déclaré par le profil ; certains n'en ont pas (Docker, Nuxt).
+        $package = $environment->framework->versionPackage;
         if (null === $package) {
-            $result->error(sprintf('« version » n\'a pas de sens pour l\'environnement « %s » (%s) : retirez-la.', $environment->id, $environment->framework));
+            $result->error(sprintf('« version » n\'a pas de sens pour l\'environnement « %s » (%s) : retirez-la.', $environment->id, $environment->framework->label));
 
             return;
         }
-        $lock = json_decode((string) @file_get_contents($environment->directory.'/composer.lock'), true);
+        $lock = json_decode((string) @file_get_contents((string) $environment->file('composer.lock')), true);
         $installed = null;
         foreach ($lock['packages'] ?? [] as $candidate) {
             if (($candidate['name'] ?? null) === $package) {
@@ -173,7 +180,7 @@ final class ExerciseChecker
      * @param array<string, string> $tests
      * @param array<string, string> $solution
      */
-    private function checkStructure(Exercise $exercise, array $starting, array $tests, array $solution, string $environmentDir, CheckResult $result): void
+    private function checkStructure(Exercise $exercise, array $starting, array $tests, array $solution, Environment $environment, CheckResult $result): void
     {
         if (!$tests && !$exercise->ownTests()) {
             $result->error('Aucun test dans tests/.');
@@ -184,16 +191,17 @@ final class ExerciseChecker
         $testCode = implode("\n", $tests);
         foreach (array_filter($exercise->objectives, static fn (Objective $o) => $o->isHiddenTest()) as $objective) {
             // PHPUnit : une méthode du nom de l'objectif ; Vitest : un it() ou test() de ce titre.
-            $pattern = 'nuxt' === $this->framework
-                ? '/\b(?:it|test)(?:\.\w+)*\s*\(\s*([\'"`])'.preg_quote($objective->test, '/').'\1/u'
-                : '/function\s+'.preg_quote($objective->test, '/').'\s*\(/';
+            $phpunit = $this->framework?->runsPhpunit() ?? true;
+            $pattern = $phpunit
+                ? '/function\s+'.preg_quote($objective->test, '/').'\s*\(/'
+                : '/\b(?:it|test)(?:\.\w+)*\s*\(\s*([\'"`])'.preg_quote($objective->test, '/').'\1/u';
             if (!preg_match($pattern, $testCode)) {
-                $result->error(sprintf('Objectif « %s » : aucun %s de ce nom dans tests/.', $objective->test, 'nuxt' === $this->framework ? 'test it()' : 'méthode de test'));
+                $result->error(sprintf('Objectif « %s » : aucun %s de ce nom dans tests/.', $objective->test, $phpunit ? 'méthode de test' : 'test it()'));
             }
         }
         // Un motif (migrations/*.php) désigne des fichiers qui n'existent pas encore : rien à vérifier.
         foreach ([...$exercise->editablePaths(), ...$exercise->readonly] as $path) {
-            if (!isset($starting[$path]) && !is_file($environmentDir.'/'.$path)) {
+            if (!isset($starting[$path]) && null === $environment->file($path)) {
                 $result->error(sprintf('Fichier « %s » introuvable (ni dans starter/, ni dans une base, ni dans l\'environnement).', $path));
             }
         }
@@ -203,7 +211,8 @@ final class ExerciseChecker
         }
         foreach ($exercise->mutants as $mutant) {
             foreach ($mutant->changes as $change) {
-                $code = $solution[$change['file']] ?? $starting[$change['file']] ?? (is_file($environmentDir.'/'.$change['file']) ? (string) file_get_contents($environmentDir.'/'.$change['file']) : null);
+                $depuisLEnvironnement = $environment->file($change['file']);
+                $code = $solution[$change['file']] ?? $starting[$change['file']] ?? (null === $depuisLEnvironnement ? null : (string) file_get_contents($depuisLEnvironnement));
                 if (null === $code || !str_contains($code, $change['search'])) {
                     $result->error(sprintf('Mutant « %s » : texte à remplacer introuvable dans %s (%s).', $mutant->id, $change['file'], $change['search']));
                 }
@@ -220,7 +229,7 @@ final class ExerciseChecker
      * Les classes que l'apprenant doit importer lui-même — citées par la solution, absentes de l'état de départ —
      * doivent figurer dans l'index de complétion de l'environnement. Sinon l'éditeur ne les propose pas, alors que
      * l'exercice demande précisément de les écrire. La liste des namespaces indexés est dans
-     * tools/build-completion.php ; l'index lui-même est produit par tools/build-env.sh.
+     * environments/bin/build-completion.php ; l'index lui-même est produit par build-env.sh.
      *
      * @param array<string, string> $starting
      * @param array<string, string> $tests
@@ -228,9 +237,10 @@ final class ExerciseChecker
      */
     private function checkCompletion(array $starting, array $tests, array $solution, Environment $environment, CheckResult $result): void
     {
-        $indexPath = $this->platformDir.'/public/'.$environment->completionIndexPath();
+        $indexPath = $this->artifacts?->path(basename($environment->completionIndexPath()))
+            ?? $this->platformDir.'/public/'.$environment->completionIndexPath();
         if (!is_file($indexPath)) {
-            $result->warning(sprintf('Index de complétion absent (%s) : les imports de la solution n\'ont pas été vérifiés. Lancez tools/build-env.sh %s.', $environment->completionIndexPath(), $environment->id));
+            $result->warning(sprintf('Index de complétion absent (%s) : les imports de la solution n\'ont pas été vérifiés. Lancez environments/bin/build-env.sh %s.', $environment->completionIndexPath(), $environment->id));
 
             return;
         }
@@ -266,7 +276,7 @@ final class ExerciseChecker
         }
         if ($missing) {
             $result->error(sprintf(
-                'Complétion : %s hors de l\'index de « %s ». L\'apprenant doit écrire ces imports, l\'éditeur ne les lui proposera pas : ajoutez leur namespace à tools/build-completion.php.',
+                'Complétion : %s hors de l\'index de « %s ». L\'apprenant doit écrire ces imports, l\'éditeur ne les lui proposera pas : ajoutez leur namespace à environments/bin/build-completion.php.',
                 implode(', ', array_keys($missing)),
                 $environment->id,
             ));
@@ -399,8 +409,8 @@ final class ExerciseChecker
      */
     private function runTests(string $workdir, array $paths = []): ?array
     {
-        if ('nuxt' === $this->framework) {
-            return $this->runVitest($workdir, $paths);
+        if (!($this->framework?->runsPhpunit() ?? true)) {
+            return $this->runExternalTests($workdir, $paths);
         }
         $junit = $workdir.'/var/junit.xml';
         $this->filesystem->remove($junit);
@@ -441,20 +451,37 @@ final class ExerciseChecker
     }
 
     /**
-     * Tests Vitest d'un projet Nuxt, lancés par le simulateur (tools/nuxt-sim/bin/tests.ts) : le même runner
-     * que dans le navigateur, donc le même verdict.
+     * Tests lancés par le module que le framework déclare (`testModule`) : le même runner que dans le
+     * navigateur, donc le même verdict.
+     *
+     * Le moteur ne connaît ni le module ni son emplacement — il demande à Node de résoudre le
+     * spécificateur depuis le playground, là où les paquets de runtime sont installés. Ajouter un
+     * runtime avec son propre lanceur ne demande donc rien ici.
      *
      * @param list<string> $paths fichiers de test à lancer (tous par défaut)
      *
      * @return array<string, array{status: string, file: string}>|null par titre de test, null si aucun test n'a tourné
      */
-    private function runVitest(string $workdir, array $paths): ?array
+    private function runExternalTests(string $workdir, array $paths): ?array
     {
-        $process = new Process([(string) $this->nodeBinary(), '--experimental-transform-types', '--no-warnings', $this->nuxtSimulatorDir().'/bin/tests.ts', $workdir, ...$paths], $workdir, ['NODE_ENV' => false], timeout: 120);
+        $module = $this->framework?->testModule;
+        if (null === $module) {
+            $this->failures = ['*' => sprintf('Le framework « %s » ne lance pas PHPUnit et ne déclare aucun module de test (voir FrameworkProfile::$testModule).', $this->framework?->id ?? '?')];
+
+            return null;
+        }
+        $script = $this->resolveTestModule($module);
+        if (null === $script) {
+            $this->failures = ['*' => sprintf('Module de test « %s » introuvable : installez le paquet qui le fournit (npm install, dans playground/).', $module)];
+
+            return null;
+        }
+
+        $process = new Process([(string) $this->nodeBinary(), '--experimental-transform-types', '--no-warnings', $script, $workdir, ...$paths], $workdir, ['NODE_ENV' => false], timeout: 120);
         $process->run();
         $report = json_decode($process->getOutput(), true);
         if (!\is_array($report) || !\is_array($report['cases'] ?? null)) {
-            $this->failures = ['*' => trim($process->getErrorOutput()) ?: 'le simulateur Nuxt n\'a rien rapporté.'];
+            $this->failures = ['*' => trim($process->getErrorOutput()) ?: sprintf('« %s » n\'a rien rapporté.', $module)];
 
             return null;
         }
@@ -477,9 +504,31 @@ final class ExerciseChecker
         return $results;
     }
 
-    private function nuxtSimulatorDir(): string
+    /**
+     * Le fichier derrière un spécificateur de module, résolu par Node depuis le playground.
+     *
+     * C'est `node_modules` qui sait où vit un paquet, pas le moteur : un runtime peut être un lien
+     * local, une dépendance publiée ou un dossier tiers, cela ne regarde personne ici.
+     */
+    private function resolveTestModule(string $module): ?string
     {
-        return $this->platformDir.'/../tools/nuxt-sim';
+        $node = $this->nodeBinary();
+        if (null === $node) {
+            return null;
+        }
+        $process = new Process(
+            [$node, '--input-type=module', '-e', sprintf('process.stdout.write(import.meta.resolve(%s))', json_encode($module, \JSON_THROW_ON_ERROR))],
+            $this->platformDir.'/../playground',
+            timeout: 30,
+        );
+        $process->run();
+        $url = trim($process->getOutput());
+
+        // rawurldecode : l'URL renvoyée par Node est percent-encodée (un dossier « formation symfony »
+        // arrive en « formation%20symfony »), et Node ne retrouve pas ce fichier-là.
+        return $process->isSuccessful() && str_starts_with($url, 'file://')
+            ? rawurldecode((string) parse_url($url, \PHP_URL_PATH))
+            : null;
     }
 
     private function nodeBinary(): ?string

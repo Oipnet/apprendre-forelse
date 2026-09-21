@@ -10,8 +10,9 @@ import { HttpCookieStore, inferMimeType, PHP, PHPExecutionFailureError, type PHP
 import { createSpawnHandler } from '@php-wasm/util';
 import { getPHPLoaderModule, loadWebRuntime } from '@php-wasm/web';
 import { unzipSync } from 'fflate';
-import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestCaseResult, TestRunResult } from './Runtime';
-import type { WorkerCall, WorkerMessage } from './protocol';
+import type { FrameworkProfile } from '../app/types';
+import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestCaseResult, TestRunResult } from '@forelse/runtime-contract';
+import type { WorkerCall, WorkerMessage } from '@forelse/runtime-contract';
 import consoleScript from './console.php?raw';
 import artisanScript from './artisan.php?raw';
 import runTestsScript from './run-tests.php?raw';
@@ -40,48 +41,22 @@ let nextProcessId = 1;
  */
 let testsDirty = false;
 
-/** Ce qui change d'un framework à l'autre : la console, où vit le code, où vivent les caches. */
-interface FrameworkProfile {
-	/** Script exécutant une commande de la console du projet (bin/console, artisan). */
-	consoleScript: string;
-	/**
-	 * Dossiers où une commande console peut écrire du code (doctrine:migrations:diff, make:*…).
-	 * Caches et dépendances n'en font pas partie : ils ne regardent pas l'apprenant.
-	 */
-	projectDirs: string[];
-	/** Caches de l'instance de tests, vidés quand des fichiers ont changé (relatifs au projet). */
-	testCaches: string[];
-	/** Ce que l'explorateur de fichiers ne montre pas (relatif au projet). */
-	hidden: string[];
-	unpackLabel: string;
-}
-/** Nuxt n'a pas de PHP : son runtime est le worker du simulateur (nuxt-worker.ts). */
-const PROFILES: Record<Exclude<NonNullable<EnvironmentSpec['framework']>, 'nuxt'>, FrameworkProfile> = {
-	symfony: {
-		consoleScript,
-		projectDirs: ['src', 'migrations', 'templates', 'config', 'tests', 'translations'],
-		testCaches: ['var/cache/test'],
-		hidden: ['vendor', 'var', '.git', 'node_modules', '.phpunit.cache'],
-		unpackLabel: 'Décompression du projet Symfony',
-	},
-	laravel: {
-		consoleScript: artisanScript,
-		projectDirs: ['app', 'config', 'database', 'resources', 'routes', 'tests'],
-		// Blade compare les dates de modification à la seconde : une vue réécrite dans la seconde resterait « fraîche ».
-		testCaches: ['storage/framework/views'],
-		hidden: ['vendor', 'storage', 'bootstrap/cache', 'database/database.sqlite', '.git', 'node_modules', '.phpunit.cache'],
-		unpackLabel: 'Décompression du projet Laravel',
-	},
-	docker: {
-		consoleScript: dockerScript,
-		// docker cp, un volume monté sur le projet : ce qu'un conteneur écrit chez l'hôte reste visible.
-		projectDirs: ['public', 'src', 'docker', 'config', 'templates', 'data'],
-		testCaches: [],
-		hidden: ['vendor', '.git', 'node_modules', '.phpunit.cache'],
-		unpackLabel: 'Décompression du projet',
-	},
+/**
+ * Ce qui change d'un framework à l'autre — dossiers du projet, caches, masquage, libellés — est déclaré
+ * par le moteur et arrive dans la spec de l'environnement (App\Content\Framework\FrameworkProfile).
+ * Le worker n'en garde que ce qui est du **code** : le script qui exécute la console du projet.
+ */
+const CONSOLE_SCRIPTS: Record<string, string> = {
+	symfony: consoleScript,
+	laravel: artisanScript,
+	docker: dockerScript,
 };
-let profile: FrameworkProfile = PROFILES.symfony;
+let profile: FrameworkProfile | null = null;
+/** Le profil du projet en cours ; boot() le pose avant tout le reste. */
+const frameworkProfile = (): FrameworkProfile => profile ?? raise('Environnement non démarré.');
+const raise = (message: string): never => {
+	throw new Error(message);
+};
 const cookies = new HttpCookieStore();
 const encoder = new TextEncoder();
 
@@ -161,8 +136,8 @@ async function createPhp(): Promise<PHP> {
 	writeTree(php, overlay);
 	php.mkdir('/runner');
 	php.writeFile(RUNNER, runTestsScript);
-	php.writeFile(CONSOLE, profile.consoleScript);
-	if (env.framework === 'docker') php.writeFile(DOCKER_HTTP, dockerHttpScript);
+	php.writeFile(CONSOLE, CONSOLE_SCRIPTS[frameworkProfile().id] ?? consoleScript);
+	if ('docker' === env.framework.id) php.writeFile(DOCKER_HTTP, dockerHttpScript);
 	return php;
 }
 
@@ -179,7 +154,7 @@ function toHttpResponse(response: PHPResponse, start: number): HttpResponse {
 }
 
 function clearTestCache(php: PHP) {
-	for (const dir of profile.testCaches.map((d) => `${APP_DIR}/${d}`)) {
+	for (const dir of frameworkProfile().testCaches.map((d) => `${APP_DIR}/${d}`)) {
 		if (php.isDir(dir)) php.rmdir(dir, { recursive: true });
 		php.mkdir(dir);
 	}
@@ -258,7 +233,7 @@ function instantane(php: PHP): Map<string, string> {
 			else fichiers.set(chemin.slice(APP_DIR.length + 1), php.readFileAsText(chemin));
 		}
 	};
-	for (const dossier of profile.projectDirs) if (php.isDir(`${APP_DIR}/${dossier}`)) parcourir(`${APP_DIR}/${dossier}`);
+	for (const dossier of frameworkProfile().projectDirs) if (php.isDir(`${APP_DIR}/${dossier}`)) parcourir(`${APP_DIR}/${dossier}`);
 	return fichiers;
 }
 
@@ -329,10 +304,14 @@ async function dockerRequest(req: HttpRequest, url: URL, start: number): Promise
 const api: Runtime = {
 	async boot(spec) {
 		env = spec;
-		if (spec.framework === 'nuxt') throw new Error('Un environnement Nuxt se joue avec NuxtRuntime, pas avec PHP.');
-		profile = PROFILES[spec.framework ?? 'symfony'];
+		// Le garde porte sur le runtime demandé, pas sur le nom du framework : ce worker sert tous ceux
+		// qui s'exécutent en PHP, quel que soit leur nombre, et aucun autre.
+		if ('php-wasm' !== spec.framework.runtime) {
+			throw new Error(`Un environnement « ${spec.framework.runtime} » ne se joue pas avec PHP (voir src/runtime/registry.ts).`);
+		}
+		profile = spec.framework;
 		const archive = await download(spec.archiveUrl);
-		progress({ step: 'unpack', ratio: null, label: profile.unpackLabel });
+		progress({ step: 'unpack', ratio: null, label: spec.framework.unpackLabel });
 		baseFiles = new Map(
 			Object.entries(unzipSync(archive)).filter(([path]) => !path.endsWith('/')),
 		);
@@ -361,7 +340,7 @@ const api: Runtime = {
 
 	async listFiles() {
 		// L'apprenant explore son projet, pas les dépendances ni les caches.
-		const hidden = new Set(profile.hidden);
+		const hidden = new Set(frameworkProfile().hidden);
 		const files: string[] = [];
 		const walk = (directory: string) => {
 			for (const name of preview.listFiles(directory)) {
@@ -388,7 +367,7 @@ const api: Runtime = {
 	async request(req: HttpRequest) {
 		const start = performance.now();
 		const url = new URL(req.url, 'http://preview.local');
-		if (env.framework === 'docker') return dockerRequest(req, url, start);
+		if ('docker' === env.framework.id) return dockerRequest(req, url, start);
 		const relativePath = decodeURIComponent(url.pathname.slice(env.previewBasePath.length)) || '/';
 
 		// Fichier statique de public/ (CSS, images…) : servi sans passer par PHP.

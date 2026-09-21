@@ -1,4 +1,6 @@
-# Environnement d'exécution : projet Symfony de base, empaqueté par tools/build-env.sh
+# Environnement d'exécution : le Symfony de base, complété de tout ce qu'une application demande.
+# Il prolonge symfony-8 : ne vivent ici que les fichiers qu'il ajoute ou remplace.
 id: symfony-8-app
+extends: symfony-8
 title: Symfony 8.1 — Twig, Doctrine (SQLite), Form, Validator, Security, Serializer, Messenger, Mailer, Workflow, PHPUnit
 php: '8.4'

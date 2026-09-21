@@ -20,9 +20,9 @@ use Symfony\Contracts\Service\ResetInterface;
  * obtenu. Toute page ou API de contenu (exercice, progression, mentor, fiche, livret) passe par lui.
  *
  * Règles, dans l'ordre :
- *  1. le premier chapitre d'un parcours public est ouvert à tous, avec ou sans compte ;
- *  2. un administrateur ou un auteur (qui relit le contenu) ouvre tout ;
- *  3. sans compte, rien d'autre ;
+ *  1. sans compte, rien : le contenu se lit (consigne, notions), il ne se joue pas ;
+ *  2. le premier chapitre d'un parcours public est ouvert à tout compte connecté, gratuitement ;
+ *  3. un administrateur ou un auteur (qui relit le contenu) ouvre tout ;
  *  4. un parcours gratuit (sans tarif, ou à 0 €) est ouvert à tout compte ;
  *  5. un chef de cohorte ouvre les parcours que proposent ses cohortes ;
  *  6. sinon, il faut un accès actif (achat, cohorte, offert : TrackAccess).
@@ -47,14 +47,14 @@ final class TrackAccessChecker implements ResetInterface
 
     public function canAccess(?User $user, Track $track, Chapter $chapter): bool
     {
-        if (self::isFreeChapter($track, $chapter)) {
+        if (null !== $user && self::isFreeChapter($track, $chapter)) {
             return true;
         }
 
         return $this->hasFullAccess($user, $track);
     }
 
-    /** Tout le parcours est ouvert (règles 2 à 6) : ce qui distingue « Continuer » d'« Acheter ». */
+    /** Tout le parcours est ouvert (règles 3 à 6) : ce qui distingue « Continuer » d'« Acheter ». */
     public function hasFullAccess(?User $user, Track $track): bool
     {
         return match (true) {
@@ -78,7 +78,19 @@ final class TrackAccessChecker implements ResetInterface
         return null !== $track && null !== $chapter && $this->canAccess($user, $track, $chapter);
     }
 
-    /** Le premier chapitre d'un parcours public : la porte d'entrée, sans compte. */
+    /** Un exercice du premier chapitre : gratuit pour tout compte, sans rien acheter. La Pratique n'en fait pas partie. */
+    public function isFreeExercise(Exercise $exercise): bool
+    {
+        if (null === $exercise->trackId) {
+            return false;
+        }
+        $track = $this->content->findTrack($exercise->trackId);
+        $chapter = null === $track ? null : $this->content->chapterOf($exercise);
+
+        return null !== $track && null !== $chapter && self::isFreeChapter($track, $chapter);
+    }
+
+    /** Le premier chapitre d'un parcours public : la porte d'entrée, gratuite, une fois le compte créé. */
     public static function isFreeChapter(Track $track, Chapter $chapter): bool
     {
         return !$track->isRestricted() && ($track->chapters[0] ?? null)?->id === $chapter->id;

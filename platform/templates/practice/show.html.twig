@@ -1,7 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {# Un exercice de Pratique vu sans compte : l'explication se lit, l'éditeur et la validation demandent un compte. #}
-{% block title %}{{ practice.exercise.title }} · Pratique · Forelse{% endblock %}
+{% block title %}{{ practice.exercise.title }} · Pratique · {{ marque.name }}{% endblock %}
 
 {% block body %}
     <main class="page practice exercise-public">

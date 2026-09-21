@@ -7,11 +7,15 @@
 # --- 1. Playground : build Vite (îlot JS, runtime WebAssembly) -------------------------
 FROM node:24-slim AS playground
 
-# Le worker Nuxt du playground importe le simulateur (tools/nuxt-sim) et ses dépendances.
-WORKDIR /src/tools/nuxt-sim
-COPY tools/nuxt-sim/package.json tools/nuxt-sim/package-lock.json ./
+# Le contrat des runtimes : le playground et chaque paquet de runtime en dépendent (lien npm « file: »),
+# il doit donc être présent avant le moindre « npm ci ».
+COPY packages/runtime-contract /src/packages/runtime-contract
+
+# Le simulateur Nuxt est un paquet de runtime : le playground le découvre parmi ses dépendances.
+WORKDIR /src/packages/simulateur-nuxt
+COPY packages/simulateur-nuxt/package.json packages/simulateur-nuxt/package-lock.json ./
 RUN npm ci --no-audit --no-fund
-COPY tools/nuxt-sim/src ./src
+COPY packages/simulateur-nuxt/src ./src
 
 WORKDIR /src/playground
 COPY playground/package.json playground/package-lock.json ./
@@ -50,9 +54,10 @@ FROM php_base AS environments
 
 RUN apt-get update && apt-get install -y --no-install-recommends zip && rm -rf /var/lib/apt/lists/*
 COPY environments/ /app/environments/
-COPY tools/ /app/tools/
-# Écrit /app/platform/public/envs/<id>.zip et <id>.completion.json
-RUN mkdir -p /app/platform/public && for dir in /app/environments/*/; do /app/tools/build-env.sh "$(basename "$dir")"; done
+# Le simulateur Docker : dépôt Composer « path » de l'environnement docker (voir environments/README.md).
+COPY packages/simulateur-docker/ /app/packages/simulateur-docker/
+# Écrit /app/platform/public/envs/<id>.zip et <id>.completion.json, pour tous les environnements.
+RUN mkdir -p /app/platform/public && /app/environments/bin/build-env.sh
 
 
 # --- 5. Image finale --------------------------------------------------------------------
@@ -76,14 +81,20 @@ ENV APP_ENV=prod \
     APP_DEBUG=0 \
     APP_TIMEZONE=UTC \
     CONTENT_PACKS_PATHS=/packs \
-    ENVIRONMENTS_DIR=/app/environments
+    ENVIRONMENTS_DIR=/app/environments,/environnements \
+    INSTALLED_ENVIRONMENTS_DIR=/environnements \
+    ENVIRONMENTS_AUTO_INSTALL=0 \
+    BRANDING_DIR=/marque
 
 # Utilisateur non privilégié ; le binaire peut tout de même écouter sur 80/443.
-RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin && rm -rf /var/lib/apt/lists/* \
+# git et zip : l'administration installe un environnement depuis un dépôt et l'empaquette ici même
+# (voir README, « Ajouter un environnement depuis un dépôt Git »). util-linux fournit setsid, qui détache
+# l'installation de la requête HTTP qui la lance.
+RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin git zip util-linux && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 1000 --home /app formation \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
-    && mkdir -p /data/app /config /packs /app/platform/var \
-    && chown -R formation:formation /data /config /app/platform/var
+    && mkdir -p /data/app /config /packs /marque /environnements /app/platform/var \
+    && chown -R formation:formation /data /config /environnements /app/platform/var
 USER formation
 
 VOLUME ["/data"]

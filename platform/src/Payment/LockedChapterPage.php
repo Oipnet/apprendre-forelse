@@ -9,6 +9,7 @@ use App\Content\Exercise;
 use App\Content\LessonRenderer;
 use App\Content\Track;
 use App\Entity\User;
+use App\Security\TrackAccessChecker;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Environment;
@@ -74,6 +75,8 @@ final readonly class LockedChapterPage
             ...$this->exerciseContext($track, $chapter, $exercise),
             'offer' => $this->offers->create($track, $user),
             'inviteOnly' => $this->inviteOnly,
+            // Le premier chapitre est gratuit : un visiteur n'a qu'un compte à créer, pas un parcours à acheter.
+            'freeChapter' => TrackAccessChecker::isFreeChapter($track, $chapter),
             'firstExercise' => null === $firstId ? null : $this->content->findExercise($track->id, $firstId),
         ]), null === $user ? Response::HTTP_OK : Response::HTTP_FORBIDDEN);
     }

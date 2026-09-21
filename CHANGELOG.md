@@ -8,6 +8,256 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 2.0.0 — 2026-09-21
+
+Premier chantier de la marque blanche (voir [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md),
+« niveau 2 ») : **l'habillage**. Ce qui parlait de Forelse en dur dans le moteur devient de la
+configuration montée à côté des packs. Une instance change de nom, de couleurs, d'images et de pages
+sans fork, sans reconstruire l'image, et sans rien avoir à republier au titre de l'AGPL — parce qu'elle
+ne modifie pas de code. Les instances existantes ne changent pas : sans dossier de marque, tout reste
+tel quel.
+
+### Cassant
+
+- **Un pack doit accepter le moteur 2.** La contrainte `moteur:` d'un `pack.yaml` est vérifiée au
+  chargement : un pack resté en `^1.x` n'est plus chargé du tout, et la plateforme ne sert plus son
+  contenu. Élargissez la borne haute (`'^1.0'` → `'>=1.0 <3'`) **avant** de mettre le moteur à jour —
+  une contrainte élargie fonctionne avec le moteur 1 comme avec le 2, l'inverse n'est pas vrai. Les
+  packs de Forelse le sont déjà.
+- **L'empaquetage des environnements a déménagé** : `tools/build-env.sh` et `tools/build-completion.php`
+  deviennent `environments/bin/build-env.sh` et `environments/bin/build-completion.php`. Tout ce qui
+  concerne les environnements vit désormais dans `environments/`, prêt à partir dans son propre dépôt.
+  Une intégration continue qui appelait l'ancien chemin doit suivre.
+- **Les simulateurs ont quitté `tools/`** : `tools/docker-sim` devient `packages/simulateur-docker` et
+  `tools/nuxt-sim` devient `packages/simulateur-nuxt`. Le dépôt Composer `path` des environnements
+  Docker et les dépendances du playground pointent sur les nouveaux chemins.
+
+### Ajouté
+
+- **Identité de l'instance** (`BRANDING_DIR`, `/marque` dans l'image) : un dossier monté qui contient
+  `marque.yaml` et ses images. Il habille l'en-tête, le pied de page, les `<title>`, la barre de
+  l'éditeur, les tableaux de bord, **les emails** (confirmation d'adresse, mot de passe oublié, achat,
+  alerte d'inscription), les balises Open Graph et les données structurées. Clés : `name` (obligatoire),
+  `chip`, `title`, `tagline`, `url`, `logo`, `icon`, `share`, `colors`, `fonts` et `home`. Exemple
+  commenté à copier dans [examples/marque/](examples/marque/marque.yaml), guide dans le
+  [README](README.md#habiller-son-instance) et dans
+  [auto-hebergement/README.md](auto-hebergement/README.md#votre-marque).
+- **Règle « tout ou rien »** : dès qu'un `marque.yaml` existe, plus rien de la marque du moteur n'est
+  servi — ni le nom, ni le logo, ni la favicon, ni l'image de partage, ni les trois sections d'accueil
+  qui parlent de la Taverne du Dragon Ivre et de l'auteur de Forelse. Une instance ne peut pas se
+  retrouver à afficher une marque qui n'est pas la sienne parce qu'elle a oublié une clé. Elle déclare
+  les siennes sous `home.showcase`, `home.author` et `home.demo` ; non déclarée, une section n'apparaît
+  pas et la page reste cohérente sans elle.
+- **Couleurs et polices** (`colors`, `fonts`) : les variables CSS du thème clair, posées après la feuille
+  de styles. Les valeurs sont vérifiées à la lecture (hexadécimal, pile de polices) — rien de ce fichier
+  ne peut refermer la balise `<style>`. Une valeur mal écrite ou une clé inconnue **arrête la page** avec
+  un message qui dit quoi corriger : une instance à moitié habillée serait pire qu'une erreur franche.
+  Le thème sombre de l'éditeur reste celui du moteur.
+- **Images de marque** servies sur `/marque/logo`, `/marque/icon` et `/marque/share`, avec la date du
+  fichier dans l'URL : une image remplacée change d'URL. Le nom du fichier vient du manifeste, jamais de
+  l'URL, et un chemin y est refusé. Une instance qui ne déclare pas d'`icon` n'affiche **aucune** icône
+  d'onglet, plutôt que celle du moteur que le navigateur serait allé chercher sur `/favicon.ico`.
+- **Thème sombre de l'éditeur** (`editor:`) : l'éditeur d'exercice et l'atelier suivent eux aussi la
+  marque. Palette déclarée à part du thème clair et jamais déduite de lui — une couleur claire assombrie
+  automatiquement, c'est un contraste perdu au hasard. Absente, celle du moteur reste.
+- **Gabarits de l'instance** : un fichier Twig déposé dans `<marque>/templates/` remplace celui du moteur
+  qui porte le même nom (`home.html.twig`, `_footer.html.twig`, `legal/notice.html.twig`…). C'est
+  l'échappatoire de l'habillage : ce que `marque.yaml` ne règle pas se réécrit sans toucher au moteur. En
+  production, les gabarits sont compilés une fois : redémarrez le conteneur après en avoir déposé un.
+
+- **Un profil par runtime** (`platform/src/Content/Framework/`) : ce que le moteur sait d'un framework —
+  nom, console, dossiers du projet et du code, caches, dossiers masqués, racines de namespace, lanceur de
+  tests, paquet dont la version fait foi, langages des fiches, conventions données au modèle — est
+  déclaré **une fois**, dans une classe par framework. C'était la même connaissance recopiée dans une
+  dizaine d'endroits : un `match` dans le vérificateur, un autre dans chaque rédacteur, une table de
+  libellés dans un contrôleur, quatre tables de plus dans le playground. Le navigateur **reçoit**
+  désormais le profil dans la charge utile de l'exercice au lieu de le réécrire ; il ne garde que ce qui
+  est du code (le worker, les snippets, le script de la console).
+
+  Ajouter un framework, c'est fournir un `FrameworkProfileProvider`, découvert par son étiquette de
+  service — pas retoucher une énumération fermée et neuf `match`. C'est la moitié serveur du contrat
+  d'un paquet de plateforme (voir [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md), « niveau 3 ») ;
+  le contrat reste jeune et bougera tant qu'un paquet tiers ne l'aura pas essayé.
+
+- **Tout ce qui concerne les environnements est réuni dans `environments/`** : les projets de base, et
+  désormais leur empaquetage (`bin/build-env.sh`, `bin/build-completion.php`, qui vivaient dans
+  `tools/`). Le dossier ne dépend d'aucun code du moteur, et le moteur n'y entre que par deux portes :
+  la variable `ENVIRONMENTS_DIR` et ce script. Il est prêt à partir dans son propre dépôt ; ce qu'il
+  restera à faire ce jour-là est écrit dans [environments/README.md](environments/README.md).
+
+  `build-env.sh` sans argument empaquette **tous** les environnements (un dossier en est un s'il
+  contient un `environment.yaml`, comme un pack en est un s'il contient un `pack.yaml`), et sa sortie se
+  choisit par argument ou par `ENVIRONMENTS_OUT` au lieu d'être clouée au `public/` du moteur.
+
+  Les simulateurs Docker et Nuxt **restent** dans `tools/` : ce sont des runtimes, ce que le moteur
+  fournit pour exécuter un projet, pas des projets. `environments/docker` dépend du premier comme d'une
+  bibliothèque, ce qui deviendra une contrainte de version le jour de l'extraction.
+
+- **Fusionner des environnements** : `extends:` dans `environment.yaml`. Un environnement en prolonge un
+  autre et ne porte plus que sa différence — le projet joué est la superposition de la chaîne, du plus
+  général au plus particulier. `symfony-8-app` passe de 45 fichiers à 26, `symfony-8-doctrine` de 33 à
+  14, sans qu'un seul octet du projet servi à l'apprenant ne change.
+
+  Les clés d'`environment.yaml` s'héritent (`php`, `framework`, `cache`), sauf `title`. `vendor/`, lui,
+  ne se superpose pas : il vient du seul dossier de la chaîne qui déclare un `composer.json`, sinon les
+  paquets qu'un enfant a retirés traîneraient dans le projet. Un environnement qui n'ajoute aucune
+  dépendance n'a donc ni `composer.json` ni `composer.lock` à porter. Une chaîne qui tourne en rond ou
+  une base introuvable arrêtent le chargement en nommant le coupable.
+
+  C'est le mécanisme qui rendra un décor de pack abordable : « le Symfony complet, plus mes trois
+  entités » se dira en quelques fichiers au lieu d'une copie de squelette.
+
+- **Installer un environnement depuis un dépôt Git**, depuis `/admin` → **Environnements** ou par
+  `bin/console app:environnement:installer <adresse> [--ref=<branche>]`. Un environnement d'exécution
+  n'a plus à vivre dans ce dépôt : le moteur clone, vérifie, empaquette (archive et index de complétion)
+  et le rend disponible aux exercices, sans reconstruire l'image. C'est, pour les runtimes, ce que
+  `CONTENT_PACKS_PATHS` est au contenu et `BRANDING_DIR` à l'habillage — et c'est la porte par laquelle
+  `environments/` pourra partir dans son propre dépôt.
+
+  **Le dépôt se nomme lui-même** : l'identifiant vient de l'`id:` de son `environment.yaml`, jamais de
+  l'adresse ni de l'administrateur, et un identifiant déjà porté par un environnement du moteur est
+  refusé — un environnement installé n'en masque aucun autre. `extends:` traverse les dépôts : un
+  environnement installé peut prolonger `symfony-8` sans emporter de `vendor/`.
+
+  L'installation dure des minutes : la page la lance en tâche de fond et rend la main. L'état vit sur
+  disque, donc un rafraîchissement suffit à voir où elle en est, même après un redémarrage du conteneur,
+  et un échec reste affiché avec la sortie de `git` ou de `composer` jusqu'à ce qu'on l'efface.
+  **Mettre à jour** rejoue l'installation depuis l'adresse enregistrée ; **Retirer** supprime
+  l'environnement et ses archives.
+
+  ⚠️ **Empaqueter exécute le code du dépôt sur ce serveur** (`composer install`, ses scripts et ses
+  greffons) : même confiance que pour un pack passé à `content:check`. La page est réservée aux
+  administrateurs ; seules les adresses `https://` sont acceptées (ni `file://`, ni `git@`, ni `git://`) ;
+  `ENVIRONMENT_SOURCES_ALLOWLIST` restreint les hôtes ; le clone est superficiel, minuté et plafonné en
+  taille avant toute exécution ; aucune commande ne passe par un shell. Une instance qui n'en veut pas
+  laisse `INSTALLED_ENVIRONMENTS_DIR` vide : la fonctionnalité est absente et la page le dit. Guide dans
+  [auto-hebergement/README.md](auto-hebergement/README.md#ajouter-un-environnement-dexécution).
+
+- **Un pack porte son environnement** : `<pack>/environments/<id>/environment.yaml`, à côté de ses
+  parcours. Rien à déclarer, rien à installer — le moteur le trouve du seul fait que le pack est monté.
+  Un décor appartient au contenu qui le met en scène : il se déplace avec lui, se versionne avec lui, et
+  disparaît avec lui. `extends: symfony-8` fonctionne depuis un pack, ce qui rend « le Symfony complet,
+  plus mes trois entités » tenable en une poignée de fichiers.
+
+  Il reste à l'empaqueter (`composer install`, archive, index de complétion) :
+  `app:environnement:synchroniser` s'en charge, comme pour un environnement venu d'un dépôt, et les
+  archives vont dans `INSTALLED_ENVIRONMENTS_DIR`, hors de l'arborescence publique. Un pack ne peut pas
+  s'approprier un identifiant déjà pris : déclaré deux fois, le chargement s'arrête en nommant les deux
+  dossiers.
+
+- **Un runtime s'ajoute en installant un paquet**, sans modifier un fichier du moteur. Un paquet déclare
+  `{"forelse": {"runtime": "…", "vite": "…"}}` dans son `package.json` ; le playground parcourt ses
+  dépendances au build, trouve ceux qui portent ce champ et les enregistre seuls. Aucune liste à tenir
+  à jour, aucun `if` à rallonger. Le navigateur restant un bundle, il faut toujours **reconstruire** le
+  playground — mais plus rien à y modifier. C'est le niveau 3 de
+  [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md), côté navigateur ; côté serveur, l'étiquette de
+  service `app.framework` jouait déjà ce rôle.
+
+  Deux paquets naissent de là :
+
+  - **`@forelse/runtime-contract`** : ce qu'un runtime doit remplir et ce que le moteur lui fournit —
+    le `Runtime`, le protocole du worker, le profil du framework, le manifeste, et la plomberie
+    `WorkerRuntime` que les deux côtés partagent. Ni le moteur ni un runtime n'ont plus à connaître
+    l'autre.
+  - **`@forelse/simulateur-nuxt`** (l'ancien `tools/nuxt-sim`, désormais `packages/simulateur-nuxt`)
+    porte son runtime, son worker et ses greffons Vite. `playground/vite.config.ts` ne nomme plus Nuxt
+    nulle part, et les 192 fichiers du simulateur ne sont plus une dépendance en chemin relatif du
+    moteur. L'archive produite est **identique au bit près** à celle d'avant l'extraction.
+
+  Le runtime PHP livré avec le moteur est écrit comme le serait un paquet tiers : même manifeste, même
+  enregistrement. `FrameworkId` cesse d'être une énumération fermée — un framework apporté par un tiers
+  n'a pas à figurer dans une liste du moteur.
+
+  **Le lanceur de tests côté serveur** suit la même règle. `content:check` rejoue les tests d'un
+  exercice avec le même runner que le navigateur ; un framework dont les tests ne sont pas du PHPUnit
+  déclare désormais `testModule` dans son profil — un spécificateur de paquet
+  (`@forelse/simulateur-nuxt/tests`), jamais un chemin. Le moteur le fait résoudre par Node depuis
+  `playground/` : il ne sait ni où ce paquet est installé, ni qu'il existe. `ExerciseChecker` ne nomme
+  plus Nuxt.
+
+  **Les simulateurs rejoignent `packages/`** : `tools/nuxt-sim` devient `packages/simulateur-nuxt`,
+  `tools/docker-sim` devient `packages/simulateur-docker`. `tools/` ne garde que `release.sh`. Le
+  dossier dit maintenant ce qu'il contient : ce qui peut vivre hors du moteur. 280 fichiers de moins
+  dans l'arborescence du moteur proprement dit, pour six fois la taille du playground.
+
+  Le simulateur Docker reste une **bibliothèque du runtime php-wasm**, pas un runtime : il est chargé
+  dans PHP, et `environments/docker` en dépend par un dépôt Composer `path`. Son extraction passera par
+  Composer, le jour où `forelse/simulateur-docker` sera publié.
+
+- **Un registre de runtimes** : le playground résout le runtime par une table
+  (`playground/src/runtime/registry.ts`) au lieu d'un `'nuxt' === framework.id ? … : …`. Le profil du
+  framework déclare `runtime` (`php-wasm`, `nuxt-sim`, ou un runtime ajouté) ; le navigateur le reçoit
+  dans la charge utile et va chercher la fabrique correspondante. Un runtime s'enregistre en une ligne,
+  depuis son propre module.
+
+  Le profil déclare aussi deux choses que le navigateur devinait : `snippets` (les familles d'extraits
+  que l'éditeur propose — « php », « laravel », « docker ») et `consoleAliases` (les préfixes tolérés
+  au début d'une commande : `php bin/console …`, `artisan …`, `docker-compose up` devenant
+  `compose up`). L'éditeur et la console ne comparent plus aucun identifiant de framework. Le worker
+  PHP non plus : il refuse un environnement dont le `runtime` n'est pas le sien, au lieu de nommer Nuxt.
+
+  Restent dans le worker PHP deux branches `docker` — le script HTTP du simulateur et le routage de ses
+  requêtes. Elles y sont à leur place : le simulateur Docker **est** servi par `php-wasm`, c'est une
+  affaire interne à ce runtime, pas un couplage du moteur.
+
+### Modifié
+
+- **Le premier chapitre demande un compte.** Il reste gratuit — rien à acheter — mais il ne se joue plus
+  en visiteur : l'éditeur, l'exécution du projet et les tests s'ouvrent une fois le compte créé. La page
+  de l'exercice reste publique et indexable (consigne, notions, fil d'Ariane) et propose de créer un
+  compte ou de se connecter, au lieu de proposer le parcours à l'achat. Conséquences : plus de
+  progression d'invité dans le navigateur (celle qui y est déjà est reprise à la première connexion),
+  et le discours du site (accueil, fiche parcours, CGV, confidentialité, page écoles) dit désormais
+  « gratuit avec un compte » plutôt que « gratuit, sans compte ».
+- Les **tarifs de cohorte** ne sont plus des paramètres du conteneur mais des variables d'environnement
+  (`COHORT_UNIT_PRICE`, `COHORT_TIERS`, au format « effectif:pourcentage ») : une instance a ses prix
+  sans reconstruire l'image. Les valeurs par défaut sont inchangées (30 €, puis 70 % à partir de 10 et
+  50 % à partir de 30).
+- L'atelier échafaude les tests d'un nouvel exercice Symfony dans `tests/Exercice/` (`App\Tests\Exercice`)
+  au lieu de `tests/Taverne/` : le squelette servait à tous les packs, il ne porte plus le nom du fil
+  rouge d'un seul. Les exercices existants ne sont pas touchés.
+- Le message affiché après un changement de mot de passe ne souhaite plus la bienvenue « à la taverne ».
+- L'atelier refuse désormais de faire **rédiger** un exercice pour un framework dont le profil ne déclare
+  pas de conventions (Nuxt aujourd'hui), et le dit. Il produisait jusqu'ici un brouillon écrit avec les
+  conventions de Symfony, en annonçant au modèle une « formation Symfony ».
+- L'environnement d'un exercice porte le profil de son framework et non plus son seul identifiant
+  (`Environment::$framework`). Détail interne : le code du moteur n'est pas une API publique.
+- `ENVIRONMENTS_DIR` accepte désormais **plusieurs** dossiers séparés par des virgules, lus dans l'ordre,
+  comme `CONTENT_PACKS_PATHS` : ceux du moteur, puis ceux que l'instance installe. Un identifiant déclaré
+  deux fois arrête le chargement en nommant les deux dossiers, plutôt que d'en masquer un au hasard. Une
+  valeur unique continue de fonctionner telle quelle.
+- Les archives d'environnement (`<id>.zip`, `<id>.completion.json`) sont servies par `/envs/<fichier>`,
+  qui reste un fichier statique pour celles du moteur et passe par un contrôleur pour celles des
+  environnements installés — hors de l'arborescence publique. Les URL et la mise en cache ne changent pas.
+- Le halo derrière l'enseigne du fil rouge (`.lp-candle`, la bougie de la taverne) devient `.lp-sign-glow`
+  et prend la seconde couleur de la marque au lieu d'un or codé en dur.
+
+### Corrigé
+
+- `build-env.sh` : une base introuvable (`extends:` pointant sur un environnement absent) **n'arrêtait
+  pas l'empaquetage**. L'archive partait sans sa base — un Symfony sans Symfony dedans — avec un code de
+  sortie 0 et une seule ligne sur la sortie d'erreur. En cause, une subtilité de bash : `set -e` est
+  désactivé dans une fonction appelée depuis une liste `&&`, ce qui était le cas de la résolution
+  récursive de la chaîne. Les échecs sont désormais traités explicitement. Corollaire du même défaut :
+  la chaîne repartait avec un maillon vide, et `cp -a "$dossier/."` devenait `cp -a "/."` — la racine du
+  serveur recopiée dans un dossier temporaire. Un garde-fou s'y ajoute.
+- `build-env.sh` : un environnement qui **prolonge une base sans `composer.json`** (un projet Nuxt, ou
+  un socle qui n'apporte que des fichiers) n'empaquetait que ses propres fichiers — la superposition
+  était sautée avec l'installation des dépendances. La chaîne se superpose désormais dans tous les cas ;
+  seuls Composer et l'index de complétion sont omis quand il n'y a pas de PHP à installer. Aucun
+  environnement livré n'était concerné : c'est le cas qui attendait le premier décor de pack.
+- L'état d'un environnement installé (`.forelse.json`, qui porte l'adresse du dépôt et donc le jeton
+  d'un dépôt privé) n'est plus empaqueté dans l'archive téléchargée par les apprenants. Les adresses
+  affichées dans l'administration sont elles aussi expurgées de leurs identifiants.
+- `build-env.sh` n'utilise plus `mapfile`, une nouveauté de bash 4 : macOS ne livre que le 3.2 en
+  `/bin/bash`, et l'empaquetage y échouait à la première chaîne d'environnements — donc `make install`
+  ne produisait aucune archive. Invisible depuis l'intégration continue, qui tourne sous Linux.
+- Le lanceur de tests d'un runtime est de nouveau trouvé quand le **chemin du projet contient une
+  espace** : `import.meta.resolve` répond une URL percent-encodée, que `parse_url` ne décode pas.
+- `EnvironmentAdminTest` crée le dossier `INSTALLED_ENVIRONMENTS_DIR` qu'il vérifie, au lieu de le
+  supposer monté : rien ne le crée sur un dépôt fraîchement cloné.
+
+
 ## 1.4.0 — 2026-09-21
 
 ### Ajouté

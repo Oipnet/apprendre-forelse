@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\ExecutableFinder;
 
-/** Exercices Nuxt : leurs tests Vitest sont lancés par le simulateur (tools/nuxt-sim), sous Node. */
+/** Exercices Nuxt : leurs tests Vitest sont lancés par le simulateur (packages/simulateur-nuxt), sous Node. */
 final class NuxtExerciseCheckerTest extends TestCase
 {
     private const string ROOT = __DIR__.'/../../..';
@@ -18,8 +18,8 @@ final class NuxtExerciseCheckerTest extends TestCase
 
     protected function setUp(): void
     {
-        if (null === (new ExecutableFinder())->find('node') || !is_dir(self::ROOT.'/tools/nuxt-sim/node_modules')) {
-            $message = 'Node.js ou les dépendances du simulateur Nuxt manquent (npm ci dans tools/nuxt-sim).';
+        if (null === (new ExecutableFinder())->find('node') || !is_dir(self::ROOT.'/packages/simulateur-nuxt/node_modules')) {
+            $message = 'Node.js ou les dépendances du simulateur Nuxt manquent (npm ci dans packages/simulateur-nuxt).';
             if (filter_var(getenv('CI'), \FILTER_VALIDATE_BOOL)) {
                 $this->fail($message);
             }

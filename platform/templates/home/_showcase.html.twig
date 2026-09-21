@@ -1,0 +1,23 @@
+{# Le fil rouge mis en avant sur l'accueil (marque.yaml, « home.showcase »). L'enseigne de droite est
+   facultative : sans « sign », le texte occupe toute la largeur. #}
+<section class="lp-section dark">
+    <div class="lp-wrap lp-two">
+        <div>
+            {% if showcase.eyebrow is defined %}<span class="lp-eyebrow">{{ showcase.eyebrow }}</span>{% endif %}
+            <h2 class="lp-h2">{{ showcase.title }}</h2>
+            {% for paragraph in showcase.lead|default([]) %}
+                <p class="lp-lead">{{ paragraph }}</p>
+            {% endfor %}
+        </div>
+        {% if showcase.sign is defined %}
+            <div class="lp-sign-wrap">
+                <span class="lp-sign-glow" aria-hidden="true"></span>
+                <div class="lp-sign" role="img" aria-label="{{ showcase.sign.alt|default(showcase.sign.name|replace({"\n": ' '})) }}">
+                    {% if marque.logoLargeUrl %}<img src="{{ marque.logoLargeUrl }}" alt="" width="144" height="168" loading="lazy" decoding="async">{% endif %}
+                    <div class="name">{{ showcase.sign.name|nl2br }}</div>
+                    {% if showcase.sign.note is defined %}<div class="since">{{ showcase.sign.note }}</div>{% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>

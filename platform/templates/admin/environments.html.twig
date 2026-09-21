@@ -1,0 +1,160 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Environnements d'exécution{% endblock %}
+
+{% block main %}
+    <div class="beta-panel">
+        <div class="beta-panel-header"><h2>Disponibles</h2></div>
+        <div class="beta-panel-body beta-scroll">
+            <p class="text-muted">Ce qu'un exercice peut désigner par <code>environment:</code>. Ceux qui viennent d'un dépôt portent son adresse.</p>
+            <table class="table">
+                <thead><tr><th>Identifiant</th><th>Titre</th><th>Framework</th><th>Source</th><th></th></tr></thead>
+                <tbody>
+                    {% for ligne in disponibles %}
+                        <tr>
+                            <td><code>{{ ligne.id }}</code>{% if ligne.compose %} <span class="badge bg-secondary" title="Prolonge un autre environnement">composé</span>{% endif %}</td>
+                            <td>{{ ligne.title }}</td>
+                            <td>{{ ligne.framework }}</td>
+                            <td>
+                                {% if ligne.source %}
+                                    <code>{{ ligne.source.displayUrl }}</code>
+                                    {% if ligne.source.ref %}<span class="text-muted">({{ ligne.source.ref }})</span>{% endif %}
+                                    {% if ligne.source.dossier %}<span class="text-muted">→ {{ ligne.source.dossier }}</span>{% endif %}
+                                    {% if ligne.source.commit %}<code class="text-muted">{{ ligne.source.commit[:8] }}</code>{% endif %}
+                                    {% if not ligne.source.isReady %}
+                                        <div class="{{ ligne.source.hasFailed ? 'text-danger' : 'text-muted' }}">{{ ligne.source.message }}</div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">livré avec le moteur</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if ligne.source %}
+                                    <form method="post" action="{{ path('admin_environments_update', {id: ligne.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('environments') }}">
+                                        <button class="btn btn-sm btn-secondary">Mettre à jour</button>
+                                    </form>
+                                    <form method="post" action="{{ path('admin_environments_remove', {id: ligne.id}) }}" class="d-inline"
+                                          onsubmit="return confirm('Retirer « {{ ligne.id }} » ? Les exercices qui le désignent ne se chargeront plus.')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('environments') }}">
+                                        <button class="btn btn-sm btn-outline-danger">Retirer</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% if portes %}
+    <div class="beta-panel">
+        <div class="beta-panel-header"><h2>Portés par les packs</h2></div>
+        <div class="beta-panel-body beta-scroll">
+            <p class="text-muted">
+                Un pack peut apporter son propre décor, dans <code>environments/&lt;id&gt;/</code> à côté de
+                ses parcours. Il arrive avec le pack ; il ne lui manque que son archive — celle que le
+                navigateur télécharge. L'empaquetage exécute <code>composer install</code> sur ce serveur.
+            </p>
+            <table class="table">
+                <thead><tr><th>Identifiant</th><th>Dossier</th><th>État</th></tr></thead>
+                <tbody>
+                    {% for ligne in portes %}
+                        <tr>
+                            <td><code>{{ ligne.id }}</code></td>
+                            <td class="text-muted">{{ ligne.directory }}</td>
+                            <td class="{{ ligne.built ? 'text-success' : 'text-danger' }}">
+                                {{ ligne.built ? 'Empaqueté' : 'Pas encore empaqueté' }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if aEmpaqueter and activable %}
+                <form method="post" action="{{ path('admin_environments_sync') }}"
+                      onsubmit="return confirm('Empaqueter {{ aEmpaqueter }} environnement(s) ? Leur code sera exécuté sur ce serveur.')">
+                    <input type="hidden" name="_token" value="{{ csrf_token('environments') }}">
+                    <button class="btn btn-primary">Empaqueter ce qui manque ({{ aEmpaqueter }})</button>
+                </form>
+            {% elseif aEmpaqueter %}
+                <p class="text-danger">
+                    {{ aEmpaqueter }} environnement(s) sans archive, et cette instance n'a pas de dossier
+                    où les déposer : voir plus bas.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+    {% if installations %}
+        <div class="beta-panel">
+            <div class="beta-panel-header"><h2>Installations</h2></div>
+            <div class="beta-panel-body beta-scroll">
+                <table class="table">
+                    <thead><tr><th>Dépôt</th><th>État</th><th></th></tr></thead>
+                    <tbody>
+                        {% for job in installations %}
+                            <tr>
+                                <td><code>{{ job.displayUrl }}</code>{% if job.ref %} <span class="text-muted">({{ job.ref }})</span>{% endif %}</td>
+                                <td class="{{ job.state == 'failed' ? 'text-danger' : '' }}">
+                                    {{ job.state == 'failed' ? 'Échec' : 'En cours' }} — {{ job.message }}
+                                </td>
+                                <td class="text-end">
+                                    <form method="post" action="{{ path('admin_environments_forget', {cle: job.key}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('environments') }}">
+                                        <button class="btn btn-sm btn-outline-secondary">Effacer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="beta-panel">
+        <div class="beta-panel-header"><h2>Ajouter depuis un dépôt Git</h2></div>
+        <div class="beta-panel-body">
+            {% if activable %}
+                <p class="text-muted">
+                    Le dépôt doit porter un <code>environment.yaml</code> à sa racine ; c'est lui qui donne
+                    l'identifiant de l'environnement. Le moteur clone, puis empaquette (<code>composer install</code>,
+                    archive, index de complétion) : comptez quelques minutes.
+                </p>
+                <p class="text-danger">
+                    <strong>À savoir</strong> : empaqueter exécute le code du dépôt sur ce serveur (Composer et ses
+                    greffons). N'installez que des dépôts en qui vous avez confiance.
+                </p>
+                <form method="post" action="{{ path('admin_environments_install') }}" class="row g-2">
+                    <input type="hidden" name="_token" value="{{ csrf_token('environments') }}">
+                    <div class="col-md-7">
+                        <label class="form-label" for="depot">Adresse du dépôt</label>
+                        <input class="form-control" id="depot" name="depot" type="url" required
+                               placeholder="https://github.com/…/mon-environnement.git" pattern="https://.*">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="ref">Branche ou étiquette</label>
+                        <input class="form-control" id="ref" name="ref" placeholder="par défaut : celle du dépôt">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" for="dossier">Sous-dossier</label>
+                        <input class="form-control" id="dossier" name="dossier" placeholder="racine du dépôt"
+                               pattern="[A-Za-z0-9._/-]*" title="Un chemin relatif dans le dépôt, sans remontée">
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary">Installer</button>
+                    </div>
+                </form>
+            {% else %}
+                <p>
+                    Cette instance n'a pas de dossier d'environnements installables. Montez un volume écrivable et
+                    pointez <code>INSTALLED_ENVIRONMENTS_DIR</code> dessus
+                    {% if dossier %}(actuellement <code>{{ dossier }}</code>, absent ou en lecture seule){% endif %} —
+                    voir le guide d'auto-hébergement.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

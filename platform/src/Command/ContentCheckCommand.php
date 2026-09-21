@@ -4,6 +4,7 @@ namespace App\Command;
 
 use App\Content\Check\ExerciseChecker;
 use App\Content\ContentRepository;
+use App\Instance\PackEnvironments;
 use App\Version;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -20,6 +21,7 @@ final class ContentCheckCommand
     public function __construct(
         private readonly ContentRepository $content,
         private readonly ExerciseChecker $checker,
+        private readonly PackEnvironments $packEnvironments,
         private readonly Version $version,
     ) {
     }
@@ -47,6 +49,7 @@ final class ContentCheckCommand
             static fn ($pack) => sprintf('%s %s%s', $pack->id, $pack->version, $pack->engine ? sprintf(' (moteur %s)', $pack->engine) : ''),
             $this->content->packs(),
         )));
+        $this->reportPackEnvironments($io);
         $io->newLine();
 
         $failures = 0;
@@ -98,5 +101,38 @@ final class ContentCheckCommand
         $io->success(sprintf('%d exercice(s) conformes.', \count($exercises)));
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Les environnements que les packs portent (`<pack>/environments/<id>/`), et lesquels sont prêts.
+     *
+     * Signalé, jamais empaqueté : `content:check` vérifie, il ne déploie pas. Un exercice dont
+     * l'environnement n'a pas d'archive échouera de toute façon plus bas — autant dire tout de suite
+     * pourquoi, et quelle commande y remédie.
+     */
+    private function reportPackEnvironments(SymfonyStyle $io): void
+    {
+        $lignes = $this->packEnvironments->state();
+        if ([] === $lignes) {
+            return;
+        }
+
+        $manquants = [];
+        foreach ($lignes as $ligne) {
+            if (!$ligne['built']) {
+                $manquants[] = $ligne['id'];
+            }
+            $io->writeln(sprintf(
+                ' %s environnement %s, porté par un pack (%s), %s',
+                $ligne['built'] ? '<info>✔</info>' : '<error>✘</error>',
+                $ligne['id'],
+                $ligne['directory'],
+                $ligne['built'] ? 'empaqueté' : 'pas encore empaqueté',
+            ));
+        }
+
+        if ([] !== $manquants) {
+            $io->writeln(sprintf('     <fg=yellow>Pour les empaqueter : bin/console app:environnement:synchroniser (%s)</>', implode(', ', $manquants)));
+        }
     }
 }

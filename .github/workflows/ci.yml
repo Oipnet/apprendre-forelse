@@ -110,8 +110,8 @@ jobs:
           cache: npm
           cache-dependency-path: |
             playground/package-lock.json
-            tools/nuxt-sim/package-lock.json
-            tools/nuxt-sim/conformite/reference/package-lock.json
+            packages/simulateur-nuxt/package-lock.json
+            packages/simulateur-nuxt/conformite/reference/package-lock.json
 
       - name: Dépendances de la plateforme
         uses: ramsey/composer-install@v3
@@ -131,31 +131,31 @@ jobs:
           path: |
             environments/*/vendor
             platform/public/envs
-          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'tools/build-env.sh', 'tools/build-completion.php', 'tools/docker-sim/composer.json', 'tools/docker-sim/src/**', 'tools/docker-sim/bin/**', 'environments/nuxt-*/**') }}
+          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'environments/bin/**', 'packages/simulateur-docker/composer.json', 'packages/simulateur-docker/src/**', 'packages/simulateur-docker/bin/**', 'environments/nuxt-*/**') }}
 
       - name: Construire les environnements
         if: steps.cache-environnements.outputs.cache-hit != 'true'
-        run: for env in environments/*/; do tools/build-env.sh "$(basename "$env")"; done
+        run: environments/bin/build-env.sh
 
       - name: Dépendances du simulateur Docker
         uses: ramsey/composer-install@v3
         with:
-          working-directory: tools/docker-sim
+          working-directory: packages/simulateur-docker
           dependency-versions: highest
 
       - name: Tests du simulateur Docker
         run: php vendor/bin/phpunit
-        working-directory: tools/docker-sim
+        working-directory: packages/simulateur-docker
 
       - name: Tests du simulateur Nuxt
         run: npm ci && npm run typecheck && npm test
-        working-directory: tools/nuxt-sim
+        working-directory: packages/simulateur-nuxt
 
       # Le vrai Nuxt (version épinglée dans conformite/reference) reçoit les mêmes requêtes que le simulateur :
       # un écart fait échouer le passage avant qu'un exercice ne l'enseigne.
       - name: Conformité du simulateur Nuxt
         run: npm ci --prefix conformite/reference && npm run conformite
-        working-directory: tools/nuxt-sim
+        working-directory: packages/simulateur-nuxt
 
       - name: Types du playground
         run: npm run typecheck
@@ -318,9 +318,10 @@ jobs:
             echo 'verifier=oui' >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # Ce qui peut faire passer un exercice du vert au rouge : les environnements d'exécution et
-          # leurs outils, la lecture des packs, la version du moteur (que pack.yaml contraint).
-          if printf '%s\n' "$fichiers" | grep -qE '^(environments/|tools/|platform/src/Content/|platform/src/Version\.php|VERSION|Dockerfile)'; then
+          # Ce qui peut faire passer un exercice du vert au rouge : les environnements d'exécution, les
+          # paquets qui les font tourner (simulateurs), la lecture des packs, la version du moteur
+          # (que pack.yaml contraint).
+          if printf '%s\n' "$fichiers" | grep -qE '^(environments/|packages/|tools/|platform/src/Content/|platform/src/Version\.php|VERSION|Dockerfile)'; then
             echo 'Le moteur d'"'"'exercices a changé : revérification du contenu.'
             echo 'verifier=oui' >> "$GITHUB_OUTPUT"
           else

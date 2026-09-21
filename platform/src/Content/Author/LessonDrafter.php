@@ -6,6 +6,7 @@ use App\Ai\ModelClient;
 use App\Content\Chapter;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
+use App\Content\Framework\FrameworkProfile;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
 use App\Content\Track;
@@ -188,16 +189,9 @@ final class LessonDrafter
         return array_values(array_filter(array_map(fn (string $id) => $this->content->findExercise($track->id, $id), $chapter->exerciseIds)));
     }
 
-    private function consignes(string $framework): string
+    private function consignes(FrameworkProfile $framework): string
     {
-        $nom = match ($framework) { 'laravel' => 'Laravel', 'docker' => 'Docker', default => 'Symfony' };
-        $langues = match ($framework) {
-            'laravel' => '```php, ```blade, ```bash',
-            'docker' => '```dockerfile, ```yaml, ```bash, ```nginx, ```php',
-            default => '```php, ```twig, ```yaml, ```bash',
-        };
-
-        return str_replace(['{framework}', '{langues}'], [$nom, $langues], <<<'TEXTE'
+        return str_replace(['{framework}', '{langues}'], [$framework->label, $framework->lessonLanguages], <<<'TEXTE'
             Tu rédiges la fiche de cours de fin de chapitre d'une formation {framework} interactive : l'apprenant
             vient de réussir les exercices du chapitre dans son navigateur, et emporte cette fiche (page web
             et PDF) comme support à garder sous la main. Tu réponds uniquement en appelant l'outil ecrire_fiche.

@@ -6,6 +6,7 @@ use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Tests\DatabaseTrait;
 use App\Tests\PacksTrait;
+use App\Tests\PaymentTrait;
 use App\Version;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -13,10 +14,13 @@ final class ExerciseApiTest extends WebTestCase
 {
     use DatabaseTrait;
     use PacksTrait;
+    use PaymentTrait;
 
-    public function testUnExerciceLibreEstServiSansSolution(): void
+    public function testUnExerciceGratuitEstServiSansSolution(): void
     {
         $client = static::createClient();
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
         $payload = $this->json($client, 'GET', '/api/exercises/decouverte/01-bonjour');
 
         $this->assertResponseIsSuccessful();
@@ -32,14 +36,55 @@ final class ExerciseApiTest extends WebTestCase
         $this->assertSame('/parcours/decouverte/02-bonjour-prenom', $payload['next']['url']);
     }
 
-    public function testUnExerciceAvecCompteEstRefuseAUnInvite(): void
+    /**
+     * Le navigateur ne redéclare plus rien du framework : tout ce qu'il en sait arrive ici. Les clés de
+     * ce bloc sont le contrat avec playground/src/app/types.ts (FrameworkProfile) — les changer casse
+     * l'éditeur en silence, d'où ce test.
+     */
+    public function testLaChargeUtilePorteLeProfilDuFramework(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
+        $framework = $this->json($client, 'GET', '/api/exercises/decouverte/01-bonjour')['environment']['framework'];
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame([
+            'id', 'label', 'console', 'consoleExample', 'bootNote', 'unpackLabel',
+            'testRunner', 'runtime', 'snippets', 'consoleAliases',
+            'projectDirs', 'testCaches', 'hidden', 'namespaceRoots',
+        ], array_keys($framework));
+        $this->assertSame('symfony', $framework['id']);
+        // C'est « runtime » qui décide qui exécute le projet dans le navigateur, et non l'identifiant
+        // du framework : le playground le résout par son registre (playground/src/runtime/registry.ts).
+        $this->assertSame('php-wasm', $framework['runtime']);
+        $this->assertSame(['php'], $framework['snippets']);
+        $this->assertSame(['php' => '', 'bin/console' => ''], (array) $framework['consoleAliases']);
+        $this->assertSame('Symfony', $framework['label']);
+        $this->assertSame('bin/console', $framework['console']);
+        $this->assertSame('phpunit', $framework['testRunner']);
+        $this->assertContains('src', $framework['projectDirs']);
+        $this->assertContains('vendor', $framework['hidden']);
+        $this->assertSame('App', $framework['namespaceRoots']['src']);
+        $this->assertSame('App\\Tests', $framework['namespaceRoots']['tests']);
+    }
+
+    public function testUnInviteNObtientAucunExerciceMemeGratuit(): void
     {
         $this->usePaidPack();
         try {
             $client = static::createClient();
             $this->json($client, 'GET', '/api/exercises/payant/e2');
             $this->assertResponseStatusCodeSame(401, 'Hors du premier chapitre, un compte est demandé.');
-            $this->assertSame('free', $this->json($client, 'GET', '/api/exercises/payant/e1')['access'], 'Le premier chapitre est libre.');
+            $this->json($client, 'GET', '/api/exercises/payant/e1');
+            $this->assertResponseStatusCodeSame(401, 'Le premier chapitre est gratuit, pas anonyme.');
+
+            $this->resetDatabase();
+            $this->setPrice('payant', 4900);
+            $client->loginUser($this->createUser());
+            $this->assertSame('free', $this->json($client, 'GET', '/api/exercises/payant/e1')['access'], 'Un compte suffit pour le premier chapitre.');
+            $this->json($client, 'GET', '/api/exercises/payant/e2');
+            $this->assertResponseStatusCodeSame(403, 'La suite demande un accès au parcours.');
         } finally {
             $this->restorePacks();
         }
@@ -67,6 +112,8 @@ final class ExerciseApiTest extends WebTestCase
             new Version(__DIR__.'/../../../VERSION'),
         ));
 
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
         $payload = $this->json($client, 'GET', '/api/exercises/debut/e1');
 
         $this->assertResponseIsSuccessful();
