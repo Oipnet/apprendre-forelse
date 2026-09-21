@@ -94,7 +94,15 @@ final readonly class Sitemap
         return max($practice->published->format('Y-m-d'), self::lastModified($practice->exercise->directory));
     }
 
-    /** Date du fichier le plus récent du dossier (récursivement), au format AAAA-MM-JJ. */
+    /**
+     * Date du fichier le plus récent du dossier (récursivement), au format AAAA-MM-JJ.
+     *
+     * Elle n'a de sens que si l'installation des packs conserve les dates réelles : git n'en garde aucune,
+     * et une récupération du dépôt les met toutes à l'heure de la récupération. Le déploiement des packs
+     * les rétablit donc depuis le journal avant de copier (voir .github/workflows/contenu.yml du dépôt de
+     * contenu). Un pack déposé à la main annonce, lui, la date du dépôt : sans conséquence pour une
+     * instance qui ne s'indexe pas (SEARCH_INDEXING=0).
+     */
     public static function lastModified(string $directory): string
     {
         $latest = is_dir($directory) ? (int) filemtime($directory) : 0;
