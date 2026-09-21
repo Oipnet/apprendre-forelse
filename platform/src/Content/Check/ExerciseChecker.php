@@ -524,7 +524,11 @@ final class ExerciseChecker
         $process->run();
         $url = trim($process->getOutput());
 
-        return $process->isSuccessful() && str_starts_with($url, 'file://') ? (string) parse_url($url, \PHP_URL_PATH) : null;
+        // rawurldecode : l'URL renvoyée par Node est percent-encodée (un dossier « formation symfony »
+        // arrive en « formation%20symfony »), et Node ne retrouve pas ce fichier-là.
+        return $process->isSuccessful() && str_starts_with($url, 'file://')
+            ? rawurldecode((string) parse_url($url, \PHP_URL_PATH))
+            : null;
     }
 
     private function nodeBinary(): ?string

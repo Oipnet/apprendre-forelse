@@ -62,7 +62,7 @@ final class TestModuleTest extends TestCase
         $process->run();
 
         $this->assertTrue($process->isSuccessful(), sprintf('« %s » ne se résout pas : %s', $module, $process->getErrorOutput()));
-        $chemin = (string) parse_url(trim($process->getOutput()), \PHP_URL_PATH);
+        $chemin = rawurldecode((string) parse_url(trim($process->getOutput()), \PHP_URL_PATH));
         $this->assertFileExists($chemin);
     }
 
