@@ -2,9 +2,10 @@
 
 namespace App\Seo;
 
+use App\Content\ConceptIndex;
 use App\Content\ContentRepository;
 use App\Content\Practice;
-use App\Content\Track;
+use App\Content\PublishedContent;
 use App\Controller\LegalController;
 use App\Instance\SelfHostingPage;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -26,6 +27,8 @@ final readonly class Sitemap
 
     public function __construct(
         private ContentRepository $content,
+        private PublishedContent $published,
+        private ConceptIndex $concepts,
         private UrlGeneratorInterface $urls,
         #[Autowire(service: 'sitemap.cache')]
         private CacheInterface $cache,
@@ -40,20 +43,35 @@ final readonly class Sitemap
             $entries = [];
             $latest = LegalController::UPDATED_AT;
 
-            foreach ($this->publishedTracks() as $track) {
+            foreach ($this->published->tracks() as $track) {
                 $trackEntries = [];
                 foreach ($this->content->exercisesOf($track) as $exercise) {
                     $trackEntries[] = $this->entry('app_exercise', ['trackId' => $track->id, 'exerciseId' => $exercise->id], self::lastModified($exercise->directory));
                 }
+                // Le sommaire d'un chapitre change quand un de ses exercices change.
+                $chapterEntries = [];
+                foreach ($track->chapters as $chapter) {
+                    $dates = [];
+                    foreach ($chapter->exerciseIds as $exerciseId) {
+                        $exercise = $this->content->findExercise($track->id, $exerciseId);
+                        $dates[] = null === $exercise ? null : self::lastModified($exercise->directory);
+                    }
+                    $dates = array_filter($dates);
+                    // Un chapitre sans exercice lisible n'a pas de sommaire (voir ChapterOutline).
+                    if ([] !== $dates) {
+                        $chapterEntries[] = $this->entry('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id], max($dates));
+                    }
+                }
+
                 // Le parcours change quand track.yaml, une fiche ou un de ses exercices change.
                 $modified = max(self::lastModified($track->directory), ...array_column($trackEntries, 'lastmod') ?: ['']);
                 $entries[] = $this->entry('app_track', ['trackId' => $track->id], $modified);
-                array_push($entries, ...$trackEntries);
+                array_push($entries, ...$chapterEntries, ...$trackEntries);
                 $latest = max($latest, $modified);
             }
 
             $practiceEntries = [];
-            foreach ($this->publishedPractices() as $practice) {
+            foreach ($this->published->practices() as $practice) {
                 $practiceEntries[] = $this->entry('app_exercise_pratique', ['exerciseId' => $practice->exercise->id], self::practiceModified($practice));
             }
             if ($practiceEntries) {
@@ -61,6 +79,16 @@ final readonly class Sitemap
                 $entries[] = $this->entry('app_practice', [], $practiceLatest);
                 array_push($entries, ...$practiceEntries);
                 $latest = max($latest, $practiceLatest);
+            }
+
+            // Les notions : une page par notion travaillée par plus d'un exercice, datée de son contenu.
+            $conceptEntries = [];
+            foreach ($this->concepts->directories() as $slug => $directories) {
+                $conceptEntries[] = $this->entry('app_concept', ['slug' => $slug], max(array_map(self::lastModified(...), $directories)));
+            }
+            if ($conceptEntries) {
+                $entries[] = $this->entry('app_concepts', [], max(array_column($conceptEntries, 'lastmod')));
+                array_push($entries, ...$conceptEntries);
             }
 
             $entries[] = $this->entry('app_organizations', [], self::PAGES_UPDATED_AT);
@@ -76,25 +104,21 @@ final readonly class Sitemap
         });
     }
 
-    /** @return list<Track> les parcours publiés, dans l'ordre d'affichage */
-    public function publishedTracks(): array
-    {
-        return array_values(array_filter($this->content->tracks(), static fn (Track $track) => !$track->isRestricted()));
-    }
-
-    /** @return list<Practice> */
-    public function publishedPractices(): array
-    {
-        return array_values(array_filter($this->content->practices(), static fn (Practice $p) => !$p->isRestricted() && !$p->isScheduled()));
-    }
-
     /** Un exercice de Pratique n'est pas modifié avant sa date de publication (dossier copié la veille, par exemple). */
     public static function practiceModified(Practice $practice): string
     {
         return max($practice->published->format('Y-m-d'), self::lastModified($practice->exercise->directory));
     }
 
-    /** Date du fichier le plus récent du dossier (récursivement), au format AAAA-MM-JJ. */
+    /**
+     * Date du fichier le plus récent du dossier (récursivement), au format AAAA-MM-JJ.
+     *
+     * Elle n'a de sens que si l'installation des packs conserve les dates réelles : git n'en garde aucune,
+     * et une récupération du dépôt les met toutes à l'heure de la récupération. Le déploiement des packs
+     * les rétablit donc depuis le journal avant de copier (voir .github/workflows/contenu.yml du dépôt de
+     * contenu). Un pack déposé à la main annonce, lui, la date du dépôt : sans conséquence pour une
+     * instance qui ne s'indexe pas (SEARCH_INDEXING=0).
+     */
     public static function lastModified(string $directory): string
     {
         $latest = is_dir($directory) ? (int) filemtime($directory) : 0;

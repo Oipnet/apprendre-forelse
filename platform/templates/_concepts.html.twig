@@ -1,0 +1,14 @@
+{#
+  Les notions d'un exercice ou d'un chapitre, en pastilles. Celles qui ont une page y mènent ; les autres
+  restent de simples pastilles (voir ConceptIndex : une notion vue une seule fois ne relie rien).
+  Variables : concepts (list<string>), label (facultatif, le texte qui les introduit).
+#}
+{% if concepts %}
+    <p class="exercise-concepts">
+        {%- if label is defined and label %}<span class="meta">{{ label }}</span> {% endif -%}
+        {%- for concept in concepts -%}
+            {%- set url = notion_url(concept) -%}
+            {%- if url %}<a class="tag" href="{{ url }}">{{ concept }}</a>{% else %}<span class="tag">{{ concept }}</span>{% endif -%}
+        {%- endfor -%}
+    </p>
+{% endif %}

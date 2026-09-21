@@ -388,6 +388,25 @@ Un décor trop gros pour vivre dans un pack, ou partagé entre plusieurs, s'inst
 dépôt Git — voir la section précédente ; c'est alors un geste d'administrateur, pas une déclaration du
 pack.
 
+## Pages publiques et référencement
+
+Rien n'est indexable par défaut : `App\Seo\SearchIndexing` tient la **liste blanche** des routes qu'un visiteur sans compte peut lire, et toute autre page sort en `noindex` (de même que le bac à sable, et qu'une instance en `SEARCH_INDEXING=0`). `robots.txt` et `sitemap.xml` sont servis par l'application, car ils dépendent de l'origine et des packs installés.
+
+Les pages publiques forment une hiérarchie, de l'accueil à l'exercice :
+
+```
+Accueil ── /parcours/<parcours> ── /parcours/<parcours>/chapitre/<chapitre>/sommaire ── /parcours/<parcours>/<exercice>
+                                                    │
+                          /notions ── /notions/<notion> ─┘   (transversal : relie les exercices d'une même notion)
+```
+
+- **Sommaire de chapitre** (`ChapterOutline`) : public et indexable. Il annonce ce que le chapitre fait apprendre et mène à chacun de ses exercices. Rien de ce qui résout un exercice n'y figure — pas même le texte des objectifs, que des tests vérifient. La **fiche de cours** du chapitre (`/parcours/<parcours>/chapitre/<chapitre>`), elle, reste réservée à qui a réussi le chapitre.
+- **Notions** (`ConceptIndex`) : les `concepts:` déclarés par les exercices deviennent des pages, qui rapprochent un exercice de parcours d'un exercice de Pratique. Une notion vue sur un seul exercice ne relie rien : elle reste une pastille, sans page à elle (`notion_url()` ne lui donne pas de lien).
+- Le **title** d'un exercice et d'un sommaire est mené par ses notions, puis fermé par son libellé narratif : c'est « Boucle Twig » que l'on cherche dans un moteur, pas « Les prix en pièces d'or » — mais seul ce libellé distingue deux pages d'une même notion.
+- La page publique d'un exercice mène aux **autres exercices de son chapitre** : sans cela, tous les exercices d'un parcours ne pendent que de sa page, sans se relier entre eux.
+- `lastmod` vient de la date de modification des fichiers du pack. Elle n'a de sens que si l'installation des packs la conserve : git n'en garde aucune, et le déploiement des packs les rétablit depuis le journal avant de copier (voir le workflow du dépôt de contenu).
+- `PublicPagesSeoTest` parcourt **toutes** les adresses du sitemap et vérifie leurs balises : title unique et dans la limite, description, canonical absolu, Open Graph, un seul `h1`. Une page publique ajoutée sans ses balises y échoue.
+
 ## Sécurité
 
 - **Aperçu isolé** : le HTML/JS produit par l'apprenant s'affiche sur une origine distincte (`SANDBOX_ORIGIN`), sans cookie ni accès à la plateforme. Chaque origine ne sert que ses propres pages (`OriginIsolationListener`).

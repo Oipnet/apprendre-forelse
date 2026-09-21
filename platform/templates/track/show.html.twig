@@ -136,6 +136,8 @@
                                 {% endif %}
                             </ol>
                         </details>
+                        {# Hors du <details> : le sommaire reste atteignable chapitre replié, pour un visiteur comme pour un robot. #}
+                        <p class="tr-outline-link"><a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: item.chapter.id}) }}">Ce que le chapitre {{ item.number }} fait apprendre →</a></p>
                     </section>
                 {% endfor %}
 
