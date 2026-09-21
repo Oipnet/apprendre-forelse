@@ -29,6 +29,9 @@ final class EnvironmentAdminTest extends WebTestCase
         $this->resetDatabase();
         $this->filesystem = new Filesystem();
         $this->installes = static::getContainer()->get(InstalledEnvironments::class)->directory();
+        // Rien ne crée ce dossier : ni l'installation, ni la CI sur un dépôt fraîchement cloné. Sans lui
+        // la fonctionnalité se croit absente et les portes vérifiées ici ne s'affichent pas.
+        $this->filesystem->mkdir($this->installes);
     }
 
     protected function tearDown(): void
