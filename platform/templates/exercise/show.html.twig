@@ -36,5 +36,27 @@
                 </p>
             {% endif %}
         </aside>
+
+        {#
+          Le reste du chapitre : sans ces liens, une page d'exercice ne mène qu'au parcours, et les exercices
+          d'un même chapitre ne se connaissent pas.
+        #}
+        <nav class="exercise-siblings" aria-labelledby="exercise-siblings-title">
+            <h2 id="exercise-siblings-title">La suite du chapitre {{ chapterNumber }} : {{ chapter.title }}</h2>
+            {% if siblings %}
+                <ol class="exercise-siblings-list">
+                    {% for row in siblings %}
+                        <li>
+                            <a href="{{ path('app_exercise', {trackId: track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a>
+                            <span class="meta">Exercice {{ row.position }}{% if row.exercise.concepts %} · {{ row.exercise.concepts|join(', ') }}{% endif %}</span>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
+            <p class="exercise-siblings-more">
+                <a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: chapter.id}) }}">Le sommaire du chapitre</a>
+                · <a href="{{ path('app_track', {trackId: track.id}) }}">Tout le parcours {{ track.title }}</a>
+            </p>
+        </nav>
     </main>
 {% endblock %}

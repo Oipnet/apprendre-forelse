@@ -19,7 +19,10 @@ final readonly class SearchIndexing
     public const array ROUTES = [
         'app_home',
         'app_track',
+        'app_chapter_summary',
         'app_exercise',
+        'app_concepts',
+        'app_concept',
         'app_practice',
         'app_exercise_pratique',
         'app_legal_notice',

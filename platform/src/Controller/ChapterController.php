@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Content\Chapter;
+use App\Content\ChapterOutline;
 use App\Content\ContentRepository;
 use App\Content\LessonRenderer;
 use App\Content\Track;
@@ -12,6 +13,7 @@ use App\Export\LessonPdf;
 use App\Payment\LockedChapterPage;
 use App\Repository\ExerciseProgressRepository;
 use App\Security\TrackAccessChecker;
+use App\Seo\SeoWriter;
 use App\Service\ChapterSummary;
 use App\Service\LessonAccess;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -53,6 +55,25 @@ final class ChapterController extends AbstractController
             'html' => $renderer->toHtml((string) $chapter->lesson),
             'nextChapter' => $nextChapter,
             'nextExercise' => $nextChapter && $nextChapter->exerciseIds ? $this->content->findExercise($track->id, $nextChapter->exerciseIds[0]) : null,
+        ]);
+    }
+
+    /**
+     * Le sommaire du chapitre : public, indexable, et le seul niveau entre le parcours et ses exercices.
+     * Il annonce ce que le chapitre fait apprendre ; la fiche de cours (show) reste, elle, réservée.
+     */
+    #[Route('/parcours/{trackId}/chapitre/{chapterId}/sommaire', name: 'app_chapter_summary', methods: ['GET'])]
+    public function summary(string $trackId, string $chapterId, ChapterOutline $outlines, SeoWriter $seo): Response
+    {
+        $track = $this->visibility->find($trackId) ?? throw $this->createNotFoundException();
+        $chapter = $this->content->findChapter($track, $chapterId) ?? throw $this->createNotFoundException();
+        $outline = $outlines->of($track, $chapter) ?? throw $this->createNotFoundException();
+        $seo->chapter($track, $chapter, $outline['number'], $outline['concepts']);
+
+        return $this->render('chapter/summary.html.twig', [
+            'track' => $track,
+            ...$outline,
+            'free' => TrackAccessChecker::isFreeChapter($track, $chapter),
         ]);
     }
 

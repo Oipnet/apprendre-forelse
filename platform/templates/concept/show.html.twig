@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{#
+  Une notion et tout ce qui la pratique : exercices de parcours, exercices de Pratique, notions voisines.
+  Variables : name, slug, exercises, practices, related.
+#}
+{% block title %}{{ name }} · Notion · Forelse{% endblock %}
+
+{% block body %}
+    <main class="page concept-page">
+        <nav class="breadcrumb" aria-label="Fil d'Ariane">
+            <ol>
+                <li><a href="{{ path('app_home') }}">Accueil</a></li>
+                <li><a href="{{ path('app_concepts') }}">Les notions</a></li>
+                <li aria-current="page">{{ name }}</li>
+            </ol>
+        </nav>
+
+        <h1>{{ name }}</h1>
+        <p class="lead">
+            {{ exercises|length + practices|length }} exercice{{ exercises|length + practices|length > 1 ? 's' }}
+            {{- exercises|length + practices|length > 1 ? ' font' : ' fait' }} travailler cette notion, en écrivant du code dans le navigateur.
+        </p>
+
+        {% if exercises %}
+            <h2>Dans les parcours</h2>
+            <ul class="concept-exercises">
+                {% for row in exercises %}
+                    <li>
+                        <a href="{{ path('app_exercise', {trackId: row.track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a>
+                        <span class="meta">
+                            <a href="{{ path('app_track', {trackId: row.track.id}) }}">{{ row.track.title }}</a>
+                            · <a href="{{ path('app_chapter_summary', {trackId: row.track.id, chapterId: row.chapter.id}) }}">chapitre {{ row.number }} : {{ row.chapter.title }}</a>
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if practices %}
+            <h2>Dans la Pratique</h2>
+            <ul class="concept-exercises">
+                {% for practice in practices %}
+                    <li>
+                        <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}">{{ practice.exercise.title }}</a>
+                        <span class="meta">{{ practice.summary }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if related %}
+            <h2>Notions voisines</h2>
+            <p class="exercise-concepts">
+                {%- for other in related %}<a class="tag" href="{{ path('app_concept', {slug: other.slug}) }}">{{ other.name }}</a>{% endfor -%}
+            </p>
+        {% endif %}
+
+        <nav class="lesson-nav">
+            <a class="button ghost" href="{{ path('app_concepts') }}">← Toutes les notions</a>
+        </nav>
+    </main>
+{% endblock %}

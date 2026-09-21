@@ -6,7 +6,7 @@ use App\Content\Chapter;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
-use App\Content\LessonRenderer;
+use App\Content\ExerciseStory;
 use App\Content\Practice;
 use App\Content\Track;
 use App\Controller\PracticeController;
@@ -28,11 +28,11 @@ final readonly class SeoWriter
         private PageSeo $seo,
         private UrlGeneratorInterface $urls,
         private EnvironmentRegistry $environments,
-        private LessonRenderer $markdown,
         private TrackOfferFactory $offers,
         private Packages $packages,
         private TrackSeoText $trackText,
         private ContentRepository $content,
+        private ExerciseStory $stories,
     ) {
     }
 
@@ -106,22 +106,122 @@ final readonly class SeoWriter
 
     public function exercise(Track $track, Chapter $chapter, Exercise $exercise): void
     {
-        $prefix = sprintf('%s – exercice %s', $exercise->title, $this->framework($exercise->environment));
-        $titles = [];
-        for ($count = \count($exercise->concepts); $count > 0; --$count) {
-            $titles[] = $prefix.' : '.implode(', ', \array_slice($exercise->concepts, 0, $count));
-        }
-
+        $framework = $this->framework($exercise->environment);
         $this->seo
-            ->setTitle(...[...$titles, $prefix, $exercise->title])
+            ->setTitle(
+                ...$this->conceptLed($exercise->concepts, $framework, 'exercice : '.$exercise->title),
+                ...[sprintf('%s – exercice %s', $exercise->title, $framework), $exercise->title],
+            )
             ->setDescription(
-                $this->story($exercise->instructions),
+                $this->stories->fromInstructions($exercise->instructions),
                 sprintf('Un exercice du chapitre « %s », parcours %s.', $chapter->title, $track->title),
             )
             ->setCanonical($url = $this->url('app_exercise', ['trackId' => $track->id, 'exerciseId' => $exercise->id]))
             ->addStructuredData($this->breadcrumb([
                 $track->title => $this->url('app_track', ['trackId' => $track->id]),
+                $chapter->title => $this->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]),
                 $exercise->title => $url,
+            ]));
+    }
+
+    /**
+     * Le sommaire d'un chapitre : ce qu'il fait apprendre, et combien d'exercices l'y amènent.
+     *
+     * @param list<string> $concepts les notions de ses exercices, sans doublon
+     */
+    public function chapter(Track $track, Chapter $chapter, int $number, array $concepts): void
+    {
+        $framework = $this->framework($chapter->environment ?? $track->environment);
+        $count = \count($chapter->exerciseIds);
+        $this->seo
+            ->setTitle(
+                ...$this->conceptLed($concepts, $framework, $chapter->title),
+                ...[sprintf('%s – chapitre %d, parcours %s', $chapter->title, $number, $framework), $chapter->title],
+            )
+            ->setDescription(
+                sprintf(
+                    'Chapitre %d du parcours %s : %s. %d exercice%s à faire en écrivant du code, corrigé%s par des tests.',
+                    $number,
+                    $track->title,
+                    $concepts ? mb_strtolower(implode(', ', \array_slice($concepts, 0, 4))) : mb_strtolower($chapter->title),
+                    $count,
+                    $count > 1 ? 's' : '',
+                    $count > 1 ? 's' : '',
+                ),
+            )
+            ->setCanonical($url = $this->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]))
+            ->addStructuredData($this->breadcrumb([
+                $track->title => $this->url('app_track', ['trackId' => $track->id]),
+                $chapter->title => $url,
+            ]));
+    }
+
+    /**
+     * Les titres candidats d'une page de contenu, menés par ses notions, du plus complet au plus court
+     * (PageSeo garde le premier qui tient). C'est la notion que l'on cherche dans un moteur, pas « Les prix
+     * en pièces d'or » ; le libellé narratif ferme chaque candidat, car il distingue deux pages d'une même notion.
+     *
+     * @param list<string> $concepts
+     *
+     * @return list<string>
+     */
+    private function conceptLed(array $concepts, string $framework, string $label): array
+    {
+        $titles = [];
+        for ($count = \count($concepts); $count > 0; --$count) {
+            $titles[] = implode(', ', \array_slice($concepts, 0, $count)).' en '.$framework.' – '.$label;
+        }
+        if ([] !== $concepts) {
+            // Dernier recours avant d'abandonner la notion : sans le framework. Jamais sans le libellé,
+            // qui seul distingue deux pages — un title en double n'aide personne, et le test du sitemap le refuse.
+            $titles[] = $concepts[0].' – '.$label;
+        }
+
+        return $titles;
+    }
+
+    /**
+     * L'index des notions.
+     *
+     * @param list<array{name: string, slug: string, exercises: int}> $concepts
+     */
+    public function conceptList(array $concepts): void
+    {
+        $url = $this->url('app_concepts');
+        $this->seo
+            ->setTitle('Les notions travaillées en exercices | '.PageSeo::SITE_NAME, 'Les notions travaillées en exercices')
+            ->setDescription(sprintf(
+                '%d notions de développement, et pour chacune les exercices qui la font pratiquer : on écrit le code dans le navigateur, des tests disent s\'il est juste.',
+                \count($concepts),
+            ))
+            ->setCanonical($url)
+            ->addStructuredData($this->breadcrumb(['Les notions' => $url]));
+    }
+
+    /**
+     * Une notion : c'est le mot que l'on cherche dans un moteur, et la page qui rassemble ce qui le pratique.
+     *
+     * @param array{name: string, slug: string, exercises: list<array<string, mixed>>, practices: list<Practice>} $concept
+     */
+    public function concept(array $concept): void
+    {
+        $count = \count($concept['exercises']) + \count($concept['practices']);
+        $this->seo
+            ->setTitle(
+                sprintf('%s : %d exercices pour la pratiquer | %s', $concept['name'], $count, PageSeo::SITE_NAME),
+                sprintf('%s : %d exercices pour la pratiquer', $concept['name'], $count),
+                sprintf('%s en exercices', $concept['name']),
+                $concept['name'],
+            )
+            ->setDescription(sprintf(
+                'Les %d exercices qui font travailler %s : chacun pose un problème à résoudre en écrivant du code dans le navigateur, corrigé par des tests.',
+                $count,
+                $concept['name'],
+            ))
+            ->setCanonical($url = $this->url('app_concept', ['slug' => $concept['slug']]))
+            ->addStructuredData($this->breadcrumb([
+                'Les notions' => $this->url('app_concepts'),
+                $concept['name'] => $url,
             ]));
     }
 
@@ -235,20 +335,6 @@ final readonly class SeoWriter
     public function framework(string $environmentId): string
     {
         return $this->frameworkLabel($this->environments->has($environmentId) ? $this->environments->get($environmentId)->framework : 'symfony');
-    }
-
-    /** Le premier paragraphe de la consigne, en texte brut : le besoin posé par le personnage. */
-    public function story(string $instructions): string
-    {
-        $text = trim(html_entity_decode(strip_tags((string) preg_replace('#</(p|h[1-6]|li|ul|ol|pre|table|blockquote)>#', "\$0\n\n", $this->markdown->toHtml($instructions))), \ENT_QUOTES | \ENT_HTML5));
-        foreach (preg_split('/\n\s*\n/', $text) ?: [] as $paragraph) {
-            // Un titre répète celui de l'exercice : on cherche une vraie phrase.
-            if (mb_strlen(trim($paragraph)) >= 40) {
-                return trim($paragraph);
-            }
-        }
-
-        return $text;
     }
 
     /** @return array<string, mixed> l'éditeur du site */
