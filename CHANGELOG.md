@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 2.0.0 — 2026-09-21
+
 Premier chantier de la marque blanche (voir [ANALYSE-MARQUE-BLANCHE.md](ANALYSE-MARQUE-BLANCHE.md),
 « niveau 2 ») : **l'habillage**. Ce qui parlait de Forelse en dur dans le moteur devient de la
 configuration montée à côté des packs. Une instance change de nom, de couleurs, d'images et de pages
