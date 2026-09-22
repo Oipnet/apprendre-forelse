@@ -8,6 +8,19 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Trois brouillons de post LinkedIn, depuis l'atelier.** Un bouton sur la page d'un parcours et sur
+  l'éditeur d'un exercice de Pratique — les deux objets du contenu qui ont une page publique — ouvre une
+  page où le modèle écrit trois variantes sous trois angles : l'annonce, les coulisses d'une décision, et
+  une notion expliquée pour de bon. Elles partent de ce qui est déjà écrit (résumé, chapitres, notions,
+  consignes), pas d'une page blanche, et l'auteur peut donner une demande en une phrase (« insister sur
+  les tests », « pour des devs qui sortent d'un bootcamp »). Chaque brouillon se retouche sur place, avec
+  le compte de caractères que LinkedIn impose sous les yeux, puis se copie. L'atelier ne parle jamais à
+  LinkedIn : pas d'API, pas d'OAuth, pas de jeton à renouveler — et rien n'est enregistré dans le pack, un
+  post n'étant pas du contenu. Facultatif comme le reste de l'assistance : sans `ANTHROPIC_API_KEY`, le
+  bouton n'apparaît pas.
+
 ### Modifié
 
 - **La Pratique s'écrit sans compte.** Un visiteur ouvre l'éditeur, écrit son code, lance les tests et voit

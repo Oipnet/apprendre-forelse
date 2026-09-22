@@ -94,6 +94,8 @@ Chaque chapitre a sa **fiche de cours** (voir « Packs de contenu »), éditable
 
 Avec une clé d'API, l'atelier peut **proposer un brouillon d'exercice** à partir d'un sujet (« tester un voter avec des stubs »), dans l'univers et le style du parcours : consignes, fichiers de départ, solution, tests, indices, liens de documentation. Après un échec de `content:check`, un bouton **Corriger avec l'IA** lui renvoie le rapport et propose une correction.
 
+Avec la même clé, un bouton **Post LinkedIn** apparaît sur la page d'un parcours et sur l'éditeur d'un exercice de Pratique — les deux objets du contenu qui ont une page publique à partager. Il ouvre `/atelier/<parcours>/post`, où le modèle écrit **trois brouillons sous trois angles** (annonce, coulisses, pédagogique) à partir du contenu déjà écrit : résumé, chapitres, notions, consignes. Chaque brouillon se relit et se retouche sur place, avec le compte de caractères que LinkedIn impose (3 000 au total, ~200 avant « …voir plus »), puis se copie. Rien n'est publié — l'atelier ne parle jamais à LinkedIn — et rien n'est enregistré : un post vit dans LinkedIn, pas dans le pack.
+
 ```dotenv
 # platform/.env.local
 ANTHROPIC_API_KEY=sk-ant-…
