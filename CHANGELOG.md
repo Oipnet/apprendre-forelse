@@ -20,6 +20,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   LinkedIn : pas d'API, pas d'OAuth, pas de jeton à renouveler — et rien n'est enregistré dans le pack, un
   post n'étant pas du contenu. Facultatif comme le reste de l'assistance : sans `ANTHROPIC_API_KEY`, le
   bouton n'apparaît pas.
+- **`AI_MODEL_POST`** choisit le modèle des seuls brouillons de post. Écrire un texte qui partira sous le
+  nom de l'auteur n'est pas relire du code : on peut vouloir ici un modèle plus fort sans le payer sur
+  chaque revue du mentor. Vide (par défaut) : `AI_MODEL`, comme avant. Le reste de l'assistance ne
+  change pas.
 
 ### Modifié
 

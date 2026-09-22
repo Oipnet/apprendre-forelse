@@ -12,6 +12,7 @@ use App\Content\Framework\FrameworkProfile;
 use App\Content\Practice;
 use App\Content\Track;
 use App\Instance\Branding;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Trois brouillons de post LinkedIn pour annoncer un parcours ou un exercice de Pratique, à partir de ce
@@ -65,6 +66,12 @@ final class PostDrafter
         private readonly ContentRepository $content,
         private readonly EnvironmentRegistry $environments,
         private readonly Branding $branding,
+        /**
+         * Un modèle pour les posts seulement (AI_MODEL_POST). Écrire pour LinkedIn n'est pas relire du code :
+         * on peut vouloir ici un modèle plus fort qu'ailleurs, sans changer celui du mentor. Vide : AI_MODEL.
+         */
+        #[Autowire(env: 'AI_MODEL_POST')]
+        private readonly string $modelePost = '',
     ) {
     }
 
@@ -136,7 +143,7 @@ final class PostDrafter
             ? $contexte
             : $contexte."\n\n".'Demande de l\'auteur, à suivre en priorité : '.trim($precision);
 
-        $entree = $this->modele->appeler($this->consignes($framework, $url), [['role' => 'user', 'content' => $message]], self::OUTIL);
+        $entree = $this->modele->appeler($this->consignes($framework, $url), [['role' => 'user', 'content' => $message]], self::OUTIL, modele: $this->modelePost);
 
         $posts = [];
         foreach (\is_array($entree['posts'] ?? null) ? $entree['posts'] : [] as $post) {

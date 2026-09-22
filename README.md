@@ -99,8 +99,11 @@ Avec la même clé, un bouton **Post LinkedIn** apparaît sur la page d'un parco
 ```dotenv
 # platform/.env.local
 ANTHROPIC_API_KEY=sk-ant-…
-AI_MODEL=claude-sonnet-5   # facultatif
+AI_MODEL=claude-sonnet-5        # facultatif
+AI_MODEL_POST=claude-opus-5     # facultatif : les posts LinkedIn seulement, vide = AI_MODEL
 ```
+
+`AI_MODEL` vaut pour tout ce qui appelle le modèle ; `AI_MODEL_POST` ne vaut que pour les brouillons de post. Écrire un post n'est pas relire du code : on peut vouloir un modèle plus fort là où le texte part sous son propre nom, sans payer ce modèle sur chaque revue de code du mentor.
 
 La même clé sert à `content:lesson-draft --ia`, qui rédige un brouillon de fiche de cours (voir « Packs de contenu »). Sans clé, l'atelier fonctionne à l'identique et ces boutons n'apparaissent pas. Un brouillon reste un brouillon : rien n'est enregistré sans relecture, et c'est `content:check` qui tranche — tests rouges au départ, verts avec la solution.
 

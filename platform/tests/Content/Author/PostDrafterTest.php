@@ -30,7 +30,7 @@ final class PostDrafterTest extends TestCase
     }
 
     /** @param list<array<string, mixed>> $posts */
-    private function drafter(array $posts, string $cle = 'cle-de-test'): PostDrafter
+    private function drafter(array $posts, string $cle = 'cle-de-test', string $modelePost = ''): PostDrafter
     {
         $client = new MockHttpClient(function (string $method, string $url, array $options) use ($posts) {
             $this->requetes[] = ['corps' => json_decode($options['body'], true)];
@@ -38,7 +38,7 @@ final class PostDrafterTest extends TestCase
             return new JsonMockResponse(['content' => [['type' => 'tool_use', 'name' => 'ecrire_posts', 'input' => ['posts' => $posts]]]]);
         });
 
-        return new PostDrafter(new ModelClient($client, $cle, 'claude-sonnet-5'), $this->content(), new EnvironmentRegistry(self::ROOT.'/environments'), self::branding());
+        return new PostDrafter(new ModelClient($client, $cle, 'claude-sonnet-5'), $this->content(), new EnvironmentRegistry(self::ROOT.'/environments'), self::branding(), $modelePost);
     }
 
     /**
@@ -117,6 +117,18 @@ final class PostDrafterTest extends TestCase
         $this->parcours([['angle' => 'annonce', 'texte' => 'Un post.']], 'Insister sur les tests automatiques');
 
         $this->assertStringContainsString('Insister sur les tests automatiques', $this->requetes[0]['corps']['messages'][0]['content']);
+    }
+
+    public function testLesPostsPeuventAvoirLeurPropreModele(): void
+    {
+        $track = $this->content()->findTrack('decouverte');
+        $post = [['angle' => 'annonce', 'texte' => 'Un post.']];
+
+        $this->drafter($post)->pourParcours($track, self::URL);
+        $this->assertSame('claude-sonnet-5', $this->requetes[0]['corps']['model'], 'Sans AI_MODEL_POST, les posts suivent AI_MODEL.');
+
+        $this->drafter($post, modelePost: 'claude-opus-5')->pourParcours($track, self::URL);
+        $this->assertSame('claude-opus-5', $this->requetes[1]['corps']['model'], 'AI_MODEL_POST ne vaut que pour les posts.');
     }
 
     public function testUnExerciceDePratiqueEstDecritParSonResumeEtSesConsignes(): void
