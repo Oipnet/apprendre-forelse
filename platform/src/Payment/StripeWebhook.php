@@ -87,6 +87,7 @@ final readonly class StripeWebhook
             $event->markProcessed($this->clock->now());
         } catch (\Throwable $e) {
             $event->markFailed($e->getMessage());
+            $this->saveFailure($event);
             $this->logger->error('Événement Stripe {id} en échec : {message}', ['id' => $event->getEventId(), 'message' => $e->getMessage()]);
             throw $e;
         } finally {
@@ -94,6 +95,20 @@ final readonly class StripeWebhook
                 $this->entityManager->flush();
             }
         }
+    }
+
+    /**
+     * L'erreur est écrite par une requête à part : l'exception a pu fermer l'EntityManager (levée dans une transaction),
+     * et le flush du finally n'aurait alors pas lieu. Sans elle, ni le message ni l'échec ne resteraient en base.
+     */
+    private function saveFailure(StripeEvent $event): void
+    {
+        $metadata = $this->entityManager->getClassMetadata(StripeEvent::class);
+        $this->entityManager->getConnection()->update(
+            $metadata->getTableName(),
+            [$metadata->getColumnName('error') => $event->getError()],
+            [$metadata->getColumnName('id') => $event->getId()],
+        );
     }
 
     /**

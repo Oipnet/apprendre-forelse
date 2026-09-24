@@ -262,6 +262,18 @@ final class PurchaseTest extends WebTestCase
         $this->assertStringNotContainsString('79,00', $this->client->getCrawler()->filter('main')->text());
     }
 
+    public function testUnWebhookPourUneSessionInconnueResteEnEchecAvecSonMessage(): void
+    {
+        $this->sendPaidWebhook($this->client, 'cs_inconnue', 7900, eventId: 'evt_inconnu');
+        $this->assertResponseStatusCodeSame(500, 'Stripe réessaiera.');
+
+        $this->entityManager()->clear();
+        $event = $this->entityManager()->getRepository(StripeEvent::class)->findOneBy(['eventId' => 'evt_inconnu']);
+        $this->assertNotNull($event);
+        $this->assertFalse($event->isProcessed());
+        $this->assertSame('Aucun achat pour la session Stripe « cs_inconnue ».', $event->getError(), 'L\'erreur est gardée pour le rejeu.');
+    }
+
     public function testSiStripeNeRepondPasRienNEstEnregistre(): void
     {
         $this->setPrice('payant', 7900);
