@@ -78,6 +78,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Installer un environnement n'exécute plus le code de son dépôt à côté des secrets.** `git clone` puis
+  `composer install` (dont les greffons et les scripts de l'autoload tournent) se faisaient dans le conteneur
+  `app`, qui porte les clés Stripe et Anthropic, `APP_SECRET` et l'accès à la base. Les `compose.yaml` ont
+  un nouveau service **`empaqueteur`** (même image) : sans aucun de ces secrets, sur son propre réseau (Internet,
+  mais ni la base ni les autres services), 1 Go et un processeur au plus. La plateforme ne fait plus que déposer
+  la demande dans le volume `environnements` (`ENVIRONMENTS_BUILDER=empaqueteur`), et il la traite
+  (`app:environnement:empaqueteur`) ; `ENVIRONMENTS_AUTO_INSTALL` passe aussi par lui. Sans ce service (un
+  `compose.yaml` plus ancien), rien ne change : la plateforme empaquette elle-même. **Plafonds de ressources**
+  sur `app` (1536 Mo, 512 processus), `worker`, `empaqueteur` et `umami`, réglables dans `.env`.
 - **Les fichiers à télécharger d'un parcours sont réservés à ceux qui y ont accès.** `/telechargements` servait tout
   fichier de `DOWNLOADS_DIR` à n'importe quel compte connecté : l'archive d'un parcours payant revenait à un compte
   gratuit. Nouvelle clé `downloads:` de `track.yaml` : un fichier qu'un parcours déclare demande l'accès à tout ce

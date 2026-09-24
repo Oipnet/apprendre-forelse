@@ -167,11 +167,15 @@ sien — « le Symfony complet, plus mes trois entités ». `/admin` → **Envir
 dépôt Git, sans reconstruire l'image.
 
 > ⚠️ **Empaqueter un environnement exécute le code du dépôt sur ce serveur** : le moteur y lance
-> `composer install`, qui exécute les scripts et les greffons déclarés par ce dépôt. C'est exactement la
-> même confiance que pour un pack de contenu passé à `content:check`. N'installez que des dépôts que vous
-> contrôlez ou dont vous connaissez l'auteur. `ENVIRONMENT_SOURCES_ALLOWLIST=github.com` limite les
-> adresses acceptées à un hôte ; videz `INSTALLED_ENVIRONMENTS_DIR` pour retirer la fonctionnalité — la
-> page reste, sans formulaire.
+> `composer install`, qui exécute les greffons et les scripts déclarés par ce dépôt. Ce code tourne dans le
+> service **`empaqueteur`**, pas dans `app` : il n'y trouve ni vos clés (Stripe, Anthropic, `APP_SECRET`),
+> ni la base, ni le réseau des autres services — seulement Internet et le volume des environnements, avec
+> 1 Go de mémoire et un processeur au plus. Il reste que cet environnement sera ensuite servi à vos
+> apprenants : n'installez que des dépôts que vous contrôlez ou dont vous connaissez l'auteur.
+> `ENVIRONMENT_SOURCES_ALLOWLIST=github.com` limite les adresses acceptées à un hôte ; videz
+> `INSTALLED_ENVIRONMENTS_DIR` pour retirer la fonctionnalité — la page reste, sans formulaire. Un
+> `compose.yaml` antérieur à la 2.1 n'a pas ce service : la plateforme empaquette alors elle-même, à côté
+> des secrets (`ENVIRONMENTS_BUILDER` vide) ; retéléchargez-le.
 
 Ce qu'il faut dans le dépôt : un `environment.yaml` à sa racine. C'est lui qui **nomme** l'environnement
 (`id:`), pas l'adresse ni l'administrateur, et cet identifiant est celui que les exercices désignent par
@@ -199,8 +203,8 @@ Ensuite :
 En ligne de commande, sans passer par l'administration :
 
 ```bash
-docker compose exec app bin/console app:environnement:installer https://github.com/…/mon-environnement.git
-docker compose exec app bin/console app:environnement:installer mon-environnement   # mise à jour
+docker compose exec empaqueteur bin/console app:environnement:installer https://github.com/…/mon-environnement.git
+docker compose exec empaqueteur bin/console app:environnement:installer mon-environnement   # mise à jour
 ```
 
 ### Le plus souvent, le pack apporte son décor
@@ -232,6 +236,7 @@ docker compose up -d
 | Emails | `MAILER_DSN`, `MAILER_FROM`, `CONTACT_EMAIL`, `REGISTRATION_ALERT_EMAIL` | Sans `MAILER_DSN`, aucun email ne part : ni confirmation d'adresse, ni mot de passe oublié. Test : `docker compose exec app bin/console mailer:test vous@example.org`. Les emails passent par une file d'attente dans la base, que vide le service `worker` : un serveur SMTP en panne ne bloque pas l'inscription, l'email part à son retour. `MESSENGER_TRANSPORT_DSN=sync://` les envoie pendant la requête, sans worker. |
 | Mentions légales | `LEGAL_*` | Remplissent `/mentions-legales` et `/confidentialite` ; tant qu'un champ obligatoire manque, les pages le signalent. Les textes sont écrits pour le droit français. |
 | Inscription | `REGISTRATION_INVITE_ONLY` | `1` : sur code de cohorte uniquement (cohortes créées dans `/admin`), et la Pratique demande un compte. `0` : inscription libre, et la Pratique s'écrit sans compte. |
+| Ressources | `APP_MEM_LIMIT`, `EMPAQUETEUR_MEM_LIMIT`, `UMAMI_MEM_LIMIT` | Mémoire au plus de chaque service (1536m, 1g, 512m), avec un plafond de processus : un service qui s'emballe ne fait pas tomber les autres. À relever sur un gros serveur. |
 | Sécurité du contenu | `CSP_REPORT_ONLY` | `1` (par défaut) : le navigateur signale seulement les scripts qu'il bloquerait, en lignes « CSP : … » dans `docker compose logs app`. `0` : il les bloque — le filet contre une faille XSS. Passez à `0` une fois les journaux muets, surtout si vous servez un traceur ou des gabarits à vous. |
 | Référencement | `SEARCH_INDEXING`, `GOOGLE_SITE_VERIFICATION` | `0` pour une instance interne ou de préproduction : robots.txt interdit l'indexation. |
 | Audience | `ANALYTICS_*` | Facultative, éteinte par défaut : voir [Savoir qui visite le site](#savoir-qui-visite-le-site). |
