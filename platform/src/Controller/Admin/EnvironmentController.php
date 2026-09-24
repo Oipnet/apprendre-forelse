@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Content\ContentException;
 use App\Content\EnvironmentRegistry;
 use App\Instance\InstalledEnvironment;
+use App\Instance\EnvironmentBuildQueue;
 use App\Instance\InstalledEnvironments;
 use App\Instance\PackEnvironments;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
@@ -30,6 +31,7 @@ final class EnvironmentController extends AbstractController
         private readonly EnvironmentRegistry $environments,
         private readonly InstalledEnvironments $installed,
         private readonly PackEnvironments $packEnvironments,
+        private readonly EnvironmentBuildQueue $queue,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
     ) {
@@ -182,6 +184,12 @@ final class EnvironmentController extends AbstractController
      */
     private function lancer(array $arguments, string $commandeConsole = 'app:environnement:installer'): void
     {
+        // Le code du dépôt ne tourne pas ici, à côté des secrets : le service empaqueteur s'en charge.
+        if ($this->queue->isEnabled()) {
+            $this->queue->push($commandeConsole, $arguments);
+
+            return;
+        }
         $php = (new PhpExecutableFinder())->find() ?: 'php';
         $commande = [$php, $this->projectDir.'/bin/console', $commandeConsole, ...$arguments];
 

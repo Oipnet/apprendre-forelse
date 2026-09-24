@@ -38,7 +38,8 @@ if [ "$1" = 'frankenphp' ]; then
 	# minutes, et un dépôt injoignable n'a pas à empêcher la plateforme de servir ses pages. Les exercices
 	# concernés attendent leur environnement ; les autres tournent tout de suite. Suivi dans
 	# /admin → Environnements, et dans les journaux du conteneur.
-	if [ "${ENVIRONMENTS_AUTO_INSTALL:-0}" = "1" ]; then
+	# Avec le service empaqueteur (ENVIRONMENTS_BUILDER=empaqueteur), c'est lui qui s'en charge, loin des secrets.
+	if [ "${ENVIRONMENTS_AUTO_INSTALL:-0}" = "1" ] && [ "${ENVIRONMENTS_BUILDER:-}" != "empaqueteur" ]; then
 		echo "Environnements des packs : installation des manquants en tâche de fond (ENVIRONMENTS_AUTO_INSTALL=1)."
 		php bin/console app:environnement:synchroniser --no-interaction &
 	fi

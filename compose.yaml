@@ -15,6 +15,8 @@ services:
     environment: &app-environment
       # Emails en file d'attente dans la base, envoyés par le service « worker » ci-dessous.
       MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0}
+      # Installations d'environnements confiées au service « empaqueteur » ci-dessous, loin des secrets.
+      ENVIRONMENTS_BUILDER: ${ENVIRONMENTS_BUILDER:-empaqueteur}
       APP_URL: ${APP_URL:-http://localhost:${LOCAL_PORT:-8080}}
       SANDBOX_URL: ${SANDBOX_URL:-http://127.0.0.1:${LOCAL_PORT:-8080}}
       APP_SECRET: ${APP_SECRET:-}
@@ -41,6 +43,9 @@ services:
   # envoie. Un serveur SMTP lent ou en panne ne bloque plus l'inscription, et l'email part à son retour
   # (nouvelles tentatives pendant deux heures, puis `bin/console messenger:failed:retry` dans ce conteneur).
   # Même image, mêmes réglages que « app » ; il redémarre de lui-même toutes les heures pour rester léger.
+    # Plafonds : un service qui s'emballe ne fait pas tomber les autres (réglables dans .env).
+    mem_limit: ${APP_MEM_LIMIT:-1536m}
+    pids_limit: 512
   worker:
     image: apprendre-forelse
     restart: unless-stopped
@@ -54,6 +59,43 @@ services:
     # Le contrôle de santé de l'image interroge Caddy, qui ne tourne pas ici.
     healthcheck:
       disable: true
+    mem_limit: 256m
+    pids_limit: 64
+
+  # Installe et empaquette les environnements d'exécution (/admin → Environnements) : `git clone` puis
+  # `composer install` sur un dépôt tiers, donc son code. Il tourne ici, et non dans « app » : ni les clés
+  # (Stripe, Anthropic, APP_SECRET), ni la base, ni le réseau des autres services — seulement Internet, pour
+  # cloner et télécharger les dépendances, et le volume des environnements, qu'il partage avec « app ».
+  empaqueteur:
+    image: apprendre-forelse
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:${LOCAL_PORT:-8080}}
+      SANDBOX_URL: ${SANDBOX_URL:-http://127.0.0.1:${LOCAL_PORT:-8080}}
+      # Rien de secret : de quoi démarrer Symfony, sans rien atteindre.
+      APP_SECRET: empaqueteur-sans-secret
+      DATABASE_URL: postgresql://aucun:aucun@aucune-base:5432/aucune?serverVersion=17
+      MAILER_DSN: null://null
+      MESSENGER_TRANSPORT_DSN: sync://
+      CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}
+      INSTALLED_ENVIRONMENTS_DIR: ${INSTALLED_ENVIRONMENTS_DIR:-/environnements}
+      ENVIRONMENT_SOURCES_ALLOWLIST: ${ENVIRONMENT_SOURCES_ALLOWLIST:-}
+      ENVIRONMENTS_AUTO_INSTALL: ${ENVIRONMENTS_AUTO_INSTALL:-0}
+    volumes:
+      - ${PACKS_DIR:-./examples/packs}:/packs:ro
+      - environnements:/environnements
+    networks:
+      - empaquetage
+    command: ["php", "bin/console", "app:environnement:empaqueteur"]
+    healthcheck:
+      disable: true
+    # Un `composer install` gourmand ne fait pas tomber le reste du serveur.
+    mem_limit: ${EMPAQUETEUR_MEM_LIMIT:-1g}
+    pids_limit: 256
+    cpus: 1
 
   db:
     image: postgres:17-alpine
@@ -76,6 +118,8 @@ services:
   #   ANALYTICS_SCRIPT_URL=/mesure/traceur.js ANALYTICS_WEBSITE_ID=… docker compose --profile mesure up -d
   umami:
     image: ghcr.io/umami-software/umami:postgresql-latest
+    mem_limit: ${UMAMI_MEM_LIMIT:-512m}
+    pids_limit: 128
     profiles: ["mesure"]
     depends_on:
       umami-base:
@@ -108,3 +152,8 @@ volumes:
   environnements:
   config:
   db:
+
+networks:
+  # Le réseau par défaut relie app, la base et les autres. L'empaqueteur n'a que celui-ci : Internet, rien d'autre.
+  default:
+  empaquetage:

@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use App\Entity\User;
+use App\Instance\EnvironmentBuildQueue;
 use App\Instance\InstalledEnvironments;
 use App\Tests\DatabaseTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -38,6 +39,29 @@ final class EnvironmentAdminTest extends WebTestCase
     {
         parent::tearDown();
         $this->filesystem->remove($this->installes.'/'.InstalledEnvironments::JOBS);
+        $this->filesystem->remove($this->installes.'/'.EnvironmentBuildQueue::DIRECTORY);
+        // Remis à la valeur de .env, et non retiré : une variable absente ferait échouer les tests suivants.
+        foreach (['_ENV', '_SERVER'] as $store) {
+            $GLOBALS[$store]['ENVIRONMENTS_BUILDER'] = '';
+        }
+    }
+
+    /** Avec le service empaqueteur, la plateforme n'exécute rien : elle dépose la demande dans le volume partagé. */
+    public function testAvecLEmpaqueteurLaDemandeEstDeposeeSansRienLancerIci(): void
+    {
+        foreach (['_ENV', '_SERVER'] as $store) {
+            $GLOBALS[$store]['ENVIRONMENTS_BUILDER'] = EnvironmentBuildQueue::BUILDER;
+        }
+        $this->connecteUnAdmin();
+        $this->client->request('GET', '/admin/environnements');
+        $this->client->submitForm('Installer', ['depot' => 'https://exemple.test/depot.git', 'ref' => 'v1']);
+
+        $this->assertResponseRedirects();
+        $this->assertSame([], static::getContainer()->get(InstalledEnvironments::class)->jobs(), 'Aucune installation lancée dans ce conteneur.');
+        $this->assertSame(
+            ['command' => 'app:environnement:installer', 'arguments' => ['https://exemple.test/depot.git', '--ref=v1']],
+            static::getContainer()->get(EnvironmentBuildQueue::class)->pop(),
+        );
     }
 
     public function testLaPageEstReserveeAuxAdmins(): void
