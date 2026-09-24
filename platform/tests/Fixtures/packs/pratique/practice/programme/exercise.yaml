@@ -3,5 +3,7 @@ title: Publié plus tard
 environment: symfony-8
 published: 2099-01-01
 summary: Daté d'un jour à venir, donc visible des seuls administrateurs d'ici là.
+# Annonce une version : une page de version ne doit pas le montrer avant sa parution.
+version: '8.1'
 editable: [src/Controller/BonjourController.php]
 objectives: [{test: testA, label: A}]

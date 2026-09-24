@@ -632,7 +632,7 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 	<main class="workspace" data-pane="code">
 		<aside class="panel brief">
 			<div class="already-done" id="already-done" hidden></div>
-			<div class="xp">${exercise.concepts.map((c) => `<span class="chip">${escapeHtml(c)}</span>`).join('')}${exercise.xp > 0 ? `<span class="chip gold">${exercise.xp} XP</span>` : ''}${exercise.practice?.version ? `<span class="chip gold">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</span>` : ''}</div>
+			<div class="xp">${exercise.concepts.map((c) => `<span class="chip">${escapeHtml(c)}</span>`).join('')}${exercise.xp > 0 ? `<span class="chip gold">${exercise.xp} XP</span>` : ''}${exercise.practice?.version ? (exercise.practice.versionUrl ? `<a class="chip gold" href="${escapeHtml(exercise.practice.versionUrl)}" title="Les autres exercices de cette version">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</a>` : `<span class="chip gold">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</span>`) : ''}</div>
 			<article class="instructions">${markdown(exercise.instructions)}</article>
 			<h3>Objectifs</h3>
 			<ul class="objectives">

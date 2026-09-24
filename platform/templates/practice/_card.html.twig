@@ -1,0 +1,30 @@
+{#
+  La carte d'un exercice de Pratique, partagée par la liste et les pages de version.
+  item : {practice, state} ; frameworks : identifiant => libellé.
+  badges : la version et « Nouveauté », que la page d'une version répète pour rien (elle passe false).
+#}
+{% macro card(item, frameworks, badges = true) %}
+    {% set practice = item.practice %}
+    <li data-state="{{ item.state }}">
+        <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
+            <span class="practice-head">
+                {% if badges %}
+                    <span class="tag framework">{{ frameworks[practice.framework] ?? practice.framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
+                    {% if practice.version %}<span class="tag new">Nouveauté</span>{% endif %}
+                {% endif %}
+                {% if practice.isRestricted %}<span class="tag">En préparation</span>{% endif %}
+                {% if practice.isScheduled %}<span class="tag">Programmé le {{ practice.published|date('d/m/Y') }}</span>{% endif %}
+                <time class="meta" datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time>
+                {% if item.state == 'completed' %}<span class="state">✓ Réussi</span>{% elseif item.state == 'in_progress' %}<span class="state">En cours</span>{% endif %}
+            </span>
+            <span class="title">{{ practice.exercise.title }}</span>
+            <span class="summary">{{ practice.summary }}</span>
+            <span class="practice-foot">
+                {% if practice.exercise.concepts %}
+                    <span class="practice-notions">{% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</span>
+                {% endif %}
+                <span class="practice-cta">{% if item.state == 'completed' %}Refaire l'exercice{% elseif item.state == 'in_progress' %}Reprendre{% else %}Faire l'exercice{% endif %} <span aria-hidden="true">→</span></span>
+            </span>
+        </a>
+    </li>
+{% endmacro %}

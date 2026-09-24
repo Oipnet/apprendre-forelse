@@ -1,0 +1,8 @@
+id: symfony-huit-un
+title: Symfony 8.1, seul
+environment: symfony-8
+published: 2026-08-03
+summary: La seule nouveauté 8.1 de ce pack.
+version: '8.1'
+editable: [src/Controller/BonjourController.php]
+objectives: [{test: testA, label: A}]

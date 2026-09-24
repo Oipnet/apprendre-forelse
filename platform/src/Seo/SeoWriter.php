@@ -253,6 +253,45 @@ final readonly class SeoWriter
             ->addStructuredData($this->breadcrumb(['Pratique' => $url]));
     }
 
+    /**
+     * Une version de framework : ce qu'elle apporte, en exercices. Le titre mène par « Nouveautés Symfony 8.2 »,
+     * qui est la requête, et la page ne prétend pas les lister toutes (voir PracticeVersionIndex).
+     *
+     * La description reprend l'intro écrite pour cette version quand il y en a une ; sinon elle nomme ce que
+     * la page fait travailler, pour que deux pages ne se ressemblent pas.
+     *
+     * @param array{label: string, slug: string, practices: list<Practice>, intro: string|null, concepts: list<string>} $version
+     */
+    public function practiceVersion(array $version): void
+    {
+        $count = \count($version['practices']);
+        $concepts = \array_slice($version['concepts'], 0, 3);
+        $this->seo
+            ->setTitle(
+                sprintf('Nouveautés %s en exercices | %s', $version['label'], $this->branding->name()),
+                sprintf('Nouveautés %s en exercices', $version['label']),
+                sprintf('Nouveautés %s', $version['label']),
+            )
+            ->setDescription(
+                null !== $version['intro']
+                    ? $this->stories->firstParagraph($version['intro'])
+                    : sprintf(
+                        [] === $concepts
+                            ? '%d exercices courts sur les nouveautés de %s%s : un code écrit à l\'ancienne, à réécrire avec la fonctionnalité.'
+                            : '%d exercices courts sur les nouveautés de %s, autour de %s. À écrire dans le navigateur, corrigés par des tests.',
+                        $count,
+                        $version['label'],
+                        [] === $concepts ? '' : implode(', ', $concepts),
+                    ),
+                sprintf('Les nouveautés de %s en %d exercices courts, à faire dans le navigateur.', $version['label'], $count),
+            )
+            ->setCanonical($url = $this->url('app_practice_version', ['slug' => $version['slug']]))
+            ->addStructuredData($this->breadcrumb([
+                'Pratique' => $this->url('app_practice'),
+                'Nouveautés '.$version['label'] => $url,
+            ]));
+    }
+
     public function practice(Practice $practice): void
     {
         $framework = trim($this->frameworkLabel($practice->framework).' '.$practice->version);

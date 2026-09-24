@@ -4,6 +4,7 @@ namespace App\Command;
 
 use App\Content\Check\ExerciseChecker;
 use App\Content\ContentRepository;
+use App\Content\PracticeVersionIndex;
 use App\Instance\PackEnvironments;
 use App\Version;
 use Symfony\Component\Console\Attribute\Argument;
@@ -20,6 +21,7 @@ final class ContentCheckCommand
 {
     public function __construct(
         private readonly ContentRepository $content,
+        private readonly PracticeVersionIndex $versions,
         private readonly ExerciseChecker $checker,
         private readonly PackEnvironments $packEnvironments,
         private readonly Version $version,
@@ -81,6 +83,12 @@ final class ContentCheckCommand
             if (!$chapter->hasLesson()) {
                 $io->writeln(sprintf(' <fg=yellow>!</> %s — chapitre « %s » sans fiche de cours (chapters/%s/lesson.md)', $track->id, $chapter->title, $chapter->id));
             }
+        }
+
+        // Une intro de version que rien n'affiche : faute de frappe dans le nom du fichier, ou version
+        // qu'un seul exercice pratique. Pas bloquant : l'intro peut précéder le deuxième exercice.
+        foreach ($this->versions->orphanIntros() as $slug => $file) {
+            $io->writeln(sprintf(' <fg=yellow>!</> %s — intro de version sans page publiée (%s)', $slug, $file));
         }
 
         // Clés dépréciées : acceptées, mais à retirer avant qu'une version majeure ne les refuse.

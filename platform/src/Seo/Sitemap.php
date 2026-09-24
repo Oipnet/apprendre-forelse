@@ -5,6 +5,7 @@ namespace App\Seo;
 use App\Content\ConceptIndex;
 use App\Content\ContentRepository;
 use App\Content\Practice;
+use App\Content\PracticeVersionIndex;
 use App\Content\PublishedContent;
 use App\Controller\LegalController;
 use App\Instance\SelfHostingPage;
@@ -29,6 +30,7 @@ final readonly class Sitemap
         private ContentRepository $content,
         private PublishedContent $published,
         private ConceptIndex $concepts,
+        private PracticeVersionIndex $versions,
         private UrlGeneratorInterface $urls,
         #[Autowire(service: 'sitemap.cache')]
         private CacheInterface $cache,
@@ -79,6 +81,16 @@ final readonly class Sitemap
                 $entries[] = $this->entry('app_practice', [], $practiceLatest);
                 array_push($entries, ...$practiceEntries);
                 $latest = max($latest, $practiceLatest);
+            }
+
+            // Les nouveautés d'une version : une page par version qu'au moins deux exercices pratiquent.
+            foreach ($this->versions->practices() as $slug => $practices) {
+                $dates = array_map(self::practiceModified(...), $practices);
+                // Une intro réécrite change la page, sans qu'aucun exercice bouge.
+                if (null !== ($intro = $this->versions->introFile($slug))) {
+                    $dates[] = date('Y-m-d', (int) filemtime($intro));
+                }
+                $entries[] = $this->entry('app_practice_version', ['slug' => $slug], max($dates));
             }
 
             // Les notions : une page par notion travaillée par plus d'un exercice, datée de son contenu.
