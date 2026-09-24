@@ -84,6 +84,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Le code Nuxt de l'apprenant ne peut plus appeler la plateforme avec sa session.** Le simulateur Nuxt évalue
+  les routes `server/` dans un worker de l'origine de la plateforme, où `fetch('/api/…')` partait avec les cookies.
+  Les scripts des workers sont désormais servis avec `connect-src` limité aux archives d'environnement et aux
+  fichiers du build (`docker/Caddyfile`) : vérifié sous Chrome sur l'image, l'appel est refusé depuis le worker,
+  et les exercices Nuxt, PHP et Docker démarrent, testent et affichent leur aperçu comme avant. Une instance
+  derrière son propre serveur web doit poser le même en-tête sur `/build/assets/*worker*.js`.
 - **Les codes d'invitation de cohorte ne se devinent plus.** Choisis à la main (« iut-2026 ») et essayables sans
   limite, ils ouvraient des comptes, et les parcours payants d'une cohorte financée par l'établissement. Une
   nouvelle cohorte reçoit une partie aléatoire de 10 caractères après la partie lisible (« iut-2026-k3m9x7q2pw »,

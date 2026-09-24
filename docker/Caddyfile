@@ -39,6 +39,13 @@
 	@sw path /preview-sw.js
 	header @sw Cache-Control "no-cache"
 
+	# Les workers des runtimes (PHP, simulateur Nuxt, éditeur) tournent sur l'origine de la plateforme, et le
+	# simulateur Nuxt y évalue le code de l'apprenant : sans cette politique, un fetch('/api/…') dans une route
+	# Nuxt partirait avec sa session. Un worker suit la CSP de son propre script : il ne peut plus joindre que les
+	# archives d'environnement et les fichiers du build, qu'il télécharge pour démarrer.
+	@workers path_regexp workers ^/build/assets/[^/]*worker[^/]*\.js$
+	header @workers Content-Security-Policy "connect-src {$APP_URL}/envs/ {$APP_URL}/build/ blob: data:"
+
 	# Mesure d'audience : le traceur et son point de collecte sont servis par le site lui-même, et non
 	# depuis le domaine d'Umami. Même origine = rien à autoriser côté navigateur, et un bloqueur de
 	# publicités n'y voit pas un traceur tiers. Le traceur déduit son point de collecte du dossier de son

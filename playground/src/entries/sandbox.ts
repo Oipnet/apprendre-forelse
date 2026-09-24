@@ -5,7 +5,9 @@
  * - héberge l'iframe d'aperçu (le code de l'apprenant) ;
  * - fait suivre les requêtes du SW à la plateforme, et seulement à elle (origine vérifiée).
  *
- * Le code de l'apprenant tourne ici, sans cookie ni accès à la plateforme.
+ * Le HTML et le JavaScript de l'aperçu tournent ici, sans cookie ni accès à la plateforme. Les routes `server/`
+ * d'un exercice Nuxt, elles, sont évaluées dans le worker du simulateur, sur l'origine de la plateforme : sa CSP
+ * (connect-src, voir docker/Caddyfile) l'empêche d'en appeler les API.
  */
 import type { RelayToHost, HostToRelay } from '../preview/protocol';
 
