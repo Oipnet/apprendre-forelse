@@ -2,6 +2,7 @@
 
 namespace App\EventListener;
 
+use App\Security\ContentSecurityPolicy;
 use App\Security\SandboxOrigin;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -18,7 +19,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 final readonly class OriginIsolationListener
 {
-    public function __construct(private SandboxOrigin $sandbox)
+    public function __construct(private SandboxOrigin $sandbox, private ContentSecurityPolicy $policy)
     {
     }
 
@@ -30,8 +31,10 @@ final readonly class OriginIsolationListener
         }
         $request = $event->getRequest();
         $isRelay = SandboxOrigin::RELAY_PATH === $request->getPathInfo();
-        // robots.txt existe sur les deux origines : le bac à sable y interdit tout (voir SeoController).
-        if ('/robots.txt' !== $request->getPathInfo() && $this->sandbox->isSandboxRequest($request) !== $isRelay) {
+        // robots.txt existe sur les deux origines : le bac à sable y interdit tout (voir SeoController). Les rapports
+        // de la politique de sécurité du contenu aussi : la page du relais envoie les siens à son origine.
+        $bothOrigins = \in_array($request->getPathInfo(), ['/robots.txt', ContentSecurityPolicy::REPORT_PATH], true);
+        if (!$bothOrigins && $this->sandbox->isSandboxRequest($request) !== $isRelay) {
             throw new NotFoundHttpException();
         }
         // Écritures : refusées si le navigateur annonce une autre origine que la page (bac à sable compris).
@@ -53,6 +56,8 @@ final readonly class OriginIsolationListener
         // Le relais ne peut être encadré que par la plateforme ; les pages de la plateforme par personne d'autre.
         $ancestors = $this->sandbox->isSandboxRequest($event->getRequest()) ? $this->sandbox->platformOrigin : "'self'";
         $headers->set('Content-Security-Policy', 'frame-ancestors '.$ancestors);
+        // À part : frame-ancestors est ignorée dans un en-tête Report-Only, et doit s'appliquer dès maintenant.
+        $headers->set($this->policy->headerName(), $this->policy->policy($event->getRequest()), false);
         // HTTPS seulement, et jamais pour une adresse locale : le navigateur retiendrait « localhost en HTTPS »
         // pour tous les projets de la machine. Pas d'includeSubDomains : les autres sous-domaines ne dépendent pas d'ici.
         $request = $event->getRequest();

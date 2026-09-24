@@ -9,6 +9,8 @@
 
 {% block javascripts %}
     {{ parent() }}
+    {# Le simulateur Nuxt compile le code de l'apprenant dans la page. #}
+    {% do csp_allow_eval() %}
     {{ vite_entry_script_tags('atelier') }}
 {% endblock %}
 
