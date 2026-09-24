@@ -35,7 +35,7 @@ final readonly class TrackPricer
         }
 
         $now = $this->clock->now();
-        $founderSales = $pricing->isFounderActive() ? $this->purchases->countFounderSales($track->id) : 0;
+        $founderSales = $pricing->isFounderActive() ? $this->purchases->countFounderSales($track->id, $now, $user) : 0;
         if ($pricing->isFounderPriceApplicable($now, $founderSales)) {
             return new PriceQuote(
                 $pricing->currentPrice($now, $founderSales),

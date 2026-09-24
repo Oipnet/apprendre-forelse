@@ -100,6 +100,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   nouvel essai, deux exercices dans deux onglets) se suivent derrière un verrou sur le compte, et chacune relit
   l'XP et la progression une fois ce verrou obtenu. La seconde donnait jusqu'ici l'XP une deuxième fois, ou
   écrasait le total écrit par la première.
+- **Le quota de places au prix fondateur n'est plus dépassé** quand plusieurs paiements sont lancés en même temps
+  sur les dernières places. Un paiement en cours réserve sa place : le décompte compte désormais les achats en
+  attente, en plus des achats payés, sauf celui de l'apprenant qui revient sur la page de paiement (il garde son
+  prix). La réservation dure autant que la session Stripe, désormais limitée à une heure au lieu de 24 : passé
+  ce délai, la place est rendue, et l'apprenant qui n'a pas payé recommence depuis la plateforme.
 
 ### Sécurité
 

@@ -6,6 +6,7 @@ use App\Entity\PriceKind;
 use App\Entity\Purchase;
 use App\Entity\PurchaseStatus;
 use App\Entity\User;
+use App\Payment\CheckoutSession;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -19,10 +20,30 @@ class PurchaseRepository extends ServiceEntityRepository
         parent::__construct($registry, Purchase::class);
     }
 
-    /** Achats payés au prix fondateur : ce que compte le quota (un remboursement libère la place). */
-    public function countFounderSales(string $trackId): int
+    /**
+     * Places prises au prix fondateur : les achats payés (un remboursement libère la place), et les achats en attente
+     * dont la session Stripe peut encore être payée. Le prix est figé dès l'achat en attente : sans eux, N paiements
+     * lancés ensemble sur la dernière place l'obtenaient tous. L'achat en attente de $except ne compte pas : il garde
+     * sa place, et son prix, s'il revient sur la page de paiement.
+     */
+    public function countFounderSales(string $trackId, \DateTimeImmutable $now, ?User $except = null): int
     {
-        return $this->count(['trackId' => $trackId, 'priceKind' => PriceKind::Founder, 'status' => PurchaseStatus::Paid]);
+        $qb = $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->andWhere('p.trackId = :track')
+            ->andWhere('p.priceKind = :founder')
+            ->andWhere('p.status = :paid OR (p.status = :pending AND p.createdAt > :reservedSince'.(null !== $except ? ' AND (p.user IS NULL OR p.user != :except)' : '').')')
+            ->setParameter('track', $trackId)
+            ->setParameter('founder', PriceKind::Founder)
+            ->setParameter('paid', PurchaseStatus::Paid)
+            ->setParameter('pending', PurchaseStatus::Pending)
+            // La session est créée juste après l'achat : quelques minutes de marge sur sa durée de vie.
+            ->setParameter('reservedSince', $now->modify(sprintf('-%d seconds', CheckoutSession::LIFETIME + 300)));
+        if (null !== $except) {
+            $qb->setParameter('except', $except);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     public function findOneBySession(string $sessionId): ?Purchase

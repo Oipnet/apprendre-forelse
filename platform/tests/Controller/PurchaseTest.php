@@ -262,6 +262,36 @@ final class PurchaseTest extends WebTestCase
         $this->assertStringNotContainsString('79,00', $this->client->getCrawler()->filter('main')->text());
     }
 
+    public function testUnPaiementEnCoursReserveLaDernierePlaceFondateur(): void
+    {
+        $this->setPrice('payant', 7900, 4900, quota: 1);
+        $ada = $this->createUser();
+        $bob = $this->createUser('bob@example.test', 'Bob');
+
+        $this->client->loginUser($ada);
+        $this->checkout();
+        $this->assertSame(4900, $this->onlyPurchase()->getPrice(), 'Ada lance son paiement sur la dernière place.');
+
+        // Pas encore payé, mais la place est prise : Bob paierait le prix normal.
+        $this->client->loginUser($bob);
+        $this->client->request('GET', '/parcours/payant/acheter');
+        $this->assertSelectorTextContains('main', '79,00');
+        $this->assertSelectorTextNotContains('main', '49,00');
+
+        // Ada revient sur la page de paiement : sa réservation ne compte pas contre elle, même session, même prix.
+        $this->client->loginUser($ada);
+        $this->checkout();
+        $this->assertResponseRedirects('https://checkout.stripe.test/c/pay/cs_test_'.$this->onlyPurchase()->getId(), 303);
+        $this->assertSame([], FakePaymentGateway::$expired);
+
+        // Au-delà de la durée de vie de sa session, la place est rendue.
+        $this->entityManager()->createQuery('UPDATE '.Purchase::class.' p SET p.createdAt = :old')
+            ->execute(['old' => new \DateTimeImmutable(sprintf('-%d seconds', CheckoutSession::LIFETIME + 600))]);
+        $this->client->loginUser($bob);
+        $this->client->request('GET', '/parcours/payant/acheter');
+        $this->assertSelectorTextContains('main', '49,00');
+    }
+
     public function testUnWebhookPourUneSessionInconnueResteEnEchecAvecSonMessage(): void
     {
         $this->sendPaidWebhook($this->client, 'cs_inconnue', 7900, eventId: 'evt_inconnu');
