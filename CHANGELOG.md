@@ -78,6 +78,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Les fichiers à télécharger d'un parcours sont réservés à ceux qui y ont accès.** `/telechargements` servait tout
+  fichier de `DOWNLOADS_DIR` à n'importe quel compte connecté : l'archive d'un parcours payant revenait à un compte
+  gratuit. Nouvelle clé `downloads:` de `track.yaml` : un fichier qu'un parcours déclare demande l'accès à tout ce
+  parcours (403 sinon, 404 si le parcours est en préparation). Un fichier qu'aucun parcours ne déclare reste ouvert
+  à tout compte connecté, comme avant. Un moteur plus ancien ignore la clé.
 - **Un retour sur un exercice (« Un avis ? ») demande de pouvoir l'ouvrir**, comme les autres API d'un exercice :
   403 pour un chapitre fermé, 404 pour un parcours en préparation — la réponse ne dit plus quels exercices
   existent. Au plus 20 retours par heure et par compte.

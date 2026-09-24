@@ -21,6 +21,8 @@ final readonly class Track
         public string $visibility = self::VISIBILITY_PUBLIC,
         /** Rang d'affichage parmi les parcours (clé « order » de track.yaml) : le plus petit d'abord, sans rang à la fin. */
         public ?int $order = null,
+        /** Fichiers de DOWNLOADS_DIR réservés à ce parcours (clé « downloads » de track.yaml), voir DownloadController. */
+        public array $downloads = [],
     ) {
     }
 
