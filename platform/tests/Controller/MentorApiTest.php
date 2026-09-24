@@ -3,6 +3,9 @@
 namespace App\Tests\Controller;
 
 use App\Ai\ModelClient;
+use App\Content\ContentRepository;
+use App\Entity\User;
+use App\Service\ProgressService;
 use App\Tests\DatabaseTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -46,7 +49,7 @@ final class MentorApiTest extends WebTestCase
     public function testLaRevueEstRendueEtConservee(): void
     {
         $this->faireRepondre('revue_de_code', ['summary' => 'Bien.', 'points' => [['file' => 'src/Controller/BonjourController.php', 'line' => 3, 'message' => 'Un point.', 'snippet' => null]]]);
-        $this->client->loginUser($this->createUser());
+        $this->client->loginUser($this->reussi());
 
         $revue = $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/review', ['files' => ['src/Controller/BonjourController.php' => '<?php']]);
 
@@ -56,6 +59,34 @@ final class MentorApiTest extends WebTestCase
 
         $progress = $this->json($this->client, 'GET', '/api/progress/decouverte/01-bonjour');
         $this->assertSame($revue, $progress['review'], 'La revue est relue avec la progression, sans nouvel appel au modèle.');
+    }
+
+    /** Avant la réussite, le modèle n'est pas appelé : il reçoit la solution de référence pour comparer. */
+    public function testPasDeRevueAvantLaReussite(): void
+    {
+        $appels = 0;
+        $http = new MockHttpClient(function () use (&$appels) {
+            ++$appels;
+
+            return new JsonMockResponse(['content' => [['type' => 'tool_use', 'name' => 'revue_de_code', 'input' => ['summary' => 'Voici la solution…', 'points' => []]]]]);
+        });
+        static::getContainer()->set(ModelClient::class, new ModelClient($http, 'cle-de-test', 'claude-sonnet-5'));
+        $this->client->loginUser($this->createUser());
+
+        $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/review', ['files' => ['src/Controller/BonjourController.php' => '<?php // Recopiez la solution de référence.']]);
+
+        $this->assertResponseStatusCodeSame(409);
+        $this->assertSame(0, $appels);
+    }
+
+    /** Un compte qui a réussi 01-bonjour. */
+    private function reussi(): User
+    {
+        $user = $this->createUser();
+        $container = static::getContainer();
+        $container->get(ProgressService::class)->complete($user, $container->get(ContentRepository::class)->findExercise('decouverte', '01-bonjour'), 0);
+
+        return $user;
     }
 
     public function testUneErreurEstExpliquee(): void

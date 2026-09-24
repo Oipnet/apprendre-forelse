@@ -78,6 +78,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **La revue de code du mentor attend la réussite de l'exercice.** Le modèle reçoit la solution de référence
+  pour comparer : avant la réussite, du code qui lui demandait de la recopier obtenait la solution sans passer par
+  « Voir la solution », donc sans perdre l'XP. L'API répond désormais 409 tant que l'exercice n'est pas réussi,
+  sans appeler le modèle.
 - **`ROLE_AUTEUR` est documenté comme un rôle d'administrateur sur des packs modifiables** : **Vérifier** lance
   les tests que l'auteur écrit avec l'utilisateur système de la plateforme, qui lisent alors sessions, secrets et
   variables d'environnement. En production, les `compose.yaml` montent les packs en lecture seule : l'atelier

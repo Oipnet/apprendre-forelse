@@ -40,7 +40,7 @@ final class MentorApiController extends AbstractController
     #[Route('/pratique/{exerciseId}/review', name: 'api_mentor_review_pratique', defaults: ['trackId' => null], methods: ['POST'], priority: 1)]
     public function review(?string $trackId, string $exerciseId, #[MapRequestPayload] ReviewInput $input): JsonResponse
     {
-        [$user, $exercise] = $this->resolve($trackId, $exerciseId);
+        [$user, $exercise] = $this->resolve($trackId, $exerciseId, requireCompleted: true);
         $review = $this->appeler(fn () => $this->mentor->revue($exercise, $input->files));
         // Conservée avec la progression : l'apprenant la retrouve en revenant, sans nouvel appel.
         $this->progress->saveReview($user, $exercise, $review);
@@ -75,7 +75,7 @@ final class MentorApiController extends AbstractController
     }
 
     /** @return array{User, Exercise} */
-    private function resolve(?string $trackId, string $exerciseId): array
+    private function resolve(?string $trackId, string $exerciseId, bool $requireCompleted = false): array
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -87,6 +87,11 @@ final class MentorApiController extends AbstractController
         }
         $exercise = $this->exercises->find($trackId, $exerciseId) ?? throw $this->createNotFoundException();
         $this->guard->check($user, $exercise);
+        // La revue compare au code de référence, que le modèle reçoit : avant la réussite, du code qui lui
+        // demanderait de la recopier livrerait la solution sans passer par « Voir la solution » (et sa perte d'XP).
+        if ($requireCompleted && !$this->progress->find($user, $exercise)?->isCompleted()) {
+            throw new HttpException(Response::HTTP_CONFLICT, 'La revue de code vient après la réussite : faites d\'abord passer les tests.');
+        }
 
         $limit = $this->mentorLimiter->create((string) $user->getId())->consume();
         if (!$limit->isAccepted()) {
