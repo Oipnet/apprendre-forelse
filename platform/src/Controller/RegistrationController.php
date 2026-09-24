@@ -36,6 +36,9 @@ final class RegistrationController extends AbstractController
         /** Inscriptions refusées pour email déjà pris, par adresse IP (config/packages/rate_limiter.yaml). */
         #[Autowire(service: 'limiter.registration_duplicate')]
         private readonly RateLimiterFactoryInterface $duplicates,
+        /** Codes d'invitation inconnus, par adresse IP : un code ouvre des comptes, parfois des parcours payants. */
+        #[Autowire(service: 'limiter.invitation_code')]
+        private readonly RateLimiterFactoryInterface $invitationCodes,
     ) {
     }
 
@@ -58,8 +61,14 @@ final class RegistrationController extends AbstractController
         // c'est ralentir qui teste une liste d'adresses : passé un certain nombre de refus, plus aucune inscription
         // n'aboutit depuis cette adresse IP, que l'email soit pris ou non.
         $duplicates = $this->duplicates->create($request->getClientIp() ?? 'inconnu');
+        $codes = $this->invitationCodes->create($request->getClientIp() ?? 'inconnu');
+        $withCode = $form->isSubmitted() && $form->has('invitationCode') && '' !== trim((string) $form->get('invitationCode')->getData());
         if ($form->isSubmitted() && 0 === $duplicates->consume(0)->getRemainingTokens()) {
             $form->addError(new FormError('Beaucoup d\'inscriptions refusées depuis votre connexion : réessayez dans une heure.'));
+        } elseif ($withCode && 0 === $codes->consume(0)->getRemainingTokens()) {
+            $form->get('invitationCode')->addError(new FormError('Trop de codes d\'invitation essayés depuis votre connexion : réessayez dans une heure, ou demandez le lien d\'invitation à votre formateur.'));
+        } elseif ($withCode && !$form->get('invitationCode')->isValid()) {
+            $codes->consume();
         } elseif ($form->isSubmitted() && !$form->isValid() && self::emailTaken($form)) {
             $duplicates->consume();
             $holder = $users->findOneBy(['email' => $user->getEmail()]);

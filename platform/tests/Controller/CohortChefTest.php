@@ -275,11 +275,13 @@ final class CohortChefTest extends WebTestCase
         $this->client->request('POST', $form->getUri(), $values, server: self::ORIGIN);
         $this->assertResponseRedirects();
 
-        $cohorte = static::getContainer()->get(CohortRepository::class)->findOneByCode('iut-annecy');
+        // Le code a reçu sa partie aléatoire à la création.
+        $cohorte = static::getContainer()->get(CohortRepository::class)->findOneBy(['name' => 'BUT Info Annecy']);
+        $this->assertStringStartsWith('iut-annecy-', (string) $cohorte->getCode());
         $this->assertSame(['laravel-bases'], $cohorte->getAvailableTrackIds());
         $this->assertTrue($cohorte->isChef($chef));
 
-        $this->createUser('bob@example.test', 'Bob', 'iut-annecy');
+        $this->createUser('bob@example.test', 'Bob', (string) $cohorte->getCode());
         $crawler = $this->client->request('GET', '/admin');
         $this->assertSame('BUT Info Annecy', $crawler->filter('.beta-panel h2')->first()->text());
         $this->assertSame(['Bases de Laravel'], $crawler->filter('.beta-panel')->first()->filter('h3')->extract(['_text']), '« Avancement par cohorte » n\'affiche que les parcours proposés.');
