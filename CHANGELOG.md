@@ -84,6 +84,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Une boucle infinie ne fige plus l'exercice.** Un `while (true)` dans une route bloquait le worker (PHP
+  comme Nuxt : `max_execution_time` ne s'applique pas sous wasm), et tout restait en attente, le bouton sur
+  « Tests en cours… ». Le playground surveille désormais le worker par un battement de cœur : au bout de
+  10 s sans réponse, il l'arrête, l'appel en cours échoue avec un message qui évoque une boucle infinie, et
+  un worker neuf redémarre avec les fichiers du projet (et les commandes de préparation), sans recharger la
+  page. Un worker lent mais vivant, pendant une notation par mutants, n'est pas concerné. Le contrat des
+  runtimes gagne `onRestart()`, facultatif.
 - **Deux onglets de paiement ne donnent plus deux achats payés.** Une nouvelle demande de paiement pour un
   parcours reprend la session Stripe encore ouverte de l'achat en attente, au lieu d'en ouvrir une seconde :
   Stripe n'encaisse qu'une fois par session. Si elle vient d'être payée, l'apprenant arrive sur la page de

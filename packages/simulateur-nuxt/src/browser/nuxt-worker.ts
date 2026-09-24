@@ -8,7 +8,7 @@ import clientBundle from 'virtual:nuxt-sim-client';
 import { prepareHappyDom } from './happy-dom-node';
 import { NuxtSimulator } from '../index.ts';
 import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
-import type { WorkerCall, WorkerMessage } from '@forelse/runtime-contract';
+import { PING, type WorkerCall, type WorkerMessage } from '@forelse/runtime-contract';
 
 let simulator: NuxtSimulator | undefined;
 
@@ -76,7 +76,9 @@ const api: Runtime = {
 	},
 };
 
-self.addEventListener('message', async (event: MessageEvent<WorkerCall>) => {
+self.addEventListener('message', async (event: MessageEvent<WorkerCall | typeof PING>) => {
+	// Le battement de cœur de WorkerRuntime : répondu avant tout await, pour qu'un worker occupé reste vivant à ses yeux.
+	if (event.data === PING) return postMessage({ type: 'pong' } satisfies WorkerMessage);
 	const { id, method, args } = event.data;
 	try {
 		const result = await (api[method] as (...a: unknown[]) => Promise<unknown>)(...args);

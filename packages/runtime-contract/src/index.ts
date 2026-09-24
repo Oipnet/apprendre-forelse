@@ -11,8 +11,10 @@ export type {
 	HttpRequest,
 	HttpResponse,
 	Runtime,
+	RuntimeRestart,
 	TestRunResult,
 } from './runtime';
 
 // La plomberie que les deux côtés partagent : un runtime dans un worker, piloté par postMessage.
+export { PING } from './protocol';
 export { createModuleWorker, WorkerRuntime } from './worker';
