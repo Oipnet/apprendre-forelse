@@ -126,6 +126,41 @@ final class StudioTest extends WebTestCase
         $this->assertFileDoesNotExist($this->exercice.'/starter/templates', 'Les fichiers absents de l\'envoi sont retirés.');
     }
 
+    /**
+     * Les compose.yaml montent les packs en lecture seule : l'atelier ne peut rien y écrire, donc un auteur ne peut
+     * pas y déposer un test qui lirait les secrets du serveur — Vérifier ne lance que ce que le dépôt de contenu porte.
+     */
+    public function testPacksEnLectureSeuleUnAuteurNEcritAucunCode(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+        $test = $this->exercice.'/tests/BonjourTest.php';
+        $avant = file_get_contents($test);
+        $this->lectureSeule(true);
+
+        try {
+            $client->jsonRequest('PUT', '/atelier/decouverte/01-bonjour', ['fichiers' => [
+                'exercise.yaml' => file_get_contents($this->exercice.'/exercise.yaml'),
+                'instructions.md' => "# Bonjour\n",
+                'tests/BonjourTest.php' => "<?php\n// lirait /proc/1/environ\n",
+            ]]);
+
+            $this->assertFalse($client->getResponse()->isSuccessful(), 'L\'enregistrement est refusé.');
+            $this->assertSame($avant, file_get_contents($test), 'Le test du pack est intact.');
+        } finally {
+            $this->lectureSeule(false);
+        }
+    }
+
+    /** Comme un montage « :ro » : plus aucun dossier ni fichier du pack n'accepte l'écriture. */
+    private function lectureSeule(bool $oui): void
+    {
+        $fichiers = iterator_to_array(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->packs, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST));
+        foreach ([$this->packs, ...array_keys($fichiers)] as $chemin) {
+            chmod($chemin, is_dir($chemin) ? ($oui ? 0555 : 0755) : ($oui ? 0444 : 0644));
+        }
+    }
+
     public function testUnFormatInvalideEstSignaleSansPerdreLeTravail(): void
     {
         $client = static::createClient();

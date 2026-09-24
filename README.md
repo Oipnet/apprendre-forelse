@@ -79,6 +79,8 @@ Tests : `make test`. Vérification des packs : `make check`.
 
 L'atelier écrit sur le disque et exécute le PHP du pack : il est réservé au rôle `ROLE_AUTEUR`.
 
+> ⚠️ **Sur des packs modifiables, `ROLE_AUTEUR` est un rôle d'administrateur.** **Vérifier** lance PHPUnit sur les tests que l'auteur vient d'écrire, avec l'utilisateur système de la plateforme : un test peut lire les sessions, `APP_SECRET` et les variables d'environnement du serveur (clés Stripe et Anthropic, base). Ne le donnez qu'à qui pourrait administrer la machine. Les `compose.yaml` montent les packs **en lecture seule** : l'atelier y reste consultable, mais n'écrit rien, et **Vérifier** ne lance que ce que le dépôt de contenu contient déjà — le même code que sa CI. On écrit alors dans le dépôt de contenu, sur son poste ; ne retirez pas le `:ro` d'une instance en production.
+
 ```bash
 bin/console app:auteur vous@example.com            # donner le droit
 bin/console app:auteur vous@example.com --retirer  # le retirer

@@ -80,7 +80,9 @@ Le tableau de bord est sur `/admin` : comptes, cohortes, accès, tarifs, message
 Pour écrire des exercices dans l'atelier (`/atelier`), le droit est distinct :
 `bin/console app:auteur vous@example.org`. L'atelier écrit dans les packs : avec le montage en lecture seule
 de `compose.yaml`, il reste consultable mais ne modifie rien. Écrire du contenu se fait plus confortablement
-sur un poste de développement (voir le [README](../README.md) du dépôt).
+sur un poste de développement (voir le [README](../README.md) du dépôt). **Gardez ce `:ro`** : sur des packs
+modifiables, un auteur fait exécuter à **Vérifier** les tests qu'il écrit, dans le conteneur `app`, avec ses
+secrets à portée — le rôle d'auteur deviendrait un rôle d'administrateur.
 
 ## Contenu : les packs
 

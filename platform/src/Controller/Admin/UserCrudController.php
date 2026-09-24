@@ -89,7 +89,8 @@ final class UserCrudController extends AbstractCrudController
             ->setChoices(['Apprenant' => 'ROLE_USER', 'Auteur' => User::ROLE_AUTEUR, 'Chef de cohorte' => User::ROLE_CHEF_COHORTE, 'Admin' => User::ROLE_ADMIN])
             ->allowMultipleChoices()
             ->renderExpanded()
-            ->renderAsBadges();
+            ->renderAsBadges()
+            ->setHelp('Auteur : sur des packs modifiables, l\'atelier exécute sur le serveur les tests qu\'il écrit, avec ses secrets à portée — un rôle d\'administrateur. Les packs de la production sont en lecture seule.');
         yield DateTimeField::new('createdAt', 'Inscrit le')->hideOnForm();
     }
 
