@@ -65,17 +65,20 @@ final class UserCrudController extends AbstractCrudController
     public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
         $previous = $entityManager->getUnitOfWork()->getOriginalEntityData($entityInstance)['cohort'] ?? null;
-        parent::updateEntity($entityManager, $entityInstance);
-        $current = $entityInstance->getCohort();
-        if ($previous === $current) {
-            return;
-        }
-        if ($previous instanceof Cohort) {
-            $this->cohortAccess->leave($entityInstance, $previous);
-        }
-        if (null !== $current) {
-            $this->cohortAccess->join($entityInstance, $current);
-        }
+        // Le compte et ses accès ensemble : un échec ne laisse pas l'apprenant dans une cohorte sans ses parcours.
+        $entityManager->wrapInTransaction(function () use ($entityManager, $entityInstance, $previous): void {
+            parent::updateEntity($entityManager, $entityInstance);
+            $current = $entityInstance->getCohort();
+            if ($previous === $current) {
+                return;
+            }
+            if ($previous instanceof Cohort) {
+                $this->cohortAccess->leave($entityInstance, $previous);
+            }
+            if (null !== $current) {
+                $this->cohortAccess->join($entityInstance, $current);
+            }
+        });
     }
 
     public function configureFields(string $pageName): iterable

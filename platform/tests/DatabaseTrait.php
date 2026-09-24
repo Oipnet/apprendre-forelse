@@ -3,7 +3,10 @@
 namespace App\Tests;
 
 use App\Entity\Cohort;
+use App\Entity\TrackAccess;
 use App\Entity\User;
+use Doctrine\ORM\Event\OnFlushEventArgs;
+use Doctrine\ORM\Events;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -53,5 +56,25 @@ trait DatabaseTrait
         $content = $client->getResponse()->getContent();
 
         return '' === $content ? null : json_decode($content, true);
+    }
+
+    /**
+     * Fait échouer tout flush qui écrit un accès (TrackAccess), comme une panne de la base en cours d'opération. Le
+     * kernel n'est plus redémarré entre deux requêtes : l'écouteur reste branché pour la suivante.
+     */
+    protected function failTrackAccessWrites(KernelBrowser $client): void
+    {
+        $client->disableReboot();
+        $client->getContainer()->get(EntityManagerInterface::class)->getEventManager()->addEventListener(Events::onFlush, new class {
+            public function onFlush(OnFlushEventArgs $args): void
+            {
+                $unitOfWork = $args->getObjectManager()->getUnitOfWork();
+                foreach ([...$unitOfWork->getScheduledEntityInsertions(), ...$unitOfWork->getScheduledEntityUpdates()] as $entity) {
+                    if ($entity instanceof TrackAccess) {
+                        throw new \RuntimeException('Écriture des accès en échec (test).');
+                    }
+                }
+            }
+        });
     }
 }

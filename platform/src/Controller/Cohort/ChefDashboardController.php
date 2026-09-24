@@ -99,10 +99,12 @@ final class ChefDashboardController extends AbstractDashboardController
 
             return $this->redirectToRoute('chef_cohort', ['id' => $cohort->getId()]);
         }
-        $cohort->setAvailableTrackIds($selection);
-        $entityManager->flush();
         // Financée par l'établissement : accès ouverts pour les parcours ajoutés, révoqués pour les parcours retirés.
-        $this->cohortAccess->sync($cohort);
+        // Ensemble ou pas du tout : une sélection enregistrée sans ses accès laisserait les apprenants sans parcours.
+        $entityManager->wrapInTransaction(function () use ($cohort, $selection): void {
+            $cohort->setAvailableTrackIds($selection);
+            $this->cohortAccess->sync($cohort);
+        });
 
         $this->addFlash('success', $cohort->hasTrackSelection()
             ? sprintf('Parcours de « %s » enregistrés : %s.', $cohort->getName(), implode(', ', array_map(fn (string $id) => $this->content->findTrack($id)?->title ?? $id, $cohort->getAvailableTrackIds())))
