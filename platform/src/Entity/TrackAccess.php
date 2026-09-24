@@ -94,6 +94,12 @@ class TrackAccess
         }
     }
 
+    /** Rouvre un accès acheté après une contestation bancaire gagnée : à vie, comme à l'achat. */
+    public function restore(): void
+    {
+        $this->endsAt = null;
+    }
+
     /** Pour un accès de cohorte : suit les dates de la cohorte (et se rouvre si le parcours lui est rendu). */
     public function followCohortDates(Cohort $cohort): void
     {

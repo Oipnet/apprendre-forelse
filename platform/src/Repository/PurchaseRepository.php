@@ -30,6 +30,11 @@ class PurchaseRepository extends ServiceEntityRepository
         return $this->findOneBy(['stripeSessionId' => $sessionId]);
     }
 
+    public function findOneByPaymentIntent(string $paymentIntentId): ?Purchase
+    {
+        return $this->findOneBy(['stripePaymentIntentId' => $paymentIntentId]);
+    }
+
     /** @return list<Purchase> les achats de l'apprenant, les plus récents d'abord (sessions abandonnées exclues) */
     public function findByUser(User $user): array
     {

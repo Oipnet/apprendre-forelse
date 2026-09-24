@@ -308,4 +308,73 @@ final class PurchaseTest extends WebTestCase
         $this->client->request('GET', '/parcours/payant/e2');
         $this->assertResponseStatusCodeSame(403);
     }
+
+    public function testUneContestationBancaireRevoqueLAccesJusquACeQuElleSoitGagnee(): void
+    {
+        $ada = $this->paidPurchase();
+        $paymentIntent = 'pi_cs_test_'.$this->onlyPurchase()->getId();
+
+        $this->sendWebhook($this->client, 'charge.dispute.created', ['id' => 'dp_1', 'object' => 'dispute', 'payment_intent' => $paymentIntent, 'status' => 'needs_response'], 'evt_dispute');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(PurchaseStatus::Disputed, $this->onlyPurchase()->getStatus());
+        $this->client->loginUser($ada);
+        $this->client->request('GET', '/parcours/payant/e2');
+        $this->assertResponseStatusCodeSame(403, 'Contestation ouverte : l\'accès est révoqué.');
+
+        // Perdue : rien ne change. Gagnée : le paiement reste acquis, l'accès se rouvre.
+        $this->sendWebhook($this->client, 'charge.dispute.closed', ['id' => 'dp_1', 'object' => 'dispute', 'payment_intent' => $paymentIntent, 'status' => 'lost'], 'evt_lost');
+        $this->assertSame(PurchaseStatus::Disputed, $this->onlyPurchase()->getStatus());
+        $this->sendWebhook($this->client, 'charge.dispute.closed', ['id' => 'dp_1', 'object' => 'dispute', 'payment_intent' => $paymentIntent, 'status' => 'won'], 'evt_won');
+        $this->assertSame(PurchaseStatus::Paid, $this->onlyPurchase()->getStatus());
+        $this->client->loginUser($ada);
+        $this->client->request('GET', '/parcours/payant/e2');
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testUnRemboursementFaitDepuisStripeRevoqueLAcces(): void
+    {
+        $ada = $this->paidPurchase();
+        $paymentIntent = 'pi_cs_test_'.$this->onlyPurchase()->getId();
+
+        // Remboursement partiel (un geste commercial) : l'accès reste.
+        $this->sendWebhook($this->client, 'charge.refunded', ['id' => 'ch_1', 'object' => 'charge', 'payment_intent' => $paymentIntent, 'refunded' => false, 'amount_refunded' => 1000], 'evt_partiel');
+        $this->assertSame(PurchaseStatus::Paid, $this->onlyPurchase()->getStatus());
+
+        $this->sendWebhook($this->client, 'charge.refunded', ['id' => 'ch_1', 'object' => 'charge', 'payment_intent' => $paymentIntent, 'refunded' => true, 'refunds' => ['data' => [['id' => 're_1']]]], 'evt_total');
+        $this->assertResponseIsSuccessful();
+        $purchase = $this->onlyPurchase();
+        $this->assertSame(PurchaseStatus::Refunded, $purchase->getStatus());
+        $this->assertSame('re_1', $purchase->getStripeRefundId());
+        $this->client->loginUser($ada);
+        $this->client->request('GET', '/parcours/payant/e2');
+        $this->assertResponseStatusCodeSame(403);
+    }
+
+    public function testLeRemboursementDeLAdministrationRevientParLeWebhookSansRienChanger(): void
+    {
+        $this->paidPurchase();
+        $purchase = $this->onlyPurchase();
+        $admin = $this->createUser('admin@example.test', 'Admin')->setRoles([User::ROLE_ADMIN]);
+        $this->entityManager()->flush();
+        $this->client->loginUser($admin);
+        $this->client->request('POST', '/admin/achats/'.$purchase->getId().'/rembourser', server: self::ORIGIN);
+        $refundedAt = $this->onlyPurchase()->getRefundedAt();
+
+        $this->sendWebhook($this->client, 'charge.refunded', ['id' => 'ch_1', 'object' => 'charge', 'payment_intent' => 'pi_cs_test_'.$purchase->getId(), 'refunded' => true], 'evt_retour');
+        $this->assertResponseIsSuccessful();
+        $this->assertEquals($refundedAt, $this->onlyPurchase()->getRefundedAt());
+        $this->assertNotNull($this->onlyPurchase()->getStripeRefundId(), 'Le numéro de remboursement de l\'administration est gardé.');
+    }
+
+    /** Ada achète le parcours « payant », le paiement est confirmé. */
+    private function paidPurchase(): User
+    {
+        $this->setPrice('payant', 7900);
+        $ada = $this->createUser();
+        $this->client->loginUser($ada);
+        $this->checkout();
+        $this->sendPaidWebhook($this->client, 'cs_test_'.$this->onlyPurchase()->getId(), 7900);
+
+        return $ada;
+    }
 }
