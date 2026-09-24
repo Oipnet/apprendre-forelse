@@ -72,6 +72,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Les exports CSV n'exécutent plus de formule** (`app:beta:feedback`, `app:beta:progress`) : un texte qui
+  commence par `=`, `+`, `-`, `@`, une tabulation ou un retour chariot (un pseudo `=HYPERLINK(…)`, par exemple)
+  est préfixé d'une apostrophe, et le tableur l'affiche comme du texte. Les nombres, négatifs compris, restent
+  des nombres.
 - **On ne peut plus savoir par le mot de passe oublié si une adresse a un compte.** La page était déjà la même
   dans les deux cas, mais le temps de réponse trahissait l'envoi de l'email. La requête ne fait plus que
   déposer la demande dans la file : le worker cherche le compte, crée le lien et l'envoie. Mesuré en local :
