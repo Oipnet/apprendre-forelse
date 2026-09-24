@@ -76,6 +76,26 @@ final class StripeGateway implements PaymentGateway
         return new CheckoutSession($session->id, (string) $session->url);
     }
 
+    public function retrieveCheckoutSession(string $sessionId): CheckoutSession
+    {
+        try {
+            $session = $this->client()->checkout->sessions->retrieve($sessionId);
+        } catch (ApiErrorException $e) {
+            throw new PaymentException('Le paiement en cours n\'a pas pu être retrouvé : '.$e->getMessage(), previous: $e);
+        }
+
+        return new CheckoutSession($session->id, (string) $session->url, (string) $session->status);
+    }
+
+    public function expireCheckoutSession(string $sessionId): void
+    {
+        try {
+            $this->client()->checkout->sessions->expire($sessionId);
+        } catch (ApiErrorException $e) {
+            throw new PaymentException('Le paiement en cours n\'a pas pu être annulé : '.$e->getMessage(), previous: $e);
+        }
+    }
+
     public function receiptUrl(string $paymentIntentId): ?string
     {
         try {

@@ -16,6 +16,16 @@ interface PaymentGateway
     /** @throws PaymentException */
     public function createCheckoutSession(Purchase $purchase, string $productName, string $successUrl, string $cancelUrl): CheckoutSession;
 
+    /** @throws PaymentException */
+    public function retrieveCheckoutSession(string $sessionId): CheckoutSession;
+
+    /**
+     * Ferme une session encore ouverte : plus rien ne peut y être payé. Échoue si elle vient d'être payée.
+     *
+     * @throws PaymentException
+     */
+    public function expireCheckoutSession(string $sessionId): void;
+
     /** Lien vers le reçu du paiement, s'il existe déjà. */
     public function receiptUrl(string $paymentIntentId): ?string;
 

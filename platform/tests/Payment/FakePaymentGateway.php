@@ -15,6 +15,10 @@ final class FakePaymentGateway implements PaymentGateway
 {
     /** @var list<array{purchaseId: int|null, price: int, productName: string, successUrl: string}> */
     public static array $sessions = [];
+    /** @var array<string, string> état de chaque session créée (CheckoutSession::OPEN par défaut), par identifiant */
+    public static array $statuses = [];
+    /** @var list<string> sessions closes par la plateforme */
+    public static array $expired = [];
     /** @var list<string> payment intents remboursés */
     public static array $refunds = [];
     public static bool $failing = false;
@@ -23,7 +27,7 @@ final class FakePaymentGateway implements PaymentGateway
 
     public static function reset(): void
     {
-        self::$sessions = self::$refunds = [];
+        self::$sessions = self::$refunds = self::$statuses = self::$expired = [];
         self::$failing = false;
         self::$configured = true;
     }
@@ -40,7 +44,29 @@ final class FakePaymentGateway implements PaymentGateway
         }
         self::$sessions[] = ['purchaseId' => $purchase->getId(), 'price' => $purchase->getPrice(), 'productName' => $productName, 'successUrl' => $successUrl];
 
+        self::$statuses['cs_test_'.$purchase->getId()] = CheckoutSession::OPEN;
+
         return new CheckoutSession('cs_test_'.$purchase->getId(), 'https://checkout.stripe.test/c/pay/cs_test_'.$purchase->getId());
+    }
+
+    public function retrieveCheckoutSession(string $sessionId): CheckoutSession
+    {
+        if (self::$failing) {
+            throw new PaymentException('Stripe ne répond pas.');
+        }
+        $status = self::$statuses[$sessionId] ?? throw new PaymentException(sprintf('Session « %s » inconnue.', $sessionId));
+
+        return new CheckoutSession($sessionId, CheckoutSession::OPEN === $status ? 'https://checkout.stripe.test/c/pay/'.$sessionId : '', $status);
+    }
+
+    /** Comme Stripe : seule une session ouverte se ferme. */
+    public function expireCheckoutSession(string $sessionId): void
+    {
+        if (CheckoutSession::OPEN !== (self::$statuses[$sessionId] ?? null)) {
+            throw new PaymentException('Seule une session ouverte peut expirer.');
+        }
+        self::$statuses[$sessionId] = CheckoutSession::EXPIRED;
+        self::$expired[] = $sessionId;
     }
 
     public function receiptUrl(string $paymentIntentId): ?string

@@ -9,7 +9,9 @@ use App\Entity\Purchase;
 use App\Entity\PurchaseStatus;
 use App\Entity\StripeEvent;
 use App\Entity\TrackAccess;
+use App\Entity\TrackPricing;
 use App\Entity\User;
+use App\Payment\CheckoutSession;
 use App\Payment\WithdrawalWaiver;
 use App\Tests\DatabaseTrait;
 use App\Tests\PacksTrait;
@@ -187,6 +189,99 @@ final class PurchaseTest extends WebTestCase
         $this->client->restart();
         $this->client->request('GET', '/');
         $this->assertSelectorTextContains('.lp-track-offer', 'encore 99 places');
+    }
+
+    public function testDeuxDemandesDePaiementRenvoientALaMemeSessionStripe(): void
+    {
+        $this->setPrice('payant', 7900);
+        $this->client->loginUser($this->createUser());
+
+        // Deux onglets, ou un retour arrière depuis la page de Stripe.
+        $this->checkout();
+        $url = $this->client->getResponse()->headers->get('Location');
+        $this->checkout();
+
+        $this->assertResponseRedirects($url, 303, 'La même session : Stripe n\'y encaisse qu\'un paiement.');
+        $purchase = $this->onlyPurchase();
+        $this->assertSame(PurchaseStatus::Pending, $purchase->getStatus());
+        $this->assertCount(1, FakePaymentGateway::$sessions);
+    }
+
+    public function testUnPaiementFaitDansLAutreOngletMeneALaPageDeRemerciement(): void
+    {
+        $this->setPrice('payant', 7900);
+        $this->client->loginUser($this->createUser());
+
+        $this->checkout();
+        $purchase = $this->onlyPurchase();
+        // Payé chez Stripe, webhook pas encore arrivé.
+        FakePaymentGateway::$statuses['cs_test_'.$purchase->getId()] = CheckoutSession::COMPLETE;
+        $this->checkout();
+
+        $this->assertResponseRedirects('http://localhost/achat/'.$purchase->getId().'/merci', 303);
+        $this->assertSame(PurchaseStatus::Pending, $this->onlyPurchase()->getStatus(), 'Le webhook le passera « payé ».');
+        $this->assertCount(1, FakePaymentGateway::$sessions);
+    }
+
+    public function testUneSessionExpireeLaissePlaceAUnNouvelAchat(): void
+    {
+        $this->setPrice('payant', 7900);
+        $this->client->loginUser($this->createUser());
+
+        $this->checkout();
+        $first = $this->onlyPurchase();
+        FakePaymentGateway::$statuses['cs_test_'.$first->getId()] = CheckoutSession::EXPIRED;
+        $this->checkout();
+
+        [$old, $new] = $this->purchasesInOrder();
+        $this->assertSame(PurchaseStatus::Abandoned, $old->getStatus());
+        $this->assertSame(PurchaseStatus::Pending, $new->getStatus());
+        $this->assertResponseRedirects('https://checkout.stripe.test/c/pay/cs_test_'.$new->getId(), 303);
+        $this->assertSame([], FakePaymentGateway::$expired, 'Rien à fermer : Stripe l\'a déjà fait.');
+    }
+
+    public function testUnPrixChangeFermeLaSessionOuverteAvantDEnOuvrirUneAutre(): void
+    {
+        $this->setPrice('payant', 7900);
+        $this->client->loginUser($this->createUser());
+
+        $this->checkout();
+        $first = $this->onlyPurchase();
+        $this->entityManager()->getRepository(TrackPricing::class)->findOneBy(['trackId' => 'payant'])?->setNormalPrice(9900);
+        $this->entityManager()->flush();
+        $this->checkout();
+
+        [$old, $new] = $this->purchasesInOrder();
+        $this->assertSame(['cs_test_'.$first->getId()], FakePaymentGateway::$expired, 'L\'ancien prix ne peut plus être payé.');
+        $this->assertSame(PurchaseStatus::Abandoned, $old->getStatus());
+        $this->assertSame(9900, $new->getPrice());
+        $this->assertResponseRedirects('https://checkout.stripe.test/c/pay/cs_test_'.$new->getId(), 303);
+
+        // Un achat abandonné n'apparaît pas dans le compte.
+        $this->client->request('GET', '/compte');
+        $this->assertStringNotContainsString('79,00', $this->client->getCrawler()->filter('main')->text());
+    }
+
+    public function testSiStripeNeRepondPasRienNEstEnregistre(): void
+    {
+        $this->setPrice('payant', 7900);
+        $this->client->loginUser($this->createUser());
+
+        FakePaymentGateway::$failing = true;
+        $this->checkout();
+
+        $this->assertResponseRedirects('/parcours/payant/acheter');
+        $this->assertSame([], $this->entityManager()->getRepository(Purchase::class)->findAll(), 'Pas d\'achat sans session Stripe.');
+        $this->client->followRedirect();
+        $this->assertSelectorTextContains('.flash-danger', 'Rien n\'a été débité');
+    }
+
+    /** @return list<Purchase> */
+    private function purchasesInOrder(): array
+    {
+        $this->entityManager()->clear();
+
+        return $this->entityManager()->getRepository(Purchase::class)->findBy([], ['id' => 'ASC']);
     }
 
     public function testSansRenonciationCocheeLAchatNeDemarrePas(): void

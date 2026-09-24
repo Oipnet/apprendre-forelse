@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Payment\PriceQuote;
 use App\Repository\PurchaseRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -109,6 +110,21 @@ class Purchase
     public function attachCheckoutSession(string $sessionId): void
     {
         $this->stripeSessionId = $sessionId;
+    }
+
+    /** Mêmes conditions que celles proposées maintenant : sa session Stripe peut resservir. */
+    public function hasSameTerms(PriceQuote $quote, ?string $termsVersion): bool
+    {
+        return $this->price === $quote->price && $this->priceKind === $quote->kind
+            && $this->cohort?->getId() === $quote->cohort?->getId() && $this->termsVersion === $termsVersion;
+    }
+
+    /** Session Stripe expirée ou remplacée, sans paiement. */
+    public function markAbandoned(): void
+    {
+        if (PurchaseStatus::Pending === $this->status) {
+            $this->status = PurchaseStatus::Abandoned;
+        }
     }
 
     /** Paiement confirmé. Renvoie false s'il l'était déjà (webhook rejoué). */
