@@ -12,7 +12,7 @@ import { getPHPLoaderModule, loadWebRuntime } from '@php-wasm/web';
 import { unzipSync } from 'fflate';
 import type { FrameworkProfile } from '../app/types';
 import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestCaseResult, TestRunResult } from '@forelse/runtime-contract';
-import { PING, type WorkerCall, type WorkerMessage } from '@forelse/runtime-contract';
+import { serveRuntime, type WorkerMessage } from '@forelse/runtime-contract';
 import consoleScript from './console.php?raw';
 import artisanScript from './artisan.php?raw';
 import runTestsScript from './run-tests.php?raw';
@@ -437,14 +437,7 @@ const api: Runtime = {
 	},
 };
 
-self.addEventListener('message', async (event: MessageEvent<WorkerCall | typeof PING>) => {
-	// Le battement de cœur de WorkerRuntime : répondu avant tout await, pour qu'un worker occupé reste vivant à ses yeux.
-	if (event.data === PING) return postMessage({ type: 'pong' } satisfies WorkerMessage);
-	const { id, method, args } = event.data;
-	try {
-		const result = await (api[method] as (...a: unknown[]) => Promise<unknown>)(...args);
-		postMessage({ type: 'result', id, result } satisfies WorkerMessage);
-	} catch (error) {
-		postMessage({ type: 'error', id, error: error instanceof Error ? `${error.message}\n${error.stack ?? ''}` : String(error) } satisfies WorkerMessage);
-	}
+serveRuntime(api, {
+	// php-wasm rend des copies neuves (sortie de PHP, fichier lu) : rien ne les retient dans le worker.
+	transferResponseBodies: true,
 });
