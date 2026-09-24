@@ -12,6 +12,7 @@ use App\Repository\ExerciseProgressRepository;
 use App\Seo\SeoWriter;
 use App\Security\TrackAccessChecker;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
@@ -29,6 +30,9 @@ final class PracticeController extends AbstractController
     public function __construct(
         private readonly PracticeVisibility $practices,
         private readonly FrameworkRegistry $frameworks,
+        /** Instance sur invitation : l'éditeur y reste fermé aux visiteurs, et le bas de la liste le dit. */
+        #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
+        private readonly bool $inviteOnly,
     ) {
     }
 
@@ -82,6 +86,7 @@ final class PracticeController extends AbstractController
             'total' => \count($all),
             'newCount' => \count(array_filter($all, static fn (Practice $p) => null !== $p->version)),
             'completedCount' => \count(array_filter($progress, static fn ($p) => 'completed' === $p->getStatus()->value)),
+            'inviteOnly' => $this->inviteOnly,
         ]);
     }
 
