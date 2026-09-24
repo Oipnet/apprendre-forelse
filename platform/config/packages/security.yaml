@@ -26,6 +26,11 @@ security:
                 default_target_path: app_home
                 username_parameter: email
                 password_parameter: password
+            # Contre la force brute et les mots de passe fuités : 5 échecs par compte et par adresse IP en 15 minutes
+            # (et 25 par adresse IP, tous comptes confondus), puis la connexion attend.
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
             logout:
                 path: app_logout
                 target: app_home
