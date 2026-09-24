@@ -43,6 +43,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   chaque revue du mentor. Vide (par défaut) : `AI_MODEL`, comme avant. Le reste de l'assistance ne
   change pas.
 
+- **Les emails partent d'une file d'attente**, vidée par un nouveau service `worker` dans les `compose.yaml`
+  (même image, mêmes réglages que `app`, `bin/console messenger:consume async`). Un serveur SMTP lent ou en
+  panne ne bloque plus l'inscription ni le mot de passe oublié : l'email part à son retour, avec de nouvelles
+  tentatives pendant deux heures, puis attend dans `messenger:failed:show`. La file est une table de la base
+  (`messenger_messages`, migration jouée au démarrage), rien d'autre à installer. **Pour une instance
+  auto-hébergée**, retéléchargez `compose.yaml` pour avoir le worker ; sans lui, rien ne change : par défaut
+  (`MESSENGER_TRANSPORT_DSN=sync://`), les emails partent pendant la requête, comme avant. En dev, même chose ;
+  `make dev-worker` sert à essayer la file.
+
 ### Modifié
 
 - Les liens vers la page d'inscription portent `rel="nofollow"` : elle est déjà en `noindex`, les moteurs
@@ -63,6 +72,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **On ne peut plus savoir par le mot de passe oublié si une adresse a un compte.** La page était déjà la même
+  dans les deux cas, mais le temps de réponse trahissait l'envoi de l'email. La requête ne fait plus que
+  déposer la demande dans la file : le worker cherche le compte, crée le lien et l'envoie. Mesuré en local :
+  22 ms avec compte, 21 ms sans (contre plusieurs centaines de millisecondes d'écart avec un envoi SMTP).
+- **L'inscription ne dit plus « un compte existe déjà avec cet email »**, mais oriente vers la connexion et le
+  mot de passe oublié, et le titulaire du compte reçoit un email (une fois par jour au plus) : quelqu'un a
+  essayé de s'inscrire avec son adresse. Un email pris reste visible (un nouveau compte, lui, est connecté
+  aussitôt), mais tester une liste d'adresses devient lent : après 10 refus en une heure depuis une adresse IP,
+  plus aucune inscription n'aboutit depuis celle-ci. Les inscriptions réussies ne comptent pas, pour qu'une
+  classe entière s'inscrive derrière la même adresse.
 - **Les iframes de l'aperçu sont sous `sandbox`** (côté plateforme et côté bac à sable), sans
   `allow-top-navigation` : le code affiché dans l'aperçu ne peut plus rediriger la page de la plateforme.
   Scripts, formulaires, fenêtres modales, pop-ups et téléchargements restent permis, et `allow-same-origin`

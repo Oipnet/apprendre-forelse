@@ -229,7 +229,7 @@ docker compose up -d
 | Adresses | `APP_URL`, `SANDBOX_URL` | Deux domaines distincts, avec leur schéma (`https://`). |
 | Base | `POSTGRES_PASSWORD` | Lettres et chiffres. PostgreSQL ne le lit qu'à la création de la base : le changer ensuite ne change pas le mot de passe réel. |
 | Fuseau | `APP_TIMEZONE` | Les dates sont stockées sans fuseau : choisissez-le avant les premiers comptes. |
-| Emails | `MAILER_DSN`, `MAILER_FROM`, `CONTACT_EMAIL`, `REGISTRATION_ALERT_EMAIL` | Sans `MAILER_DSN`, aucun email ne part : ni confirmation d'adresse, ni mot de passe oublié. Test : `docker compose exec app bin/console mailer:test vous@example.org`. |
+| Emails | `MAILER_DSN`, `MAILER_FROM`, `CONTACT_EMAIL`, `REGISTRATION_ALERT_EMAIL` | Sans `MAILER_DSN`, aucun email ne part : ni confirmation d'adresse, ni mot de passe oublié. Test : `docker compose exec app bin/console mailer:test vous@example.org`. Les emails passent par une file d'attente dans la base, que vide le service `worker` : un serveur SMTP en panne ne bloque pas l'inscription, l'email part à son retour. `MESSENGER_TRANSPORT_DSN=sync://` les envoie pendant la requête, sans worker. |
 | Mentions légales | `LEGAL_*` | Remplissent `/mentions-legales` et `/confidentialite` ; tant qu'un champ obligatoire manque, les pages le signalent. Les textes sont écrits pour le droit français. |
 | Inscription | `REGISTRATION_INVITE_ONLY` | `1` : sur code de cohorte uniquement (cohortes créées dans `/admin`), et la Pratique demande un compte. `0` : inscription libre, et la Pratique s'écrit sans compte. |
 | Référencement | `SEARCH_INDEXING`, `GOOGLE_SITE_VERIFICATION` | `0` pour une instance interne ou de préproduction : robots.txt interdit l'indexation. |
@@ -429,7 +429,7 @@ Planifiez la sauvegarde (cron) et copiez les fichiers hors du serveur.
 | Erreur sur toutes les pages après l'ajout d'un pack ou une mise à jour | Un pack refuse la version du moteur, ou son format est invalide : le message est dans `docker compose logs app`. |
 | L'aperçu du code reste vide | `SANDBOX_URL` exacte et joignable ? Derrière un proxy : `SYMFONY_TRUSTED_PROXIES`, et le proxy sert bien les deux domaines. |
 | « Origine non autorisée » à l'envoi d'un formulaire | `APP_URL` ne correspond pas à l'adresse affichée par le navigateur (schéma, domaine, port), ou `SYMFONY_TRUSTED_PROXIES` manque derrière un proxy. |
-| Aucun email reçu | `docker compose exec app bin/console mailer:test vous@example.org`, puis les journaux de votre fournisseur. |
+| Aucun email reçu | `docker compose exec app bin/console mailer:test vous@example.org`, puis `docker compose logs worker` (le service `worker` tourne-t-il ? il manque à un `compose.yaml` antérieur à la 2.1) et les journaux de votre fournisseur. Un email qui a échoué plusieurs heures durant attend dans `docker compose exec worker bin/console messenger:failed:show` ; `messenger:failed:retry` le renvoie. |
 | Encart « Mentions incomplètes » | Renseignez les variables `LEGAL_*` obligatoires. |
 | Quelle version tourne ? | `docker compose exec app cat /app/VERSION`, aussi affichée en pied de page. |
 

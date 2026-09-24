@@ -15,6 +15,18 @@ framework:
             policy: fixed_window
             limit: 5
             interval: '1 hour'
+        # Inscriptions refusées parce que l'email a déjà un compte, par adresse IP. Au-delà, toute inscription
+        # est refusée depuis cette adresse : c'est ce qui ralentit qui teste une liste d'emails. Seuls les refus
+        # comptent, pour qu'une classe entière s'inscrive derrière la même adresse IP.
+        registration_duplicate:
+            policy: sliding_window
+            limit: 10
+            interval: '1 hour'
+        # Email « quelqu'un a voulu créer un compte avec votre adresse », par compte : pas de quoi inonder sa boîte.
+        registration_notice:
+            policy: fixed_window
+            limit: 1
+            interval: '1 day'
 
 when@test:
     framework:

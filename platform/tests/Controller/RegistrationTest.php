@@ -2,9 +2,11 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Tests\DatabaseTrait;
 use App\Tests\PacksTrait;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Mime\Email;
 
@@ -85,7 +87,73 @@ final class RegistrationTest extends WebTestCase
         ], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertSelectorTextContains('.form-card', 'Un compte existe déjà avec cet email.');
+        $this->assertSelectorTextContains('.form-card', User::EMAIL_TAKEN);
+
+        // Le titulaire du compte apprend la tentative.
+        $this->assertEmailCount(1);
+        $email = $this->getMailerMessage();
+        $this->assertInstanceOf(Email::class, $email);
+        $this->assertEmailAddressContains($email, 'To', 'gorm@example.test');
+        $this->assertEmailTextBodyContains($email, 'essayer de créer un compte');
+    }
+
+    public function testLeTitulaireNEstPrevenuQuUneFoisParJour(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $holder = $this->createUser('gorm@example.test');
+        // Les compteurs vivent dans un cache en mémoire, vidé entre deux requêtes de test : on épuise le quota avant
+        // la première requête, sur le même kernel.
+        static::getContainer()->get('limiter.registration_notice')->create((string) $holder->getId())->consume();
+
+        $this->register($client, 'gorm@example.test');
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertEmailCount(0);
+    }
+
+    public function testTropDEmailsDejaPrisBloquentToutesLesInscriptions(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $limiter = static::getContainer()->get('limiter.registration_duplicate')->create('127.0.0.1');
+        for ($i = 1; $i <= 10; ++$i) {
+            $limiter->consume();
+        }
+
+        // Même avec un email libre : sinon, la réussite trahirait qu'il n'avait pas de compte.
+        $this->register($client, 'libre@example.test');
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSelectorTextContains('.form-card', 'réessayez dans une heure');
+        $this->assertNull(static::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'libre@example.test']));
+    }
+
+    public function testLesInscriptionsReussiesNeRapprochentPasDeLaLimite(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        // Une classe entière s'inscrit derrière la même adresse IP : seuls les refus pour email déjà pris comptent.
+        $limiter = static::getContainer()->get('limiter.registration_duplicate')->create('127.0.0.1');
+        for ($i = 1; $i <= 9; ++$i) {
+            $limiter->consume();
+        }
+
+        $this->register($client, 'eleve@example.test');
+
+        $this->assertResponseRedirects('/');
+        $this->assertSame(1, $limiter->consume(0)->getRemainingTokens());
+    }
+
+    /** Envoi direct, sans charger le formulaire : c'est la première requête, sur le kernel des compteurs épuisés. */
+    private function register(KernelBrowser $client, string $email): void
+    {
+        $client->request('POST', '/inscription', ['registration_form' => [
+            'displayName' => 'Gorm',
+            'email' => $email,
+            'plainPassword' => 'une-longue-phrase',
+            '_token' => 'csrf-token',
+        ]], server: ['HTTP_ORIGIN' => 'http://localhost']);
     }
 
     public function testRedirectionOuverteImpossible(): void

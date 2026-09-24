@@ -2,20 +2,16 @@
 
 namespace App\Controller;
 
+use App\Account\PasswordResetRequested;
 use App\Entity\User;
 use App\Form\ChangePasswordFormType;
 use App\Form\ResetPasswordRequestFormType;
-use App\Instance\Branding;
-use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
@@ -27,8 +23,9 @@ use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
  * Mot de passe oublié : l'apprenant saisit son email, reçoit un lien à usage unique (valable une
  * heure, voir config/packages/reset_password.yaml) et choisit un nouveau mot de passe.
  *
- * La page « email envoyé » est la même que l'adresse soit connue ou non : on ne révèle pas
- * quels emails ont un compte.
+ * La page « email envoyé » est la même que l'adresse soit connue ou non, et la requête fait le même travail
+ * dans les deux cas : déposer la demande dans la file d'attente (PasswordResetRequested). C'est le worker qui
+ * cherche le compte et envoie le lien ; le temps de réponse ne dit pas quels emails ont un compte.
  */
 #[Route('/mot-de-passe-oublie')]
 final class ResetPasswordController extends AbstractController
@@ -38,15 +35,11 @@ final class ResetPasswordController extends AbstractController
     public function __construct(
         private readonly ResetPasswordHelperInterface $resetPasswordHelper,
         private readonly EntityManagerInterface $entityManager,
-        /** Expéditeur des emails (« Nom <adresse> »), voir MAILER_FROM dans .env. */
-        #[Autowire(env: 'MAILER_FROM')]
-        private readonly string $mailerFrom,
-        private readonly Branding $branding,
     ) {
     }
 
     #[Route('', name: 'app_forgot_password_request')]
-    public function request(Request $request, UserRepository $users, MailerInterface $mailer): Response
+    public function request(Request $request, MessageBusInterface $bus): Response
     {
         if ($this->getUser()) {
             return $this->redirectToRoute('app_home');
@@ -56,10 +49,7 @@ final class ResetPasswordController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user = $users->findOneBy(['email' => $form->get('email')->getData()]);
-            if ($user instanceof User) {
-                $this->sendResetEmail($user, $mailer);
-            }
+            $bus->dispatch(new PasswordResetRequested((string) $form->get('email')->getData()));
 
             return $this->redirectToRoute('app_check_email');
         }
@@ -71,11 +61,8 @@ final class ResetPasswordController extends AbstractController
     #[Route('/email-envoye', name: 'app_check_email')]
     public function checkEmail(): Response
     {
-        // Sans demande en session (adresse inconnue, ou page ouverte directement) : un jeton factice,
-        // pour afficher la même durée de validité dans tous les cas.
-        $resetToken = $this->getTokenObjectFromSession() ?? $this->resetPasswordHelper->generateFakeResetToken();
-
-        return $this->render('security/reset_password/check_email.html.twig', ['resetToken' => $resetToken]);
+        // Le lien part plus tard, s'il part : un jeton factice donne la durée de validité, la même pour tous.
+        return $this->render('security/reset_password/check_email.html.twig', ['resetToken' => $this->resetPasswordHelper->generateFakeResetToken()]);
     }
 
     /** Lien reçu par email : vérifie le jeton, puis propose de choisir le nouveau mot de passe. */
@@ -126,27 +113,5 @@ final class ResetPasswordController extends AbstractController
         }
 
         return $this->render('security/reset_password/reset.html.twig', ['form' => $form]);
-    }
-
-    private function sendResetEmail(User $user, MailerInterface $mailer): void
-    {
-        try {
-            $resetToken = $this->resetPasswordHelper->generateResetToken($user);
-        } catch (ResetPasswordExceptionInterface) {
-            // Demande trop rapprochée de la précédente : on n'envoie rien, sans le dire (sinon on
-            // révélerait que l'adresse a un compte).
-            return;
-        }
-
-        $mailer->send((new TemplatedEmail())
-            ->from(Address::create($this->mailerFrom))
-            ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
-            ->subject(sprintf('Votre nouveau mot de passe %s', $this->branding->name()))
-            ->htmlTemplate('emails/reset_password.html.twig')
-            ->textTemplate('emails/reset_password.txt.twig')
-            ->context(['resetToken' => $resetToken, 'user' => $user]));
-
-        // Pour la page « email envoyé » : la durée de validité, sans le jeton lui-même.
-        $this->setTokenObjectInSession($resetToken);
     }
 }

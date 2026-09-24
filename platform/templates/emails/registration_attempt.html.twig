@@ -1,0 +1,10 @@
+<p>Bonjour {{ user.displayName }},</p>
+
+<p>Quelqu'un vient d'essayer de créer un compte sur {{ marque.name }} avec votre adresse email. Or vous en avez déjà un.</p>
+
+<p>Si c'était vous, connectez-vous : <a href="{{ url('app_login') }}">{{ url('app_login') }}</a>.
+Mot de passe oublié ? Choisissez-en un nouveau : <a href="{{ url('app_forgot_password_request') }}">{{ url('app_forgot_password_request') }}</a>.</p>
+
+<p>Si ce n'était pas vous, ignorez cet email : aucun compte n'a été créé et le vôtre n'a pas changé.</p>
+
+<p>{{ marque.signature }}</p>

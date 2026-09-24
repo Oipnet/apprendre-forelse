@@ -10,7 +10,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    environment:
+    environment: &app-environment
+      # Emails en file d'attente dans la base, envoyés par le service « worker » ci-dessous.
+      MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0}
       APP_URL: ${APP_URL:?APP_URL manquant dans .env}
       SANDBOX_URL: ${SANDBOX_URL:?SANDBOX_URL manquant dans .env}
       # Adresses écoutées par Caddy. Vide : APP_URL et SANDBOX_URL, avec HTTPS automatique. « :80 » derrière un
@@ -71,7 +73,7 @@ services:
       LEGAL_MEDIATOR_NAME: ${LEGAL_MEDIATOR_NAME:-}
       LEGAL_MEDIATOR_URL: ${LEGAL_MEDIATOR_URL:-}
       LEGAL_REFUND_DAYS: ${LEGAL_REFUND_DAYS:-}
-    volumes:
+    volumes: &app-volumes
       # Secret de l'application, sessions, certificats HTTPS.
       - data:/data
       - config:/config
@@ -87,6 +89,24 @@ services:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
       - "${HTTPS_PORT:-443}:443/udp" # HTTP/3
+
+  # Envoi des emails, hors des requêtes : la plateforme les dépose dans la base (Messenger), ce service les
+  # envoie. Un serveur SMTP lent ou en panne ne bloque plus l'inscription, et l'email part à son retour
+  # (nouvelles tentatives pendant deux heures, puis `bin/console messenger:failed:retry` dans ce conteneur).
+  # Même image, mêmes réglages que « app » ; il redémarre de lui-même toutes les heures pour rester léger.
+  worker:
+    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:1}
+    restart: unless-stopped
+    depends_on:
+      # Après les migrations, que lance le démarrage de « app » (dont la table de la file d'attente).
+      app:
+        condition: service_healthy
+    environment: *app-environment
+    volumes: *app-volumes
+    command: ["php", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=128M"]
+    # Le contrôle de santé de l'image interroge Caddy, qui ne tourne pas ici.
+    healthcheck:
+      disable: true
 
   db:
     image: postgres:17-alpine

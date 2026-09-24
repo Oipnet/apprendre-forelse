@@ -1,5 +1,5 @@
 # Raccourcis de développement. `make install` une fois, puis `make dev`.
-.PHONY: install dev dev-platform dev-sandbox dev-vite dev-mail test conformite-nuxt check ci build docker
+.PHONY: install dev dev-platform dev-sandbox dev-vite dev-mail dev-worker test conformite-nuxt check ci build docker
 
 install: ## Dépendances, environnements d'exécution et bases de données (PostgreSQL : voir README)
 	cd platform && composer install
@@ -27,6 +27,11 @@ dev-vite:
 # Avec MAILER_DSN=smtp://localhost:1025 dans platform/.env.local, aucun email ne part pour de vrai.
 dev-mail:
 	mailpit --smtp 127.0.0.1:1025 --listen 127.0.0.1:8025
+
+# Envoi des emails mis en file d'attente, avec MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0 dans
+# platform/.env.local (par défaut, sync:// les envoie pendant la requête et ce worker n'a rien à faire).
+dev-worker:
+	cd platform && php -d xdebug.mode=off bin/console messenger:consume async -vv
 
 test: ## Tests du moteur
 	cd platform && php -d xdebug.mode=off bin/phpunit

@@ -7,6 +7,7 @@
         <h1>Créer un compte</h1>
         <p class="meta">{{ inviteOnly ? 'Bêta sur invitation. ' : 'Gratuit. ' }}Votre progression et votre XP sont sauvegardées.</p>
         {{ form_start(form) }}
+            {{ form_errors(form) }}
             {% if form.invitationCode is defined %}{{ form_row(form.invitationCode) }}{% endif %}
             {{ form_row(form.displayName) }}
             {{ form_row(form.email) }}

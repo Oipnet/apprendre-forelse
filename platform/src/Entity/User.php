@@ -15,9 +15,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 // « user » est un mot réservé de PostgreSQL : le nom doit être cité.
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-#[UniqueEntity(fields: ['email'], message: 'Un compte existe déjà avec cet email.')]
+#[UniqueEntity(fields: ['email'], message: self::EMAIL_TAKEN)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    /** Email déjà pris : on oriente vers la connexion, sans en dire plus (le titulaire du compte est prévenu). */
+    public const string EMAIL_TAKEN = 'Impossible de créer un compte avec cet email. Si c\'est le vôtre, connectez-vous, ou choisissez un nouveau mot de passe.';
+
     /** Droit d'écrire des exercices dans l'atelier des auteurs. */
     public const string ROLE_AUTEUR = 'ROLE_AUTEUR';
     /** Accès au tableau de bord d'administration (/admin). */
