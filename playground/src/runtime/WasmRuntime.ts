@@ -4,6 +4,6 @@ import phpWorkerUrl from './php-worker.ts?worker&url';
 /** Le runtime PHP : php-wasm dans un worker. */
 export class WasmRuntime extends WorkerRuntime {
 	constructor() {
-		super(phpWorkerUrl, 'php');
+		super(phpWorkerUrl, 'php', { label: 'PHP' });
 	}
 }

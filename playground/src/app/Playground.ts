@@ -159,6 +159,18 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	}
 	bridge.navigate(exercise.preview);
 
+	// Une boucle infinie bloque le runtime : il est relancé avec les fichiers, mais ce qui vivait en mémoire
+	// (la base de l'aperçu) est à refaire. L'aperçu n'est pas rechargé : il retomberait dans la boucle.
+	// La prochaine modification le rechargera.
+	runtime.onRestart?.((event) => {
+		if (event.phase === 'restarting') status('Le code ne répond plus (boucle infinie ?) : redémarrage…', 'ko');
+		else if (event.phase === 'failed') status(`Impossible de redémarrer : ${event.error}. Rechargez la page.`, 'ko');
+		else void (async () => {
+			for (const command of exercise.setup) await consolePanel.run(command, { quiet: true });
+			status('Redémarré. Corrigez la boucle, puis relancez.', 'idle');
+		})();
+	});
+
 	// --- Éditeur -------------------------------------------------------------------------
 	// Écritures vers PHP en attente, par fichier : un debounce global perdrait la
 	// modification d'un fichier quand un autre change juste après.

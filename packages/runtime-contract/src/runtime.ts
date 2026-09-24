@@ -105,4 +105,18 @@ export interface Runtime {
 	runTests(grading?: Grading): Promise<TestRunResult>;
 	/** Commande bin/console (arguments déjà découpés), exécutée dans le projet de l'aperçu. */
 	runCommand(args: string[]): Promise<CommandResult>;
+	/**
+	 * Facultatif : prévient quand le runtime a dû être relancé parce qu'il ne répondait plus (une boucle
+	 * infinie dans le code de l'apprenant). Les fichiers sont rejoués ; ce qui ne vivait qu'en mémoire
+	 * (base de l'aperçu, sessions) est perdu.
+	 */
+	onRestart?(listener: (event: RuntimeRestart) => void): void;
 }
+
+export type RuntimeRestart =
+	/** Le runtime vient d'être arrêté ; les appels en cours ont échoué avec `reason`. */
+	| { phase: 'restarting'; reason: string }
+	/** Un runtime neuf a démarré, avec les fichiers du projet. */
+	| { phase: 'restarted' }
+	/** Le nouveau runtime n'a pas démarré : il faut recharger la page. */
+	| { phase: 'failed'; error: string };
