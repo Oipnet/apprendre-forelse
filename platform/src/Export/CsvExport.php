@@ -8,6 +8,9 @@ use Symfony\Component\Filesystem\Filesystem;
 /** CSV « à la française » (séparateur « ; », BOM UTF-8) : s'ouvre directement dans Excel ou LibreOffice. */
 final class CsvExport
 {
+    /** Premiers caractères qui font d'une cellule une formule dans un tableur. */
+    private const string FORMULA_PREFIXES = "=+-@\t\r";
+
     /**
      * @param list<string>               $header
      * @param iterable<list<scalar|null>> $rows
@@ -16,10 +19,10 @@ final class CsvExport
     {
         $buffer = fopen('php://temp', 'r+');
         fwrite($buffer, "\u{FEFF}");
-        fputcsv($buffer, $header, ';', '"', '');
+        fputcsv($buffer, array_map(self::cell(...), $header), ';', '"', '');
         $count = 0;
         foreach ($rows as $row) {
-            fputcsv($buffer, array_map(static fn ($v) => \is_bool($v) ? ($v ? 'oui' : 'non') : $v, $row), ';', '"', '');
+            fputcsv($buffer, array_map(self::cell(...), $row), ';', '"', '');
             ++$count;
         }
         rewind($buffer);
@@ -33,5 +36,22 @@ final class CsvExport
         }
 
         return $count;
+    }
+
+    /**
+     * Un texte saisi par un apprenant (pseudo, retour) qui commence comme une formule (« =HYPERLINK(…) ») est
+     * préfixé d'une apostrophe : le tableur l'affiche comme du texte au lieu de l'exécuter à l'ouverture.
+     * Les nombres restent des nombres, négatifs compris.
+     */
+    private static function cell(bool|int|float|string|null $value): int|float|string|null
+    {
+        if (\is_bool($value)) {
+            return $value ? 'oui' : 'non';
+        }
+        if (\is_string($value) && '' !== $value && str_contains(self::FORMULA_PREFIXES, $value[0])) {
+            return "'".$value;
+        }
+
+        return $value;
     }
 }
