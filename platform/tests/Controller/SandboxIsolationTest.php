@@ -16,6 +16,11 @@ final class SandboxIsolationTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('iframe#preview');
+        // L'aperçu ne peut pas naviguer la page parente.
+        $sandbox = $client->getCrawler()->filter('iframe#preview')->attr('sandbox');
+        $this->assertNotNull($sandbox);
+        $this->assertStringContainsString('allow-scripts', $sandbox);
+        $this->assertStringNotContainsString('allow-top-navigation', $sandbox);
         // Seule la plateforme peut l'encadrer.
         $this->assertResponseHeaderSame('Content-Security-Policy', 'frame-ancestors http://localhost');
     }

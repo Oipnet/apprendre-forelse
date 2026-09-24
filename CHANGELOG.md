@@ -56,6 +56,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   pour les moteurs de recherche. Une instance sur invitation (`REGISTRATION_INVITE_ONLY=1` : école,
   entreprise, préproduction) garde la Pratique fermée comme avant.
 
+### Sécurité
+
+- **Les iframes de l'aperçu sont sous `sandbox`** (côté plateforme et côté bac à sable), sans
+  `allow-top-navigation` : le code affiché dans l'aperçu ne peut plus rediriger la page de la plateforme.
+  Scripts, formulaires, fenêtres modales, pop-ups et téléchargements restent permis, et `allow-same-origin`
+  garde au relais son origine bac à sable, dont le Service Worker de l'aperçu a besoin.
+- La méthode HTTP des requêtes d'exemple d'un exercice est insérée comme du texte, et non plus comme du HTML.
+
 
 ## 2.0.0 — 2026-09-21
 
