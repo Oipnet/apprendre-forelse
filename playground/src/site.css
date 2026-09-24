@@ -5083,6 +5083,126 @@ body.site-page {
 	color: var(--lp-ink);
 }
 
+/* Brouillons de post LinkedIn : le formulaire, puis une carte par angle */
+.st-post {
+	padding-top: clamp(24px, 3vw, 40px);
+	padding-bottom: clamp(56px, 7vw, 88px);
+	display: grid;
+	gap: 18px;
+}
+.st-post-form {
+	display: grid;
+	gap: 10px;
+	border: 1px solid var(--lp-line-2);
+	border-radius: 13px;
+	background: var(--lp-card);
+	padding: clamp(16px, 2vw, 22px);
+}
+.st-post-form label {
+	font-size: 13.5px;
+	font-weight: 600;
+	color: var(--lp-ink-2);
+}
+.st-post-form textarea {
+	width: 100%;
+	resize: vertical;
+	border: 1px solid var(--lp-line-2);
+	border-radius: 9px;
+	background: var(--lp-bg-2);
+	color: var(--lp-ink);
+	padding: 10px 12px;
+	font: inherit;
+	font-size: 14px;
+	line-height: 1.55;
+}
+.st-post-form textarea:focus-visible {
+	outline: 2px solid var(--lp-gold);
+	outline-offset: 1px;
+}
+.st-post-go {
+	display: flex;
+	gap: 12px;
+	flex-wrap: wrap;
+	align-items: center;
+}
+.st-post-etat {
+	font-size: 13px;
+	color: var(--lp-ink-3);
+}
+.st-post-form .erreur {
+	margin: 0;
+	font-size: 13.5px;
+	color: var(--ko);
+}
+.st-post-form .erreur:empty {
+	display: none;
+}
+
+.st-post-results:not(:empty) {
+	display: grid;
+	gap: 14px;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	align-items: start;
+}
+.st-post-card {
+	border: 1px solid var(--lp-line-2);
+	border-radius: 13px;
+	background: var(--lp-card);
+	padding: 16px;
+	display: grid;
+	gap: 10px;
+}
+.st-post-head {
+	margin: 0;
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+}
+.st-post-angle {
+	font-family: var(--lp-serif);
+	font-size: 19px;
+	color: var(--lp-ink);
+}
+.st-post-count {
+	font-family: var(--lp-mono);
+	font-size: 11.5px;
+	color: var(--lp-ink-3);
+}
+/* Trop long, ou accroche coupée : l'auteur doit le voir avant de coller. */
+.st-post-count[data-alerte='oui'] {
+	color: var(--lp-rust);
+}
+.st-post-texte {
+	width: 100%;
+	resize: vertical;
+	border: 1px solid var(--lp-line-2);
+	border-radius: 9px;
+	background: var(--lp-bg-2);
+	color: var(--lp-ink);
+	padding: 12px;
+	font: inherit;
+	font-size: 14px;
+	line-height: 1.6;
+	white-space: pre-wrap;
+}
+/* Le même bouton que le lien .st-btn, sur un <button> : ni la police ni le curseur ne sont hérités. */
+.site-page button.st-btn {
+	font-family: inherit;
+	cursor: pointer;
+}
+.site-page button.st-btn[disabled] {
+	opacity: 0.55;
+	cursor: progress;
+}
+.st-post-foot {
+	margin: 0;
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
 /* Pied de page de l'atelier : trois liens et la version, rien de plus */
 .st-footer .lp-wrap {
 	display: flex;

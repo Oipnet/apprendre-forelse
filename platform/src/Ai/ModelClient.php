@@ -39,10 +39,11 @@ final class ModelClient
      *
      * @param list<array{role: string, content: string}>                                $messages
      * @param array{name: string, description: string, input_schema: array<mixed>} $outil
+     * @param string                                                               $modele un modèle pour cet appel, ou '' pour celui de l'instance (AI_MODEL)
      *
      * @return array<mixed> l'entrée de l'outil, telle que le modèle l'a construite
      */
-    public function appeler(string $consignes, array $messages, array $outil, int $maxTokens = 16000): array
+    public function appeler(string $consignes, array $messages, array $outil, int $maxTokens = 16000, string $modele = ''): array
     {
         if (!$this->disponible()) {
             throw new ContentException('Aucune clé d\'API : la génération est désactivée (voir ANTHROPIC_API_KEY).');
@@ -55,7 +56,7 @@ final class ModelClient
             $reponse = $this->httpClient->request('POST', self::URL, [
                 'headers' => ['x-api-key' => $this->cle, 'anthropic-version' => self::VERSION],
                 'json' => [
-                    'model' => $this->modele,
+                    'model' => '' === trim($modele) ? $this->modele : trim($modele),
                     'max_tokens' => $maxTokens,
                     'system' => $consignes,
                     'tools' => [$outil],

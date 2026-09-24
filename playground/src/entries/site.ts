@@ -40,6 +40,11 @@ async function importGuestProgress(url: string) {
 const importUrl = document.body.dataset.importUrl;
 if (importUrl) void importGuestProgress(importUrl);
 
+/** Atelier des auteurs : les brouillons de post LinkedIn d'un parcours ou d'un exercice de Pratique. */
+const post = document.querySelector<HTMLElement>('[data-post]');
+// Chargé à la demande : ce code ne sert qu'aux auteurs, sur une seule page de l'atelier.
+if (post) void import('../app/post').then(({ mountPostStudio }) => mountPostStudio(post, JSON.parse(post.dataset.post!)));
+
 /** Atelier des auteurs : création d'un exercice depuis la liste des parcours. */
 for (const form of document.querySelectorAll<HTMLFormElement>('form[data-nouveau]')) {
 	form.addEventListener('submit', async (event) => {

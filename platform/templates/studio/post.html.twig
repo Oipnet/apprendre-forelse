@@ -1,0 +1,57 @@
+{% extends 'studio/_chrome.html.twig' %}
+
+{% block title %}Post LinkedIn · {{ cible.titre }} · Atelier · {{ marque.name }}{% endblock %}
+
+{% block body_class %}site-page studio-page{% endblock %}
+
+{% block body %}
+    <main class="st st-track">
+        <div class="st-track-head">
+            <div class="lp-wrap">
+                <a class="st-back" href="{{ cible.retour }}"><span aria-hidden="true">←</span> {{ cible.retourTitre }}</a>
+                <div class="st-track-row">
+                    <div class="st-track-intro">
+                        <div class="st-title-line">
+                            <h1>Post LinkedIn</h1>
+                        </div>
+                        <p class="lead">{{ cible.titre }}{% if cible.resume %} — {{ cible.resume }}{% endif %}</p>
+                        <p class="st-figures">
+                            <span>Trois angles proposés, rien n'est publié ni enregistré</span>
+                            <span>{{ config.maximum|number_format(0, ',', ' ') }} caractères au plus</span>
+                        </p>
+                    </div>
+                    <div class="st-track-actions">
+                        <a class="st-btn" href="{{ config.urls.publique }}" target="_blank" rel="noopener">Voir la page publique</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lp-wrap st-post" data-post="{{ config|json_encode }}">
+            {% if config.ia %}
+                <form class="st-post-form">
+                    <label for="precision">Ce que le post doit dire, si vous avez une idée (facultatif)</label>
+                    <textarea id="precision" name="precision" rows="2" maxlength="500"
+                              placeholder="« Insister sur les tests automatiques », « pour des devs qui sortent d'un bootcamp », « raccrocher à la sortie de Symfony 8.1 »"></textarea>
+                    <div class="st-post-go">
+                        <button type="submit" class="st-btn primary">Écrire trois brouillons</button>
+                        <span class="st-post-etat" role="status"></span>
+                    </div>
+                    <p class="erreur" role="alert"></p>
+                </form>
+
+                <div class="st-post-results"></div>
+
+                <p class="st-hint">
+                    Le lien <code>{{ config.urls.publique }}</code> est ajouté au post. LinkedIn n'affiche que les
+                    {{ config.accroche }} premiers caractères avant « …voir plus » : c'est la première ligne qui décide
+                    de la lecture. Relisez toujours avant de coller — un modèle écrit vite, il ne signe pas.
+                </p>
+            {% else %}
+                <p class="st-hint">
+                    Génération assistée désactivée : renseignez <code>ANTHROPIC_API_KEY</code> pour l'activer.
+                </p>
+            {% endif %}
+        </div>
+    </main>
+{% endblock %}

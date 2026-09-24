@@ -28,6 +28,7 @@
             <div class="status">Prêt</div>
             <div class="actions">
                 <a class="button ghost small" href="{{ config.urls.jouer }}" target="_blank" rel="noopener">Jouer l'exercice ↗</a>
+                {% if config.ia and config.urls.post %}<a class="button ghost small" href="{{ config.urls.post }}">Post LinkedIn</a>{% endif %}
                 <button id="ajouter" class="ghost">+ Fichier</button>
                 <button id="supprimer" class="ghost">Supprimer le fichier</button>
                 <button id="supprimer-exercice" class="ghost" title="Supprimer l'exercice entier">🗑</button>

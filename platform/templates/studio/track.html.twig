@@ -27,6 +27,7 @@
                     </div>
                     <div class="st-track-actions">
                         <a class="st-btn" href="{{ path('app_track', {trackId: track.id}) }}">Voir la page publique</a>
+                        {% if ia %}<a class="st-btn outline" href="{{ path('app_studio_post', {trackId: track.id}) }}">Post LinkedIn</a>{% endif %}
                     </div>
                 </div>
             </div>

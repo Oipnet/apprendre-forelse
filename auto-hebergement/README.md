@@ -234,7 +234,7 @@ docker compose up -d
 | Inscription | `REGISTRATION_INVITE_ONLY` | `1` : sur code de cohorte uniquement (cohortes créées dans `/admin`), et la Pratique demande un compte. `0` : inscription libre, et la Pratique s'écrit sans compte. |
 | Référencement | `SEARCH_INDEXING`, `GOOGLE_SITE_VERIFICATION` | `0` pour une instance interne ou de préproduction : robots.txt interdit l'indexation. |
 | Audience | `ANALYTICS_*` | Facultative, éteinte par défaut : voir [Savoir qui visite le site](#savoir-qui-visite-le-site). |
-| Mentor et IA | `ANTHROPIC_API_KEY`, `AI_MODEL` | Revue de code et erreurs expliquées pour les apprenants connectés, brouillons dans l'atelier. Chaque appel est facturé sur votre clé ; sans clé, les boutons n'apparaissent pas. |
+| Mentor et IA | `ANTHROPIC_API_KEY`, `AI_MODEL`, `AI_MODEL_POST` | Revue de code et erreurs expliquées pour les apprenants connectés, brouillons dans l'atelier. Chaque appel est facturé sur votre clé ; sans clé, les boutons n'apparaissent pas. `AI_MODEL_POST` ne concerne que les brouillons de post LinkedIn ; vide, ils suivent `AI_MODEL`. |
 | Vente | `STRIPE_*`, `LEGAL_MEDIATOR_*`, `LEGAL_REFUND_DAYS` | Facultatif : **une instance sans tarif reste entièrement gratuite** pour les comptes. Détails dans le [README](../README.md#parcours-payants). |
 | Environnements | `INSTALLED_ENVIRONMENTS_DIR`, `ENVIRONMENT_SOURCES_ALLOWLIST`, `ENVIRONMENTS_AUTO_INSTALL` | Installer un environnement d'exécution depuis un dépôt Git. **Exécute le code du dépôt sur ce serveur** : voir [Ajouter un environnement d'exécution](#ajouter-un-environnement-dexécution). |
 | Marque | `BRANDING_HOST_DIR`, `COHORT_*` | Votre nom, vos couleurs, vos images, vos tarifs de cohorte : voir [Votre marque](#votre-marque). |

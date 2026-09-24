@@ -2,12 +2,15 @@
 
 namespace App\Tests\Controller;
 
+use App\Ai\ModelClient;
 use App\Entity\User;
 use App\Tests\DatabaseTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
 /** L'atelier écrit dans un pack : les tests travaillent sur une copie jetable du pack de démo. */
 final class StudioTest extends WebTestCase
@@ -46,6 +49,17 @@ final class StudioTest extends WebTestCase
         $utilisateur->setRoles([User::ROLE_AUTEUR]);
         static::getContainer()->get(EntityManagerInterface::class)->flush();
         $client->loginUser($utilisateur);
+    }
+
+    /**
+     * Remplace le modèle par un faux qui rend toujours `$posts` à l'outil des posts.
+     *
+     * @param list<array<string, mixed>> $posts
+     */
+    private function faireEcrireLesPosts(array $posts): void
+    {
+        $http = new MockHttpClient(fn () => new JsonMockResponse(['content' => [['type' => 'tool_use', 'name' => 'ecrire_posts', 'input' => ['posts' => $posts]]]]));
+        static::getContainer()->set(ModelClient::class, new ModelClient($http, 'cle-de-test', 'claude-sonnet-5'));
     }
 
     public function testLAtelierEstReserveAuxAuteurs(): void
@@ -296,4 +310,74 @@ final class StudioTest extends WebTestCase
         $this->assertTrue($verdict['ok'], implode("\n", $verdict['erreurs']));
         $this->assertSame([false, false], array_column($verdict['objectifs'], 'dejaValide'), 'Aucun objectif ne doit être validé au départ.');
     }
+
+    public function testLesBrouillonsDePostSOuvrentDepuisLeParcoursEtDepuisLaPratique(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+        // Plusieurs requêtes avec le même faux modèle : sans cela, le noyau redémarre et le rétablit.
+        $client->disableReboot();
+        $this->faireEcrireLesPosts([['angle' => 'annonce', 'texte' => 'Un post.']]);
+
+        $crawler = $client->request('GET', '/atelier/decouverte');
+        $this->assertSame('/atelier/decouverte/post', $crawler->filter('.st-track-actions a')->eq(1)->attr('href'), 'Le parcours mène à ses brouillons de post.');
+
+        $crawler = $client->request('GET', '/atelier/decouverte/post');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.lead', 'Découverte');
+        $config = json_decode($crawler->filter('[data-post]')->attr('data-post'), true);
+        $this->assertTrue($config['ia']);
+        $this->assertSame('/atelier/decouverte/post', $config['urls']['generer']);
+        $this->assertStringEndsWith('/parcours/decouverte', $config['urls']['publique'], 'Le post renvoie vers la page publique du parcours.');
+        $this->assertSelectorExists('.st-post-form');
+
+        $crawler = $client->request('GET', '/atelier/pratique/exemple-map-request-header/post');
+        $this->assertResponseIsSuccessful();
+        $config = json_decode($crawler->filter('[data-post]')->attr('data-post'), true);
+        $this->assertSame('/atelier/pratique/exemple-map-request-header/post', $config['urls']['generer']);
+        $this->assertStringEndsWith('/pratique/exemple-map-request-header', $config['urls']['publique']);
+
+        $client->request('GET', '/atelier/inconnu/post');
+        $this->assertResponseStatusCodeSame(404);
+        $client->request('GET', '/atelier/pratique/inconnu/post');
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testLesTroisBrouillonsSontProposesSansRienEcrireDansLePack(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+        $avant = file_get_contents($this->packs.'/demo/tracks/decouverte/track.yaml');
+        $this->faireEcrireLesPosts([
+            ['angle' => 'annonce', 'texte' => 'Deux exercices pour voir Symfony tourner.'],
+            ['angle' => 'coulisses', 'texte' => 'Pourquoi deux exercices.'],
+            ['angle' => 'pedagogique', 'texte' => "Une route, c'est une URL et un contrôleur."],
+        ]);
+
+        $client->jsonRequest('POST', '/atelier/decouverte/post', ['precision' => 'Insister sur les tests']);
+
+        $this->assertResponseIsSuccessful();
+        $posts = json_decode((string) $client->getResponse()->getContent(), true)['posts'];
+        $this->assertSame(['Annonce', 'Coulisses', 'Pédagogique'], array_column($posts, 'label'));
+        $this->assertStringContainsString('/parcours/decouverte', $posts[0]['texte'], 'Le lien manquant est ajouté au post.');
+        $this->assertSame($avant, file_get_contents($this->packs.'/demo/tracks/decouverte/track.yaml'), 'Un post ne touche pas au contenu.');
+    }
+
+    public function testSansCleDApiLesPostsSontRefusesEtLaPageLExplique(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+
+        $crawler = $client->request('GET', '/atelier/decouverte/post');
+        $this->assertResponseIsSuccessful();
+        $this->assertFalse(json_decode($crawler->filter('[data-post]')->attr('data-post'), true)['ia']);
+        $this->assertSelectorNotExists('.st-post-form');
+        $this->assertSelectorTextContains('.st-hint', 'ANTHROPIC_API_KEY');
+        $this->assertCount(1, $client->request('GET', '/atelier/decouverte')->filter('.st-track-actions a'), 'Sans clé, le parcours ne propose pas de post.');
+
+        $client->jsonRequest('POST', '/atelier/decouverte/post', []);
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertStringContainsString('ANTHROPIC_API_KEY', json_decode((string) $client->getResponse()->getContent(), true)['erreur']);
+    }
+
 }
