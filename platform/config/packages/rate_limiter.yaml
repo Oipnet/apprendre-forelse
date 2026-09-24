@@ -27,6 +27,12 @@ framework:
             policy: fixed_window
             limit: 1
             interval: '1 day'
+        # Rapports de la politique de sécurité du contenu (/csp-rapport), par adresse IP : de quoi voir un problème,
+        # pas de quoi remplir les journaux.
+        csp_report:
+            policy: sliding_window
+            limit: 30
+            interval: '1 hour'
 
 when@test:
     framework:

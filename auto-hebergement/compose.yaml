@@ -13,6 +13,8 @@ services:
     environment: &app-environment
       # Emails en file d'attente dans la base, envoyés par le service « worker » ci-dessous.
       MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0}
+      # Politique de sécurité du contenu : 1 = signaler seulement (« CSP : … » dans les journaux), 0 = bloquer.
+      CSP_REPORT_ONLY: ${CSP_REPORT_ONLY:-1}
       APP_URL: ${APP_URL:?APP_URL manquant dans .env}
       SANDBOX_URL: ${SANDBOX_URL:?SANDBOX_URL manquant dans .env}
       # Adresses écoutées par Caddy. Vide : APP_URL et SANDBOX_URL, avec HTTPS automatique. « :80 » derrière un

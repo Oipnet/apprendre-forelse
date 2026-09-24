@@ -92,7 +92,7 @@
                                         {% if is_granted('ROLE_CHEF_COHORTE') %}<a href="{{ path('chef') }}">Mes cohortes</a>{% endif %}
                                         {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin') }}">Administration</a>{% endif %}
                                     {% endif %}
-                                    <a class="lp-account-logout" href="{{ path('app_logout') }}">Déconnexion</a>
+                                    <a class="lp-account-logout" href="{{ logout_path() }}">Déconnexion</a>
                                 </div>
                             </details>
                         {% else %}

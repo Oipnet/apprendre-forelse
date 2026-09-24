@@ -42,7 +42,7 @@ final class PagesTest extends WebTestCase
         $client->request('GET', '/pratique');
         $this->assertSelectorTextContains('.lp-header details.lp-account summary', 'Ada');
         $this->assertSelectorExists('.lp-account-menu a[href="/compte"]');
-        $this->assertSelectorExists('.lp-account-menu a[href="/deconnexion"]');
+        $this->assertSelectorExists('.lp-account-menu a[href^="/deconnexion?_csrf_token="]', 'La déconnexion porte son jeton.');
         $this->assertSelectorNotExists('.lp-account-label', 'Un apprenant n\'a pas d\'espace réservé.');
 
         $admin = $this->createUser('admin@example.test', 'Admin')->setRoles([\App\Entity\User::ROLE_ADMIN]);

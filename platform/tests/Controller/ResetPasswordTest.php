@@ -50,11 +50,11 @@ final class ResetPasswordTest extends WebTestCase
         $this->assertCount(0, static::getContainer()->get(ResetPasswordRequestRepository::class)->findAll(), 'La demande est consommée.');
 
         // Le nouveau mot de passe fonctionne, le lien ne sert qu'une fois.
-        $client->request('GET', '/deconnexion');
+        $client->request('GET', '/deconnexion?_csrf_token=csrf-token', server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
         $this->login($client, 'ada@example.test', 'une-nouvelle-phrase');
         $this->assertResponseRedirects('/');
 
-        $client->request('GET', '/deconnexion');
+        $client->request('GET', '/deconnexion?_csrf_token=csrf-token', server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
         $client->request('GET', $link);
         $client->followRedirect();
         $this->assertResponseRedirects('/mot-de-passe-oublie');

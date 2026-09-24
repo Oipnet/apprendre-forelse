@@ -72,6 +72,19 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Politique de sécurité du contenu pour les scripts** (`script-src 'self' 'wasm-unsafe-eval'; object-src 'none';
+  base-uri 'self'`) : un script injecté par une faille XSS, un attribut `onerror=` ou un script d'un autre site ne
+  s'exécuteraient pas. Les pages du playground et de l'atelier y ajoutent `'unsafe-eval'`, dont le simulateur Nuxt
+  a besoin pour compiler le code de l'apprenant ; le code de l'aperçu n'est pas concerné (servi par le Service
+  Worker du bac à sable). Un traceur d'audience servi depuis un autre domaine est autorisé d'office. **En
+  signalement seul pour commencer** (`CSP_REPORT_ONLY=1`, par défaut) : le navigateur envoie à `/csp-rapport`
+  ce qu'il aurait bloqué, une ligne « CSP : … » par rapport dans les journaux ; `CSP_REPORT_ONLY=0` la rend
+  bloquante. Vérifiée bloquante sur les pages du site, de l'administration et de l'atelier, et sur un exercice
+  de chaque environnement (PHP, Symfony, Laravel, Docker, Nuxt) : aucune violation. Le seul script écrit dans
+  une page (les boutons « Copier » de l'espace des chefs de cohorte) passe dans `public/js/copier.js`.
+- **La déconnexion exige un jeton** (`logout.enable_csrf`) : un autre site ne peut plus déconnecter quelqu'un
+  par un lien ou une image vers `/deconnexion`. Le lien du menu porte le jeton, et le navigateur l'annonce
+  venu du site même.
 - **Les exports CSV n'exécutent plus de formule** (`app:beta:feedback`, `app:beta:progress`) : un texte qui
   commence par `=`, `+`, `-`, `@`, une tabulation ou un retour chariot (un pseudo `=HYPERLINK(…)`, par exemple)
   est préfixé d'une apostrophe, et le tableur l'affiche comme du texte. Les nombres, négatifs compris, restent
