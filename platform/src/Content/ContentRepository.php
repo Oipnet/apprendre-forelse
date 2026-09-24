@@ -24,6 +24,9 @@ use Symfony\Component\Yaml\Yaml;
  */
 final class ContentRepository
 {
+    /** Nom d'un fichier de DOWNLOADS_DIR : celui qu'accepte la route /telechargements/{fichier}. */
+    public const string DOWNLOAD_NAME = '[A-Za-z0-9._-]+';
+
     /** @var array<string, Pack>|null */
     private ?array $packs = null;
     /** @var array<string, Track> */
@@ -89,6 +92,12 @@ final class ContentRepository
         $this->load();
 
         return $this->tracks;
+    }
+
+    /** @return list<Track> les parcours qui déclarent ce fichier à télécharger (clé « downloads ») */
+    public function tracksOffering(string $download): array
+    {
+        return array_values(array_filter($this->tracks(), static fn (Track $track) => \in_array($download, $track->downloads, true)));
     }
 
     public function findTrack(string $trackId): ?Track
@@ -484,7 +493,12 @@ final class ContentRepository
             throw new ContentException(sprintf('%s : « order » doit être un nombre entier (le plus petit s\'affiche en premier).', $file));
         }
 
-        $track = new Track($id, $pack->id, $this->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order);
+        $downloads = $meta['downloads'] ?? [];
+        if (!\is_array($downloads) || !array_is_list($downloads) || [] !== array_filter($downloads, static fn ($name) => !\is_string($name) || 1 !== preg_match('/^'.self::DOWNLOAD_NAME.'$/', $name))) {
+            throw new ContentException(sprintf('%s : « downloads » est une liste de noms de fichiers de DOWNLOADS_DIR (lettres, chiffres, « . », « _ », « - »).', $file));
+        }
+
+        $track = new Track($id, $pack->id, $this->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads);
         $this->tracks[$id] = $track;
         $this->exercises[$id] = [];
 
