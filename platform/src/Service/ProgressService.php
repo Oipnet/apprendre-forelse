@@ -9,6 +9,7 @@ use App\Content\Exercise;
 use App\Entity\ExerciseProgress;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class ProgressService
@@ -43,19 +44,30 @@ final readonly class ProgressService
      * La réussite est constatée côté navigateur (les tests y tournent) : c'est falsifiable,
      * ce qui est acceptable pour de l'apprentissage. L'XP n'est attribuée qu'une fois.
      *
+     * Atomique : deux réussites simultanées (double clic, nouvel essai, deux onglets sur deux exercices) se suivent
+     * derrière un verrou sur le compte, et chacune relit l'XP et la progression une fois le verrou obtenu. Sans lui,
+     * la seconde comptait l'XP une deuxième fois, ou écrasait le total écrit par la première.
+     *
      * @return array{xpEarned: int, totalXp: int, alreadyCompleted: bool}
      */
     public function complete(User $user, Exercise $exercise, int $hintsUsed): array
     {
-        $progress = $this->findOrCreate($user, $exercise);
-        $alreadyCompleted = $progress->isCompleted();
-        $hints = max($progress->getHintsUsed(), min($hintsUsed, \count($exercise->hints)));
-        // La solution consultée ne rapporte rien : c'est ce que promet la page d'accueil.
-        $xp = $progress->complete($hints, $progress->isSolutionRevealed() ? 0 : $this->xpCalculator->xpFor($exercise->xp, $hints));
-        $user->addXp($xp);
-        $this->entityManager->flush();
+        return $this->entityManager->wrapInTransaction(function () use ($user, $exercise, $hintsUsed): array {
+            $this->entityManager->refresh($user, LockMode::PESSIMISTIC_WRITE);
+            $progress = $this->find($user, $exercise);
+            if (null !== $progress) {
+                // Déjà chargée plus tôt dans la requête : l'état lu alors peut dater d'avant le verrou.
+                $this->entityManager->refresh($progress);
+            }
+            $progress ??= $this->create($user, $exercise);
+            $alreadyCompleted = $progress->isCompleted();
+            $hints = max($progress->getHintsUsed(), min($hintsUsed, \count($exercise->hints)));
+            // La solution consultée ne rapporte rien : c'est ce que promet la page d'accueil.
+            $xp = $progress->complete($hints, $progress->isSolutionRevealed() ? 0 : $this->xpCalculator->xpFor($exercise->xp, $hints));
+            $user->addXp($xp);
 
-        return ['xpEarned' => $xp, 'totalXp' => $user->getXp(), 'alreadyCompleted' => $alreadyCompleted];
+            return ['xpEarned' => $xp, 'totalXp' => $user->getXp(), 'alreadyCompleted' => $alreadyCompleted];
+        });
     }
 
     /**
@@ -110,11 +122,13 @@ final readonly class ProgressService
 
     private function findOrCreate(User $user, Exercise $exercise): ExerciseProgress
     {
-        $progress = $this->find($user, $exercise);
-        if (!$progress) {
-            $progress = new ExerciseProgress($user, $exercise->trackId, $exercise->id);
-            $this->entityManager->persist($progress);
-        }
+        return $this->find($user, $exercise) ?? $this->create($user, $exercise);
+    }
+
+    private function create(User $user, Exercise $exercise): ExerciseProgress
+    {
+        $progress = new ExerciseProgress($user, $exercise->trackId, $exercise->id);
+        $this->entityManager->persist($progress);
 
         return $progress;
     }

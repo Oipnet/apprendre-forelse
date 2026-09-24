@@ -96,6 +96,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   désormais écrit à part, quelle que soit l'erreur.
 - **`app:stripe:rejouer` ne s'arrête plus au premier événement en échec** : chacun est traité à part, et les
   suivants passent (ils échouaient tous avec « EntityManager is closed »).
+- **L'XP d'une réussite n'est plus comptée deux fois, ni perdue.** Deux réussites simultanées (double clic,
+  nouvel essai, deux exercices dans deux onglets) se suivent derrière un verrou sur le compte, et chacune relit
+  l'XP et la progression une fois ce verrou obtenu. La seconde donnait jusqu'ici l'XP une deuxième fois, ou
+  écrasait le total écrit par la première.
 
 ### Sécurité
 
