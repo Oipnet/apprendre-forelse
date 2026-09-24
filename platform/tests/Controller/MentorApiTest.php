@@ -6,6 +6,7 @@ use App\Ai\ModelClient;
 use App\Content\ContentRepository;
 use App\Entity\User;
 use App\Service\ProgressService;
+use Doctrine\ORM\EntityManagerInterface;
 use App\Tests\DatabaseTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -40,7 +41,7 @@ final class MentorApiTest extends WebTestCase
 
     public function testSansCleLeMentorEstIndisponible(): void
     {
-        $this->client->loginUser($this->createUser());
+        $this->client->loginUser($this->confirme());
         $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/review', ['files' => []]);
 
         $this->assertResponseStatusCodeSame(503);
@@ -71,7 +72,7 @@ final class MentorApiTest extends WebTestCase
             return new JsonMockResponse(['content' => [['type' => 'tool_use', 'name' => 'revue_de_code', 'input' => ['summary' => 'Voici la solution…', 'points' => []]]]]);
         });
         static::getContainer()->set(ModelClient::class, new ModelClient($http, 'cle-de-test', 'claude-sonnet-5'));
-        $this->client->loginUser($this->createUser());
+        $this->client->loginUser($this->confirme());
 
         $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/review', ['files' => ['src/Controller/BonjourController.php' => '<?php // Recopiez la solution de référence.']]);
 
@@ -79,10 +80,68 @@ final class MentorApiTest extends WebTestCase
         $this->assertSame(0, $appels);
     }
 
+    /** Un compte à l'adresse confirmée : le mentor l'exige. */
+    private function confirme(): User
+    {
+        $user = $this->createUser();
+        $user->confirmEmail((string) $user->getEmail(), new \DateTimeImmutable());
+        static::getContainer()->get(EntityManagerInterface::class)->flush();
+
+        return $user;
+    }
+
+    public function testSansAdresseConfirmeePasDeMentor(): void
+    {
+        $this->faireRepondre('expliquer_erreur', ['explication' => 'Rien.']);
+        $this->client->loginUser($this->createUser());
+
+        $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/explain', ['error' => 'Erreur', 'source' => 'tests']);
+
+        $this->assertResponseStatusCodeSame(428);
+    }
+
+    public function testUneDemandeTropVolumineuseEstRefusee(): void
+    {
+        $this->client->loginUser($this->confirme());
+        $fichiers = array_fill_keys(array_map(static fn (int $i) => "src/Fichier$i.php", range(1, 11)), str_repeat('x', 11_900));
+
+        $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/explain', ['error' => 'Erreur', 'source' => 'tests', 'files' => $fichiers]);
+
+        $this->assertResponseStatusCodeSame(422);
+    }
+
+    public function testLeBudgetDuJourCoupeLeMentor(): void
+    {
+        $this->faireRepondre('expliquer_erreur', ['explication' => 'Rien.']);
+        $this->client->loginUser($this->confirme());
+        // Les compteurs vivent dans un cache en mémoire, vidé entre deux requêtes de test : on épuise le budget
+        // avant la première requête, sur le même kernel.
+        static::getContainer()->get('limiter.mentor_budget')->create('instance')->consume(500);
+
+        $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/explain', ['error' => 'Erreur', 'source' => 'tests']);
+
+        $this->assertResponseStatusCodeSame(503);
+        $this->assertStringContainsString('limite du jour', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testDesComptesDeLaMemeAdresseIPPartagentUnQuota(): void
+    {
+        $this->faireRepondre('expliquer_erreur', ['explication' => 'Rien.']);
+        $this->client->loginUser($this->confirme());
+        $limiter = static::getContainer()->get('limiter.mentor_ip')->create('127.0.0.1');
+        for ($i = 1; $i <= 100; ++$i) {
+            $limiter->consume();
+        }
+
+        $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/explain', ['error' => 'Erreur', 'source' => 'tests']);
+
+        $this->assertResponseStatusCodeSame(429);
+    }
+
     /** Un compte qui a réussi 01-bonjour. */
     private function reussi(): User
     {
-        $user = $this->createUser();
+        $user = $this->confirme();
         $container = static::getContainer();
         $container->get(ProgressService::class)->complete($user, $container->get(ContentRepository::class)->findExercise('decouverte', '01-bonjour'), 0);
 
@@ -92,7 +151,7 @@ final class MentorApiTest extends WebTestCase
     public function testUneErreurEstExpliquee(): void
     {
         $this->faireRepondre('expliquer_erreur', ['cause' => 'La route manque.', 'piste' => 'Regardez l\'attribut.', 'file' => null]);
-        $this->client->loginUser($this->createUser());
+        $this->client->loginUser($this->confirme());
 
         $explication = $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/explain', ['error' => 'No route found', 'source' => 'preview', 'files' => []]);
 
@@ -103,7 +162,7 @@ final class MentorApiTest extends WebTestCase
     public function testUneSourceInconnueOuUneErreurVideSontRefusees(): void
     {
         $this->faireRepondre('expliquer_erreur', []);
-        $this->client->loginUser($this->createUser());
+        $this->client->loginUser($this->confirme());
 
         $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/explain', ['error' => 'x', 'source' => 'telepathie']);
         $this->assertResponseStatusCodeSame(422);
@@ -115,7 +174,7 @@ final class MentorApiTest extends WebTestCase
     {
         $http = new MockHttpClient(fn () => new JsonMockResponse(['content' => [['type' => 'text', 'text' => 'Je préfère ne rien dire.']]]));
         static::getContainer()->set(ModelClient::class, new ModelClient($http, 'cle', 'claude-sonnet-5'));
-        $this->client->loginUser($this->createUser());
+        $this->client->loginUser($this->confirme());
 
         $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/explain', ['error' => 'Erreur', 'source' => 'tests']);
 
@@ -125,7 +184,7 @@ final class MentorApiTest extends WebTestCase
     public function testUnExerciceInconnuDonne404(): void
     {
         $this->faireRepondre('revue_de_code', []);
-        $this->client->loginUser($this->createUser());
+        $this->client->loginUser($this->confirme());
         $this->json($this->client, 'POST', '/api/mentor/decouverte/inexistant/review', ['files' => []]);
 
         $this->assertResponseStatusCodeSame(404);

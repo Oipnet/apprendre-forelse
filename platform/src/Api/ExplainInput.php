@@ -3,6 +3,7 @@
 namespace App\Api;
 
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /** Corps de POST /api/mentor/{track}/{exercise}/explain : l'erreur rencontrée, et le code du moment. */
 final readonly class ExplainInput
@@ -20,5 +21,11 @@ final readonly class ExplainInput
         #[Assert\All([new Assert\Type('string')])]
         public array $files = [],
     ) {
+    }
+
+    #[Assert\Callback]
+    public function checkSize(ExecutionContextInterface $context): void
+    {
+        MentorInputSize::check($this->files, $context, $this->error);
     }
 }

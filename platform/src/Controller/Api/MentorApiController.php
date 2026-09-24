@@ -12,7 +12,9 @@ use App\Content\Exercise;
 use App\Entity\User;
 use App\Service\ProgressService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -32,6 +34,11 @@ final class MentorApiController extends AbstractController
         private readonly Mentor $mentor,
         private readonly ProgressService $progress,
         private readonly RateLimiterFactoryInterface $mentorLimiter,
+        #[Autowire(service: 'limiter.mentor_ip')]
+        private readonly RateLimiterFactoryInterface $ipLimiter,
+        #[Autowire(service: 'limiter.mentor_budget')]
+        private readonly RateLimiterFactoryInterface $budget,
+        private readonly RequestStack $requests,
         private readonly ExerciseAccessGuard $guard,
     ) {
     }
@@ -93,9 +100,19 @@ final class MentorApiController extends AbstractController
             throw new HttpException(Response::HTTP_CONFLICT, 'La revue de code vient après la réussite : faites d\'abord passer les tests.');
         }
 
-        $limit = $this->mentorLimiter->create((string) $user->getId())->consume();
-        if (!$limit->isAccepted()) {
-            throw new TooManyRequestsHttpException($limit->getRetryAfter()->getTimestamp() - time(), 'Le mentor a beaucoup travaillé : réessayez un peu plus tard.');
+        // Une inscription ne coûte rien : sans adresse confirmée, des comptes jetables multiplieraient la facture.
+        if (!$user->isEmailVerified()) {
+            throw new HttpException(Response::HTTP_PRECONDITION_REQUIRED, 'Confirmez votre adresse email pour faire appel au mentor : le lien est dans l\'email reçu à l\'inscription, ou à renvoyer depuis votre compte.');
+        }
+        $ip = $this->requests->getMainRequest()?->getClientIp() ?? 'inconnue';
+        foreach ([$this->mentorLimiter->create((string) $user->getId()), $this->ipLimiter->create($ip)] as $limiter) {
+            $limit = $limiter->consume();
+            if (!$limit->isAccepted()) {
+                throw new TooManyRequestsHttpException($limit->getRetryAfter()->getTimestamp() - time(), 'Le mentor a beaucoup travaillé : réessayez un peu plus tard.');
+            }
+        }
+        if (!$this->budget->create('instance')->consume()->isAccepted()) {
+            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, 'Le mentor a atteint sa limite du jour sur cette plateforme : il revient demain.');
         }
 
         return [$user, $exercise];
