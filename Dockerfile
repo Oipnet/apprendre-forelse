@@ -100,7 +100,9 @@ USER formation
 VOLUME ["/data"]
 EXPOSE 8080 80 443
 
-HEALTHCHECK --start-period=30s CMD php -r 'exit(false === @file_get_contents("http://localhost:2019/metrics", context: stream_context_create(["http" => ["timeout" => 5]])) ? 1 : 0);'
+# /sante passe par PHP et fait un SELECT 1 : base arrêtée ou PHP en panne, le conteneur devient « unhealthy ».
+# Adresse interne au conteneur, déclarée dans le Caddyfile. file_get_contents échoue aussi sur un 503.
+HEALTHCHECK --start-period=30s CMD php -r 'exit(false === @file_get_contents("http://127.0.0.1:2020/sante", context: stream_context_create(["http" => ["timeout" => 5]])) ? 1 : 0);'
 
 WORKDIR /app/platform
 ENTRYPOINT ["docker-entrypoint"]

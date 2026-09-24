@@ -23,9 +23,10 @@ final readonly class AnonymousPageCacheListener
     {
         $request = $event->getRequest();
         $response = $event->getResponse();
+        // La route avant l'utilisateur : lire l'utilisateur ouvre la session, interdite sur une route stateless (/sante).
         if (!$event->isMainRequest() || !$request->isMethodCacheable() || 200 !== $response->getStatusCode()
-            || null !== $this->security->getUser() || $response->getEtag()
-            || !\in_array($request->attributes->get('_route'), SearchIndexing::ROUTES, true)) {
+            || !\in_array($request->attributes->get('_route'), SearchIndexing::ROUTES, true)
+            || $response->getEtag() || null !== $this->security->getUser()) {
             return;
         }
 
