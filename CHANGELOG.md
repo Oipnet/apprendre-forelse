@@ -72,6 +72,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Un retour sur un exercice (« Un avis ? ») demande de pouvoir l'ouvrir**, comme les autres API d'un exercice :
+  403 pour un chapitre fermé, 404 pour un parcours en préparation — la réponse ne dit plus quels exercices
+  existent. Au plus 20 retours par heure et par compte.
 - **L'import de la progression d'invité ne fait plus apparaître un parcours en préparation.** Il vérifiait l'accès
   à l'exercice mais pas la visibilité du parcours : importer un exercice d'un parcours caché le rendait visible
   (un parcours commencé s'affiche), et ouvert en entier s'il était gratuit. L'import fait désormais le même

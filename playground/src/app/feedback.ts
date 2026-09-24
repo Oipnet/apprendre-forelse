@@ -85,6 +85,7 @@ export class FeedbackDialog {
 			credentials: 'same-origin',
 		});
 		if (response.status === 401) throw new Error('votre session a expiré, reconnectez-vous puis rechargez la page');
+		if (response.status === 429) throw new Error('beaucoup de retours en peu de temps, réessayez dans une heure');
 		if (!response.ok) throw new Error(`réponse ${response.status}`);
 	}
 }
