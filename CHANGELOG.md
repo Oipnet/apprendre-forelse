@@ -75,6 +75,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   déclarer le déploiement réussi. L'appel passe par une adresse interne au conteneur (`127.0.0.1:2020`), si bien
   qu'il marche quel que soit `SERVER_NAME`. `/sante` répond aussi sur l'origine de la plateforme (`ok`, ou 503
   sans détail), pour une sonde de disponibilité externe ; elle n'ouvre aucune session.
+- **Un déploiement raté remet la version précédente** (`deploy/deployer.sh`, lancé par la CI sur le serveur) :
+  si les conteneurs ne deviennent pas `healthy` ou si `/sante` ne répond pas de l'extérieur, l'image qui
+  tournait avant est relancée, et le job reste rouge. Seule l'image revient, pas la base : une migration
+  qui retire ou renomme une colonne doit donc se faire en deux déploiements. Le jeton du registre est aussi
+  retiré du serveur quand le déploiement échoue, et plus seulement quand il réussit ; les secrets du job
+  de déploiement passent par l'environnement au lieu d'être interpolés dans ses scripts.
 
 ### Sécurité
 

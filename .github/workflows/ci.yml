@@ -355,38 +355,36 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Les secrets passent par l'environnement, jamais interpolés dans le script : un caractère spécial ne peut pas
+      # y devenir du shell.
       - name: Accès SSH au serveur
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy
-          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/deploy ~/.ssh/known_hosts
           cat > ~/.ssh/config <<EOF
           Host vps
-            HostName ${{ secrets.DEPLOY_HOST }}
+            HostName $DEPLOY_HOST
             User deploy
             IdentityFile ~/.ssh/deploy
             IdentitiesOnly yes
           EOF
 
-      - name: Fichier compose
-        run: scp deploy/compose.yaml deploy/nettoyer-images.sh vps:/srv/forelse/
+      - name: Fichiers de déploiement
+        run: scp deploy/compose.yaml deploy/deployer.sh deploy/nettoyer-images.sh vps:/srv/forelse/
 
+      # Revient à l'image précédente si la nouvelle ne devient pas « healthy » ou si /sante ne répond pas (deploy/deployer.sh).
+      # Le jeton du registre est retiré du serveur à la fin, que le déploiement réussisse ou non.
       - name: Mettre à jour les conteneurs
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ needs.docker.outputs.image }}
+          APP_URL: ${{ vars.APP_URL }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | ssh vps 'docker login ghcr.io -u ${{ github.actor }} --password-stdin'
-          # Sans épinglage, une étiquette qui n'existe plus (ou un APP_IMAGE oublié dans le .env
-          # du serveur) fait tirer une image inchangée : compose ne recrée rien et la CI reste verte.
-          # L'image déployée reçoit aussi l'étiquette locale :edge, celle qu'utilise compose.yaml par défaut : un
-          # `docker compose up -d` lancé à la main sur le serveur (après avoir modifié .env) relance la même image,
-          # au lieu d'une ancienne :edge restée en cache (vu le 2026-09-17 : retour à un moteur 0.1.0).
-          ssh vps 'cd /srv/forelse \
-            && export APP_IMAGE=${{ needs.docker.outputs.image }} \
-            && docker compose pull --quiet \
-            && docker tag "$APP_IMAGE" "${APP_IMAGE%@*}:edge" \
-            && docker compose up -d --remove-orphans --wait --wait-timeout 180 \
-            && docker logout ghcr.io \
-            && sh nettoyer-images.sh "${APP_IMAGE%@*}" 3'
-
-      - name: Vérifier la réponse de la plateforme
-        run: curl -fsSIL --retry 6 --retry-delay 5 --retry-all-errors "${{ vars.APP_URL }}" | head -1
+          printf '%s\n' "$GHCR_TOKEN" | ssh vps "docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin"
+          ssh vps "sh /srv/forelse/deployer.sh '$IMAGE' '$APP_URL'"
