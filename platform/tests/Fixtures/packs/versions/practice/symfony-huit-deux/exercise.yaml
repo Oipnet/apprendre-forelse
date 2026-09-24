@@ -1,0 +1,8 @@
+id: symfony-huit-deux
+title: Symfony 8.2, seul
+environment: symfony-8
+published: 2026-08-04
+summary: La seule nouveauté 8.2 de ce pack.
+version: '8.2'
+editable: [src/Controller/BonjourController.php]
+objectives: [{test: testA, label: A}]

@@ -8,6 +8,27 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Une page par version de framework dans la Pratique** (`/pratique/nouveautes/symfony-8-2`) : les exercices
+  qui annoncent la même `version:` s'y retrouvent. « Les nouveautés de Symfony 8.2 » est ce qu'un développeur
+  cherche dans un moteur de recherche, et il tombe ici sur des exercices à faire plutôt que sur un billet à
+  lire. Rien n'y est obligatoire à écrire : la page se remplit quand un exercice paraît, et tant que personne
+  n'a écrit son intro, elle annonce qu'elle ne liste pas toutes les nouveautés de la version — seulement celles
+  qui ont un exercice. Une version qu'un seul
+  exercice pratique n'a pas de page, comme une notion vue une seule fois ; un exercice programmé n'y entre pas
+  avant sa parution, même pour un administrateur. Le groupement suit le rythme de chaque framework, déclaré
+  par son profil : Symfony se range par version mineure (« Symfony 8.2 »), Laravel par version majeure
+  (« Laravel 13 »), parce qu'une nouveauté y sort dans une mineure parmi vingt. La liste `/pratique` mène à
+  ces pages, la pastille de version d'un exercice mène à la sienne, et le sitemap les porte.
+- **Le texte d'une page de nouveautés se personnalise.** Par défaut il se compose des notions de ses exercices
+  (« 6 exercices courts, autour de Form, Console et Validator »), si bien qu'aucune page n'est du gabarit et
+  que deux pages ne se ressemblent pas — sans rien écrire. Un pack peut écrire la sienne dans
+  `<pack>/versions/<version>.md` (du Markdown, sans titre) : elle remplace l'intro **et** la description pour
+  les moteurs de recherche, et la page retire sa réserve sur l'exhaustivité, puisque l'auteur répond désormais
+  de ce qu'elle promet. `content:check` signale une intro que rien n'affiche (faute de frappe dans le nom du
+  fichier, ou version qu'un seul exercice pratique).
+
 ### Modifié
 
 - Les liens vers la page d'inscription portent `rel="nofollow"` : elle est déjà en `noindex`, les moteurs

@@ -339,6 +339,20 @@ final class ContentRepositoryTest extends TestCase
         $this->assertFalse($repository->closesChapter($practice->exercise));
     }
 
+    public function testChargeLesIntrosDeVersion(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P");
+        $filesystem->dumpFile($this->tmp.'/p/versions/symfony-8-2.md', "8.2 est la version des formulaires.\n");
+
+        $intros = $this->repository($this->tmp)->versionIntros();
+
+        $this->assertSame(['symfony-8-2'], array_keys($intros));
+        $this->assertSame('8.2 est la version des formulaires.', $intros['symfony-8-2']['markdown']);
+        $this->assertSame('p', $intros['symfony-8-2']['packId']);
+        $this->assertFileExists($intros['symfony-8-2']['file']);
+    }
+
     public function testSelectionnerLaPratique(): void
     {
         $repository = $this->repository(self::ROOT.'/examples/packs', __DIR__.'/../Fixtures/packs/pratique');
@@ -402,6 +416,22 @@ final class ContentRepositoryTest extends TestCase
                 'q/practice/x/instructions.md' => 'Consignes',
             ],
             'Exercice de Pratique « x » présent deux fois',
+        ];
+        yield 'intro de version mal nommée' => [
+            ['p/versions/Symfony 8.2.md' => 'Une intro.'],
+            'le nom du fichier doit être l\'identifiant de la version dans l\'adresse',
+        ];
+        yield 'intro de version vide' => [
+            ['p/versions/symfony-8-2.md' => "  \n"],
+            'vide : une page sans intro écrite compose son texte toute seule',
+        ];
+        yield 'la même intro dans deux packs' => [
+            [
+                'p/versions/symfony-8-2.md' => 'Une intro.',
+                'q/pack.yaml' => "id: q\ntitle: Q",
+                'q/versions/symfony-8-2.md' => 'Une autre intro.',
+            ],
+            'Intro de version « symfony-8-2 » présente deux fois',
         ];
         yield 'un parcours nommé pratique' => [
             [

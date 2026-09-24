@@ -2,32 +2,8 @@
 
 {% block body_class %}site-page practice-page{% endblock %}
 
-{% macro card(item, frameworks) %}
-    {% set practice = item.practice %}
-    <li data-state="{{ item.state }}">
-        <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
-            <span class="practice-head">
-                <span class="tag framework">{{ frameworks[practice.framework] ?? practice.framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
-                {% if practice.version %}<span class="tag new">Nouveauté</span>{% endif %}
-                {% if practice.isRestricted %}<span class="tag">En préparation</span>{% endif %}
-                {% if practice.isScheduled %}<span class="tag">Programmé le {{ practice.published|date('d/m/Y') }}</span>{% endif %}
-                <time class="meta" datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time>
-                {% if item.state == 'completed' %}<span class="state">✓ Réussi</span>{% elseif item.state == 'in_progress' %}<span class="state">En cours</span>{% endif %}
-            </span>
-            <span class="title">{{ practice.exercise.title }}</span>
-            <span class="summary">{{ practice.summary }}</span>
-            <span class="practice-foot">
-                {% if practice.exercise.concepts %}
-                    <span class="practice-notions">{% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</span>
-                {% endif %}
-                <span class="practice-cta">{% if item.state == 'completed' %}Refaire l'exercice{% elseif item.state == 'in_progress' %}Reprendre{% else %}Faire l'exercice{% endif %} <span aria-hidden="true">→</span></span>
-            </span>
-        </a>
-    </li>
-{% endmacro %}
-
 {% block body %}
-    {% import _self as ui %}
+    {% import 'practice/_card.html.twig' as ui %}
     {% set hasFilters = filters.framework or filters.notions or filters.nouveautes or filters.recherche %}
     {% set filterCount = (filters.framework ? 1 : 0) + filters.notions|length + (filters.nouveautes ? 1 : 0) + (filters.recherche ? 1 : 0) %}
     <main class="pr">
@@ -37,6 +13,14 @@
                     <p class="pr-eyebrow">Pratique</p>
                     <h1>Se servir d'une fonctionnalité, tout de suite</h1>
                     <p class="lead">De courts exercices, à part des parcours : un code écrit à l'ancienne, à réécrire avec la fonctionnalité. Souvent une nouveauté du framework, parfois un point précis qui mérite qu'on s'y arrête.</p>
+                    {% if versions %}
+                        <p class="pr-versions">
+                            <span class="meta">Par version :</span>
+                            {% for version in versions %}
+                                <a class="pr-tab" href="{{ path('app_practice_version', {slug: version.slug}) }}">{{ version.label }} <span class="pr-tab-count">{{ version.exercises }}</span></a>
+                            {% endfor %}
+                        </p>
+                    {% endif %}
                 </div>
                 <ul class="pr-kpis">
                     <li><span class="pr-kpi-value">{{ total }}</span><span class="pr-kpi-label">exercice{{ total > 1 ? 's' }}</span></li>

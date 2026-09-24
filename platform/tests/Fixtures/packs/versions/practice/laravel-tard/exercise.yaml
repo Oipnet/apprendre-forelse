@@ -1,0 +1,9 @@
+id: laravel-tard
+title: Laravel, une autre mineure
+environment: laravel-13
+published: 2026-08-02
+summary: Une nouveauté de Laravel 13.26.
+version: '13.26'
+concepts: [Files d'attente]
+editable: [app/Http/Controllers/Controller.php]
+objectives: [{test: testA, label: A}]

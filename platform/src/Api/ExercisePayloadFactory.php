@@ -5,6 +5,7 @@ namespace App\Api;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
+use App\Content\PracticeVersionIndex;
 use App\Content\TrackVisibility;
 use App\Instance\EnvironmentArtifacts;
 use App\Security\TrackAccessChecker;
@@ -26,6 +27,7 @@ final readonly class ExercisePayloadFactory
         private Packages $packages,
         private UrlGeneratorInterface $urls,
         private ExerciseUrls $exerciseUrls,
+        private PracticeVersionIndex $versions,
         private TrackAccessChecker $access,
         private EnvironmentArtifacts $artifacts,
         #[Autowire('%kernel.environment%')] private string $kernelEnvironment,
@@ -113,6 +115,8 @@ final readonly class ExercisePayloadFactory
             'practice' => $practice ? [
                 'framework' => $practice->framework,
                 'version' => $practice->version,
+                // Les autres exercices de cette version, quand ils sont assez nombreux pour avoir une page.
+                'versionUrl' => null === ($slug = $this->versions->slugOf($practice)) ? null : $this->urls->generate('app_practice_version', ['slug' => $slug]),
                 'pullRequest' => $practice->pullRequest,
                 'published' => $practice->published->format('Y-m-d'),
             ] : null,

@@ -84,6 +84,68 @@ final class PracticeTest extends WebTestCase
         $this->assertSelectorTextContains('main', 'Aucun exercice avec ces filtres');
     }
 
+    /**
+     * Les pages de version : « les nouveautés de Symfony 8.1 » est ce qu'on cherche dans un moteur, et on tombe
+     * sur les exercices qui les pratiquent. Symfony 8.1 en a deux (pack de démo compris) ; Laravel 13.0, un seul.
+     */
+    public function testUneVersionRassembleLesExercicesQuiLaPratiquent(): void
+    {
+        $crawler = $this->client->request('GET', '/pratique/nouveautes/symfony-8-1');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertFalse($this->client->getResponse()->headers->has('X-Robots-Tag'), 'La page s\'indexe.');
+        $this->assertSame('Les nouveautés de Symfony 8.1', $crawler->filter('h1')->text());
+        $this->assertSame(
+            ['Lire un en-tête avec #[MapRequestHeader]', 'Une nouveauté récente'],
+            $crawler->filter('.practice-list .title')->extract(['_text']),
+            'Les exercices parus de cette version, du plus récent au plus ancien.',
+        );
+        $this->assertSelectorExists('a[href="/pratique"]', 'La page renvoie à toute la Pratique.');
+    }
+
+    /** Une intro écrite dans le pack (versions/symfony-8-1.md) remplace le texte composé, et la description. */
+    public function testUneVersionAfficheLIntroEcriteDansLePack(): void
+    {
+        $crawler = $this->client->request('GET', '/pratique/nouveautes/symfony-8-1');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringContainsString('8.1 est la version des attributs', $crawler->filter('.pr-written')->text());
+        $this->assertStringContainsString('<code>Request</code>', $crawler->filter('.pr-written')->html(), 'L\'intro est du Markdown, rendu comme tel.');
+        $this->assertStringStartsWith('8.1 est la version des attributs', (string) $crawler->filter('meta[name="description"]')->attr('content'));
+        $this->assertCount(0, $crawler->filter('.pr-scope'), 'Quand l\'auteur écrit l\'intro, il répond de ce qu\'elle promet.');
+    }
+
+    /** Un exercice programmé annonce sa version sans être paru : la page publique ne le montre à personne. */
+    public function testUneVersionNeMontrePasUnExerciceProgramme(): void
+    {
+        $admin = $this->createUser('admin@example.test', 'Admin');
+        $admin->setRoles([User::ROLE_ADMIN]);
+        static::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->client->loginUser($admin);
+
+        $crawler = $this->client->request('GET', '/pratique/nouveautes/symfony-8-1');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertNotContains('Publié plus tard', $crawler->filter('.practice-list .title')->extract(['_text']));
+    }
+
+    /** Une version qu'un seul exercice pratique n'a pas de page : elle ne dirait rien de plus que cet exercice. */
+    public function testUneVersionSansDeuxExercicesEtUnSlugInconnuSontIntrouvables(): void
+    {
+        foreach (['/pratique/nouveautes/laravel-13', '/pratique/nouveautes/symfony-9-9', '/pratique/nouveautes/inconnu'] as $url) {
+            $this->client->request('GET', $url);
+            $this->assertResponseStatusCodeSame(404, $url);
+        }
+    }
+
+    public function testLaListeMeneAuxPagesDeVersion(): void
+    {
+        $crawler = $this->client->request('GET', '/pratique');
+
+        $this->assertSame(['/pratique/nouveautes/symfony-8-1'], $crawler->filter('.pr-versions a')->each(static fn ($node) => $node->attr('href')));
+        $this->assertStringContainsString('Symfony 8.1', $crawler->filter('.pr-versions')->text());
+    }
+
     public function testLesExercicesSontRegroupesParDate(): void
     {
         $admin = $this->createUser('admin@example.test', 'Admin');
@@ -194,7 +256,7 @@ final class PracticeTest extends WebTestCase
         $this->assertNull($exercise['next']);
         $this->assertNull($exercise['nextTrack']);
         $this->assertNull($exercise['lesson']);
-        $this->assertSame(['framework' => 'symfony', 'version' => '8.1', 'pullRequest' => 'https://github.com/symfony/symfony/pull/1', 'published' => '2026-09-10'], $exercise['practice']);
+        $this->assertSame(['framework' => 'symfony', 'version' => '8.1', 'versionUrl' => '/pratique/nouveautes/symfony-8-1', 'pullRequest' => 'https://github.com/symfony/symfony/pull/1', 'published' => '2026-09-10'], $exercise['practice']);
     }
 
     public function testLeParcoursGardeSaConfiguration(): void

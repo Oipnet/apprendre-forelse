@@ -46,6 +46,8 @@ final class LaravelProfile implements FrameworkProfileProvider
             runtime: FrameworkProfile::PHP_WASM,
             snippets: ['laravel'],
             consoleAliases: ['php' => '', 'artisan' => ''],
+            // Laravel sort une version mineure par mois : ses nouveautés se rangent par version majeure.
+            versionParts: 1,
         );
     }
 }

@@ -45,6 +45,7 @@ final readonly class FrameworkProfile
      * @param string                $runtime         qui l'exécute dans le navigateur (PHP_WASM, NUXT_SIM, ou un runtime ajouté)
      * @param list<string>          $snippets        familles d'extraits proposés par l'éditeur (« php », « laravel », « docker »)
      * @param array<string, string> $consoleAliases  préfixes tolérés dans la console => ce qui les remplace (« » : retiré)
+     * @param int                   $versionParts    combien de composants de « version: » font une page de nouveautés
      */
     public function __construct(
         public string $id,
@@ -78,6 +79,14 @@ final readonly class FrameworkProfile
          * sortie standard un JSON `{cases: [{name, status, file, message}], output}`.
          */
         public ?string $testModule = null,
+        /**
+         * Les pages de nouveautés (/pratique/nouveautes/<version>) groupent les exercices par version, et
+         * les frameworks ne versionnent pas au même rythme : une nouveauté Symfony appartient à une version
+         * mineure qu'on attend (8.2), une nouveauté Laravel sort dans un patch parmi vingt (13.26). Deux
+         * composants donnent « Symfony 8.2 », un seul « Laravel 13 » — ce que l'on cherche, dans les deux cas.
+         * La carte d'un exercice, elle, affiche toujours la version exacte qu'il déclare.
+         */
+        public int $versionParts = 2,
     ) {
     }
 

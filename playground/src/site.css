@@ -2753,6 +2753,37 @@ body.site-page {
 	color: #fbf6ec;
 }
 
+/* Les pages de version (« Nouveautés Symfony 8.2 ») : une rangée de liens sous l'accroche, et le compte
+   d'exercices derrière chacun. Même pastille que les onglets de tri. */
+.pr-versions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 16px 0 0;
+}
+.pr-tab-count {
+	font-family: var(--lp-mono);
+	font-size: 11.5px;
+	color: var(--lp-ink-3);
+	margin-left: 5px;
+}
+.site-page .pr-tab:hover .pr-tab-count {
+	color: var(--lp-ink-2);
+}
+.pr-scope {
+	margin: 14px 0 0;
+	max-width: 58ch;
+}
+
+/* Intro écrite pour une page de version : du Markdown, donc plusieurs paragraphes possibles. */
+.pr-written p {
+	margin: 0 0 10px;
+}
+.pr-written p:last-child {
+	margin-bottom: 0;
+}
+
 /* Un intertitre par groupe (cette semaine, avant, à venir) */
 .pr-set {
 	display: grid;

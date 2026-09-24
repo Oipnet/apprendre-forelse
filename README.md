@@ -154,6 +154,7 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
     tests/            tests PHPUnit cachés ; chaque objectif = une méthode de test
     solution/         solution de référence (jamais envoyée au navigateur, sauf en dev)
 <pack>/practice/<exercice>/            exercice de Pratique, hors parcours (même contenu qu'un exercice)
+<pack>/versions/<version>.md           intro d'une page de nouveautés (Markdown, facultative)
 ```
 
 - `duration:` (dans `exercise.yaml`, facultative) : la durée estimée de l'exercice, en minutes, pour le public du
@@ -398,10 +399,14 @@ Les pages publiques forment une hiérarchie, de l'accueil à l'exercice :
 Accueil ── /parcours/<parcours> ── /parcours/<parcours>/chapitre/<chapitre>/sommaire ── /parcours/<parcours>/<exercice>
                                                     │
                           /notions ── /notions/<notion> ─┘   (transversal : relie les exercices d'une même notion)
+
+Accueil ── /pratique ── /pratique/<exercice>
+              └─ /pratique/nouveautes/<framework>-<version>      (transversal : les exercices d'une même version)
 ```
 
 - **Sommaire de chapitre** (`ChapterOutline`) : public et indexable. Il annonce ce que le chapitre fait apprendre et mène à chacun de ses exercices. Rien de ce qui résout un exercice n'y figure — pas même le texte des objectifs, que des tests vérifient. La **fiche de cours** du chapitre (`/parcours/<parcours>/chapitre/<chapitre>`), elle, reste réservée à qui a réussi le chapitre.
 - **Notions** (`ConceptIndex`) : les `concepts:` déclarés par les exercices deviennent des pages, qui rapprochent un exercice de parcours d'un exercice de Pratique. Une notion vue sur un seul exercice ne relie rien : elle reste une pastille, sans page à elle (`notion_url()` ne lui donne pas de lien).
+- **Nouveautés d'une version** (`PracticeVersionIndex`) : le `version:` déclaré par les exercices de Pratique donne une page par version — « les nouveautés de Symfony 8.2 » est ce qu'un développeur cherche, et il tombe sur des exercices à faire plutôt que sur un billet à lire. Rien n'y est rédigé : la page se remplit quand un exercice paraît, et elle annonce qu'elle ne liste pas toutes les nouveautés de la version, seulement celles qui ont un exercice. Une version qu'un seul exercice pratique n'a pas de page (comme une notion vue une seule fois), et un exercice programmé n'y entre pas avant sa parution. Le texte de la page se compose de ses notions (« 6 exercices courts, autour de Form, Console et Validator ») tant que personne n'en a écrit un : deux pages ne se ressemblent donc jamais, sans rien rédiger. Une intro écrite dans le pack (`<pack>/versions/symfony-8-2.md`, du Markdown sans titre) la remplace, en haut de page comme en description : l'auteur dit ce que la version apporte et répond de ce qu'il promet — la page retire alors sa réserve sur l'exhaustivité. Le nom du fichier est l'identifiant de la version dans l'adresse ; `content:check` signale une intro que rien n'affiche. Le groupement dépend du framework, que son profil déclare (`versionParts`) : une nouveauté Symfony appartient à une mineure qu'on attend (« Symfony 8.2 »), une nouveauté Laravel sort dans une mineure parmi vingt et se range sous la majeure (« Laravel 13 »). La liste `/pratique` mène à ces pages, et la pastille de version d'un exercice mène à la sienne.
 - Le **title** d'un exercice et d'un sommaire est mené par ses notions, puis fermé par son libellé narratif : c'est « Boucle Twig » que l'on cherche dans un moteur, pas « Les prix en pièces d'or » — mais seul ce libellé distingue deux pages d'une même notion.
 - La page publique d'un exercice mène aux **autres exercices de son chapitre** : sans cela, tous les exercices d'un parcours ne pendent que de sa page, sans se relier entre eux.
 - `lastmod` vient de la date de modification des fichiers du pack. Elle n'a de sens que si l'installation des packs la conserve : git n'en garde aucune, et le déploiement des packs les rétablit depuis le journal avant de copier (voir le workflow du dépôt de contenu).

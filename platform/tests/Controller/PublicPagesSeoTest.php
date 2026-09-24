@@ -80,6 +80,9 @@ final class PublicPagesSeoTest extends WebTestCase
         $this->assertNotContains('http://localhost/pratique/programme', $urls, 'Pratique programmée.');
         $this->assertNotContains('http://localhost/pratique/en-preparation', $urls, 'Pratique en préparation.');
         $this->assertContains('http://localhost/pratique/point-precis', $urls);
+        // Les pages de version : Symfony 8.1 en a deux, Laravel 13 un seul (et le programmé ne compte pas).
+        $this->assertContains('http://localhost/pratique/nouveautes/symfony-8-1', $urls);
+        $this->assertNotContains('http://localhost/pratique/nouveautes/laravel-13', $urls);
     }
 
     public function testUnParcoursEnPreparationEstAnnonceSansLien(): void

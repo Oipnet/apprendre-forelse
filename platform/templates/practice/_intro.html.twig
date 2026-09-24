@@ -10,7 +10,12 @@
     </ol>
 </nav>
 <p class="practice-head">
-    <span class="tag framework">{{ framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
+    {% set versionSlug = versionSlug|default(null) %}
+    {% if versionSlug %}
+        <a class="tag framework" href="{{ path('app_practice_version', {slug: versionSlug}) }}">{{ framework }}{% if practice.version %} {{ practice.version }}{% endif %}</a>
+    {% else %}
+        <span class="tag framework">{{ framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
+    {% endif %}
     {% if practice.version %}<span class="tag new">Nouveauté</span>{% endif %}
     <span class="meta">Publié le <time datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time></span>
 </p>

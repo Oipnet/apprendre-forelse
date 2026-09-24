@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block body_class %}site-page practice-page{% endblock %}
+
+{#
+  Une version d'un framework : les exercices de Pratique qui la font pratiquer. Rien n'y est rédigé à la main —
+  la page se remplit quand un exercice paraît (voir App\Content\PracticeVersionIndex).
+  Variables : slug, label, framework, version, practices, others, items, frameworks, concepts, introHtml.
+#}
+{% block body %}
+    {% import 'practice/_card.html.twig' as ui %}
+    <main class="pr">
+        <div class="lp-wrap">
+            <nav class="breadcrumb" aria-label="Fil d'Ariane">
+                <ol>
+                    <li><a href="{{ path('app_home') }}">Accueil</a></li>
+                    <li><a href="{{ path('app_practice') }}">Pratique</a></li>
+                    <li aria-current="page">Nouveautés {{ label }}</li>
+                </ol>
+            </nav>
+
+            <div class="pr-hero">
+                <div class="pr-intro">
+                    <p class="pr-eyebrow">Pratique</p>
+                    <h1>Les nouveautés de {{ label }}</h1>
+                    {% if introHtml %}
+                        {# Intro écrite dans le pack : l'auteur dit ce que la version apporte, et répond de ce
+                           qu'il promet — la page ne rajoute donc pas sa réserve sur l'exhaustivité. #}
+                        <div class="lead pr-written">{{ introHtml|raw }}</div>
+                    {% else %}
+                        {% set shown = concepts|slice(0, 4) %}
+                        <p class="lead">
+                            {{ items|length }} exercices courts
+                            {%- if shown %}, autour de {{ shown|slice(0, -1)|join(', ') }}{% if shown|length > 1 %} et {% endif %}{{ shown|last }}{% endif %}.
+                            Un code écrit à l'ancienne, à réécrire avec la nouveauté, directement dans le navigateur. Des tests disent si c'est juste.
+                        </p>
+                        <p class="meta pr-scope">Cette page ne liste pas toutes les nouveautés de {{ label }} : seulement celles qui ont un exercice ici. Elle grandit à chaque exercice publié.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="pr-results">
+                <section class="pr-set">
+                    <ol class="practice-list">
+                        {% for item in items %}{{ ui.card(item, frameworks, false) }}{% endfor %}
+                    </ol>
+                </section>
+
+                {% if others %}
+                    <p class="pr-versions">
+                        <span class="meta">Autres versions de {{ frameworks[framework] ?? framework }} :</span>
+                        {% for other in others %}
+                            <a class="pr-tab" href="{{ path('app_practice_version', {slug: other.slug}) }}">{{ other.label }} <span class="pr-tab-count">{{ other.exercises }}</span></a>
+                        {% endfor %}
+                    </p>
+                {% endif %}
+
+                <p class="pr-versions">
+                    <a class="pr-tab" href="{{ path('app_practice') }}">← Toute la Pratique</a>
+                </p>
+            </div>
+        </div>
+    </main>
+{% endblock %}

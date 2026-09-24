@@ -24,6 +24,7 @@ final readonly class SearchIndexing
         'app_concepts',
         'app_concept',
         'app_practice',
+        'app_practice_version',
         'app_exercise_pratique',
         'app_legal_notice',
         'app_privacy',

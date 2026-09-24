@@ -6,6 +6,7 @@ use App\Api\PlaygroundConfigFactory;
 use App\Content\LessonRenderer;
 use App\Content\Practice;
 use App\Content\Framework\FrameworkRegistry;
+use App\Content\PracticeVersionIndex;
 use App\Content\PracticeVisibility;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
@@ -41,6 +42,7 @@ final class PracticeController extends AbstractController
     #[Route('/pratique', name: 'app_practice', methods: ['GET'])]
     public function index(
         ExerciseProgressRepository $progressRepository,
+        PracticeVersionIndex $versions,
         SeoWriter $seo,
         #[MapQueryParameter] ?string $framework = null,
         #[MapQueryParameter] array $notions = [],
@@ -79,9 +81,39 @@ final class PracticeController extends AbstractController
             'frameworks' => array_intersect_key($this->frameworks->labels(), array_flip(array_map(static fn (Practice $p) => $p->framework, $all))),
             'notionCounts' => $notionCounts,
             'filters' => ['framework' => $framework, 'notions' => $notions, 'nouveautes' => $nouveautes, 'recherche' => $recherche, 'tri' => $tri],
+            'versions' => $versions->all(),
             'total' => \count($all),
             'newCount' => \count(array_filter($all, static fn (Practice $p) => null !== $p->version)),
             'completedCount' => \count(array_filter($progress, static fn ($p) => 'completed' === $p->getStatus()->value)),
+        ]);
+    }
+
+    /**
+     * Une version d'un framework : ce qu'elle apporte, et les exercices qui le font pratiquer. Elle ne promet
+     * pas la liste des nouveautés de la version — seulement celles qu'on peut pratiquer ici.
+     *
+     * Le chemin tient deux segments : « nouveautes » n'entre donc pas en conflit avec un identifiant d'exercice.
+     */
+    #[Route('/pratique/nouveautes/{slug}', name: 'app_practice_version', methods: ['GET'])]
+    public function version(string $slug, PracticeVersionIndex $versions, ExerciseProgressRepository $progressRepository, SeoWriter $seo, LessonRenderer $markdown): Response
+    {
+        $version = $versions->find($slug) ?? throw $this->createNotFoundException();
+        $seo->practiceVersion($version);
+
+        $user = $this->getUser();
+        $progress = $user instanceof User ? $progressRepository->findPractice($user) : [];
+
+        return $this->render('practice/version.html.twig', [
+            ...$version,
+            'introHtml' => null === $version['intro'] ? null : $markdown->toHtml($version['intro']),
+            'items' => array_map(
+                static fn (Practice $practice) => [
+                    'practice' => $practice,
+                    'state' => ($progress[$practice->exercise->id] ?? null)?->getStatus()->value ?? 'todo',
+                ],
+                $version['practices'],
+            ),
+            'frameworks' => $this->frameworks->labels(),
         ]);
     }
 
@@ -91,7 +123,7 @@ final class PracticeController extends AbstractController
      * publique de l'exercice — le problème et la fonctionnalité expliquée, sans éditeur (TrackAccessChecker).
      */
     #[Route('/pratique/{exerciseId}', name: 'app_exercise_pratique', methods: ['GET'])]
-    public function play(string $exerciseId, PlaygroundConfigFactory $configs, SeoWriter $seo, LessonRenderer $markdown, TrackAccessChecker $access): Response
+    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, SeoWriter $seo, LessonRenderer $markdown, TrackAccessChecker $access): Response
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
         $seo->practice($practice);
@@ -99,6 +131,8 @@ final class PracticeController extends AbstractController
             'practice' => $practice,
             'framework' => $this->frameworks->has($practice->framework) ? $this->frameworks->get($practice->framework)->label : ucfirst($practice->framework),
             'instructions' => $markdown->toHtmlUnderTitle($practice->exercise->instructions),
+            // La pastille de version mène aux autres exercices de cette version, quand cette page existe.
+            'versionSlug' => $versions->slugOf($practice),
         ];
 
         $user = $this->getUser();

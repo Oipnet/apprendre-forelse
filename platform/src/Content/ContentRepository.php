@@ -17,6 +17,7 @@ use Symfony\Component\Yaml\Yaml;
  *   <pack>/tracks/<parcours>/chapters/<chapitre>/lesson.md      fiche de cours de fin de chapitre (facultative)
  *   <pack>/tracks/<parcours>/exercises/<exercice>/{exercise.yaml, instructions.md, starter/, tests/, solution/}
  *   <pack>/practice/<exercice>/{exercise.yaml, …}                 exercice de Pratique, hors parcours (voir Practice)
+ *   <pack>/versions/<version>.md                                  intro d'une page de nouveautés (facultative)
  *
  * Les vérifications qui demandent d'exécuter le contenu (tests rouges puis verts)
  * sont faites par la commande content:check.
@@ -33,6 +34,8 @@ final class ContentRepository
     private array $practices = [];
     /** @var array<string, string> clés dépréciées rencontrées, par « parcours/exercice » (voir deprecations()) */
     private array $deprecations = [];
+    /** @var array<string, array{markdown: string, file: string, packId: string}> intros de pages de nouveautés, par version */
+    private array $versionIntros = [];
 
     /** Identifiant réservé : un parcours ne peut pas s'appeler ainsi (voir les routes /atelier/pratique/…). */
     public const string PRACTICE = 'pratique';
@@ -58,6 +61,7 @@ final class ContentRepository
         $this->tracks = [];
         $this->exercises = [];
         $this->practices = [];
+        $this->versionIntros = [];
         $this->deprecations = [];
     }
 
@@ -114,6 +118,19 @@ final class ContentRepository
         $this->load();
 
         return $this->practices;
+    }
+
+    /**
+     * Les intros écrites pour les pages de nouveautés, par version (« symfony-8-2 »). Sans intro, la page
+     * compose son texte avec les notions de ses exercices (voir PracticeVersionIndex).
+     *
+     * @return array<string, array{markdown: string, file: string, packId: string}>
+     */
+    public function versionIntros(): array
+    {
+        $this->load();
+
+        return $this->versionIntros;
     }
 
     public function findPractice(string $id): ?Practice
@@ -360,6 +377,32 @@ final class ContentRepository
         foreach ($practiceDirectories as $practiceDirectory) {
             $this->loadPractice($pack, $practiceDirectory);
         }
+        foreach (glob($directory.'/versions/*.md') ?: [] as $file) {
+            $this->loadVersionIntro($pack, $file);
+        }
+    }
+
+    /**
+     * L'intro d'une page de nouveautés : `<pack>/versions/symfony-8-2.md`, du Markdown sans titre (la page
+     * affiche le sien). Le nom du fichier est l'identifiant de la version dans l'adresse, tel qu'il s'écrit
+     * (voir PracticeVersionIndex::slug) : une faute de frappe donnerait une intro que rien n'affiche, alors
+     * elle est refusée ici, et content:check signale une intro qui ne correspond à aucune page.
+     */
+    private function loadVersionIntro(Pack $pack, string $file): void
+    {
+        $slug = basename($file, '.md');
+        if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug)) {
+            throw new ContentException(sprintf('Intro de version « %s » : le nom du fichier doit être l\'identifiant de la version dans l\'adresse, en minuscules (« symfony-8-2.md »).', $file));
+        }
+        if (isset($this->versionIntros[$slug])) {
+            throw new ContentException(sprintf('Intro de version « %s » présente deux fois (packs %s et %s).', $slug, $this->versionIntros[$slug]['packId'], $pack->id));
+        }
+        $markdown = trim((string) file_get_contents($file));
+        if ('' === $markdown) {
+            throw new ContentException(sprintf('Intro de version « %s » vide : une page sans intro écrite compose son texte toute seule, autant retirer le fichier.', $file));
+        }
+
+        $this->versionIntros[$slug] = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id];
     }
 
 
