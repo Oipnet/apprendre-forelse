@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Account\AccountProgress;
+use App\Account\EmailChangeNotice;
 use App\Account\EmailVerifier;
 use App\Content\ContentRepository;
 use App\Entity\Purchase;
@@ -54,16 +55,19 @@ final class AccountController extends AbstractController
 
     #[Route('/compte/profil', name: 'app_account_profile', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function profile(Request $request, UserRepository $users, TrackAccessRepository $accesses, PurchaseRepository $purchases, ContentRepository $content, AccountProgress $progress): Response
+    public function profile(Request $request, UserRepository $users, UserPasswordHasherInterface $hasher, TrackAccessRepository $accesses, PurchaseRepository $purchases, ContentRepository $content, AccountProgress $progress): Response
     {
         $user = $this->user();
         $form = $this->profileForm($user)->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            /** @var array{displayName: string, email: string} $data */
+            /** @var array{displayName: string, email: string, currentPassword: string|null} $data */
             $data = $form->getData();
             $email = trim($data['email']);
             $emailChanged = 0 !== strcasecmp($email, (string) $user->getEmail());
-            if ($emailChanged && null !== $users->findOneBy(['email' => $email])) {
+            if ($emailChanged && !$hasher->isPasswordValid($user, (string) $data['currentPassword'])) {
+                // Avant de dire si l'adresse est prise : sans le mot de passe, on n'apprend rien.
+                $form->get('currentPassword')->addError(new FormError('Votre mot de passe actuel est demandé pour changer d\'adresse.'));
+            } elseif ($emailChanged && null !== $users->findOneBy(['email' => $email])) {
                 $form->get('email')->addError(new FormError('Un compte existe déjà avec cet email.'));
             } else {
                 $user->setDisplayName(trim($data['displayName']));
@@ -127,7 +131,7 @@ final class AccountController extends AbstractController
 
     /** Le lien reçu par email. Il fonctionne sans être connecté : on l'ouvre souvent depuis un autre appareil. */
     #[Route('/compte/confirmer-email', name: 'app_account_confirm_email', methods: ['GET'])]
-    public function confirmEmail(Request $request, UserRepository $users, Security $security): Response
+    public function confirmEmail(Request $request, UserRepository $users, Security $security, EmailChangeNotice $notice): Response
     {
         $user = $users->find($request->query->getInt('id'));
         $email = $request->query->getString('email');
@@ -147,9 +151,14 @@ final class AccountController extends AbstractController
             return $this->afterConfirmation('error', 'Cette adresse est déjà utilisée par un autre compte.');
         }
 
-        $changed = $user->getEmail() !== $email;
+        $previous = (string) $user->getEmail();
+        $changed = $previous !== $email;
         $user->confirmEmail($email, $this->clock->now());
         $this->entityManager->flush();
+        if ($changed) {
+            // L'ancienne adresse apprend le changement : si ce n'était pas son titulaire, il sait qu'il doit réagir.
+            $notice->send($user, $previous);
+        }
         // L'adresse identifie l'apprenant dans la session : sans reconnexion, il serait déconnecté à la page suivante.
         if ($changed && $current instanceof User && $current->getId() === $user->getId()) {
             $security->login($user, 'form_login', 'main');

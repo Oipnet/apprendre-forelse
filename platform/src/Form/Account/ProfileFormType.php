@@ -4,6 +4,7 @@ namespace App\Form\Account;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -12,7 +13,10 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Pseudo et adresse du compte. Sans classe de données : un formulaire invalide ne doit pas modifier l'utilisateur
  * connecté, et une nouvelle adresse n'est enregistrée qu'une fois confirmée (voir EmailVerifier).
  *
- * @extends AbstractType<array{displayName: string, email: string}>
+ * Changer d'adresse demande le mot de passe (vérifié par AccountController) : sur un poste partagé ou avec une
+ * session volée, remplacer l'adresse puis réinitialiser le mot de passe suffirait à s'approprier le compte.
+ *
+ * @extends AbstractType<array{displayName: string, email: string, currentPassword: string|null}>
  */
 final class ProfileFormType extends AbstractType
 {
@@ -33,6 +37,12 @@ final class ProfileFormType extends AbstractType
                     new Assert\Email(message: 'Cet email n\'est pas valide.'),
                     new Assert\Length(max: 180),
                 ],
+            ])
+            ->add('currentPassword', PasswordType::class, [
+                'label' => 'Mot de passe actuel',
+                'help' => 'Demandé seulement pour changer d\'adresse.',
+                'required' => false,
+                'attr' => ['autocomplete' => 'current-password'],
             ]);
     }
 }

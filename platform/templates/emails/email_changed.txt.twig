@@ -1,0 +1,9 @@
+Bonjour {{ user.displayName }},
+
+L'adresse de votre compte {{ marque.name }} vient d'être remplacée par {{ newEmail }}. Les emails du compte (mot de passe oublié, achats) partent désormais à cette adresse.
+
+Si c'est vous, il n'y a rien à faire.
+
+Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : {% if contact %}écrivez-nous au plus vite à {{ contact }}{% else %}répondez à cet email au plus vite{% endif %}, en indiquant cette adresse-ci.
+
+{{ marque.signature }}

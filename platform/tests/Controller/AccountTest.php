@@ -106,6 +106,7 @@ final class AccountTest extends WebTestCase
         $this->client->submitForm('Enregistrer', [
             'profile_form[displayName]' => 'Ada L.',
             'profile_form[email]' => 'ada.nouvelle@example.test',
+            'profile_form[currentPassword]' => self::PASSWORD,
         ], serverParameters: self::ORIGIN);
 
         $this->assertResponseRedirects('/compte#profil', 303);
@@ -121,6 +122,10 @@ final class AccountTest extends WebTestCase
         $user = $this->reload($ada);
         $this->assertSame('ada.nouvelle@example.test', $user->getEmail());
         $this->assertTrue($user->isEmailVerified());
+        // L'ancienne adresse est prévenue du changement.
+        $this->assertEmailCount(1);
+        $this->assertEmailAddressContains($this->getMailerMessage(), 'to', 'ada@example.test');
+        $this->assertEmailTextBodyContains($this->getMailerMessage(), 'ada.nouvelle@example.test');
 
         $this->client->followRedirect();
         $this->assertResponseIsSuccessful('Toujours connecté avec la nouvelle adresse.');
@@ -134,6 +139,30 @@ final class AccountTest extends WebTestCase
         $this->assertSelectorTextContains('.flash', 'déjà confirmée');
     }
 
+    /** Sur un poste partagé ou avec une session volée, on ne s'approprie pas le compte en changeant son adresse. */
+    public function testChangerDAdresseDemandeLeMotDePasse(): void
+    {
+        $ada = $this->login();
+        foreach (['', 'pas-le-bon'] as $motDePasse) {
+            $this->client->request('GET', '/compte');
+            $this->client->submitForm('Enregistrer', [
+                'profile_form[displayName]' => 'Ada',
+                'profile_form[email]' => 'pirate@example.test',
+                'profile_form[currentPassword]' => $motDePasse,
+            ], serverParameters: self::ORIGIN);
+
+            $this->assertResponseStatusCodeSame(422);
+            $this->assertSelectorTextContains('#profil', 'mot de passe actuel est demandé');
+            $this->assertEmailCount(0);
+        }
+        $this->assertSame('ada@example.test', $this->reload($ada)->getEmail());
+
+        // Le pseudo, lui, se change sans mot de passe.
+        $this->client->request('GET', '/compte');
+        $this->client->submitForm('Enregistrer', ['profile_form[displayName]' => 'Ada L.', 'profile_form[email]' => 'ada@example.test'], serverParameters: self::ORIGIN);
+        $this->assertResponseRedirects('/compte#profil', 303);
+    }
+
     public function testUneAdresseDejaPriseEstRefusee(): void
     {
         $this->createUser('gorm@example.test', 'Gorm');
@@ -142,6 +171,7 @@ final class AccountTest extends WebTestCase
         $this->client->submitForm('Enregistrer', [
             'profile_form[displayName]' => 'Ada',
             'profile_form[email]' => 'gorm@example.test',
+            'profile_form[currentPassword]' => self::PASSWORD,
         ], serverParameters: self::ORIGIN);
 
         $this->assertResponseStatusCodeSame(422);
