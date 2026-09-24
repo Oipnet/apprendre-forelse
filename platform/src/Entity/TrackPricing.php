@@ -70,7 +70,7 @@ class TrackPricing
     /**
      * Le prix fondateur s'applique-t-il ?
      *
-     * @param int $founderSales achats déjà payés au prix fondateur
+     * @param int $founderSales places déjà prises au prix fondateur (payées, ou réservées par un paiement en cours)
      */
     public function isFounderPriceApplicable(\DateTimeImmutable $now, int $founderSales): bool
     {

@@ -68,6 +68,8 @@ final class StripeGateway implements PaymentGateway
                 'tax_id_collection' => ['enabled' => true],
                 'success_url' => $successUrl,
                 'cancel_url' => $cancelUrl,
+                // Au-delà, la place réservée au prix fondateur est rendue : la session ne doit plus pouvoir être payée.
+                'expires_at' => time() + CheckoutSession::LIFETIME,
             ], ['idempotency_key' => 'purchase-'.$purchase->getId()]);
         } catch (ApiErrorException $e) {
             throw new PaymentException('Le paiement n\'a pas pu démarrer : '.$e->getMessage(), previous: $e);
