@@ -40,6 +40,9 @@ final class AuteurCommand
         $this->entityManager->flush();
 
         $io->success(sprintf('%s %s l\'atelier des auteurs.', $email, $retirer ? 'n\'a plus accès à' : 'a désormais accès à'));
+        if (!$retirer) {
+            $io->note('Sur des packs modifiables, l\'atelier exécute sur ce serveur les tests que l\'auteur écrit, avec les secrets de la plateforme à portée : c\'est un rôle d\'administrateur. Les compose.yaml montent les packs en lecture seule.');
+        }
 
         return Command::SUCCESS;
     }
