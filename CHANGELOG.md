@@ -64,6 +64,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   en base répondent 401 sans compte. La consigne reste servie dans le HTML de la page, donc rien ne change
   pour les moteurs de recherche. Une instance sur invitation (`REGISTRATION_INVITE_ONLY=1` : école,
   entreprise, préproduction) garde la Pratique fermée comme avant.
+- **L'image précharge les classes de Symfony** (`opcache.preload`) : environ 2 300 classes du framework et du
+  conteneur sont chargées une fois au démarrage, au lieu d'être relues à chaque requête. Mesuré sur l'image
+  (trois pages, `ab -c 4`) : +3 % de requêtes par seconde sur l'accueil, que les requêtes SQL dominent,
+  +10 % sur `/pratique`, +22 % sur `/connexion` ; opcache occupe 15 Mo de plus, sur 128. Rien à faire côté
+  instance : la liste des classes est écrite par le `cache:clear` du démarrage.
 
 ### Sécurité
 
