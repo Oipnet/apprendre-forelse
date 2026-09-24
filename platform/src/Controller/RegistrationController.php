@@ -92,8 +92,9 @@ final class RegistrationController extends AbstractController
                 $confirmationSent ? sprintf(' Un email vient de partir à %s pour confirmer votre adresse.', $user->getEmail()) : '',
             ));
 
-            // Chemin local uniquement (« //hote » ou « /\hote » mèneraient ailleurs : redirection ouverte).
-            $isLocalPath = \is_string($target) && 1 === preg_match('#^/(?![/\\\\])#', $target);
+            // Chemin local uniquement (« //hote » ou « /\hote » mèneraient ailleurs : redirection ouverte). Ni blanc ni
+            // caractère de contrôle : le navigateur retire une tabulation, et « /<tab>/hote » redeviendrait « //hote ».
+            $isLocalPath = \is_string($target) && 1 === preg_match('#^/(?![/\\\\])[^\s\x00-\x1f\x7f]*$#', $target);
 
             return $this->redirect($isLocalPath ? $target : $this->generateUrl('app_home'));
         }

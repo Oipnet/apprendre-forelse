@@ -78,6 +78,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Plus de redirection vers un autre site après l'inscription.** `?suite=/%09/site.tld` passait le contrôle du
+  chemin local, et le navigateur, qui retire la tabulation, allait sur `//site.tld`. Le chemin de retour refuse
+  désormais tout blanc et tout caractère de contrôle.
 - **Changer l'adresse de son compte demande le mot de passe**, et l'ancienne adresse est prévenue une fois le
   changement confirmé. Sur un poste partagé ou avec une session volée, mettre son adresse, la confirmer puis
   réinitialiser le mot de passe suffisait à garder le compte et ses achats. Le pseudo, lui, se change toujours
