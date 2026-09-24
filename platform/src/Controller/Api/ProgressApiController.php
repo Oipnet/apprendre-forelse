@@ -21,6 +21,8 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/progress', format: 'json')]
 final class ProgressApiController extends AbstractController
 {
+    private const int MAX_IMPORT = 200;
+
     public function __construct(
         private readonly ExerciseLocator $exercises,
         private readonly ProgressService $progress,
@@ -82,6 +84,11 @@ final class ProgressApiController extends AbstractController
     #[Route('/import', name: 'api_progress_import', methods: ['POST'], priority: 10)]
     public function import(#[MapRequestPayload(type: GuestProgressInput::class)] array $items): JsonResponse
     {
+        // Largement plus que les exercices qu'un invité peut jouer ; chaque entrée coûte des écritures en base.
+        if (\count($items) > self::MAX_IMPORT) {
+            throw new HttpException(Response::HTTP_UNPROCESSABLE_ENTITY, sprintf('Au plus %d exercices par import.', self::MAX_IMPORT));
+        }
+
         return $this->json(['imported' => $this->progress->importGuestProgress($this->user(), $items)]);
     }
 

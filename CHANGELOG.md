@@ -72,6 +72,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **L'import de la progression d'invité ne fait plus apparaître un parcours en préparation.** Il vérifiait l'accès
+  à l'exercice mais pas la visibilité du parcours : importer un exercice d'un parcours caché le rendait visible
+  (un parcours commencé s'affiche), et ouvert en entier s'il était gratuit. L'import fait désormais le même
+  contrôle que les autres API d'un exercice, et refuse une liste de plus de 200 exercices.
 - **Un remboursement ou une contestation bancaire ferment l'accès au parcours.** Le webhook Stripe ne traitait
   que les paiements : un achat remboursé depuis le tableau de bord de Stripe, ou contesté auprès de la banque,
   gardait son parcours ouvert à vie. `charge.refunded` (remboursement total ; un remboursement partiel laisse

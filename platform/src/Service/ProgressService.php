@@ -2,13 +2,13 @@
 
 namespace App\Service;
 
+use App\Api\ExerciseAccessGuard;
 use App\Api\GuestProgressInput;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Entity\ExerciseProgress;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
-use App\Security\TrackAccessChecker;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class ProgressService
@@ -18,7 +18,7 @@ final readonly class ProgressService
         private EntityManagerInterface $entityManager,
         private XpCalculator $xpCalculator,
         private ContentRepository $content,
-        private TrackAccessChecker $access,
+        private ExerciseAccessGuard $guard,
     ) {
     }
 
@@ -92,9 +92,10 @@ final readonly class ProgressService
     {
         $imported = 0;
         foreach ($items as $item) {
-            // On ne reprend que ce que le compte peut ouvrir : la Pratique n'a de toute façon rien à importer.
+            // On ne reprend que ce que le compte peut ouvrir, dans un parcours visible : une progression importée dans
+            // un parcours en préparation le ferait apparaître (hasStarted). La Pratique n'a de toute façon rien à importer.
             $exercise = $this->content->findExercise($item->trackId, $item->exerciseId);
-            if (!$exercise || !$this->access->canAccessExercise($user, $exercise) || $this->find($user, $exercise)) {
+            if (!$exercise || !$this->guard->allows($user, $exercise) || $this->find($user, $exercise)) {
                 continue;
             }
             $this->saveDraft($user, $exercise, $item->files, $item->hintsUsed);
