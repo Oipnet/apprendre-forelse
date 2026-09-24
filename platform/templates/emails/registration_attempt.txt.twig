@@ -1,0 +1,13 @@
+Bonjour {{ user.displayName }},
+
+Quelqu'un vient d'essayer de créer un compte sur {{ marque.name }} avec votre adresse email. Or vous en avez déjà un.
+
+Si c'était vous, connectez-vous :
+{{ url('app_login') }}
+
+Mot de passe oublié ? Choisissez-en un nouveau :
+{{ url('app_forgot_password_request') }}
+
+Si ce n'était pas vous, ignorez cet email : aucun compte n'a été créé et le vôtre n'a pas changé.
+
+{{ marque.signature }}

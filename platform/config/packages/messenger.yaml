@@ -1,0 +1,38 @@
+framework:
+    messenger:
+        # Un email qui échoue encore après ses nouvelles tentatives est gardé ici :
+        #   bin/console messenger:failed:show    puis    messenger:failed:retry
+        failure_transport: failed
+
+        transports:
+            # Avec les compose.yaml (MESSENGER_TRANSPORT_DSN=doctrine://…), les emails partent hors de la requête, par
+            # leur service « worker » (bin/console messenger:consume async) : un serveur SMTP lent ou en panne ne
+            # bloque plus l'inscription ni le mot de passe oublié, et le temps de réponse ne trahit plus si une
+            # adresse a un compte. Par défaut (sync://, voir .env), ils partent pendant la requête, sans worker.
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                # Sans LISTEN/NOTIFY : il faudrait un déclencheur PostgreSQL que la migration ne crée pas, et sans lui un
+                # email attendrait jusqu'à une minute. Le worker interroge la table chaque seconde, elle reste minuscule.
+                options:
+                    use_notify: false
+                retry_strategy:
+                    # 1 min, 5 min, 25 min, 2 h : de quoi attendre le retour d'un serveur SMTP.
+                    max_retries: 4
+                    delay: 60000
+                    multiplier: 5
+            failed:
+                dsn: 'doctrine://default?queue_name=failed&auto_setup=0'
+                options:
+                    use_notify: false
+
+        routing:
+            Symfony\Component\Mailer\Messenger\SendEmailMessage: async
+            # Mot de passe oublié : tout le travail (compte, jeton, email) se fait hors de la requête.
+            App\Account\PasswordResetRequested: async
+
+when@test:
+    framework:
+        messenger:
+            transports:
+                # Envoi immédiat : les tests lisent les emails envoyés (assertEmailCount…).
+                async: 'sync://'
