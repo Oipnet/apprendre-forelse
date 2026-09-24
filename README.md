@@ -423,6 +423,7 @@ Accueil ── /pratique ── /pratique/<exercice>
 ## Sécurité
 
 - **Aperçu isolé** : le HTML/JS produit par l'apprenant s'affiche sur une origine distincte (`SANDBOX_ORIGIN`), sans cookie ni accès à la plateforme. Chaque origine ne sert que ses propres pages (`OriginIsolationListener`).
+- **Workers des runtimes** : le PHP WebAssembly et le simulateur Nuxt (qui évalue les routes `server/` de l'apprenant) tournent dans des workers de l'origine de la plateforme. Leur script est servi avec `Content-Security-Policy: connect-src <APP_URL>/envs/ <APP_URL>/build/` (`docker/Caddyfile`) : ils téléchargent leurs archives, mais un `fetch('/api/…')` ne part pas avec la session. En développement, les workers viennent du serveur de Vite, sans cette politique.
 - **Cookies de session** limités à l'hôte de la plateforme (`HttpOnly`, `SameSite=Lax`, pas de `cookie_domain`).
 - **Écritures** refusées si l'en-tête `Origin` diffère de celle de la plateforme ; consignes Markdown nettoyées (DOMPurify).
 - La réussite d'un exercice est constatée dans le navigateur : l'XP est donc falsifiable. C'est acceptable pour apprendre, mais il ne faut pas s'en servir pour certifier.
