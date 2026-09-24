@@ -84,6 +84,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **La connexion se bloque après 5 échecs en 15 minutes** pour un même compte depuis une même adresse IP
+  (`login_throttling`), même avec le bon mot de passe ensuite : contre la force brute et les mots de passe fuités.
 - **Plus de redirection vers un autre site après l'inscription.** `?suite=/%09/site.tld` passait le contrôle du
   chemin local, et le navigateur, qui retire la tabulation, allait sur `//site.tld`. Le chemin de retour refuse
   désormais tout blanc et tout caractère de contrôle.
