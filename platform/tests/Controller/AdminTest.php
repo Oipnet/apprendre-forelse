@@ -67,16 +67,18 @@ final class AdminTest extends WebTestCase
         ], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
         $this->assertResponseRedirects();
 
-        $cohort = static::getContainer()->get(CohortRepository::class)->findOneByCode('iut-annecy-2026');
-        $this->assertNotNull($cohort, 'Le code est normalisé en minuscules.');
+        $cohort = static::getContainer()->get(CohortRepository::class)->findOneBy(['name' => 'BUT Info Annecy 2026']);
+        $this->assertNotNull($cohort);
+        $this->assertMatchesRegularExpression('/^iut-annecy-2026-[a-z2-9]{10}$/', (string) $cohort->getCode(), 'Le code est normalisé en minuscules, et reçoit une partie aléatoire : il ne se devine pas.');
         $this->assertTrue($cohort->isActive());
+        $code = (string) $cohort->getCode();
 
         $this->client->request('GET', '/admin/cohortes');
-        $this->assertSelectorTextContains('body', 'http://localhost/inscription?code=iut-annecy-2026', 'Le lien d\'invitation est affiché.');
+        $this->assertSelectorTextContains('body', 'http://localhost/inscription?code='.$code, 'Le lien d\'invitation est affiché.');
 
         $this->client->request('GET', '/admin');
         $this->assertSelectorTextContains('h2', 'BUT Info Annecy 2026', 'Une cohorte vide apparaît quand même sur l\'accueil.');
-        $this->client->request('GET', '/admin/cohorte/iut-annecy-2026');
+        $this->client->request('GET', '/admin/cohorte/'.$code);
         $this->assertResponseIsSuccessful();
     }
 

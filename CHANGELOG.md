@@ -84,6 +84,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Les codes d'invitation de cohorte ne se devinent plus.** Choisis à la main (« iut-2026 ») et essayables sans
+  limite, ils ouvraient des comptes, et les parcours payants d'une cohorte financée par l'établissement. Une
+  nouvelle cohorte reçoit une partie aléatoire de 10 caractères après la partie lisible (« iut-2026-k3m9x7q2pw »,
+  sans caractères qui se confondent), et 10 codes inconnus en une heure depuis une adresse IP ferment les codes
+  depuis celle-ci, bon code compris. **Les cohortes existantes gardent leur code** : pour celles qui financent des
+  parcours, remplacez-le dans `/admin` → Cohortes et renvoyez le lien d'invitation.
 - **La connexion se bloque après 5 échecs en 15 minutes** pour un même compte depuis une même adresse IP
   (`login_throttling`), même avec le bon mot de passe ensuite : contre la force brute et les mots de passe fuités.
 - **Plus de redirection vers un autre site après l'inscription.** `?suite=/%09/site.tld` passait le contrôle du

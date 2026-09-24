@@ -34,6 +34,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Validator\Constraints\Length;
 
 /** Cohortes : créées ici, rejointes à l'inscription avec leur code (ou le lien d'invitation). */
 #[AdminRoute(path: '/cohortes', name: 'cohorts')]
@@ -79,10 +80,16 @@ final class CohortCrudController extends AbstractCrudController
     {
         yield TextField::new('name', 'Nom')->setHelp('Ex. « BUT Info Annecy 2026 ».');
         // Le code, et en lecture le lien d'invitation qui le pré-remplit (à copier dans un message aux apprenants).
-        yield TextField::new('code', 'Code d\'invitation')
-            ->setHelp('Minuscules, chiffres et tirets : ce que l\'apprenant saisit à l\'inscription.')
+        $code = TextField::new('code', 'Code d\'invitation')
+            ->setHelp(Crud::PAGE_NEW === $pageName
+                ? sprintf('Minuscules, chiffres et tirets, %d caractères au plus (ex. iut-2026). Une partie aléatoire de %d caractères s\'y ajoute à l\'enregistrement : un code lisible seul se devine.', Cohort::READABLE_CODE_MAX, Cohort::RANDOM_CODE_LENGTH)
+                : 'Minuscules, chiffres et tirets : ce que l\'apprenant saisit à l\'inscription.')
             ->formatValue(fn ($value, Cohort $cohort) => sprintf('<code>%s</code><br><a href="%2$s" target="_blank" rel="noopener">%2$s</a>', htmlspecialchars((string) $value), htmlspecialchars($this->invitationUrl($cohort))))
             ->renderAsHtml();
+        if (Crud::PAGE_NEW === $pageName) {
+            $code->setFormTypeOption('constraints', [new Length(max: Cohort::READABLE_CODE_MAX, maxMessage: 'Au plus {{ limit }} caractères : la partie aléatoire s\'y ajoute.')]);
+        }
+        yield $code;
         yield BooleanField::new('active', 'Inscriptions ouvertes');
         yield AssociationField::new('users', 'Apprenants')->hideOnForm();
         if (\in_array($pageName, [Crud::PAGE_INDEX, Crud::PAGE_DETAIL], true)) {
@@ -138,6 +145,7 @@ final class CohortCrudController extends AbstractCrudController
     /** Les accès de la cohorte suivent ses parcours, ses dates et son mode de financement. */
     public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
+        $entityInstance->addRandomCodePart();
         parent::persistEntity($entityManager, $entityInstance);
         $this->cohortAccess->sync($entityInstance);
     }

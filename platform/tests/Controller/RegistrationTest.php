@@ -302,4 +302,43 @@ final class RegistrationTest extends WebTestCase
         $user = static::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'gorm@example.test']);
         $this->assertSame('iut-2026', $user?->getCohort()?->getCode(), 'Le code est normalisé (casse, espaces).');
     }
+
+    public function testDixCodesInconnusFermentLesCodesDepuisCetteAdresse(): void
+    {
+        $this->inviteOnly();
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->createCohort('iut-2026');
+        // Les compteurs vivent dans un cache en mémoire, vidé entre deux requêtes de test : on épuise le quota avant
+        // la première requête, sur le même kernel.
+        $limiter = static::getContainer()->get('limiter.invitation_code')->create('127.0.0.1');
+        for ($i = 1; $i <= 10; ++$i) {
+            $limiter->consume();
+        }
+
+        // Même le bon code : sinon, sa réussite dirait qu'on l'a trouvé.
+        $client->request('POST', '/inscription', ['registration_form' => [
+            'displayName' => 'Gorm', 'email' => 'gorm@example.test', 'plainPassword' => 'une-longue-phrase',
+            'invitationCode' => 'iut-2026', '_token' => 'csrf-token',
+        ]], server: ['HTTP_ORIGIN' => 'http://localhost']);
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSelectorTextContains('.form-card', 'Trop de codes d\'invitation essayés');
+        $this->assertNull(static::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'gorm@example.test']));
+    }
+
+    public function testUnCodeInconnuCompteParmiLesEssais(): void
+    {
+        $this->inviteOnly();
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $client->request('POST', '/inscription', ['registration_form' => [
+            'displayName' => 'Gorm', 'email' => 'gorm@example.test', 'plainPassword' => 'une-longue-phrase',
+            'invitationCode' => 'iut-2025', '_token' => 'csrf-token',
+        ]], server: ['HTTP_ORIGIN' => 'http://localhost']);
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSame(9, static::getContainer()->get('limiter.invitation_code')->create('127.0.0.1')->consume(0)->getRemainingTokens());
+    }
 }

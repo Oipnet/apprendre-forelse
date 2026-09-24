@@ -20,6 +20,10 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[UniqueEntity(fields: ['code'], message: 'Ce code d\'invitation est déjà utilisé.')]
 class Cohort implements \Stringable
 {
+    /** Longueur de la partie aléatoire du code ; la partie lisible a donc au plus 40 - 11 caractères. */
+    public const int RANDOM_CODE_LENGTH = 10;
+    public const int READABLE_CODE_MAX = 40 - 1 - self::RANDOM_CODE_LENGTH;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -154,6 +158,21 @@ class Cohort implements \Stringable
         $this->code = strtolower(trim($code));
 
         return $this;
+    }
+
+    /**
+     * Ajoute au code une partie aléatoire (« iut-2026 » → « iut-2026-k3m9x7q2pw ») : un code d'invitation ouvre des
+     * comptes, et des parcours payants pour une cohorte financée ; lisible seulement, il se devine.
+     */
+    public function addRandomCodePart(): static
+    {
+        $alphabet = 'abcdefghjkmnpqrstuvwxyz23456789'; // sans 0/o, 1/l/i : il se recopie à la main
+        $part = '';
+        for ($i = 0; $i < self::RANDOM_CODE_LENGTH; ++$i) {
+            $part .= $alphabet[random_int(0, \strlen($alphabet) - 1)];
+        }
+
+        return $this->setCode($this->code.'-'.$part);
     }
 
     public function isActive(): bool

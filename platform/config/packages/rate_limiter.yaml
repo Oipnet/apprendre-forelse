@@ -32,6 +32,12 @@ framework:
             policy: sliding_window
             limit: 10
             interval: '1 hour'
+        # Codes d'invitation inconnus essayés à l'inscription, par adresse IP. Au-delà, plus aucun code n'est accepté
+        # depuis cette adresse, pas même un bon : sinon la réussite dirait qu'on l'a trouvé.
+        invitation_code:
+            policy: sliding_window
+            limit: 10
+            interval: '1 hour'
         # Email « quelqu'un a voulu créer un compte avec votre adresse », par compte : pas de quoi inonder sa boîte.
         registration_notice:
             policy: fixed_window
