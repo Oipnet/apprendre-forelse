@@ -146,7 +146,13 @@
                         {% endfor %}
 
                         {% if shown and not app.user %}
-                            <p class="meta pr-signup">Chaque exercice demande un compte : <a rel="nofollow" href="{{ path('app_register') }}">créez le vôtre</a> ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
+                            {# Sur une instance sur invitation, l'éditeur reste fermé aux visiteurs (TrackAccessChecker) :
+                               la même phrase y mentirait. #}
+                            {% if inviteOnly %}
+                                <p class="meta pr-signup">Cette plateforme est réservée à ses membres : <a rel="nofollow" href="{{ path('app_register') }}">créez votre compte</a> avec votre code d'invitation, ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
+                            {% else %}
+                                <p class="meta pr-signup">Ces exercices s'écrivent sans compte : l'éditeur s'ouvre tout de suite. Le compte garde votre progression, ouvre le mentor et les retours — <a rel="nofollow" href="{{ path('app_register') }}">créez le vôtre</a> ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>

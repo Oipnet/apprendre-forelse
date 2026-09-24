@@ -49,6 +49,7 @@ final class PracticeTest extends WebTestCase
         $this->assertSame(['Lire un en-tête avec #[MapRequestHeader]', 'Une nouveauté récente', 'Un point précis', 'Côté Laravel'], $crawler->filter('.practice-list .title')->extract(['_text']), 'Du plus récent au plus ancien, pack de démo compris.');
         $this->assertStringContainsString('Symfony 8.1', $crawler->filter('.practice-list li')->eq(1)->text());
         $this->assertSelectorExists('header nav a[href="/pratique"]', 'La Pratique est dans le menu.');
+        $this->assertSelectorTextContains('.pr-signup', 'Ces exercices s\'écrivent sans compte', 'Le bas de la liste ne promet pas un compte avant d\'avoir rien montré.');
     }
 
     public function testUnAdministrateurVoitLesExercicesEnPreparation(): void
@@ -221,6 +222,10 @@ final class PracticeTest extends WebTestCase
             $this->assertSelectorExists('.exercise-access a[href="/inscription?suite=/pratique/point-precis"]');
             $this->json($client, 'GET', '/api/exercises/pratique/point-precis');
             $this->assertResponseStatusCodeSame(401);
+
+            // La liste reste lisible, mais elle ne peut pas promettre un éditeur ouvert sans compte.
+            $client->request('GET', '/pratique');
+            $this->assertSelectorTextContains('.pr-signup', 'réservée à ses membres');
         } finally {
             $_SERVER['REGISTRATION_INVITE_ONLY'] = $_ENV['REGISTRATION_INVITE_ONLY'] = $initial;
         }
