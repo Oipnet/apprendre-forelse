@@ -69,6 +69,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   (trois pages, `ab -c 4`) : +3 % de requêtes par seconde sur l'accueil, que les requêtes SQL dominent,
   +10 % sur `/pratique`, +22 % sur `/connexion` ; opcache occupe 15 Mo de plus, sur 128. Rien à faire côté
   instance : la liste des classes est écrite par le `cache:clear` du démarrage.
+- **Le contrôle de santé de l'image interroge PHP et la base** : il appelle `/sante`, qui fait un `SELECT 1`,
+  au lieu de l'API d'administration de Caddy, qui restait verte avec une base arrêtée ou un PHP qui ne démarre
+  pas. Le conteneur passe donc en `unhealthy` dans ces cas-là, et `docker compose up --wait` échoue au lieu de
+  déclarer le déploiement réussi. L'appel passe par une adresse interne au conteneur (`127.0.0.1:2020`), si bien
+  qu'il marche quel que soit `SERVER_NAME`. `/sante` répond aussi sur l'origine de la plateforme (`ok`, ou 503
+  sans détail), pour une sonde de disponibilité externe ; elle n'ouvre aucune session.
 
 ### Sécurité
 

@@ -57,6 +57,20 @@
 	}
 }
 
+# Contrôle de santé de l'image (HEALTHCHECK du Dockerfile) : PHP et la base répondent-ils ? Adresse locale au
+# conteneur, pour ne pas dépendre de SERVER_NAME (des domaines en HTTPS, ou :80 derrière un reverse proxy). Elle ne
+# sert que /sante ; la même route répond aussi sur l'origine de la plateforme, pour une sonde externe.
+http://127.0.0.1:2020 {
+	bind 127.0.0.1
+	root /app/platform/public
+	handle /sante {
+		php_server
+	}
+	handle {
+		respond 404
+	}
+}
+
 # Tableau de bord d'Umami, sur son propre nom d'hôte (ANALYTICS_SERVER_NAME, ex. https://suivi.example.org) :
 # l'image officielle est construite pour la racine d'un domaine, elle ne sait pas vivre sous un sous-chemin.
 # Variable absente, le cas par défaut : Caddy écoute une adresse locale inutilisée, le tableau de bord n'est
