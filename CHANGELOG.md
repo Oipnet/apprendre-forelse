@@ -10,6 +10,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Modifié
 
+- Les liens vers la page d'inscription portent `rel="nofollow"` : elle est déjà en `noindex`, les moteurs
+  de recherche n'ont pas à la suivre.
 - **La Pratique s'écrit sans compte.** Un visiteur ouvre l'éditeur, écrit son code, lance les tests et voit
   s'il a réussi — l'inscription n'est proposée qu'après, pour garder la progression. Elle était jusqu'ici
   demandée avant d'avoir rien montré, au moment exact où le visiteur est le plus motivé. Ses essais sont

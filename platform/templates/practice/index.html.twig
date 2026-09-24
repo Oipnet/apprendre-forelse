@@ -162,7 +162,7 @@
                         {% endfor %}
 
                         {% if shown and not app.user %}
-                            <p class="meta pr-signup">Chaque exercice demande un compte : <a href="{{ path('app_register') }}">créez le vôtre</a> ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
+                            <p class="meta pr-signup">Chaque exercice demande un compte : <a rel="nofollow" href="{{ path('app_register') }}">créez le vôtre</a> ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
                         {% endif %}
                     </div>
                 </div>

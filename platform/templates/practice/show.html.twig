@@ -15,7 +15,7 @@
             <p>Cette plateforme est réservée à ses membres : créez votre compte avec votre code d'invitation,
                 ou laissez votre adresse sur la liste d'attente.</p>
             <p class="exercise-access-actions">
-                <a class="button primary" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Créer un compte</a>
+                <a class="button primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Créer un compte</a>
                 <a class="button" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>
                 <a class="button ghost" href="{{ path('app_login') }}">Se connecter</a>
             </p>
