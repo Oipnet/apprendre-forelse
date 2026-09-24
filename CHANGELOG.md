@@ -91,6 +91,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   l'achat passe au nouveau statut « Abandonné » avant qu'un autre ne commence. Deux demandes simultanées
   (double clic) se suivent grâce à un verrou sur le compte. Un Stripe injoignable n'enregistre plus d'achat
   sans session.
+- **Un événement Stripe en échec garde son erreur.** Un paiement confirmé pour une session sans achat fermait
+  l'EntityManager avant que l'échec soit noté : l'événement restait en base sans message. Le message est
+  désormais écrit à part, quelle que soit l'erreur.
+- **`app:stripe:rejouer` ne s'arrête plus au premier événement en échec** : chacun est traité à part, et les
+  suivants passent (ils échouaient tous avec « EntityManager is closed »).
 
 ### Sécurité
 
