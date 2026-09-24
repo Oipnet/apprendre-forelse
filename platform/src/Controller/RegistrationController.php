@@ -81,12 +81,15 @@ final class RegistrationController extends AbstractController
             if ('' !== $code) {
                 $user->setCohort($cohorts->findActiveByCode($code));
             }
-            $entityManager->persist($user);
-            $entityManager->flush();
-            if (null !== $user->getCohort()) {
-                // Cohorte financée par l'établissement : ses parcours s'ouvrent dès l'inscription.
-                $cohortAccess->join($user, $user->getCohort());
-            }
+            // Le compte et les accès de sa cohorte ensemble, ou rien : un compte sans ses accès ne pourrait plus
+            // se réinscrire (email pris), et resterait privé des parcours payés par l'établissement.
+            $entityManager->wrapInTransaction(static function () use ($entityManager, $user, $cohortAccess): void {
+                $entityManager->persist($user);
+                if (null !== $user->getCohort()) {
+                    // Cohorte financée par l'établissement : ses parcours s'ouvrent dès l'inscription.
+                    $cohortAccess->join($user, $user->getCohort());
+                }
+            });
             $alert->notify($user);
             $confirmationSent = $verifier->send($user);
 

@@ -142,25 +142,34 @@ final class CohortCrudController extends AbstractCrudController
             ->add(ChoiceFilter::new('fundingMode', 'Financement')->setChoices(array_combine(array_map(static fn (FundingMode $m) => $m->label(), FundingMode::cases()), array_column(FundingMode::cases(), 'value'))));
     }
 
-    /** Les accès de la cohorte suivent ses parcours, ses dates et son mode de financement. */
+    /**
+     * Les accès de la cohorte suivent ses parcours, ses dates et son mode de financement : enregistrés dans la même
+     * transaction que la cohorte, pour qu'un échec n'enregistre pas l'une sans les autres.
+     */
     public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
         $entityInstance->addRandomCodePart();
-        parent::persistEntity($entityManager, $entityInstance);
-        $this->cohortAccess->sync($entityInstance);
+        $entityManager->wrapInTransaction(function () use ($entityManager, $entityInstance): void {
+            parent::persistEntity($entityManager, $entityInstance);
+            $this->cohortAccess->sync($entityInstance);
+        });
     }
 
     public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
-        parent::updateEntity($entityManager, $entityInstance);
-        $this->cohortAccess->sync($entityInstance);
+        $entityManager->wrapInTransaction(function () use ($entityManager, $entityInstance): void {
+            parent::updateEntity($entityManager, $entityInstance);
+            $this->cohortAccess->sync($entityInstance);
+        });
     }
 
     /** Les accès ouverts par la cohorte ne lui survivent pas (la progression, si). */
     public function deleteEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
-        $this->cohortAccess->revokeAll($entityInstance);
-        parent::deleteEntity($entityManager, $entityInstance);
+        $entityManager->wrapInTransaction(function () use ($entityManager, $entityInstance): void {
+            $this->cohortAccess->revokeAll($entityInstance);
+            parent::deleteEntity($entityManager, $entityInstance);
+        });
     }
 
     /** Copie l'estimation dans le devis : point de départ, à corriger avant de l'envoyer. */

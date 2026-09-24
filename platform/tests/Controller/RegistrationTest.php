@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use App\Tests\DatabaseTrait;
 use App\Tests\PacksTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -211,6 +212,27 @@ final class RegistrationTest extends WebTestCase
         $this->assertResponseRedirects('/');
         $user = static::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'gorm@example.test']);
         $this->assertSame('iut-2026', $user?->getCohort()?->getCode());
+    }
+
+    public function testSiLesAccesDeLaCohorteNePeuventEtreOuvertsLeCompteNEstPasCree(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        // Financée par l'établissement, avec un parcours : l'inscription ouvre un accès.
+        $this->createCohort('iut-2026')->setAvailableTrackIds(['decouverte']);
+        static::getContainer()->get(EntityManagerInterface::class)->flush();
+
+        $client->request('GET', '/inscription?code=iut-2026');
+        $this->failTrackAccessWrites($client);
+        $client->submitForm('Créer mon compte', [
+            'registration_form[displayName]' => 'Gorm',
+            'registration_form[email]' => 'gorm@example.test',
+            'registration_form[plainPassword]' => 'une-longue-phrase',
+        ], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
+
+        $this->assertResponseStatusCodeSame(500);
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->assertSame(0, (int) $entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM "user" WHERE email = ?', ['gorm@example.test']), 'Pas de compte sans les accès de sa cohorte : il peut réessayer.');
     }
 
     /** L'équipe est prévenue de chaque inscription (REGISTRATION_ALERT_EMAIL). */

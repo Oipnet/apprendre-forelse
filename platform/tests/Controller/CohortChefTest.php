@@ -154,6 +154,25 @@ final class CohortChefTest extends WebTestCase
         $this->assertFalse($this->recharger($cohorte)->hasTrackSelection());
     }
 
+    public function testSiLesAccesNeSuiventPasLaSelectionNEstPasEnregistree(): void
+    {
+        $chef = $this->chef();
+        $cohorte = $this->cohorte('iut-annecy', [$chef], ['symfony-bases']);
+        $this->createUser('ada@example.test', 'Ada', 'iut-annecy');
+        $this->client->loginUser($chef);
+        $crawler = $this->client->request('GET', '/cohorte/'.$cohorte->getId());
+        $form = $crawler->selectButton('Enregistrer les parcours')->form();
+
+        $this->failTrackAccessWrites($this->client);
+        $this->client->request('POST', $form->getUri(), ['cohort_tracks' => [
+            'trackIds' => ['laravel-bases'],
+            '_token' => $form->get('cohort_tracks[_token]')->getValue(),
+        ]], server: self::ORIGIN);
+
+        $this->assertResponseStatusCodeSame(500);
+        $this->assertSame(['symfony-bases'], $this->recharger($cohorte)->getAvailableTrackIds(), 'La sélection reste celle dont les accès sont ouverts.');
+    }
+
     public function testUnApprenantDUneCohorteLimiteeALaravelNeVoitPasSymfony(): void
     {
         $this->cohorte('iut-annecy', tracks: ['laravel-bases']);

@@ -105,6 +105,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   attente, en plus des achats payés, sauf celui de l'apprenant qui revient sur la page de paiement (il garde son
   prix). La réservation dure autant que la session Stripe, désormais limitée à une heure au lieu de 24 : passé
   ce délai, la place est rendue, et l'apprenant qui n'a pas payé recommence depuis la plateforme.
+- **Une cohorte et les accès qu'elle ouvre s'enregistrent ensemble, ou pas du tout.** Les parcours choisis par
+  un chef (ou dans l'administration), une inscription avec un code de cohorte, le changement de cohorte d'un
+  apprenant : si l'ouverture des accès échouait, le reste était déjà enregistré. Une sélection de parcours
+  restait sans ses accès, et un compte existait sans les parcours de sa cohorte, sans pouvoir se réinscrire
+  puisque son email était pris.
 
 ### Sécurité
 
