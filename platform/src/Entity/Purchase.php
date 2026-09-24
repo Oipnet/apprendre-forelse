@@ -142,6 +142,28 @@ class Purchase
         $this->stripeRefundId = $refundId;
     }
 
+    /** Contestation bancaire ouverte. Renvoie false si l'achat n'était pas payé (déjà remboursé, par exemple). */
+    public function markDisputed(): bool
+    {
+        if (PurchaseStatus::Paid !== $this->status) {
+            return false;
+        }
+        $this->status = PurchaseStatus::Disputed;
+
+        return true;
+    }
+
+    /** Contestation gagnée : l'achat redevient payé. Renvoie false s'il n'était pas contesté. */
+    public function markDisputeWon(): bool
+    {
+        if (PurchaseStatus::Disputed !== $this->status) {
+            return false;
+        }
+        $this->status = PurchaseStatus::Paid;
+
+        return true;
+    }
+
     public function isPaid(): bool
     {
         return PurchaseStatus::Paid === $this->status;

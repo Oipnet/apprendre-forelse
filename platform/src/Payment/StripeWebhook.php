@@ -76,9 +76,14 @@ final readonly class StripeWebhook
             return;
         }
         try {
-            if (\in_array($event->getType(), self::PAID_EVENTS, true)) {
-                $this->handlePaidSession(json_decode($event->getPayload(), true, flags: \JSON_THROW_ON_ERROR)['data']['object'] ?? []);
-            }
+            $object = json_decode($event->getPayload(), true, flags: \JSON_THROW_ON_ERROR)['data']['object'] ?? [];
+            match (true) {
+                \in_array($event->getType(), self::PAID_EVENTS, true) => $this->handlePaidSession($object),
+                'charge.refunded' === $event->getType() => $this->handleRefundedCharge($object),
+                'charge.dispute.created' === $event->getType() => $this->handleDispute($object, closed: false),
+                'charge.dispute.closed' === $event->getType() => $this->handleDispute($object, closed: true),
+                default => null,
+            };
             $event->markProcessed($this->clock->now());
         } catch (\Throwable $e) {
             $event->markFailed($e->getMessage());
@@ -88,6 +93,38 @@ final readonly class StripeWebhook
             if ($this->entityManager->isOpen()) {
                 $this->entityManager->flush();
             }
+        }
+    }
+
+    /**
+     * Remboursement total (un remboursement partiel laisse l'accès ouvert). Celui de l'administration arrive aussi
+     * par ici, après coup : l'achat est déjà noté remboursé, rien ne change.
+     *
+     * @param array<string, mixed> $charge objet Charge de l'événement
+     */
+    private function handleRefundedCharge(array $charge): void
+    {
+        if (true !== ($charge['refunded'] ?? null) || !\is_string($charge['payment_intent'] ?? null)) {
+            return;
+        }
+        $refundId = $charge['refunds']['data'][0]['id'] ?? null;
+        $this->fulfillment->refundedAtStripe($charge['payment_intent'], \is_string($refundId) ? $refundId : null);
+    }
+
+    /**
+     * Contestation bancaire : ouverte, l'accès est révoqué ; close et gagnée, il se rouvre ; perdue, il reste fermé.
+     *
+     * @param array<string, mixed> $dispute objet Dispute de l'événement
+     */
+    private function handleDispute(array $dispute, bool $closed): void
+    {
+        if (!\is_string($dispute['payment_intent'] ?? null)) {
+            return;
+        }
+        if (!$closed) {
+            $this->fulfillment->disputed($dispute['payment_intent']);
+        } elseif ('won' === ($dispute['status'] ?? null)) {
+            $this->fulfillment->disputeWon($dispute['payment_intent']);
         }
     }
 

@@ -12,6 +12,8 @@ enum PurchaseStatus: string implements TranslatableInterface
     case Pending = 'pending';
     case Paid = 'paid';
     case Refunded = 'refunded';
+    /** Contestation bancaire ouverte, ou perdue : l'accès est révoqué. Gagnée, l'achat redevient payé. */
+    case Disputed = 'disputed';
 
     public function label(): string
     {
@@ -19,6 +21,7 @@ enum PurchaseStatus: string implements TranslatableInterface
             self::Pending => 'En attente',
             self::Paid => 'Payé',
             self::Refunded => 'Remboursé',
+            self::Disputed => 'Contesté',
         };
     }
 

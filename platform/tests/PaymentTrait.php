@@ -22,19 +22,24 @@ trait PaymentTrait
     /** Envoie un événement checkout.session.completed payé, signé comme le ferait Stripe. */
     protected function sendPaidWebhook(KernelBrowser $client, string $sessionId, int $amount, string $eventId = 'evt_1', string $secret = 'whsec_test'): void
     {
-        $payload = json_encode([
-            'id' => $eventId,
-            'object' => 'event',
-            'type' => 'checkout.session.completed',
-            'data' => ['object' => [
-                'id' => $sessionId,
-                'object' => 'checkout.session',
-                'payment_status' => 'paid',
-                'amount_total' => $amount,
-                'payment_intent' => 'pi_'.$sessionId,
-                'invoice' => 'in_'.$sessionId,
-            ]],
-        ], \JSON_THROW_ON_ERROR);
+        $this->sendWebhook($client, 'checkout.session.completed', [
+            'id' => $sessionId,
+            'object' => 'checkout.session',
+            'payment_status' => 'paid',
+            'amount_total' => $amount,
+            'payment_intent' => 'pi_'.$sessionId,
+            'invoice' => 'in_'.$sessionId,
+        ], $eventId, $secret);
+    }
+
+    /**
+     * Envoie un événement Stripe quelconque, signé.
+     *
+     * @param array<string, mixed> $object l'objet de l'événement (data.object)
+     */
+    protected function sendWebhook(KernelBrowser $client, string $type, array $object, string $eventId, string $secret = 'whsec_test'): void
+    {
+        $payload = json_encode(['id' => $eventId, 'object' => 'event', 'type' => $type, 'data' => ['object' => $object]], \JSON_THROW_ON_ERROR);
         $timestamp = time();
         $signature = sprintf('t=%d,v1=%s', $timestamp, hash_hmac('sha256', $timestamp.'.'.$payload, $secret));
 

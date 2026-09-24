@@ -72,6 +72,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Un remboursement ou une contestation bancaire ferment l'accès au parcours.** Le webhook Stripe ne traitait
+  que les paiements : un achat remboursé depuis le tableau de bord de Stripe, ou contesté auprès de la banque,
+  gardait son parcours ouvert à vie. `charge.refunded` (remboursement total ; un remboursement partiel laisse
+  l'accès) note l'achat remboursé et révoque l'accès, comme le bouton de l'administration. `charge.dispute.created`
+  passe l'achat en « Contesté » et révoque l'accès ; `charge.dispute.closed` le rouvre si la contestation est
+  gagnée. **À faire chez Stripe** : ajouter ces trois événements au point d'entrée du webhook.
 - **Politique de sécurité du contenu pour les scripts** (`script-src 'self' 'wasm-unsafe-eval'; object-src 'none';
   base-uri 'self'`) : un script injecté par une faille XSS, un attribut `onerror=` ou un script d'un autre site ne
   s'exécuteraient pas. Les pages du playground et de l'atelier y ajoutent `'unsafe-eval'`, dont le simulateur Nuxt

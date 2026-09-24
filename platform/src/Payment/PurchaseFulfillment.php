@@ -3,6 +3,7 @@
 namespace App\Payment;
 
 use App\Entity\Purchase;
+use App\Entity\PurchaseStatus;
 use App\Entity\TrackAccess;
 use App\Repository\PurchaseRepository;
 use App\Repository\TrackAccessRepository;
@@ -11,7 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
 /**
- * Ce qui suit un paiement, ou son remboursement.
+ * Ce qui suit un paiement, son remboursement ou sa contestation bancaire.
  *
  * Le paiement confirmé n'arrive que du webhook Stripe, jamais de la page de retour (qu'on peut ouvrir sans payer).
  * Idempotent : un webhook rejoué, ou deux événements pour la même session, n'ouvrent qu'un seul accès.
@@ -87,9 +88,55 @@ final readonly class PurchaseFulfillment
         $refundId = $this->gateway->refund($paymentIntentId);
         $now = $this->clock->now();
         $purchase->markRefunded($now, $refundId);
+        $this->revokeAccess($purchase, $now);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Remboursement total fait ailleurs que dans l'administration (tableau de bord Stripe) : noté, accès révoqué.
+     * Sans effet sur un achat déjà remboursé, dont celui que refund() vient de faire.
+     */
+    public function refundedAtStripe(string $paymentIntentId, ?string $refundId): void
+    {
+        $purchase = $this->purchases->findOneByPaymentIntent($paymentIntentId);
+        if (null === $purchase || PurchaseStatus::Refunded === $purchase->getStatus()) {
+            return;
+        }
+        $now = $this->clock->now();
+        $purchase->markRefunded($now, $refundId);
+        $this->revokeAccess($purchase, $now);
+        $this->entityManager->flush();
+    }
+
+    /** Contestation bancaire ouverte : l'accès est révoqué le temps qu'elle se règle, et le reste si elle est perdue. */
+    public function disputed(string $paymentIntentId): void
+    {
+        $purchase = $this->purchases->findOneByPaymentIntent($paymentIntentId);
+        if (null === $purchase || !$purchase->markDisputed()) {
+            return;
+        }
+        $this->revokeAccess($purchase, $this->clock->now());
+        $this->entityManager->flush();
+    }
+
+    /** Contestation gagnée : le paiement reste acquis, l'accès se rouvre. */
+    public function disputeWon(string $paymentIntentId): void
+    {
+        $purchase = $this->purchases->findOneByPaymentIntent($paymentIntentId);
+        if (null === $purchase || !$purchase->markDisputeWon()) {
+            return;
+        }
+        foreach ($this->accesses->findByPurchase($purchase) as $access) {
+            $access->restore();
+        }
+        $this->entityManager->flush();
+    }
+
+    /** L'accès ouvert par l'achat se termine ; la progression reste. */
+    private function revokeAccess(Purchase $purchase, \DateTimeImmutable $now): void
+    {
         foreach ($this->accesses->findByPurchase($purchase) as $access) {
             $access->revoke($now);
         }
-        $this->entityManager->flush();
     }
 }
