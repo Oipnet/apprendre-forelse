@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Tests\DatabaseTrait;
 use App\Tests\PacksTrait;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Mime\Email;
@@ -156,19 +157,31 @@ final class RegistrationTest extends WebTestCase
         ]], server: ['HTTP_ORIGIN' => 'http://localhost']);
     }
 
-    public function testRedirectionOuverteImpossible(): void
+    /** @return iterable<string, array{string, string}> */
+    public static function suites(): iterable
+    {
+        yield 'tabulation, que le navigateur retire' => ['/%09/phishing.test', '/'];
+        yield 'double barre' => ['//evil.test', '/'];
+        yield 'barre inverse' => ['/%5Cevil.test', '/'];
+        yield 'retour à la ligne' => ['/%0A/evil.test', '/'];
+        yield 'adresse complète' => ['https://evil.test/', '/'];
+        yield 'chemin du site' => ['/parcours/decouverte', '/parcours/decouverte'];
+    }
+
+    #[DataProvider('suites')]
+    public function testRedirectionOuverteImpossible(string $suite, string $attendu): void
     {
         $client = static::createClient();
         $this->resetDatabase();
 
-        $client->request('GET', '/inscription?suite=/\\evil.example');
+        $client->request('GET', '/inscription?suite='.$suite);
         $client->submitForm('Créer mon compte', [
             'registration_form[displayName]' => 'Gorm',
             'registration_form[email]' => 'gorm2@example.test',
             'registration_form[plainPassword]' => 'une-longue-phrase',
         ], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
 
-        $this->assertResponseRedirects('/');
+        $this->assertResponseRedirects($attendu);
     }
 
     public function testInscriptionLibreSansChampDeCode(): void

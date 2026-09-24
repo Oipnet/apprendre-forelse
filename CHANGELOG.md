@@ -78,6 +78,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Plus de redirection vers un autre site après l'inscription.** `?suite=/%09/site.tld` passait le contrôle du
+  chemin local, et le navigateur, qui retire la tabulation, allait sur `//site.tld`. Le chemin de retour refuse
+  désormais tout blanc et tout caractère de contrôle.
+- **Changer l'adresse de son compte demande le mot de passe**, et l'ancienne adresse est prévenue une fois le
+  changement confirmé. Sur un poste partagé ou avec une session volée, mettre son adresse, la confirmer puis
+  réinitialiser le mot de passe suffisait à garder le compte et ses achats. Le pseudo, lui, se change toujours
+  sans mot de passe.
 - **Le coût du mentor a des plafonds.** Une demande envoie au plus 120 000 caractères au modèle (422 au-delà) ;
   le mentor demande une **adresse email confirmée** (428 sinon, avec le chemin pour la confirmer) ; au quota de
   40 appels par heure et par compte s'ajoutent 100 par adresse IP, et un budget de toute l'instance,

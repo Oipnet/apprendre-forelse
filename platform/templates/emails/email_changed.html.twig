@@ -1,0 +1,9 @@
+<p>Bonjour {{ user.displayName }},</p>
+
+<p>L'adresse de votre compte {{ marque.name }} vient d'être remplacée par <strong>{{ newEmail }}</strong>. Les emails du compte (mot de passe oublié, achats) partent désormais à cette adresse.</p>
+
+<p>Si c'est vous, il n'y a rien à faire.</p>
+
+<p>Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : {% if contact %}écrivez-nous au plus vite à <a href="mailto:{{ contact }}">{{ contact }}</a>{% else %}répondez à cet email au plus vite{% endif %}, en indiquant cette adresse-ci.</p>
+
+<p>{{ marque.signature }}</p>
