@@ -5,6 +5,16 @@ framework:
             policy: sliding_window
             limit: 40
             interval: '1 hour'
+        # Le même, par adresse IP : des comptes jetables ne multiplient pas le quota.
+        mentor_ip:
+            policy: sliding_window
+            limit: 100
+            interval: '1 hour'
+        # Budget de toute l'instance (MENTOR_DAILY_LIMIT appels par jour) : atteint, le mentor se tait jusqu'au lendemain.
+        mentor_budget:
+            policy: fixed_window
+            limit: '%env(int:MENTOR_DAILY_LIMIT)%'
+            interval: '1 day'
         # Formulaire de contact et demandes des écoles : par adresse IP.
         contact:
             policy: sliding_window

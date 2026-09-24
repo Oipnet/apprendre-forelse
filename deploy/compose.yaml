@@ -55,6 +55,8 @@ services:
       REGISTRATION_ALERT_EMAIL: ${REGISTRATION_ALERT_EMAIL:-}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Appels au mentor par jour pour toute l'instance ; atteint, il se tait jusqu'au lendemain.
+      MENTOR_DAILY_LIMIT: ${MENTOR_DAILY_LIMIT:-500}
       # Paiement des parcours : vide, pas de bouton d'achat actif (voir .env.example).
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}

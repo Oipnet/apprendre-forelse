@@ -78,6 +78,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Le coût du mentor a des plafonds.** Une demande envoie au plus 120 000 caractères au modèle (422 au-delà) ;
+  le mentor demande une **adresse email confirmée** (428 sinon, avec le chemin pour la confirmer) ; au quota de
+  40 appels par heure et par compte s'ajoutent 100 par adresse IP, et un budget de toute l'instance,
+  `MENTOR_DAILY_LIMIT` appels par jour (500 par défaut), au-delà duquel il répond « revenez demain ». Un compte
+  qui n'a jamais confirmé son adresse perd le mentor jusqu'à ce qu'il le fasse.
 - **La revue de code du mentor attend la réussite de l'exercice.** Le modèle reçoit la solution de référence
   pour comparer : avant la réussite, du code qui lui demandait de la recopier obtenait la solution sans passer par
   « Voir la solution », donc sans perdre l'XP. L'API répond désormais 409 tant que l'exercice n'est pas réussi,
