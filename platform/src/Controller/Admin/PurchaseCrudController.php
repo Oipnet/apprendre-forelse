@@ -60,6 +60,7 @@ final class PurchaseCrudController extends AbstractCrudController
         yield ChoiceField::new('trackId', 'Parcours')->setChoices($this->trackChoices());
         yield ChoiceField::new('status', 'Statut')->renderAsBadges([
             PurchaseStatus::Pending->name => 'secondary',
+            PurchaseStatus::Abandoned->name => 'light',
             PurchaseStatus::Paid->name => 'success',
             PurchaseStatus::Refunded->name => 'warning',
         ]);

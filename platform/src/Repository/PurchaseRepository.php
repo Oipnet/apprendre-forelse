@@ -35,14 +35,31 @@ class PurchaseRepository extends ServiceEntityRepository
         return $this->findOneBy(['stripePaymentIntentId' => $paymentIntentId]);
     }
 
+    /** L'achat de ce parcours dont la session Stripe est peut-être encore ouverte (un seul, voir PurchaseCheckout). */
+    public function findPendingCheckout(User $user, string $trackId): ?Purchase
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.trackId = :track')
+            ->andWhere('p.status = :pending')
+            ->andWhere('p.stripeSessionId IS NOT NULL')
+            ->setParameter('user', $user)
+            ->setParameter('track', $trackId)
+            ->setParameter('pending', PurchaseStatus::Pending)
+            ->orderBy('p.createdAt', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     /** @return list<Purchase> les achats de l'apprenant, les plus récents d'abord (sessions abandonnées exclues) */
     public function findByUser(User $user): array
     {
         return $this->createQueryBuilder('p')
             ->andWhere('p.user = :user')
-            ->andWhere('p.status != :pending')
+            ->andWhere('p.status NOT IN (:unpaid)')
             ->setParameter('user', $user)
-            ->setParameter('pending', PurchaseStatus::Pending)
+            ->setParameter('unpaid', [PurchaseStatus::Pending, PurchaseStatus::Abandoned])
             ->orderBy('p.createdAt', 'DESC')
             ->getQuery()
             ->getResult();

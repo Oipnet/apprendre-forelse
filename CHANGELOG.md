@@ -82,6 +82,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   retiré du serveur quand le déploiement échoue, et plus seulement quand il réussit ; les secrets du job
   de déploiement passent par l'environnement au lieu d'être interpolés dans ses scripts.
 
+### Corrigé
+
+- **Deux onglets de paiement ne donnent plus deux achats payés.** Une nouvelle demande de paiement pour un
+  parcours reprend la session Stripe encore ouverte de l'achat en attente, au lieu d'en ouvrir une seconde :
+  Stripe n'encaisse qu'une fois par session. Si elle vient d'être payée, l'apprenant arrive sur la page de
+  remerciement. Si elle a expiré, ou si le prix (ou les CGV) a changé depuis, elle est close chez Stripe et
+  l'achat passe au nouveau statut « Abandonné » avant qu'un autre ne commence. Deux demandes simultanées
+  (double clic) se suivent grâce à un verrou sur le compte. Un Stripe injoignable n'enregistre plus d'achat
+  sans session.
+
 ### Sécurité
 
 - **Le code Nuxt de l'apprenant ne peut plus appeler la plateforme avec sa session.** Le simulateur Nuxt évalue

@@ -3,22 +3,17 @@
 namespace App\Controller;
 
 use App\Content\TrackVisibility;
-use App\Controller\LegalController;
 use App\Entity\Purchase;
 use App\Entity\User;
 use App\Form\PurchaseConfirmationType;
 use App\Payment\PaymentException;
-use App\Payment\PaymentGateway;
+use App\Payment\PurchaseCheckout;
 use App\Payment\TrackOfferFactory;
-use App\Payment\WithdrawalWaiver;
-use Doctrine\ORM\EntityManagerInterface;
-use Psr\Clock\ClockInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 /**
@@ -37,7 +32,7 @@ final class PurchaseController extends AbstractController
 
     /** Le chemin ressemble à celui d'un exercice (/parcours/{trackId}/{exerciseId}) : priorité à l'achat. */
     #[Route('/parcours/{trackId}/acheter', name: 'app_purchase', methods: ['GET', 'POST'], priority: 1)]
-    public function checkout(string $trackId, Request $request, PaymentGateway $gateway, EntityManagerInterface $entityManager, ClockInterface $clock): Response
+    public function checkout(string $trackId, Request $request, PurchaseCheckout $checkout): Response
     {
         $track = $this->visibility->find($trackId) ?? throw $this->createNotFoundException();
         $user = $this->getUser();
@@ -62,27 +57,15 @@ final class PurchaseController extends AbstractController
         $form = $this->createForm(PurchaseConfirmationType::class, options: ['terms_url' => $this->generateUrl('app_terms')]);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            // Le prix est figé maintenant : celui que l'apprenant vient de voir, et que Stripe facturera.
-            $purchase = new Purchase($user, $track->id, $offer->quote->price, $offer->quote->kind, WithdrawalWaiver::TEXT, $clock->now(), $offer->quote->cohort, LegalController::TERMS_VERSION);
-            $entityManager->persist($purchase);
-            $entityManager->flush();
-
             try {
-                $session = $gateway->createCheckoutSession(
-                    $purchase,
-                    sprintf('Parcours « %s » (accès à vie)', $track->title),
-                    $this->generateUrl('app_purchase_thanks', ['id' => $purchase->getId()], UrlGeneratorInterface::ABSOLUTE_URL),
-                    $this->generateUrl('app_track', ['trackId' => $track->id], UrlGeneratorInterface::ABSOLUTE_URL),
-                );
+                $url = $checkout->start($user, $track, $offer->quote);
             } catch (PaymentException $e) {
                 $this->addFlash('danger', $e->getMessage().' Rien n\'a été débité ; réessayez dans un instant.');
 
                 return $this->redirectToRoute('app_purchase', ['trackId' => $track->id]);
             }
-            $purchase->attachCheckoutSession($session->id);
-            $entityManager->flush();
 
-            return $this->redirect($session->url, Response::HTTP_SEE_OTHER);
+            return $this->redirect($url, Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('purchase/checkout.html.twig', [

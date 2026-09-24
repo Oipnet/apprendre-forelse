@@ -10,6 +10,8 @@ enum PurchaseStatus: string implements TranslatableInterface
 {
     /** Session Stripe ouverte, paiement pas encore confirmé par le webhook. */
     case Pending = 'pending';
+    /** Session Stripe expirée, ou remplacée par un nouvel achat (autre onglet, prix changé) : rien n'a été payé. */
+    case Abandoned = 'abandoned';
     case Paid = 'paid';
     case Refunded = 'refunded';
     /** Contestation bancaire ouverte, ou perdue : l'accès est révoqué. Gagnée, l'achat redevient payé. */
@@ -19,6 +21,7 @@ enum PurchaseStatus: string implements TranslatableInterface
     {
         return match ($this) {
             self::Pending => 'En attente',
+            self::Abandoned => 'Abandonné',
             self::Paid => 'Payé',
             self::Refunded => 'Remboursé',
             self::Disputed => 'Contesté',
