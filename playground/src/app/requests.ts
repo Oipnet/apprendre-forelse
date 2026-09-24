@@ -74,8 +74,10 @@ export class RequestsPanel {
 		for (const example of examples) {
 			const button = document.createElement('button');
 			button.className = 'ghost small';
-			button.innerHTML = `<span class="method">${example.method}</span> `;
-			button.append(example.title);
+			const method = document.createElement('span');
+			method.className = 'method';
+			method.textContent = example.method;
+			button.append(method, ' ', example.title);
 			button.title = `${example.method} ${example.path}`;
 			button.addEventListener('click', () => this.fill(example));
 			list.append(button);

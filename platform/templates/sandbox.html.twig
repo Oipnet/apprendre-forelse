@@ -10,6 +10,8 @@
         {{ vite_entry_script_tags('sandbox') }}
     </head>
     <body>
-        <iframe id="preview" title="Aperçu de l'application"></iframe>
+        {# Mêmes droits que l'iframe du relais côté plateforme, qui les impose de toute façon :
+           rien pour naviguer la page parente. allow-same-origin laisse le Service Worker servir l'aperçu. #}
+        <iframe id="preview" title="Aperçu de l'application" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"></iframe>
     </body>
 </html>

@@ -677,7 +677,9 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 					<input id="url" value="${escapeHtml(exercise.preview)}" spellcheck="false" aria-label="Chemin de l'aperçu" />
 					<button id="reload" class="ghost small" title="Recharger">⟳</button>
 				</div>
-				<iframe id="frame" title="Aperçu de l'application"></iframe>
+				<!-- Sans allow-top-navigation : le code de l'apprenant ne peut pas rediriger la plateforme.
+				     allow-same-origin garde au relais son origine bac à sable, sans quoi il n'enregistre pas le Service Worker. -->
+				<iframe id="frame" title="Aperçu de l'application" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"></iframe>
 				<div class="requestlog"><span id="requestlog"></span><button id="explain-preview" class="ghost small" hidden title="Demander au mentor ce que signifie cette erreur">🩺 Expliquer l'erreur</button></div>
 			</div>
 			<div class="pane-console" hidden>
