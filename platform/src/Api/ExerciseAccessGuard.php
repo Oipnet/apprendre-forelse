@@ -24,7 +24,7 @@ final readonly class ExerciseAccessGuard
 
     public function check(?User $user, Exercise $exercise): void
     {
-        if (null !== $exercise->trackId && null === $this->visibility->find($exercise->trackId)) {
+        if (!$this->isVisible($exercise)) {
             throw new NotFoundHttpException();
         }
         if ($this->access->canAccessExercise($user, $exercise)) {
@@ -34,5 +34,17 @@ final readonly class ExerciseAccessGuard
         throw null === $user
             ? new HttpException(Response::HTTP_UNAUTHORIZED, 'Connectez-vous pour accéder à cet exercice.')
             : new HttpException(Response::HTTP_FORBIDDEN, 'Cet exercice fait partie du parcours complet : achetez le parcours pour y accéder.');
+    }
+
+    /** Le même contrôle que check(), sans exception : pour trier une liste (import de progression). */
+    public function allows(?User $user, Exercise $exercise): bool
+    {
+        return $this->isVisible($exercise) && $this->access->canAccessExercise($user, $exercise);
+    }
+
+    /** Un parcours en préparation, ou programmé, n'existe pas pour l'apprenant. */
+    private function isVisible(Exercise $exercise): bool
+    {
+        return null === $exercise->trackId || null !== $this->visibility->find($exercise->trackId);
     }
 }
