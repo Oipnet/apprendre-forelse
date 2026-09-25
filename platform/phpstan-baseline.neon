@@ -1,0 +1,307 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: src/Admin/BetaStats.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>title" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Admin/BetaStats.php
+
+		-
+			message: '#^Offset ''console''\|''preview''\|''tests'' on array\{preview\: ''l\\''aperçu de l…'', tests\: ''l\\''exécution des…'', console\: ''une commande de la…''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Ai/Mentor.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Api/MentorInputSize.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>concepts" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Content/Author/ExerciseDrafter.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>environment" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: src/Content/Author/ExerciseDrafter.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Content/Author/ExerciseDrafter.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>environment" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Content/Author/ExerciseStudio.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Content/Check/ExerciseChecker.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>exerciseIds" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Content/ContentRepository.php
+
+		-
+			message: '#^Method App\\Content\\Track\:\:__construct\(\) has parameter \$downloads with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Content/Track.php
+
+		-
+			message: '#^Method App\\Controller\\AccountController\:\:profileForm\(\) should return Symfony\\Component\\Form\\FormInterface\<array\{displayName\: string, email\: string\}\> but returns Symfony\\Component\\Form\\FormInterface\<array\{displayName\: string\|null, email\: string\|null, currentPassword\?\: string\|null\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\CohortCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/CohortCrudController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\CohortCrudController\:\:applyQuote\(\) has parameter \$context with generic class EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/CohortCrudController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\ContactMessageCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/ContactMessageCrudController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\ContactMessageCrudController\:\:handle\(\) has parameter \$context with generic class EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/ContactMessageCrudController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\ContactMessageCrudController\:\:reopen\(\) has parameter \$context with generic class EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/ContactMessageCrudController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\ContactMessageCrudController\:\:setHandled\(\) has parameter \$context with generic class EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/ContactMessageCrudController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\ExerciseProgressCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/ExerciseProgressCrudController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\FeedbackCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/FeedbackCrudController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\FeedbackCrudController\:\:handle\(\) has parameter \$context with generic class EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/FeedbackCrudController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\FeedbackCrudController\:\:reopen\(\) has parameter \$context with generic class EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/FeedbackCrudController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\FeedbackCrudController\:\:setHandled\(\) has parameter \$context with generic class EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/FeedbackCrudController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\PurchaseCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/PurchaseCrudController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\PurchaseCrudController\:\:refund\(\) has parameter \$context with generic class EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/PurchaseCrudController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\TrackAccessCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/TrackAccessCrudController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\TrackAccessCrudController\:\:revoke\(\) has parameter \$context with generic class EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/TrackAccessCrudController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\TrackPricingCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/TrackPricingCrudController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\TrackSeoCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/TrackSeoCrudController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:getId\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/Admin/UserCrudController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\UserCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/UserCrudController.php
+
+		-
+			message: '#^Class App\\Controller\\Admin\\WaitlistEntryCrudController extends generic class EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AbstractCrudController but does not specify its types\: TEntity$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/WaitlistEntryCrudController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>title" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Controller/Cohort/ChefDashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>concepts" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Controller/HomeController.php
+
+		-
+			message: '#^Method App\\Controller\\RegistrationController\:\:emailTaken\(\) has parameter \$form with generic interface Symfony\\Component\\Form\\FormInterface but does not specify its types\: TData$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/RegistrationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>xp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Controller/TrackController.php
+
+		-
+			message: '#^Property App\\Entity\\ExerciseProgress\:\:\$review type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ExerciseProgress.php
+
+		-
+			message: '#^Class App\\Form\\Account\\DeleteAccountFormType extends generic class Symfony\\Component\\Form\\AbstractType but does not specify its types\: TData$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Form/Account/DeleteAccountFormType.php
+
+		-
+			message: '#^Class App\\Form\\Account\\PasswordFormType extends generic class Symfony\\Component\\Form\\AbstractType but does not specify its types\: TData$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Form/Account/PasswordFormType.php
+
+		-
+			message: '#^Class App\\Form\\ChangePasswordFormType extends generic class Symfony\\Component\\Form\\AbstractType but does not specify its types\: TData$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Form/ChangePasswordFormType.php
+
+		-
+			message: '#^Class App\\Form\\CohortHeadcountType extends generic class Symfony\\Component\\Form\\AbstractType but does not specify its types\: TData$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Form/CohortHeadcountType.php
+
+		-
+			message: '#^Class App\\Form\\CohortTracksType extends generic class Symfony\\Component\\Form\\AbstractType but does not specify its types\: TData$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Form/CohortTracksType.php
+
+		-
+			message: '#^Class App\\Form\\PurchaseConfirmationType extends generic class Symfony\\Component\\Form\\AbstractType but does not specify its types\: TData$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Form/PurchaseConfirmationType.php
+
+		-
+			message: '#^Class App\\Form\\ResetPasswordRequestFormType extends generic class Symfony\\Component\\Form\\AbstractType but does not specify its types\: TData$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Form/ResetPasswordRequestFormType.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/Instance/Branding.php
+
+		-
+			message: '#^Method App\\Instance\\Branding\:\:section\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Instance/Branding.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Instance/EnvironmentBuildQueue.php
+
+		-
+			message: '#^Method App\\Instance\\EnvironmentInstaller\:\:run\(\) has parameter \$command with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Instance/EnvironmentInstaller.php
+
+		-
+			message: '#^Method App\\Kernel\:\:getAllowedEnvs\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Kernel.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>title" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Payment/PurchaseMailer.php
+
+		-
+			message: '#^Method App\\Seo\\SeoWriter\:\:asset\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Seo/SeoWriter.php

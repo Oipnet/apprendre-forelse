@@ -90,6 +90,15 @@ final class BrandingTest extends TestCase
         self::branding($this->tmp)->home();
     }
 
+    public function testUnAccueilQuiNEstPasUneListeEstSignale(): void
+    {
+        $this->write("name: A\nhome: Bienvenue au port\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« home » doit être une liste de sections (showcase, author, demo)');
+        self::branding($this->tmp)->home();
+    }
+
     public function testUneSectionIncompleteEstSignalee(): void
     {
         $this->write("name: A\nhome:\n  author:\n    title: Qui nous sommes\n");

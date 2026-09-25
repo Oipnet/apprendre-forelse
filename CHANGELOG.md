@@ -10,6 +10,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Cinq événements dans la mesure d'audience** (`exercice-ouvert`, `tests-lances`, `exercice-reussi`,
+  `indice-demande`, `solution-consultee`), avec l'identifiant de l'exercice et du parcours. Les pages vues
+  disaient qui arrivait, jamais qui écrivait du code : c'est maintenant lisible dans *Events*. Rien de ce
+  que l'apprenant écrit n'est transmis, et une instance sans mesure d'audience n'envoie rien.
+- **Journaux d'accès du serveur web** : Caddy note chaque page demandée, en écartant les fichiers servis
+  tels quels (build, images, archives d'environnement, traceur). C'est la seule façon de voir passer les
+  robots des moteurs de recherche, qui n'exécutent pas le JavaScript et échappent donc à la mesure
+  d'audience. La production limite ces journaux à cinq fichiers de 10 Mo (`deploy/compose.yaml`) ;
+  `auto-hebergement/README.md` donne les commandes pour les lire.
+
 - **Une page par version de framework dans la Pratique** (`/pratique/nouveautes/symfony-8-2`) : les exercices
   qui annoncent la même `version:` s'y retrouvent. « Les nouveautés de Symfony 8.2 » est ce qu'un développeur
   cherche dans un moteur de recherche, et il tombe ici sur des exercices à faire plutôt que sur un billet à
@@ -69,6 +79,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   (trois pages, `ab -c 4`) : +3 % de requêtes par seconde sur l'accueil, que les requêtes SQL dominent,
   +10 % sur `/pratique`, +22 % sur `/connexion` ; opcache occupe 15 Mo de plus, sur 128. Rien à faire côté
   instance : la liste des classes est écrite par le `cache:clear` du démarrage.
+- **Les packs de contenu ne sont plus relus à chaque requête.** Leur chargement (tous les YAML et Markdown,
+  validés) est gardé en cache entre les requêtes, et reste valable tant que chaque fichier et dossier lu garde
+  sa date et sa taille : un pack déposé, modifié ou retiré se voit dès la requête suivante, sans redémarrage,
+  et l'atelier le vide à chaque écriture. Mesuré sur l'image avec six packs (313 exercices), `ab -c 4` :
+  l'accueil passe d'environ 8 à 71 requêtes par seconde, `/pratique` de 8 à 300, une page de parcours de 8 à
+  130, un exercice de Pratique de 8 à 200.
+- **Les tarifs des parcours sont lus en une requête**, au lieu d'une par parcours et par chapitre : la table est
+  chargée d'un bloc et gardée le temps de la requête. Les places fondateur restantes de tous les parcours sont
+  aussi comptées en une seule requête. L'accueil passe de trois requêtes SQL par parcours affiché à deux en tout,
+  et la page d'un parcours ne lit plus qu'une fois les tarifs.
 - **Le contrôle de santé de l'image interroge PHP et la base** : il appelle `/sante`, qui fait un `SELECT 1`,
   au lieu de l'API d'administration de Caddy, qui restait verte avec une base arrêtée ou un PHP qui ne démarre
   pas. Le conteneur passe donc en `unhealthy` dans ces cas-là, et `docker compose up --wait` échoue au lieu de
@@ -84,6 +104,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Une section `home` mal écrite dans `marque.yaml` est expliquée**, au lieu d'une erreur PHP (« Undefined
+  constant ») : le message liste les sections acceptées (showcase, author, demo).
+- **Simulateur Docker : un `compose.yaml` mal formé est signalé** (`yaml: line N: …`) au lieu de faire planter
+  le simulateur, et **`id -u -n` donne le nom de l'utilisateur**, comme `id -un` et comme sur une vraie image.
+  Trois défauts trouvés par l'analyse statique, désormais lancée en CI.
 - **Le cache du simulateur Docker suit celui de BuildKit.** Modifier un `LABEL`, un `EXPOSE`, un `CMD`, un
   `ENTRYPOINT`, un `HEALTHCHECK` ou un `VOLUME` rejouait tous les `COPY` et `RUN` suivants : l'exercice
   enseignait un faux ordre des couches. Ces instructions n'entrent plus dans la clé de cache ; `ENV` et les

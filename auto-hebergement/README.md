@@ -303,6 +303,25 @@ ANALYTICS_SERVER_NAME=https://suivi.example.org
 Caddy obtiendra son certificat tout seul. **À ne faire qu'une fois le mot de passe changé** : cette
 adresse expose la page de connexion d'Umami sur l'internet.
 
+Au-delà des pages vues, la plateforme envoie cinq événements, tous anonymes : `exercice-ouvert`,
+`tests-lances`, `exercice-reussi`, `indice-demande` et `solution-consultee`, avec l'identifiant de
+l'exercice et du parcours. Ils se lisent dans *Events*, et ils répondent à la question que les pages
+vues laissent entière : un visiteur a-t-il écrit du code, ou seulement lu ? Le code écrit, lui, n'est
+jamais transmis.
+
+### Les robots des moteurs de recherche
+
+Umami ne les voit pas : ils n'exécutent pas le JavaScript. Ils sont dans les journaux d'accès, que
+Caddy écrit sur la sortie standard du conteneur (les fichiers statiques en sont écartés) :
+
+```bash
+# Les pages les plus demandées, toutes origines confondues
+docker compose logs --since 24h app | grep -o '"uri":"[^"]*"' | sort | uniq -c | sort -rn | head
+
+# Le passage des robots
+docker compose logs --since 24h app | grep -oiE 'googlebot|bingbot|gptbot|claudebot' | sort | uniq -c
+```
+
 ## Derrière un reverse proxy
 
 Si nginx, Traefik ou un autre Caddy occupe déjà les ports 80 et 443 et gère le HTTPS, le conteneur sert du
