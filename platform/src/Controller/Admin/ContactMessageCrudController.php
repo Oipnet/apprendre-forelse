@@ -24,7 +24,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use Symfony\Component\HttpFoundation\Response;
 
-/** Messages de la page de contact et demandes des écoles : on les lit, on répond par email, on les marque traités. */
+/**
+ * Messages de la page de contact et demandes des écoles : on les lit, on répond par email, on les marque traités.
+ *
+ * @extends AbstractCrudController<ContactMessage>
+ */
 #[AdminRoute(path: '/messages', name: 'contact_message')]
 final class ContactMessageCrudController extends AbstractCrudController
 {
@@ -97,18 +101,21 @@ final class ContactMessageCrudController extends AbstractCrudController
             ->add(Crud::PAGE_DETAIL, $reopen);
     }
 
+    /** @param AdminContext<ContactMessage> $context */
     #[AdminRoute('/{entityId}/traite', name: 'handle', options: ['methods' => ['POST', 'GET']])]
     public function handle(AdminContext $context): Response
     {
         return $this->setHandled($context, true);
     }
 
+    /** @param AdminContext<ContactMessage> $context */
     #[AdminRoute('/{entityId}/rouvrir', name: 'reopen', options: ['methods' => ['POST', 'GET']])]
     public function reopen(AdminContext $context): Response
     {
         return $this->setHandled($context, false);
     }
 
+    /** @param AdminContext<ContactMessage> $context */
     private function setHandled(AdminContext $context, bool $handled): Response
     {
         $message = $context->getEntity()->getInstance();

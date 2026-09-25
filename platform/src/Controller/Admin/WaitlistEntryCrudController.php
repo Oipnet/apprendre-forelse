@@ -11,7 +11,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 
-/** Adresses laissées sur la page d'accueil pour être prévenues de l'ouverture. Lecture et suppression seulement. */
+/**
+ * Adresses laissées sur la page d'accueil pour être prévenues de l'ouverture. Lecture et suppression seulement.
+ *
+ * @extends AbstractCrudController<WaitlistEntry>
+ */
 #[AdminRoute(path: '/liste-d-attente', name: 'waitlist')]
 final class WaitlistEntryCrudController extends AbstractCrudController
 {

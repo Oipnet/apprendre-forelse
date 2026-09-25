@@ -7,7 +7,11 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 
-/** Supprimer son compte : le mot de passe confirme que c'est bien le titulaire, et pas un onglet resté ouvert. */
+/**
+ * Supprimer son compte : le mot de passe confirme que c'est bien le titulaire, et pas un onglet resté ouvert.
+ *
+ * @extends AbstractType<array{password: string|null}>
+ */
 final class DeleteAccountFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

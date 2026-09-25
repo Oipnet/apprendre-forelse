@@ -58,20 +58,20 @@ final class ExerciseDrafter
      */
     public function brouillon(Track $track, string $id, string $titre, string $sujet, ?Exercise $base): array
     {
-        $framework = $this->environments->get($base?->environment ?? $track->environment)->framework;
+        $framework = $this->environments->get($base->environment ?? $track->environment)->framework;
 
         return $this->demander([[
             'role' => 'user',
             'content' => implode("\n\n", array_filter([
                 $this->presentationDuParcours($track),
                 $base ? $this->etatDeLApplication($base, $framework) : 'L\'exercice part de l\'environnement nu, sans code préexistant.',
-                $this->outilsDeTest($base?->environment ?? $track->environment),
+                $this->outilsDeTest($base->environment ?? $track->environment),
                 $this->exempleDExercice($track),
                 sprintf(
                     "Écris maintenant l'exercice suivant.\n- identifiant : %s\n- titre : %s\n- base : %s\n- sujet : %s",
                     $id,
                     $titre,
-                    $base?->id ?? '(aucune)',
+                    $base->id ?? '(aucune)',
                     $sujet,
                 ),
             ])),
@@ -160,7 +160,7 @@ final class ExerciseDrafter
             $exercices = [];
             foreach ($chapitre->exerciseIds as $id) {
                 $exercice = $this->content->findExercise($track->id, $id);
-                $exercices[] = sprintf('    - %s — %s (%s)', $id, $exercice?->title, implode(', ', $exercice?->concepts ?? []));
+                $exercices[] = sprintf('    - %s — %s (%s)', $id, $exercice?->title, implode(', ', $exercice->concepts ?? []));
             }
             $chapitres[] = sprintf("  %s — %s\n%s", $chapitre->id, $chapitre->title, implode("\n", $exercices));
         }

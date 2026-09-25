@@ -13,7 +13,6 @@ use App\Content\Track;
 use App\Instance\Branding;
 use App\Payment\TrackOfferFactory;
 use App\Twig\DurationExtension;
-use Symfony\Component\Asset\Packages;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
@@ -30,7 +29,6 @@ final readonly class SeoWriter
         private UrlGeneratorInterface $urls,
         private EnvironmentRegistry $environments,
         private TrackOfferFactory $offers,
-        private Packages $packages,
         private TrackSeoText $trackText,
         private ContentRepository $content,
         private Branding $branding,
@@ -435,11 +433,6 @@ final readonly class SeoWriter
         }
 
         return ['@type' => 'BreadcrumbList', 'itemListElement' => $items];
-    }
-
-    private function asset(string $path): string
-    {
-        return rtrim($this->url('app_home'), '/').$this->packages->getUrl($path);
     }
 
     private static function plain(string $text): string

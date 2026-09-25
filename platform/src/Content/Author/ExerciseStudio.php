@@ -80,7 +80,7 @@ final class ExerciseStudio
         }
 
         (new Filesystem())->mkdir($directory);
-        $framework = $this->environments->get($this->content->findChapter($track, $chapitreId)?->environment ?? $track->environment)->framework;
+        $framework = $this->environments->get($this->content->findChapter($track, $chapitreId)->environment ?? $track->environment)->framework;
         $this->fichiers->write($directory, $brouillon ?? $this->squelette($id, $titre, $base, $framework));
         $this->trackWriter->ajouterExercice($track, $chapitreId, $id);
         $this->content->reset();

@@ -36,12 +36,17 @@ final readonly class BetaStats
         foreach ($this->cohorts->findAllOrdered() as $cohort) {
             $byCohort[$cohort->getCode()] = [$cohort, []];
         }
-        $byCohort[self::NO_COHORT] = [null, []];
+        $withoutCohort = [];
         foreach ($this->users->findByCohort(null) as $user) {
-            $byCohort[$user->getCohort()?->getCode() ?? self::NO_COHORT][1][] = $user;
+            $code = $user->getCohort()?->getCode();
+            if (null === $code) {
+                $withoutCohort[] = $user;
+            } else {
+                $byCohort[$code][1][] = $user;
+            }
         }
-        if (!$byCohort[self::NO_COHORT][1]) {
-            unset($byCohort[self::NO_COHORT]);
+        if ($withoutCohort) {
+            $byCohort[self::NO_COHORT] = [null, $withoutCohort];
         }
 
         return array_values(array_map(fn (array $entry) => $this->statsOf($entry[0], $entry[1], cohortTracksOnly: true), $byCohort));
@@ -125,7 +130,7 @@ final readonly class BetaStats
                 $possible = \count($users) * \count($chapter->exerciseIds);
                 $chapters[] = new ChapterStats($chapter->title, $chapter->exerciseIds, $completed, $possible ? $completed / $possible : 0.0);
             }
-            $tracks[] = new TrackStats($track->id, $track->title, $chapters, $cells, array_map(fn (string $id) => $this->content->findExercise($track->id, $id)?->title ?? $id, array_combine($track->exerciseIds(), $track->exerciseIds())));
+            $tracks[] = new TrackStats($track->id, $track->title, $chapters, $cells, array_map(fn (string $id) => $this->content->findExercise($track->id, $id)->title ?? $id, array_combine($track->exerciseIds(), $track->exerciseIds())));
         }
 
         $feedbacks = array_filter($this->feedbacks->findByCohort($cohort?->getCode()), static fn (Feedback $f) => \in_array($f->getUser()->getId(), $ids, true));

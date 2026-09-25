@@ -7,7 +7,11 @@ use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/** Effectif prévu d'une cohorte, seul champ du financement que le chef de cohorte modifie. */
+/**
+ * Effectif prévu d'une cohorte, seul champ du financement que le chef de cohorte modifie.
+ *
+ * @extends AbstractType<array{expectedHeadcount: int}>
+ */
 final class CohortHeadcountType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

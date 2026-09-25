@@ -107,7 +107,7 @@ final class ChefDashboardController extends AbstractDashboardController
         });
 
         $this->addFlash('success', $cohort->hasTrackSelection()
-            ? sprintf('Parcours de « %s » enregistrés : %s.', $cohort->getName(), implode(', ', array_map(fn (string $id) => $this->content->findTrack($id)?->title ?? $id, $cohort->getAvailableTrackIds())))
+            ? sprintf('Parcours de « %s » enregistrés : %s.', $cohort->getName(), implode(', ', array_map(fn (string $id) => $this->content->findTrack($id)->title ?? $id, $cohort->getAvailableTrackIds())))
             : sprintf('Aucun parcours coché : « %s » propose tous les parcours.', $cohort->getName()));
 
         return $this->redirectToRoute('chef_cohort', ['id' => $cohort->getId()]);

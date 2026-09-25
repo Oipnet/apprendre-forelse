@@ -18,6 +18,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 /**
  * Title et description d'une page de parcours, quand la génération automatique ne convient pas. Un champ vide garde
  * le texte généré, affiché dans la liste.
+ *
+ * @extends AbstractCrudController<TrackSeo>
  */
 #[AdminRoute(path: '/referencement', name: 'track_seo')]
 final class TrackSeoCrudController extends AbstractCrudController

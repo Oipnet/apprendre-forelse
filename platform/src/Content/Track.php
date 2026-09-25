@@ -6,6 +6,7 @@ final readonly class Track
 {
     /**
      * @param list<Chapter> $chapters
+     * @param list<string>  $downloads fichiers de DOWNLOADS_DIR proposés au téléchargement (clé « downloads »)
      */
     public function __construct(
         public string $id,

@@ -7,7 +7,11 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/** Nouveau mot de passe, mêmes règles qu'à l'inscription (voir RegistrationFormType). */
+/**
+ * Nouveau mot de passe, mêmes règles qu'à l'inscription (voir RegistrationFormType).
+ *
+ * @extends AbstractType<array{plainPassword: string|null}>
+ */
 final class ChangePasswordFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

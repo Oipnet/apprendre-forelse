@@ -229,7 +229,11 @@ final class Branding
         ];
     }
 
-    /** @param array<string, mixed> $home */
+    /**
+     * @param array<string, mixed> $home
+     *
+     * @return array<string, mixed>|null
+     */
     private function section(array $home, string $key): ?array
     {
         $section = $home[$key] ?? null;
@@ -248,7 +252,7 @@ final class Branding
      * Vérifie une section contre sa forme, et dit précisément ce qui cloche : le fichier est écrit à la
      * main, et le message est tout ce dont dispose celui qui l'écrit.
      *
-     * @param array<string, mixed>              $section
+     * @param array<mixed>                       $section tel que lu dans le YAML : ses clés ne sont pas forcément des chaînes
      * @param array<string, string|array<mixed>> $shape
      */
     private function checkShape(array $section, array $shape, string $path): void

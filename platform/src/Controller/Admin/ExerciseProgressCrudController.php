@@ -19,7 +19,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 
-/** Progression : en lecture seule, elle n'est écrite que par le playground. */
+/**
+ * Progression : en lecture seule, elle n'est écrite que par le playground.
+ *
+ * @extends AbstractCrudController<ExerciseProgress>
+ */
 #[AdminRoute(path: '/progression', name: 'progress')]
 final class ExerciseProgressCrudController extends AbstractCrudController
 {

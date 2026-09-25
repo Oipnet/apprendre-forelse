@@ -134,7 +134,7 @@ final class Mentor
 
         $sources = ['preview' => 'l\'aperçu de l\'application (réponse HTTP en erreur)', 'tests' => 'l\'exécution des tests', 'console' => 'une commande de la console du projet (bin/console, php artisan ou docker, selon le projet)'];
         $contexte = $this->contexte($exercise, $fichiers);
-        $contexte .= "\n\n# L'erreur\nSource : ".($sources[$source] ?? $source)."\n\n```\n".$this->tronquer($erreur, self::MAX_ERROR_CHARS)."\n```";
+        $contexte .= "\n\n# L'erreur\nSource : ".$sources[$source]."\n\n```\n".$this->tronquer($erreur, self::MAX_ERROR_CHARS)."\n```";
 
         $reponse = $this->modele->appeler($consignes, [['role' => 'user', 'content' => $contexte]], [
             'name' => 'expliquer_erreur',

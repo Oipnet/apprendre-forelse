@@ -45,7 +45,7 @@ final class TrackController extends AbstractController
                 $exercise = $content->findExercise($track->id, $exerciseId);
                 $state = isset($progress[$exerciseId]) ? $progress[$exerciseId]->getStatus()->value : 'todo';
                 $completed += 'completed' === $state ? 1 : 0;
-                $chapterXp += $exercise?->xp ?? 0;
+                $chapterXp += $exercise->xp ?? 0;
                 $xpEarned += ($progress[$exerciseId] ?? null)?->getXpEarned() ?? 0;
                 $items[] = [
                     'exercise' => $exercise,

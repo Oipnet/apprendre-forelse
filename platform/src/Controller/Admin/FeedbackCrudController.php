@@ -25,7 +25,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Symfony\Component\HttpFoundation\Response;
 
-/** Retours des apprenants (bouton « Un avis ? ») : on les lit, on les marque traités, on les supprime. */
+/**
+ * Retours des apprenants (bouton « Un avis ? ») : on les lit, on les marque traités, on les supprime.
+ *
+ * @extends AbstractCrudController<Feedback>
+ */
 #[AdminRoute(path: '/retours', name: 'feedback')]
 final class FeedbackCrudController extends AbstractCrudController
 {
@@ -103,18 +107,21 @@ final class FeedbackCrudController extends AbstractCrudController
             ->add(Crud::PAGE_DETAIL, $reopen);
     }
 
+    /** @param AdminContext<Feedback> $context */
     #[AdminRoute('/{entityId}/traite', name: 'handle', options: ['methods' => ['POST', 'GET']])]
     public function handle(AdminContext $context): Response
     {
         return $this->setHandled($context, true);
     }
 
+    /** @param AdminContext<Feedback> $context */
     #[AdminRoute('/{entityId}/rouvrir', name: 'reopen', options: ['methods' => ['POST', 'GET']])]
     public function reopen(AdminContext $context): Response
     {
         return $this->setHandled($context, false);
     }
 
+    /** @param AdminContext<Feedback> $context */
     private function setHandled(AdminContext $context, bool $handled): Response
     {
         $feedback = $context->getEntity()->getInstance();

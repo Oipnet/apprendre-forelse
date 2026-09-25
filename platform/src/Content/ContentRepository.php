@@ -210,7 +210,7 @@ final class ContentRepository
     public function durationOf(Track $track, ?Chapter $chapter = null): ?int
     {
         $total = 0;
-        foreach ($chapter?->exerciseIds ?? $track->exerciseIds() as $exerciseId) {
+        foreach ($chapter->exerciseIds ?? $track->exerciseIds() as $exerciseId) {
             $duration = $this->findExercise($track->id, $exerciseId)?->duration;
             if (null === $duration) {
                 return null;

@@ -466,7 +466,7 @@ final class ExerciseChecker
     {
         $module = $this->framework?->testModule;
         if (null === $module) {
-            $this->failures = ['*' => sprintf('Le framework « %s » ne lance pas PHPUnit et ne déclare aucun module de test (voir FrameworkProfile::$testModule).', $this->framework?->id ?? '?')];
+            $this->failures = ['*' => sprintf('Le framework « %s » ne lance pas PHPUnit et ne déclare aucun module de test (voir FrameworkProfile::$testModule).', $this->framework->id ?? '?')];
 
             return null;
         }

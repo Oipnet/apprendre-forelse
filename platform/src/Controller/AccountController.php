@@ -220,7 +220,7 @@ final class AccountController extends AbstractController
         return $this->confirmationLimiter->create('user-'.$user->getId())->consume()->isAccepted();
     }
 
-    /** @return FormInterface<array{displayName: string, email: string}> */
+    /** @return FormInterface<array{displayName: string|null, email: string|null, currentPassword?: string|null}> */
     private function profileForm(User $user): FormInterface
     {
         return $this->createForm(ProfileFormType::class, ['displayName' => $user->getDisplayName(), 'email' => $user->getEmail()], ['action' => $this->generateUrl('app_account_profile')]);

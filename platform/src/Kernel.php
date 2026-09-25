@@ -10,9 +10,12 @@ class Kernel extends BaseKernel
     use MicroKernelTrait;
 
     /**
+     * Point d'extension de Symfony (KernelTrait) : un APP_ENV hors de cette liste est refusé au démarrage.
+     * Protégée, et non privée : l'appel vient du trait, et une méthode privée paraîtrait inutilisée.
+     *
      * @return list<string> An array of allowed values for APP_ENV
      */
-    private function getAllowedEnvs(): array
+    protected function getAllowedEnvs(): array
     {
         return ['prod', 'dev', 'test'];
     }

@@ -41,7 +41,7 @@ class ExerciseProgress
     #[ORM\Column(options: ['default' => false])]
     private bool $solutionRevealed = false;
 
-    /**  array<string, mixed>|null revue de code du mentor, conservée pour être relue */
+    /** @var array<string, mixed>|null revue de code du mentor, conservée pour être relue */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $review = null;
 

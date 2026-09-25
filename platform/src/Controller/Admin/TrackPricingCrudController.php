@@ -21,6 +21,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 /**
  * Prix des parcours installés. Un parcours sans tarif, ou à 0 €, est gratuit pour tout compte.
  * Les prix sont TTC : Stripe Tax en déduit la TVA du pays de l'acheteur.
+ *
+ * @extends AbstractCrudController<TrackPricing>
  */
 #[AdminRoute(path: '/tarifs', name: 'pricing')]
 final class TrackPricingCrudController extends AbstractCrudController
