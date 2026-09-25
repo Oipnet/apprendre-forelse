@@ -11,6 +11,7 @@ import { cheminsExplicites, contenuDeDepart, estModifiable } from './editable';
 import { FileTree } from './filetree';
 import { MentorClient, errorTextOf, renderExplanation, renderReview, stripAnsi, type ErrorSource } from './mentor';
 import { RequestsPanel } from './requests';
+import { mesurer } from '../mesure';
 import { ApiProgressStore, LocalProgressStore, xpFor, type ProgressStore } from './progress';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 
@@ -42,6 +43,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const progress: ProgressStore =
 		config.progress.mode === 'api' ? new ApiProgressStore(config.progress.url) : new LocalProgressStore(`formation:${exercise.trackId}/${exercise.id}`, exercise.xp);
 	const practice = config.context === 'practice';
+	/** Ce qui identifie l'exercice dans la mesure d'audience : du contenu public, rien de l'apprenant. */
+	const mesure = { exercice: exercise.id, parcours: exercise.trackId ?? 'pratique' };
 
 	root.innerHTML = layout(exercise, config);
 	const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
@@ -369,6 +372,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			await progress.saveDraft(current, hintsUsed);
 			const result = await progress.complete(hintsUsed);
 			completed = true;
+			if (!result.alreadyCompleted) mesurer('exercice-reussi', { ...mesure, indices: hintsUsed, solution: solutionRevealed });
 			markCompleted();
 			const gain = result.alreadyCompleted ? 'Exercice déjà validé.' : practice ? '' : solutionRevealed && result.xpEarned === 0 ? 'Sans XP : la solution a été consultée.' : `+${result.xpEarned} XP`;
 			const total = result.totalXp !== null && !practice ? ` · ${result.totalXp} XP au total` : '';
@@ -502,6 +506,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	runButton.addEventListener('click', async () => {
 		runButton.disabled = true;
+		mesurer('tests-lances', mesure);
 		status('Tests en cours…', 'busy');
 		try {
 			// Les dernières frappes doivent être testées, pas perdues.
@@ -540,6 +545,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		showHint(hintsUsed);
 		revealPane('brief');
 		hintsUsed++;
+		mesurer('indice-demande', { ...mesure, indices: hintsUsed });
 		updateHintButton();
 		saveDraft();
 	});
@@ -595,6 +601,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 				const files = await progress.revealSolution();
 				if (!files) return;
 				solutionRevealed = true;
+				mesurer('solution-consultee', mesure);
 				noteSolution();
 				showSolution(files);
 			} catch (error) {
@@ -624,6 +631,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	runButton.disabled = false;
 	$('.overlay').classList.add('hidden');
 	mark('ready');
+	mesurer('exercice-ouvert', { ...mesure, compte: config.progress.mode === 'api' });
 	status(`Prêt en ${(metrics.ready / 1000).toFixed(1)} s`, 'ok');
 	Object.assign(window, { playground: { metrics, runtime, editor: editor.instance, monaco } }); // debug / mesures
 }

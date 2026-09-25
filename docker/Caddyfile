@@ -35,6 +35,18 @@
 	header @img Cache-Control "public, max-age=2592000"
 	@envs path /envs/*
 	header @envs Cache-Control "public, max-age=86400"
+	# Journaux d'accès : savoir qui demande quoi, les robots des moteurs de recherche compris (voir
+	# deploy/README.md). Les fichiers servis tels quels — build, images, archives d'environnement, traceur —
+	# sont écartés : ils n'apprennent rien et noieraient le reste. Caddy masque déjà les en-têtes Cookie et
+	# Authorization. L'adresse IP journalisée est annoncée dans /confidentialite (douze mois au plus) ; le
+	# service de production limite la taille des journaux (deploy/compose.yaml).
+	@sans_journal path /build/* /img/* /envs/* /mesure/* /favicon.ico /preview-sw.js
+	log_skip @sans_journal
+	log {
+		output stdout
+		format json
+	}
+
 	# Le Service Worker de l'aperçu doit toujours être revalidé.
 	@sw path /preview-sw.js
 	header @sw Cache-Control "no-cache"

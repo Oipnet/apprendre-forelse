@@ -10,6 +10,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Cinq événements dans la mesure d'audience** (`exercice-ouvert`, `tests-lances`, `exercice-reussi`,
+  `indice-demande`, `solution-consultee`), avec l'identifiant de l'exercice et du parcours. Les pages vues
+  disaient qui arrivait, jamais qui écrivait du code : c'est maintenant lisible dans *Events*. Rien de ce
+  que l'apprenant écrit n'est transmis, et une instance sans mesure d'audience n'envoie rien.
+- **Journaux d'accès du serveur web** : Caddy note chaque page demandée, en écartant les fichiers servis
+  tels quels (build, images, archives d'environnement, traceur). C'est la seule façon de voir passer les
+  robots des moteurs de recherche, qui n'exécutent pas le JavaScript et échappent donc à la mesure
+  d'audience. La production limite ces journaux à cinq fichiers de 10 Mo (`deploy/compose.yaml`) ;
+  `auto-hebergement/README.md` donne les commandes pour les lire.
+
 - **Une page par version de framework dans la Pratique** (`/pratique/nouveautes/symfony-8-2`) : les exercices
   qui annoncent la même `version:` s'y retrouvent. « Les nouveautés de Symfony 8.2 » est ce qu'un développeur
   cherche dans un moteur de recherche, et il tombe ici sur des exercices à faire plutôt que sur un billet à
