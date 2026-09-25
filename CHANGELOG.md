@@ -69,6 +69,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   (trois pages, `ab -c 4`) : +3 % de requêtes par seconde sur l'accueil, que les requêtes SQL dominent,
   +10 % sur `/pratique`, +22 % sur `/connexion` ; opcache occupe 15 Mo de plus, sur 128. Rien à faire côté
   instance : la liste des classes est écrite par le `cache:clear` du démarrage.
+- **Les packs de contenu ne sont plus relus à chaque requête.** Leur chargement (tous les YAML et Markdown,
+  validés) est gardé en cache entre les requêtes, et reste valable tant que chaque fichier et dossier lu garde
+  sa date et sa taille : un pack déposé, modifié ou retiré se voit dès la requête suivante, sans redémarrage,
+  et l'atelier le vide à chaque écriture. Mesuré sur l'image avec six packs (313 exercices), `ab -c 4` :
+  l'accueil passe d'environ 8 à 71 requêtes par seconde, `/pratique` de 8 à 300, une page de parcours de 8 à
+  130, un exercice de Pratique de 8 à 200.
 - **Le contrôle de santé de l'image interroge PHP et la base** : il appelle `/sante`, qui fait un `SELECT 1`,
   au lieu de l'API d'administration de Caddy, qui restait verte avec une base arrêtée ou un PHP qui ne démarre
   pas. Le conteneur passe donc en `unhealthy` dans ces cas-là, et `docker compose up --wait` échoue au lieu de
