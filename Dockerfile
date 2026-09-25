@@ -5,6 +5,7 @@
 # La base PostgreSQL est un service à part (voir compose.yaml), indiquée par DATABASE_URL.
 
 # --- 1. Playground : build Vite (îlot JS, runtime WebAssembly) -------------------------
+# Même version majeure que .nvmrc, avec laquelle la CI teste le playground (elle vérifie qu'elles concordent).
 FROM node:24-slim AS playground
 
 # Le contrat des runtimes : le playground et chaque paquet de runtime en dépendent (lien npm « file: »),

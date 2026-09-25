@@ -1,0 +1,61 @@
+# Mises à jour des dépendances du moteur, chaque semaine. Les mineures et correctifs d'un même dossier
+# arrivent groupés dans une seule pull request ; une version majeure a toujours la sienne.
+#
+# Volontairement absents :
+# - environments/* : les versions de framework que les exercices enseignent (Symfony 8, Laravel 13…). Monter
+#   de version change ce que dit le cours : cela se décide avec le contenu, pas par un robot.
+# - packages/simulateur-nuxt/conformite/* : le vrai Nuxt y est épinglé, comme référence du simulateur.
+# - les fichiers compose (déploiement, auto-hébergement) : une majeure de Postgres y demande une migration
+#   des données. Voir l'épinglage des services du déploiement avant de les confier à Dependabot.
+version: 2
+
+updates:
+  - package-ecosystem: composer
+    directory: /platform
+    schedule:
+      interval: weekly
+    groups:
+      mineures:
+        update-types: [minor, patch]
+
+  - package-ecosystem: composer
+    directory: /packages/simulateur-docker
+    schedule:
+      interval: weekly
+    groups:
+      mineures:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /playground
+    schedule:
+      interval: weekly
+    groups:
+      mineures:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /packages/simulateur-nuxt
+    schedule:
+      interval: weekly
+    groups:
+      mineures:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      mineures:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # La majeure de Node se change dans .nvmrc et dans le Dockerfile ensemble (la CI vérifie qu'ils
+      # concordent) : une pull request qui ne toucherait que le Dockerfile échouerait à coup sûr.
+      - dependency-name: node
+        update-types: [version-update:semver-major]
