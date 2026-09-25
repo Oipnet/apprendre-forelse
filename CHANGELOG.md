@@ -85,6 +85,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   et l'atelier le vide à chaque écriture. Mesuré sur l'image avec six packs (313 exercices), `ab -c 4` :
   l'accueil passe d'environ 8 à 71 requêtes par seconde, `/pratique` de 8 à 300, une page de parcours de 8 à
   130, un exercice de Pratique de 8 à 200.
+- **Les tarifs des parcours sont lus en une requête**, au lieu d'une par parcours et par chapitre : la table est
+  chargée d'un bloc et gardée le temps de la requête. Les places fondateur restantes de tous les parcours sont
+  aussi comptées en une seule requête. L'accueil passe de trois requêtes SQL par parcours affiché à deux en tout,
+  et la page d'un parcours ne lit plus qu'une fois les tarifs.
 - **Le contrôle de santé de l'image interroge PHP et la base** : il appelle `/sante`, qui fait un `SELECT 1`,
   au lieu de l'API d'administration de Caddy, qui restait verte avec une base arrêtée ou un PHP qui ne démarre
   pas. Le conteneur passe donc en `unhealthy` dans ces cas-là, et `docker compose up --wait` échoue au lieu de

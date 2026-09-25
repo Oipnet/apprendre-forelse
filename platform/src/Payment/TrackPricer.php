@@ -8,18 +8,27 @@ use App\Entity\User;
 use App\Repository\PurchaseRepository;
 use App\Repository\TrackPricingRepository;
 use Psr\Clock\ClockInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Le prix courant d'un parcours : fondateur tant qu'il est actif et que ni sa date ni son quota ne sont dépassés,
  * normal sinon ; pour l'apprenant d'une cohorte financée par ses apprenants, le tarif de la cohorte s'il est fixé.
  */
-final readonly class TrackPricer
+final class TrackPricer implements ResetInterface
 {
+    /** @var array<string, array<string, int>> places fondateur prises, par parcours, pour chaque apprenant (« » : visiteur) */
+    private array $founderSales = [];
+
     public function __construct(
-        private TrackPricingRepository $pricings,
-        private PurchaseRepository $purchases,
-        private ClockInterface $clock,
+        private readonly TrackPricingRepository $pricings,
+        private readonly PurchaseRepository $purchases,
+        private readonly ClockInterface $clock,
     ) {
+    }
+
+    public function reset(): void
+    {
+        $this->founderSales = [];
     }
 
     public function quote(Track $track, ?User $user = null): PriceQuote
@@ -35,7 +44,10 @@ final readonly class TrackPricer
         }
 
         $now = $this->clock->now();
-        $founderSales = $pricing->isFounderActive() ? $this->purchases->countFounderSales($track->id, $now, $user) : 0;
+        // Une requête pour tous les parcours, la première fois qu'un prix fondateur est en jeu dans la requête.
+        $founderSales = $pricing->isFounderActive()
+            ? ($this->founderSales[(string) $user?->getId()] ??= $this->purchases->founderSalesByTrack($now, $user))[$track->id] ?? 0
+            : 0;
         if ($pricing->isFounderPriceApplicable($now, $founderSales)) {
             return new PriceQuote(
                 $pricing->currentPrice($now, $founderSales),
