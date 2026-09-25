@@ -117,7 +117,7 @@ services:
   # production. Créez-y le site, puis relancez avec son identifiant pour voir la balise apparaître :
   #   ANALYTICS_SCRIPT_URL=/mesure/traceur.js ANALYTICS_WEBSITE_ID=… docker compose --profile mesure up -d
   umami:
-    image: ghcr.io/umami-software/umami:postgresql-latest
+    image: ghcr.io/umami-software/umami:3.4.0  # même version qu'en production (deploy/compose.yaml)
     mem_limit: ${UMAMI_MEM_LIMIT:-512m}
     pids_limit: 128
     profiles: ["mesure"]

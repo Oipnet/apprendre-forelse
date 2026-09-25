@@ -89,6 +89,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   chargée d'un bloc et gardée le temps de la requête. Les places fondateur restantes de tous les parcours sont
   aussi comptées en une seule requête. L'accueil passe de trois requêtes SQL par parcours affiché à deux en tout,
   et la page d'un parcours ne lit plus qu'une fois les tarifs.
+- **Chaque conteneur fait tourner ses journaux** (cinq fichiers de 10 Mo au plus), dans `deploy/` comme dans
+  `auto-hebergement/` : seul `app` le faisait, et les journaux Docker des autres services grossissaient sans
+  limite. Pour une instance auto-hébergée, `docker compose up -d` suffit à l'appliquer.
+- **Umami est épinglé en 3.4.0** au lieu de `postgresql-latest`, et un déploiement du moteur ne tire plus que
+  son image : une nouvelle version d'Umami (qui migre sa base) ou de PostgreSQL n'arrive plus avec un commit du
+  moteur. Monter de version devient un choix : changer le numéro dans `compose.yaml`, sauvegarder, puis
+  `docker compose up -d umami`.
 - **Le contrôle de santé de l'image interroge PHP et la base** : il appelle `/sante`, qui fait un `SELECT 1`,
   au lieu de l'API d'administration de Caddy, qui restait verte avec une base arrêtée ou un PHP qui ne démarre
   pas. Le conteneur passe donc en `unhealthy` dans ces cas-là, et `docker compose up --wait` échoue au lieu de
