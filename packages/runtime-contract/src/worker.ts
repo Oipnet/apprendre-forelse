@@ -1,5 +1,5 @@
-import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, RuntimeRestart, TestRunResult } from './runtime';
-import { PING, type WorkerCall, type WorkerMessage, type WorkerMethod } from './protocol';
+import type { BootProgress, EnvironmentSpec, Grading, HttpRequest, Runtime, RuntimeRestart } from './runtime';
+import { PING, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol';
 
 /**
  * Crée un worker module à partir d'une URL obtenue par `import url from './x.ts?worker&url'`.
@@ -100,19 +100,20 @@ export class WorkerRuntime implements Runtime {
 	}
 
 	/** Envoie l'appel au worker courant, sans attendre un redémarrage (réservé à celui-ci). */
-	private send<T>(method: WorkerMethod, args: unknown[]): Promise<T> {
+	private send<M extends WorkerMethod>(method: M, args: WorkerArgs[M]): Promise<WorkerResult[M]> {
 		const id = this.nextId++;
-		return new Promise<T>((resolve, reject) => {
+		return new Promise<WorkerResult[M]>((resolve, reject) => {
 			// Rien n'était en cours : le silence se compte à partir de maintenant, pas du dernier message.
 			if (this.pending.size === 0) this.lastSign = performance.now();
 			this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
-			this.worker.postMessage({ id, method, args } satisfies WorkerCall);
+			const call: WorkerCall<M> = { id, method, args };
+			this.worker.postMessage(call);
 		});
 	}
 
-	private async call<T>(method: WorkerMethod, ...args: unknown[]): Promise<T> {
+	private async call<M extends WorkerMethod>(method: M, ...args: WorkerArgs[M]): Promise<WorkerResult[M]> {
 		await this.restarting;
-		return this.send<T>(method, args);
+		return this.send(method, args);
 	}
 
 	/** Surveille le worker une fois démarré : le premier boot (téléchargement, décompression) n'est pas concerné. */
@@ -139,7 +140,7 @@ export class WorkerRuntime implements Runtime {
 		this.emit({ phase: 'restarting', reason });
 		this.restarting = (async () => {
 			try {
-				await this.send('boot', [this.env]);
+				await this.send('boot', [this.env!]);
 				for (const [path, content] of this.files) {
 					if (content !== null) await this.send('writeFile', [path, content]);
 					// Un fichier créé puis supprimé n'existe pas dans le projet neuf : rien à retirer.
@@ -170,7 +171,7 @@ export class WorkerRuntime implements Runtime {
 
 	async boot(env: EnvironmentSpec, onProgress?: (p: BootProgress) => void) {
 		this.onProgress = onProgress;
-		await this.call<void>('boot', env);
+		await this.call('boot', env);
 		// Un redémarrage se fait en silence : la barre de progression n'est plus affichée.
 		this.onProgress = undefined;
 		this.env = env;
@@ -179,32 +180,32 @@ export class WorkerRuntime implements Runtime {
 
 	writeFile(path: string, content: string) {
 		this.remember(path, content);
-		return this.call<void>('writeFile', path, content);
+		return this.call('writeFile', path, content);
 	}
 
 	readFile(path: string) {
-		return this.call<string | null>('readFile', path);
+		return this.call('readFile', path);
 	}
 
 	listFiles() {
-		return this.call<string[]>('listFiles');
+		return this.call('listFiles');
 	}
 
 	deleteFile(path: string) {
 		this.remember(path, null);
-		return this.call<void>('deleteFile', path);
+		return this.call('deleteFile', path);
 	}
 
 	request(request: HttpRequest) {
-		return this.call<HttpResponse>('request', request);
+		return this.call('request', request);
 	}
 
 	runTests(grading?: Grading) {
-		return this.call<TestRunResult>('runTests', grading);
+		return this.call('runTests', grading);
 	}
 
 	async runCommand(args: string[]) {
-		const result = await this.call<CommandResult>('runCommand', args);
+		const result = await this.call('runCommand', args);
 		// Les fichiers qu'une commande a générés (une migration…) doivent survivre à un redémarrage.
 		for (const [path, content] of Object.entries(result.fichiers ?? {})) this.remember(path, content);
 		for (const path of result.supprimes ?? []) this.remember(path, null);

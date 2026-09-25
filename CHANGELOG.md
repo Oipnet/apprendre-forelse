@@ -84,6 +84,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Les workers traitent leurs messages un par un, dans l'ordre.** Leurs écouteurs `async` les traitaient en
+  parallèle : une frappe arrivée pendant la notation par mutants était écrasée par la restauration du code
+  d'origine, et l'instance de tests gardait l'ancien code ; une frappe arrivée pendant une commande console
+  passait pour une modification de la commande. Le répartiteur, jusqu'ici copié dans les deux workers, devient
+  `serveRuntime()` dans `@forelse/runtime-contract` : file d'appels, méthode vérifiée avant l'appel, typage du
+  contrat de bout en bout (plus de transtypage), et transfert des corps de réponse du worker PHP au lieu d'une
+  copie. Le battement de cœur passe hors de la file. Les requêtes de l'aperçu attendent désormais la fin d'un
+  run de tests en cours.
 - **Une boucle infinie ne fige plus l'exercice.** Un `while (true)` dans une route bloquait le worker (PHP
   comme Nuxt : `max_execution_time` ne s'applique pas sous wasm), et tout restait en attente, le bouton sur
   « Tests en cours… ». Le playground surveille désormais le worker par un battement de cœur : au bout de
