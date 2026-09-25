@@ -84,6 +84,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **L'aperçu PHP s'affiche sans attendre l'instance de tests.** Chaque écriture attendait que la seconde
+  instance PHP, celle des tests, soit entièrement créée ; et cette création copiait tout le projet d'un seul
+  bloc, pendant lequel le worker ne répondait à rien. Les écritures vont désormais dans l'aperçu tout de
+  suite, et dans l'instance de tests seulement quand elle est prête (elle applique à sa création ce qu'elle
+  a manqué) ; sa copie du projet rend la main au worker toutes les 50 ms. Mesuré sur `symfony-8` : les
+  écritures du démarrage passent de 4,4 s à 0,2 s, la première page de l'aperçu arrive 4 s plus tôt, et
+  l'instance de tests est prête 0,4 s plus tard qu'avant. Une écriture différée qui échoue n'est plus une
+  promesse rejetée sans gestionnaire.
+- **Une commande console ne remet plus le curseur au début d'un fichier qu'elle n'a pas changé.** L'éditeur
+  ignore un contenu identique à celui qu'il affiche (son historique d'annulation est conservé).
 - **Les workers traitent leurs messages un par un, dans l'ordre.** Leurs écouteurs `async` les traitaient en
   parallèle : une frappe arrivée pendant la notation par mutants était écrasée par la restauration du code
   d'origine, et l'instance de tests gardait l'ancien code ; une frappe arrivée pendant une commande console
