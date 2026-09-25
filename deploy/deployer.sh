@@ -38,7 +38,9 @@ fi
 
 # Sans épinglage, une étiquette qui n'existe plus (ou un APP_IMAGE oublié dans le .env du serveur) fait tirer une
 # image inchangée : compose ne recrée rien et la CI reste verte. Un échec ici n'a encore rien touché.
-APP_IMAGE="$NEW" docker compose pull --quiet || exit 1
+# L'image du moteur seulement (worker et empaqueteur la partagent) : PostgreSQL et Umami ne changent pas de version
+# avec un déploiement du moteur. Une version épinglée pas encore présente est tirée par `up`, une fois.
+APP_IMAGE="$NEW" docker compose pull --quiet app || exit 1
 
 if demarrer "$NEW"; then
     echo "Déployé : $NEW"

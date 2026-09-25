@@ -3,17 +3,21 @@
 # de .github/workflows/ci.yml). Variables : /srv/forelse/.env.
 #
 # Pour votre propre instance, partez plutôt de auto-hebergement/ (guide, compose.yaml et .env.example).
+# Rotation des journaux, pour chaque service (logging: *logging) : cinq fichiers de 10 Mo au plus par conteneur.
+# Sans elle, le pilote json-file de Docker grossit sans limite et finit par remplir le disque.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   app:
     image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
+    # Les journaux d'accès (docker/Caddyfile) s'ajoutent aux journaux applicatifs, dans la même rotation : bien en
+    # deçà des douze mois annoncés dans /confidentialite.
+    logging: *logging
     restart: unless-stopped
-    # Les journaux d'accès (docker/Caddyfile) s'ajoutent aux journaux applicatifs : cinq fichiers de 10 Mo au
-    # plus, sinon le disque se remplit sans bruit. Bien en deçà des douze mois annoncés dans /confidentialite.
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
     depends_on:
       db:
         condition: service_healthy
@@ -103,16 +107,17 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp" # HTTP/3
+    # Plafonds : un service qui s'emballe ne fait pas tomber les autres (réglables dans .env).
+    mem_limit: ${APP_MEM_LIMIT:-1536m}
+    pids_limit: 512
 
   # Envoi des emails, hors des requêtes : la plateforme les dépose dans la base (Messenger), ce service les
   # envoie. Un serveur SMTP lent ou en panne ne bloque plus l'inscription, et l'email part à son retour
   # (nouvelles tentatives pendant deux heures, puis `bin/console messenger:failed:retry` dans ce conteneur).
   # Même image, mêmes réglages que « app » ; il redémarre de lui-même toutes les heures pour rester léger.
-    # Plafonds : un service qui s'emballe ne fait pas tomber les autres (réglables dans .env).
-    mem_limit: ${APP_MEM_LIMIT:-1536m}
-    pids_limit: 512
   worker:
     image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
+    logging: *logging
     restart: unless-stopped
     depends_on:
       # Après les migrations, que lance le démarrage de « app » (dont la table de la file d'attente).
@@ -133,6 +138,7 @@ services:
   # cloner et télécharger les dépendances, et le volume des environnements, qu'il partage avec « app ».
   empaqueteur:
     image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
+    logging: *logging
     restart: unless-stopped
     depends_on:
       app:
@@ -164,6 +170,7 @@ services:
 
   db:
     image: postgres:17-alpine
+    logging: *logging
     restart: unless-stopped
     environment:
       POSTGRES_DB: formation
@@ -185,7 +192,10 @@ services:
   # avec admin / umami, CHANGER CE MOT DE PASSE, créer le site, puis reporter son identifiant dans
   # ANALYTICS_WEBSITE_ID et ANALYTICS_SCRIPT_URL=/mesure/traceur.js — et `docker compose up -d`.
   umami:
-    image: ghcr.io/umami-software/umami:postgresql-latest
+    # Version épinglée : une nouvelle version d'Umami migre sa base, elle se choisit (et se sauvegarde avant),
+    # elle n'arrive pas avec un déploiement du moteur. Changer ce numéro, puis `docker compose up -d umami`.
+    image: ghcr.io/umami-software/umami:3.4.0
+    logging: *logging
     mem_limit: ${UMAMI_MEM_LIMIT:-512m}
     pids_limit: 128
     restart: unless-stopped
@@ -215,6 +225,7 @@ services:
   # donc jamais sur un serveur déjà en service. Ce conteneur la crée si elle manque, puis s'arrête.
   umami-base:
     image: postgres:17-alpine
+    logging: *logging
     depends_on:
       db:
         condition: service_healthy
