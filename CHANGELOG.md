@@ -84,6 +84,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Une section `home` mal écrite dans `marque.yaml` est expliquée**, au lieu d'une erreur PHP (« Undefined
+  constant ») : le message liste les sections acceptées (showcase, author, demo).
+- **Simulateur Docker : un `compose.yaml` mal formé est signalé** (`yaml: line N: …`) au lieu de faire planter
+  le simulateur, et **`id -u -n` donne le nom de l'utilisateur**, comme `id -un` et comme sur une vraie image.
+  Trois défauts trouvés par l'analyse statique, désormais lancée en CI.
 - **Le cache du simulateur Docker suit celui de BuildKit.** Modifier un `LABEL`, un `EXPOSE`, un `CMD`, un
   `ENTRYPOINT`, un `HEALTHCHECK` ou un `VOLUME` rejouait tous les `COPY` et `RUN` suivants : l'exercice
   enseignait un faux ordre des couches. Ces instructions n'entrent plus dans la clé de cache ; `ENV` et les
