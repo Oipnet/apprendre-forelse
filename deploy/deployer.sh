@@ -22,20 +22,25 @@ trap 'docker logout ghcr.io > /dev/null 2>&1' EXIT
 
 cd "${DEPLOY_DIR:-/srv/forelse}" || exit 1
 
+# L'étiquette locale de cette instance, lue dans son .env comme le fait compose.yaml : « edge » pour la production,
+# autre chose pour la préproduction, qui tourne sur le même serveur et ne doit pas déplacer les étiquettes de l'autre.
+TAG=$(sed -n 's/^IMAGE_TAG=//p' .env 2>/dev/null | tail -n 1)
+TAG="${TAG:-edge}"
+
 demarrer() {
-    # L'image déployée reçoit aussi l'étiquette locale :edge, celle qu'utilise compose.yaml par défaut : un
-    # `docker compose up -d` lancé à la main sur le serveur (après avoir modifié .env) relance la même image,
-    # au lieu d'une ancienne :edge restée en cache (vu le 2026-09-17 : retour à un moteur 0.1.0).
-    docker tag "$1" "$REPO:edge" \
+    # L'image déployée reçoit aussi l'étiquette locale de l'instance (:edge en production), celle qu'utilise
+    # compose.yaml par défaut : un `docker compose up -d` lancé à la main sur le serveur (après avoir modifié .env)
+    # relance la même image, au lieu d'une ancienne restée en cache (vu le 2026-09-17 : retour à un moteur 0.1.0).
+    docker tag "$1" "$REPO:$TAG" \
         && APP_IMAGE="$1" docker compose up -d --remove-orphans --wait --wait-timeout "$WAIT" \
         && curl -fsS -o /dev/null --retry 6 --retry-delay 5 --retry-all-errors "$URL/sante"
 }
 
-# L'image en service, gardée sous une étiquette à elle : :edge va changer, et le nettoyage ne passe qu'après un succès.
+# L'image en service, gardée sous une étiquette à elle : :$TAG va changer, et le nettoyage ne passe qu'après un succès.
 PREVIOUS=""
 APP=$(docker compose ps -q app)
 if [ -n "$APP" ]; then
-    PREVIOUS="$REPO:precedente"
+    PREVIOUS="$REPO:$TAG-precedente"
     docker tag "$(docker inspect -f '{{.Image}}' "$APP")" "$PREVIOUS"
 fi
 

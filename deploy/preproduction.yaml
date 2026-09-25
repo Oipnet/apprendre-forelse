@@ -1,0 +1,18 @@
+# Surcharge de la préproduction, en plus de derriere-front.yaml :
+#   COMPOSE_FILE=compose.yaml:derriere-front.yaml:preproduction.yaml
+#
+# Même image et mêmes services que la production, sans rien qui touche le monde réel : pas d'indexation, pas de
+# mesure d'audience. Le reste se règle dans son .env (voir .env.preproduction.example) : clés Stripe de test,
+# emails captés ou coupés, plafonds de mémoire bas pour ne jamais priver la production, qui tourne à côté.
+services:
+  app:
+    environment:
+      SEARCH_INDEXING: "0"
+      ANALYTICS_SCRIPT_URL: ""
+      ANALYTICS_WEBSITE_ID: ""
+
+  # Pas d'Umami : un profil qu'on n'active jamais le laisse éteint.
+  umami:
+    profiles: [jamais]
+  umami-base:
+    profiles: [jamais]

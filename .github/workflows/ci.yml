@@ -390,17 +390,95 @@ jobs:
           GH_TOKEN: ${{ secrets.CONTENU_TOKEN }}
         run: gh api "repos/${{ vars.CONTENU_DEPOT }}/dispatches" -f event_type=moteur-mis-a-jour -f "client_payload[moteur]=${{ github.sha }}"
 
-  deployer:
-    name: Déployer sur le VPS
+  # Deux instances sur le même serveur (voir deploy/README.md) : la préproduction suit main, la production ne reçoit
+  # que les versions publiées (tools/release.sh), après validation dans GitHub (règle de l'environnement « production »).
+  deployer-preproduction:
+    name: Déployer la préproduction
     needs: [moteur, docker]
-    # Une poussée sur main, ou un lancement manuel sur main (ex. après un incident GitHub) : jamais une PR.
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # Une poussée sur main, ou un lancement manuel sur main : jamais une PR. Tant que la variable de dépôt STAGING_URL
+    # n'existe pas, la préproduction n'est pas installée sur le serveur : le job est ignoré, rien n'échoue.
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+      && vars.STAGING_URL != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: deploiement-preproduction
+      cancel-in-progress: false
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Un passage relancé sur un commit plus ancien ne doit pas remettre une version dépassée par-dessus la plus
+      # récente (vu le 25/09/2026, issue #74) : seul le commit qui est encore la tête de main se déploie.
+      - name: Toujours la tête de main ?
+        id: tete
+        run: |
+          tete=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$tete" = "$GITHUB_SHA" ]; then
+            echo 'deployer=oui' >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::main est passé à $tete : $GITHUB_SHA ne se déploie pas par-dessus."
+            echo 'deployer=non' >> "$GITHUB_OUTPUT"
+          fi
+
+      # Les secrets passent par l'environnement, jamais interpolés dans le script : un caractère spécial ne peut pas
+      # y devenir du shell.
+      - name: Accès SSH au serveur
+        if: steps.tete.outputs.deployer == 'oui'
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName $DEPLOY_HOST
+            User deploy
+            IdentityFile ~/.ssh/deploy
+            IdentitiesOnly yes
+          EOF
+
+      - name: Fichiers de déploiement
+        if: steps.tete.outputs.deployer == 'oui'
+        run: scp deploy/compose.yaml deploy/derriere-front.yaml deploy/preproduction.yaml deploy/deployer.sh deploy/nettoyer-images.sh vps:/srv/forelse-staging/
+
+      - name: Mettre à jour les conteneurs
+        if: steps.tete.outputs.deployer == 'oui'
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ needs.docker.outputs.image }}
+          STAGING_URL: ${{ vars.STAGING_URL }}
+        run: |
+          printf '%s\n' "$GHCR_TOKEN" | ssh vps "docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin"
+          ssh vps "DEPLOY_DIR=/srv/forelse-staging sh /srv/forelse-staging/deployer.sh '$IMAGE' '$STAGING_URL'"
+
+  deployer:
+    name: Déployer la production
+    # Sur une étiquette vX.Y.Z : soit l'image testée sur main est reprise et étiquetée (« Publier la version »),
+    # soit tests et construction ont été refaits (« reprise » n'a rien trouvé). Le reste est ignoré, pas en échec :
+    # d'où !cancelled() plutôt qu'un simple needs.
+    needs: [reprise, moteur, docker, version]
+    if: >-
+      ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v')
+      && ((needs.reprise.outputs.image != '' && needs.version.result == 'success')
+      || (needs.reprise.outputs.image == '' && needs.moteur.result == 'success' && needs.docker.result == 'success')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Un déploiement à la fois, jamais annulé en cours de route.
     concurrency:
       group: deploiement-production
       cancel-in-progress: false
+    # La validation manuelle se règle sur cet environnement (Settings → Environments → production → Required reviewers).
     environment:
       name: production
       url: ${{ vars.APP_URL }}
@@ -409,6 +487,29 @@ jobs:
       packages: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Connexion au registre
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # deployer.sh veut l'image par son empreinte : celle qui a été construite ici, ou celle de main qu'on reprend
+      # (référencée par son commit), résolue en empreinte pour que la production ne puisse tirer rien d'autre.
+      - name: Image à déployer
+        id: image
+        env:
+          CONSTRUITE: ${{ needs.docker.outputs.image }}
+          REPRISE: ${{ needs.reprise.outputs.image }}
+        run: |
+          if [ -n "$CONSTRUITE" ]; then
+            echo "image=$CONSTRUITE" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          empreinte=$(docker buildx imagetools inspect "$REPRISE" --format '{{json .Manifest}}' | jq -r .digest)
+          echo "image=${REPRISE%:*}@$empreinte" >> "$GITHUB_OUTPUT"
+
       # Les secrets passent par l'environnement, jamais interpolés dans le script : un caractère spécial ne peut pas
       # y devenir du shell.
       - name: Accès SSH au serveur
@@ -430,14 +531,14 @@ jobs:
           EOF
 
       - name: Fichiers de déploiement
-        run: scp deploy/compose.yaml deploy/deployer.sh deploy/nettoyer-images.sh vps:/srv/forelse/
+        run: scp deploy/compose.yaml deploy/derriere-front.yaml deploy/deployer.sh deploy/nettoyer-images.sh vps:/srv/forelse/
 
       # Revient à l'image précédente si la nouvelle ne devient pas « healthy » ou si /sante ne répond pas (deploy/deployer.sh).
       # Le jeton du registre est retiré du serveur à la fin, que le déploiement réussisse ou non.
       - name: Mettre à jour les conteneurs
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IMAGE: ${{ needs.docker.outputs.image }}
+          IMAGE: ${{ steps.image.outputs.image }}
           APP_URL: ${{ vars.APP_URL }}
         run: |
           printf '%s\n' "$GHCR_TOKEN" | ssh vps "docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin"

@@ -1,0 +1,39 @@
+# Le proxy commun (deploy/front/compose.yaml). Tout vient du .env : noms d'hôte et identifiants.
+{
+	email {$ACME_EMAIL}
+	# Essai local seulement : FRONT_OPTIONS=local_certs (certificats d'une autorité locale, sans Let's Encrypt).
+	{$FRONT_OPTIONS}
+	grace_period 3s
+}
+
+# Vers une instance. Pendant qu'elle redémarre (un déploiement), les requêtes attendent qu'elle réponde, jusqu'à
+# 30 s, au lieu d'échouer aussitôt : une page lente plutôt qu'une erreur.
+(instance) {
+	reverse_proxy {args[0]}:80 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+}
+
+# Production : plateforme, bac à sable et, s'il est exposé, le tableau de bord d'Umami (noms séparés par des
+# virgules). Ils arrivent tels quels à l'application, qui les distingue elle-même.
+{$PRODUCTION_HOSTS} {
+	import instance forelse-prod
+}
+
+# Préproduction : hors des moteurs de recherche, et la plateforme derrière un mot de passe. Le bac à sable n'en a
+# pas : il ne sert que la page relais et son Service Worker, sans donnée, et un mot de passe y gênerait l'aperçu.
+# /sante reste ouvert : le déploiement l'interroge pour savoir si la nouvelle version tient.
+{$PREPRODUCTION_APP_HOST} {
+	header X-Robots-Tag "noindex, nofollow"
+	@protege not path /sante
+	basic_auth @protege {
+		{$PREPRODUCTION_USER} {$PREPRODUCTION_PASSWORD_HASH}
+	}
+	import instance forelse-preprod
+}
+
+{$PREPRODUCTION_SANDBOX_HOST} {
+	header X-Robots-Tag "noindex, nofollow"
+	import instance forelse-preprod
+}

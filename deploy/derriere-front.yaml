@@ -1,0 +1,22 @@
+# Surcharge : l'instance derrière le proxy commun (deploy/front/), qui tient 80/443, les certificats et HTTP/3.
+# S'active depuis le .env de l'instance : COMPOSE_FILE=compose.yaml:derriere-front.yaml (voir deploy/README.md).
+#
+# L'application n'expose plus de port sur le serveur : elle sert du HTTP simple sur le réseau « front », sous un
+# nom propre à l'instance (FRONT_ALIAS), et fait confiance aux en-têtes X-Forwarded-* du proxy pour le schéma et
+# l'adresse du visiteur. Demande Docker Compose 2.24 ou plus (!reset).
+services:
+  app:
+    ports: !reset []
+    environment:
+      SERVER_NAME: ":80"
+      SYMFONY_TRUSTED_PROXIES: private_ranges
+    networks:
+      default:
+      front:
+        aliases:
+          - ${FRONT_ALIAS:?FRONT_ALIAS manquant dans .env (ex. forelse-prod)}
+
+networks:
+  front:
+    external: true
+    name: front

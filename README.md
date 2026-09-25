@@ -30,7 +30,7 @@ environments/     Projets de base dans lesquels s'exécutent les exercices, et d
                   (bin/build-env.sh) — destiné à devenir son propre dépôt, voir environments/README.md
 tools/            Simulateurs Docker (docker-sim) et Nuxt (nuxt-sim), publication d'une version
 auto-hebergement/ Guide, compose.yaml et .env.example d'une instance auto-hébergée
-deploy/           compose.yaml de l'instance de Forelse, copié sur son serveur par l'intégration continue
+deploy/           production et préproduction de l'instance de Forelse, derrière un proxy commun (deploy/README.md)
 examples/packs/   Pack de démonstration (format de contenu, tests du moteur)
 examples/marque/  Exemple d'identité d'instance (marque blanche) : marque.yaml commenté et ses images
 ```
