@@ -91,7 +91,18 @@ plateforme (même « site » pour le navigateur, voir `auto-hebergement/README.m
    `docker compose exec app php bin/console app:admin votre@adresse`.
 8. `docker stats` : la production garde de la marge avec les deux instances en marche.
 
-## 3. La production ne suit plus que les versions
+## 3. Suivi des erreurs
+
+Un seul projet Sentry (type Symfony, région UE) pour les deux instances : la préproduction y range ses erreurs
+sous `preproduction` (`preproduction.yaml`), la production sous `production`.
+
+1. Le DSN du projet (Settings → Client Keys) dans le `.env` de chaque instance : `SENTRY_DSN=https://…`.
+2. `docker compose up -d app worker` dans le dossier de l'instance : un conteneur ne relit son `.env` qu'à sa
+   création.
+3. `docker compose exec app php bin/console app:sentry:essai` : l'erreur volontaire doit apparaître dans Sentry,
+   avec sa pile et la version du moteur.
+
+## 4. La production ne suit plus que les versions
 
 1. GitHub, **Settings → Environments → production → Required reviewers** : vous. Chaque mise en production attend
    votre validation dans l'onglet Actions.

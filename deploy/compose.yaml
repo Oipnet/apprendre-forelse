@@ -50,6 +50,10 @@ services:
       # Nom d'hôte qui sert le tableau de bord d'Umami (ex. https://suivi.example.org, avec son enregistrement
       # DNS). Vide : il n'est pas exposé, et se consulte par un tunnel SSH.
       ANALYTICS_SERVER_NAME: ${ANALYTICS_SERVER_NAME:-http://127.0.0.1:9998}
+      # Suivi des erreurs : le DSN du projet Sentry (ou GlitchTip). Vide : rien ne part.
+      # Vérification : `docker compose exec app php bin/console app:sentry:essai`.
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       # Packs chargés (chemins dans le conteneur, séparés par des virgules). /packs = le volume ci-dessous ;
       # ajouter /app/examples/packs pour proposer aussi le parcours de démonstration, ouvert aux visiteurs.
       CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}

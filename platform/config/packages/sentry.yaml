@@ -1,0 +1,22 @@
+# Suivi des erreurs (Sentry, ou GlitchTip qui parle le même protocole) : les exceptions non rattrapées des pages,
+# des commandes et du worker, avec leur pile. SENTRY_DSN vide, le cas par défaut : rien ne part.
+# Le bundle n'est chargé qu'en prod (config/bundles.php) ; `app:sentry:essai` vérifie le branchement.
+when@prod:
+    sentry:
+        dsn: '%env(SENTRY_DSN)%'
+        # Pas de mesure de performance : elle compterait chaque requête, et rien ici ne s'en sert.
+        tracing:
+            enabled: false
+        options:
+            environment: '%env(SENTRY_ENVIRONMENT)%'
+            # Rien qui désigne un apprenant : ni adresse IP, ni cookies, ni compte connecté, ni corps des
+            # requêtes (un formulaire de connexion porte un mot de passe).
+            send_default_pii: false
+            max_request_body_size: none
+            # Les dépréciations ne sont pas des pannes : elles se lisent au passage à la version suivante.
+            error_types: 'E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED'
+            # Écarte les erreurs du client (404, 403…) et date chaque erreur de la version du moteur.
+            before_send: App\Monitoring\FiltreSentry
+            ignore_exceptions:
+                # Déjà remontées par le gestionnaire d'erreurs de PHP : sans cela, deux fois.
+                - 'Symfony\Component\ErrorHandler\Error\FatalError'
