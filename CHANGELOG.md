@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 2.1.0 — 2026-09-25
+
 ### Ajouté
 
 - **Cinq événements dans la mesure d'audience** (`exercice-ouvert`, `tests-lances`, `exercice-reussi`,
