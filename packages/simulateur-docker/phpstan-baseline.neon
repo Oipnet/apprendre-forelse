@@ -1,0 +1,1315 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Anonymous function has an unused use \$root\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: src/Build/BuildContext.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Build\\BuildContext\:\:checksum\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Build/BuildContext.php
+
+		-
+			message: '#^Property Forelse\\DockerSim\\Build\\BuildOutput\:\:\$pendingError type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Build/BuildOutput.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Build\\Builder\:\:cloneState\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Build/Builder.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Build\\Builder\:\:exportImage\(\) has parameter \$tags with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Build/Builder.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>createdAt" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Build/Builder.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>tags" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Build/Builder.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Catalog\\BaseImage\:\:__construct\(\) has parameter \$healthcheck with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Catalog/BaseImage.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Catalog\\BaseImage\:\:__construct\(\) has parameter \$owners with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Catalog/BaseImage.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Catalog\\Catalog\:\:image\(\) has parameter \$healthcheck with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Catalog/Catalog.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Catalog\\Catalog\:\:image\(\) has parameter \$owners with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Catalog/Catalog.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:build\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:container\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:containerPrune\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:cp\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:exec\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:history\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:image\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:imagePrune\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:images\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:inspect\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:logs\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:network\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:port\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:ps\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:pull\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:push\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:restart\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:rm\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:rmi\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:runContainer\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:search\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:start\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:stop\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:system\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:tag\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:top\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Application\:\:volume\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Right side of && is always false\.$#'
+			identifier: booleanAnd.rightAlwaysFalse
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Cli/Application.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:build\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:config\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:down\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:exec\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:logs\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:port\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:ps\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:pull\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:rm\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:run\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:runService\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:services\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\ComposeCommand\:\:up\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>ports" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Cli/ComposeCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Inspect\:\:format\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Inspect.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Inspect\:\:healthcheck\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Inspect.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Cli\\Inspect\:\:path\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Inspect.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Compose/ComposeFile.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Compose\\ComposeFile\:\:build\(\) has parameter \$environment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Compose/ComposeFile.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Compose\\ComposeFile\:\:build\(\) has parameter \$file with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Compose/ComposeFile.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Compose\\ComposeFile\:\:load\(\) has parameter \$environment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Compose/ComposeFile.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Compose\\ComposeFile\:\:shellSplit\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Compose/ComposeFile.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/Compose/ComposeFile.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Compose\\Project\:\:activeServices\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Compose/Project.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Dockerfile\\Instruction\:\:words\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Dockerfile/Instruction.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Dockerfile/Parser.php
+
+		-
+			message: '#^Call to an undefined method Forelse\\DockerSim\\Fs\\FileSystem\:\:real\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Engine/Docker.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Engine\\Docker\:\:http\(\) has parameter \$headers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Engine/Docker.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Engine\\Docker\:\:upstream\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Engine/Docker.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>kind" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Engine/Docker.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>os" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Engine/Docker.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Fs\\DiskFs\:\:files\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Fs/DiskFs.php
+
+		-
+			message: '#^Offset 2 on array\{int, string\} in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Fs/DiskFs.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: src/Fs/DiskFs.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Fs\\FileSystem\:\:files\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Fs/FileSystem.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Fs\\MemoryFs\:\:files\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Fs/MemoryFs.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\ApacheServer\:\:documentRoot\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/ApacheServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\ApacheServer\:\:file\(\) has parameter \$trace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/ApacheServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\HttpRequest\:\:fromUrl\(\) has parameter \$headers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/HttpRequest.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\HttpResponse\:\:failure\(\) has parameter \$trace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/HttpResponse.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\HttpResponse\:\:page\(\) has parameter \$trace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/HttpResponse.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\Nginx\\ConfigSnapshot\:\:files\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Nginx/ConfigSnapshot.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\Nginx\\NginxConfig\:\:collect\(\) has parameter \$tree with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Nginx/NginxConfig.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\Nginx\\NginxConfig\:\:load\(\) has parameter \$env with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Nginx/NginxConfig.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\Nginx\\NginxConfig\:\:location\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Nginx/NginxConfig.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\Nginx\\NginxConfig\:\:location\(\) has parameter \$block with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Nginx/NginxConfig.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\Nginx\\NginxConfig\:\:location\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Nginx/NginxConfig.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\Nginx\\NginxConfig\:\:parseBlock\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Nginx/NginxConfig.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\Nginx\\NginxConfig\:\:server\(\) has parameter \$block with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Nginx/NginxConfig.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\Nginx\\NginxConfig\:\:server\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Nginx/NginxConfig.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:directory\(\) has parameter \$index with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:directory\(\) has parameter \$server with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:directory\(\) has parameter \$trace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:fastcgi\(\) has parameter \$directives with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:fastcgi\(\) has parameter \$trace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:hasPhpLocation\(\) has parameter \$server with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:match\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:process\(\) has parameter \$server with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:proxy\(\) has parameter \$trace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\NginxServer\:\:static\(\) has parameter \$trace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/NginxServer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Http\\ServerContext\:\:upstream\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/ServerContext.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Runtime\\PhpExecutor\:\:environment\(\) has parameter \$extra with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Runtime/PhpExecutor.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Runtime\\PhpExecutor\:\:execute\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Runtime/PhpExecutor.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Runtime\\PhpExecutor\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Runtime/PhpExecutor.php
+
+		-
+			message: '#^Offset ''function'' on array\{function\: string, line\?\: int, file\?\: string, class\?\: class\-string, type\?\: ''\-\>''\|''\:\:'', args\?\: list\<mixed\>, object\?\: object\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/Runtime/PhpExecutor.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 2
+			path: src/Runtime/PhpExit.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Runtime\\ProcessManager\:\:listen\(\) has parameter \$addresses with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Runtime/ProcessManager.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Runtime\\ProcessManager\:\:render\(\) has parameter \$lastPart with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Runtime/ProcessManager.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Runtime\\ProcessManager\:\:render\(\) has parameter \$prefix with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Runtime/ProcessManager.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: src/Runtime/ProcessManager.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Runtime/ProcessManager.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Runtime/ProcessManager.php
+
+		-
+			message: '#^Parameter \#1 \$fs of static method Forelse\\DockerSim\\Http\\ApacheServer\:\:enabled\(\) expects Forelse\\DockerSim\\Fs\\DiskFs, Forelse\\DockerSim\\Fs\\FileSystem given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Runtime/ProcessManager.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: src/Runtime/ProcessManager.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between null and null will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: src/Runtime/ProcessManager.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\ComposerCommand\:\:checkPlatform\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/ComposerCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\ComposerCommand\:\:dumpAutoload\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/ComposerCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\ComposerCommand\:\:install\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/ComposerCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\ComposerCommand\:\:platformProblems\(\) has parameter \$json with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/ComposerCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\ComposerCommand\:\:platformProblems\(\) has parameter \$lock with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/ComposerCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\ComposerCommand\:\:runScripts\(\) has parameter \$json with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/ComposerCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\ComposerCommand\:\:thirdPartyRequirements\(\) has parameter \$json with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/ComposerCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\ComposerCommand\:\:writeAutoloader\(\) has parameter \$json with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/ComposerCommand.php
+
+		-
+			message: '#^Offset 1 on array\{non\-empty\-string, ''''\|''\!\=''\|''\<''\|''\<\=''\|''\=''\|''\=\=''\|''\>''\|''\>\=''\|''\^''\|''~'', non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Shell/Command/ComposerCommand.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:archive\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:awk\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:cat\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:checksum\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:chmod\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:chown\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:copy\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:cut\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:diff\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:dispatch\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:du\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:env\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:find\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:grep\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:headTail\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:id\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:kill\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:ln\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:ls\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:mkdir\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:rm\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:sed\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:shell\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:stat\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:switchUser\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:tee\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:touch\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:wc\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:which\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:wrapper\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\CoreCommands\:\:xargs\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/Shell/Command/CoreCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:clientOptions\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:curl\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:git\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:lookup\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:mysql\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:mysqlAdmin\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:nc\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:pgIsReady\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:ping\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:psql\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:reachDatabase\(\) has parameter \$processes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:redisCli\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\NetworkCommands\:\:wget\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>env" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Shell/Command/NetworkCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PackageCommands\:\:apk\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PackageCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PackageCommands\:\:apt\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PackageCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PackageCommands\:\:aptInstall\(\) has parameter \$names with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PackageCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PhpCommands\:\:extConfigure\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PhpCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PhpCommands\:\:extEnable\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PhpCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PhpCommands\:\:extInstall\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PhpCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PhpCommands\:\:installPhpExtensions\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PhpCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PhpCommands\:\:pecl\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PhpCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PhpCommands\:\:php\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PhpCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\PhpCommands\:\:phpFpm\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/PhpCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\SystemCommands\:\:addUser\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/SystemCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\SystemCommands\:\:apacheCtl\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/SystemCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\SystemCommands\:\:apacheToggle\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/SystemCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\SystemCommands\:\:deleteUser\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/SystemCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\SystemCommands\:\:install\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/SystemCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\SystemCommands\:\:nginx\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/SystemCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\SystemCommands\:\:npm\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/SystemCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Command\\SystemCommands\:\:usermod\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Command/SystemCommands.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execAndOr\(\) has parameter \$andor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execCase\(\) has parameter \$command with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execCommand\(\) has parameter \$command with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execFor\(\) has parameter \$command with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execGroup\(\) has parameter \$command with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execIf\(\) has parameter \$command with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execList\(\) has parameter \$list with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execPipeline\(\) has parameter \$pipeline with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execSimple\(\) has parameter \$command with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:execWhile\(\) has parameter \$command with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:expandText\(\) has parameter \$word with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:expandWord\(\) has parameter \$word with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:prepareRedirects\(\) has parameter \$redirects with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:runArgv\(\) has parameter \$argv with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Interpreter\:\:runScript\(\) has parameter \$positional with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Interpreter.php
+
+		-
+			message: '#^Property Forelse\\DockerSim\\Shell\\Machine\:\:\$execTarget type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Machine.php
+
+		-
+			message: '#^Property Forelse\\DockerSim\\Shell\\Machine\:\:\$notes type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Machine.php
+
+		-
+			message: '#^Property Forelse\\DockerSim\\Shell\\Machine\:\:\$positional type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Machine.php
+
+		-
+			message: '#^Property Forelse\\DockerSim\\Shell\\Machine\:\:\$signals type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Machine.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Parser\:\:withRedirects\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Parser.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Shell\\Parser\:\:wordText\(\) has parameter \$word with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Shell/Parser.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: src/Shell/Parser.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between '''' and '''' will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: src/Shell/Parser.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between array\{\} and array\{\} will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: src/Shell/Parser.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\State\\Container\:\:__construct\(\) has parameter \$facts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/Container.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\State\\Container\:\:__construct\(\) has parameter \$ips with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/Container.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\State\\Container\:\:__construct\(\) has parameter \$listenAddresses with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/Container.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\State\\Container\:\:__construct\(\) has parameter \$processOptions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/Container.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\State\\ImageConfig\:\:__construct\(\) has parameter \$shell with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/ImageConfig.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\State\\Layer\:\:__construct\(\) has parameter \$dirs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/Layer.php
+
+		-
+			message: '#^Method Forelse\\DockerSim\\Testing\\DockerTestCase\:\:http\(\) has parameter \$headers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Testing/DockerTestCase.php
