@@ -141,11 +141,13 @@ export class WorkerRuntime implements Runtime {
 		this.restarting = (async () => {
 			try {
 				await this.send('boot', [this.env!]);
+				const written: Record<string, string> = {};
 				for (const [path, content] of this.files) {
-					if (content !== null) await this.send('writeFile', [path, content]);
+					if (content !== null) written[path] = content;
 					// Un fichier créé puis supprimé n'existe pas dans le projet neuf : rien à retirer.
 					else await this.send('deleteFile', [path]).catch(() => {});
 				}
+				await this.send('writeFiles', [written]);
 			} catch (error) {
 				const message = error instanceof Error ? error.message.split('\n')[0] : String(error);
 				this.emit({ phase: 'failed', error: message });
@@ -181,6 +183,11 @@ export class WorkerRuntime implements Runtime {
 	writeFile(path: string, content: string) {
 		this.remember(path, content);
 		return this.call('writeFile', path, content);
+	}
+
+	writeFiles(files: Record<string, string>) {
+		for (const [path, content] of Object.entries(files)) this.remember(path, content);
+		return this.call('writeFiles', files);
 	}
 
 	readFile(path: string) {

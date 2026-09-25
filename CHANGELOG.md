@@ -84,6 +84,18 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Un exercice s'ouvre plus vite.** L'éditeur (Monaco, 3,8 Mo) n'est plus importé avant tout le reste : il
+  se télécharge pendant que PHP démarre, comme le relais de l'aperçu, qui attendait la fin du démarrage. Le
+  projet de départ part au worker en un seul message (`writeFiles`, ajouté au contrat des runtimes) au lieu
+  d'un par fichier. Mesuré sur un exercice Symfony, réseau bridé à 50 Mbit/s : 7,3 s → 6,6 s jusqu'à la
+  première page de l'aperçu.
+- **L'aperçu ne reste plus bloqué sans rien dire quand son Service Worker ne s'active pas.** Au bout de 10 s,
+  il dit pourquoi (et tout de suite si le navigateur bloque les Service Workers, ou n'en a pas en navigation
+  privée) ; il restait figé sur « Démarrage de PHP ». Une page d'aperçu injoignable est signalée au bout de
+  20 s, et une erreur du relais survenue après le démarrage apparaît dans la console.
+- **Une URL mal encodée (`/menu%`) donne une 400 dans l'aperçu PHP**, comme sur un vrai serveur, au lieu d'une
+  500 qui affichait la pile d'appels du worker. Plus aucune erreur interne n'expose sa pile dans l'aperçu :
+  elle reste dans la console de la plateforme.
 - **L'aperçu PHP s'affiche sans attendre l'instance de tests.** Chaque écriture attendait que la seconde
   instance PHP, celle des tests, soit entièrement créée ; et cette création copiait tout le projet d'un seul
   bloc, pendant lequel le worker ne répondait à rien. Les écritures vont désormais dans l'aperçu tout de

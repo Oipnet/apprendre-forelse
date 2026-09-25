@@ -32,6 +32,9 @@ function runtime(body: () => Uint8Array = () => new Uint8Array([1, 2, 3])): Work
 		async writeFile(path, content) {
 			fichiers.set(path, content);
 		},
+		async writeFiles(files) {
+			for (const [path, content] of Object.entries(files)) fichiers.set(path, content);
+		},
 		async readFile(path) {
 			return fichiers.get(path) ?? null;
 		},

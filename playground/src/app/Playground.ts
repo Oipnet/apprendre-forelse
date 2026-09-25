@@ -1,13 +1,11 @@
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
-import { registerCompletion, type CompletionIndex } from '../editor/completion';
-import { EditorPanel, monaco } from '../editor/monaco';
+import type { CompletionIndex } from '../editor/completion';
 import { PreviewBridge } from '../preview/bridge';
 import type { CommandResult, TestRunResult } from '@forelse/runtime-contract';
 import '../runtime/builtin';
 import { createRuntime, runtimeLabel } from '../runtime/registry';
 import { ConsolePanel } from './console';
-import { BeforeAfterDialog } from './diff';
 import { FeedbackDialog } from './feedback';
 import { cheminsExplicites, contenuDeDepart, estModifiable } from './editable';
 import { FileTree } from './filetree';
@@ -25,6 +23,10 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const metrics: Record<string, number> = {};
 	const t0 = performance.now();
 	const mark = (name: string) => (metrics[name] = Math.round(performance.now() - t0));
+	// Monaco pèse plusieurs Mo : importé statiquement, il se téléchargeait avant même que le worker ne démarre.
+	// Il arrive maintenant pendant que PHP démarre, et n'est attendu qu'au moment de créer l'éditeur.
+	const editeur = Promise.all([import('../editor/monaco'), import('../editor/completion'), import('./diff')]);
+	editeur.catch(() => {}); // attendu plus bas : son échec éventuel s'y affiche
 
 	const response = await fetch(config.exerciseUrl, { headers: { accept: 'application/json' }, credentials: 'same-origin' });
 	if (!response.ok) {
@@ -85,6 +87,10 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			$('#explain-preview').hidden = !mentor || !lastPreviewError;
 		},
 	});
+	// Le relais de l'aperçu (page du bac à sable, Service Worker) se prépare pendant que PHP démarre : il n'a
+	// besoin du runtime qu'à la première requête. Il attendait la fin du boot et l'écriture des fichiers.
+	const relais = bridge.start();
+	relais.catch(() => {}); // attendu plus bas : son échec éventuel s'y affiche
 	try {
 		await runtime.boot(
 			{
@@ -113,10 +119,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// Les motifs (migrations/*.php) couvrent les fichiers générés lors d'une session précédente.
 	for (const [path, content] of Object.entries(saved?.files ?? {})) if (estModifiable(path, exercise.editable)) initial[path] = content;
 	const editables = [...new Set([...cheminsExplicites(exercise.editable), ...Object.keys(initial).filter((path) => estModifiable(path, exercise.editable))])];
-	for (const [path, content] of Object.entries({ ...initial, ...exercise.tests })) await runtime.writeFile(path, content);
+	// Un seul message pour tout le projet de départ, au lieu d'un aller-retour par fichier.
+	await runtime.writeFiles({ ...initial, ...exercise.tests });
 	mark('filesWritten');
 
-	await bridge.start();
+	await relais;
+	mark('relayReady');
 	const reload = () => bridge.navigate(urlInput.value || '/');
 	urlInput.addEventListener('keydown', (e) => e.key === 'Enter' && reload());
 	$('#reload').addEventListener('click', reload);
@@ -191,6 +199,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		for (const [path, content] of changes) await runtime.writeFile(path, content);
 		return changes.length > 0;
 	}
+	const [{ EditorPanel, monaco }, { registerCompletion }, { BeforeAfterDialog }] = await editeur;
+	mark('editorLoaded');
 	const editor = new EditorPanel($('#tabs'), $('#editor'), (path, content) => {
 		current[path] = content;
 		pending.set(path, content);

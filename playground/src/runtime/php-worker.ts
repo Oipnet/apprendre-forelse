@@ -381,6 +381,10 @@ const api: Runtime = {
 		}
 	},
 
+	async writeFiles(files) {
+		for (const [path, content] of Object.entries(files)) await api.writeFile(path, content);
+	},
+
 	async readFile(path) {
 		const absolute = `${APP_DIR}/${path}`;
 		return preview.isFile(absolute) ? preview.readFileAsText(absolute) : null;
@@ -416,7 +420,13 @@ const api: Runtime = {
 		const start = performance.now();
 		const url = new URL(req.url, 'http://preview.local');
 		if ('docker' === env.framework.id) return dockerRequest(req, url, start);
-		const relativePath = decodeURIComponent(url.pathname.slice(env.previewBasePath.length)) || '/';
+		let relativePath: string;
+		try {
+			relativePath = decodeURIComponent(url.pathname.slice(env.previewBasePath.length)) || '/';
+		} catch {
+			// « /menu% » : un vrai serveur web refuse la requête avant PHP, avec une 400.
+			return { status: 400, headers: { 'content-type': ['text/plain; charset=utf-8'] }, body: encoder.encode('400 Bad Request : URL mal encodée.'), durationMs: performance.now() - start };
+		}
 
 		// Fichier statique de public/ (CSS, images…) : servi sans passer par PHP.
 		const staticPath = `${APP_DIR}/public${relativePath}`;
