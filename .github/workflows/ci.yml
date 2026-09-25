@@ -8,6 +8,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Droits minimaux par défaut : lire le dépôt. Un job qui a besoin de plus (publier une image, lire les
+# exécutions d'un autre workflow) le déclare lui-même, et ne reçoit que cela.
+permissions:
+  contents: read
+
 # Un seul passage à la fois par branche : les suivants annulent le précédent.
 concurrency:
   group: ci-${{ github.ref }}
@@ -16,7 +21,6 @@ concurrency:
 env:
   # Xdebug ferait planter le serveur interne de PHP et ralentirait PHPUnit.
   PHP_VERSION: '8.4'
-  NODE_VERSION: '22'
 
 jobs:
   # Une étiquette de version vise un commit que la poussée de main vient de tester et de construire
@@ -103,15 +107,28 @@ jobs:
           extensions: ctype, iconv, intl, pdo_pgsql, zip
           coverage: none # pas de Xdebug ni de PCOV : plus rapide, et Xdebug fait planter le serveur
 
-      - name: Node ${{ env.NODE_VERSION }}
+      # La version de Node est déclarée dans .nvmrc, et nulle part ailleurs (l'image la reprend : voir plus bas).
+      - name: Node (.nvmrc)
         uses: actions/setup-node@v7
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: |
             playground/package-lock.json
             packages/simulateur-nuxt/package-lock.json
             packages/simulateur-nuxt/conformite/reference/package-lock.json
+
+      # Le Dockerfile ne peut pas lire .nvmrc : on vérifie qu'il construit le playground avec le même Node
+      # que celui qui vient de le tester. Sinon, l'image livrerait un build que la CI n'a jamais vu.
+      - name: Même Node que l'image
+        run: |
+          attendu=$(tr -d '[:space:]' < .nvmrc)
+          image=$(sed -nE 's/^FROM node:([0-9]+)[-a-z0-9.]* AS playground$/\1/p' Dockerfile)
+          if [ "$image" != "$attendu" ]; then
+            echo "::error file=Dockerfile::Le playground est construit avec node:${image:-?} dans l'image, et testé avec Node $attendu (.nvmrc) : alignez les deux."
+            exit 1
+          fi
+          echo "Node $attendu en CI comme dans l'image."
 
       - name: Dépendances de la plateforme
         uses: ramsey/composer-install@v3
