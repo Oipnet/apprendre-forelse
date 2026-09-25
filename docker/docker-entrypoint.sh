@@ -31,7 +31,12 @@ fi
 if [ "$1" = 'frankenphp' ]; then
 	# Cache compilé avec les variables d'environnement réelles du conteneur.
 	php bin/console cache:clear --no-interaction
-	php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
+	# Migrations de la base : au démarrage, par défaut, pour qu'une instance auto-hébergée n'ait rien à lancer à la
+	# main. Une plateforme qui les joue dans une étape à part de son déploiement, avant de basculer, met
+	# MIGRATIONS_AT_STARTUP=0 (voir deploy/deployer.sh) : une migration en échec n'arrête plus la version en service.
+	if [ "${MIGRATIONS_AT_STARTUP:-1}" = "1" ]; then
+		php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
+	fi
 
 	# Environnements déclarés par les packs (clé « environments » de pack.yaml) : installés au démarrage
 	# si l'instance l'a demandé. En tâche de fond, volontairement : cloner puis lancer composer dure des

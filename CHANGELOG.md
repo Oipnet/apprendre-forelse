@@ -92,6 +92,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Chaque conteneur fait tourner ses journaux** (cinq fichiers de 10 Mo au plus), dans `deploy/` comme dans
   `auto-hebergement/` : seul `app` le faisait, et les journaux Docker des autres services grossissaient sans
   limite. Pour une instance auto-hébergée, `docker compose up -d` suffit à l'appliquer.
+- **Les migrations peuvent se jouer avant de redémarrer la plateforme** (`MIGRATIONS_AT_STARTUP=0`) : une
+  migration en échec laisse alors l'ancienne version en service, au lieu de la remplacer par un conteneur qui ne
+  démarre pas. La production le fait désormais (`deploy/deployer.sh` les joue avec la nouvelle image, dans un
+  conteneur à part, puis bascule). Rien ne change pour une instance auto-hébergée : par défaut, elles sont
+  toujours jouées au démarrage ; la commande pour les jouer à part est dans le README d'auto-hébergement.
 - **Umami est épinglé en 3.4.0** au lieu de `postgresql-latest`, et un déploiement du moteur ne tire plus que
   son image : une nouvelle version d'Umami (qui migre sa base) ou de PostgreSQL n'arrive plus avec un commit du
   moteur. Monter de version devient un choix : changer le numéro dans `compose.yaml`, sauvegarder, puis
