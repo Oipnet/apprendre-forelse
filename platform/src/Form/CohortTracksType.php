@@ -8,7 +8,11 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-/** Parcours proposés par une cohorte : une case par parcours installé. */
+/**
+ * Parcours proposés par une cohorte : une case par parcours installé.
+ *
+ * @extends AbstractType<array{trackIds: list<string>}>
+ */
 final class CohortTracksType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

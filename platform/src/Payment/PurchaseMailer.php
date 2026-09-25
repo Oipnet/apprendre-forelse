@@ -30,7 +30,7 @@ final readonly class PurchaseMailer
         $email = (new TemplatedEmail())
             ->from(Address::create($this->mailerFrom))
             ->to($purchase->getCustomerEmail())
-            ->subject(sprintf('Votre accès au parcours « %s »', $track?->title ?? $purchase->getTrackId()))
+            ->subject(sprintf('Votre accès au parcours « %s »', $track->title ?? $purchase->getTrackId()))
             ->htmlTemplate('emails/purchase_confirmation.html.twig')
             ->textTemplate('emails/purchase_confirmation.txt.twig')
             ->context(['purchase' => $purchase, 'track' => $track]);

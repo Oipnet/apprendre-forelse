@@ -8,7 +8,11 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/** Changer de mot de passe depuis son compte : l'actuel d'abord, puis le nouveau (mêmes règles qu'à l'inscription). */
+/**
+ * Changer de mot de passe depuis son compte : l'actuel d'abord, puis le nouveau (mêmes règles qu'à l'inscription).
+ *
+ * @extends AbstractType<array{currentPassword: string|null, plainPassword: string|null}>
+ */
 final class PasswordFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

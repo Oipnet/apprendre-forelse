@@ -1,10 +1,8 @@
-# Analyse statique du moteur. Les erreurs connues sont gelées dans phpstan-baseline.neon : la CI échoue sur
-# toute erreur nouvelle. Corriger une erreur de la baseline, puis la régénérer :
-#   vendor/bin/phpstan analyse --generate-baseline
+# Analyse statique du moteur, niveau 6, sans erreur connue ni baseline : la CI échoue sur toute erreur.
+# Une erreur se corrige (code, ou PHPDoc inexact) ; elle ne se gèle pas.
 includes:
     - vendor/phpstan/phpstan-symfony/extension.neon
     - vendor/phpstan/phpstan-doctrine/extension.neon
-    - phpstan-baseline.neon
 
 parameters:
     level: 6

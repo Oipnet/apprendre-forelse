@@ -105,7 +105,7 @@ final class HomeController extends AbstractController
     {
         $concepts = [];
         foreach ($chapter->exerciseIds as $exerciseId) {
-            foreach ($content->findExercise($track->id, $exerciseId)?->concepts ?? [] as $concept) {
+            foreach ($content->findExercise($track->id, $exerciseId)->concepts ?? [] as $concept) {
                 $concepts[$concept] = true;
             }
         }

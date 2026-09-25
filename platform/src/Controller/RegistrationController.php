@@ -114,6 +114,7 @@ final class RegistrationController extends AbstractController
         return $this->render('security/register.html.twig', ['form' => $form, 'inviteOnly' => $this->inviteOnly]);
     }
 
+    /** @param FormInterface<User> $form */
     private static function emailTaken(FormInterface $form): bool
     {
         foreach ($form->getErrors(true) as $error) {

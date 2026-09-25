@@ -36,7 +36,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Validator\Constraints\Length;
 
-/** Cohortes : créées ici, rejointes à l'inscription avec leur code (ou le lien d'invitation). */
+/**
+ * Cohortes : créées ici, rejointes à l'inscription avec leur code (ou le lien d'invitation).
+ *
+ * @extends AbstractCrudController<Cohort>
+ */
 #[AdminRoute(path: '/cohortes', name: 'cohorts')]
 final class CohortCrudController extends AbstractCrudController
 {
@@ -172,7 +176,11 @@ final class CohortCrudController extends AbstractCrudController
         });
     }
 
-    /** Copie l'estimation dans le devis : point de départ, à corriger avant de l'envoyer. */
+    /**
+     * Copie l'estimation dans le devis : point de départ, à corriger avant de l'envoyer.
+     *
+     * @param AdminContext<Cohort> $context
+     */
     #[AdminRoute('/{entityId}/appliquer-estimation', name: 'apply_quote', options: ['methods' => ['POST']])]
     public function applyQuote(AdminContext $context, EntityManagerInterface $entityManager): Response
     {

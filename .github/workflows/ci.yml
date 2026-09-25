@@ -202,7 +202,8 @@ jobs:
           php bin/console doctrine:schema:validate --skip-sync
         working-directory: platform
 
-      # Niveau 6, erreurs connues gelées dans phpstan-baseline.neon : seule une erreur nouvelle fait échouer.
+      # Niveau 6. Plateforme : aucune erreur tolérée, pas de baseline. Simulateur Docker : erreurs connues gelées dans
+      # sa phpstan-baseline.neon, seule une erreur nouvelle fait échouer.
       # Après « Lint Symfony », qui compile le conteneur que lit l'extension Symfony de PHPStan.
       - name: Analyse statique (PHPStan)
         run: |

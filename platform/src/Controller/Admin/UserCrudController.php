@@ -24,7 +24,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 
-/** Comptes : la création passe par l'inscription du site, l'admin corrige (cohorte, rôles) ou supprime (RGPD). */
+/**
+ * Comptes : la création passe par l'inscription du site, l'admin corrige (cohorte, rôles) ou supprime (RGPD).
+ *
+ * @extends AbstractCrudController<User>
+ */
 #[AdminRoute(path: '/apprenants', name: 'users')]
 final class UserCrudController extends AbstractCrudController
 {
@@ -128,7 +132,8 @@ final class UserCrudController extends AbstractCrudController
                 ->generateUrl());
 
         // Se supprimer soi-même casserait la session en cours : on retire l'action pour son propre compte.
-        $notSelf = fn (Action $action) => $action->displayIf(fn (User $user) => $user->getId() !== $this->getUser()?->getId());
+        $current = $this->getUser();
+        $notSelf = fn (Action $action) => $action->displayIf(static fn (User $user) => !$current instanceof User || $user->getId() !== $current->getId());
 
         return $actions
             ->disable(Action::NEW)

@@ -9,7 +9,11 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/** Confirmation avant Stripe : acceptation des CGV et renonciation au droit de rétractation, toutes deux obligatoires. */
+/**
+ * Confirmation avant Stripe : acceptation des CGV et renonciation au droit de rétractation, toutes deux obligatoires.
+ *
+ * @extends AbstractType<array{termsOfSale: bool, withdrawalWaiver: bool}>
+ */
 final class PurchaseConfirmationType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

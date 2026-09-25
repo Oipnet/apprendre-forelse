@@ -27,6 +27,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Accès aux parcours, toutes sources confondues. On n'en crée ici que des accès offerts (« Offrir un parcours ») ;
  * les autres viennent des achats et des cohortes. Un accès ne se supprime pas : il se révoque.
+ *
+ * @extends AbstractCrudController<TrackAccess>
  */
 #[AdminRoute(path: '/acces', name: 'accesses')]
 final class TrackAccessCrudController extends AbstractCrudController
@@ -109,6 +111,7 @@ final class TrackAccessCrudController extends AbstractCrudController
             ->update(Crud::PAGE_INDEX, Action::EDIT, static fn (Action $action) => $action->setLabel('Modifier la fin'));
     }
 
+    /** @param AdminContext<TrackAccess> $context */
     #[AdminRoute('/{entityId}/revoquer', name: 'revoke', options: ['methods' => ['POST']])]
     public function revoke(AdminContext $context, EntityManagerInterface $entityManager): Response
     {

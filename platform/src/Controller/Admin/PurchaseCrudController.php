@@ -27,7 +27,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use Symfony\Component\HttpFoundation\Response;
 
-/** Achats individuels : lecture seule, sauf le remboursement. Un achat ne se crée ni ne se supprime ici. */
+/**
+ * Achats individuels : lecture seule, sauf le remboursement. Un achat ne se crée ni ne se supprime ici.
+ *
+ * @extends AbstractCrudController<Purchase>
+ */
 #[AdminRoute(path: '/achats', name: 'purchases')]
 final class PurchaseCrudController extends AbstractCrudController
 {
@@ -103,7 +107,11 @@ final class PurchaseCrudController extends AbstractCrudController
             ->add(Crud::PAGE_DETAIL, $refund);
     }
 
-    /** Rembourse chez Stripe, passe l'achat en « remboursé » et révoque l'accès (la progression reste). */
+    /**
+     * Rembourse chez Stripe, passe l'achat en « remboursé » et révoque l'accès (la progression reste).
+     *
+     * @param AdminContext<Purchase> $context
+     */
     #[AdminRoute('/{entityId}/rembourser', name: 'refund', options: ['methods' => ['POST']])]
     public function refund(AdminContext $context): Response
     {

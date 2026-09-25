@@ -45,7 +45,7 @@ final readonly class EnvironmentBuildQueue
         $this->filesystem->mkdir($this->directory());
         // Nom trié par date : les demandes se traitent dans l'ordre où elles arrivent.
         $file = sprintf('%s/%s-%s.json', $this->directory(), (new \DateTimeImmutable())->format('YmdHisu'), bin2hex(random_bytes(4)));
-        $this->filesystem->dumpFile($file, json_encode(['command' => $command, 'arguments' => array_values($arguments)], \JSON_THROW_ON_ERROR));
+        $this->filesystem->dumpFile($file, json_encode(['command' => $command, 'arguments' => $arguments], \JSON_THROW_ON_ERROR));
     }
 
     /**

@@ -238,7 +238,10 @@ final readonly class EnvironmentInstaller
         );
     }
 
-    /** @param array<string, string> $env */
+    /**
+     * @param list<string>          $command
+     * @param array<string, string> $env
+     */
     private function run(array $command, ?string $cwd, int $timeout, string $etape, array $env = []): string
     {
         $process = new Process($command, $cwd, $env ?: null, timeout: $timeout);
