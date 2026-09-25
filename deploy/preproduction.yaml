@@ -10,6 +10,8 @@ services:
       SEARCH_INDEXING: "0"
       ANALYTICS_SCRIPT_URL: ""
       ANALYTICS_WEBSITE_ID: ""
+      # Ses erreurs dans le même projet Sentry que la production, rangées à part.
+      SENTRY_ENVIRONMENT: preproduction
 
   # Pas d'Umami : un profil qu'on n'active jamais le laisse éteint.
   umami:

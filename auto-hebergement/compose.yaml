@@ -65,6 +65,9 @@ services:
       ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
       ANALYTICS_WEBSITE_ID: ${ANALYTICS_WEBSITE_ID:-}
       ANALYTICS_SERVER_NAME: ${ANALYTICS_SERVER_NAME:-http://127.0.0.1:9998}
+      # Suivi des erreurs (facultatif, voir .env.example). Vide : rien ne part.
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       MAILER_DSN: ${MAILER_DSN:-null://null}
       MAILER_FROM: ${MAILER_FROM:-ne-pas-repondre@example.com}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}

@@ -16,6 +16,7 @@
         "easycorp/easyadmin-bundle": "^5.5",
         "league/commonmark": "^2.10",
         "pentatrion/vite-bundle": "^8.2",
+        "sentry/sentry-symfony": "^5.13",
         "stripe/stripe-php": "^21.3",
         "symfony/asset": "8.1.*",
         "symfony/brevo-mailer": "8.1.*",

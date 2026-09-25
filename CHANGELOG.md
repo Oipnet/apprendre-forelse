@@ -8,6 +8,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Suivi des erreurs** (Sentry, ou GlitchTip qui parle le même protocole) : les exceptions non rattrapées
+  des pages, des commandes et du worker arrivent avec leur pile, la version du moteur et le nom de
+  l'instance (`SENTRY_ENVIRONMENT`). Seules les erreurs du serveur partent, pas les 404 ni les accès
+  refusés ; rien qui désigne un utilisateur non plus (ni adresse IP, ni compte, ni contenu des
+  formulaires). Désactivé tant que `SENTRY_DSN` est vide, le cas par défaut d'une instance
+  auto-hébergée. `app:sentry:essai` lève une erreur volontaire pour vérifier le branchement.
+
 ## 2.1.0 — 2026-09-25
 
 ### Ajouté
