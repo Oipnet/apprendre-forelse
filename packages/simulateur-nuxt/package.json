@@ -24,7 +24,7 @@
 		"@unhead/vue": "3.4.1",
 		"@vitest/expect": "5.0.1",
 		"@vitest/spy": "5.0.1",
-		"@vue/test-utils": "2.5.1",
+		"@vue/test-utils": "2.4.6",
 		"acorn": "8.18.0",
 		"buffer": "6.0.3",
 		"chai": "^6.2.2",
@@ -35,7 +35,7 @@
 		"fflate": "^0.8.3",
 		"fnv1a-64": "0.1.2",
 		"happy-dom": "20.14.5",
-		"hookable": "6.1.2",
+		"hookable": "6.1.1",
 		"klona": "2.0.6",
 		"object-identity": "0.2.3",
 		"ofetch": "1.5.1",
@@ -45,7 +45,7 @@
 		"unhead": "3.4.1",
 		"unrouting": "^0.2.3",
 		"unstorage": "1.17.5",
-		"vue": "3.5.43",
+		"vue": "3.5.42",
 		"vue-router": "5.3.1"
 	},
 	"devDependencies": {

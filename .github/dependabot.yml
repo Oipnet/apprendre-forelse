@@ -41,6 +41,35 @@ updates:
     groups:
       mineures:
         update-types: [minor, patch]
+    # Le simulateur imite le vrai Nuxt : ces paquets sont les siens, à la version exacte qu'installe la
+    # référence de conformite/reference (aujourd'hui Nuxt 4.5.2). Les monter seul ferait diverger le
+    # simulateur de ce qu'il imite, et les tests de conformité comparent justement les deux. Ils bougent
+    # quand la référence bouge, à la main. Restent confiés à Dependabot : l'outillage du paquet
+    # (TypeScript, Vitest, rolldown, @types/node) et ce qui n'appartient qu'au simulateur (fflate, sucrase).
+    ignore:
+      - dependency-name: "@unhead/vue"
+      - dependency-name: "@vitest/spy"
+      - dependency-name: "@vue/test-utils"
+      - dependency-name: acorn
+      - dependency-name: buffer
+      - dependency-name: chai
+      - dependency-name: cookie-es
+      - dependency-name: cookie-es-nuxt
+      - dependency-name: devalue
+      - dependency-name: es-module-lexer
+      - dependency-name: fnv1a-64
+      - dependency-name: happy-dom
+      - dependency-name: hookable
+      - dependency-name: klona
+      - dependency-name: object-identity
+      - dependency-name: ofetch
+      - dependency-name: ohash
+      - dependency-name: ufo
+      - dependency-name: unhead
+      - dependency-name: unrouting
+      - dependency-name: unstorage
+      - dependency-name: vue
+      - dependency-name: vue-router
 
   - package-ecosystem: github-actions
     directory: /
