@@ -618,11 +618,12 @@ final class CoreCommands implements Command
         }
         $uid = ctype_digit($user) ? (int) $user : ($m->facts->users[$user] ?? 0);
         $name = ctype_digit($user) ? (array_search((int) $user, $m->facts->users, true) ?: null) : $user;
-        if (\in_array('-u', $args, true)) {
-            return Result::ok($uid."\n");
-        }
+        // -n d'abord : « id -u -n » donne le nom, comme « id -un ».
         if (\in_array('-un', $args, true) || (\in_array('-u', $args, true) && \in_array('-n', $args, true))) {
             return Result::ok(($name ?? $uid)."\n");
+        }
+        if (\in_array('-u', $args, true)) {
+            return Result::ok($uid."\n");
         }
 
         return Result::ok(sprintf("uid=%d(%s) gid=%d(%s) groups=%d(%s)\n", $uid, $name ?? $uid, $uid, $name ?? $uid, $uid, $name ?? $uid));

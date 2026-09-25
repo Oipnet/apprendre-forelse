@@ -214,7 +214,7 @@ final class Branding
     {
         $home = $this->config()['home'] ?? ($this->isDefault() ? self::defaultHome() : []);
         if (!\is_array($home)) {
-            throw $this->error('« home » doit être une liste de sections ('.implode(', ', self::HOME_KEYS).').');
+            throw $this->error('« home » doit être une liste de sections ('.implode(', ', array_keys(self::HOME_SHAPE)).').');
         }
         foreach (array_keys($home) as $key) {
             if (!isset(self::HOME_SHAPE[$key])) {
