@@ -3,6 +3,11 @@
 # de .github/workflows/ci.yml). Variables : /srv/forelse/.env.
 #
 # Pour votre propre instance, partez plutôt de auto-hebergement/ (guide, compose.yaml et .env.example).
+#
+# Le même fichier sert la production (/srv/forelse) et la préproduction (/srv/forelse-staging) : chaque dossier a
+# son .env, donc son nom de projet, sa base et ses volumes. Leur .env choisit les surcharges (COMPOSE_FILE) :
+# derriere-front.yaml (le proxy commun de deploy/front/ tient 80/443) et, pour la préproduction, preproduction.yaml.
+# Sans COMPOSE_FILE, ce fichier seul : l'application tient elle-même 80/443, comme avant. Voir deploy/README.md.
 # Rotation des journaux, pour chaque service (logging: *logging) : cinq fichiers de 10 Mo au plus par conteneur.
 # Sans elle, le pilote json-file de Docker grossit sans limite et finit par remplir le disque.
 x-logging: &logging
@@ -13,7 +18,7 @@ x-logging: &logging
 
 services:
   app:
-    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
+    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:${IMAGE_TAG:-edge}}
     # Les journaux d'accès (docker/Caddyfile) s'ajoutent aux journaux applicatifs, dans la même rotation : bien en
     # deçà des douze mois annoncés dans /confidentialite.
     logging: *logging
@@ -118,7 +123,7 @@ services:
   # (nouvelles tentatives pendant deux heures, puis `bin/console messenger:failed:retry` dans ce conteneur).
   # Même image, mêmes réglages que « app » ; il redémarre de lui-même toutes les heures pour rester léger.
   worker:
-    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
+    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:${IMAGE_TAG:-edge}}
     logging: *logging
     restart: unless-stopped
     # Pas de dépendance à « app » : Compose devrait sinon l'arrêter avant de recréer « app », et le site resterait
@@ -144,7 +149,7 @@ services:
   # (Stripe, Anthropic, APP_SECRET), ni la base, ni le réseau des autres services — seulement Internet, pour
   # cloner et télécharger les dépendances, et le volume des environnements, qu'il partage avec « app ».
   empaqueteur:
-    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
+    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:${IMAGE_TAG:-edge}}
     logging: *logging
     restart: unless-stopped
     # Aucune dépendance : ni base ni réseau commun avec « app », et en dépendre retardait sa recréation (voir « worker »).

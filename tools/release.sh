@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Prépare une version du moteur : VERSION, package.json, CHANGELOG, commit et étiquette git.
 # Rien n'est poussé : relisez `git show`, puis `git push --follow-tags`.
-# L'étiquette poussée déclenche les images ghcr.io/…:X.Y.Z, :X.Y et :latest (voir .github/workflows/ci.yml).
+# L'étiquette poussée publie les images ghcr.io/…:X.Y.Z, :X.Y et :latest, puis déploie la production après
+# validation dans GitHub (environnement « production ») : voir .github/workflows/ci.yml et deploy/README.md.
 # Usage : tools/release.sh 0.2.0
 set -euo pipefail
 
@@ -30,3 +31,4 @@ git tag -a "v$VERSION" -m "Version $VERSION"
 echo
 echo "Version $VERSION préparée. Relisez :  git show v$VERSION"
 echo "Puis publiez :                        git push --follow-tags"
+echo "La mise en production attendra votre validation dans l'onglet Actions de GitHub."

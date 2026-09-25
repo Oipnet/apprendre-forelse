@@ -1,0 +1,51 @@
+# Le proxy commun du serveur : seul à tenir 80/443 (et 443/udp pour HTTP/3), il obtient et renouvelle tous les
+# certificats, et envoie chaque nom d'hôte à la bonne instance (production, préproduction) sur le réseau « front ».
+# Dossier sur le serveur : /srv/front, avec son .env (voir .env.example et deploy/README.md).
+#
+# Il ne se redéploie pas avec le moteur : une modification du Caddyfile se recharge à chaud, sans coupure :
+#   docker compose exec front caddy reload --config /etc/caddy/Caddyfile
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  front:
+    # Version épinglée : le proxy ne change pas sans qu'on le décide.
+    image: caddy:2.10-alpine
+    logging: *logging
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL manquant dans .env}
+      PRODUCTION_HOSTS: ${PRODUCTION_HOSTS:?PRODUCTION_HOSTS manquant dans .env}
+      # Préproduction pas encore installée : des noms locaux qui ne demandent aucun certificat, et un mot de passe
+      # que personne ne connaît (empreinte d'une valeur aléatoire jetée). Le proxy démarre quand même.
+      PREPRODUCTION_APP_HOST: ${PREPRODUCTION_APP_HOST:-http://preprod.localhost}
+      PREPRODUCTION_SANDBOX_HOST: ${PREPRODUCTION_SANDBOX_HOST:-http://preprod-bac-a-sable.localhost}
+      PREPRODUCTION_USER: ${PREPRODUCTION_USER:-forelse}
+      PREPRODUCTION_PASSWORD_HASH: ${PREPRODUCTION_PASSWORD_HASH:-$$2a$$14$$.l5tnLohxO44kLLG1tZZbOp3R27je7N9wl3U.B5rgifcOw7GMqx3O}
+      FRONT_OPTIONS: ${FRONT_OPTIONS:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificats et état de Caddy. Au passage derrière le proxy, on y copie ceux de l'application (voir le README) :
+      # pas de nouvelle demande à Let's Encrypt, pas de coupure le temps de les obtenir.
+      - data:/data
+      - config:/config
+    networks:
+      - front
+    mem_limit: 256m
+    pids_limit: 128
+
+volumes:
+  data:
+  config:
+
+networks:
+  # Créé ici, rejoint par chaque instance (deploy/derriere-front.yaml).
+  front:
+    name: front
