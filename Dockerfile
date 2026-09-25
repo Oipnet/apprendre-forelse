@@ -33,7 +33,10 @@ FROM dunglas/frankenphp:1-php8.4 AS php_base
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 WORKDIR /app
 
-RUN install-php-extensions @composer intl opcache pdo_pgsql
+RUN install-php-extensions @composer intl opcache pdo_pgsql pcntl \
+    # pcntl pour les seules commandes longues (worker, empaqueteur), qui la chargent avec « php -d extension=pcntl » :
+    # elle leur fait entendre le SIGTERM d'un arrêt. Pas pour FrankenPHP (serveur multithread), d'où l'ini retiré.
+    && rm "$PHP_INI_DIR/conf.d/docker-php-ext-pcntl.ini"
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 

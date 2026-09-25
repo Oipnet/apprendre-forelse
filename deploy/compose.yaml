@@ -121,13 +121,18 @@ services:
     image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
     logging: *logging
     restart: unless-stopped
+    # Pas de dépendance à « app » : Compose devrait sinon l'arrêter avant de recréer « app », et le site resterait
+    # coupé pendant ce temps (10 s sur ~22 s, mesuré le 25/09/2026). Les migrations, dont la table de la file
+    # d'attente, sont jouées par deployer.sh avant le démarrage : la base suffit.
     depends_on:
-      # Après « app », et donc après les migrations (dont la table de la file d'attente), que deployer.sh joue avant.
-      app:
+      db:
         condition: service_healthy
     environment: *app-environment
     volumes: *app-volumes
-    command: ["php", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=128M"]
+    # pcntl (chargée pour cette commande seulement) lui fait entendre le SIGTERM d'un arrêt : il finit le message en
+    # cours et s'arrête, au lieu d'être tué au bout de 10 s. init : un vrai processus n°1, qui relaie les signaux.
+    init: true
+    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=128M"]
     # Le contrôle de santé de l'image interroge Caddy, qui ne tourne pas ici.
     healthcheck:
       disable: true
@@ -142,9 +147,7 @@ services:
     image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
     logging: *logging
     restart: unless-stopped
-    depends_on:
-      app:
-        condition: service_healthy
+    # Aucune dépendance : ni base ni réseau commun avec « app », et en dépendre retardait sa recréation (voir « worker »).
     environment:
       APP_URL: ${APP_URL:?APP_URL manquant dans .env}
       SANDBOX_URL: ${SANDBOX_URL:?SANDBOX_URL manquant dans .env}
@@ -162,7 +165,9 @@ services:
       - environnements:/environnements
     networks:
       - empaquetage
-    command: ["php", "bin/console", "app:environnement:empaqueteur"]
+    # Même raison que « worker » : pcntl et init, pour s'arrêter dès le SIGTERM.
+    init: true
+    command: ["php", "-d", "extension=pcntl", "bin/console", "app:environnement:empaqueteur"]
     healthcheck:
       disable: true
     # Un `composer install` gourmand ne fait pas tomber le reste du serveur.

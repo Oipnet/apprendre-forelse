@@ -92,10 +92,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Chaque conteneur fait tourner ses journaux** (cinq fichiers de 10 Mo au plus), dans `deploy/` comme dans
   `auto-hebergement/` : seul `app` le faisait, et les journaux Docker des autres services grossissaient sans
   limite. Pour une instance auto-hébergée, `docker compose up -d` suffit à l'appliquer.
-- **Caddy limite à 3 secondes l'attente des connexions ouvertes quand le conteneur s'arrête** (`grace_period`),
-  au lieu d'attendre sans limite : un déploiement mesuré le 25/09/2026 coupait le site environ 20 secondes, dont
-  une douzaine pendant l'arrêt de l'ancien conteneur. Un appel au mentor en cours pendant un redémarrage échoue
-  plus tôt ; il échouait déjà au bout de 10 secondes, quand Docker arrêtait le conteneur de force.
+- **Un déploiement coupe le site deux fois moins longtemps.** Mesuré le 25/09/2026 : ~22 secondes, dont 10 à
+  attendre l'arrêt des services `worker` et `empaqueteur`. Ces commandes PHP n'entendaient pas le `SIGTERM` de
+  Docker, et Compose les arrêtait avant de redémarrer `app`, dont elles dépendaient. Elles s'arrêtent désormais
+  aussitôt (`init: true`, et l'extension `pcntl`, installée dans l'image et chargée par ces seules commandes : le
+  worker finit le message en cours), et en production elles ne dépendent plus d'`app`, puisque les migrations sont
+  jouées avant. Le premier déploiement avec ce changement paie encore l'attente ; les suivants non. Pour une
+  instance auto-hébergée, reprendre `compose.yaml` suffit.
 - **Les migrations peuvent se jouer avant de redémarrer la plateforme** (`MIGRATIONS_AT_STARTUP=0`) : une
   migration en échec laisse alors l'ancienne version en service, au lieu de la remplacer par un conteneur qui ne
   démarre pas. La production le fait désormais (`deploy/deployer.sh` les joue avec la nouvelle image, dans un
