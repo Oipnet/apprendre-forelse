@@ -21,19 +21,21 @@ class PurchaseRepository extends ServiceEntityRepository
     }
 
     /**
-     * Places prises au prix fondateur : les achats payés (un remboursement libère la place), et les achats en attente
-     * dont la session Stripe peut encore être payée. Le prix est figé dès l'achat en attente : sans eux, N paiements
-     * lancés ensemble sur la dernière place l'obtenaient tous. L'achat en attente de $except ne compte pas : il garde
-     * sa place, et son prix, s'il revient sur la page de paiement.
+     * Places prises au prix fondateur, par parcours, en une requête pour tous les parcours (l'accueil affiche celles
+     * de chacun) : les achats payés (un remboursement libère la place), et les achats en attente dont la session
+     * Stripe peut encore être payée. Le prix est figé dès l'achat en attente : sans eux, N paiements lancés ensemble
+     * sur la dernière place l'obtenaient tous. L'achat en attente de $except ne compte pas : il garde sa place, et son
+     * prix, s'il revient sur la page de paiement.
+     *
+     * @return array<string, int> par parcours ; un parcours sans place prise est absent
      */
-    public function countFounderSales(string $trackId, \DateTimeImmutable $now, ?User $except = null): int
+    public function founderSalesByTrack(\DateTimeImmutable $now, ?User $except = null): array
     {
         $qb = $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)')
-            ->andWhere('p.trackId = :track')
+            ->select('p.trackId AS track, COUNT(p.id) AS sales')
+            ->groupBy('p.trackId')
             ->andWhere('p.priceKind = :founder')
             ->andWhere('p.status = :paid OR (p.status = :pending AND p.createdAt > :reservedSince'.(null !== $except ? ' AND (p.user IS NULL OR p.user != :except)' : '').')')
-            ->setParameter('track', $trackId)
             ->setParameter('founder', PriceKind::Founder)
             ->setParameter('paid', PurchaseStatus::Paid)
             ->setParameter('pending', PurchaseStatus::Pending)
@@ -43,7 +45,7 @@ class PurchaseRepository extends ServiceEntityRepository
             $qb->setParameter('except', $except);
         }
 
-        return (int) $qb->getQuery()->getSingleScalarResult();
+        return array_map('intval', array_column($qb->getQuery()->getArrayResult(), 'sales', 'track'));
     }
 
     public function findOneBySession(string $sessionId): ?Purchase
