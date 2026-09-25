@@ -25,9 +25,20 @@ Le `.env` de chaque instance choisit ses fichiers avec `COMPOSE_FILE`. Il faut *
 Une coupure de quelques secondes, le temps que le proxy prenne les ports. À faire en premier, seul, et à vérifier
 avant d'installer la préproduction.
 
+Le compte `deploy` n'a pas `sudo` : les deux dossiers se créent une fois avec un compte administrateur, puis lui
+sont confiés.
+
+```sh
+# Avec un compte administrateur
+sudo mkdir -p /srv/front /srv/forelse-staging
+sudo chown deploy:deploy /srv/front /srv/forelse-staging
+```
+
+Puis, avec `deploy` :
+
 ```sh
 # Le proxy
-sudo mkdir -p /srv/front && cd /srv/front
+cd /srv/front
 # compose.yaml, Caddyfile et .env.example depuis deploy/front/ du dépôt
 cp .env.example .env    # ACME_EMAIL, PRODUCTION_HOSTS (plateforme, bac à sable, et suivi si exposé)
 
@@ -65,7 +76,11 @@ plateforme (même « site » pour le navigateur, voir `auto-hebergement/README.m
 1. Enregistrements DNS des deux adresses vers le serveur.
 2. `/srv/forelse-staging` : `.env` à partir de `.env.preproduction.example`.
 3. `/srv/front/.env` : `PREPRODUCTION_APP_HOST`, `PREPRODUCTION_SANDBOX_HOST`, l'utilisateur et l'empreinte du mot de
-   passe, puis `docker compose up -d` dans `/srv/front` (les nouveaux noms obtiennent leurs certificats).
+   passe, puis `docker compose up -d` dans `/srv/front` (les nouveaux noms obtiennent leurs certificats ; la
+   production est coupée une seconde, le temps de recréer le proxy). L'empreinte :
+   `docker run --rm -it caddy:2.10-alpine caddy hash-password` (le mot de passe ne passe ni à l'écran ni dans
+   l'historique), puis dans le `.env`, entre guillemets simples. Pour l'y écrire par un bloc `cat >> .env <<'EOF'`,
+   gardez les guillemets autour de `EOF` : sans eux, le shell remplacerait les `$` de l'empreinte.
 4. GitHub, **Settings → Environments** : créer `staging`. Si les secrets `DEPLOY_*` sont rangés dans l'environnement
    `production`, les y recopier (ou les passer en secrets du dépôt).
 5. GitHub, **Settings → Secrets and variables → Actions → Variables** : variable **de dépôt** `STAGING_URL`
