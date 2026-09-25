@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 2.2.0 — 2026-09-25
+
 ### Ajouté
 
 - **Suivi des erreurs** (Sentry, ou GlitchTip qui parle le même protocole) : les exceptions non rattrapées
