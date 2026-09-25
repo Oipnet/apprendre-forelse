@@ -27,3 +27,4 @@ packages/simulateur-nuxt/conformite/reference/.data/
 packages/simulateur-nuxt/conformite/sans-pages/node_modules
 packages/simulateur-nuxt/conformite/sans-pages/.nuxt/
 packages/simulateur-nuxt/conformite/runner/node_modules/
+packages/simulateur-docker/.phpstan.cache/

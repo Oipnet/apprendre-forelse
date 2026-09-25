@@ -13,7 +13,7 @@ final readonly class CheckoutSession
 
     /**
      * Durée pendant laquelle une session reste payable (Stripe accepte de 30 minutes à 24 heures). Un achat en attente
-     * réserve sa place au prix fondateur le temps de sa session, et la rend ensuite (PurchaseRepository::countFounderSales).
+     * réserve sa place au prix fondateur le temps de sa session, et la rend ensuite (PurchaseRepository::founderSalesByTrack).
      */
     public const int LIFETIME = 3600;
 

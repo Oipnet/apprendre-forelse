@@ -13,18 +13,18 @@
 	"dependencies": {
 		"@forelse/runtime-contract": "file:../packages/runtime-contract",
 		"@forelse/simulateur-nuxt": "file:../packages/simulateur-nuxt",
-		"@php-wasm/universal": "^3.1.53",
-		"@php-wasm/util": "^3.1.53",
-		"@php-wasm/web": "^3.1.53",
+		"@php-wasm/universal": "^3.1.55",
+		"@php-wasm/util": "^3.1.55",
+		"@php-wasm/web": "^3.1.55",
 		"buffer": "6.0.3",
 		"dompurify": "^3.4.15",
 		"fflate": "^0.8.3",
 		"happy-dom": "20.14.5",
-		"marked": "^18.0.12",
+		"marked": "^18.0.14",
 		"monaco-editor": "^0.56.0"
 	},
 	"devDependencies": {
-		"@php-wasm/node": "^3.1.53",
+		"@php-wasm/node": "^3.1.55",
 		"typescript": "^7.0.2",
 		"vite": "^8.3.0",
 		"vite-plugin-symfony": "^8.2.4"

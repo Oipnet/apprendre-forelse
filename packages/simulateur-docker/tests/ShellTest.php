@@ -25,6 +25,14 @@ final class ShellTest extends TestCase
         return [$code, $machine->output, $machine];
     }
 
+    /** Relevé sur alpine:3.20 : « id -u -n » et « id -un » donnent le nom, « id -u » le numéro. */
+    public function testIdDonneLeNomAvecUEtN(): void
+    {
+        $this->assertSame("root\n", $this->sh('id -u -n')[1]);
+        $this->assertSame("root\n", $this->sh('id -un')[1]);
+        $this->assertSame("0\n", $this->sh('id -u')[1]);
+    }
+
     public function testGrepCommeLeVrai(): void
     {
         $m = $this->machine();

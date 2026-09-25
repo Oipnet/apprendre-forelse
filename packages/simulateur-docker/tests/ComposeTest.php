@@ -31,6 +31,14 @@ final class ComposeTest extends SimulatorTestCase
         ]);
     }
 
+    public function testUnComposeYamlMalFormeEstSignaleSansPlanter(): void
+    {
+        $this->files(['compose.yaml' => "services:\n  app:\n    image: alpine:3.20\n   ports: [80]\n"]);
+        [$code, $output] = $this->cli('compose up -d');
+        $this->assertNotSame(0, $code);
+        $this->assertStringContainsString('yaml: line ', $output);
+    }
+
     public function testNginxPhpFpmPostgres(): void
     {
         $this->stack();

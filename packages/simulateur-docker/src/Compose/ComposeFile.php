@@ -151,7 +151,8 @@ final class ComposeFile
         try {
             $data = Yaml::parse((string) file_get_contents($path));
         } catch (ParseException $e) {
-            throw new ComposeException(sprintf('yaml: line %d: %s', max(1, $e->getParsedLine()), lcfirst(preg_replace('/ at line \d+.*$/s', '', $e->getRawMessage()) ?? $e->getRawMessage())));
+            // ParseException n'expose pas son message brut : on retire du message complet la position qu'il y ajoute.
+            throw new ComposeException(sprintf('yaml: line %d: %s', max(1, $e->getParsedLine()), lcfirst(preg_replace('/ at line \d+.*$/s', '', $e->getMessage()) ?? $e->getMessage())));
         }
 
         return \is_array($data) ? $data : ($data === null ? null : throw new ComposeException(sprintf('validating %s: (root) must be a mapping', $path)));

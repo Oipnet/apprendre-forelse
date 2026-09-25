@@ -340,7 +340,7 @@ final class Builder
                         // l'écriture au RUN suivant d'un USER non root, ce qu'un vrai build accepte.
                         $owner = explode(':', $user)[0];
                         $dir = '';
-                        foreach (array_filter(explode('/', $path), 'strlen') as $segment) {
+                        foreach (array_filter(explode('/', $path), static fn (string $segment): bool => $segment !== '') as $segment) {
                             $dir .= '/'.$segment;
                             if (!$state['fs']->isDir($dir)) {
                                 $state['fs']->mkdir($dir, $owner === 'root' || $owner === '0' ? null : $owner);

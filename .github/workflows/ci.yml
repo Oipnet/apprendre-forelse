@@ -8,6 +8,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Les actions sont épinglées par empreinte de commit (la version en commentaire) : une étiquette peut être
+# déplacée, une empreinte non. Dependabot les tient à jour (.github/dependabot.yml).
+#
 # Droits minimaux par défaut : lire le dépôt. Un job qui a besoin de plus (publier une image, lire les
 # exécutions d'un autre workflow) le déclare lui-même, et ne reçoit que cela.
 permissions:
@@ -41,7 +44,7 @@ jobs:
     steps:
       - name: Connexion au registre
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -98,10 +101,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://app:app@127.0.0.1:5432/formation?serverVersion=17&charset=utf8
     steps:
-      - uses: actions/checkout@v7
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: PHP ${{ env.PHP_VERSION }}
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: ${{ env.PHP_VERSION }}
           extensions: ctype, iconv, intl, pdo_pgsql, zip
@@ -109,7 +111,7 @@ jobs:
 
       # La version de Node est déclarée dans .nvmrc, et nulle part ailleurs (l'image la reprend : voir plus bas).
       - name: Node (.nvmrc)
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -131,7 +133,7 @@ jobs:
           echo "Node $attendu en CI comme dans l'image."
 
       - name: Dépendances de la plateforme
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
         with:
           working-directory: platform
 
@@ -143,7 +145,7 @@ jobs:
       # changent qu'avec leurs composer.lock : on les garde d'un passage à l'autre.
       - name: Environnements en cache
         id: cache-environnements
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             environments/*/vendor
@@ -155,10 +157,20 @@ jobs:
         run: environments/bin/build-env.sh
 
       - name: Dépendances du simulateur Docker
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
         with:
           working-directory: packages/simulateur-docker
           dependency-versions: highest
+
+      # Une faille connue dans une dépendance fait échouer le passage. Côté npm, seules les dépendances livrées
+      # (--omit=dev) et à partir de « high » : Vite ou Vitest ne partent pas dans le navigateur de l'apprenant.
+      # Un paquet abandonné est signalé sans bloquer : ce n'est pas une faille.
+      - name: Audit des dépendances
+        run: |
+          composer audit --locked --abandoned=report --working-dir=platform
+          composer audit --abandoned=report --working-dir=packages/simulateur-docker
+          npm audit --omit=dev --audit-level=high --prefix playground
+          npm audit --omit=dev --audit-level=high --prefix packages/simulateur-nuxt
 
       - name: Tests du simulateur Docker
         run: php vendor/bin/phpunit
@@ -181,6 +193,33 @@ jobs:
       - name: Build du playground
         run: npm run build
         working-directory: playground
+
+      - name: Lint Symfony
+        run: |
+          php bin/console lint:container
+          php bin/console lint:twig templates
+          php bin/console lint:yaml config --parse-tags
+          php bin/console doctrine:schema:validate --skip-sync
+        working-directory: platform
+
+      # Niveau 6, erreurs connues gelées dans phpstan-baseline.neon : seule une erreur nouvelle fait échouer.
+      # Après « Lint Symfony », qui compile le conteneur que lit l'extension Symfony de PHPStan.
+      - name: Analyse statique (PHPStan)
+        run: |
+          (cd platform && vendor/bin/phpstan analyse --no-progress --memory-limit=1G)
+          (cd packages/simulateur-docker && vendor/bin/phpstan analyse --no-progress --memory-limit=1G)
+
+      # Les tests construisent leur schéma depuis le mapping (SchemaTool) : ils ne jouent jamais les migrations,
+      # que la production joue au démarrage. Une entité modifiée sans sa migration passerait donc les tests.
+      # Ici, une base neuve reçoit les migrations, puis doit correspondre exactement au mapping.
+      - name: Migrations conformes au mapping
+        env:
+          DATABASE_URL: postgresql://app:app@127.0.0.1:5432/migrations?serverVersion=17&charset=utf8
+        run: |
+          php bin/console doctrine:database:create --no-interaction
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+          php bin/console doctrine:schema:validate
+        working-directory: platform
 
       - name: Base de test
         run: php bin/console doctrine:database:create --if-not-exists --env=test
@@ -211,12 +250,11 @@ jobs:
       # sur une pull request, l'image est seulement construite.
       PUBLIER: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Connexion au registre
         if: env.PUBLIER == 'true'
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -227,7 +265,7 @@ jobs:
       # Pas d'étiquette majeure seule tant qu'on est en 0.x : en 0.x, une mineure peut casser.
       - name: Étiquettes de l'image
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -239,7 +277,7 @@ jobs:
 
       - name: Construire l'image
         id: build
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           push: ${{ env.PUBLIER == 'true' }}
@@ -269,10 +307,9 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: docker/setup-buildx-action@v4
-
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Connexion au registre
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -280,7 +317,7 @@ jobs:
 
       - name: Étiquettes de la version
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -370,8 +407,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: actions/checkout@v7
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Les secrets passent par l'environnement, jamais interpolés dans le script : un caractère spécial ne peut pas
       # y devenir du shell.
       - name: Accès SSH au serveur
