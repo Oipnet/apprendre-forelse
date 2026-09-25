@@ -50,6 +50,10 @@ const api: Runtime = {
 		ready().writeFile(path, content);
 	},
 
+	async writeFiles(files) {
+		for (const [path, content] of Object.entries(files)) ready().writeFile(path, content);
+	},
+
 	async readFile(path) {
 		return ready().readFile(path);
 	},

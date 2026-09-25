@@ -1,6 +1,9 @@
 import type { HttpRequest, HttpResponse, Runtime } from '@forelse/runtime-contract';
 import type { HostToRelay, RelayToHost } from './protocol';
 
+/** Au-delà du délai d'activation du Service Worker dans le relais (10 s), pour que son message arrive en premier. */
+const RELAY_TIMEOUT_MS = 20_000;
+
 /**
  * Côté plateforme : pilote l'aperçu isolé sur l'origine bac à sable.
  *
@@ -34,15 +37,26 @@ export class PreviewBridge {
 
 	start(): Promise<void> {
 		this.ready ??= new Promise((resolve, reject) => {
+			let started = false;
+			// Le relais annonce « ready » ou « error » ; s'il ne se charge pas du tout (origine du bac à sable
+			// injoignable), rien n'arrive : on le dit plutôt que d'attendre.
+			const timer = setTimeout(() => {
+				reject(new Error(`L'aperçu ne répond pas (${this.sandboxOrigin}) : rechargez la page.`));
+			}, RELAY_TIMEOUT_MS);
 			window.addEventListener('message', async (event: MessageEvent<RelayToHost>) => {
 				if (event.origin !== this.sandboxOrigin || event.source !== this.frame.contentWindow) return;
 				const message = event.data;
 				switch (message.type) {
 					case 'ready':
+						started = true;
+						clearTimeout(timer);
 						resolve();
 						break;
 					case 'error':
-						reject(new Error(String(message.message)));
+						clearTimeout(timer);
+						// Après le démarrage, rejeter ne ferait plus rien : l'erreur irait se perdre.
+						if (started) this.callbacks.onConsole?.('error', `Relais de l'aperçu : ${String(message.message)}`);
+						else reject(new Error(String(message.message)));
 						break;
 					case 'navigated':
 						this.callbacks.onNavigated?.(String(message.path));
@@ -78,7 +92,10 @@ export class PreviewBridge {
 			this.callbacks.onResponse?.(request, response);
 			port.postMessage({ ok: true, response });
 		} catch (error) {
-			port.postMessage({ ok: false, error: error instanceof Error ? error.message : String(error) });
+			// L'aperçu n'en montre que la première ligne : la pile d'appels décrit le worker du playground, pas le
+			// code de l'apprenant. Elle reste dans la console de la plateforme, pour qui la cherche.
+			console.error('Requête d\'aperçu', request.method, request.url, error);
+			port.postMessage({ ok: false, error: (error instanceof Error ? error.message : String(error)).split('\n')[0] });
 		}
 	}
 }

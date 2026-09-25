@@ -97,6 +97,8 @@ export interface Runtime {
 	boot(env: EnvironmentSpec, onProgress?: (p: BootProgress) => void): Promise<void>;
 	/** Chemins relatifs à la racine du projet (ex. src/Controller/MenuController.php). */
 	writeFile(path: string, content: string): Promise<void>;
+	/** Plusieurs fichiers d'un coup (le projet de départ) : un seul message au lieu d'un par fichier. */
+	writeFiles(files: Record<string, string>): Promise<void>;
 	readFile(path: string): Promise<string | null>;
 	/** Tous les fichiers du projet (hors vendor/, var/ et caches), pour l'explorateur. */
 	listFiles(): Promise<string[]>;

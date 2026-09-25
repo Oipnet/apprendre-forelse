@@ -25,6 +25,11 @@ async function start() {
 		return;
 	}
 
+	// Firefox en navigation privée n'a pas de Service Worker : sans ce message, l'erreur serait un TypeError.
+	if (!('serviceWorker' in navigator)) {
+		throw new Error('Ce navigateur refuse les Service Workers ici (navigation privée ?) : l\'aperçu en a besoin.');
+	}
+
 	// Requêtes de l'aperçu : on transmet le MessagePort du SW directement à la plateforme.
 	navigator.serviceWorker.addEventListener('message', (event) => {
 		if (event.data?.type === 'preview-request') toHost({ type: 'preview-request', request: event.data.request }, [event.ports[0]]);
@@ -52,19 +57,43 @@ async function start() {
 	});
 
 	const registration = await navigator.serviceWorker.register('/preview-sw.js', { scope: '/preview/' });
+	// Service Workers bloqués par le navigateur (réglage, extension) : Chromium résout alors sans rien.
+	if (!registration) throw new Error('Ce navigateur bloque les Service Workers : l\'aperçu en a besoin.');
 	await activated(registration);
 	toHost({ type: 'ready', base });
 }
 
-/** `navigator.serviceWorker.ready` ne résout pas ici : le relais est hors du scope /preview/. */
+/** Délai laissé au Service Worker pour s'activer : il s'installe en une fraction de seconde. */
+const ACTIVATION_TIMEOUT_MS = 10_000;
+
+/**
+ * `navigator.serviceWorker.ready` ne résout pas ici : le relais est hors du scope /preview/.
+ *
+ * On suit le worker qui s'installe, y compris s'il n'apparaît qu'après coup (`updatefound`) : sans worker
+ * à suivre, l'attente ne finissait jamais, et l'écran de démarrage tournait sans rien dire.
+ */
 function activated(registration: ServiceWorkerRegistration): Promise<void> {
 	if (registration.active) return Promise.resolve();
-	const worker = registration.installing ?? registration.waiting;
 	return new Promise((resolve, reject) => {
-		worker?.addEventListener('statechange', () => {
-			if (worker.state === 'activated') resolve();
-			if (worker.state === 'redundant') reject(new Error('Service Worker de l\'aperçu rejeté.'));
-		});
+		const timer = setTimeout(() => {
+			reject(new Error(`Le Service Worker de l'aperçu ne s'est pas activé en ${ACTIVATION_TIMEOUT_MS / 1000} s : rechargez la page.`));
+		}, ACTIVATION_TIMEOUT_MS);
+		const follow = (worker: ServiceWorker | null) => {
+			if (!worker) return;
+			const check = () => {
+				if (worker.state === 'activated') {
+					clearTimeout(timer);
+					resolve();
+				} else if (worker.state === 'redundant') {
+					clearTimeout(timer);
+					reject(new Error('Service Worker de l\'aperçu rejeté.'));
+				}
+			};
+			worker.addEventListener('statechange', check);
+			check();
+		};
+		follow(registration.installing ?? registration.waiting);
+		registration.addEventListener('updatefound', () => follow(registration.installing));
 	});
 }
 

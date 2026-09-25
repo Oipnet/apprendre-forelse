@@ -32,6 +32,10 @@ class FauxWorker extends EventTarget {
 			const resultat = (result: unknown) => this.repondre({ type: 'result', id, result });
 			if (method === 'boot') return (this.demarre = true), resultat(undefined);
 			if (method === 'writeFile') return this.fichiers.set(args[0] as string, args[1] as string), resultat(undefined);
+			if (method === 'writeFiles') {
+				for (const [path, content] of Object.entries(args[0] as Record<string, string>)) this.fichiers.set(path, content);
+				return resultat(undefined);
+			}
 			if (method === 'deleteFile') return this.fichiers.delete(args[0] as string), resultat(undefined);
 			if (method === 'readFile') return resultat(this.fichiers.get(args[0] as string) ?? null);
 			if (method === 'request' && (args[0] as { url: string }).url.endsWith('/boucle')) return void (this.bloque = true);
