@@ -263,7 +263,8 @@ final class Builder
                             $args[$name] = '';
                         }
                     }
-                    $state['key'] = hash('sha256', $state['key'].'|ARG|'.json_encode($args));
+                    // Pas de clé ici : BuildKit passe tous les ARG de l'étape aux RUN qui suivent (voir runStep),
+                    // et à rien d'autre. Changer une valeur ne rejoue ni WORKDIR ni COPY.
                     break;
                 case 'ENV':
                     [$pairs] = Variables::pairs($instruction->arguments);
@@ -331,9 +332,20 @@ final class Builder
                     $this->undefinedWarnings($undefined, $instruction);
                     $state['config']->workdir = $path;
                     $name = sprintf('[%s%d/%d] WORKDIR %s', $label, $number, $total, $path);
-                    $key = hash('sha256', $state['key'].'|WORKDIR|'.$path);
-                    $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use (&$state, $path): array {
-                        $state['fs']->mkdir($path);
+                    // Le dossier appartient à l'utilisateur courant : changer USER rejoue WORKDIR (vérifié avec BuildKit).
+                    $key = hash('sha256', $state['key'].'|WORKDIR|'.$path.'|'.$user);
+                    $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use (&$state, $path, $user): array {
+                        // Comme BuildKit : les dossiers qu'il faut créer (parents compris) appartiennent à
+                        // l'utilisateur courant, ceux qui existent gardent le leur. Créés en root, ils refusaient
+                        // l'écriture au RUN suivant d'un USER non root, ce qu'un vrai build accepte.
+                        $owner = explode(':', $user)[0];
+                        $dir = '';
+                        foreach (array_filter(explode('/', $path), 'strlen') as $segment) {
+                            $dir .= '/'.$segment;
+                            if (!$state['fs']->isDir($dir)) {
+                                $state['fs']->mkdir($dir, $owner === 'root' || $owner === '0' ? null : $owner);
+                            }
+                        }
 
                         return [0, '', 0.0];
                     });
@@ -397,12 +409,22 @@ final class Builder
         return $health;
     }
 
-    /** @param array<string,mixed> $state */
-    private function metadataLayer(Instruction $instruction, array &$state): Layer
+    /**
+     * La couche vide qu'une instruction de métadonnées (ENV, LABEL, EXPOSE, CMD, USER…) laisse dans l'historique.
+     *
+     * Elle ne modifie pas la clé de cache de la suite : BuildKit ne rejoue une étape que si ce qu'elle
+     * utilise change. ENV et les ARG entrent dans la clé des RUN, USER dans celle des RUN et des WORKDIR,
+     * une variable dans le chemin qu'elle développe ; LABEL, EXPOSE, CMD, ENTRYPOINT, HEALTHCHECK, VOLUME
+     * n'entrent dans aucune. Les chaîner apprenait un faux ordre des couches : modifier un LABEL rejouait
+     * tous les COPY et RUN suivants, ce qu'un vrai `docker build` ne fait pas.
+     *
+     * @param array<string,mixed> $state
+     */
+    private function metadataLayer(Instruction $instruction, array $state): Layer
     {
-        $state['key'] = hash('sha256', $state['key'].'|'.$instruction->name.'|'.$instruction->arguments.'|'.json_encode($instruction->exec));
+        $id = hash('sha256', $state['key'].'|'.$instruction->name.'|'.$instruction->arguments.'|'.json_encode($instruction->exec));
 
-        return new Layer('sha256:'.$state['key'], $instruction->summary(200), 0, $state['key'], [], [], time(), true);
+        return new Layer('sha256:'.$id, $instruction->summary(200), 0, $id, [], [], time(), true);
     }
 
     /**
@@ -413,8 +435,9 @@ final class Builder
     {
         $display = $instruction->exec !== null ? 'RUN '.json_encode($instruction->exec, \JSON_UNESCAPED_SLASHES) : 'RUN '.preg_replace('/\s+/', ' ', $instruction->arguments);
         $name = sprintf('[%s%d/%d] %s', $label, $number, $total, $display);
-        $argsInKey = array_filter($args, static fn ($v, $k) => str_contains($instruction->arguments.($instruction->heredoc ?? ''), $k), ARRAY_FILTER_USE_BOTH);
-        $key = hash('sha256', $state['key'].'|RUN|'.$instruction->arguments.'|'.($instruction->heredoc ?? '').'|'.json_encode($instruction->exec).'|'.json_encode($argsInKey).'|'.$user.'|'.json_encode($state['config']->shell));
+        // Ce que la commande reçoit : l'environnement de l'image et tous les ARG de l'étape, qu'elle les lise ou non
+        // (BuildKit les passe tous en variables d'environnement : changer un ARG inutilisé rejoue le RUN).
+        $key = hash('sha256', $state['key'].'|RUN|'.$instruction->arguments.'|'.($instruction->heredoc ?? '').'|'.json_encode($instruction->exec).'|'.json_encode($state['config']->env).'|'.json_encode($args).'|'.$user.'|'.json_encode($state['config']->shell));
         $processLabel = $instruction->exec !== null ? json_encode($instruction->exec, \JSON_UNESCAPED_SLASHES) : implode(' ', $state['config']->shell).' '.$instruction->arguments;
         $failure = null;
         $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use (&$state, $instruction, $args, $user, $context, &$failure, $processLabel): array {
@@ -483,12 +506,14 @@ final class Builder
         $words = array_map(fn ($w) => Variables::unquote(Variables::expand($w, $variables, $undefined)), $instruction->words());
         $this->undefinedWarnings($undefined, $instruction);
         $flags = $instruction->flags;
+        // Dans la clé, les options telles qu'elles s'appliquent : --chown=$UTILISATEUR change avec la variable.
+        $keyFlags = array_map(static fn (string $value): string => Variables::expand($value, $variables), $flags);
         $name = sprintf('[%s%d/%d] %s', $label, $number, $total, $instruction->name.($flags !== [] ? ' '.implode(' ', array_map(static fn ($k, $v) => '--'.$k.($v !== '' ? '='.$v : ''), array_keys($flags), $flags)) : '').' '.implode(' ', $words));
 
         // COPY <<EOF /chemin
         if ($instruction->heredoc !== null && \count($words) >= 1 && str_starts_with($words[0], '<<')) {
             $destination = Path::normalize(end($words), $state['config']->workdir);
-            $key = hash('sha256', $state['key'].'|COPYHEREDOC|'.$destination.'|'.$instruction->heredoc.'|'.json_encode($flags));
+            $key = hash('sha256', $state['key'].'|COPYHEREDOC|'.$destination.'|'.$instruction->heredoc.'|'.json_encode($keyFlags));
             $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use (&$state, $destination, $instruction, $flags): array {
                 $state['fs']->write($destination, $instruction->heredoc, isset($flags['chmod']) ? octdec($flags['chmod']) : null, isset($flags['chown']) ? explode(':', $flags['chown'])[0] : null);
 
@@ -554,7 +579,7 @@ final class Builder
                     return $this->fail('ERROR: failed to build: failed to solve: '.$message, excerptLine: $instruction->line, failedStep: $name, endLine: $instruction->endLine);
                 }
             }
-            $key = hash('sha256', $state['key'].'|COPYFROM|'.$fromKey.'|'.json_encode($sources).'|'.$destination.'|'.json_encode($flags));
+            $key = hash('sha256', $state['key'].'|COPYFROM|'.$fromKey.'|'.json_encode($sources).'|'.$destination.'|'.json_encode($keyFlags));
         } else {
             $matched = [];
             foreach ($sources as $source) {
@@ -582,7 +607,7 @@ final class Builder
                     $matched[] = $file;
                 }
             }
-            $key = hash('sha256', $state['key'].'|COPY|'.$context->checksum($matched).'|'.$destination.'|'.json_encode($flags).'|'.json_encode($sources));
+            $key = hash('sha256', $state['key'].'|COPY|'.$context->checksum($matched).'|'.$destination.'|'.json_encode($keyFlags).'|'.json_encode($sources));
         }
 
         $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use (&$state, $plan, $context, $fromFs, $owner, $mode): array {

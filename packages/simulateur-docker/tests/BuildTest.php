@@ -4,8 +4,80 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 final class BuildTest extends SimulatorTestCase
 {
+    private const METADONNEES = <<<'DOCKERFILE'
+        FROM alpine:3.20
+        ARG VERSION=1
+        LABEL app=menu
+        EXPOSE 8080
+        ENV MODE=prod
+        HEALTHCHECK CMD true
+        ENTRYPOINT ["sh", "-c"]
+        CMD ["echo", "a"]
+        STOPSIGNAL SIGTERM
+        VOLUME /data
+        USER root
+        WORKDIR /app
+        COPY a.txt .
+        RUN echo run > /app/r
+
+        DOCKERFILE;
+
+    /**
+     * Ce qu'un vrai `docker build` (BuildKit, Docker 29.3) reprend du cache quand une seule instruction change,
+     * relevé sur ce Dockerfile : [WORKDIR, COPY, RUN] en cache ?
+     *
+     * @return iterable<string, array{0: string, 1: string, 2: array<string,string>, 3: array{bool, bool, bool}}>
+     */
+    public static function changementsDeMetadonnees(): iterable
+    {
+        yield 'rien' => ['x', 'x', [], [true, true, true]];
+        yield 'LABEL' => ['app=menu', 'app=carte', [], [true, true, true]];
+        yield 'EXPOSE' => ['EXPOSE 8080', 'EXPOSE 9090', [], [true, true, true]];
+        yield 'HEALTHCHECK' => ['CMD true', 'CMD false', [], [true, true, true]];
+        yield 'ENTRYPOINT' => ['["sh", "-c"]', '["sh"]', [], [true, true, true]];
+        yield 'CMD' => ['"echo", "a"', '"echo", "b"', [], [true, true, true]];
+        yield 'STOPSIGNAL' => ['SIGTERM', 'SIGINT', [], [true, true, true]];
+        yield 'VOLUME' => ['VOLUME /data', 'VOLUME /autre', [], [true, true, true]];
+        // ENV et ARG arrivent dans l'environnement du RUN, et nulle part ailleurs.
+        yield 'ENV' => ['MODE=prod', 'MODE=dev', [], [true, true, false]];
+        yield 'ARG, valeur par défaut (inutilisé)' => ['VERSION=1', 'VERSION=2', [], [true, true, false]];
+        yield '--build-arg d\'un ARG déclaré' => ['x', 'x', ['VERSION' => '7'], [true, true, false]];
+        yield '--build-arg d\'un ARG non déclaré' => ['x', 'x', ['INCONNU' => '1'], [true, true, true]];
+        // Le dossier de WORKDIR appartient à l'utilisateur ; COPY sans --chown copie en root.
+        yield 'USER' => ['USER root', 'USER nobody', [], [false, false, false]];
+    }
+
+    /** @param array<string,string> $buildArgs @param array{bool, bool, bool} $attendu */
+    #[DataProvider('changementsDeMetadonnees')]
+    public function testUneMetadonneeNeRejouePasLesCouchesQuiNeLUtilisentPas(string $avant, string $apres, array $buildArgs, array $attendu): void
+    {
+        $this->files(['Dockerfile' => self::METADONNEES, 'a.txt' => 'contenu']);
+        $premier = $this->docker()->build('.', null, ['menu']);
+        $this->assertTrue($premier->success, $premier->output);
+
+        $this->files(['Dockerfile' => str_replace($avant, $apres, self::METADONNEES)]);
+        $second = $this->docker()->build('.', null, ['menu'], buildArgs: $buildArgs);
+        $this->assertTrue($second->success, $second->output);
+
+        $cache = static fn (string $instruction): bool => array_values(array_filter($second->steps, static fn (array $etape) => $etape['instruction'] === $instruction))[0]['cached'];
+        $this->assertSame($attendu, [$cache('WORKDIR'), $cache('COPY'), $cache('RUN')], $second->output);
+    }
+
+    public function testUneVariableDansUnCheminRejoueLEtape(): void
+    {
+        $dockerfile = "FROM alpine:3.20\nWORKDIR /app\nARG VERSION=1\nCOPY a.txt \${VERSION}.txt\nRUN echo run > /tmp/r\n";
+        $this->files(['Dockerfile' => $dockerfile, 'a.txt' => 'contenu']);
+        $this->assertTrue($this->docker()->build('.', null, ['menu'])->success);
+        $this->files(['Dockerfile' => str_replace('VERSION=1', 'VERSION=5', $dockerfile)]);
+        $second = $this->docker()->build('.', null, ['menu']);
+        $cache = static fn (string $instruction): bool => array_values(array_filter($second->steps, static fn (array $etape) => $etape['instruction'] === $instruction))[0]['cached'];
+        $this->assertSame([true, false, false], [$cache('WORKDIR'), $cache('COPY'), $cache('RUN')], $second->output);
+    }
+
     public function testLeCacheDesCouches(): void
     {
         $this->files([

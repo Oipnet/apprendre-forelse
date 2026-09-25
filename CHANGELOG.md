@@ -84,6 +84,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Le cache du simulateur Docker suit celui de BuildKit.** Modifier un `LABEL`, un `EXPOSE`, un `CMD`, un
+  `ENTRYPOINT`, un `HEALTHCHECK` ou un `VOLUME` rejouait tous les `COPY` et `RUN` suivants : l'exercice
+  enseignait un faux ordre des couches. Ces instructions n'entrent plus dans la clé de cache ; `ENV` et les
+  `ARG` n'invalident que les `RUN` (qui les reçoivent tous, utilisés ou non), `USER` les `RUN` et les
+  `WORKDIR`. Chaque règle a été relevée sur un vrai `docker build` (Docker 29.3) et fait l'objet d'un test.
+- **Un `WORKDIR` créé après `USER` appartient à cet utilisateur**, comme avec BuildKit (dossiers parents
+  compris ; un dossier existant garde son propriétaire). Le simulateur le créait en root, et un `RUN` qui y
+  écrivait échouait avec « Permission denied », là où un vrai build réussit.
 - **Un exercice s'ouvre plus vite.** L'éditeur (Monaco, 3,8 Mo) n'est plus importé avant tout le reste : il
   se télécharge pendant que PHP démarre, comme le relais de l'aperçu, qui attendait la fin du démarrage. Le
   projet de départ part au worker en un seul message (`writeFiles`, ajouté au contrat des runtimes) au lieu
