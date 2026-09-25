@@ -40,7 +40,8 @@
 	# sont écartés : ils n'apprennent rien et noieraient le reste. Caddy masque déjà les en-têtes Cookie et
 	# Authorization. L'adresse IP journalisée est annoncée dans /confidentialite (douze mois au plus) ; le
 	# service de production limite la taille des journaux (deploy/compose.yaml).
-	@sans_journal path /build/* /img/* /envs/* /mesure/* /favicon.ico /preview-sw.js
+	# /sante est la sonde de santé, appelée en boucle : elle n'apprend rien non plus.
+	@sans_journal path /build/* /img/* /envs/* /mesure/* /favicon.ico /preview-sw.js /sante
 	log_skip @sans_journal
 	log {
 		output stdout
