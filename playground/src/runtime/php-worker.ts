@@ -31,7 +31,14 @@ let baseFiles = new Map<string, Uint8Array>();
 /** Modifications de l'apprenant, rejouées sur chaque instance (null = supprimé). */
 const overlay = new Map<string, Uint8Array | null>();
 let preview: PHP;
+/** L'instance de tests, en préparation ou prête ; null si sa création a échoué (réessayée aux tests suivants). */
 let tests: Promise<PHP> | null = null;
+/**
+ * La même, une fois prête. Les écritures ne l'attendent pas : tant qu'elle se prépare, elles ne vont que
+ * dans l'overlay, qu'elle applique à sa création. Elles l'attendaient, et au démarrage chaque fichier
+ * attendait la création complète d'une seconde instance PHP avant d'apparaître dans l'aperçu.
+ */
+let testsReady: PHP | null = null;
 let nextProcessId = 1;
 /**
  * Des fichiers ont changé depuis le dernier run : on repart d'un cache de test vide.
@@ -85,7 +92,42 @@ async function download(url: string): Promise<Uint8Array> {
 	return bytes;
 }
 
-function writeTree(php: PHP, files: Map<string, Uint8Array | null>) {
+/**
+ * Lance la création de l'instance de tests. Elle applique l'overlay à la fin de sa création, sans rien
+ * attendre ensuite : aucune écriture ne peut s'intercaler entre ce moment et celui où elle devient
+ * `testsReady` (seules des microtâches les séparent, et les messages sont des tâches).
+ */
+function prepareTests(): Promise<PHP> {
+	const pending = createPhp(true);
+	tests = pending;
+	testsReady = null;
+	pending.then(
+		(php) => {
+			if (tests === pending) testsReady = php;
+		},
+		() => {
+			if (tests === pending) tests = null;
+		},
+	);
+	return pending;
+}
+
+/**
+ * Comme writeTree, mais par tranches d'environ 50 ms, en rendant la main au worker entre deux : copier
+ * un projet et son vendor/ prend plusieurs secondes, pendant lesquelles le worker ne répondait à rien
+ * (ni aux écritures de l'éditeur, ni à l'aperçu, ni au battement de cœur de WorkerRuntime).
+ */
+async function writeTreeInSlices(php: PHP, files: Map<string, Uint8Array | null>) {
+	let started = performance.now();
+	for (const entry of files) {
+		writeTree(php, [entry]);
+		if (performance.now() - started < 50) continue;
+		await new Promise((resolve) => setTimeout(resolve));
+		started = performance.now();
+	}
+}
+
+function writeTree(php: PHP, files: Iterable<[string, Uint8Array | null]>) {
 	for (const [path, content] of files) {
 		const absolute = `${APP_DIR}/${path}`;
 		if (content === null) {
@@ -118,7 +160,11 @@ function compilePhpWasm(): Promise<WebAssembly.Module> {
 	return compiledPhp;
 }
 
-async function createPhp(): Promise<PHP> {
+/**
+ * Une instance PHP complète, projet copié. `background` : l'instance de tests, préparée pendant que
+ * l'apprenant travaille déjà ; sa copie du projet rend la main au worker entre deux tranches.
+ */
+async function createPhp(background = false): Promise<PHP> {
 	const wasm = await compilePhpWasm();
 	const emscriptenOptions = {
 		processId: nextProcessId++,
@@ -132,7 +178,9 @@ async function createPhp(): Promise<PHP> {
 	// après make:entity, par exemple) se termine sans rien faire, au lieu de faire échouer la commande.
 	await php.setSpawnHandler(createSpawnHandler((_command, processApi) => processApi.exit(0)));
 	php.mkdir(APP_DIR);
-	writeTree(php, baseFiles);
+	if (background) await writeTreeInSlices(php, baseFiles);
+	else writeTree(php, baseFiles);
+	// L'overlay en dernier, et plus aucun await ensuite (voir prepareTests).
 	writeTree(php, overlay);
 	php.mkdir('/runner');
 	php.writeFile(RUNNER, runTestsScript);
@@ -248,7 +296,7 @@ async function propagerLesChangements(avant: Map<string, string>, apres: Map<str
 	for (const chemin of avant.keys()) if (!apres.has(chemin)) supprimes.push(chemin);
 	if (!Object.keys(fichiers).length && !supprimes.length) return { fichiers, supprimes };
 
-	const instanceDeTests = await tests;
+	const instanceDeTests = testsReady;
 	for (const [chemin, contenu] of Object.entries(fichiers)) {
 		const octets = encoder.encode(contenu);
 		overlay.set(chemin, octets);
@@ -318,8 +366,7 @@ const api: Runtime = {
 		progress({ step: 'boot', ratio: null, label: `Démarrage de PHP ${spec.phpVersion}` });
 		preview = await createPhp();
 		// Instance de tests préparée en arrière-plan : premier run plus rapide.
-		tests = createPhp();
-		tests.catch(() => (tests = null)); // réessayée au premier lancement des tests
+		prepareTests().catch(() => {}); // réessayée au premier lancement des tests
 	},
 
 	async writeFile(path, content) {
@@ -327,7 +374,8 @@ const api: Runtime = {
 		overlay.set(path, bytes);
 		testsDirty = true;
 		const absolute = `${APP_DIR}/${path}`;
-		for (const php of [preview, await tests].filter(Boolean) as PHP[]) {
+		for (const php of [preview, testsReady]) {
+			if (!php) continue;
 			php.mkdir(absolute.slice(0, absolute.lastIndexOf('/')));
 			php.writeFile(absolute, bytes);
 		}
@@ -359,8 +407,8 @@ const api: Runtime = {
 		overlay.set(path, null);
 		testsDirty = true;
 		const absolute = `${APP_DIR}/${path}`;
-		for (const php of [preview, await tests].filter(Boolean) as PHP[]) {
-			if (php.fileExists(absolute)) php.unlink(absolute);
+		for (const php of [preview, testsReady]) {
+			if (php?.fileExists(absolute)) php.unlink(absolute);
 		}
 	},
 
@@ -409,8 +457,7 @@ const api: Runtime = {
 
 	async runTests(grading?: Grading) {
 		const start = performance.now();
-		tests ??= createPhp();
-		const php = await tests;
+		const php = await (tests ?? prepareTests());
 		if (testsDirty) {
 			testsDirty = false;
 			clearTestCache(php);

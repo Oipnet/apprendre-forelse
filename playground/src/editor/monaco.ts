@@ -125,6 +125,9 @@ export class EditorPanel {
 
 	/** Remplace le contenu (réinitialisation, solution) : déclenche onChange. */
 	setContent(path: string, content: string) {
-		this.files.get(path)?.model.setValue(content);
+		const model = this.files.get(path)?.model;
+		// setValue remet le curseur au début et vide l'historique d'annulation : rien à faire si rien ne change
+		// (une commande console renvoie parfois un fichier tel que l'apprenant l'a déjà).
+		if (model && model.getValue() !== content) model.setValue(content);
 	}
 }

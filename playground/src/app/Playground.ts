@@ -195,7 +195,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		current[path] = content;
 		pending.set(path, content);
 		clearTimeout(writeTimer);
-		writeTimer = window.setTimeout(async () => (await flushPending()) && reload(), 400);
+		writeTimer = window.setTimeout(() => {
+			flushPending()
+				.then((changed) => changed && reload())
+				// Runtime redémarré en cours d'écriture : l'écriture est rejouée par le runtime neuf, rien n'est perdu.
+				.catch((error) => console.warn('Écriture différée vers le runtime', error));
+		}, 400);
 		saveDraft();
 	});
 	// Un motif (src/Entity/*.php) couvre souvent des fichiers déjà là : ils s'ouvrent depuis l'explorateur, pas tous d'emblée.
