@@ -30,7 +30,7 @@
 		"chai": "^6.2.2",
 		"cookie-es": "1.2.3",
 		"cookie-es-nuxt": "npm:cookie-es@3.1.1",
-		"devalue": "5.9.2",
+		"devalue": "6.0.1",
 		"es-module-lexer": "^2.3.2",
 		"fflate": "^0.8.3",
 		"fnv1a-64": "0.1.2",
