@@ -92,6 +92,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Chaque conteneur fait tourner ses journaux** (cinq fichiers de 10 Mo au plus), dans `deploy/` comme dans
   `auto-hebergement/` : seul `app` le faisait, et les journaux Docker des autres services grossissaient sans
   limite. Pour une instance auto-hébergée, `docker compose up -d` suffit à l'appliquer.
+- **Caddy limite à 3 secondes l'attente des connexions ouvertes quand le conteneur s'arrête** (`grace_period`),
+  au lieu d'attendre sans limite : un déploiement mesuré le 25/09/2026 coupait le site environ 20 secondes, dont
+  une douzaine pendant l'arrêt de l'ancien conteneur. Un appel au mentor en cours pendant un redémarrage échoue
+  plus tôt ; il échouait déjà au bout de 10 secondes, quand Docker arrêtait le conteneur de force.
 - **Les migrations peuvent se jouer avant de redémarrer la plateforme** (`MIGRATIONS_AT_STARTUP=0`) : une
   migration en échec laisse alors l'ancienne version en service, au lieu de la remplacer par un conteneur qui ne
   démarre pas. La production le fait désormais (`deploy/deployer.sh` les joue avec la nouvelle image, dans un
