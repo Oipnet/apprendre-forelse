@@ -22,6 +22,8 @@ services:
       db:
         condition: service_healthy
     environment: &app-environment
+      # Les migrations sont jouées par deploy/deployer.sh avant de basculer, pas au démarrage du conteneur.
+      MIGRATIONS_AT_STARTUP: "0"
       # Emails en file d'attente dans la base, envoyés par le service « worker » ci-dessous.
       MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0}
       # Installations d'environnements confiées au service « empaqueteur » ci-dessous, loin des secrets.
@@ -120,7 +122,7 @@ services:
     logging: *logging
     restart: unless-stopped
     depends_on:
-      # Après les migrations, que lance le démarrage de « app » (dont la table de la file d'attente).
+      # Après « app », et donc après les migrations (dont la table de la file d'attente), que deployer.sh joue avant.
       app:
         condition: service_healthy
     environment: *app-environment

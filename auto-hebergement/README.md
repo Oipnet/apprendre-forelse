@@ -398,7 +398,17 @@ docker compose up -d --wait
 docker compose exec app cat /app/VERSION
 ```
 
-Les migrations de la base sont jouées au démarrage du conteneur.
+Les migrations de la base sont jouées au démarrage du conteneur : rien à lancer à la main.
+
+Pour les jouer plutôt dans une étape à part, avant de redémarrer la plateforme (une migration en échec laisse alors
+l'ancienne version en service), mettez `MIGRATIONS_AT_STARTUP=0` dans le `.env`, et lancez
+les migrations vous-même à chaque mise à jour, entre le `pull` et le `up` :
+
+```bash
+docker compose pull
+docker compose run --rm app php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
+docker compose up -d --wait
+```
 
 Le moteur suit le versionnage sémantique ; chaque version est décrite dans le
 [journal des modifications](../CHANGELOG.md). Choisissez l'étiquette de `APP_IMAGE` selon ce que vous acceptez

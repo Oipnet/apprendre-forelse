@@ -4,6 +4,9 @@
 # Lancé par le job « Déployer » de .github/workflows/ci.yml, après un `docker login ghcr.io`.
 # Usage : deployer.sh ghcr.io/oipnet/apprendre-forelse@sha256:… https://apprendre.forelse.fr
 #
+# Les migrations de la nouvelle image sont jouées avant de basculer, dans un conteneur à part (compose.yaml met
+# MIGRATIONS_AT_STARTUP=0) : si elles échouent (--all-or-nothing, tout est annulé), la version en service n'a pas bougé.
+#
 # Le retour arrière remet l'image, pas la base : les migrations de la nouvelle version restent appliquées. L'ancienne
 # image redémarre quand même (Doctrine signale des migrations qu'il ne connaît pas, sans échouer), mais son code doit
 # supporter le nouveau schéma : une migration qui retire ou renomme une colonne se fait en deux déploiements.
@@ -41,6 +44,13 @@ fi
 # L'image du moteur seulement (worker et empaqueteur la partagent) : PostgreSQL et Umami ne changent pas de version
 # avec un déploiement du moteur. Une version épinglée pas encore présente est tirée par `up`, une fois.
 APP_IMAGE="$NEW" docker compose pull --quiet app || exit 1
+
+# Base à jour pour la nouvelle image, avant qu'elle ne serve la moindre requête. La base démarre si besoin (depends_on).
+echo "Migrations de la base."
+if ! APP_IMAGE="$NEW" docker compose run --rm app php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing; then
+    echo "::error::Migrations en échec : rien n'a été basculé, la version en service continue."
+    exit 1
+fi
 
 if demarrer "$NEW"; then
     echo "Déployé : $NEW"
