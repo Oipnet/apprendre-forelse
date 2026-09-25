@@ -4,6 +4,7 @@ namespace App\Content;
 
 use App\Version;
 use Composer\Semver\Semver;
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
@@ -21,6 +22,11 @@ use Symfony\Component\Yaml\Yaml;
  *
  * Les vérifications qui demandent d'exécuter le contenu (tests rouges puis verts)
  * sont faites par la commande content:check.
+ *
+ * Le résultat du chargement est mis en cache entre les requêtes (pool content.cache) : sans lui, chaque page relisait
+ * et validait tous les YAML et Markdown des packs. Il reste valable tant que chaque fichier et dossier lu garde sa
+ * date et sa taille (voir watch()) : un pack déposé, modifié ou retiré se voit à la requête suivante, sans
+ * redémarrage. L'atelier, qui écrit dans les packs, le vide par reset().
  */
 final class ContentRepository
 {
@@ -39,6 +45,8 @@ final class ContentRepository
     private array $deprecations = [];
     /** @var array<string, array{markdown: string, file: string, packId: string}> intros de pages de nouveautés, par version */
     private array $versionIntros = [];
+    /** @var array<string, string> empreinte (date, taille) de chaque fichier ou dossier lu, par chemin : ce qui périme le cache */
+    private array $watched = [];
 
     /** Identifiant réservé : un parcours ne peut pas s'appeler ainsi (voir les routes /atelier/pratique/…). */
     public const string PRACTICE = 'pratique';
@@ -54,10 +62,13 @@ final class ContentRepository
         private readonly array $packPaths,
         private readonly EnvironmentRegistry $environments,
         private readonly Version $version,
+        /** Sans pool (tests, outils), le contenu est relu à chaque instance. */
+        #[Autowire(service: 'content.cache')]
+        private readonly ?CacheItemPoolInterface $cache = null,
     ) {
     }
 
-    /** Oublie ce qui a été lu : à appeler après avoir écrit dans un pack (voir l'atelier). */
+    /** Oublie ce qui a été lu, cache compris : à appeler après avoir écrit dans un pack (voir l'atelier). */
     public function reset(): void
     {
         $this->packs = null;
@@ -66,6 +77,8 @@ final class ContentRepository
         $this->practices = [];
         $this->versionIntros = [];
         $this->deprecations = [];
+        $this->watched = [];
+        $this->cache?->deleteItem($this->cacheKey());
     }
 
     /** @return array<string, Pack> */
@@ -330,7 +343,74 @@ final class ContentRepository
             return $this->packs;
         }
 
+        $item = $this->cache?->getItem($this->cacheKey());
+        $cached = $item?->isHit() ? $item->get() : null;
+        if (\is_array($cached) && $this->isFresh($cached['watched'])) {
+            [
+                'packs' => $this->packs, 'tracks' => $this->tracks, 'exercises' => $this->exercises, 'practices' => $this->practices,
+                'deprecations' => $this->deprecations, 'versionIntros' => $this->versionIntros, 'watched' => $this->watched,
+            ] = $cached;
+
+            return $this->packs;
+        }
+
+        $this->readPacks();
+        if (null !== $item) {
+            $this->cache->save($item->set([
+                'packs' => $this->packs, 'tracks' => $this->tracks, 'exercises' => $this->exercises, 'practices' => $this->practices,
+                'deprecations' => $this->deprecations, 'versionIntros' => $this->versionIntros, 'watched' => $this->watched,
+            ]));
+        }
+
+        return $this->packs;
+    }
+
+    /** Une entrée par version du moteur et par jeu de chemins (les tests en changent) : un vieux cache ne resert jamais. */
+    private function cacheKey(): string
+    {
+        return 'packs.'.hash('xxh128', serialize([$this->version->get(), $this->packPaths, $this->environments->roots()]));
+    }
+
+    /** @param array<string, string> $watched */
+    private function isFresh(array $watched): bool
+    {
+        foreach ($watched as $path => $fingerprint) {
+            if (self::fingerprint($path) !== $fingerprint) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Note un fichier ou un dossier dont dépend le contenu chargé. Un fichier modifié change de date ou de taille ; un
+     * fichier ajouté ou retiré change la date de son dossier. Un chemin absent (une fiche lesson.md facultative) est
+     * remplacé par son plus proche parent existant : le créer changera la date de celui-ci.
+     */
+    private function watch(string $path): void
+    {
+        while (!file_exists($path) && \dirname($path) !== $path) {
+            $path = \dirname($path);
+        }
+        $this->watched[$path] = self::fingerprint($path);
+    }
+
+    private static function fingerprint(string $path): string
+    {
+        $stat = @stat($path);
+
+        return false === $stat ? '' : $stat['mtime'].'/'.$stat['size'];
+    }
+
+    private function readPacks(): void
+    {
         $this->packs = [];
+        $this->watched = [];
+        // Un environnement installé ou retiré change ce que le chargement accepte.
+        foreach ($this->environments->roots() as $root) {
+            $this->watch($root);
+        }
         foreach ($this->packPaths as $path) {
             $path = rtrim(trim($path), '/');
             if ('' === $path) {
@@ -340,6 +420,7 @@ final class ContentRepository
                 throw new ContentException(sprintf('Dossier de packs introuvable : %s (voir CONTENT_PACKS_PATHS).', $path));
             }
             // Un chemin peut désigner un pack, ou un dossier contenant plusieurs packs.
+            $this->watch($path);
             $directories = is_file($path.'/pack.yaml') ? [$path] : glob($path.'/*', \GLOB_ONLYDIR);
             foreach ($directories as $directory) {
                 if (is_file($directory.'/pack.yaml')) {
@@ -353,8 +434,6 @@ final class ContentRepository
         // (uasort est stable, comme toutes les fonctions de tri depuis PHP 8.0).
         uasort($this->tracks, static fn (Track $a, Track $b) => [null === $a->order, $a->order] <=> [null === $b->order, $b->order]);
         uasort($this->practices, static fn (Practice $a, Practice $b) => [$b->published, $a->exercise->id] <=> [$a->published, $b->exercise->id]);
-
-        return $this->packs;
     }
 
     private function loadPack(string $directory): void
@@ -365,6 +444,8 @@ final class ContentRepository
             throw new ContentException(sprintf('Pack « %s » déclaré deux fois (%s et %s).', $id, $this->packs[$id]->directory, $directory));
         }
 
+        $this->watch($directory.'/practice');
+        $this->watch($directory.'/versions');
         $practiceDirectories = glob($directory.'/practice/*', \GLOB_ONLYDIR) ?: [];
         $pack = new Pack(
             id: $id,
@@ -406,6 +487,7 @@ final class ContentRepository
         if (isset($this->versionIntros[$slug])) {
             throw new ContentException(sprintf('Intro de version « %s » présente deux fois (packs %s et %s).', $slug, $this->versionIntros[$slug]['packId'], $pack->id));
         }
+        $this->watch($file);
         $markdown = trim((string) file_get_contents($file));
         if ('' === $markdown) {
             throw new ContentException(sprintf('Intro de version « %s » vide : une page sans intro écrite compose son texte toute seule, autant retirer le fichier.', $file));
@@ -471,6 +553,7 @@ final class ContentRepository
                 throw new ContentException(sprintf('Parcours « %s » : chapitre « %s » déclaré deux fois.', $id, $chapterId));
             }
             $lesson = $directory.'/chapters/'.$chapterId.'/lesson.md';
+            $this->watch($lesson);
             $chapters[] = new Chapter(
                 id: $chapterId,
                 title: $this->required($chapter, 'title', $file),
@@ -597,6 +680,7 @@ final class ContentRepository
         if (basename($directory) !== $id) {
             throw new ContentException(sprintf('%s : l\'id « %s » doit correspondre au nom du dossier.', $file, $id));
         }
+        $this->watch($directory.'/instructions.md');
         if (!is_file($directory.'/instructions.md')) {
             throw new ContentException(sprintf('Exercice « %s » : instructions.md manquant.', $id));
         }
@@ -770,6 +854,7 @@ final class ContentRepository
     /** @return array<string, mixed> */
     private function parse(string $file): array
     {
+        $this->watch($file);
         if (!is_file($file)) {
             throw new ContentException(sprintf('Fichier manquant : %s', $file));
         }

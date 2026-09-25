@@ -7,6 +7,13 @@ services:
   app:
     image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:edge}
     restart: unless-stopped
+    # Les journaux d'accès (docker/Caddyfile) s'ajoutent aux journaux applicatifs : cinq fichiers de 10 Mo au
+    # plus, sinon le disque se remplit sans bruit. Bien en deçà des douze mois annoncés dans /confidentialite.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     depends_on:
       db:
         condition: service_healthy
