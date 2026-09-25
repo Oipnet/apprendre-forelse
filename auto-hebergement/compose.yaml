@@ -124,7 +124,10 @@ services:
         condition: service_healthy
     environment: *app-environment
     volumes: *app-volumes
-    command: ["php", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=128M"]
+    # pcntl (chargée pour cette commande seulement) lui fait entendre le SIGTERM d'un arrêt : il finit le message en
+    # cours et s'arrête, au lieu d'être tué au bout de 10 s. init : un vrai processus n°1, qui relaie les signaux.
+    init: true
+    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=128M"]
     # Le contrôle de santé de l'image interroge Caddy, qui ne tourne pas ici.
     healthcheck:
       disable: true
@@ -159,7 +162,9 @@ services:
       - environnements:/environnements
     networks:
       - empaquetage
-    command: ["php", "bin/console", "app:environnement:empaqueteur"]
+    # Même raison que « worker » : pcntl et init, pour s'arrêter dès le SIGTERM.
+    init: true
+    command: ["php", "-d", "extension=pcntl", "bin/console", "app:environnement:empaqueteur"]
     healthcheck:
       disable: true
     # Un `composer install` gourmand ne fait pas tomber le reste du serveur.

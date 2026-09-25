@@ -1,10 +1,5 @@
 {
 	frankenphp
-	# À l'arrêt (un déploiement), Caddy refuse aussitôt les nouvelles connexions puis laisse finir les requêtes en
-	# cours. Sans limite, il attendait aussi les connexions que les navigateurs gardent ouvertes, jusqu'à ce que
-	# Docker le tue au bout de 10 s : autant de coupure en plus (mesuré le 25/09/2026, voir l'issue #74). Trois
-	# secondes laissent finir une page ; un appel au mentor plus long échoue, comme il échouait déjà à 10 s.
-	grace_period 3s
 }
 
 # Deux origines, une seule application : la plateforme (APP_URL) et le bac à sable (SANDBOX_URL),
