@@ -79,8 +79,8 @@ final readonly class BetaStats
     public function learnersInProgress(Cohort $cohort): array
     {
         $started = [];
-        foreach ($this->progress->findByUsers($this->users->findByCohort($cohort->getCode())) as $progress) {
-            $started[$progress->getTrackId()][$progress->getUser()->getId()][$progress->getExerciseId()] = $progress->isCompleted();
+        foreach ($this->progress->summariesByUsers($this->users->findByCohort($cohort->getCode())) as $progress) {
+            $started[$progress->trackId][$progress->userId][$progress->exerciseId] = $progress->isCompleted();
         }
 
         $counts = [];
@@ -110,8 +110,8 @@ final readonly class BetaStats
         $key = $cohort?->getCode() ?? self::NO_COHORT;
         $ids = array_map(static fn (User $u) => $u->getId(), $users);
         $cells = [];
-        foreach ($this->progress->findByUsers($users) as $progress) {
-            $cells[$progress->getUser()->getId()][$progress->getTrackId()][$progress->getExerciseId()] = $progress;
+        foreach ($this->progress->summariesByUsers($users) as $progress) {
+            $cells[$progress->userId][$progress->trackId][$progress->exerciseId] = $progress;
         }
 
         $tracks = [];
