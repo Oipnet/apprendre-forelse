@@ -153,6 +153,35 @@ final class CohortFundingTest extends WebTestCase
         $this->assertResponseStatusCodeSame(404, 'Retiré de sa cohorte et jamais commencé : le parcours sort de son catalogue.');
     }
 
+    public function testLaSynchroFaitAutantDeRequetesQuelQueSoitLEffectif(): void
+    {
+        $small = $this->cohort('petite', ['payant', 'symfony-bases']);
+        $large = $this->cohort('grande', ['payant', 'symfony-bases']);
+        for ($i = 1; $i <= 2; ++$i) {
+            $this->createUser(sprintf('p%d@example.test', $i), 'P'.$i, 'petite');
+        }
+        for ($i = 1; $i <= 8; ++$i) {
+            $this->createUser(sprintf('g%d@example.test', $i), 'G'.$i, 'grande');
+        }
+        // Un premier passage ouvre les accès ; on compte le second, qui les retrouve et les tient à jour.
+        $sync = static::getContainer()->get(CohortAccessSync::class);
+        $sync->sync($small);
+        $sync->sync($large);
+
+        $this->assertSame($this->queriesOf(fn () => $sync->sync($small)), $this->queriesOf(fn () => $sync->sync($large)));
+        $this->assertCount(16, $this->entityManager()->getRepository(TrackAccess::class)->findBy(['cohort' => $large]), 'Un accès par apprenant et par parcours, pas un de plus.');
+    }
+
+    /** Nombre de requêtes SQL jouées par $work (profilage de Doctrine, exposé en test par config/services.yaml). */
+    private function queriesOf(callable $work): int
+    {
+        $holder = static::getContainer()->get('test.doctrine.debug_data_holder');
+        $holder->reset();
+        $work();
+
+        return \count($holder->getData()['default'] ?? []);
+    }
+
     public function testApresLExpirationDeLaCohorteUnAchatRetrouveLaProgression(): void
     {
         $cohort = $this->cohort('promo-2025', ['payant'], startsAt: new \DateTimeImmutable('-13 months'), endsAt: new \DateTimeImmutable('-1 day'));

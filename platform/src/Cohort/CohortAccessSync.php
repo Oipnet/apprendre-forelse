@@ -31,7 +31,8 @@ final readonly class CohortAccessSync
     {
         if ($cohort->isFundedByInstitution()) {
             foreach ($cohort->getAvailableTrackIds() as $trackId) {
-                $this->open($user, $trackId, $cohort);
+                $existing = null === $user->getId() || null === $cohort->getId() ? null : $this->accesses->findCohortAccess($user, $trackId, $cohort);
+                $this->open($user, $trackId, $cohort, $existing);
             }
         }
         $this->entityManager->flush();
@@ -56,13 +57,19 @@ final readonly class CohortAccessSync
         $selected = $cohort->isFundedByInstitution() ? $cohort->getAvailableTrackIds() : [];
         // Lu en base : la collection inverse Cohort::$users peut ne pas refléter un rattachement récent.
         $members = null === $cohort->getId() ? [] : $this->users->findBy(['cohort' => $cohort]);
+        // Les accès de la cohorte, lus une fois : autant de requêtes quel que soit l'effectif.
+        $accesses = null === $cohort->getId() ? [] : $this->accesses->findByCohort($cohort);
+        $byUserAndTrack = [];
+        foreach ($accesses as $access) {
+            $byUserAndTrack[$access->getUser()->getId()][$access->getTrackId()] = $access;
+        }
 
         foreach ($members as $user) {
             foreach ($selected as $trackId) {
-                $this->open($user, $trackId, $cohort);
+                $this->open($user, $trackId, $cohort, $byUserAndTrack[$user->getId()][$trackId] ?? null);
             }
         }
-        foreach ($this->accesses->findByCohort($cohort) as $access) {
+        foreach ($accesses as $access) {
             if (!\in_array($access->getTrackId(), $selected, true) || !\in_array($access->getUser(), $members, true)) {
                 $access->revoke($now);
             }
@@ -80,9 +87,9 @@ final readonly class CohortAccessSync
         $this->entityManager->flush();
     }
 
-    private function open(User $user, string $trackId, Cohort $cohort): void
+    /** @param TrackAccess|null $access l'accès « cohorte » déjà ouvert à l'apprenant pour ce parcours, s'il existe */
+    private function open(User $user, string $trackId, Cohort $cohort, ?TrackAccess $access): void
     {
-        $access = null === $user->getId() || null === $cohort->getId() ? null : $this->accesses->findCohortAccess($user, $trackId, $cohort);
         if (null === $access) {
             $this->entityManager->persist(TrackAccess::forCohort($user, $trackId, $cohort));
 
