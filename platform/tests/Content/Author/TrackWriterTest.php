@@ -7,6 +7,9 @@ use App\Content\ContentException;
 use App\Content\Track;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\FlockStore;
+use Symfony\Component\Process\PhpProcess;
 
 final class TrackWriterTest extends TestCase
 {
@@ -45,6 +48,12 @@ final class TrackWriterTest extends TestCase
         return new Track('t', 'p', 'T', '', 'symfony-8', [], $this->tmp);
     }
 
+    /** Verrous posés dans un dossier du test (FlockStore, le magasin de LOCK_DSN=flock). */
+    private function writer(): TrackWriter
+    {
+        return new TrackWriter(new LockFactory(new FlockStore($this->tmp.'/verrous')));
+    }
+
     private function yaml(): string
     {
         return (string) file_get_contents($this->tmp.'/track.yaml');
@@ -52,7 +61,7 @@ final class TrackWriterTest extends TestCase
 
     public function testAjouteALaFinDuChapitreEtGardeLesCommentaires(): void
     {
-        (new TrackWriter())->ajouterExercice($this->track(), 'c1', '99-neuf');
+        $this->writer()->ajouterExercice($this->track(), 'c1', '99-neuf');
 
         $this->assertStringContainsString("      - 02-deux\n      - 99-neuf\n", $this->yaml());
         $this->assertStringContainsString('# Deuxième chapitre', $this->yaml(), 'Le fichier garde ses commentaires.');
@@ -60,14 +69,14 @@ final class TrackWriterTest extends TestCase
 
     public function testAjouteDansLeBonChapitre(): void
     {
-        (new TrackWriter())->ajouterExercice($this->track(), 'c2', '99-neuf');
+        $this->writer()->ajouterExercice($this->track(), 'c2', '99-neuf');
 
         $this->assertStringContainsString("      - 03-trois\n      - 99-neuf", $this->yaml());
     }
 
     public function testUnExerciceDejaInscritNEstPasAjouteDeuxFois(): void
     {
-        $writer = new TrackWriter();
+        $writer = $this->writer();
         $writer->ajouterExercice($this->track(), 'c1', '99-neuf');
         $writer->ajouterExercice($this->track(), 'c1', '99-neuf');
 
@@ -78,6 +87,33 @@ final class TrackWriterTest extends TestCase
     {
         $this->expectExceptionMessageMatches('/Chapitre « c9 » introuvable/');
 
-        (new TrackWriter())->ajouterExercice($this->track(), 'c9', '99-neuf');
+        $this->writer()->ajouterExercice($this->track(), 'c9', '99-neuf');
+    }
+
+    public function testUnSecondEcrivainAttendQueLePremierAitFini(): void
+    {
+        (new Filesystem())->mkdir($this->tmp.'/verrous');
+        // Un autre auteur, dans un autre processus, tient le verrou de ce track.yaml pendant une seconde.
+        $autre = new PhpProcess(sprintf(<<<'PHP'
+            <?php
+            require %s;
+            $verrou = (new Symfony\Component\Lock\LockFactory(new Symfony\Component\Lock\Store\FlockStore(%s)))
+                ->createLock(App\Content\Author\TrackWriter::lockKey(%s));
+            $verrou->acquire(true);
+            echo "pris\n";
+            usleep(1_000_000);
+            $verrou->release();
+            PHP, var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true), var_export($this->tmp.'/verrous', true), var_export($this->tmp.'/track.yaml', true)));
+        $autre->start();
+        $autre->waitUntil(static fn (string $type, string $sortie) => str_contains($sortie, 'pris'));
+
+        $debut = microtime(true);
+        $this->writer()->ajouterExercice($this->track(), 'c1', '99-neuf');
+        $attente = microtime(true) - $debut;
+        $autre->wait();
+
+        $this->assertTrue($autre->isSuccessful(), $autre->getErrorOutput());
+        $this->assertGreaterThan(0.5, $attente, 'L\'écriture a attendu que l\'autre auteur libère le verrou.');
+        $this->assertStringContainsString("      - 02-deux\n      - 99-neuf\n", $this->yaml());
     }
 }
