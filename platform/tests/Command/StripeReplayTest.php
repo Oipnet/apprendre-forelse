@@ -79,4 +79,41 @@ final class StripeReplayTest extends KernelTestCase
         $statuses = array_map(static fn (Purchase $p) => $p->getStatus(), $entityManager->getRepository(Purchase::class)->findAll());
         $this->assertSame([PurchaseStatus::Paid, PurchaseStatus::Paid], $statuses);
     }
+
+    public function testRejouerUnEvenementPrecisApresCorrection(): void
+    {
+        $entityManager = $this->entityManager();
+        $purchase = new Purchase($this->createUser(), 'payant', 7900, PriceKind::Normal, WithdrawalWaiver::TEXT, new \DateTimeImmutable());
+        $entityManager->persist($purchase);
+        $payload = json_encode(['id' => 'evt_1', 'type' => 'checkout.session.completed', 'data' => ['object' => [
+            'id' => 'cs_1', 'payment_status' => 'paid', 'amount_total' => 7900, 'payment_intent' => 'pi_1',
+        ]]], \JSON_THROW_ON_ERROR);
+        $entityManager->persist(new StripeEvent('evt_1', 'checkout.session.completed', $payload, new \DateTimeImmutable()));
+        $entityManager->flush();
+        $tester = new CommandTester((new Application(self::$kernel))->find('app:stripe:rejouer'));
+
+        // Sa session n'est pas encore attachée à l'achat : l'événement échoue.
+        $this->assertSame(Command::FAILURE, $tester->execute(['evenement' => 'evt_1']));
+        $this->assertStringContainsString('✘ evt_1', $tester->getDisplay(true));
+
+        $entityManager = $this->entityManager();
+        $entityManager->clear();
+        $entityManager->find(Purchase::class, $purchase->getId())?->attachCheckoutSession('cs_1');
+        $entityManager->flush();
+        $this->assertSame(Command::SUCCESS, $tester->execute(['evenement' => 'evt_1']));
+        $this->assertStringContainsString('✔ evt_1', $tester->getDisplay(true));
+
+        // Rejoué une fois de trop : rien ne change.
+        $this->assertSame(Command::SUCCESS, $tester->execute(['evenement' => 'evt_1']));
+        $this->assertStringContainsString('déjà traité', $tester->getDisplay(true));
+        $this->assertEmailCount(1); // Une seule confirmation.
+
+        $entityManager->clear();
+        $event = $entityManager->getRepository(StripeEvent::class)->findOneBy(['eventId' => 'evt_1']);
+        $this->assertTrue($event?->isProcessed());
+        $this->assertNull($event->getError());
+        $this->assertSame(PurchaseStatus::Paid, $entityManager->find(Purchase::class, $purchase->getId())?->getStatus());
+
+        $this->assertSame(Command::FAILURE, $tester->execute(['evenement' => 'evt_absent']), 'Un identifiant inconnu est signalé.');
+    }
 }

@@ -19,6 +19,10 @@
             <h1>Paiement en cours de confirmation</h1>
             <p role="status">Stripe nous confirme le paiement dans un instant : cette page se met à jour toute seule.</p>
             <p class="meta">Rien ne bouge au bout d'une minute ? Si vous avez abandonné le paiement, rien n'a été débité. Sinon, <a href="{{ path('app_purchase_thanks', {id: purchase.id}) }}">rechargez la page</a> un peu plus tard : l'accès apparaîtra aussi dans <a href="{{ path('app_account') }}">votre compte</a>.</p>
+        {% elseif purchase.status.value == 'abandoned' %}
+            <h1>Paiement non abouti</h1>
+            <p>Le paiement n'a pas abouti : rien n'a été débité et l'accès n'est pas ouvert.</p>
+            {% if track %}<a class="button primary" href="{{ path('app_purchase', {trackId: track.id}) }}">Réessayer le paiement</a>{% endif %}
         {% else %}
             <h1>Achat remboursé</h1>
             <p>Cet achat a été remboursé ; l'accès au parcours est fermé, votre progression est conservée.</p>

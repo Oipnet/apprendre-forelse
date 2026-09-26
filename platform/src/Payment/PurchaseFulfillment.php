@@ -83,6 +83,16 @@ final readonly class PurchaseFulfillment
     }
 
     /**
+     * Paiement différé refusé : l'achat en attente est abandonné. Sans cela, il resterait « en attente » pour de bon,
+     * et l'apprenant qui réessaie serait renvoyé sur la page de remerciement au lieu de pouvoir payer.
+     */
+    public function paymentFailed(string $sessionId): void
+    {
+        $this->purchases->findOneBySession($sessionId)?->markAbandoned();
+        $this->entityManager->flush();
+    }
+
+    /**
      * Rembourse l'achat chez Stripe, le note et révoque l'accès qu'il avait ouvert (la progression reste).
      *
      * @throws PaymentException
