@@ -78,9 +78,22 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// La console est créée plus bas : les messages de l'aperçu arrivés avant sont gardés en attente.
 	let messagesDeLApercu: ((level: 'warn' | 'error', message: string) => void) | undefined;
 	const enAttente: [level: 'warn' | 'error', message: string][] = [];
+	const versLaConsole = (level: 'warn' | 'error', message: string) => (messagesDeLApercu ? messagesDeLApercu(level, message) : enAttente.push([level, message]));
 	const bridge = new PreviewBridge(runtime, $<HTMLIFrameElement>('#frame'), config.sandboxUrl, {
-		onConsole: (level, message) => (messagesDeLApercu ? messagesDeLApercu(level, message) : enAttente.push([level, message])),
-		onNavigated: (path) => (urlInput.value = path || '/'),
+		onConsole: versLaConsole,
+		onNavigated: (path) => {
+			urlInput.value = path || '/';
+			$('#preview-frozen').hidden = true;
+		},
+		// Une boucle infinie dans le code de la page (onMounted, watch, clic…) gèle l'aperçu : le relais est
+		// recréé, mais la page n'est pas rechargée, elle retomberait dans la boucle. La prochaine modification,
+		// ou ⟳, la recharge.
+		onFrozen: () => {
+			$('#preview-frozen').hidden = false;
+			status('La page de l\'aperçu ne répond plus : boucle infinie dans son code ?', 'ko');
+			versLaConsole('error', 'La page de l\'aperçu ne répond plus depuis plusieurs secondes : boucle infinie dans son code (onMounted, watch, gestionnaire d\'événement…) ? L\'aperçu a été relancé sans recharger cette page. Corrigez la boucle, puis rechargez l\'aperçu (⟳).');
+		},
+		onRecovered: () => status('Aperçu relancé. Corrigez la boucle, puis rechargez-le (⟳).', 'idle'),
 		onResponse: (request, res) => {
 			const path = request.url.slice(bridge.base.length) || '/';
 			$('#requestlog').innerHTML = `<span class="method">${escapeHtml(request.method)}</span> ${escapeHtml(path)} <span class="code c${String(res.status)[0]}">${res.status}</span> · ${Math.round(res.durationMs)} ms`;
@@ -714,6 +727,7 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 				</div>
 				<!-- Sans allow-top-navigation : le code de l'apprenant ne peut pas rediriger la plateforme.
 				     allow-same-origin garde au relais son origine bac à sable, sans quoi il n'enregistre pas le Service Worker. -->
+				<div class="preview-frozen" id="preview-frozen" role="alert" hidden>La page ne répondait plus : boucle infinie dans son code ? L'aperçu a été relancé sans la recharger. Corrigez la boucle, puis rechargez (⟳).</div>
 				<iframe id="frame" title="Aperçu de l'application" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"></iframe>
 				<div class="requestlog"><span id="requestlog"></span><button id="explain-preview" class="ghost small" hidden title="Demander au mentor ce que signifie cette erreur">🩺 Expliquer l'erreur</button></div>
 			</div>

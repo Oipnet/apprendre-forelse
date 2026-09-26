@@ -448,6 +448,13 @@ body.playground-page {
 	padding: 0.3rem 0.5rem;
 	font: 13px ui-monospace, Menlo, monospace;
 }
+.preview-frozen {
+	padding: 0.5rem 0.7rem;
+	font-size: 13px;
+	color: var(--ko);
+	background: var(--panel);
+	border-bottom: 1px solid var(--ko);
+}
 #frame {
 	flex: 1;
 	border: none;
