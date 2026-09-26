@@ -5,7 +5,8 @@
 	"scripts": {
 		"dev": "NODE_OPTIONS=--experimental-transform-types vite",
 		"build": "tsc --noEmit && NODE_OPTIONS=--experimental-transform-types vite build",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run"
 	},
 	"license": "AGPL-3.0-or-later",
 	"type": "module",
@@ -27,7 +28,8 @@
 		"@php-wasm/node": "^3.1.55",
 		"typescript": "^7.0.2",
 		"vite": "^8.3.0",
-		"vite-plugin-symfony": "^8.2.4"
+		"vite-plugin-symfony": "^8.2.4",
+		"vitest": "^5.0.1"
 	},
 	"overrides": {
 		"@php-wasm/web-5-2": "file:./stubs/php-wasm-unused",
