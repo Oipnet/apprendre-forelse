@@ -23,3 +23,8 @@ when@test:
         # Stripe n'est jamais appelé par les tests : une passerelle factice note les sessions et remboursements.
         App\Payment\PaymentGateway:
             class: App\Tests\Payment\FakePaymentGateway
+        # Requêtes SQL jouées (profilage de Doctrine, actif en debug) : pour vérifier qu'un traitement ne fait pas une
+        # requête par ligne.
+        test.doctrine.debug_data_holder:
+            alias: doctrine.debug_data_holder
+            public: true
