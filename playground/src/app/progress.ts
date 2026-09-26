@@ -32,7 +32,7 @@ export interface ProgressStore {
 
 /** Même règle que App\Service\XpCalculator côté serveur : −25 % par indice, plancher à 25 %. */
 export function xpFor(baseXp: number, hintsUsed: number): number {
-	return Math.round(baseXp * Math.max(0.25, 1 - 0.25 * hintsUsed));
+	return Math.round(baseXp * Math.max(0.25, 1 - 0.25 * Math.max(0, hintsUsed)));
 }
 
 export class LocalProgressStore implements ProgressStore {
