@@ -54,12 +54,9 @@ final readonly class ProgressService
     {
         return $this->entityManager->wrapInTransaction(function () use ($user, $exercise, $hintsUsed): array {
             $this->entityManager->refresh($user, LockMode::PESSIMISTIC_WRITE);
-            $progress = $this->find($user, $exercise);
-            if (null !== $progress) {
-                // Déjà chargée plus tôt dans la requête : l'état lu alors peut dater d'avant le verrou.
-                $this->entityManager->refresh($progress);
-            }
-            $progress ??= $this->create($user, $exercise);
+            $progress = $this->findOrCreate($user, $exercise);
+            // Déjà chargée plus tôt dans la requête : l'état lu alors peut dater d'avant le verrou.
+            $this->entityManager->refresh($progress);
             $alreadyCompleted = $progress->isCompleted();
             $hints = max($progress->getHintsUsed(), min($hintsUsed, \count($exercise->hints)));
             // La solution consultée ne rapporte rien : c'est ce que promet la page d'accueil.
@@ -120,17 +117,10 @@ final readonly class ProgressService
         return $imported;
     }
 
+    /** Créée par une insertion qui ne peut pas échouer sur une création simultanée (voir le dépôt). */
     private function findOrCreate(User $user, Exercise $exercise): ExerciseProgress
     {
-        return $this->find($user, $exercise) ?? $this->create($user, $exercise);
-    }
-
-    private function create(User $user, Exercise $exercise): ExerciseProgress
-    {
-        $progress = new ExerciseProgress($user, $exercise->trackId, $exercise->id);
-        $this->entityManager->persist($progress);
-
-        return $progress;
+        return $this->repository->findOrCreate($user, $exercise->trackId, $exercise->id);
     }
 
     /**

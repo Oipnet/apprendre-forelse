@@ -7,6 +7,7 @@ use App\Entity\ExerciseProgress;
 use App\Entity\ProgressStatus;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -24,6 +25,44 @@ class ExerciseProgressRepository extends ServiceEntityRepository
     {
         // findOneBy traduit null en « IS NULL ».
         return $this->findOneBy(['user' => $user, 'trackId' => $trackId, 'exerciseId' => $exerciseId]);
+    }
+
+    /**
+     * La progression de l'apprenant sur l'exercice, créée si besoin. Sûr face à une création simultanée (premier
+     * brouillon et première réussite dans la même seconde) : la ligne est insérée par un INSERT … ON CONFLICT DO NOTHING
+     * qui laisse gagner l'autre requête au lieu d'échouer sur la contrainte unique, puis relue. Les valeurs de départ
+     * sont celles d'une ExerciseProgress neuve.
+     */
+    public function findOrCreate(User $user, ?string $trackId, string $exerciseId): ExerciseProgress
+    {
+        $existing = $this->findOne($user, $trackId, $exerciseId);
+        if (null !== $existing) {
+            return $existing;
+        }
+
+        $entityManager = $this->getEntityManager();
+        $connection = $entityManager->getConnection();
+        $metadata = $entityManager->getClassMetadata(ExerciseProgress::class);
+        $fresh = new ExerciseProgress($user, $trackId, $exerciseId);
+        $columns = [$metadata->getSingleAssociationJoinColumnName('user') => $user->getId()];
+        $types = [$metadata->getSingleAssociationJoinColumnName('user') => Types::INTEGER];
+        foreach ($metadata->getFieldNames() as $field) {
+            if ($metadata->isIdentifier($field)) {
+                continue;
+            }
+            $value = $metadata->getFieldValue($fresh, $field);
+            $column = $metadata->getColumnName($field);
+            $columns[$column] = $value instanceof \BackedEnum ? $value->value : $value;
+            $types[$column] = $metadata->getTypeOfField($field) ?? Types::STRING;
+        }
+        $quoted = array_map($connection->quoteSingleIdentifier(...), array_keys($columns));
+        $connection->executeStatement(
+            sprintf('INSERT INTO %s (%s) VALUES (%s) ON CONFLICT DO NOTHING', $metadata->getTableName(), implode(', ', $quoted), implode(', ', array_fill(0, \count($columns), '?'))),
+            array_values($columns),
+            array_values($types),
+        );
+
+        return $this->findOne($user, $trackId, $exerciseId) ?? throw new \LogicException(sprintf('Progression « %s » introuvable juste après sa création.', $exerciseId));
     }
 
     /** @return array<string, ExerciseProgress> progression en Pratique, par identifiant d'exercice */

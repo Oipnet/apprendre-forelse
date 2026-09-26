@@ -2,12 +2,15 @@
 
 namespace App\Tests\Service;
 
+use App\Api\ExerciseAccessGuard;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Entity\ExerciseProgress;
 use App\Entity\ProgressStatus;
 use App\Entity\User;
+use App\Repository\ExerciseProgressRepository;
 use App\Service\ProgressService;
+use App\Service\XpCalculator;
 use App\Tests\DatabaseTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -99,5 +102,66 @@ final class ProgressServiceTest extends KernelTestCase
         $this->assertSame($exercise->xp, $this->xpInDatabase($ada));
         $this->entityManager->clear();
         $this->assertTrue($this->entityManager->getRepository(ExerciseProgress::class)->findOneBy(['exerciseId' => '01-bonjour'])?->isCompleted());
+    }
+
+    public function testUnPremierBrouillonCreeEnMemeTempsParUneAutreRequeteNEchouePas(): void
+    {
+        $ada = $this->createUser();
+        $exercise = $this->exercise('01-bonjour');
+
+        // Premier PUT de brouillon pendant que la première réussite crée la même ligne.
+        $draft = $this->withConcurrentCreation($ada)->saveDraft($ada, $exercise, [], 1);
+
+        $this->assertSame(1, $draft->getHintsUsed());
+        $this->assertSame(1, $this->progressRows($ada), 'Une seule progression pour l\'exercice.');
+    }
+
+    public function testUnePremiereReussiteCreeeEnMemeTempsParUneAutreRequeteNEchouePas(): void
+    {
+        $ada = $this->createUser();
+        $exercise = $this->exercise('01-bonjour');
+
+        // Première réussite pendant que le premier brouillon crée la même ligne.
+        $result = $this->withConcurrentCreation($ada)->complete($ada, $exercise, 0);
+
+        $this->assertSame($exercise->xp, $result['xpEarned']);
+        $this->assertSame($exercise->xp, $this->xpInDatabase($ada));
+        $this->assertSame(1, $this->progressRows($ada), 'Une seule progression pour l\'exercice.');
+        $this->entityManager->clear();
+        $this->assertTrue($this->entityManager->getRepository(ExerciseProgress::class)->findOneBy(['exerciseId' => '01-bonjour'])?->isCompleted());
+    }
+
+    /**
+     * Le service, avec un dépôt qui laisse une autre requête créer la progression juste après avoir constaté qu'elle
+     * n'existait pas : l'intervalle où deux premières écritures simultanées se croisent.
+     */
+    private function withConcurrentCreation(User $user): ProgressService
+    {
+        $repository = new class(static::getContainer()->get('doctrine')) extends ExerciseProgressRepository {
+            private bool $armed = true;
+
+            public function findOne(User $user, ?string $trackId, string $exerciseId): ?ExerciseProgress
+            {
+                $found = parent::findOne($user, $trackId, $exerciseId);
+                if (null === $found && $this->armed) {
+                    $this->armed = false;
+                    $this->getEntityManager()->getConnection()->executeStatement(
+                        "INSERT INTO exercise_progress (user_id, track_id, exercise_id, status, files, hints_used, xp_earned, solution_revealed, started_at, updated_at)
+                         VALUES (?, ?, ?, 'in_progress', '[]', 0, 0, false, NOW(), NOW())",
+                        [$user->getId(), $trackId, $exerciseId],
+                    );
+                }
+
+                return $found;
+            }
+        };
+        $container = static::getContainer();
+
+        return new ProgressService($repository, $this->entityManager, $container->get(XpCalculator::class), $container->get(ContentRepository::class), $container->get(ExerciseAccessGuard::class));
+    }
+
+    private function progressRows(User $user): int
+    {
+        return (int) $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM exercise_progress WHERE user_id = ?', [$user->getId()]);
     }
 }
