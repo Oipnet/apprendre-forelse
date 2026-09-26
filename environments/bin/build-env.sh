@@ -97,7 +97,7 @@ if [ -n "$INSTALL_DIR" ]; then
     # Un paquet installé par clone porte son .git, ses tests et sa documentation : quand GitHub refuse ses
     # archives (403, limite des requêtes anonymes), Composer se rabat sans rien dire sur un « git clone », et
     # l'archive que chaque apprenant télécharge passe de quelques dizaines de Mo à plusieurs Go.
-    CLONES=$(cd "$INSTALL_DIR" && find vendor -mindepth 3 -maxdepth 3 -name .git 2>/dev/null | sed 's|^vendor/||; s|/\.git$||' | sort)
+    CLONES=$(cd "$INSTALL_DIR" && { find vendor -mindepth 3 -maxdepth 3 -name .git 2>/dev/null || true; } | sed 's|^vendor/||; s|/\.git$||' | sort)
     if [ -n "$CLONES" ]; then
         {
             echo "Environnement $ENV_NAME : ces paquets ont été installés par clone git, et non depuis leur archive :"
