@@ -45,6 +45,8 @@ async function start() {
 	window.addEventListener('message', (event: MessageEvent<HostToRelay>) => {
 		if (event.origin !== hostOrigin || event.source !== window.parent) return;
 		if (event.data.type === 'navigate') frame.src = base + (event.data.path.startsWith('/') ? event.data.path : `/${event.data.path}`);
+		// L'aperçu (même origine) partage le fil du relais : bloqué par une boucle infinie, il n'y a plus de réponse.
+		else if (event.data.type === 'ping') toHost({ type: 'pong', seq: Number(event.data.seq) });
 	});
 
 	frame.addEventListener('load', () => {
