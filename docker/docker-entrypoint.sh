@@ -37,6 +37,9 @@ if [ "$1" = 'frankenphp' ]; then
 	if [ "${MIGRATIONS_AT_STARTUP:-1}" = "1" ]; then
 		php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
 	fi
+	# Compteurs des limites de débit expirés (table cache_items) : l'adaptateur ne supprime une ligne que si sa clé
+	# est relue ; celles des adresses IP de passage resteraient. Sans gravité en cas d'échec.
+	php bin/console cache:pool:prune --no-interaction || echo "Purge des compteurs expirés impossible, on continue."
 
 	# Environnements déclarés par les packs (clé « environments » de pack.yaml) : installés au démarrage
 	# si l'instance l'a demandé. En tâche de fond, volontairement : cloner puis lancer composer dure des
