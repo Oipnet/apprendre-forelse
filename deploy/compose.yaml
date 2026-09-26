@@ -31,6 +31,8 @@ services:
       MIGRATIONS_AT_STARTUP: "0"
       # Emails en file d'attente dans la base, envoyés par le service « worker » ci-dessous.
       MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0}
+      # Verrous (écriture de track.yaml dans l'atelier) : fichiers du conteneur, qui écrit seul dans ses packs.
+      LOCK_DSN: ${LOCK_DSN:-flock}
       # Installations d'environnements confiées au service « empaqueteur » ci-dessous, loin des secrets.
       ENVIRONMENTS_BUILDER: ${ENVIRONMENTS_BUILDER:-empaqueteur}
       # Politique de sécurité du contenu : 1 = signaler seulement (« CSP : … » dans les journaux), 0 = bloquer.
