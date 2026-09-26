@@ -94,6 +94,22 @@ if [ -n "$INSTALL_DIR" ]; then
         # shellcheck disable=SC2086
         (cd "$INSTALL_DIR" && composer reinstall --no-interaction --quiet $PATH_PACKAGES && composer dump-autoload --optimize --quiet)
     fi
+    # Un paquet installé par clone porte son .git, ses tests et sa documentation : quand GitHub refuse ses
+    # archives (403, limite des requêtes anonymes), Composer se rabat sans rien dire sur un « git clone », et
+    # l'archive que chaque apprenant télécharge passe de quelques dizaines de Mo à plusieurs Go.
+    CLONES=$(cd "$INSTALL_DIR" && find vendor -mindepth 3 -maxdepth 3 -name .git 2>/dev/null | sed 's|^vendor/||; s|/\.git$||' | sort)
+    if [ -n "$CLONES" ]; then
+        {
+            echo "Environnement $ENV_NAME : ces paquets ont été installés par clone git, et non depuis leur archive :"
+            echo "$CLONES" | sed 's/^/  - /'
+            echo "Composer se rabat sur un clone quand GitHub refuse ses téléchargements (403, limite des requêtes"
+            echo "anonymes). L'archive serait énorme : rien n'est empaqueté. Donnez un jeton GitHub à Composer"
+            echo "(variable COMPOSER_AUTH='{\"github-oauth\":{\"github.com\":\"<jeton>\"}}', ou"
+            echo "composer config --global github-oauth.github.com <jeton>), ou réessayez plus tard ; supprimez"
+            echo "d'abord $INSTALL_DIR/vendor, que Composer ne réinstallerait pas."
+        } >&2
+        exit 1
+    fi
 fi
 
 # Un environnement seul s'empaquette depuis son dossier ; une chaîne se superpose d'abord dans un
