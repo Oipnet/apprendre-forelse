@@ -119,7 +119,7 @@ class Purchase
             && $this->cohort?->getId() === $quote->cohort?->getId() && $this->termsVersion === $termsVersion;
     }
 
-    /** Session Stripe expirée ou remplacée, sans paiement. */
+    /** Session Stripe expirée ou remplacée, ou paiement différé refusé : rien n'a été payé. */
     public function markAbandoned(): void
     {
         if (PurchaseStatus::Pending === $this->status) {

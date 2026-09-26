@@ -79,6 +79,7 @@ final readonly class StripeWebhook
             $object = json_decode($event->getPayload(), true, flags: \JSON_THROW_ON_ERROR)['data']['object'] ?? [];
             match (true) {
                 \in_array($event->getType(), self::PAID_EVENTS, true) => $this->handlePaidSession($object),
+                'checkout.session.async_payment_failed' === $event->getType() => $this->handleFailedSession($object),
                 'charge.refunded' === $event->getType() => $this->handleRefundedCharge($object),
                 'charge.dispute.created' === $event->getType() => $this->handleDispute($object, closed: false),
                 'charge.dispute.closed' === $event->getType() => $this->handleDispute($object, closed: true),
@@ -140,6 +141,19 @@ final readonly class StripeWebhook
             $this->fulfillment->disputed($dispute['payment_intent']);
         } elseif ('won' === ($dispute['status'] ?? null)) {
             $this->fulfillment->disputeWon($dispute['payment_intent']);
+        }
+    }
+
+    /**
+     * Paiement différé refusé (prélèvement rejeté…) : la session est close chez Stripe, l'achat est abandonné pour
+     * que l'apprenant puisse payer autrement.
+     *
+     * @param array<string, mixed> $session objet Checkout Session de l'événement
+     */
+    private function handleFailedSession(array $session): void
+    {
+        if (\is_string($session['id'] ?? null)) {
+            $this->fulfillment->paymentFailed($session['id']);
         }
     }
 

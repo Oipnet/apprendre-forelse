@@ -304,6 +304,127 @@ final class PurchaseTest extends WebTestCase
         $this->assertSame('Aucun achat pour la session Stripe « cs_inconnue ».', $event->getError(), 'L\'erreur est gardée pour le rejeu.');
     }
 
+    public function testUnEvenementEnEchecEstTraiteQuandStripeLeRelivre(): void
+    {
+        $this->setPrice('payant', 7900);
+        $ada = $this->createUser();
+        $this->client->loginUser($ada);
+        $this->checkout();
+        $purchase = $this->onlyPurchase();
+
+        // L'événement vise une session que la plateforme ne connaît pas (encore) : en échec, Stripe réessaiera.
+        $this->sendPaidWebhook($this->client, 'cs_tardive', 7900, eventId: 'evt_tardif');
+        $this->assertResponseStatusCodeSame(500);
+        $this->assertSame(PurchaseStatus::Pending, $this->onlyPurchase()->getStatus());
+        $this->assertCount(0, $this->accessesOf($ada));
+        $this->assertEmailCount(0);
+
+        // La cause est corrigée, puis Stripe relivre le même événement.
+        $this->entityManager()->createQuery('UPDATE '.Purchase::class.' p SET p.stripeSessionId = :session')->execute(['session' => 'cs_tardive']);
+        $this->sendPaidWebhook($this->client, 'cs_tardive', 7900, eventId: 'evt_tardif');
+        $this->assertResponseStatusCodeSame(204);
+        $this->assertEmailCount(1); // La confirmation part au traitement réussi.
+
+        $this->assertSame(PurchaseStatus::Paid, $this->onlyPurchase()->getStatus());
+        $this->assertCount(1, $this->accessesOf($ada));
+        $event = $this->entityManager()->getRepository(StripeEvent::class)->findOneBy(['eventId' => 'evt_tardif']);
+        $this->assertNotNull($event);
+        $this->assertTrue($event->isProcessed());
+        $this->assertNull($event->getError(), 'L\'erreur du premier essai est effacée.');
+        $this->assertSame(2, $event->getDeliveries());
+        $this->assertSame($purchase->getId(), $this->onlyPurchase()->getId());
+    }
+
+    public function testUnPaiementDiffereNOuvreLAccesQuAuPaiementConfirme(): void
+    {
+        $this->setPrice('payant', 7900);
+        $ada = $this->createUser();
+        $this->client->loginUser($ada);
+        $this->checkout();
+        $purchase = $this->onlyPurchase();
+        $session = 'cs_test_'.$purchase->getId();
+
+        // Prélèvement lancé : la session est terminée chez Stripe, mais rien n'est encore payé.
+        $this->sendSessionWebhook('checkout.session.completed', $session, 'unpaid', 'evt_lance');
+        $this->assertResponseStatusCodeSame(204);
+        $this->assertSame(PurchaseStatus::Pending, $this->onlyPurchase()->getStatus());
+        $this->assertCount(0, $this->accessesOf($ada), 'Pas d\'accès sans paiement.');
+        $this->assertEmailCount(0);
+        $event = $this->entityManager()->getRepository(StripeEvent::class)->findOneBy(['eventId' => 'evt_lance']);
+        $this->assertTrue($event?->isProcessed(), 'Rien à faire, mais pas un échec : Stripe ne doit pas réessayer.');
+        $this->client->loginUser($ada);
+        $this->client->request('GET', '/achat/'.$purchase->getId().'/merci');
+        $this->assertSelectorTextContains('h1', 'Paiement en cours de confirmation');
+
+        $this->sendSessionWebhook('checkout.session.async_payment_succeeded', $session, 'paid', 'evt_confirme');
+        $this->assertResponseStatusCodeSame(204);
+        $purchase = $this->onlyPurchase();
+        $this->assertSame(PurchaseStatus::Paid, $purchase->getStatus());
+        $this->assertSame(7900, $purchase->getAmountPaid());
+        $this->assertCount(1, $this->accessesOf($ada));
+        $this->assertEmailCount(1);
+        $this->client->loginUser($ada);
+        $this->client->request('GET', '/parcours/payant/e2');
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testUnPaiementDiffereRefuseLaissePayerAutrement(): void
+    {
+        $this->setPrice('payant', 7900);
+        $ada = $this->createUser();
+        $this->client->loginUser($ada);
+        $this->checkout();
+        $first = $this->onlyPurchase();
+        $session = 'cs_test_'.$first->getId();
+        FakePaymentGateway::$statuses[$session] = CheckoutSession::COMPLETE;
+        $this->sendSessionWebhook('checkout.session.completed', $session, 'unpaid', 'evt_lance');
+
+        // Le prélèvement est rejeté.
+        $this->sendSessionWebhook('checkout.session.async_payment_failed', $session, 'unpaid', 'evt_refuse');
+        $this->assertResponseStatusCodeSame(204);
+        $this->assertSame(PurchaseStatus::Abandoned, $this->onlyPurchase()->getStatus());
+        $this->assertCount(0, $this->accessesOf($ada));
+        $this->assertEmailCount(0);
+
+        $this->client->loginUser($ada);
+        $this->client->request('GET', '/achat/'.$first->getId().'/merci');
+        $this->assertSelectorTextContains('h1', 'Paiement non abouti');
+        $this->assertSelectorNotExists('meta[http-equiv="refresh"]', 'Plus rien à attendre.');
+        $this->assertSelectorExists('a[href="/parcours/payant/acheter"]');
+
+        // Un nouvel essai ouvre une nouvelle session, au lieu de renvoyer vers la page d'attente.
+        $this->checkout();
+        [, $new] = $this->purchasesInOrder();
+        $this->assertSame(PurchaseStatus::Pending, $new->getStatus());
+        $this->assertResponseRedirects('https://checkout.stripe.test/c/pay/cs_test_'.$new->getId(), 303);
+
+        // Un refus relivré après coup ne touche pas au nouvel achat.
+        $this->sendSessionWebhook('checkout.session.async_payment_failed', $session, 'unpaid', 'evt_refuse');
+        $this->assertSame(PurchaseStatus::Pending, $this->purchasesInOrder()[1]->getStatus());
+    }
+
+    public function testUnRefusDePaiementNeDefaitPasUnAchatPaye(): void
+    {
+        $this->paidPurchase();
+        $session = 'cs_test_'.$this->onlyPurchase()->getId();
+
+        $this->sendSessionWebhook('checkout.session.async_payment_failed', $session, 'unpaid', 'evt_refuse');
+        $this->assertResponseStatusCodeSame(204);
+        $this->assertSame(PurchaseStatus::Paid, $this->onlyPurchase()->getStatus());
+    }
+
+    /** Événement Checkout Session signé, avec l'état de paiement donné (paid, unpaid…). */
+    private function sendSessionWebhook(string $type, string $sessionId, string $paymentStatus, string $eventId): void
+    {
+        $this->sendWebhook($this->client, $type, [
+            'id' => $sessionId,
+            'object' => 'checkout.session',
+            'payment_status' => $paymentStatus,
+            'amount_total' => 7900,
+            'payment_intent' => 'pi_'.$sessionId,
+        ], $eventId);
+    }
+
     public function testSiStripeNeRepondPasRienNEstEnregistre(): void
     {
         $this->setPrice('payant', 7900);
