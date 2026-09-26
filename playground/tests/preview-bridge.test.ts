@@ -22,6 +22,13 @@ class Scene {
 		window.dispatchEvent(Object.assign(new Event('message'), { data, origin, source, ports }));
 	}
 
+	/** Relais chargé et prêt : sans « ready », le délai de démarrage (20 s) finirait par rejeter. */
+	async started(): Promise<void> {
+		const started = this.bridge.start();
+		this.receive({ type: 'ready', base: this.bridge.base });
+		await started;
+	}
+
 	/** Une requête de l'aperçu, avec le port où répondre ; attend que la réponse y soit postée. */
 	async ask(url: string, options: { origin?: string; source?: unknown } = {}): Promise<ReturnType<typeof vi.fn>> {
 		const port = { postMessage: vi.fn() };
@@ -55,7 +62,7 @@ describe('PreviewBridge', () => {
 
 	it('sert une requête sous son préfixe et transmet la réponse', async () => {
 		const scene = new Scene();
-		void scene.bridge.start();
+		await scene.started();
 
 		const reply = await scene.ask(`${scene.bridge.base}/menu?jour=lundi`);
 
@@ -65,7 +72,7 @@ describe('PreviewBridge', () => {
 
 	it('refuse une requête hors de son préfixe, sans la jouer', async () => {
 		const scene = new Scene();
-		void scene.bridge.start();
+		await scene.started();
 
 		const reply = await scene.ask('/preview/un-autre-relais/menu');
 
@@ -75,7 +82,7 @@ describe('PreviewBridge', () => {
 
 	it('ignore les messages d\'une autre origine ou d\'une autre fenêtre', async () => {
 		const scene = new Scene();
-		void scene.bridge.start();
+		await scene.started();
 
 		const fromPlatform = await scene.ask(`${scene.bridge.base}/`, { origin: 'https://plateforme.example' });
 		const fromElsewhere = await scene.ask(`${scene.bridge.base}/`, { source: { postMessage: vi.fn() } });
@@ -89,7 +96,7 @@ describe('PreviewBridge', () => {
 		const scene = new Scene();
 		vi.spyOn(console, 'error').mockImplementation(() => undefined);
 		scene.request.mockRejectedValueOnce(new Error('Fatal error: Uncaught Exception\n#0 worker.ts(12)\n#1 {main}'));
-		void scene.bridge.start();
+		await scene.started();
 
 		const reply = await scene.ask(`${scene.bridge.base}/`);
 
