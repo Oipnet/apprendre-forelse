@@ -23,9 +23,9 @@ fi
 MAJEURE="${VERSION%%.*}"
 if [ "$MAJEURE" != 0 ]; then
     for f in auto-hebergement/compose.yaml auto-hebergement/.env.example; do
-        etiquettes="$(grep -oE 'apprendre-forelse:[0-9.]+' "$f" | sed 's/.*://' | grep -vF . | sort -u)"
+        etiquettes="$({ grep -oE 'apprendre-forelse:[0-9.]+' "$f" || true; } | sed 's/.*://' | { grep -vF . || true; } | sort -u)"
         if [ "$etiquettes" != "$MAJEURE" ]; then
-            echo "$f : l'image par défaut doit être :$MAJEURE (trouvé : ${etiquettes//$'\n'/ } ) — mettez aussi à jour le tableau des étiquettes de auto-hebergement/README.md." >&2
+            echo "$f : l'image par défaut doit être :$MAJEURE (trouvé : ${etiquettes:-aucune}) — mettez aussi à jour le tableau des étiquettes de auto-hebergement/README.md." >&2
             exit 1
         fi
     done
