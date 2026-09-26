@@ -13,7 +13,7 @@ x-logging: &logging
 
 services:
   app:
-    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:1}
+    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:2}
     logging: *logging
     restart: unless-stopped
     depends_on:
@@ -118,7 +118,7 @@ services:
   # (nouvelles tentatives pendant deux heures, puis `bin/console messenger:failed:retry` dans ce conteneur).
   # Même image, mêmes réglages que « app » ; il redémarre de lui-même toutes les heures pour rester léger.
   worker:
-    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:1}
+    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:2}
     logging: *logging
     restart: unless-stopped
     depends_on:
@@ -142,7 +142,7 @@ services:
   # (Stripe, Anthropic, APP_SECRET), ni la base, ni le réseau des autres services — seulement Internet, pour
   # cloner et télécharger les dépendances, et le volume des environnements, qu'il partage avec « app ».
   empaqueteur:
-    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:1}
+    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:2}
     logging: *logging
     restart: unless-stopped
     depends_on:
