@@ -7,6 +7,7 @@ use App\Content\EnvironmentRegistry;
 use App\Instance\EnvironmentInstaller;
 use App\Instance\InstalledEnvironment;
 use App\Instance\InstalledEnvironments;
+use App\Tests\GitIsolationTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -22,11 +23,12 @@ use Symfony\Component\Process\Process;
  */
 final class EnvironmentInstallerTest extends TestCase
 {
+    use GitIsolationTrait;
+
     private const string ROOT = __DIR__.'/../../..';
 
     private string $tmp;
     private Filesystem $filesystem;
-    private string|false $home;
 
     protected function setUp(): void
     {
@@ -37,17 +39,14 @@ final class EnvironmentInstallerTest extends TestCase
         $this->tmp = sys_get_temp_dir().'/install-'.bin2hex(random_bytes(6));
         $this->filesystem->mkdir([$this->tmp.'/installes', $this->tmp.'/maison']);
 
-        // Un « chez-soi » par test. `git config --global` écrit dans $HOME/.gitconfig ; sans cela, la
-        // redirection posée plus bas survivrait au test et le suivant clonerait un dossier effacé.
-        $this->home = getenv('HOME');
-        putenv('HOME='.$this->tmp.'/maison');
-        putenv('XDG_CONFIG_HOME='.$this->tmp.'/maison');
+        // Un « chez-soi » par test : la redirection posée par `git config --global` (plus bas) écrit dans sa
+        // configuration git, jamais dans celle de la machine, et ne survit pas au test.
+        $this->isolateGitConfig($this->tmp.'/maison');
     }
 
     protected function tearDown(): void
     {
-        putenv(false === $this->home ? 'HOME' : 'HOME='.$this->home);
-        putenv('XDG_CONFIG_HOME');
+        $this->restoreGitConfig();
         $this->filesystem->remove($this->tmp);
     }
 

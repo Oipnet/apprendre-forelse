@@ -9,6 +9,7 @@ use App\Instance\EnvironmentArtifacts;
 use App\Instance\EnvironmentInstaller;
 use App\Instance\InstalledEnvironments;
 use App\Instance\PackEnvironments;
+use App\Tests\GitIsolationTrait;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -23,11 +24,12 @@ use Symfony\Component\Process\Process;
  */
 final class EnvironmentCommandsTest extends TestCase
 {
+    use GitIsolationTrait;
+
     private const string ROOT = __DIR__.'/../../..';
 
     private string $tmp;
     private Filesystem $filesystem;
-    private string|false $home;
 
     protected function setUp(): void
     {
@@ -36,16 +38,12 @@ final class EnvironmentCommandsTest extends TestCase
         $this->filesystem->mkdir([$this->tmp.'/installes', $this->tmp.'/packs', $this->tmp.'/maison']);
         $this->filesystem->dumpFile($this->tmp.'/socle/base-test/environment.yaml', "id: base-test\nphp: '8.4'\ntitle: Socle\n");
         $this->filesystem->dumpFile($this->tmp.'/socle/base-test/src/Base.php', '<?php // du socle');
-        // La configuration git d'un test (redirection d'adresse) ne doit pas survivre à ce test.
-        $this->home = getenv('HOME');
-        putenv('HOME='.$this->tmp.'/maison');
-        putenv('XDG_CONFIG_HOME='.$this->tmp.'/maison');
+        $this->isolateGitConfig($this->tmp.'/maison');
     }
 
     protected function tearDown(): void
     {
-        putenv(false === $this->home ? 'HOME' : 'HOME='.$this->home);
-        putenv('XDG_CONFIG_HOME');
+        $this->restoreGitConfig();
         $this->filesystem->remove($this->tmp);
     }
 
