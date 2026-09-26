@@ -8,6 +8,20 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Corrigé
+
+- **Auto-hébergement : une instance neuve démarre en 2.x.** L'image par défaut de
+  `auto-hebergement/compose.yaml` et de `.env.example` était encore `:1`, une branche qui ne reçoit plus rien.
+  Une instance existante qui a `APP_IMAGE=…:1` dans son `.env` y reste : passez à `:2` après avoir lu les
+  changements cassants de la 2.0.0. `tools/release.sh` refuse désormais de publier une majeure que l'image par
+  défaut ne suit pas.
+- **Paiement différé refusé** (prélèvement rejeté) : l'achat restait « en attente » et l'apprenant ne pouvait
+  plus repayer. Il est maintenant abandonné, et la page de retour propose de réessayer. Ajoutez l'événement
+  `checkout.session.async_payment_failed` au webhook déclaré chez Stripe.
+- **Limites de débit** (mentor, contact, emails, connexion…) : leurs compteurs repartaient à zéro à chaque
+  redémarrage. Ils sont désormais dans la base (table `cache_items`, créée par migration), et les compteurs
+  expirés sont purgés au démarrage.
+
 ## 2.2.0 — 2026-09-25
 
 ### Ajouté

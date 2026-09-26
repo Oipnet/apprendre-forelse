@@ -18,6 +18,18 @@ if [ -z "$(sed -n '/^## Non publié$/,/^## [0-9]/p' CHANGELOG.md | sed '1d;$d' |
     echo "CHANGELOG.md : la section « Non publié » est vide — décrivez ce qui change avant de publier." >&2
     exit 1
 fi
+# Une instance auto-hébergée neuve prend l'image de sa majeure (:2…) : elle doit être celle qu'on publie, sinon elle
+# démarre sur une branche qui ne reçoit plus rien. Une 0.x ne publie pas d'étiquette de majeure.
+MAJEURE="${VERSION%%.*}"
+if [ "$MAJEURE" != 0 ]; then
+    for f in auto-hebergement/compose.yaml auto-hebergement/.env.example; do
+        etiquettes="$({ grep -oE 'apprendre-forelse:[0-9.]+' "$f" || true; } | sed 's/.*://' | { grep -vF . || true; } | sort -u)"
+        if [ "$etiquettes" != "$MAJEURE" ]; then
+            echo "$f : l'image par défaut doit être :$MAJEURE (trouvé : ${etiquettes:-aucune}) — mettez aussi à jour le tableau des étiquettes de auto-hebergement/README.md." >&2
+            exit 1
+        fi
+    done
+fi
 
 echo "$VERSION" > VERSION
 # Le playground est publié avec le moteur : même numéro, pour que l'îlot JS soit identifiable.
