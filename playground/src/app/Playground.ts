@@ -91,9 +91,13 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		onFrozen: () => {
 			$('#preview-frozen').hidden = false;
 			status('La page de l\'aperçu ne répond plus : boucle infinie dans son code ?', 'ko');
-			versLaConsole('error', 'La page de l\'aperçu ne répond plus depuis plusieurs secondes : boucle infinie dans son code (onMounted, watch, gestionnaire d\'événement…) ? L\'aperçu a été relancé sans recharger cette page. Corrigez la boucle, puis rechargez l\'aperçu (⟳).');
+			versLaConsole('error', 'La page de l\'aperçu ne répond plus depuis plusieurs secondes : boucle infinie dans son code (onMounted, watch, gestionnaire d\'événement…), ou boîte de dialogue (alert, confirm) restée ouverte ? L\'aperçu a été relancé sans recharger cette page. Corrigez la boucle, puis rechargez l\'aperçu (⟳).');
 		},
 		onRecovered: () => status('Aperçu relancé. Corrigez la boucle, puis rechargez-le (⟳).', 'idle'),
+		onRestartFailed: (message) => {
+			status('L\'aperçu n\'a pas pu être relancé : rechargez-le (⟳) pour réessayer.', 'ko');
+			versLaConsole('error', `Relais de l'aperçu : ${message}`);
+		},
 		onResponse: (request, res) => {
 			const path = request.url.slice(bridge.base.length) || '/';
 			$('#requestlog').innerHTML = `<span class="method">${escapeHtml(request.method)}</span> ${escapeHtml(path)} <span class="code c${String(res.status)[0]}">${res.status}</span> · ${Math.round(res.durationMs)} ms`;
@@ -727,7 +731,7 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 				</div>
 				<!-- Sans allow-top-navigation : le code de l'apprenant ne peut pas rediriger la plateforme.
 				     allow-same-origin garde au relais son origine bac à sable, sans quoi il n'enregistre pas le Service Worker. -->
-				<div class="preview-frozen" id="preview-frozen" role="alert" hidden>La page ne répondait plus : boucle infinie dans son code ? L'aperçu a été relancé sans la recharger. Corrigez la boucle, puis rechargez (⟳).</div>
+				<div class="preview-frozen" id="preview-frozen" role="alert" hidden>La page ne répondait plus : boucle infinie dans son code, ou boîte de dialogue restée ouverte ? L'aperçu a été relancé sans la recharger. Corrigez la boucle, puis rechargez (⟳).</div>
 				<iframe id="frame" title="Aperçu de l'application" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"></iframe>
 				<div class="requestlog"><span id="requestlog"></span><button id="explain-preview" class="ghost small" hidden title="Demander au mentor ce que signifie cette erreur">🩺 Expliquer l'erreur</button></div>
 			</div>

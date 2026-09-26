@@ -50,14 +50,16 @@ describe('PreviewBridge : battement de cœur', () => {
 	let bridge: PreviewBridge;
 	const onFrozen = vi.fn();
 	const onRecovered = vi.fn();
+	const onRestartFailed = vi.fn();
 
 	beforeEach(async () => {
 		vi.useFakeTimers();
 		vi.stubGlobal('window', new EventTarget());
 		onFrozen.mockReset();
 		onRecovered.mockReset();
+		onRestartFailed.mockReset();
 		relais = new FauxRelais();
-		bridge = new PreviewBridge({} as Runtime, relais.element as unknown as HTMLIFrameElement, `${SANDBOX}/relais.html`, { onFrozen, onRecovered });
+		bridge = new PreviewBridge({} as Runtime, relais.element as unknown as HTMLIFrameElement, `${SANDBOX}/relais.html`, { onFrozen, onRecovered, onRestartFailed });
 		const pret = bridge.start();
 		recevoir({ type: 'ready', base: bridge.base }, relais.window);
 		await pret;
@@ -120,5 +122,36 @@ describe('PreviewBridge : battement de cœur', () => {
 		await vi.advanceTimersByTimeAsync(HEARTBEAT_MS);
 
 		expect(onFrozen).not.toHaveBeenCalled();
+	});
+
+	it('ne compte pas le silence quand l\'onglet est caché (boîte de dialogue laissée ouverte en partant)', async () => {
+		vi.stubGlobal('document', { hidden: true });
+		relais.gele = true;
+		await vi.advanceTimersByTimeAsync(10 * SILENCE_MS);
+		expect(onFrozen).not.toHaveBeenCalled();
+
+		// De retour sous les yeux de l'apprenant, et toujours muet : le silence se compte à partir de là.
+		vi.stubGlobal('document', { hidden: false });
+		await vi.advanceTimersByTimeAsync(SILENCE_MS - HEARTBEAT_MS);
+		expect(onFrozen).not.toHaveBeenCalled();
+		await vi.advanceTimersByTimeAsync(3 * HEARTBEAT_MS);
+		expect(onFrozen).toHaveBeenCalledOnce();
+	});
+
+	it('retente à la navigation suivante un relais recréé qui n\'a pas démarré', async () => {
+		relais.gele = true;
+		await vi.advanceTimersByTimeAsync(SILENCE_MS + 2 * HEARTBEAT_MS);
+		const [neuf] = relais.clones;
+		recevoir({ type: 'error', message: 'Service Worker de l\'aperçu rejeté.' }, neuf.window);
+		await vi.advanceTimersByTimeAsync(0);
+		expect(onRestartFailed).toHaveBeenCalledWith('Service Worker de l\'aperçu rejeté.');
+
+		bridge.navigate('/menu'); // ⟳ : un nouveau relais, qui reçoit la navigation une fois prêt
+		const [encore] = neuf.clones;
+		expect(neuf.element.replaceWith).toHaveBeenCalledWith(encore.element);
+		recevoir({ type: 'ready', base: bridge.base }, encore.window);
+		await vi.advanceTimersByTimeAsync(0);
+		expect(onRecovered).toHaveBeenCalledOnce();
+		expect(encore.navigations()).toEqual([{ type: 'navigate', path: '/menu' }]);
 	});
 });

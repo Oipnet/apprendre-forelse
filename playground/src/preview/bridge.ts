@@ -5,7 +5,12 @@ import type { HostToRelay, RelayToHost } from './protocol';
 const RELAY_TIMEOUT_MS = 20_000;
 /** Battement de cœur : un ping au relais toutes les HEARTBEAT_MS, sans réponse depuis SILENCE_MS, il est gelé. */
 export const HEARTBEAT_MS = 2_000;
-export const SILENCE_MS = 8_000;
+/**
+ * Une boîte de dialogue ouverte (alert, confirm) bloque le fil comme une boucle, et rien ne peut le signaler : un
+ * message posté juste avant ne part qu'à sa fermeture. Elle bloque aussi toute saisie dans l'onglet, l'apprenant la
+ * referme donc vite ; le délai lui laisse large.
+ */
+export const SILENCE_MS = 15_000;
 
 /**
  * Côté plateforme : pilote l'aperçu isolé sur l'origine bac à sable.
@@ -32,6 +37,8 @@ export class PreviewBridge {
 	private seq = 0;
 	/** Le ping resté sans réponse, et depuis quand ; aucun : le relais a répondu au dernier. */
 	private unanswered?: { seq: number; since: number };
+	/** Le relais recréé n'a pas démarré : la prochaine navigation (⟳, modification) retente. */
+	private restartFailed = false;
 
 	constructor(
 		private readonly runtime: Runtime,
@@ -45,6 +52,8 @@ export class PreviewBridge {
 			onFrozen?: () => void;
 			/** Le relais recréé est prêt : l'aperçu peut de nouveau naviguer. */
 			onRecovered?: () => void;
+			/** Le relais recréé n'a pas démarré : la prochaine navigation réessaiera. */
+			onRestartFailed?: (message: string) => void;
 		} = {},
 	) {
 		this.base = `/preview/${this.relayId}`;
@@ -126,6 +135,9 @@ export class PreviewBridge {
 			// encore été livrée. Le silence se recompte à partir de maintenant, plutôt que de conclure à une boucle.
 			if (this.unanswered && now - lastTick > 2 * HEARTBEAT_MS) this.unanswered.since = now;
 			lastTick = now;
+			// Onglet caché : une boîte de dialogue (alert, confirm) laissée ouverte en partant ne doit pas passer pour
+			// une boucle au retour. Le silence ne se compte que sous les yeux de l'apprenant.
+			if (typeof document !== 'undefined' && document.hidden && this.unanswered) this.unanswered.since = now;
 			if (this.unanswered) {
 				if (now - this.unanswered.since >= SILENCE_MS) this.frozen();
 				return;
@@ -140,6 +152,11 @@ export class PreviewBridge {
 		clearInterval(this.heartbeat);
 		this.unanswered = undefined;
 		this.callbacks.onFrozen?.();
+		this.restart();
+	}
+
+	private restart() {
+		this.restartFailed = false;
 		const fresh = this.frame.cloneNode(false) as HTMLIFrameElement;
 		fresh.removeAttribute('src');
 		this.frame.replaceWith(fresh);
@@ -147,12 +164,18 @@ export class PreviewBridge {
 		this.ready = undefined;
 		this.start().then(
 			() => this.callbacks.onRecovered?.(),
-			(error: unknown) => this.callbacks.onConsole?.('error', `Relais de l'aperçu : ${error instanceof Error ? error.message : String(error)}`),
+			(error: unknown) => {
+				// Sans nouvelle tentative, l'aperçu resterait vide jusqu'au rechargement du playground : la
+				// prochaine navigation recrée le relais.
+				this.restartFailed = true;
+				this.callbacks.onRestartFailed?.(error instanceof Error ? error.message : String(error));
+			},
 		);
 	}
 
 	/** Une fois le relais prêt : juste après sa recréation, le message se perdrait dans une page qui se charge. */
 	navigate(path: string) {
+		if (this.restartFailed) this.restart();
 		void (this.ready ?? Promise.resolve()).then(() => {
 			this.frame.contentWindow?.postMessage({ type: 'navigate', path } satisfies HostToRelay, this.sandboxOrigin);
 		}, () => {});
