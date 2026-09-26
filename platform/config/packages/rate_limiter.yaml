@@ -1,4 +1,10 @@
 framework:
+    cache:
+        pools:
+            # Compteurs dans la base (table cache_items, créée par migration) : ils survivent au cache:clear de chaque
+            # démarrage, donc aux déploiements, et sont partagés par tous les conteneurs de l'instance.
+            cache.rate_limiter:
+                adapter: cache.adapter.doctrine_dbal
     rate_limiter:
         # Le mentor (revue de code, erreurs expliquées) : chaque appel coûte, par apprenant.
         mentor:
@@ -54,11 +60,3 @@ framework:
             policy: sliding_window
             limit: 20
             interval: '1 hour'
-
-when@test:
-    framework:
-        cache:
-            pools:
-                # En mémoire : les compteurs ne survivent pas d'un test à l'autre.
-                cache.rate_limiter:
-                    adapter: cache.adapter.array
