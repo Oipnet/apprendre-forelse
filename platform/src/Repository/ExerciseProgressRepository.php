@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Admin\ProgressSummary;
 use App\Entity\ExerciseProgress;
+use App\Entity\ProgressStatus;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -31,21 +33,36 @@ class ExerciseProgressRepository extends ServiceEntityRepository
     }
 
     /**
-     * Toute la progression d'un groupe d'apprenants dans les parcours (tableau de bord), sans la Pratique.
+     * L'état de la progression d'un groupe d'apprenants dans les parcours (tableaux de bord), sans la Pratique. Requête
+     * partielle : ni les brouillons de code (files) ni la revue du mentor, qui pèsent et ne s'affichent pas.
      *
      * @param list<User> $users
      *
-     * @return list<ExerciseProgress>
+     * @return list<ProgressSummary>
      */
-    public function findByUsers(array $users): array
+    public function summariesByUsers(array $users): array
     {
-        return $users ? $this->createQueryBuilder('p')
+        if (!$users) {
+            return [];
+        }
+        $rows = $this->createQueryBuilder('p')
+            ->select('IDENTITY(p.user) AS userId', 'p.trackId', 'p.exerciseId', 'p.status', 'p.hintsUsed', 'p.startedAt', 'p.completedAt')
             ->andWhere('p.user IN (:users)')
             ->andWhere('p.trackId IS NOT NULL')
             ->setParameter('users', $users)
             ->orderBy('p.id')
             ->getQuery()
-            ->getResult() : [];
+            ->getArrayResult();
+
+        return array_map(static fn (array $row) => new ProgressSummary(
+            (int) $row['userId'],
+            $row['trackId'],
+            $row['exerciseId'],
+            $row['status'] instanceof ProgressStatus ? $row['status'] : ProgressStatus::from($row['status']),
+            $row['hintsUsed'],
+            $row['startedAt'],
+            $row['completedAt'],
+        ), $rows);
     }
 
     /** @return array<string, ExerciseProgress> progression par identifiant d'exercice (null : la Pratique) */
