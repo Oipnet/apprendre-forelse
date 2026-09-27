@@ -55,6 +55,9 @@ final class TrackSeoTest extends WebTestCase
         $this->assertSame($title, $crawler->filter('meta[property="og:title"]')->attr('content'));
         $this->assertSame($description, $crawler->filter('meta[name="description"]')->attr('content'));
         $this->assertSame($description, $crawler->filter('meta[property="og:description"]')->attr('content'));
+
+        $sql = array_column($this->client->getContainer()->get('test.doctrine.debug_data_holder')->getData()['default'] ?? [], 'sql');
+        $this->assertCount(1, preg_grep('/\bFROM track_seo\b/', $sql), 'Title et description : la table track_seo n\'est lue qu\'une fois.');
     }
 
     public function testLeReferencementSaisiDansLAdminPasseAvant(): void
