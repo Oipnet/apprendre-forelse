@@ -4,11 +4,11 @@ namespace App\Controller;
 
 use App\Content\Chapter;
 use App\Content\ContentRepository;
-use App\Content\TrackVisibility;
 use App\Content\Track;
+use App\Content\TrackVisibility;
 use App\Entity\User;
 use App\Payment\TrackOfferFactory;
-use App\Seo\SeoWriter;
+use App\Seo\Page\HomeSeo;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,7 +25,7 @@ final class HomeController extends AbstractController
     }
 
     #[Route('/', name: 'app_home', methods: ['GET'])]
-    public function index(ContentRepository $content, TrackVisibility $visibility, TrackOfferFactory $offers, SeoWriter $seo): Response
+    public function index(ContentRepository $content, TrackVisibility $visibility, TrackOfferFactory $offers, HomeSeo $seo): Response
     {
         $user = $this->getUser();
         $tracks = [];
@@ -55,7 +55,7 @@ final class HomeController extends AbstractController
         usort($upcoming, static fn (Track $a, Track $b) => [$a->order ?? \PHP_INT_MAX, $a->title] <=> [$b->order ?? \PHP_INT_MAX, $b->title]);
 
         $faq = self::faq(array_map(static fn (array $item) => $item['track'], $tracks), $upcoming);
-        $seo->home($faq);
+        $seo->write($faq);
 
         return $this->render('home.html.twig', [
             'tracks' => $tracks,

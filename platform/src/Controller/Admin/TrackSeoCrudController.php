@@ -5,7 +5,7 @@ namespace App\Controller\Admin;
 use App\Content\ContentRepository;
 use App\Entity\TrackSeo;
 use App\Instance\Branding;
-use App\Seo\SeoWriter;
+use App\Seo\Page\CourseSeo;
 use App\Seo\TrackSeoText;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -26,7 +26,7 @@ final class TrackSeoCrudController extends AbstractCrudController
 {
     public function __construct(
         private readonly ContentRepository $content,
-        private readonly SeoWriter $seo,
+        private readonly CourseSeo $seo,
         private readonly Branding $branding,
     ) {
     }

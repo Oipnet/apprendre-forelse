@@ -14,7 +14,7 @@ use App\Export\LessonPdf;
 use App\Export\PdfResponse;
 use App\Repository\ExerciseProgressRepository;
 use App\Security\TrackAccessChecker;
-use App\Seo\SeoWriter;
+use App\Seo\Page\CourseSeo;
 use App\Service\ChapterSummary;
 use App\Service\TrackProgress;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -62,7 +62,7 @@ final class ChapterController extends AbstractController
      * Il annonce ce que le chapitre fait apprendre ; la fiche de cours (show) reste, elle, réservée.
      */
     #[Route('/parcours/{trackId}/chapitre/{chapterId}/sommaire', name: 'app_chapter_summary', methods: ['GET'])]
-    public function summary(string $trackId, string $chapterId, ChapterOutline $outlines, SeoWriter $seo): Response
+    public function summary(string $trackId, string $chapterId, ChapterOutline $outlines, CourseSeo $seo): Response
     {
         $track = $this->visibility->find($trackId) ?? throw $this->createNotFoundException();
         $chapter = $this->content->findChapter($track, $chapterId) ?? throw $this->createNotFoundException();

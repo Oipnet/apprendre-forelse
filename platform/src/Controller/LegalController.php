@@ -6,7 +6,7 @@ use App\Ai\Mentor;
 use App\Legal\LegalInfo;
 use App\Legal\LegalVersions;
 use App\Payment\PaymentGateway;
-use App\Seo\SeoWriter;
+use App\Seo\Seo;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Psr\Clock\ClockInterface;
@@ -34,26 +34,23 @@ final class LegalController extends AbstractController
     }
 
     #[Route('/mentions-legales', name: 'app_legal_notice', methods: ['GET'])]
-    public function notice(SeoWriter $seo): Response
+    #[Seo('Mentions légales', 'Mentions légales du site : éditeur, directeur de la publication, hébergeur de la plateforme et du bac à sable où s\'exécute le code des apprenants.')]
+    public function notice(): Response
     {
-        $seo->legalNotice();
-
         return $this->render('legal/notice.html.twig', $this->context());
     }
 
     #[Route('/confidentialite', name: 'app_privacy', methods: ['GET'])]
-    public function privacy(SeoWriter $seo): Response
+    #[Seo('Politique de confidentialité', 'Politique de confidentialité : données collectées, finalités, durées de conservation, sous-traitants et exercice de vos droits sur vos données.')]
+    public function privacy(): Response
     {
-        $seo->privacy();
-
         return $this->render('legal/privacy.html.twig', $this->context());
     }
 
     #[Route('/cgv', name: 'app_terms', methods: ['GET'])]
-    public function terms(SeoWriter $seo): Response
+    #[Seo('Conditions générales de vente', 'Conditions générales de vente des parcours : prix TTC, commande et paiement, accès aux contenus, droit de rétractation, garanties et médiation.')]
+    public function terms(): Response
     {
-        $seo->terms();
-
         return $this->render('legal/terms.html.twig', [
             ...$this->context(),
             'missing' => $this->legal->termsMissing(),
