@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use App\Ai\ModelClient;
+use App\Content\Author\PackWritability;
 use App\Entity\User;
 use App\Tests\DatabaseTrait;
 use Doctrine\ORM\EntityManagerInterface;
@@ -132,38 +133,29 @@ final class StudioTest extends WebTestCase
      */
     public function testPacksEnLectureSeuleUnAuteurNEcritAucunCode(): void
     {
-        if (\function_exists('posix_geteuid') && 0 === posix_geteuid()) {
-            $this->markTestSkipped('Exécuté en root : un dossier en lecture seule reste inscriptible.');
-        }
         $client = static::createClient();
+        $client->disableReboot();
         $this->auteur($client);
+        // Les packs montés en lecture seule, comme en production. Un chmod ne le reproduirait pas sous root.
+        static::getContainer()->set(PackWritability::class, new PackWritability(fn (string $dossier) => !str_starts_with($dossier, $this->packs)));
         $test = $this->exercice.'/tests/BonjourTest.php';
         $avant = file_get_contents($test);
-        $this->lectureSeule(true);
 
-        try {
-            $client->jsonRequest('PUT', '/atelier/decouverte/01-bonjour', ['fichiers' => [
-                'exercise.yaml' => file_get_contents($this->exercice.'/exercise.yaml'),
-                'instructions.md' => "# Bonjour\n",
-                'tests/BonjourTest.php' => "<?php\n// lirait /proc/1/environ\n",
-            ]]);
+        $client->jsonRequest('PUT', '/atelier/decouverte/01-bonjour', ['fichiers' => [
+            'exercise.yaml' => file_get_contents($this->exercice.'/exercise.yaml'),
+            'instructions.md' => "# Bonjour\n",
+            'tests/BonjourTest.php' => "<?php\n// lirait /proc/1/environ\n",
+        ]]);
 
-            $this->assertFalse($client->getResponse()->isSuccessful(), 'L\'enregistrement est refusé.');
-            $this->assertSame($avant, file_get_contents($test), 'Le test du pack est intact.');
-        } finally {
-            $this->lectureSeule(false);
-        }
+        $this->assertResponseStatusCodeSame(422, 'L\'enregistrement est refusé.');
+        $this->assertStringContainsString('lecture seule', (string) $client->getResponse()->getContent());
+        $this->assertSame($avant, file_get_contents($test), 'Le test du pack est intact.');
+
+        $client->request('GET', '/atelier/decouverte/01-bonjour');
+        $this->assertFalse(json_decode($client->getCrawler()->filter('[data-studio]')->attr('data-config'), true)['modifiable'], 'L\'éditeur le sait.');
     }
 
     /** Comme un montage « :ro » : plus aucun dossier ni fichier du pack n'accepte l'écriture. */
-    private function lectureSeule(bool $oui): void
-    {
-        $fichiers = iterator_to_array(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->packs, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST));
-        foreach ([$this->packs, ...array_keys($fichiers)] as $chemin) {
-            chmod($chemin, is_dir($chemin) ? ($oui ? 0555 : 0755) : ($oui ? 0444 : 0644));
-        }
-    }
-
     public function testUnFormatInvalideEstSignaleSansPerdreLeTravail(): void
     {
         $client = static::createClient();

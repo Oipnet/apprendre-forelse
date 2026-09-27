@@ -145,16 +145,12 @@ final class EnvironmentInstallerTest extends TestCase
     }
 
     /**
-     * Le chemin heureux, sans Composer : un environnement qui prolonge un environnement du moteur n'a
-     * ni composer.json ni dépendances à installer — l'empaquetage se réduit à l'archive et à l'index.
+     * Le chemin heureux. L'empaquetage est confié à un faux build-env.sh qui dépose l'archive et l'index là où
+     * le vrai les mettrait : le test ne dépend ni de Composer ni du réseau. Le vrai script, lui, tourne en
+     * intégration continue sur chaque environnement du moteur.
      */
     public function testUnEnvironnementCloneEstInstalleEtEmpaquete(): void
     {
-        // Test d'intégration : l'empaquetage lance vraiment build-env.sh, donc composer install (réseau, plusieurs Go
-        // pour symfony-8). Il tourne en intégration continue, et en local sur demande (FORELSE_INTEGRATION=1).
-        if (!filter_var(getenv('CI'), \FILTER_VALIDATE_BOOL) && !filter_var(getenv('FORELSE_INTEGRATION'), \FILTER_VALIDATE_BOOL)) {
-            $this->markTestSkipped('Test d\'intégration (build-env.sh, composer install) : lancé en CI, ou avec FORELSE_INTEGRATION=1.');
-        }
         $depot = $this->depot([
             'environment.yaml' => "id: ma-boutique\nextends: symfony-8\ntitle: Ma boutique\n",
             'src/Controller/BoutiqueController.php' => '<?php // à moi',
@@ -162,7 +158,7 @@ final class EnvironmentInstallerTest extends TestCase
         $installed = new InstalledEnvironments($this->tmp.'/installes');
         $environments = new EnvironmentRegistry([self::ROOT.'/environments', $this->tmp.'/installes']);
 
-        $id = $this->installer($installed, $environments, url: $depot)->install('https://exemple.test/depot.git');
+        $id = $this->installer($installed, $environments, url: $depot, buildScript: $this->fauxBuildEnv())->install('https://exemple.test/depot.git');
 
         $this->assertSame('ma-boutique', $id);
         $source = $installed->read('ma-boutique');
@@ -181,6 +177,24 @@ final class EnvironmentInstallerTest extends TestCase
         // L'archive et l'index ont été produits à côté, hors de l'arborescence publique.
         $this->assertFileExists($installed->artifactsDirectory().'/ma-boutique.zip');
         $this->assertFileExists($installed->artifactsDirectory().'/ma-boutique.completion.json');
+        // Le script a reçu les racines du registre, pour résoudre `extends:` comme le moteur.
+        $this->assertSame(implode(',', $environments->roots()), file_get_contents($installed->artifactsDirectory().'/ENVIRONMENTS_PATH'));
+    }
+
+    /** Un build-env.sh qui produit ce que produit le vrai (`<id>.zip`, `<id>.completion.json`), sans rien construire. */
+    private function fauxBuildEnv(): string
+    {
+        $script = $this->tmp.'/build-env.sh';
+        $this->filesystem->dumpFile($script, <<<'SH'
+            #!/bin/sh
+            set -eu
+            printf '%s' "$ENVIRONMENTS_PATH" > "$2/ENVIRONMENTS_PATH"
+            printf 'zip' > "$2/$1.zip"
+            printf '{"classes":{}}' > "$2/$1.completion.json"
+            SH);
+        $this->filesystem->chmod($script, 0o755);
+
+        return $script;
     }
 
     /** @param array<string, string> $fichiers */
@@ -199,6 +213,7 @@ final class EnvironmentInstallerTest extends TestCase
         ?EnvironmentRegistry $environments = null,
         string $allowlist = '',
         ?string $url = null,
+        string $buildScript = self::ROOT.'/environments/bin/build-env.sh',
     ): EnvironmentInstaller {
         $installed ??= new InstalledEnvironments($this->tmp.'/installes');
         $environments ??= new EnvironmentRegistry([self::ROOT.'/environments', $this->tmp.'/installes']);
@@ -209,7 +224,7 @@ final class EnvironmentInstallerTest extends TestCase
             new InstallationJobs($installed),
             new FakeGitCheckout(null === $url ? [] : ['https://exemple.test/depot.git' => $url]),
             $environments,
-            self::ROOT.'/environments/bin/build-env.sh',
+            $buildScript,
             $allowlist,
         );
     }

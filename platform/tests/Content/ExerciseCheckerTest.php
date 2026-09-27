@@ -42,12 +42,12 @@ final class ExerciseCheckerTest extends TestCase
         }
     }
 
-    private function checker(string $packs): array
+    private function checker(string $packs, ?string $artifactsDir = null): array
     {
         $environments = new EnvironmentRegistry(self::ROOT.'/environments');
         $content = new ContentRepository([$packs], $environments, new Version(self::ROOT.'/VERSION'));
 
-        return [$content, self::exerciseChecker($content, $environments)];
+        return [$content, self::exerciseChecker($content, $environments, artifactsDir: $artifactsDir)];
     }
 
     public function testLePackDeDemoEstConforme(): void
@@ -86,10 +86,13 @@ final class ExerciseCheckerTest extends TestCase
      */
     public function testUnImportAbsentDeLIndexDeCompletionEstSignale(): void
     {
-        if (!is_file(self::ROOT.'/platform/public/envs/symfony-8.completion.json')) {
-            $this->manque('Index de complétion de symfony-8 absent (environments/bin/build-env.sh symfony-8).');
-        }
         $filesystem = new Filesystem();
+        // Un index à soi, plutôt que celui que build-env.sh aurait produit : le test ne dépend pas de sa présence.
+        $filesystem->dumpFile($this->tmp.'/envs/symfony-8.completion.json', (string) json_encode(['classes' => [
+            'Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController' => [],
+            'Symfony\\Component\\HttpFoundation\\Response' => [],
+            'Symfony\\Component\\Routing\\Attribute\\Route' => [],
+        ]]));
         $filesystem->mirror(self::ROOT.'/examples/packs/demo', $this->tmp.'/demo');
         $solution = $this->tmp.'/demo/tracks/decouverte/exercises/01-bonjour/solution/src';
         $filesystem->dumpFile($solution.'/Salutation.php', "<?php\n\nnamespace App;\n\nclass Salutation\n{\n}\n");
@@ -100,7 +103,7 @@ final class ExerciseCheckerTest extends TestCase
             (string) file_get_contents($controller),
         ));
 
-        [$content, $checker] = $this->checker($this->tmp);
+        [$content, $checker] = $this->checker($this->tmp, $this->tmp.'/envs');
         $errors = implode("\n", $checker->check($content->findExercise('decouverte', '01-bonjour'))->errors);
 
         $this->assertStringContainsString('Complétion : Symfony\Component\Finder\Finder hors de l\'index de « symfony-8 »', $errors);

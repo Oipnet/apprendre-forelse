@@ -6,6 +6,7 @@ use App\Ai\ModelClient;
 use App\Command\ContentLessonDraftCommand;
 use App\Content\Author\LessonDrafter;
 use App\Content\Author\LessonFiles;
+use App\Content\Author\PackWritability;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Version;
@@ -48,7 +49,7 @@ final class LessonDraftCommandTest extends TestCase
         $content = new ContentRepository([$this->tmp], new EnvironmentRegistry(self::ROOT.'/environments'), new Version(self::ROOT.'/VERSION'));
         $drafter = new LessonDrafter($content, new ModelClient($client ?? new MockHttpClient(), 'cle-de-test', 'claude-sonnet-5'), new EnvironmentRegistry(self::ROOT.'/environments'));
 
-        return new CommandTester(new Command(null, new ContentLessonDraftCommand($content, $drafter, new LessonFiles($content, new Filesystem(), new LockFactory(new InMemoryStore())))));
+        return new CommandTester(new Command(null, new ContentLessonDraftCommand($content, $drafter, new LessonFiles($content, new Filesystem(), new LockFactory(new InMemoryStore()), new PackWritability()))));
     }
 
     private function lesson(): string
