@@ -12,6 +12,7 @@ use Forelse\DockerSim\Engine\DockerException;
 use Forelse\DockerSim\Fs\Path;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\Image;
+use Forelse\DockerSim\State\ProcessKind;
 use Forelse\DockerSim\State\Store;
 
 /** La commande « docker » : analyse des arguments, appel du démon simulé, sortie au format de la vraie CLI. */
@@ -562,7 +563,7 @@ final class Application
 
             return 0;
         }
-        if ($args->has('interactive') && $args->has('tty') && $container->isRunning() && $container->process === 'idle') {
+        if ($args->has('interactive') && $args->has('tty') && $container->isRunning() && $container->process === ProcessKind::Idle) {
             $this->write(implode("\n", $container->logs).($container->logs !== [] ? "\n" : ''));
             $this->line(sprintf('💡 La console du simulateur n\'est pas un terminal : impossible d\'entrer dans le conteneur. Il tourne en arrière-plan (%s) ; lancez vos commandes avec docker exec %s <commande>.', $container->name, $container->name));
 
@@ -967,9 +968,13 @@ final class Application
         }
         $command = implode(' ', $container->processOptions['argv'] ?? $container->command);
         $rows = [[$container->user ?? 'root', '12345', '12320', '0', '10:00', '?', '00:00:00', $command]];
-        if (\in_array($container->process, ['apache', 'php-fpm', 'nginx'], true)) {
+        if (\in_array($container->process, [ProcessKind::Apache, ProcessKind::PhpFpm, ProcessKind::Nginx], true)) {
             for ($i = 0; $i < 2; ++$i) {
-                $rows[] = [$container->process === 'nginx' ? 'nginx' : 'www-data', (string) (12350 + $i), '12345', '0', '10:00', '?', '00:00:00', $container->process === 'php-fpm' ? 'php-fpm: pool www' : ($container->process === 'nginx' ? 'nginx: worker process' : 'apache2 -DFOREGROUND')];
+                $rows[] = [$container->process === ProcessKind::Nginx ? 'nginx' : 'www-data', (string) (12350 + $i), '12345', '0', '10:00', '?', '00:00:00', match ($container->process) {
+                    ProcessKind::PhpFpm => 'php-fpm: pool www',
+                    ProcessKind::Nginx => 'nginx: worker process',
+                    default => 'apache2 -DFOREGROUND',
+                }];
             }
         }
         $this->write(Format::table(['UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD'], $rows));

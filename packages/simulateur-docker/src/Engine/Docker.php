@@ -27,6 +27,7 @@ use Forelse\DockerSim\Shell\Network as ShellNetwork;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\Image;
 use Forelse\DockerSim\State\Network;
+use Forelse\DockerSim\State\ProcessKind;
 use Forelse\DockerSim\State\Store;
 use Forelse\DockerSim\State\Volume;
 
@@ -259,8 +260,8 @@ final class Docker implements ServerContext
     {
         if ($container->status === Container::RUNNING || $container->status === Container::RESTARTING) {
             $container->status = Container::EXITED;
-            // Apache et nginx s'arrêtent proprement sur leur signal ; PID 1 sans gestion de SIGTERM est tué au bout de 10 s (137).
-            $container->exitCode = \in_array($container->process, ['apache', 'nginx', 'php-fpm', 'postgres', 'mysql', 'mariadb', 'redis', 'php-server'], true) ? 0 : 137;
+            // Les serveurs s'arrêtent proprement sur SIGTERM ; PID 1 sans gestion du signal est tué au bout de 10 s (137).
+            $container->exitCode = $container->process?->stopsGracefully() === true ? 0 : 137;
             $container->finishedAt = time();
             $container->listening = [];
             $container->process = null;
@@ -487,12 +488,12 @@ final class Docker implements ServerContext
     public function serve(Container $container, int $port, HttpRequest $request): HttpResponse
     {
         return match ($container->process) {
-            'apache' => (new ApacheServer($this))->handle($container, $request, $port),
-            'nginx' => (new NginxServer($this))->handle($container, $request, $port),
-            'php-server' => (new PhpBuiltinServer($this))->handle($container, $request, ['docroot' => (string) ($container->processOptions['docroot'] ?? $container->workdir), 'router' => $container->processOptions['router'] ?? null]),
-            'static', 'mail', 'frankenphp' => $this->serveStatic($container, $request),
-            'php-fpm' => HttpResponse::failure('empty', sprintf('php-fpm (%s) parle FastCGI, pas HTTP : il faut un serveur web (nginx) devant lui.', $container->name)),
-            'postgres', 'mysql', 'mariadb', 'redis', 'memcached' => HttpResponse::failure('empty', sprintf('%s (%s) n\'est pas un serveur web.', $container->process, $container->name)),
+            ProcessKind::Apache => (new ApacheServer($this))->handle($container, $request, $port),
+            ProcessKind::Nginx => (new NginxServer($this))->handle($container, $request, $port),
+            ProcessKind::PhpServer => (new PhpBuiltinServer($this))->handle($container, $request, ['docroot' => (string) ($container->processOptions['docroot'] ?? $container->workdir), 'router' => $container->processOptions['router'] ?? null]),
+            ProcessKind::Static, ProcessKind::Mail, ProcessKind::FrankenPhp => $this->serveStatic($container, $request),
+            ProcessKind::PhpFpm => HttpResponse::failure('empty', sprintf('php-fpm (%s) parle FastCGI, pas HTTP : il faut un serveur web (nginx) devant lui.', $container->name)),
+            ProcessKind::Postgres, ProcessKind::Mysql, ProcessKind::Mariadb, ProcessKind::Redis, ProcessKind::Memcached => HttpResponse::failure('empty', sprintf('%s (%s) n\'est pas un serveur web.', $container->process->value, $container->name)),
             default => HttpResponse::failure('refused', sprintf('Rien n\'écoute sur le port %d du conteneur %s.', $port, $container->name)),
         };
     }
@@ -502,7 +503,7 @@ final class Docker implements ServerContext
         $fs = $this->fs($container);
         $root = rtrim((string) ($container->processOptions['docroot'] ?? '/usr/share/nginx/html'), '/');
         $path = Path::normalize($request->path);
-        if ($container->process === 'frankenphp') {
+        if ($container->process === ProcessKind::FrankenPhp) {
             $script = $fs->isFile($root.$path) && str_ends_with($path, '.php') ? $root.$path : $root.'/index.php';
             if (!$fs->isFile($root.$path) && $fs->isFile($script)) {
                 return $this->php->serve($container, $script, $root, $request, '/index.php', ['SERVER_SOFTWARE' => 'FrankenPHP']);
@@ -544,7 +545,7 @@ final class Docker implements ServerContext
         $this->processes->appendLogs($container, $line);
     }
 
-    /** @return array{0: ?Container, 1: ?string, 2: 'open'|'refused'|'unresolved'} conteneur, processus, état */
+    /** @return array{0: ?Container, 1: ?ProcessKind, 2: 'open'|'refused'|'unresolved'} conteneur, processus, état */
     public function upstream(Container $from, string $host, int $port): array
     {
         $connection = $this->network($from)->connect($host, $port);

@@ -9,6 +9,7 @@ use Forelse\DockerSim\Compose\ComposeFile;
 use Forelse\DockerSim\Compose\Project;
 use Forelse\DockerSim\Engine\Docker;
 use Forelse\DockerSim\State\Container;
+use Forelse\DockerSim\State\ProcessKind;
 use Symfony\Component\Yaml\Yaml;
 
 /** docker compose … */
@@ -403,7 +404,7 @@ final class ComposeCommand
     {
         foreach ($project->containers() as $container) {
             if ($container->isRunning()) {
-                $project->output .= $container->name."\n".Format::table(['UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD'], [[$container->user ?? ($container->process === 'postgres' ? '70' : 'root'), (string) (4000 + crc32($container->id) % 5000), (string) (3900 + crc32($container->id) % 5000), '0', '10:00', '?', '00:00:00', implode(' ', $container->processOptions['argv'] ?? $container->command)]])."\n";
+                $project->output .= $container->name."\n".Format::table(['UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD'], [[$container->user ?? ($container->process === ProcessKind::Postgres ? '70' : 'root'), (string) (4000 + crc32($container->id) % 5000), (string) (3900 + crc32($container->id) % 5000), '0', '10:00', '?', '00:00:00', implode(' ', $container->processOptions['argv'] ?? $container->command)]])."\n";
             }
         }
 
