@@ -1,4 +1,4 @@
-import type { Runtime } from './runtime';
+import type { Runtime } from './runtime.ts';
 
 /**
  * Ce qu'un paquet de runtime déclare au playground.
@@ -10,7 +10,7 @@ import type { Runtime } from './runtime';
 export interface RuntimeManifest {
 	/** L'identifiant qu'un profil de framework déclare (`runtime:` côté moteur). */
 	id: string;
-	/** Comment on le nomme à l'apprenant quand il refuse de démarrer (« PHP », « le simulateur Nuxt »). */
+	/** Comment on le nomme à l'apprenant quand il refuse de démarrer (« le simulateur Nuxt »). */
 	label: string;
 	/** Construit une instance. Appelée une fois par exercice ouvert. */
 	create: () => Runtime;

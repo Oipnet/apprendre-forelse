@@ -9,6 +9,7 @@
  * d'un exercice Nuxt, elles, sont évaluées dans le worker du simulateur, sur l'origine de la plateforme : sa CSP
  * (connect-src, voir docker/Caddyfile) l'empêche d'en appeler les API.
  */
+import { PREVIEW_CONSOLE, type PreviewConsoleMessage } from '@forelse/runtime-contract/preview';
 import type { RelayToHost, HostToRelay } from '../preview/protocol';
 
 const params = new URLSearchParams(location.search);
@@ -37,8 +38,8 @@ async function start() {
 	navigator.serviceWorker.startMessages();
 
 	// La page de l'aperçu (même origine que le relais) signale ses avertissements : on les transmet tels quels.
-	window.addEventListener('message', (event: MessageEvent<{ type?: string; level?: string; message?: unknown }>) => {
-		if (event.source !== frame.contentWindow || event.origin !== location.origin || event.data?.type !== 'nuxt-sim:console') return;
+	window.addEventListener('message', (event: MessageEvent<Partial<PreviewConsoleMessage> | null>) => {
+		if (event.source !== frame.contentWindow || event.origin !== location.origin || event.data?.type !== PREVIEW_CONSOLE) return;
 		toHost({ type: 'preview-console', level: event.data.level === 'error' ? 'error' : 'warn', message: String(event.data.message).slice(0, 4000) });
 	});
 

@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { PING, WorkerRuntime, type EnvironmentSpec, type RuntimeRestart, type WorkerCall, type WorkerMessage } from '@forelse/runtime-contract';
 
-const ENV: EnvironmentSpec = { id: 'nuxt', framework: {} as never, phpVersion: '8.4', archiveUrl: 'https://exemple/projet.zip', previewBasePath: '/apercu', previewSecure: true };
+const ENV: EnvironmentSpec = { id: 'nuxt', framework: {} as never, archiveUrl: 'https://exemple/projet.zip', previewBasePath: '/apercu', previewSecure: true };
 
 /** Un worker de test : répond de façon asynchrone, sauf quand il est « bloqué ». */
 class FauxWorker extends EventTarget {

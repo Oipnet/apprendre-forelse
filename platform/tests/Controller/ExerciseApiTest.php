@@ -51,7 +51,7 @@ final class ExerciseApiTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSame([
             'id', 'label', 'console', 'consoleExample', 'bootNote', 'unpackLabel',
-            'testRunner', 'runtime', 'snippets', 'consoleAliases',
+            'testRunner', 'testRunnerLabel', 'runtime', 'snippets', 'consoleAliases',
             'projectDirs', 'testCaches', 'hidden', 'namespaceRoots',
         ], array_keys($framework));
         $this->assertSame('symfony', $framework['id']);
@@ -63,6 +63,7 @@ final class ExerciseApiTest extends WebTestCase
         $this->assertSame('Symfony', $framework['label']);
         $this->assertSame('bin/console', $framework['console']);
         $this->assertSame('phpunit', $framework['testRunner']);
+        $this->assertSame('PHPUnit', $framework['testRunnerLabel']);
         $this->assertContains('src', $framework['projectDirs']);
         $this->assertContains('vendor', $framework['hidden']);
         $this->assertSame('App', $framework['namespaceRoots']['src']);

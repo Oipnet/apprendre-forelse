@@ -96,6 +96,16 @@ final readonly class FrameworkProfile
         return self::PHPUNIT === $this->testRunner;
     }
 
+    /** Le nom du lanceur de tests, tel que la sortie des tests le montre à l'apprenant. */
+    public function testRunnerLabel(): string
+    {
+        return match ($this->testRunner) {
+            self::PHPUNIT => 'PHPUnit',
+            self::VITEST => 'Vitest',
+            default => $this->testRunner,
+        };
+    }
+
     /**
      * Ce que le navigateur a besoin de savoir du framework (voir playground/src/app/types.ts).
      *
@@ -111,6 +121,7 @@ final readonly class FrameworkProfile
             'bootNote' => $this->bootNote,
             'unpackLabel' => $this->unpackLabel,
             'testRunner' => $this->testRunner,
+            'testRunnerLabel' => $this->testRunnerLabel(),
             'runtime' => $this->runtime,
             'snippets' => $this->snippets,
             'consoleAliases' => (object) $this->consoleAliases,

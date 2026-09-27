@@ -1,24 +1,16 @@
+import type { HttpRequest as RuntimeRequest, HttpResponse as RuntimeResponse } from '@forelse/runtime-contract';
+
 /**
- * Requête et réponse HTTP échangées avec le simulateur. Même forme que le contrat `Runtime`
- * du playground (playground/src/runtime/Runtime.ts), avec la raison du statut en plus.
+ * Requête et réponse HTTP échangées avec le simulateur : celles du contrat des runtimes, avec un corps
+ * de requête qui peut être du texte et la raison du statut en plus.
  */
-export interface HttpRequest {
-	method: string;
-	/** Chemin + query string (ex. /api/ports?page=2). */
-	url: string;
-	/** Noms en minuscules ou non : le simulateur les normalise. */
-	headers: Record<string, string>;
+export interface HttpRequest extends Omit<RuntimeRequest, 'body'> {
 	body?: Uint8Array | string;
 }
 
-export interface HttpResponse {
-	status: number;
+export interface HttpResponse extends RuntimeResponse {
 	/** Raison de la ligne de statut (« Created », « Port inconnu »…). */
 	statusText: string;
-	/** Noms en minuscules. */
-	headers: Record<string, string[]>;
-	body: Uint8Array;
-	durationMs: number;
 }
 
 /** Raisons par défaut de Node (http.STATUS_CODES) : c'est ce qu'envoie Nitro quand rien n'est précisé. */

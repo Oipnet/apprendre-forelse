@@ -95,6 +95,17 @@ describe('serveRuntime', () => {
 		expect(messages.some((m) => m.message.type === 'result' && m.message.id === 2)).toBe(false);
 	});
 
+	it('donne au boot de quoi signaler sa progression à la page', async () => {
+		const { e, envoyer, messages } = endpoint();
+		serveRuntime({ ...runtime(), boot: async (_env, onProgress) => onProgress({ step: 'unpack', ratio: null, label: 'Ouverture' }) }, {}, e);
+		envoyer({ method: 'boot', args: [{} as never] });
+		await attendre(5);
+		expect(messages.map((m) => m.message)).toEqual([
+			{ type: 'progress', progress: { step: 'unpack', ratio: null, label: 'Ouverture' } },
+			{ type: 'result', id: 1, result: undefined },
+		]);
+	});
+
 	it('refuse une méthode inconnue, sans bloquer la suite', async () => {
 		const { e, envoyer, reponses } = endpoint();
 		serveRuntime(runtime(), {}, e);

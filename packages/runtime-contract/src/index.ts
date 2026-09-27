@@ -1,7 +1,9 @@
-export type { FrameworkId, FrameworkProfile } from './framework';
-export type { RuntimeBuildContribution, RuntimeManifest } from './manifest';
-export type { WorkerArgs, WorkerCall, WorkerMessage, WorkerMethod, WorkerResult } from './protocol';
-export type { ServeOptions, WorkerApi, WorkerEndpoint } from './serve';
+export type { FrameworkId, FrameworkProfile } from './framework.ts';
+export type { GradingOutcome, GradingWording, Mutant, MutantRun } from './grading.ts';
+export type { PreviewConsoleMessage } from './preview.ts';
+export type { RuntimeBuildContribution, RuntimeManifest } from './manifest.ts';
+export type { WorkerArgs, WorkerCall, WorkerMessage, WorkerMethod, WorkerResult } from './protocol.ts';
+export type { ServeOptions, WorkerApi, WorkerEndpoint } from './serve.ts';
 export type {
 	BootProgress,
 	TestCaseResult,
@@ -14,9 +16,11 @@ export type {
 	Runtime,
 	RuntimeRestart,
 	TestRunResult,
-} from './runtime';
+} from './runtime.ts';
 
 // La plomberie que les deux côtés partagent : un runtime dans un worker, piloté par postMessage.
-export { PING } from './protocol';
-export { serveRuntime } from './serve';
-export { createModuleWorker, WorkerRuntime } from './worker';
+export { gradeOwnTests } from './grading.ts';
+export { PING } from './protocol.ts';
+export { PREVIEW_CONSOLE } from './preview.ts';
+export { serveRuntime } from './serve.ts';
+export { createModuleWorker, WorkerRuntime } from './worker.ts';

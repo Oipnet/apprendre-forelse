@@ -1,31 +1,30 @@
-import type { FrameworkProfile } from './framework';
+import type { FrameworkProfile } from './framework.ts';
 
 /**
- * Contrat d'exécution indépendant de la technologie : aujourd'hui php-wasm dans
- * le navigateur (WasmRuntime), demain un conteneur serveur pour les parcours
- * qui en ont besoin (MySQL, Messenger, déploiement…).
+ * Contrat d'exécution indépendant de la technologie : aujourd'hui des runtimes qui tournent dans
+ * le navigateur (un worker), demain un conteneur serveur pour les parcours qui en ont besoin
+ * (base de données, files de messages, déploiement…).
  */
 
-/** Environnement de base d'un parcours (ex. Symfony 8 + Twig + PHPUnit). */
+/** Environnement de base d'un parcours (un framework, sa version, son lanceur de tests). */
 export interface EnvironmentSpec {
 	id: string;
 	/**
 	 * Ce que le moteur déclare du framework : console, dossiers du projet, caches, namespaces
-	 * (voir App\Content\Framework\FrameworkProfile). C'est son champ `runtime` qui dit qui l'exécute
-	 * — `php-wasm` pour Symfony, Laravel et le simulateur Docker, `nuxt-sim` pour Nuxt —, résolu par
-	 * src/runtime/registry.ts.
+	 * (voir App\Content\Framework\FrameworkProfile). C'est son champ `runtime` qui dit qui l'exécute,
+	 * résolu par le registre des runtimes du playground.
 	 */
 	framework: FrameworkProfile;
-	/** Vide pour Nuxt (simulateur JavaScript, sans PHP). */
-	phpVersion: '8.4' | '';
+	/** Options propres au runtime, qu'il est seul à lire (une version d'interpréteur…). */
+	options?: Readonly<Record<string, string>>;
 	/** Archive zip du projet (vendor inclus). */
 	archiveUrl: string;
 	/** Préfixe d'URL sous lequel l'application est servie dans l'aperçu. */
 	previewBasePath: string;
 	/**
-	 * L'aperçu est servi en HTTPS (origine du bac à sable). PHP doit le savoir : sinon les URL absolues
-	 * qu'il produit (Laravel `asset()`, `route()`, Symfony `url()`) partent en http:// et le navigateur
-	 * les bloque depuis une page https (contenu mixte : feuille de style ignorée, formulaire non envoyé).
+	 * L'aperçu est servi en HTTPS (origine du bac à sable). L'application doit le savoir : sinon les URL
+	 * absolues qu'elle produit partent en http:// et le navigateur les bloque depuis une page https
+	 * (contenu mixte : feuille de style ignorée, formulaire non envoyé).
 	 */
 	previewSecure: boolean;
 }
@@ -48,19 +47,26 @@ export interface HttpResponse {
 export type TestStatus = 'passed' | 'failed' | 'error' | 'skipped';
 
 export interface TestCaseResult {
+	/** Classe ou suites englobantes (`describe`, séparées par « > »). */
 	className: string;
+	/** Nom du test : c'est lui que désigne un objectif d'exercice. */
 	name: string;
-	/** Fichier du test, relatif au projet (tests/…). */
+	/** Fichier du test, relatif au projet. */
 	file?: string;
 	status: TestStatus;
 	message?: string;
+	/**
+	 * Ce qu'on montre à l'apprenant sous un objectif manqué, tiré du message par le runtime qui sait le
+	 * lire (sans en-tête ni trace). Absent : la page prend les premières lignes du message.
+	 */
+	summary?: string;
 	timeMs: number;
 }
 
 export interface TestRunResult {
 	exitCode: number;
 	cases: TestCaseResult[];
-	/** Sortie texte brute de PHPUnit (ou erreur fatale). */
+	/** Sortie texte du lanceur de tests (ou erreur fatale). */
 	output: string;
 	durationMs: number;
 }
@@ -95,7 +101,7 @@ export interface BootProgress {
 
 export interface Runtime {
 	boot(env: EnvironmentSpec, onProgress?: (p: BootProgress) => void): Promise<void>;
-	/** Chemins relatifs à la racine du projet (ex. src/Controller/MenuController.php). */
+	/** Chemins relatifs à la racine du projet (ex. src/pages/menu.vue). */
 	writeFile(path: string, content: string): Promise<void>;
 	/** Plusieurs fichiers d'un coup (le projet de départ) : un seul message au lieu d'un par fichier. */
 	writeFiles(files: Record<string, string>): Promise<void>;
@@ -106,7 +112,7 @@ export interface Runtime {
 	request(request: HttpRequest): Promise<HttpResponse>;
 	runTests(grading?: Grading): Promise<TestRunResult>;
 	/**
-	 * Facultatif : la console du projet (bin/console, artisan, docker…), arguments déjà découpés, exécutée
+	 * Facultatif : la console du projet (celle que déclare le profil), arguments déjà découpés, exécutée
 	 * dans le projet de l'aperçu. Un runtime sans console ne la déclare pas : la page n'offre alors ni champ
 	 * de commande ni commandes de préparation, plutôt qu'une console qui échoue à chaque fois.
 	 */

@@ -15,6 +15,7 @@ import { mesurer } from '../mesure';
 import { ApiProgressStore, LocalProgressStore, xpFor, type ProgressStore } from './progress';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 import { escapeHtml } from './html';
+import { summaryOf } from './results';
 
 /** Le contenu vient d'un pack : on le nettoie avant de l'injecter dans la plateforme. */
 const markdown = (source: string, inline = false) => DOMPurify.sanitize(inline ? (marked.parseInline(source) as string) : (marked.parse(source) as string));
@@ -116,7 +117,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			{
 				id: exercise.environment.id,
 				framework,
-				phpVersion: exercise.environment.phpVersion,
+				options: { phpVersion: exercise.environment.phpVersion },
 				// URL absolue : le worker peut tourner depuis une URL blob: (dev), sans base relative.
 				archiveUrl: new URL(exercise.environment.archiveUrl, location.href).href,
 				previewBasePath: bridge.base,
@@ -502,11 +503,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			if (test && !ok && test.message) {
 				const why = document.createElement('div');
 				why.className = 'why';
-				// Message pédagogique du test, sans l'en-tête « Classe::méthode » ni la trace.
-				const lines = test.message.split('\n').filter((l) => l.trim() && !l.startsWith('/') && !/^App\\Tests\\\S+$/.test(l));
-				// Un message écrit par l'auteur de l'exercice suffit ; sinon on garde le détail PHPUnit.
-				const authored = lines.length > 1 && lines[1].startsWith('Failed asserting') && !lines[0].includes('\\');
-				why.textContent = lines.slice(0, authored ? 1 : 2).map((l) => (l.length > 160 ? `${l.slice(0, 160)}…` : l)).join('\n');
+				why.textContent = summaryOf(test);
 				li.append(why);
 			}
 		}
@@ -705,7 +702,7 @@ function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
 			<div id="solution-note" class="solution-note" hidden></div>
 			<div class="hints" id="hints"></div>
 			<button id="hint" class="ghost small">💡 Un indice ?</button>
-			<details class="output" id="output-box" hidden><summary>Sortie ${'vitest' === framework.testRunner ? 'Vitest' : 'PHPUnit'} <button id="explain-tests" class="ghost small" hidden title="Demander au mentor ce que signifie cette erreur">🩺 Expliquer l'erreur</button></summary><pre id="output"></pre></details>
+			<details class="output" id="output-box" hidden><summary>Sortie ${escapeHtml(framework.testRunnerLabel)} <button id="explain-tests" class="ghost small" hidden title="Demander au mentor ce que signifie cette erreur">🩺 Expliquer l'erreur</button></summary><pre id="output"></pre></details>
 		</aside>
 		<section class="panel code">
 			<nav class="tabs">

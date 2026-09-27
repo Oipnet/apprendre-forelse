@@ -1,8 +1,9 @@
 /**
  * Lance les tests d'un projet (fichiers *.test.ts / *.spec.ts) contre le simulateur, et note au besoin
- * les tests de l'apprenant par mutants, avec les mêmes règles que le runtime PHP (php-worker.ts) et
- * que content:check (ExerciseChecker).
+ * les tests de l'apprenant par mutants, avec la notation du contrat des runtimes (gradeOwnTests), celle
+ * de content:check (ExerciseChecker).
  */
+import { gradeOwnTests as gradeMutants } from '@forelse/runtime-contract';
 import { ModuleLoader, type ProjectFiles } from '../compiler.ts';
 import { createE2E, type SimulatedServer } from './e2e.ts';
 import { resolveEnvironments } from './environment.ts';
@@ -93,33 +94,22 @@ async function runFiles(files: ProjectFiles, options: RunOptions, paths: string[
 	return { exitCode: failed || cases.length === 0 ? 1 : 0, cases, fileErrors, output: '', durationMs: 0 };
 }
 
+/** Notation par mutants du contrat : chaque mutant est joué sur une copie des fichiers du projet. */
 async function gradeOwnTests(files: ProjectFiles, options: RunOptions, result: RawRun): Promise<void> {
 	const grading = options.grading!;
-	const synthetic = (name: string, passed: boolean, message?: string): TestCaseResult => ({ className: 'Notation', name, status: passed ? 'passed' : 'failed', message, timeMs: 0 });
-	const own = result.cases.filter((c) => c.file && grading.ownTests.includes(c.file));
-	const failing = own.filter((c) => c.status !== 'passed');
-	const ownPassing = own.length > 0 && failing.length === 0;
-	result.cases.push(synthetic(
-		'own-tests',
-		ownPassing,
-		own.length === 0
-			? 'Aucun de vos tests ne s\'est exécuté : écrivez au moins un it(…) dans votre fichier de test.'
-			: `${failing.length === 1 ? 'Un de vos tests ne passe' : `${failing.length} de vos tests ne passent`} pas sur l'application correcte : ${failing.map((c) => (c.status === 'skipped' ? `${c.name} (ignoré)` : c.name)).join(', ')}.`,
-	));
-	for (const mutant of grading.mutants) {
-		if (!ownPassing) {
-			result.cases.push(synthetic(`mutant:${mutant.id}`, false, 'Vos tests doivent d\'abord tous passer sur l\'application correcte.'));
-			continue;
-		}
+	const { cases } = await gradeMutants(grading, result.cases, async (mutant) => {
 		const mutated = new Map(files);
 		for (const change of mutant.changes) {
 			mutated.set(change.file, (mutated.get(change.file) ?? '').split(change.search).join(change.replace));
 		}
 		const run = await runFiles(mutated, options, grading.ownTests.filter((path) => files.has(path)));
-		// Détecté si un de vos tests échoue (ou si le fichier ne se charge plus : l'application est cassée).
-		const detected = run.fileErrors.length > 0 || run.cases.length === 0 || run.cases.some((c) => c.status !== 'passed');
-		result.cases.push(synthetic(`mutant:${mutant.id}`, detected, `Vos tests passent encore quand ${mutant.label} : il manque un test.`));
-	}
+		// Un fichier qui ne se charge plus : l'application est cassée, le mutant est détecté.
+		return { cases: run.cases, broken: run.fileErrors.length > 0 };
+	}, {
+		noOwnTest: 'Aucun de vos tests ne s\'est exécuté : écrivez au moins un it(…) dans votre fichier de test.',
+		skipped: '(ignoré)',
+	});
+	result.cases.push(...cases);
 }
 
 /** Sortie à la manière du rapporteur par défaut de Vitest. */

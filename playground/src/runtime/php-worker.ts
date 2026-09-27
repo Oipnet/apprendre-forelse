@@ -11,8 +11,9 @@ import { createSpawnHandler } from '@php-wasm/util';
 import { getPHPLoaderModule, loadWebRuntime } from '@php-wasm/web';
 import { unzipSync } from 'fflate';
 import type { FrameworkProfile } from '../app/types';
-import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestCaseResult, TestRunResult } from '@forelse/runtime-contract';
-import { serveRuntime, type WorkerMessage } from '@forelse/runtime-contract';
+import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
+import { gradeOwnTests as gradeMutants, serveRuntime } from '@forelse/runtime-contract';
+import { phpunitSummary } from './phpunit';
 import consoleScript from './console.php?raw';
 import artisanScript from './artisan.php?raw';
 import runTestsScript from './run-tests.php?raw';
@@ -67,9 +68,7 @@ const raise = (message: string): never => {
 const cookies = new HttpCookieStore();
 const encoder = new TextEncoder();
 
-const progress = (p: BootProgress) => postMessage({ type: 'progress', progress: p } satisfies WorkerMessage);
-
-async function download(url: string): Promise<Uint8Array> {
+async function download(url: string, progress: (p: BootProgress) => void): Promise<Uint8Array> {
 	const response = await fetch(url);
 	if (!response.ok || !response.body) throw new Error(`Téléchargement impossible : ${url} (${response.status})`);
 	const total = Number(response.headers.get('content-length')) || null;
@@ -145,7 +144,7 @@ function writeTree(php: PHP, files: Iterable<[string, Uint8Array | null]>) {
  * de tests re-télécharge le .wasm et échoue si le serveur n'est plus joignable.
  */
 let compiledPhp: Promise<WebAssembly.Module> | undefined;
-const phpVersionOf = (spec: EnvironmentSpec) => (spec.phpVersion || '8.4') as '8.4';
+const phpVersionOf = (spec: EnvironmentSpec) => (spec.options?.phpVersion || '8.4') as '8.4';
 function compilePhpWasm(): Promise<WebAssembly.Module> {
 	compiledPhp ??= getPHPLoaderModule(phpVersionOf(env)).then(async ({ dependencyFilename }) => {
 		try {
@@ -219,35 +218,16 @@ async function runPhpUnit(php: PHP, paths: string[] = []): Promise<Omit<TestRunR
 	const markerAt = text.lastIndexOf(REPORT_MARKER);
 	if (markerAt === -1) return { exitCode: 255, cases: [], output: text.trim() || 'PHPUnit s\'est arrêté sans rapport.' };
 	const report = JSON.parse(text.slice(markerAt + REPORT_MARKER.length)) as Omit<TestRunResult, 'durationMs'>;
-	return { ...report, output: (text.slice(0, markerAt) + report.output).trim() };
+	const cases = report.cases.map((c) => (c.message ? { ...c, summary: phpunitSummary(c.message) } : c));
+	return { ...report, cases, output: (text.slice(0, markerAt) + report.output).trim() };
 }
 
 /**
- * Note les tests de l'apprenant (voir Grading) : ajoute les cas « own-tests » et « mutant:<id> »
- * au résultat. Chaque mutant est appliqué à l'instance de tests seulement, puis retiré.
+ * Note les tests de l'apprenant (voir gradeOwnTests du contrat) : ajoute les cas « own-tests » et
+ * « mutant:<id> » au résultat. Chaque mutant est appliqué à l'instance de tests seulement, puis retiré.
  */
 async function gradeOwnTests(php: PHP, grading: Grading, result: Omit<TestRunResult, 'durationMs'>) {
-	const synthetic = (name: string, passed: boolean, message?: string): TestCaseResult => ({ className: 'Notation', name, status: passed ? 'passed' : 'failed', message, timeMs: 0 });
-	const own = result.cases.filter((c) => c.file && grading.ownTests.includes(c.file));
-	const failing = own.filter((c) => c.status !== 'passed');
-	const ownPassing = own.length > 0 && failing.length === 0;
-	result.cases.push(
-		synthetic(
-			'own-tests',
-			ownPassing,
-			own.length === 0
-				? 'Aucun de vos tests ne s\'est exécuté : écrivez au moins une méthode test…() dans votre classe de test.'
-				: `${failing.length === 1 ? 'Un de vos tests ne passe' : `${failing.length} de vos tests ne passent`} pas sur l'application correcte : ${failing
-						.map((c) => (c.status === 'skipped' ? `${c.name} (incomplet ou ignoré)` : c.name))
-						.join(', ')}.`,
-		),
-	);
-	const report: string[] = [];
-	for (const mutant of grading.mutants) {
-		if (!ownPassing) {
-			result.cases.push(synthetic(`mutant:${mutant.id}`, false, 'Vos tests doivent d\'abord tous passer sur l\'application correcte.'));
-			continue;
-		}
+	const { cases, report } = await gradeMutants(grading, result.cases, async (mutant) => {
 		const originals = new Map<string, string>();
 		for (const change of mutant.changes) {
 			const path = `${APP_DIR}/${change.file}`;
@@ -256,18 +236,18 @@ async function gradeOwnTests(php: PHP, grading: Grading, result: Omit<TestRunRes
 			php.writeFile(path, code.split(change.search).join(change.replace));
 		}
 		clearTestCache(php);
-		let mutantRun: Omit<TestRunResult, 'durationMs'>;
 		try {
-			mutantRun = await runPhpUnit(php, grading.ownTests);
+			// Si PHPUnit s'arrête sans rapport (aucun cas), l'application est cassée : le mutant est détecté.
+			return { cases: (await runPhpUnit(php, grading.ownTests)).cases };
 		} finally {
 			for (const [path, code] of originals) php.writeFile(path, code);
 			clearTestCache(php);
 		}
-		// Détecté si un de vos tests échoue (ou si PHPUnit s'arrête : l'application est cassée).
-		const detected = mutantRun.cases.length === 0 || mutantRun.cases.some((c) => c.status !== 'passed');
-		result.cases.push(synthetic(`mutant:${mutant.id}`, detected, `Vos tests passent encore quand ${mutant.label} : il manque un test.`));
-		report.push(`${detected ? '✔ détecté' : '✘ survivant'} — ${mutant.label}`);
-	}
+	}, {
+		noOwnTest: 'Aucun de vos tests ne s\'est exécuté : écrivez au moins une méthode test…() dans votre classe de test.',
+		skipped: '(incomplet ou ignoré)',
+	});
+	result.cases.push(...cases);
 	if (report.length) result.output += `\n\nMutants (versions cassées de l'application) :\n${report.join('\n')}`;
 }
 
@@ -350,7 +330,8 @@ async function dockerRequest(req: HttpRequest, url: URL, start: number): Promise
 }
 
 const api: Runtime = {
-	async boot(spec) {
+	async boot(spec, onProgress) {
+		const progress = (p: BootProgress) => onProgress?.(p);
 		env = spec;
 		// Le garde porte sur le runtime demandé, pas sur le nom du framework : ce worker sert tous ceux
 		// qui s'exécutent en PHP, quel que soit leur nombre, et aucun autre.
@@ -358,12 +339,12 @@ const api: Runtime = {
 			throw new Error(`Un environnement « ${spec.framework.runtime} » ne se joue pas avec PHP (voir src/runtime/registry.ts).`);
 		}
 		profile = spec.framework;
-		const archive = await download(spec.archiveUrl);
+		const archive = await download(spec.archiveUrl, progress);
 		progress({ step: 'unpack', ratio: null, label: spec.framework.unpackLabel });
 		baseFiles = new Map(
 			Object.entries(unzipSync(archive)).filter(([path]) => !path.endsWith('/')),
 		);
-		progress({ step: 'boot', ratio: null, label: `Démarrage de PHP ${spec.phpVersion}` });
+		progress({ step: 'boot', ratio: null, label: `Démarrage de PHP ${spec.options?.phpVersion ?? ''}` });
 		preview = await createPhp();
 		// Instance de tests préparée en arrière-plan : premier run plus rapide.
 		prepareTests().catch(() => {}); // réessayée au premier lancement des tests

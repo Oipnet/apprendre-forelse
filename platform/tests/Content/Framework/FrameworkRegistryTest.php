@@ -52,6 +52,8 @@ final class FrameworkRegistryTest extends TestCase
 
         $this->assertSame('php artisan', $browser['console']);
         $this->assertSame(['storage/framework/views'], $browser['testCaches']);
+        $this->assertSame('PHPUnit', $browser['testRunnerLabel']);
+        $this->assertSame('Vitest', (new FrameworkRegistry())->get('nuxt')->forBrowser()['testRunnerLabel']);
         $this->assertArrayNotHasKey('drafting', $browser, 'Les consignes du modèle ne regardent pas le navigateur.');
         $this->assertArrayNotHasKey('codeDirs', $browser);
     }

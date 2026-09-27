@@ -1,8 +1,14 @@
-import { PING, type OptionalWorkerMethod, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol';
+import { PING, type OptionalWorkerMethod, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol.ts';
+import type { BootProgress, EnvironmentSpec } from './runtime.ts';
 
-type WorkerFunction<M extends WorkerMethod> = (...args: WorkerArgs[M]) => Promise<WorkerResult[M]>;
+type WorkerFunction<M extends WorkerMethod> = M extends 'boot'
+	? (env: EnvironmentSpec, onProgress: (progress: BootProgress) => void) => Promise<void>
+	: (...args: WorkerArgs[M]) => Promise<WorkerResult[M]>;
 
-/** Ce que le worker expose : chaque méthode du Runtime, avec ses arguments tels qu'ils voyagent ; les facultatives peuvent manquer. */
+/**
+ * Ce que le worker expose : chaque méthode du Runtime, avec ses arguments tels qu'ils voyagent ; les
+ * facultatives peuvent manquer. `boot` reçoit en plus de quoi signaler sa progression à la page.
+ */
 export type WorkerApi = { [M in Exclude<WorkerMethod, OptionalWorkerMethod>]: WorkerFunction<M> } & { [M in OptionalWorkerMethod]?: WorkerFunction<M> };
 
 /** Le côté worker de postMessage : `self` dans un worker, une doublure dans les tests. */
@@ -21,7 +27,7 @@ export interface ServeOptions {
 }
 
 /**
- * Sert un runtime dans un worker : le répartiteur que les workers PHP et Nuxt partagent.
+ * Sert un runtime dans un worker : le répartiteur que les workers de tous les runtimes partagent.
  *
  * Les appels s'exécutent un par un, dans l'ordre d'arrivée. Traités en parallèle, ils se croisaient :
  * une écriture arrivée pendant la notation par mutants était écrasée par la restauration du code d'origine,
@@ -31,6 +37,7 @@ export interface ServeOptions {
  */
 export function serveRuntime(api: WorkerApi, options: ServeOptions = {}, endpoint: WorkerEndpoint = self as unknown as WorkerEndpoint): void {
 	let queue = Promise.resolve();
+	const progress = (p: BootProgress) => endpoint.postMessage({ type: 'progress', progress: p }, []);
 	endpoint.addEventListener('message', (event: MessageEvent<WorkerCall | typeof PING>) => {
 		const data = event.data;
 		if (data === PING) return endpoint.postMessage({ type: 'pong' }, []);
@@ -49,11 +56,11 @@ export function serveRuntime(api: WorkerApi, options: ServeOptions = {}, endpoin
 
 	function invoke<M extends WorkerMethod>(call: WorkerCall<M>): Promise<WorkerResult[M]> {
 		// Le message vient d'une autre page du même site, mais rien ne garantit qu'il nomme une vraie méthode.
-		const method = (Object.hasOwn(api, call.method) ? api[call.method] : undefined) as WorkerFunction<M> | undefined;
+		const method = (Object.hasOwn(api, call.method) ? api[call.method] : undefined) as ((...args: unknown[]) => Promise<WorkerResult[M]>) | undefined;
 		if (typeof method !== 'function') {
 			return Promise.reject(new Error(`Méthode inconnue du runtime : ${String(call.method)}.`));
 		}
-		return method(...call.args);
+		return call.method === 'boot' ? method(...call.args, progress) : method(...call.args);
 	}
 }
 
