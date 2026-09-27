@@ -22,9 +22,9 @@ final class Inspect
         }
         $networks = [];
         foreach ($container->networks as $name => $aliases) {
-            $networks[$name] = ['Aliases' => $aliases === [] ? null : $aliases, 'NetworkID' => $docker->store->networks[$name]->id ?? '', 'IPAddress' => $container->ips[$name] ?? '', 'Gateway' => preg_replace('/\.\d+$/', '.1', $container->ips[$name] ?? '') ?? '', 'DNSNames' => array_values(array_unique([$container->name, ...$aliases, substr($container->id, 0, 12)]))];
+            $networks[$name] = ['Aliases' => $aliases === [] ? null : $aliases, 'NetworkID' => $docker->networks()[$name]->id ?? '', 'IPAddress' => $container->ips[$name] ?? '', 'Gateway' => preg_replace('/\.\d+$/', '.1', $container->ips[$name] ?? '') ?? '', 'DNSNames' => array_values(array_unique([$container->name, ...$aliases, substr($container->id, 0, 12)]))];
         }
-        $image = $docker->store->images[$container->imageId] ?? null;
+        $image = $docker->imageOf($container);
 
         return [
             'Id' => $container->id,
@@ -96,7 +96,7 @@ final class Inspect
     public static function network(Docker $docker, Network $network): array
     {
         $containers = [];
-        foreach ($docker->store->containers as $container) {
+        foreach ($docker->containers() as $container) {
             if (isset($container->networks[$network->name]) && $container->isRunning()) {
                 $containers[$container->id] = ['Name' => $container->name, 'IPv4Address' => ($container->ips[$network->name] ?? '').'/16'];
             }
