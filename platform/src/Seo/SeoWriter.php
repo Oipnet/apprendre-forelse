@@ -395,22 +395,22 @@ final readonly class SeoWriter
     }
 
     /**
-     * L'auteur des parcours et des exercices. La personne derrière Forelse ne vaut que pour Forelse :
-     * une autre instance publie son organisation.
+     * L'auteur des parcours et des exercices : la personne que déclare la marque du moteur (voir son marque.yaml).
+     * Une autre instance publie son organisation.
      *
      * @return array<string, mixed>
      */
     private function author(): array
     {
-        if (!$this->branding->isDefault()) {
+        if (null === ($person = $this->branding->person())) {
             return ['@id' => $this->url('app_home').'#organisation'];
         }
 
         return [
             '@type' => 'Person',
             '@id' => $this->url('app_home').'#auteur',
-            'name' => 'Arnaud Pointet',
-            'jobTitle' => 'Développeur indépendant',
+            'name' => $person['name'],
+            'jobTitle' => $person['jobTitle'],
             'worksFor' => ['@id' => $this->url('app_home').'#organisation'],
             'url' => $this->branding->url(),
         ];

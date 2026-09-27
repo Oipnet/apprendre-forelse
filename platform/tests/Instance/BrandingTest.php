@@ -2,6 +2,7 @@
 
 namespace App\Tests\Instance;
 
+use App\Instance\Branding\BrandingLoader;
 use App\Tests\BrandingTrait;
 use PHPUnit\Framework\TestCase;
 
@@ -106,6 +107,36 @@ final class BrandingTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('« home.author.lead » est obligatoire');
         self::branding($this->tmp)->home();
+    }
+
+    /** La marque est vérifiée en entier au chargement : une erreur de l'accueil n'attend pas le rendu de l'accueil. */
+    public function testUneErreurEstSignaleeDesLeChargementAvecLeCheminDeLaCle(): void
+    {
+        $this->write("name: A\nhome:\n  demo:\n    preview:\n      row: Une ligne\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« home.demo.preview.row » doit être une liste de phrases');
+        (new BrandingLoader())->load($this->tmp);
+    }
+
+    public function testLaMarqueDuMoteurEstUnMarqueYamlValable(): void
+    {
+        $config = (new BrandingLoader())->load('');
+
+        $this->assertTrue($config->isDefault);
+        $this->assertSame('Forelse · apprendre à développer', $config->title);
+        $this->assertSame('https://forelse.fr', $config->url);
+        $this->assertSame(['name' => 'Arnaud Pointet', 'jobTitle' => 'Développeur indépendant'], $config->person);
+        $this->assertStringContainsString('Taverne du Dragon Ivre', (string) $config->home['demo']['code']);
+    }
+
+    public function testUneInstanceNeDeclarePasDePersonne(): void
+    {
+        $this->write("name: A\nperson: {name: X, jobTitle: Y}\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('clé « person » inconnue');
+        (new BrandingLoader())->load($this->tmp);
     }
 
     public function testLesCouleursDeviennentDesVariablesCss(): void
