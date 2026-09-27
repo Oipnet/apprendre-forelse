@@ -26,6 +26,7 @@ final class ComposerCommand implements Command
     public function run(string $name, array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $options = [];
+        $ignored = [];
         $operands = [];
         $workingDir = null;
         for ($i = 0; $i < \count($args); ++$i) {
@@ -39,13 +40,16 @@ final class ComposerCommand implements Command
                     $options[explode('=', $flag)[0]] = true;
                     // --ignore-platform-req=ext-intl (répétable) : seules ces exigences sont ignorées.
                     if (str_starts_with($flag, 'ignore-platform-req=')) {
-                        $options['ignored-requirements'][] = substr($flag, 20);
+                        $ignored[] = substr($flag, 20);
                     }
                 }
             } else {
                 $operands[] = $arg;
             }
         }
+        // Posée après la lecture des drapeaux : un « --ignored-requirements » tapé tel quel en ferait sinon un booléen,
+        // auquel la liste ne pourrait plus s'ajouter.
+        $options['ignored-requirements'] = $ignored;
         $command = $operands[0] ?? null;
         if (isset($options['version']) || isset($options['V']) || $command === '--version') {
             return Result::ok('Composer version '.self::VERSION." 2025-07-10 19:08:33\nPHP version ".($m->facts->phpVersion ?? '8.4.11')." (/usr/local/bin/php)\nRun the \"diagnose\" command to get more detailed diagnostics output.\n");
