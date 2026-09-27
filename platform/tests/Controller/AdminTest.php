@@ -82,6 +82,53 @@ final class AdminTest extends WebTestCase
         $this->assertResponseIsSuccessful();
     }
 
+    public function testLaListeDesCohortesFaitUnNombreDeRequetesConstant(): void
+    {
+        $this->loginAsAdmin();
+        $this->client->disableReboot();
+        $this->peuplerCohortes(2);
+        $deux = $this->requetesDeLaListeDesCohortes();
+        $this->assertSelectorTextContains('table', 'Chef 1 de cohorte-1, Chef 2 de cohorte-1', 'Les chefs, par pseudo.');
+
+        $this->peuplerCohortes(6);
+        $six = $this->requetesDeLaListeDesCohortes();
+
+        $this->assertSame($deux, $six, 'Ni les chefs ni les apprenants ne se chargent cohorte par cohorte.');
+        $apprenants = $this->client->getCrawler()->filter('td[data-column="learnerCount"]')->each(static fn ($cell) => trim($cell->text()));
+        $this->assertSame(array_fill(0, 6, '3'), $apprenants, 'Trois apprenants dans chaque cohorte.');
+    }
+
+    /** Cohortes « cohorte-1 » à « cohorte-$n », chacune avec deux chefs et trois apprenants. */
+    private function peuplerCohortes(int $n): void
+    {
+        $entityManager = static::getContainer()->get('doctrine')->getManager();
+        for ($i = 1; $i <= $n; ++$i) {
+            $code = 'cohorte-'.$i;
+            if ($this->createCohort($code)->getChefs()->count() > 0) {
+                continue;
+            }
+            for ($c = 1; $c <= 2; ++$c) {
+                $this->createCohort($code)->addChef($this->createUser(sprintf('chef%d-%d@example.test', $c, $i), sprintf('Chef %d de %s', $c, $code)));
+            }
+            for ($a = 1; $a <= 3; ++$a) {
+                $this->createUser(sprintf('apprenant%d-%d@example.test', $a, $i), 'Apprenant', $code);
+            }
+        }
+        $entityManager->flush();
+        $entityManager->clear();
+    }
+
+    /** Requêtes SQL de la page /admin/cohortes (profilage de Doctrine, exposé en test par config/services.yaml). */
+    private function requetesDeLaListeDesCohortes(): int
+    {
+        $holder = $this->client->getContainer()->get('test.doctrine.debug_data_holder');
+        $holder->reset();
+        $this->client->request('GET', '/admin/cohortes');
+        $this->assertResponseIsSuccessful();
+
+        return \count($holder->getData()['default'] ?? []);
+    }
+
     public function testCohortesProgressionEtGrille(): void
     {
         $container = static::getContainer();

@@ -18,8 +18,12 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
@@ -35,6 +39,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Cohortes : créées ici, rejointes à l'inscription avec leur code (ou le lien d'invitation).
@@ -42,8 +47,16 @@ use Symfony\Component\Validator\Constraints\Length;
  * @extends AbstractCrudController<Cohort>
  */
 #[AdminRoute(path: '/cohortes', name: 'cohorts')]
-final class CohortCrudController extends AbstractCrudController
+final class CohortCrudController extends AbstractCrudController implements ResetInterface
 {
+    /**
+     * Nombre d'apprenants par cohorte, compté une fois pour toute la liste. Vidé entre deux requêtes (reset()) : un
+     * worker qui garde le contrôleur en mémoire ne doit pas resservir les nombres de la requête précédente.
+     *
+     * @var array<int, int>|null
+     */
+    private ?array $learnerCounts = null;
+
     public function __construct(
         private readonly UrlGeneratorInterface $router,
         private readonly ContentRepository $content,
@@ -68,6 +81,16 @@ final class CohortCrudController extends AbstractCrudController
             ->setHelp(Crud::PAGE_INDEX, 'Envoyez le lien d\'invitation (ou le code) aux apprenants : il pré-remplit le formulaire d\'inscription. Une cohorte inactive n\'accepte plus d\'inscriptions.')
             // La fiche affiche le financement et l'estimation du devis sous les champs (voir configureResponseParameters).
             ->overrideTemplate('crud/detail', 'admin/cohort_detail.html.twig');
+    }
+
+    /**
+     * La liste charge les chefs avec les cohortes : sans la jointure, chaque ligne les demandait à part.
+     */
+    public function createIndexQueryBuilder(SearchDto $searchDto, EntityDto $entityDto, FieldCollection $fields, FilterCollection $filters): QueryBuilder
+    {
+        return parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters)
+            ->leftJoin('entity.chefs', 'chef')
+            ->addSelect('chef');
     }
 
     public function configureResponseParameters(KeyValueStore $responseParameters): KeyValueStore
@@ -95,7 +118,15 @@ final class CohortCrudController extends AbstractCrudController
         }
         yield $code;
         yield BooleanField::new('active', 'Inscriptions ouvertes');
-        yield AssociationField::new('users', 'Apprenants')->hideOnForm();
+        // Sur la liste, un nombre compté une fois pour toutes les lignes : un AssociationField compterait la collection,
+        // donc chargerait tous les apprenants de chaque cohorte. Champ virtuel, d'où le gabarit explicite (sans lui,
+        // EasyAdmin le dirait « inaccessible ») et l'absence de tri.
+        yield IntegerField::new('learnerCount', 'Apprenants')
+            ->onlyOnIndex()
+            ->setSortable(false)
+            ->setTemplatePath('@EasyAdmin/crud/field/integer.html.twig')
+            ->formatValue(fn ($value, Cohort $cohort) => $this->learnerCounts()[$cohort->getId()] ?? 0);
+        yield AssociationField::new('users', 'Apprenants')->onlyOnDetail();
         if (\in_array($pageName, [Crud::PAGE_INDEX, Crud::PAGE_DETAIL], true)) {
             // Gabarits maison : « Tous » plutôt que « vide » quand aucun parcours n'est choisi.
             yield ChoiceField::new('availableTrackIds', 'Parcours disponibles')
@@ -211,6 +242,17 @@ final class CohortCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, $progress)
             ->add(Crud::PAGE_DETAIL, $progress)
             ->add(Crud::PAGE_DETAIL, $applyQuote);
+    }
+
+    public function reset(): void
+    {
+        $this->learnerCounts = null;
+    }
+
+    /** @return array<int, int> identifiant de la cohorte => nombre d'apprenants, en une requête */
+    private function learnerCounts(): array
+    {
+        return $this->learnerCounts ??= $this->users->countByCohort();
     }
 
     /** @return array<string, string> titre (et état) du parcours => identifiant */
