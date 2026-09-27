@@ -52,7 +52,7 @@ final class TrackAccessChecker implements ResetInterface
 
     public function canAccess(?User $user, Track $track, Chapter $chapter): bool
     {
-        if (null !== $user && self::isFreeChapter($track, $chapter)) {
+        if (null !== $user && $track->isFreeChapter($chapter)) {
             return true;
         }
 
@@ -98,13 +98,7 @@ final class TrackAccessChecker implements ResetInterface
         $track = $this->content->findTrack($exercise->trackId);
         $chapter = null === $track ? null : $this->content->chapterOf($exercise);
 
-        return null !== $track && null !== $chapter && self::isFreeChapter($track, $chapter);
-    }
-
-    /** Le premier chapitre d'un parcours public : la porte d'entrée, gratuite, une fois le compte créé. */
-    public static function isFreeChapter(Track $track, Chapter $chapter): bool
-    {
-        return !$track->isRestricted() && ($track->chapters[0] ?? null)?->id === $chapter->id;
+        return null !== $track && null !== $chapter && $track->isFreeChapter($chapter);
     }
 
     /** Un accès actif (achat, cohorte, offert), sans compter le rôle ni la gratuité : ce qui interdit de racheter. */

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Payment;
+namespace App\Controller\View;
 
 use App\Content\Chapter;
 use App\Content\ChapterOutline;
@@ -9,16 +9,16 @@ use App\Content\Exercise;
 use App\Content\LessonRenderer;
 use App\Content\Track;
 use App\Entity\User;
-use App\Security\TrackAccessChecker;
+use App\Payment\TrackOfferFactory;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Environment;
 
 /**
- * La page d'un chapitre fermé : le prix, le bouton d'achat, la progression gardée. Pour un exercice, sa consigne reste
- * lisible : 200 pour un visiteur (la page publique de l'exercice), 403 pour un apprenant connecté sans accès.
+ * Les pages d'un exercice de parcours et d'un chapitre fermé : le prix, le bouton d'achat, la progression gardée. Un
+ * exercice fermé garde sa consigne lisible : 200 pour un visiteur (sa page publique), 403 pour un apprenant sans accès.
  */
-final readonly class LockedChapterPage
+final readonly class ExercisePage
 {
     public function __construct(
         private Environment $twig,
@@ -35,7 +35,7 @@ final readonly class LockedChapterPage
      *
      * @return array<string, mixed>
      */
-    public function exerciseContext(Track $track, Chapter $chapter, Exercise $exercise): array
+    public function context(Track $track, Chapter $chapter, Exercise $exercise): array
     {
         return [
             'track' => $track,
@@ -67,21 +67,21 @@ final readonly class LockedChapterPage
         return $siblings;
     }
 
-    public function exercise(Track $track, Chapter $chapter, Exercise $exercise, ?User $user): Response
+    public function locked(Track $track, Chapter $chapter, Exercise $exercise, ?User $user): Response
     {
         $firstId = $track->exerciseIds()[0] ?? null;
 
         return new Response($this->twig->render('exercise/show.html.twig', [
-            ...$this->exerciseContext($track, $chapter, $exercise),
+            ...$this->context($track, $chapter, $exercise),
             'offer' => $this->offers->create($track, $user),
             'inviteOnly' => $this->inviteOnly,
             // Le premier chapitre est gratuit : un visiteur n'a qu'un compte à créer, pas un parcours à acheter.
-            'freeChapter' => TrackAccessChecker::isFreeChapter($track, $chapter),
+            'freeChapter' => $track->isFreeChapter($chapter),
             'firstExercise' => null === $firstId ? null : $this->content->findExercise($track->id, $firstId),
         ]), null === $user ? Response::HTTP_OK : Response::HTTP_FORBIDDEN);
     }
 
-    public function render(Track $track, Chapter $chapter, User $user): Response
+    public function lockedChapter(Track $track, Chapter $chapter, User $user): Response
     {
         return new Response($this->twig->render('track/locked.html.twig', [
             'track' => $track,

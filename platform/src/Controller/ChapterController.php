@@ -8,16 +8,16 @@ use App\Content\ContentRepository;
 use App\Content\LessonRenderer;
 use App\Content\Track;
 use App\Content\TrackVisibility;
+use App\Controller\View\ExercisePage;
 use App\Entity\User;
 use App\Export\LessonPdf;
-use App\Payment\LockedChapterPage;
+use App\Export\PdfResponse;
 use App\Repository\ExerciseProgressRepository;
 use App\Security\TrackAccessChecker;
 use App\Seo\SeoWriter;
 use App\Service\ChapterSummary;
 use App\Service\LessonAccess;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -35,7 +35,7 @@ final class ChapterController extends AbstractController
         private readonly ExerciseProgressRepository $progressRepository,
         private readonly ChapterSummary $summary,
         private readonly TrackAccessChecker $trackAccess,
-        private readonly LockedChapterPage $lockedPage,
+        private readonly ExercisePage $pages,
     ) {
     }
 
@@ -73,7 +73,7 @@ final class ChapterController extends AbstractController
         return $this->render('chapter/summary.html.twig', [
             'track' => $track,
             ...$outline,
-            'free' => TrackAccessChecker::isFreeChapter($track, $chapter),
+            'free' => $track->isFreeChapter($chapter),
         ]);
     }
 
@@ -88,21 +88,10 @@ final class ChapterController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        return self::pdfResponse(
+        return new PdfResponse(
             $pdf->render($this->content->packs()[$track->packId], $track, $lesson, $user),
             LessonPdf::filename($track, $number, $chapter),
         );
-    }
-
-    /** Un PDF personnalisé : généré à chaque demande, jamais mis en cache. */
-    public static function pdfResponse(string $pdf, string $filename): Response
-    {
-        $response = new Response($pdf);
-        $response->headers->set('Content-Type', 'application/pdf');
-        $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_INLINE, $filename));
-        $response->headers->set('Cache-Control', 'private, no-store');
-
-        return $response;
     }
 
     /**
@@ -130,7 +119,7 @@ final class ChapterController extends AbstractController
 
         // La fiche est du contenu du parcours : un chapitre réussi mais dont l'accès a expiré reste fermé.
         if (!$this->trackAccess->canAccess($user, $track, $chapter)) {
-            return $this->lockedPage->render($track, $chapter, $user);
+            return $this->pages->lockedChapter($track, $chapter, $user);
         }
 
         $progress = $this->progressRepository->findByTrack($user, $track->id);

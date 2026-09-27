@@ -3,9 +3,9 @@
 namespace App\Payment;
 
 use App\Content\Track;
-use App\Controller\LegalController;
 use App\Entity\Purchase;
 use App\Entity\User;
+use App\Legal\LegalVersions;
 use App\Repository\PurchaseRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -49,7 +49,7 @@ final readonly class PurchaseCheckout
                 if ($session->isComplete()) {
                     return $this->thanksUrl($pending);
                 }
-                if ($session->isOpen() && $pending->hasSameTerms($quote, LegalController::TERMS_VERSION)) {
+                if ($session->isOpen() && $pending->hasSameTerms($quote, LegalVersions::TERMS_VERSION)) {
                     return $session->url;
                 }
                 // Échoue si l'apprenant vient de payer dans l'autre onglet : rien n'est changé, il réessaie et
@@ -61,7 +61,7 @@ final readonly class PurchaseCheckout
             }
 
             // Le prix est figé maintenant : celui que l'apprenant vient de voir, et que Stripe facturera.
-            $purchase = new Purchase($user, $track->id, $quote->price, $quote->kind, WithdrawalWaiver::TEXT, $this->clock->now(), $quote->cohort, LegalController::TERMS_VERSION);
+            $purchase = new Purchase($user, $track->id, $quote->price, $quote->kind, WithdrawalWaiver::TEXT, $this->clock->now(), $quote->cohort, LegalVersions::TERMS_VERSION);
             $this->entityManager->persist($purchase);
             $this->entityManager->flush();
 

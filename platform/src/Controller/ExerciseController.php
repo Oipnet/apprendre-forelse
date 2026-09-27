@@ -5,8 +5,8 @@ namespace App\Controller;
 use App\Api\PlaygroundConfigFactory;
 use App\Content\ContentRepository;
 use App\Content\TrackVisibility;
+use App\Controller\View\ExercisePage;
 use App\Entity\User;
-use App\Payment\LockedChapterPage;
 use App\Security\TrackAccessChecker;
 use App\Seo\SeoWriter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +20,7 @@ final class ExerciseController extends AbstractController
      * ni moteur WebAssembly — 200 pour un visiteur, 403 pour un apprenant connecté sans accès.
      */
     #[Route('/parcours/{trackId}/{exerciseId}', name: 'app_exercise', methods: ['GET'])]
-    public function play(string $trackId, string $exerciseId, ContentRepository $content, TrackVisibility $visibility, PlaygroundConfigFactory $configs, TrackAccessChecker $access, LockedChapterPage $locked, SeoWriter $seo): Response
+    public function play(string $trackId, string $exerciseId, ContentRepository $content, TrackVisibility $visibility, PlaygroundConfigFactory $configs, TrackAccessChecker $access, ExercisePage $page, SeoWriter $seo): Response
     {
         $track = $visibility->find($trackId) ?? throw $this->createNotFoundException();
         $exercise = $content->findExercise($trackId, $exerciseId) ?? throw $this->createNotFoundException();
@@ -33,11 +33,11 @@ final class ExerciseController extends AbstractController
             $seo->exercise($track, $chapter, $exercise);
         }
         if (!$open) {
-            return $locked->exercise($track, $chapter, $exercise, $user);
+            return $page->locked($track, $chapter, $exercise, $user);
         }
 
         return $this->render('exercise/play.html.twig', [
-            ...$locked->exerciseContext($track, $chapter, $exercise),
+            ...$page->context($track, $chapter, $exercise),
             'config' => $configs->create($exercise),
         ]);
     }

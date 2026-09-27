@@ -2,7 +2,6 @@
 
 namespace App\Tests\Controller;
 
-use App\Controller\LegalController;
 use App\Entity\AccessSource;
 use App\Entity\PriceKind;
 use App\Entity\Purchase;
@@ -11,6 +10,7 @@ use App\Entity\StripeEvent;
 use App\Entity\TrackAccess;
 use App\Entity\TrackPricing;
 use App\Entity\User;
+use App\Legal\LegalVersions;
 use App\Payment\CheckoutSession;
 use App\Payment\WithdrawalWaiver;
 use App\Tests\DatabaseTrait;
@@ -124,7 +124,7 @@ final class PurchaseTest extends WebTestCase
         $this->assertSame(4900, $purchase->getPrice());
         $this->assertSame(PriceKind::Founder, $purchase->getPriceKind());
         $this->assertSame(WithdrawalWaiver::TEXT, $purchase->getWithdrawalWaiverText(), 'Le texte coché est conservé avec l\'achat.');
-        $this->assertSame(LegalController::TERMS_VERSION, $purchase->getTermsVersion(), 'La version des CGV acceptée aussi.');
+        $this->assertSame(LegalVersions::TERMS_VERSION, $purchase->getTermsVersion(), 'La version des CGV acceptée aussi.');
         $this->assertNotNull($purchase->getTermsAcceptedAt());
         $this->assertSame('http://localhost/achat/'.$purchase->getId().'/merci', FakePaymentGateway::$sessions[0]['successUrl']);
 

@@ -65,7 +65,7 @@ class Purchase
     #[ORM\Column]
     private \DateTimeImmutable $withdrawalWaiverAcceptedAt;
 
-    /** Version des conditions générales de vente acceptées (LegalController::TERMS_VERSION) ; null avant leur existence. */
+    /** Version des conditions générales de vente acceptées (LegalVersions::TERMS_VERSION) ; null avant leur existence. */
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $termsVersion = null;
 

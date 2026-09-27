@@ -8,6 +8,7 @@ use App\Content\TrackVisibility;
 use App\Content\Track;
 use App\Entity\User;
 use App\Export\LessonPdf;
+use App\Export\PdfResponse;
 use App\Payment\TrackOfferFactory;
 use App\Repository\ExerciseProgressRepository;
 use App\Security\TrackAccessChecker;
@@ -67,7 +68,7 @@ final class TrackController extends AbstractController
                 // La fiche de cours, si le chapitre en a une : lisible ou encore verrouillée.
                 'lesson' => $chapter->hasLesson() ? $lessonAccess->status($user, $track, $chapter, $progress) : null,
                 // Premier chapitre libre ; les autres demandent l'accès au parcours (la progression s'affiche quand même).
-                'free' => TrackAccessChecker::isFreeChapter($track, $chapter),
+                'free' => $track->isFreeChapter($chapter),
                 'locked' => !$access->canAccess($user, $track, $chapter),
             ];
         }
@@ -126,7 +127,7 @@ final class TrackController extends AbstractController
 
         $summaries = array_map(static fn (Chapter $c) => $summary->summarize($track, $c, $progress), $chapters);
 
-        return ChapterController::pdfResponse(
+        return new PdfResponse(
             $pdf->renderBooklet($content->packs()[$track->packId], $track, $summaries, $user),
             LessonPdf::bookletFilename($track),
         );

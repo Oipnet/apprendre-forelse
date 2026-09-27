@@ -37,6 +37,12 @@ final readonly class Track
         return self::VISIBILITY_ADMIN === $this->visibility;
     }
 
+    /** Le premier chapitre d'un parcours public : la porte d'entrée, gratuite, une fois le compte créé. */
+    public function isFreeChapter(Chapter $chapter): bool
+    {
+        return !$this->isRestricted() && ($this->chapters[0] ?? null)?->id === $chapter->id;
+    }
+
     /** @return list<string> tous les exercices, dans l'ordre du parcours */
     public function exerciseIds(): array
     {

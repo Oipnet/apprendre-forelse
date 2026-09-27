@@ -8,8 +8,8 @@ use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Content\PracticeVersionIndex;
 use App\Content\PublishedContent;
-use App\Controller\LegalController;
 use App\Instance\SelfHostingPage;
+use App\Legal\LegalVersions;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -46,7 +46,7 @@ final readonly class Sitemap
     {
         return $this->cache->get('sitemap', function (ItemInterface $item): array {
             $entries = [];
-            $latest = LegalController::UPDATED_AT;
+            $latest = LegalVersions::UPDATED_AT;
 
             foreach ($this->published->tracks() as $track) {
                 $trackEntries = [];
@@ -106,9 +106,9 @@ final readonly class Sitemap
                 $entries[] = $this->entry('app_self_hosting', [], self::PAGES_UPDATED_AT);
             }
             $entries[] = $this->entry('app_contact', [], self::PAGES_UPDATED_AT);
-            $entries[] = $this->entry('app_legal_notice', [], LegalController::UPDATED_AT);
-            $entries[] = $this->entry('app_privacy', [], LegalController::UPDATED_AT);
-            $entries[] = $this->entry('app_terms', [], LegalController::TERMS_VERSION);
+            $entries[] = $this->entry('app_legal_notice', [], LegalVersions::UPDATED_AT);
+            $entries[] = $this->entry('app_privacy', [], LegalVersions::UPDATED_AT);
+            $entries[] = $this->entry('app_terms', [], LegalVersions::TERMS_VERSION);
 
             return [$this->entry('app_home', [], $latest), ...$entries];
         });
