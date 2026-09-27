@@ -101,28 +101,6 @@ final class LessonDrafterTest extends TestCase
         $this->drafter(cle: '')->brouillon($track, $track->chapters[0]);
     }
 
-    public function testEcrireNEcrasePasSansForce(): void
-    {
-        $content = $this->content();
-        $track = $content->findTrack('t');
-        $drafter = new LessonDrafter($content, new ModelClient(new MockHttpClient(), 'cle-de-test', 'claude-sonnet-5'), new EnvironmentRegistry(self::ROOT.'/environments'));
-
-        $chemin = $drafter->ecrire($track, $track->chapters[0], "## Première version\n");
-        $this->assertSame($this->tmp.'/p/tracks/t/chapters/c1/lesson.md', $chemin);
-        $this->assertTrue($content->findTrack('t')->chapters[0]->hasLesson(), 'Le pack est relu après écriture.');
-
-        try {
-            $drafter->ecrire($track, $track->chapters[0], "## Deuxième version\n");
-            $this->fail('Une fiche existante ne doit pas être écrasée sans --force.');
-        } catch (ContentException $e) {
-            $this->assertStringContainsString('--force', $e->getMessage());
-        }
-        $this->assertSame("## Première version\n", file_get_contents($chemin));
-
-        $drafter->ecrire($track, $track->chapters[0], "## Deuxième version\n", force: true);
-        $this->assertSame("## Deuxième version\n", file_get_contents($chemin));
-    }
-
     public function testRappel(): void
     {
         $this->assertNull(LessonDrafter::rappel("Pas de rappel.\n\n## Votre mission\n\n1. Faites."));

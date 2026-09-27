@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Content\Author\LessonDrafter;
+use App\Content\Author\LessonFiles;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use Symfony\Component\Console\Attribute\Argument;
@@ -20,6 +21,7 @@ final class ContentLessonDraftCommand
     public function __construct(
         private readonly ContentRepository $content,
         private readonly LessonDrafter $drafter,
+        private readonly LessonFiles $files,
     ) {
     }
 
@@ -40,7 +42,7 @@ final class ContentLessonDraftCommand
 
         try {
             $markdown = $ia ? $this->drafter->brouillon($track, $chapter) : $this->drafter->squelette($track, $chapter);
-            $chemin = $this->drafter->ecrire($track, $chapter, $markdown, $force);
+            $chemin = $this->files->ecrire($track, $chapter, $markdown, $force);
         } catch (ContentException $e) {
             $io->error($e->getMessage());
 

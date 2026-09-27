@@ -10,12 +10,11 @@ use App\Content\Framework\FrameworkProfile;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
 use App\Content\Track;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Point de départ d'une fiche de cours (chapters/<chapitre>/lesson.md), pour ne pas partir
  * d'une page blanche : un squelette assemblé à partir des exercices du chapitre, ou un brouillon
- * rédigé par le modèle. Dans les deux cas, l'auteur relit et réécrit.
+ * rédigé par le modèle. Dans les deux cas, l'auteur relit et réécrit ; LessonFiles l'écrit dans le pack.
  */
 final class LessonDrafter
 {
@@ -37,11 +36,6 @@ final class LessonDrafter
         private readonly ModelClient $modele,
         private readonly EnvironmentRegistry $environments,
     ) {
-    }
-
-    public function chemin(Track $track, Chapter $chapter): string
-    {
-        return sprintf('%s/chapters/%s/lesson.md', $track->directory, $chapter->id);
     }
 
     /**
@@ -138,38 +132,6 @@ final class LessonDrafter
         $fiche = (string) preg_replace('/^# [^\n]*\n+/', '', ltrim($fiche));
 
         return rtrim($fiche)."\n";
-    }
-
-    /** Écrit la fiche dans le pack. Refuse d'écraser une fiche existante sans $force. */
-    public function ecrire(Track $track, Chapter $chapter, string $markdown, bool $force = false): string
-    {
-        $chemin = $this->chemin($track, $chapter);
-        if (is_file($chemin) && !$force) {
-            throw new ContentException(sprintf('%s existe déjà : relisez-le, ou passez --force pour le remplacer.', $chemin));
-        }
-        if (!is_writable($track->directory)) {
-            throw new ContentException(sprintf('Le parcours « %s » est en lecture seule (%s).', $track->id, $track->directory));
-        }
-        (new Filesystem())->dumpFile($chemin, $markdown);
-        $this->content->reset();
-
-        return $chemin;
-    }
-
-    /** Retire la fiche du pack : le chapitre n'en a plus. */
-    public function supprimer(Track $track, Chapter $chapter): void
-    {
-        if (!is_writable($track->directory)) {
-            throw new ContentException(sprintf('Le parcours « %s » est en lecture seule (%s).', $track->id, $track->directory));
-        }
-        $chemin = $this->chemin($track, $chapter);
-        $filesystem = new Filesystem();
-        $filesystem->remove($chemin);
-        // Le dossier du chapitre ne sert qu'à la fiche : on ne laisse pas un dossier vide.
-        if (is_dir(\dirname($chemin)) && !glob(\dirname($chemin).'/*')) {
-            $filesystem->remove(\dirname($chemin));
-        }
-        $this->content->reset();
     }
 
     /** La section « ## Rappel » des consignes d'un exercice, s'il y en a une. */
