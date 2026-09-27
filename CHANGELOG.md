@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Environnement `symfony-8-2-dev` : Symfony 8.2.x-dev du 27 septembre, qui ordonne les écouteurs et les services
+  taggés avec `before` / `after`. La complétion de l'éditeur connaît les écouteurs du noyau
+  (`Symfony\Component\HttpKernel\EventListener\`), les cibles naturelles de ces contraintes.
+
 ### Corrigé
 
 - **Auto-hébergement : une instance neuve démarre en 2.x.** L'image par défaut de
