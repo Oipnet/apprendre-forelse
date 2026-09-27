@@ -8,11 +8,9 @@ import clientBundle from 'virtual:nuxt-sim-client';
 import { prepareHappyDom } from './happy-dom-node';
 import { NuxtSimulator } from '../index.ts';
 import type { BootProgress, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
-import { serveRuntime, type WorkerMessage } from '@forelse/runtime-contract';
+import { serveRuntime } from '@forelse/runtime-contract';
 
 let simulator: NuxtSimulator | undefined;
-
-const progress = (p: BootProgress) => postMessage({ type: 'progress', progress: p } satisfies WorkerMessage);
 
 function ready(): NuxtSimulator {
 	if (!simulator) throw new Error('Simulateur Nuxt non démarré.');
@@ -20,18 +18,18 @@ function ready(): NuxtSimulator {
 }
 
 const api: Runtime = {
-	async boot(env: EnvironmentSpec) {
-		progress({ step: 'download', ratio: null, label: 'Téléchargement du projet Nuxt…' });
+	async boot(env: EnvironmentSpec, onProgress?: (p: BootProgress) => void) {
+		onProgress?.({ step: 'download', ratio: null, label: 'Téléchargement du projet Nuxt…' });
 		const response = await fetch(env.archiveUrl);
 		if (!response.ok) throw new Error(`Archive de l'environnement introuvable (${response.status}).`);
-		progress({ step: 'unpack', ratio: null, label: 'Ouverture du projet…' });
+		onProgress?.({ step: 'unpack', ratio: null, label: 'Ouverture du projet…' });
 		const decoder = new TextDecoder();
 		const files = Object.fromEntries(
 			Object.entries(unzipSync(new Uint8Array(await response.arrayBuffer())))
 				.filter(([path]) => !path.endsWith('/'))
 				.map(([path, content]) => [path, decoder.decode(content)]),
 		);
-		progress({ step: 'boot', ratio: null, label: 'Démarrage du simulateur Nuxt…' });
+		onProgress?.({ step: 'boot', ratio: null, label: 'Démarrage du simulateur Nuxt…' });
 		simulator = new NuxtSimulator(files, {
 			clientBundle,
 			baseURL: `${env.previewBasePath}/`,

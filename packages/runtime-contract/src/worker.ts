@@ -1,12 +1,12 @@
-import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, Runtime, RuntimeRestart } from './runtime';
-import { PING, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol';
+import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, Runtime, RuntimeRestart } from './runtime.ts';
+import { PING, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol.ts';
 
 /**
  * Crée un worker module à partir d'une URL obtenue par `import url from './x.ts?worker&url'`.
  *
- * En dev, le script est servi par Vite (autre origine que la page Symfony), et un Worker
+ * En dev, le script est servi par Vite (autre origine que la page de la plateforme), et un Worker
  * doit être de même origine : on passe par un worker `blob:` qui importe le module.
- * En production, tout est servi par Symfony, sur une seule origine.
+ * En production, tout est servi par la plateforme, sur une seule origine.
  */
 export function createModuleWorker(url: string, name?: string): Worker {
 	const absolute = new URL(url, import.meta.url);
@@ -16,7 +16,7 @@ export function createModuleWorker(url: string, name?: string): Worker {
 }
 
 export interface WorkerRuntimeOptions {
-	/** Nom donné à l'apprenant quand le runtime ne répond plus (« PHP », « Le simulateur Nuxt ») : il commence la phrase. */
+	/** Nom donné à l'apprenant quand le runtime ne répond plus (« Le simulateur Nuxt ») : il commence la phrase. */
 	label?: string;
 	/** Silence au-delà duquel un worker qui a un appel en cours est tenu pour bloqué. */
 	silenceMs?: number;
@@ -29,7 +29,7 @@ export interface WorkerRuntimeOptions {
 }
 
 /**
- * Côté page : délègue chaque appel à un worker (PHP, simulateur Nuxt…) par postMessage.
+ * Côté page : délègue chaque appel à un worker (le runtime d'un framework) par postMessage.
  *
  * Il surveille aussi le worker. Une boucle infinie dans le code de l'apprenant (un `while (true)` dans
  * une route) bloque le fil du worker tout entier, et `max_execution_time` n'y peut rien sous wasm (vérifié :

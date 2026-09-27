@@ -1,13 +1,16 @@
-import type { BootProgress, Runtime } from './runtime';
+import type { BootProgress, EnvironmentSpec, Runtime } from './runtime.ts';
 
-/** Méthodes exposées par le worker PHP : exactement celles du Runtime (sauf l'abonnement aux redémarrages, local à la page). */
+/** Méthodes exposées par un worker : exactement celles du Runtime (sauf l'abonnement aux redémarrages, local à la page). */
 export type WorkerMethod = Exclude<keyof Runtime, 'onRestart'>;
 
 /** Les méthodes qu'un runtime peut ne pas avoir (runCommand) : un worker peut ne pas les servir. */
 export type OptionalWorkerMethod = { [M in WorkerMethod]-?: undefined extends Runtime[M] ? M : never }[WorkerMethod];
 
-/** Les arguments de chaque méthode, tels qu'ils voyagent (sans fonction : le suivi du boot passe par des messages). */
-export type WorkerArgs = { [M in WorkerMethod]: Parameters<NonNullable<Runtime[M]>> };
+/**
+ * Les arguments de chaque méthode, tels qu'ils voyagent. Sans fonction : le suivi du boot passe par des
+ * messages `progress`, et serveRuntime rend au runtime son `onProgress` côté worker.
+ */
+export type WorkerArgs = { [M in WorkerMethod]: M extends 'boot' ? [env: EnvironmentSpec] : Parameters<NonNullable<Runtime[M]>> };
 
 /** Le résultat de chaque méthode, une fois la promesse résolue. */
 export type WorkerResult = { [M in WorkerMethod]: Awaited<ReturnType<NonNullable<Runtime[M]>>> };

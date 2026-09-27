@@ -2,6 +2,7 @@
  * « Un avis ? » : retour d'un apprenant connecté sur l'exercice en cours.
  * Contrat serveur : App\Controller\Api\FeedbackApiController (POST JSON, 201).
  */
+import { escapeHtml } from './html';
 
 export const FEEDBACK_KINDS: { value: string; label: string }[] = [
 	{ value: 'bug', label: 'Un bogue (les tests, l’aperçu, l’éditeur…)' },
@@ -15,8 +16,6 @@ export interface FeedbackContext {
 	hintsUsed: number;
 	completed: boolean;
 }
-
-const escapeHtml = (s: string) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 /** Monte le dialogue de retour et le relie au bouton `trigger`. */
 export class FeedbackDialog {

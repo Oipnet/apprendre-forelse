@@ -95,6 +95,33 @@ describe('serveRuntime', () => {
 		expect(messages.some((m) => m.message.type === 'result' && m.message.id === 2)).toBe(false);
 	});
 
+	it('donne au boot de quoi signaler sa progression à la page', async () => {
+		const { e, envoyer, messages } = endpoint();
+		serveRuntime({ ...runtime(), boot: async (_env, onProgress) => onProgress({ step: 'unpack', ratio: null, label: 'Ouverture' }) }, {}, e);
+		envoyer({ method: 'boot', args: [{} as never] });
+		await attendre(5);
+		expect(messages.map((m) => m.message)).toEqual([
+			{ type: 'progress', progress: { step: 'unpack', ratio: null, label: 'Ouverture' } },
+			{ type: 'result', id: 1, result: undefined },
+		]);
+	});
+
+	it('sert une instance de classe : ses méthodes gardent leur `this`, son prototype reste fermé', async () => {
+		class Projet {
+			private readonly fichiers = ['src/Menu.php'];
+			async listFiles() {
+				return this.fichiers;
+			}
+		}
+		const { e, envoyer, reponses } = endpoint();
+		serveRuntime(new Projet() as unknown as WorkerApi, {}, e);
+		envoyer({ method: 'listFiles', args: [] });
+		envoyer({ method: 'constructor', args: [] } as never);
+		await attendre(10);
+		expect(reponses()[0]).toMatchObject({ type: 'result', result: ['src/Menu.php'] });
+		expect(reponses()[1]).toMatchObject({ type: 'error', error: expect.stringMatching(/^Méthode inconnue du runtime : constructor/) });
+	});
+
 	it('refuse une méthode inconnue, sans bloquer la suite', async () => {
 		const { e, envoyer, reponses } = endpoint();
 		serveRuntime(runtime(), {}, e);

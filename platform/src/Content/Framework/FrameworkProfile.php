@@ -46,6 +46,8 @@ final readonly class FrameworkProfile
      * @param list<string>          $snippets        familles d'extraits proposés par l'éditeur (« php », « laravel », « docker »)
      * @param array<string, string> $consoleAliases  préfixes tolérés dans la console => ce qui les remplace (« » : retiré)
      * @param int                   $versionParts    combien de composants de « version: » font une page de nouveautés
+     * @param list<string>          $rawCommands     commandes que la console affiche telles quelles, sans le nom de la console
+     *                                               (« sh », « *.sh » : tout ce qui finit par .sh)
      */
     public function __construct(
         public string $id,
@@ -87,6 +89,7 @@ final readonly class FrameworkProfile
          * La carte d'un exercice, elle, affiche toujours la version exacte qu'il déclare.
          */
         public int $versionParts = 2,
+        public array $rawCommands = [],
     ) {
     }
 
@@ -94,6 +97,16 @@ final readonly class FrameworkProfile
     public function runsPhpunit(): bool
     {
         return self::PHPUNIT === $this->testRunner;
+    }
+
+    /** Le nom du lanceur de tests, tel que la sortie des tests le montre à l'apprenant. */
+    public function testRunnerLabel(): string
+    {
+        return match ($this->testRunner) {
+            self::PHPUNIT => 'PHPUnit',
+            self::VITEST => 'Vitest',
+            default => $this->testRunner,
+        };
     }
 
     /**
@@ -111,9 +124,11 @@ final readonly class FrameworkProfile
             'bootNote' => $this->bootNote,
             'unpackLabel' => $this->unpackLabel,
             'testRunner' => $this->testRunner,
+            'testRunnerLabel' => $this->testRunnerLabel(),
             'runtime' => $this->runtime,
             'snippets' => $this->snippets,
             'consoleAliases' => (object) $this->consoleAliases,
+            'rawCommands' => $this->rawCommands,
             'projectDirs' => $this->projectDirs,
             'testCaches' => $this->testCaches,
             'hidden' => $this->hidden,

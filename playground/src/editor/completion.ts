@@ -110,6 +110,10 @@ export function registerCompletion(
 ) {
 	const classes: Record<string, ClassInfo> = { ...index.classes };
 	let projectSnapshot = '';
+	const families = snippets.filter((name) => Object.hasOwn(SNIPPET_PROVIDERS, name)).map((name) => SNIPPET_PROVIDERS[name]);
+	// Les extraits PHP d'une famille remplacent les extraits PHP génériques ; sans famille qui en déclare, ces derniers.
+	const phpProviders = families.flatMap((family) => family.php ?? []);
+	if (!phpProviders.length) phpProviders.push(phpSnippets);
 
 	/**
 	 * Les classes de l'apprenant (`App\Entity\Plat`, le DTO qu'il vient d'écrire) ne sont dans aucun index :
@@ -288,9 +292,7 @@ export function registerCompletion(
 			const suggestions = /^[A-Z]/.test(word.word) || (argumentDAttribut && word.word === '')
 				? classItems(range, model, ctx, () => true)
 				: [];
-			suggestions.push(...snippets.includes('laravel')
-				? laravelSnippets(range, model, ctx, useEdit)
-				: phpSnippets(range, model, ctx, useEdit));
+			suggestions.push(...phpProviders.flatMap((provide) => provide(range, model, ctx, useEdit)));
 			return { suggestions };
 		},
 	});
@@ -355,22 +357,17 @@ export function registerCompletion(
 		},
 	});
 
-	// Dockerfile et compose.yaml : quelques squelettes, pour ne pas partir d'une page blanche.
-	if (snippets.includes('docker')) {
-		languages.registerCompletionItemProvider('dockerfile', {
-			provideCompletionItems(model, position) {
-				const word = model.getWordUntilPosition(position);
-				const range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
-				return { suggestions: dockerfileSnippets(range) };
-			},
-		});
-		languages.registerCompletionItemProvider('yaml', {
-			provideCompletionItems(model, position) {
-				const word = model.getWordUntilPosition(position);
-				const range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
-				return { suggestions: composeSnippets(range) };
-			},
-		});
+	// Autres langages (Dockerfile, compose.yaml…) : quelques squelettes, pour ne pas partir d'une page blanche.
+	for (const family of families) {
+		for (const [language, provide] of Object.entries(family.languages ?? {})) {
+			languages.registerCompletionItemProvider(language, {
+				provideCompletionItems(model, position) {
+					const word = model.getWordUntilPosition(position);
+					const range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
+					return { suggestions: provide(range) };
+				},
+			});
+		}
 	}
 
 	languages.registerCompletionItemProvider('twig', {
@@ -397,6 +394,25 @@ export function registerCompletion(
 		},
 	});
 }
+
+type UseEdit = (fqcn: string, model: monaco.editor.ITextModel, ctx: FileContext) => monaco.languages.TextEdit[];
+type PhpSnippetProvider = (range: monaco.IRange, model: monaco.editor.ITextModel, ctx: FileContext, useEdit: UseEdit) => monaco.languages.CompletionItem[];
+
+/** Une famille d'extraits : ses extraits PHP, et ses squelettes pour d'autres langages (par identifiant Monaco). */
+interface SnippetFamily {
+	php?: PhpSnippetProvider;
+	languages?: Record<string, (range: monaco.IRange) => monaco.languages.CompletionItem[]>;
+}
+
+/**
+ * Les familles d'extraits que l'éditeur sait proposer, par nom : le profil du framework déclare
+ * lesquelles (`snippets`). Une nouvelle famille s'ajoute ici, sans toucher à registerCompletion.
+ */
+const SNIPPET_PROVIDERS: Record<string, SnippetFamily> = {
+	php: { php: phpSnippets },
+	laravel: { php: laravelSnippets },
+	docker: { languages: { dockerfile: dockerfileSnippets, yaml: composeSnippets } },
+};
 
 function snippet(label: string, insertText: string, documentation: string, range: monaco.IRange, extra: Partial<monaco.languages.CompletionItem> = {}): monaco.languages.CompletionItem {
 	return { label, kind: Kind.Snippet, insertText, insertTextRules: Rule.InsertAsSnippet, documentation, range, sortText: '2' + label, ...extra };

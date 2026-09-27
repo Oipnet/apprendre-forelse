@@ -3,8 +3,7 @@
  * différences de Monaco (lecture seule). Proposé à la réussite d'un exercice de Pratique.
  */
 import { languageOf, monaco } from '../editor/monaco';
-
-const escapeHtml = (s: string) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+import { escapeHtml } from './html';
 
 export class BeforeAfterDialog {
 	private readonly dialog: HTMLDialogElement;

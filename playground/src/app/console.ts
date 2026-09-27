@@ -1,4 +1,5 @@
 import type { CommandResult, Runtime } from '@forelse/runtime-contract';
+import { escapeHtml } from './html';
 
 /**
  * Découpe une ligne de commande en arguments (guillemets simples ou doubles respectés).
@@ -24,8 +25,6 @@ export function parseCommandLine(line: string, aliases: Record<string, string> =
 	}
 	return args;
 }
-
-const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 /**
  * Ce qu'un vrai terminal afficherait à la fin : les séquences OSC (titre, progression dans la barre
@@ -76,6 +75,15 @@ export function ansiToHtml(text: string): string {
 	return html;
 }
 
+/**
+ * La commande ne passe pas par la console du projet (« sh lancer.sh ») : elle s'affiche telle quelle.
+ * Un motif « *.sh » désigne tout ce qui finit par « .sh ».
+ */
+export function isRawCommand(command: string | undefined, rawCommands: string[]): boolean {
+	if (command === undefined) return false;
+	return rawCommands.some((pattern) => (pattern.startsWith('*') ? command.endsWith(pattern.slice(1)) : command === pattern));
+}
+
 /** Console du projet (bin/console, artisan) dans l'aperçu : saisie, historique, rendu des sorties. */
 export class ConsolePanel {
 	private readonly history: string[] = [];
@@ -91,6 +99,8 @@ export class ConsolePanel {
 		private readonly consoleName = 'bin/console',
 		/** Préfixes tolérés au début d'une commande, déclarés par le profil du framework. */
 		private readonly aliases: Record<string, string> = {},
+		/** Commandes affichées sans le nom de la console, déclarées par le profil (voir isRawCommand). */
+		private readonly rawCommands: string[] = [],
 	) {
 		input.addEventListener('keydown', (event) => {
 			if (event.key === 'Enter') {
@@ -128,8 +138,8 @@ export class ConsolePanel {
 		const entry = document.createElement('div');
 		entry.className = 'console-entry';
 		// « sh lancer.sh » n'est pas une sous-commande de la console : on l'affiche tel quel.
-		const script = this.consoleName === 'docker' && (args[0] === 'sh' || args[0]?.endsWith('.sh'));
-		entry.innerHTML = `<div class="console-command"><span class="prompt">$${script ? '' : ` ${escapeHtml(this.consoleName)}`}</span> ${escapeHtml(args.join(' '))}</div><pre class="console-result">…</pre>`;
+		const raw = isRawCommand(args[0], this.rawCommands);
+		entry.innerHTML = `<div class="console-command"><span class="prompt">$${raw ? '' : ` ${escapeHtml(this.consoleName)}`}</span> ${escapeHtml(args.join(' '))}</div><pre class="console-result">…</pre>`;
 		this.output.append(entry);
 		this.output.scrollTop = this.output.scrollHeight;
 		try {

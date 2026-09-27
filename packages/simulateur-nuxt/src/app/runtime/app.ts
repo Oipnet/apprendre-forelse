@@ -3,6 +3,7 @@
  * nuxt/dist/app/entry et du plugin de routeur de pages. Une application par requête côté serveur :
  * c'est ce qui rend visibles les fuites d'état entre visiteurs (chapitre 3 du parcours).
  */
+import { PREVIEW_CONSOLE, type PreviewConsoleMessage } from '@forelse/runtime-contract/preview';
 import { createHead as createClientHead } from '@unhead/vue/client';
 import { legacyPlugins } from '@unhead/vue/legacy';
 import { parse } from 'devalue';
@@ -355,7 +356,7 @@ function relayConsoleToPreview(): void {
 	const send = (level: 'warn' | 'error', args: unknown[]) => {
 		try {
 			const message = args.map(format).filter((part) => part !== undefined).join(' ').replace(/ +>/g, '>');
-			window.parent.postMessage({ type: 'nuxt-sim:console', level, message: message.slice(0, 4000) }, location.origin);
+			window.parent.postMessage({ type: PREVIEW_CONSOLE, level, message: message.slice(0, 4000) } satisfies PreviewConsoleMessage, location.origin);
 		} catch {
 			// Relais absent ou d'une autre origine : la console du navigateur suffit.
 		}
