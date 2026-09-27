@@ -66,6 +66,8 @@ final class ExerciseChecker
         $environment = $this->environments->get($exercise->environment);
         $this->cacheDirs = $environment->cacheDirs;
         $this->framework = $environment->framework;
+        // Le service vérifie un exercice après l'autre : un message d'échec ne doit pas passer au suivant.
+        $this->failures = [];
 
         $this->checkStructure($exercise, $starting, $tests, $solution, $environment, $result);
         $this->checkPracticeVersion($exercise, $environment, $result);
@@ -109,7 +111,7 @@ final class ExerciseChecker
             $this->clearCaches($workdir);
             $after = $this->grade($exercise, $workdir);
             if (null === $after) {
-                $result->error('Solution : PHPUnit n\'a produit aucun rapport (erreur fatale ?).');
+                $result->error('Solution : PHPUnit n\'a produit aucun rapport. '.($this->failures['*'] ?? '(erreur fatale ?)'));
 
                 return $result;
             }
@@ -426,6 +428,10 @@ final class ExerciseChecker
             return null;
         }
         if (!is_file($junit)) {
+            // Pas de rapport (erreur fatale au chargement, le plus souvent) : la fin de la sortie dit pourquoi.
+            $sortie = trim($process->getErrorOutput()."\n".$process->getOutput());
+            $this->failures = ['*' => '' !== $sortie ? implode("\n", \array_slice(explode("\n", $sortie), -5)) : '(erreur fatale ?)'];
+
             return null;
         }
 
