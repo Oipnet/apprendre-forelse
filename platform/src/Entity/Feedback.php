@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
  * Comme la progression, l'exercice n'est référencé que par ses identifiants.
  */
 #[ORM\Entity(repositoryClass: FeedbackRepository::class)]
-class Feedback
+class Feedback implements Handleable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -177,11 +177,21 @@ final class AdminTest extends WebTestCase
         $this->client->request('GET', '/admin/retours/'.$feedback->getId());
         $this->assertSelectorTextContains('body', 'Où va le contrôleur ?');
 
+        $crawler = $this->client->request('GET', '/admin/retours/'.$feedback->getId());
+        $this->assertSame('post', strtolower((string) $crawler->filter('form[action*="/traite"]')->attr('method')), '« Marquer traité » est un formulaire.');
         $this->client->request('GET', '/admin/retours/'.$feedback->getId().'/traite');
+        $this->assertResponseStatusCodeSame(405, 'Un lien (ou une image posée ailleurs) ne change rien.');
+        $this->assertFalse($container->get(FeedbackRepository::class)->find($feedback->getId())->isHandled());
+
+        $this->client->request('POST', '/admin/retours/'.$feedback->getId().'/traite', server: ['HTTP_ORIGIN' => 'http://localhost']);
         $this->assertResponseRedirects();
         $this->assertTrue($container->get(FeedbackRepository::class)->find($feedback->getId())->isHandled());
 
-        $this->client->request('GET', '/admin/retours/'.$feedback->getId().'/rouvrir');
+        $this->client->request('POST', '/admin/retours/'.$feedback->getId().'/rouvrir', server: ['HTTP_ORIGIN' => 'https://ailleurs.example']);
+        $this->assertResponseStatusCodeSame(403, 'Une autre origine ne rouvre rien.');
+        $this->assertTrue($container->get(FeedbackRepository::class)->find($feedback->getId())->isHandled());
+
+        $this->client->request('POST', '/admin/retours/'.$feedback->getId().'/rouvrir', server: ['HTTP_ORIGIN' => 'http://localhost']);
         $this->assertResponseRedirects();
         $this->assertFalse($container->get(FeedbackRepository::class)->find($feedback->getId())->isHandled());
     }

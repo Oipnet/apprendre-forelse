@@ -10,7 +10,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
-use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
@@ -23,7 +22,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Retours des apprenants (bouton « Un avis ? ») : on les lit, on les marque traités, on les supprime.
@@ -33,6 +31,8 @@ use Symfony\Component\HttpFoundation\Response;
 #[AdminRoute(path: '/retours', name: 'feedback')]
 final class FeedbackCrudController extends AbstractCrudController
 {
+    use HandledCrudActions;
+
     public function __construct(private readonly EntityManagerInterface $entityManager)
     {
     }
@@ -91,51 +91,23 @@ final class FeedbackCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
-        $handle = Action::new('handle', 'Marquer traité', 'fa fa-check')
-            ->linkToCrudAction('handle')
-            ->displayIf(static fn (Feedback $f) => !$f->isHandled());
-        $reopen = Action::new('reopen', 'Rouvrir', 'fa fa-rotate-left')
-            ->linkToCrudAction('reopen')
-            ->displayIf(static fn (Feedback $f) => $f->isHandled());
-
-        return $actions
+        return $this->addHandledActions($actions
             ->disable(Action::NEW, Action::EDIT)
-            ->add(Crud::PAGE_INDEX, Action::DETAIL)
-            ->add(Crud::PAGE_INDEX, $handle)
-            ->add(Crud::PAGE_INDEX, $reopen)
-            ->add(Crud::PAGE_DETAIL, $handle)
-            ->add(Crud::PAGE_DETAIL, $reopen);
+            ->add(Crud::PAGE_INDEX, Action::DETAIL));
     }
 
-    /** @param AdminContext<Feedback> $context */
-    #[AdminRoute('/{entityId}/traite', name: 'handle', options: ['methods' => ['POST', 'GET']])]
-    public function handle(AdminContext $context): Response
+    protected function handledNotice(bool $handled): string
     {
-        return $this->setHandled($context, true);
+        return $handled ? 'Retour marqué comme traité.' : 'Retour rouvert.';
     }
 
-    /** @param AdminContext<Feedback> $context */
-    #[AdminRoute('/{entityId}/rouvrir', name: 'reopen', options: ['methods' => ['POST', 'GET']])]
-    public function reopen(AdminContext $context): Response
+    protected function handledIndexRoute(): string
     {
-        return $this->setHandled($context, false);
+        return 'admin_feedback_index';
     }
 
-    /** @param AdminContext<Feedback> $context */
-    private function setHandled(AdminContext $context, bool $handled): Response
+    protected function handledEntityManager(): EntityManagerInterface
     {
-        $feedback = $context->getEntity()->getInstance();
-        if (!$feedback instanceof Feedback) {
-            throw $this->createNotFoundException();
-        }
-        $feedback->setHandled($handled);
-        $this->entityManager->flush();
-        $this->addFlash('success', $handled ? 'Retour marqué comme traité.' : 'Retour rouvert.');
-
-        // Retour à la liste ou au détail d'où l'on vient, tant que cela reste sur cette origine.
-        $referer = $context->getRequest()->headers->get('referer', '');
-        $sameOrigin = str_starts_with($referer, $context->getRequest()->getSchemeAndHttpHost().'/');
-
-        return $this->redirect($sameOrigin ? $referer : $this->generateUrl('admin_feedback_index'));
+        return $this->entityManager;
     }
 }
