@@ -1,5 +1,6 @@
 import { EditorPanel } from '../editor/monaco';
 import { FileTree } from './filetree';
+import { escapeHtml } from './html';
 
 /** Configuration passée par la page Twig de l'atelier. */
 export interface StudioConfig {
@@ -19,8 +20,6 @@ interface Verdict {
 	objectifs: { label: string; dejaValide: boolean }[];
 	secondes: number;
 }
-
-const escapeHtml = (s: string) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 /**
  * L'éditeur de l'atelier : les fichiers de l'exercice, tels qu'ils sont sur le disque.

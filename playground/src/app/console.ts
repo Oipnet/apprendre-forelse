@@ -1,4 +1,5 @@
 import type { CommandResult, Runtime } from '@forelse/runtime-contract';
+import { escapeHtml } from './html';
 
 /**
  * Découpe une ligne de commande en arguments (guillemets simples ou doubles respectés).
@@ -24,8 +25,6 @@ export function parseCommandLine(line: string, aliases: Record<string, string> =
 	}
 	return args;
 }
-
-const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 /**
  * Ce qu'un vrai terminal afficherait à la fin : les séquences OSC (titre, progression dans la barre

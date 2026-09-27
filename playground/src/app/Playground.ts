@@ -14,8 +14,8 @@ import { RequestsPanel } from './requests';
 import { mesurer } from '../mesure';
 import { ApiProgressStore, LocalProgressStore, xpFor, type ProgressStore } from './progress';
 import type { ExercisePayload, PlaygroundConfig } from './types';
+import { escapeHtml } from './html';
 
-const escapeHtml = (s: string) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 /** Le contenu vient d'un pack : on le nettoie avant de l'injecter dans la plateforme. */
 const markdown = (source: string, inline = false) => DOMPurify.sanitize(inline ? (marked.parseInline(source) as string) : (marked.parse(source) as string));
 

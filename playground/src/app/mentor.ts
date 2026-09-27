@@ -2,6 +2,7 @@
  * Le mentor : une revue de code quand les tests passent, une explication quand une erreur survient.
  * Contrat serveur : App\Controller\Api\MentorApiController (comptes seulement, débit limité).
  */
+import { escapeHtml } from './html';
 
 export interface Review {
 	summary: string;
@@ -21,8 +22,6 @@ export interface MentorUrls {
 	reviewUrl: string;
 	explainUrl: string;
 }
-
-const escapeHtml = (s: string) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 export class MentorClient {
 	constructor(private readonly urls: MentorUrls) {}
