@@ -132,6 +132,9 @@ final class StudioTest extends WebTestCase
      */
     public function testPacksEnLectureSeuleUnAuteurNEcritAucunCode(): void
     {
+        if (\function_exists('posix_geteuid') && 0 === posix_geteuid()) {
+            $this->markTestSkipped('Exécuté en root : un dossier en lecture seule reste inscriptible.');
+        }
         $client = static::createClient();
         $this->auteur($client);
         $test = $this->exercice.'/tests/BonjourTest.php';

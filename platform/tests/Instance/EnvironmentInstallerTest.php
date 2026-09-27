@@ -150,6 +150,11 @@ final class EnvironmentInstallerTest extends TestCase
      */
     public function testUnEnvironnementCloneEstInstalleEtEmpaquete(): void
     {
+        // Test d'intégration : l'empaquetage lance vraiment build-env.sh, donc composer install (réseau, plusieurs Go
+        // pour symfony-8). Il tourne en intégration continue, et en local sur demande (FORELSE_INTEGRATION=1).
+        if (!filter_var(getenv('CI'), \FILTER_VALIDATE_BOOL) && !filter_var(getenv('FORELSE_INTEGRATION'), \FILTER_VALIDATE_BOOL)) {
+            $this->markTestSkipped('Test d\'intégration (build-env.sh, composer install) : lancé en CI, ou avec FORELSE_INTEGRATION=1.');
+        }
         $depot = $this->depot([
             'environment.yaml' => "id: ma-boutique\nextends: symfony-8\ntitle: Ma boutique\n",
             'src/Controller/BoutiqueController.php' => '<?php // à moi',

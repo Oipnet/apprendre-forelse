@@ -15,24 +15,31 @@ final class ExerciseCheckerTest extends TestCase
     use ExerciseCheckerTrait;
 
     private const string ROOT = __DIR__.'/../../..';
-    private string $tmp;
+    private ?string $tmp = null;
 
     protected function setUp(): void
     {
         if (!is_file(self::ROOT.'/environments/symfony-8/vendor/autoload.php')) {
-            $message = 'Environnement symfony-8 non installé (environments/bin/build-env.sh symfony-8).';
-            // En intégration continue, s'ignorer reviendrait à croire qu'on teste : on échoue.
-            if (filter_var(getenv('CI'), \FILTER_VALIDATE_BOOL)) {
-                $this->fail($message);
-            }
-            $this->markTestSkipped($message);
+            $this->manque('Environnement symfony-8 non installé (environments/bin/build-env.sh symfony-8).');
         }
         $this->tmp = sys_get_temp_dir().'/checker-test-'.bin2hex(random_bytes(4));
     }
 
+    /** Ce qui manque à l'environnement de test : ignoré en local, échec en intégration continue (s'ignorer y reviendrait à croire qu'on teste). */
+    private function manque(string $message): never
+    {
+        if (filter_var(getenv('CI'), \FILTER_VALIDATE_BOOL)) {
+            $this->fail($message);
+        }
+        $this->markTestSkipped($message);
+    }
+
     protected function tearDown(): void
     {
-        (new Filesystem())->remove($this->tmp);
+        // Un test ignoré (environnement absent) n'a rien créé.
+        if (null !== $this->tmp) {
+            (new Filesystem())->remove($this->tmp);
+        }
     }
 
     private function checker(string $packs): array
@@ -79,6 +86,9 @@ final class ExerciseCheckerTest extends TestCase
      */
     public function testUnImportAbsentDeLIndexDeCompletionEstSignale(): void
     {
+        if (!is_file(self::ROOT.'/platform/public/envs/symfony-8.completion.json')) {
+            $this->manque('Index de complétion de symfony-8 absent (environments/bin/build-env.sh symfony-8).');
+        }
         $filesystem = new Filesystem();
         $filesystem->mirror(self::ROOT.'/examples/packs/demo', $this->tmp.'/demo');
         $solution = $this->tmp.'/demo/tracks/decouverte/exercises/01-bonjour/solution/src';

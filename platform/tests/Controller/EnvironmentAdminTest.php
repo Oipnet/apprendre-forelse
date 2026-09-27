@@ -171,8 +171,13 @@ final class EnvironmentAdminTest extends WebTestCase
     /** Les archives passent par un contrôleur : un nom qui n'en est pas un ne descend pas dans le disque. */
     public function testLesArchivesNeServentQueDesNomsDArchives(): void
     {
-        $this->client->request('GET', '/envs/symfony-8.completion.json');
-        $this->assertResponseIsSuccessful();
+        // L'index est produit par build-env.sh : en intégration continue il est là, en local il peut manquer.
+        if (is_file(__DIR__.'/../../public/envs/symfony-8.completion.json')) {
+            $this->client->request('GET', '/envs/symfony-8.completion.json');
+            $this->assertResponseIsSuccessful();
+        } elseif (filter_var(getenv('CI'), \FILTER_VALIDATE_BOOL)) {
+            $this->fail('Index de complétion de symfony-8 absent (environments/bin/build-env.sh symfony-8).');
+        }
 
         $this->client->request('GET', '/envs/environnement-absent.zip');
         $this->assertResponseStatusCodeSame(404);
