@@ -1,4 +1,4 @@
-import type { BootProgress, EnvironmentSpec, Grading, HttpRequest, Runtime, RuntimeRestart } from './runtime';
+import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, Runtime, RuntimeRestart } from './runtime';
 import { PING, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol';
 
 /**
@@ -24,6 +24,8 @@ export interface WorkerRuntimeOptions {
 	pingMs?: number;
 	/** Fabrique du worker ; par défaut createModuleWorker (remplacée dans les tests). */
 	spawn?: () => Worker;
+	/** Le worker sert-il la console du projet (runCommand) ? Par défaut, oui. */
+	commands?: boolean;
 }
 
 /**
@@ -65,6 +67,8 @@ export class WorkerRuntime implements Runtime {
 		this.silenceMs = options.silenceMs ?? 10_000;
 		this.pingMs = options.pingMs ?? 1_000;
 		this.spawn = options.spawn ?? (() => createModuleWorker(workerUrl, workerName));
+		// Sans console, la méthode n'existe pas : la page le voit, au lieu d'essuyer un échec par commande.
+		if (options.commands === false) this.runCommand = undefined;
 		this.worker = this.start();
 	}
 
@@ -211,11 +215,11 @@ export class WorkerRuntime implements Runtime {
 		return this.call('runTests', grading);
 	}
 
-	async runCommand(args: string[]) {
+	runCommand?: (args: string[]) => Promise<CommandResult> = async (args) => {
 		const result = await this.call('runCommand', args);
 		// Les fichiers qu'une commande a générés (une migration…) doivent survivre à un redémarrage.
 		for (const [path, content] of Object.entries(result.fichiers ?? {})) this.remember(path, content);
 		for (const path of result.supprimes ?? []) this.remember(path, null);
 		return result;
-	}
+	};
 }

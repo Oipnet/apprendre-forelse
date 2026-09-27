@@ -689,6 +689,10 @@ body.playground-page {
 	background: var(--panel);
 	font: 13px ui-monospace, Menlo, monospace;
 }
+/* Un runtime sans console (le simulateur Nuxt) : l'onglet ne garde que les messages de l'aperçu. */
+.console-input[hidden] {
+	display: none;
+}
 .console-input input {
 	flex: 1;
 	min-width: 0;

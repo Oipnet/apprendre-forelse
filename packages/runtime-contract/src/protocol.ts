@@ -3,11 +3,14 @@ import type { BootProgress, Runtime } from './runtime';
 /** Méthodes exposées par le worker PHP : exactement celles du Runtime (sauf l'abonnement aux redémarrages, local à la page). */
 export type WorkerMethod = Exclude<keyof Runtime, 'onRestart'>;
 
+/** Les méthodes qu'un runtime peut ne pas avoir (runCommand) : un worker peut ne pas les servir. */
+export type OptionalWorkerMethod = { [M in WorkerMethod]-?: undefined extends Runtime[M] ? M : never }[WorkerMethod];
+
 /** Les arguments de chaque méthode, tels qu'ils voyagent (sans fonction : le suivi du boot passe par des messages). */
-export type WorkerArgs = { [M in WorkerMethod]: Parameters<Runtime[M]> };
+export type WorkerArgs = { [M in WorkerMethod]: Parameters<NonNullable<Runtime[M]>> };
 
 /** Le résultat de chaque méthode, une fois la promesse résolue. */
-export type WorkerResult = { [M in WorkerMethod]: Awaited<ReturnType<Runtime[M]>> };
+export type WorkerResult = { [M in WorkerMethod]: Awaited<ReturnType<NonNullable<Runtime[M]>>> };
 
 /** Un appel : la méthode et ses arguments vont ensemble, ce qui permet de l'exécuter sans transtypage. */
 export type WorkerCall<M extends WorkerMethod = WorkerMethod> = { [K in M]: { id: number; method: K; args: WorkerArgs[K] } }[M];

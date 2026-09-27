@@ -80,7 +80,7 @@ describe('WorkerRuntime face à une boucle infinie', () => {
 		await r.writeFile('server/api/menu.ts', 'while (true) {}');
 		await r.writeFile('server/api/brouillon.ts', 'x');
 		await r.deleteFile('server/api/brouillon.ts');
-		await r.runCommand(['make:migration']);
+		await r.runCommand!(['make:migration']);
 
 		await r.request(requete('/apercu/boucle')).catch(() => {});
 		// Un appel fait pendant le redémarrage attend le worker neuf, au lieu d'échouer.
@@ -103,5 +103,13 @@ describe('WorkerRuntime face à une boucle infinie', () => {
 		expect((await r.request(requete('/apercu/lent'))).status).toBe(200);
 		expect(events).toEqual([]);
 		expect(FauxWorker.crees).toHaveLength(1);
+	});
+});
+
+describe('WorkerRuntime sans console', () => {
+	it('n\'offre pas runCommand : la page le voit au lieu d\'essuyer un échec par commande', () => {
+		const r = new WorkerRuntime('inutile', 'test', { commands: false, spawn: () => new FauxWorker() as unknown as Worker });
+		expect(r.runCommand).toBeUndefined();
+		expect(runtime().r.runCommand).toBeTypeOf('function');
 	});
 });

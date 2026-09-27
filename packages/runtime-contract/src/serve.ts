@@ -1,7 +1,9 @@
-import { PING, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol';
+import { PING, type OptionalWorkerMethod, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol';
 
-/** Ce que le worker expose : chaque méthode du Runtime, avec ses arguments tels qu'ils voyagent. */
-export type WorkerApi = { [M in WorkerMethod]: (...args: WorkerArgs[M]) => Promise<WorkerResult[M]> };
+type WorkerFunction<M extends WorkerMethod> = (...args: WorkerArgs[M]) => Promise<WorkerResult[M]>;
+
+/** Ce que le worker expose : chaque méthode du Runtime, avec ses arguments tels qu'ils voyagent ; les facultatives peuvent manquer. */
+export type WorkerApi = { [M in Exclude<WorkerMethod, OptionalWorkerMethod>]: WorkerFunction<M> } & { [M in OptionalWorkerMethod]?: WorkerFunction<M> };
 
 /** Le côté worker de postMessage : `self` dans un worker, une doublure dans les tests. */
 export interface WorkerEndpoint {
@@ -47,10 +49,11 @@ export function serveRuntime(api: WorkerApi, options: ServeOptions = {}, endpoin
 
 	function invoke<M extends WorkerMethod>(call: WorkerCall<M>): Promise<WorkerResult[M]> {
 		// Le message vient d'une autre page du même site, mais rien ne garantit qu'il nomme une vraie méthode.
-		if (!Object.hasOwn(api, call.method) || typeof api[call.method] !== 'function') {
+		const method = (Object.hasOwn(api, call.method) ? api[call.method] : undefined) as WorkerFunction<M> | undefined;
+		if (typeof method !== 'function') {
 			return Promise.reject(new Error(`Méthode inconnue du runtime : ${String(call.method)}.`));
 		}
-		return api[call.method](...call.args);
+		return method(...call.args);
 	}
 }
 

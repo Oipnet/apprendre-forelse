@@ -7,7 +7,7 @@ import { unzipSync } from 'fflate';
 import clientBundle from 'virtual:nuxt-sim-client';
 import { prepareHappyDom } from './happy-dom-node';
 import { NuxtSimulator } from '../index.ts';
-import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
+import type { BootProgress, EnvironmentSpec, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
 import { serveRuntime, type WorkerMessage } from '@forelse/runtime-contract';
 
 let simulator: NuxtSimulator | undefined;
@@ -75,9 +75,7 @@ const api: Runtime = {
 		return ready().runTests(grading);
 	},
 
-	async runCommand(args: string[]): Promise<CommandResult> {
-		return { exitCode: 1, output: `nuxi ${args.join(' ')} : la console n'est pas encore disponible dans le simulateur Nuxt.`, durationMs: 0 };
-	},
+	// Pas de runCommand : la console (nuxi) n'est pas simulée, et le contrat permet de ne pas l'offrir.
 };
 
 // Pas de transfert des corps de réponse : une route peut renvoyer un tableau qu'elle garde en cache.
