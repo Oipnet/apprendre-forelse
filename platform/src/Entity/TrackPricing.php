@@ -20,7 +20,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\Entity(repositoryClass: TrackPricingRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_TRACK_PRICING_TRACK', fields: ['trackId'])]
 #[UniqueEntity(fields: ['trackId'], message: 'Ce parcours a déjà un tarif.')]
-class TrackPricing
+class TrackPricing implements Touchable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -129,7 +129,6 @@ class TrackPricing
     public function setNormalPrice(?int $normalPrice): static
     {
         $this->normalPrice = (int) $normalPrice;
-        $this->touch();
 
         return $this;
     }
@@ -142,7 +141,6 @@ class TrackPricing
     public function setFounderPrice(?int $founderPrice): static
     {
         $this->founderPrice = $founderPrice;
-        $this->touch();
 
         return $this;
     }
@@ -155,7 +153,6 @@ class TrackPricing
     public function setFounderActive(bool $founderActive): static
     {
         $this->founderActive = $founderActive;
-        $this->touch();
 
         return $this;
     }
@@ -168,7 +165,6 @@ class TrackPricing
     public function setFounderEndsAt(?\DateTimeImmutable $founderEndsAt): static
     {
         $this->founderEndsAt = $founderEndsAt;
-        $this->touch();
 
         return $this;
     }
@@ -181,7 +177,6 @@ class TrackPricing
     public function setFounderQuotaMax(?int $founderQuotaMax): static
     {
         $this->founderQuotaMax = $founderQuotaMax;
-        $this->touch();
 
         return $this;
     }
@@ -191,8 +186,8 @@ class TrackPricing
         return $this->updatedAt;
     }
 
-    private function touch(): void
+    public function touch(\DateTimeImmutable $now): void
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = $now;
     }
 }

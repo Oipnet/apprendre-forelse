@@ -370,8 +370,8 @@ final class ContentRepositoryTest extends TestCase
         $this->assertTrue($repository->findPractice('en-preparation')?->isRestricted());
         $this->assertSame('laravel', $repository->findPractice('cote-laravel')?->framework);
         $this->assertSame(['cote-laravel', 'en-preparation', 'nouveaute-recente', 'point-precis', 'programme'], $repository->packs()['pratique-test']->practiceIds);
-        $this->assertTrue($repository->findPractice('programme')?->isScheduled(), 'Daté d\'un jour à venir.');
-        $this->assertFalse($practice->isScheduled());
+        $this->assertTrue($repository->findPractice('programme')?->isScheduled(new \DateTimeImmutable('2026-09-27')), 'Daté d\'un jour à venir.');
+        $this->assertFalse($practice->isScheduled(new \DateTimeImmutable('2026-09-27')));
         $this->assertFalse($practice->isScheduled(new \DateTimeImmutable('2026-09-10')), 'Le jour même, il est publié.');
         $this->assertTrue($practice->isScheduled(new \DateTimeImmutable('2026-09-09')));
 

@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Cohort\CohortAccessSync;
+use App\Cohort\CohortManagement;
 use App\Content\ContentRepository;
 use App\Content\Track;
 use App\Entity\TrackAccess;
@@ -38,7 +38,7 @@ final readonly class AccessInitCommand
         private CohortRepository $cohorts,
         private UserRepository $users,
         private TrackAccessRepository $accesses,
-        private CohortAccessSync $cohortAccess,
+        private CohortManagement $cohortManagement,
         private EntityManagerInterface $entityManager,
         private ClockInterface $clock,
     ) {
@@ -58,7 +58,8 @@ final readonly class AccessInitCommand
             }
             $io->writeln(sprintf(' · cohorte « %s » : %d apprenant(s) × %s', $cohort->getName(), $cohort->getUsers()->count(), $cohort->isFundedByInstitution() ? implode(', ', $cohort->getAvailableTrackIds()) : 'aucun accès (financée par les apprenants)'));
             if (!$dryRun) {
-                $this->cohortAccess->sync($cohort);
+                // Chaque cohorte est enregistrée avec ses accès, dans sa transaction : la même règle que l'administration.
+                $this->cohortManagement->update($cohort);
             }
         }
 
