@@ -2,10 +2,9 @@
 
 namespace App\Controller\Admin;
 
+use App\Admin\TrackChoices;
 use App\Cohort\CohortAccessSync;
 use App\Cohort\CohortQuoteEstimator;
-use App\Content\ContentRepository;
-use App\Content\Track;
 use App\Entity\Cohort;
 use App\Entity\FundingMode;
 use App\Entity\User;
@@ -59,7 +58,7 @@ final class CohortCrudController extends AbstractCrudController implements Reset
 
     public function __construct(
         private readonly UrlGeneratorInterface $router,
-        private readonly ContentRepository $content,
+        private readonly TrackChoices $tracks,
         private readonly UserRepository $users,
         private readonly CohortQuoteEstimator $estimator,
         private readonly CohortAccessSync $cohortAccess,
@@ -130,7 +129,7 @@ final class CohortCrudController extends AbstractCrudController implements Reset
         if (\in_array($pageName, [Crud::PAGE_INDEX, Crud::PAGE_DETAIL], true)) {
             // Gabarits maison : « Tous » plutôt que « vide » quand aucun parcours n'est choisi.
             yield ChoiceField::new('availableTrackIds', 'Parcours disponibles')
-                ->setChoices($this->trackChoices())
+                ->setChoices($this->tracks->choices())
                 ->allowMultipleChoices()
                 ->renderAsBadges(['info'])
                 ->setSortable(false)
@@ -141,7 +140,7 @@ final class CohortCrudController extends AbstractCrudController implements Reset
         } else {
             // Tous les parcours installés, y compris ceux en préparation : les cocher les ouvre à cette cohorte.
             yield ChoiceField::new('availableTrackIds', 'Parcours disponibles')
-                ->setChoices($this->trackChoices())
+                ->setChoices($this->tracks->choices())
                 ->allowMultipleChoices()
                 ->renderExpanded()
                 ->setHelp('Aucun coché : la cohorte propose tous les parcours publics. Un parcours retiré reste accessible aux apprenants qui l\'ont commencé.');
@@ -157,8 +156,8 @@ final class CohortCrudController extends AbstractCrudController implements Reset
         yield TextareaField::new('note', 'Note')->hideOnIndex()->setHelp('Contact, contexte, dates du pilote…');
         yield FormField::addFieldset('Financement')->onlyOnForms();
         yield ChoiceField::new('fundingMode', 'Financement')
-            ->setChoices(array_combine(array_map(static fn (FundingMode $m) => $m->label(), FundingMode::cases()), FundingMode::cases()))
-            ->renderAsBadges([FundingMode::Institution->name => 'info', FundingMode::Learners->name => 'secondary'])
+            ->setChoices(FundingMode::choices())
+            ->renderAsBadges(FundingMode::badges())
             ->setHelp('Établissement : chaque apprenant reçoit l\'accès aux parcours cochés, aux dates ci-dessous (devis). Apprenants : chacun achète, au tarif de la cohorte s\'il est fixé.');
         yield DateField::new('accessStartsAt', 'Début des accès')->hideOnIndex();
         yield DateField::new('accessEndsAt', 'Fin des accès')->setHelp('Les accès de la cohorte se ferment ce jour-là ; la progression reste.');
@@ -174,7 +173,7 @@ final class CohortCrudController extends AbstractCrudController implements Reset
     {
         return $filters
             ->add(BooleanFilter::new('active', 'Inscriptions ouvertes'))
-            ->add(ChoiceFilter::new('fundingMode', 'Financement')->setChoices(array_combine(array_map(static fn (FundingMode $m) => $m->label(), FundingMode::cases()), array_column(FundingMode::cases(), 'value'))));
+            ->add(ChoiceFilter::new('fundingMode', 'Financement')->setChoices(FundingMode::valueChoices()));
     }
 
     /**
@@ -255,21 +254,6 @@ final class CohortCrudController extends AbstractCrudController implements Reset
         return $this->learnerCounts ??= $this->users->countByCohort();
     }
 
-    /** @return array<string, string> titre (et état) du parcours => identifiant */
-    private function trackChoices(): array
-    {
-        $choices = [];
-        foreach ($this->content->tracks() as $track) {
-            $choices[$this->trackLabel($track)] = $track->id;
-        }
-
-        return $choices;
-    }
-
-    private function trackLabel(Track $track): string
-    {
-        return $track->title.($track->isRestricted() ? ' (en préparation)' : '');
-    }
 
     private function invitationUrl(Cohort $cohort): string
     {

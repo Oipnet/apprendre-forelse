@@ -3,11 +3,13 @@
 namespace App\Entity;
 
 use Symfony\Contracts\Translation\TranslatableInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Traduisible : EasyAdmin affiche label() tel quel. */
 enum ProgressStatus: string implements TranslatableInterface
 {
+    use EnumLabels;
+    use EnumBadges;
+
     case InProgress = 'in_progress';
     case Completed = 'completed';
 
@@ -19,8 +21,11 @@ enum ProgressStatus: string implements TranslatableInterface
         };
     }
 
-    public function trans(TranslatorInterface $translator, ?string $locale = null): string
+    public function badge(): string
     {
-        return $this->label();
+        return match ($this) {
+            self::InProgress => 'warning',
+            self::Completed => 'success',
+        };
     }
 }

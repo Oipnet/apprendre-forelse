@@ -42,11 +42,6 @@ final class FeedbackCrudController extends AbstractCrudController
         return Feedback::class;
     }
 
-    /** @return array<string, FeedbackKind> */
-    private static function kinds(): array
-    {
-        return array_combine(array_map(static fn (FeedbackKind $k) => $k->label(), FeedbackKind::cases()), FeedbackKind::cases());
-    }
 
     public function configureCrud(Crud $crud): Crud
     {
@@ -65,13 +60,7 @@ final class FeedbackCrudController extends AbstractCrudController
         yield TextField::new('trackId', 'Parcours')->formatValue(static fn (?string $trackId) => $trackId ?? 'Pratique')->onlyOnDetail();
         yield TextField::new('exerciseId', 'Exercice');
         // Les choix viennent de l'enum (enumType Doctrine) ; les badges sont indexés par nom de cas.
-        yield ChoiceField::new('kind', 'Type')->renderAsBadges([
-            FeedbackKind::Bug->name => 'danger',
-            FeedbackKind::Unclear->name => 'warning',
-            FeedbackKind::TooHard->name => 'warning',
-            FeedbackKind::TooEasy->name => 'info',
-            FeedbackKind::Other->name => 'secondary',
-        ]);
+        yield ChoiceField::new('kind', 'Type')->renderAsBadges(FeedbackKind::badges());
         yield TextareaField::new('message', 'Message')->setMaxLength(90)->onlyOnIndex();
         yield TextareaField::new('message', 'Message')->onlyOnDetail();
         yield IntegerField::new('hintsUsed', 'Indices');
@@ -83,7 +72,7 @@ final class FeedbackCrudController extends AbstractCrudController
     {
         return $filters
             ->add(BooleanFilter::new('handled', 'Traité'))
-            ->add(ChoiceFilter::new('kind', 'Type')->setChoices(array_map(static fn (FeedbackKind $k) => $k->value, self::kinds())))
+            ->add(ChoiceFilter::new('kind', 'Type')->setChoices(FeedbackKind::valueChoices()))
             ->add(EntityFilter::new('user', 'Apprenant'))
             ->add(TextFilter::new('exerciseId', 'Exercice'))
             ->add(BooleanFilter::new('completed', 'Réussi'));

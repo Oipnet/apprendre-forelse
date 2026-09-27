@@ -48,10 +48,7 @@ final class ExerciseProgressCrudController extends AbstractCrudController
         // Sans parcours : un exercice de Pratique.
         yield TextField::new('trackId', 'Parcours')->formatValue(static fn (?string $trackId) => $trackId ?? 'Pratique');
         yield TextField::new('exerciseId', 'Exercice');
-        yield ChoiceField::new('status', 'Statut')->renderAsBadges([
-            ProgressStatus::InProgress->name => 'warning',
-            ProgressStatus::Completed->name => 'success',
-        ]);
+        yield ChoiceField::new('status', 'Statut')->renderAsBadges(ProgressStatus::badges());
         yield IntegerField::new('hintsUsed', 'Indices');
         yield IntegerField::new('xpEarned', 'XP');
         yield DateTimeField::new('startedAt', 'Commencé le');
@@ -63,7 +60,7 @@ final class ExerciseProgressCrudController extends AbstractCrudController
     {
         return $filters
             ->add(EntityFilter::new('user', 'Apprenant'))
-            ->add(ChoiceFilter::new('status', 'Statut')->setChoices(array_combine(array_map(static fn (ProgressStatus $s) => $s->label(), ProgressStatus::cases()), array_map(static fn (ProgressStatus $s) => $s->value, ProgressStatus::cases()))))
+            ->add(ChoiceFilter::new('status', 'Statut')->setChoices(ProgressStatus::valueChoices()))
             ->add(TextFilter::new('trackId', 'Parcours'))
             ->add(TextFilter::new('exerciseId', 'Exercice'));
     }

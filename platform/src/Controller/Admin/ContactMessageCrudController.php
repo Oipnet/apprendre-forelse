@@ -54,13 +54,7 @@ final class ContactMessageCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         yield DateTimeField::new('createdAt', 'Reçu le');
-        yield ChoiceField::new('subject', 'Objet')->renderAsBadges([
-            ContactSubject::Organization->name => 'success',
-            ContactSubject::Order->name => 'warning',
-            ContactSubject::Bug->name => 'danger',
-            ContactSubject::Question->name => 'info',
-            ContactSubject::Other->name => 'secondary',
-        ]);
+        yield ChoiceField::new('subject', 'Objet')->renderAsBadges(ContactSubject::badges());
         yield TextField::new('name', 'Nom');
         yield EmailField::new('email', 'Email');
         yield TextField::new('organization', 'Établissement');
@@ -73,14 +67,9 @@ final class ContactMessageCrudController extends AbstractCrudController
 
     public function configureFilters(Filters $filters): Filters
     {
-        $subjects = [];
-        foreach (ContactSubject::cases() as $subject) {
-            $subjects[$subject->label()] = $subject->value;
-        }
-
         return $filters
             ->add(BooleanFilter::new('handled', 'Traité'))
-            ->add(ChoiceFilter::new('subject', 'Objet')->setChoices($subjects));
+            ->add(ChoiceFilter::new('subject', 'Objet')->setChoices(ContactSubject::valueChoices()));
     }
 
     public function configureActions(Actions $actions): Actions

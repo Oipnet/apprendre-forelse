@@ -3,11 +3,13 @@
 namespace App\Entity;
 
 use Symfony\Contracts\Translation\TranslatableInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Traduisible : EasyAdmin affiche label() tel quel. */
 enum PurchaseStatus: string implements TranslatableInterface
 {
+    use EnumLabels;
+    use EnumBadges;
+
     /** Session Stripe ouverte, paiement pas encore confirmé par le webhook. */
     case Pending = 'pending';
     /**
@@ -31,8 +33,14 @@ enum PurchaseStatus: string implements TranslatableInterface
         };
     }
 
-    public function trans(TranslatorInterface $translator, ?string $locale = null): string
+    public function badge(): string
     {
-        return $this->label();
+        return match ($this) {
+            self::Pending => 'secondary',
+            self::Abandoned => 'light',
+            self::Paid => 'success',
+            self::Refunded => 'warning',
+            self::Disputed => 'danger',
+        };
     }
 }
