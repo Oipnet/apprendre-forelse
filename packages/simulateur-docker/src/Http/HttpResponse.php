@@ -22,6 +22,7 @@ final class HttpResponse
     ) {
     }
 
+    /** @param list<string> $trace */
     public static function failure(string $error, string $message, array $trace = []): self
     {
         return new self(0, [], '', $error, [...$trace, $message]);
@@ -32,6 +33,7 @@ final class HttpResponse
         return $this->error === null && $this->status < 400;
     }
 
+    /** @param list<string> $trace */
     public static function page(int $status, string $html, string $server, array $trace = []): self
     {
         return new self($status, ['Content-Type' => 'text/html; charset=utf-8', 'Server' => $server], $html, null, $trace);

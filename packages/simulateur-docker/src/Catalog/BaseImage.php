@@ -21,6 +21,8 @@ final class BaseImage
      * @param list<int>             $exposed       ports EXPOSE de l'image
      * @param list<string>          $volumes       volumes anonymes déclarés (VOLUME)
      * @param array<string,string|int> $files        fichiers notables (chemin => contenu, ou taille seule)
+     * @param array<string,string> $owners      dossiers existants et leur propriétaire (/var/cache/nginx => nginx)
+     * @param array{test: list<string>, interval?: string, timeout?: string, startPeriod?: string, retries?: int}|null $healthcheck la vigie déclarée (HEALTHCHECK)
      * @param 'apache-php'|'nginx'|'php-fpm'|'php-cli'|'composer'|'postgres'|'mysql'|'mariadb'|'redis'|'shell'|'node'|'mailpit'|'adminer'|'caddy'|'hello'|'static-web'|'busybox' $kind
      */
     public function __construct(

@@ -28,7 +28,11 @@ final class Instruction
     ) {
     }
 
-    /** Arguments découpés sur les espaces (forme shell), ou la forme exec telle quelle. */
+    /**
+     * Arguments découpés sur les espaces (forme shell), ou la forme exec telle quelle.
+     *
+     * @return list<string>
+     */
     public function words(): array
     {
         if (null !== $this->exec) {

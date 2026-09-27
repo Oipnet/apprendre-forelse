@@ -73,7 +73,11 @@ final class Interpreter
         return $code;
     }
 
-    /** Exécute une commande déjà découpée (forme exec : ["php", "-v"]), sans passer par un shell. */
+    /**
+     * Exécute une commande déjà découpée (forme exec : ["php", "-v"]), sans passer par un shell.
+     *
+     * @param list<string> $argv
+     */
     public function runArgv(array $argv, Machine $machine, string $stdin = ''): int
     {
         try {
@@ -97,7 +101,11 @@ final class Interpreter
 
     // --- Exécution ------------------------------------------------------------------------
 
-    /** @return array{0:int,1:string} */
+    /**
+     * @param list<array<string,mixed>> $list script : liste de nœuds andor (voir Parser)
+     *
+     * @return array{0:int,1:string}
+     */
     private function execList(array $list, Machine $m, string $stdin): array
     {
         $code = 0;
@@ -121,6 +129,8 @@ final class Interpreter
     /**
      * Liste && / || : set -e ne s'applique qu'à l'échec de la dernière commande de la liste
      * (POSIX), pas à celui d'une commande suivie de && ou ||.
+     *
+     * @param array<string,mixed> $andor nœud andor (voir Parser)
      *
      * @return array{0:int,1:string,2:bool} code, sortie, échec ignoré par set -e
      */
@@ -148,7 +158,11 @@ final class Interpreter
         return [$code, $output, $lastExecuted !== $count - 1 || $negated];
     }
 
-    /** @return array{0:int,1:string} */
+    /**
+     * @param array<string,mixed> $pipeline nœud pipeline (voir Parser)
+     *
+     * @return array{0:int,1:string}
+     */
     private function execPipeline(array $pipeline, Machine $m, string $stdin): array
     {
         $input = $stdin;
@@ -176,7 +190,11 @@ final class Interpreter
         return [$code, $visible];
     }
 
-    /** @return array{0:int,1:string,2:string} code, stdout, stderr */
+    /**
+     * @param array<string,mixed> $command nœud commande (voir Parser)
+     *
+     * @return array{0:int,1:string,2:string} code, stdout, stderr
+     */
     private function execCommand(array $command, Machine $m, string $stdin): array
     {
         if (++$this->depth > 60) {
@@ -202,7 +220,11 @@ final class Interpreter
         }
     }
 
-    /** @return array{0:int,1:string,2:string} */
+    /**
+     * @param array<string,mixed> $command nœud commande (voir Parser)
+     *
+     * @return array{0:int,1:string,2:string}
+     */
     private function execSimple(array $command, Machine $m, string $stdin): array
     {
         $argv = [];
@@ -342,7 +364,11 @@ final class Interpreter
         return $this->runScript($content, $m, $args, $stdin);
     }
 
-    /** Exécute un script (fichier ou sh -c) avec ses paramètres positionnels, dans un sous-shell. */
+    /**
+     * Exécute un script (fichier ou sh -c) avec ses paramètres positionnels, dans un sous-shell.
+     *
+     * @param list<string> $positional
+     */
     public function runScript(string $content, Machine $m, array $positional = [], string $stdin = ''): Result
     {
         $savedPositional = $m->positional;
@@ -369,7 +395,11 @@ final class Interpreter
         return new Result($code, $out, '', $seconds);
     }
 
-    /** @return array{0:int,1:string,2:string} */
+    /**
+     * @param array<string,mixed> $command nœud commande (voir Parser)
+     *
+     * @return array{0:int,1:string,2:string}
+     */
     private function execIf(array $command, Machine $m, string $stdin): array
     {
         $output = '';
@@ -401,7 +431,11 @@ final class Interpreter
         return [0, $output, ''];
     }
 
-    /** @return array{0:int,1:string,2:string} */
+    /**
+     * @param array<string,mixed> $command nœud commande (voir Parser)
+     *
+     * @return array{0:int,1:string,2:string}
+     */
     private function execFor(array $command, Machine $m, string $stdin): array
     {
         $values = [];
@@ -427,7 +461,11 @@ final class Interpreter
         return [$code, $output, ''];
     }
 
-    /** @return array{0:int,1:string,2:string} */
+    /**
+     * @param array<string,mixed> $command nœud commande (voir Parser)
+     *
+     * @return array{0:int,1:string,2:string}
+     */
     private function execWhile(array $command, Machine $m, string $stdin): array
     {
         $output = '';
@@ -456,7 +494,11 @@ final class Interpreter
         return [$code, $output, ''];
     }
 
-    /** @return array{0:int,1:string,2:string} */
+    /**
+     * @param array<string,mixed> $command nœud commande (voir Parser)
+     *
+     * @return array{0:int,1:string,2:string}
+     */
     private function execCase(array $command, Machine $m, string $stdin): array
     {
         $subject = $this->expandText($command['word'], $m);
@@ -474,7 +516,11 @@ final class Interpreter
         return [0, '', ''];
     }
 
-    /** @return array{0:int,1:string,2:string} */
+    /**
+     * @param array<string,mixed> $command nœud commande (voir Parser)
+     *
+     * @return array{0:int,1:string,2:string}
+     */
     private function execGroup(array $command, Machine $m, string $stdin): array
     {
         if ($command['subshell']) {
@@ -496,7 +542,11 @@ final class Interpreter
 
     // --- Redirections ---------------------------------------------------------------------
 
-    /** @return array{0:string,1:list<array{0:string,1:string}>} */
+    /**
+     * @param list<array{0:string,1:list<array{0:string,1:string}>}> $redirects [op, mot]
+     *
+     * @return array{0:string,1:list<array{0:string,1:string}>}
+     */
     private function prepareRedirects(array $redirects, Machine $m, string $stdin): array
     {
         $prepared = [];
@@ -598,6 +648,8 @@ final class Interpreter
      * Mot => champs : variables et substitutions développées, découpage des parties non protégées,
      * motifs (*, ?) confrontés aux fichiers.
      *
+     * @param list<array{0:string,1:string}> $word segments [genre, texte] (voir Parser)
+     *
      * @return list<string>
      */
     public function expandWord(array $word, Machine $m): array
@@ -660,7 +712,11 @@ final class Interpreter
         return $fields;
     }
 
-    /** Mot => une seule chaîne (affectations, cibles de redirection). */
+    /**
+     * Mot => une seule chaîne (affectations, cibles de redirection).
+     *
+     * @param list<array{0:string,1:string}> $word segments [genre, texte] (voir Parser)
+     */
     public function expandText(array $word, Machine $m): string
     {
         $text = '';

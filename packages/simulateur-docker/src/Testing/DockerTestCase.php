@@ -180,6 +180,7 @@ abstract class DockerTestCase extends TestCase
         return $output;
     }
 
+    /** @param array<string,string> $headers */
     protected function http(string $url, string $method = 'GET', array $headers = [], string $body = ''): HttpResponse
     {
         return $this->engine()->http($method, $url, $headers, $body);

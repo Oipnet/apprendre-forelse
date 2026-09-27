@@ -22,6 +22,10 @@ final class Container
      * @param list<string>                                                          $logs
      * @param list<int>                                                             $listening  ports sur lesquels un processus écoute (dans le conteneur)
      * @param array{test: list<string>, interval?: string, timeout?: string, startPeriod?: string, retries?: int}|null $healthcheck
+     * @param array<int,string>                                                     $listenAddresses port => adresse d'écoute
+     * @param array<string,string>                                                  $ips        réseau => adresse IP
+     * @param array<string,mixed>                                                   $processOptions docroot, router, argv, healthRuns…
+     * @param array{packages: list<string>, phpExtensions: list<string>, binaries: list<string>, apacheModules: list<string>, users: array<string,int>}|null $facts Facts::export()
      */
     public function __construct(
         public readonly string $id,
@@ -55,9 +59,9 @@ final class Container
         /** Adresses IP par réseau. */
         public array $ips = [],
         public ?string $error = null,
-        /** Options du processus (php -S : docroot, routeur). @var array<string,mixed> */
+        /** Options du processus (php -S : docroot, routeur). */
         public array $processOptions = [],
-        /** Paquets, extensions, binaires : ceux de l'image, plus ce qui a été installé dans le conteneur. @var array<string,mixed>|null */
+        /** Paquets, extensions, binaires : ceux de l'image, plus ce qui a été installé dans le conteneur. */
         public ?array $facts = null,
         /** Sortie du dernier healthcheck. */
         public string $healthLog = '',

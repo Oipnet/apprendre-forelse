@@ -33,9 +33,9 @@ final class ComposeFile
     /** @var list<string> les fichiers de surcharge appliqués après $path */
     public array $paths = [];
 
-    /** @param array<string,string> $environment variables pour l'interpolation (en plus du .env) */
     /**
-     * @param string|list<string>|null $file un fichier, ou plusieurs (-f a.yaml -f b.yaml) fusionnés dans l'ordre
+     * @param string|list<string>|null $file        un fichier, ou plusieurs (-f a.yaml -f b.yaml) fusionnés dans l'ordre
+     * @param array<string,string>      $environment variables pour l'interpolation (en plus du .env)
      */
     public static function load(string $projectDirectory, string|array|null $file = null, ?string $projectName = null, array $environment = [], ?string $envFile = null): self
     {
@@ -48,12 +48,16 @@ final class ComposeFile
         }
     }
 
+    /**
+     * @param string|list<string>|null $file
+     * @param array<string,string>      $environment
+     */
     private static function build(self $compose, string $projectDirectory, string|array|null $file = null, ?string $projectName = null, array $environment = [], ?string $envFile = null): self
     {
         $projectDirectory = rtrim($projectDirectory, '/');
         $extra = [];
         if (\is_array($file)) {
-            $files = array_values($file);
+            $files = $file;
             $file = array_shift($files) ?: null;
             foreach ($files as $additional) {
                 $extra[] = str_starts_with($additional, '/') ? $additional : $projectDirectory.'/'.$additional;
@@ -110,9 +114,6 @@ final class ComposeFile
         }
         if ($data === null) {
             throw new ComposeException(sprintf('empty compose file: %s', $path));
-        }
-        if (!\is_array($data)) {
-            throw new ComposeException(sprintf('validating %s: (root) must be a mapping', $path));
         }
         // Relevé avant toute validation : Compose prévient pour « version » même si le fichier est invalide.
         if (isset($data['version'])) {
@@ -534,13 +535,17 @@ final class ComposeFile
         return $order;
     }
 
-    /** Découpe une commande comme shlex (Compose ne passe pas par /bin/sh). @return list<string> */
+    /**
+     * Découpe une commande comme shlex (Compose ne passe pas par /bin/sh).
+     *
+     * @return list<string>
+     */
     public static function shellSplit(string $command): array
     {
         preg_match_all('/"((?:[^"\\\\]|\\\\.)*)"|\'([^\']*)\'|(\S+)/', $command, $matches, PREG_SET_ORDER);
 
         return array_map(static function (array $m): string {
-            if (isset($m[3]) && $m[3] !== '') {
+            if (isset($m[3])) {
                 return $m[3];
             }
             if (isset($m[2]) && $m[2] !== '') {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Http;
 
 use Forelse\DockerSim\Fs\DiskFs;
+use Forelse\DockerSim\Fs\FileSystem;
 use Forelse\DockerSim\Fs\Path;
 use Forelse\DockerSim\State\Container;
 
@@ -26,7 +27,7 @@ final class ApacheServer
      *
      * @return array<string,string>
      */
-    public static function enabled(DiskFs $fs, string $kind): array
+    public static function enabled(FileSystem $fs, string $kind): array
     {
         $files = [];
         foreach ($fs->list('/etc/apache2/'.$kind.'-enabled') as $name) {
@@ -37,7 +38,11 @@ final class ApacheServer
         return $files;
     }
 
-    /** Le DocumentRoot et les avertissements de démarrage (AH00111, AH00112). @return array{0: string, 1: list<string>} */
+    /**
+     * Le DocumentRoot et les avertissements de démarrage (AH00111, AH00112).
+     *
+     * @return array{0: string, 1: list<string>}
+     */
     public function documentRoot(Container $container, int $port = 80): array
     {
         $fs = $this->context->fs($container);
@@ -119,6 +124,7 @@ final class ApacheServer
         return HttpResponse::page(404, ErrorPages::apache(404, $port), self::SIGNATURE, [...$trace, 'fichier introuvable : '.$target]);
     }
 
+    /** @param list<string> $trace */
     private function file(Container $container, DiskFs $fs, string $root, string $file, HttpRequest $request, array $trace): HttpResponse
     {
         if (str_ends_with($file, '.php')) {

@@ -13,6 +13,9 @@ use Forelse\DockerSim\State\Container;
 /**
  * nginx : choix du bloc server et de la location, root/index, try_files, return, proxy_pass et
  * fastcgi_pass vers un conteneur php-fpm (où le script doit exister : « File not found. » sinon).
+ *
+ * @phpstan-import-type NginxServerBlock from NginxConfig
+ * @phpstan-import-type NginxLocation from NginxConfig
  */
 final class NginxServer
 {
@@ -39,6 +42,7 @@ final class NginxServer
         return $response;
     }
 
+    /** @param NginxServerBlock $server */
     private function process(Container $container, DiskFs $fs, array $server, HttpRequest $request, int $depth): HttpResponse
     {
         if ($depth > 10) {
@@ -52,7 +56,7 @@ final class NginxServer
         $index = $directives['index'][0] ?? $server['index'];
         $trace = [sprintf('nginx (%s) : location %s', $container->name, $location !== null ? trim($location['modifier'].' '.$location['pattern']) : '(aucune)')];
 
-        if (!$this->allowed($location['rules'] ?? [], $server['rules'] ?? [], $request->clientIp)) {
+        if (!$this->allowed($location['rules'] ?? [], $server['rules'], $request->clientIp)) {
             $this->context->log($container, sprintf('%s [error] 29#29: *1 access forbidden by rule, client: %s, server: %s, request: "%s %s HTTP/1.1", host: "%s"', gmdate('Y/m/d H:i:s'), $request->clientIp, $server['serverName'][0] ?? 'localhost', $request->method, $request->requestUri(), $request->headers['host'] ?? $request->host));
 
             return HttpResponse::page(403, ErrorPages::nginx(403), self::SIGNATURE, [...$trace, 'deny : accès refusé par une règle']);
@@ -115,6 +119,11 @@ final class NginxServer
         return HttpResponse::page(404, ErrorPages::nginx(404), self::SIGNATURE, [...$trace, 'fichier introuvable : '.$file]);
     }
 
+    /**
+     * @param NginxServerBlock $server
+     * @param list<string>     $index
+     * @param list<string>     $trace
+     */
     private function directory(Container $container, DiskFs $fs, array $server, string $root, array $index, string $dir, HttpRequest $request, int $depth, array $trace): HttpResponse
     {
         foreach ($index as $name) {
@@ -132,6 +141,7 @@ final class NginxServer
         return HttpResponse::page(403, ErrorPages::nginx(403), self::SIGNATURE, [...$trace, 'pas de fichier index dans '.$dir]);
     }
 
+    /** @param list<string> $trace */
     private function static(DiskFs $fs, string $file, array $trace): HttpResponse
     {
         $response = StaticFiles::serve($fs, $file, self::SIGNATURE);
@@ -169,6 +179,7 @@ final class NginxServer
         return (ip2long($ip) & $mask) === ((int) ip2long($network) & $mask);
     }
 
+    /** @param NginxServerBlock $server */
     private function hasPhpLocation(array $server): bool
     {
         foreach ($server['locations'] as $location) {
@@ -180,7 +191,11 @@ final class NginxServer
         return false;
     }
 
-    /** @param list<array<string,mixed>> $locations */
+    /**
+     * @param list<NginxLocation> $locations
+     *
+     * @return NginxLocation|null
+     */
     private function match(array $locations, string $path): ?array
     {
         $prefix = null;
@@ -206,6 +221,7 @@ final class NginxServer
         return $prefix;
     }
 
+    /** @param list<string> $trace */
     private function proxy(Container $container, string $target, HttpRequest $request, array $trace): HttpResponse
     {
         $url = rtrim($target, '/');
@@ -221,6 +237,10 @@ final class NginxServer
         return new HttpResponse($response['status'], $response['headers'], $response['body'], null, [...$trace, 'proxy_pass '.$target]);
     }
 
+    /**
+     * @param array<string, list<list<string>>> $directives nom => chaque occurrence et ses arguments
+     * @param list<string>                      $trace
+     */
     private function fastcgi(Container $container, DiskFs $fs, array $directives, string $root, HttpRequest $request, array $trace): HttpResponse
     {
         $target = $directives['fastcgi_pass'][0][0] ?? '';

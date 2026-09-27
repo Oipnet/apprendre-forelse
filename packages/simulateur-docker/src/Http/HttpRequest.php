@@ -27,6 +27,7 @@ final class HttpRequest
         return $this->originalUri ?? $this->uri();
     }
 
+    /** @param array<string,string> $headers */
     public static function fromUrl(string $method, string $uri, array $headers = [], string $body = '', string $clientIp = '172.17.0.1', string $host = 'localhost', int $port = 80): self
     {
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';

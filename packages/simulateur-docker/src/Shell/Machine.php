@@ -16,13 +16,13 @@ final class Machine
     public float $elapsed = 0.0;
     public bool $errexit = false;
     public bool $xtrace = false;
-    /** Commande à exécuter à la place du shell (exec "$@" dans un script d'entrée). @var list<string>|null */
+    /** @var list<string>|null Commande à exécuter à la place du shell (exec "$@" dans un script d'entrée). */
     public ?array $execTarget = null;
-    /** Positional parameters ($1, $@) du script en cours. @var list<string> */
+    /** @var list<string> Positional parameters ($1, $@) du script en cours. */
     public array $positional = [];
-    /** Messages d'information du simulateur (ce qu'il n'exécute pas vraiment). @var list<string> */
+    /** @var list<string> Messages d'information du simulateur (ce qu'il n'exécute pas vraiment). */
     public array $notes = [];
-    /** Signaux envoyés au processus principal pendant un docker exec (« nginx -s reload »). @var list<string> */
+    /** @var list<string> Signaux envoyés au processus principal pendant un docker exec (« nginx -s reload »). */
     public array $signals = [];
 
     /**
@@ -81,6 +81,19 @@ final class Machine
     public function path(string $path): string
     {
         return \Forelse\DockerSim\Fs\Path::normalize($path, $this->cwd);
+    }
+
+    /**
+     * La commande laissée par « exec » dans le script qui vient de tourner, oubliée aussitôt lue.
+     *
+     * @return list<string>|null
+     */
+    public function takeExecTarget(): ?array
+    {
+        $target = $this->execTarget;
+        $this->execTarget = null;
+
+        return $target;
     }
 
     public function note(string $message): void

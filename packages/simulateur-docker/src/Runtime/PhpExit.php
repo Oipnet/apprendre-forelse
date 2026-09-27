@@ -33,11 +33,11 @@ final class PhpExit extends \Exception
     {
         $functions = [];
         if ($extensions !== null) {
-            $list = var_export(array_values(array_map('strtolower', $extensions)), true);
+            $list = var_export(array_map('strtolower', $extensions), true);
             $version = var_export($phpVersion ?? \PHP_VERSION, true);
             $functions = [
                 'extension_loaded' => '(static fn (string $__e): bool => \\in_array(strtolower($__e), '.$list.', true))',
-                'get_loaded_extensions' => '(static fn (): array => '.var_export(array_values($extensions), true).')',
+                'get_loaded_extensions' => '(static fn (): array => '.var_export($extensions, true).')',
                 'phpversion' => '(static fn (?string $__e = null): string|false => $__e === null || \\in_array(strtolower($__e), '.$list.', true) ? '.$version.' : false)',
             ];
         }

@@ -177,6 +177,7 @@ final class Application
 
     // --- Images ------------------------------------------------------------------------------
 
+    /** @param list<string> $argv */
     private function build(array $argv): int
     {
         $args = Args::parse($argv, [
@@ -203,7 +204,7 @@ final class Application
         }
         $result = $this->docker->build($args->positional[0], $args->get('file'), $args->all('tag'), $args->get('target'), $buildArgs, $args->has('no-cache'));
         if ($args->has('quiet') && $result->success) {
-            $this->line($result->image?->id ?? '');
+            $this->line($result->image->id ?? '');
         } else {
             $this->write($result->output);
         }
@@ -222,6 +223,7 @@ final class Application
         return $result->success ? 0 : 1;
     }
 
+    /** @param list<string> $argv */
     private function images(array $argv): int
     {
         $args = Args::parse($argv, ['a' => ['all', false], 'all' => ['all', false], 'q' => ['quiet', false], 'quiet' => ['quiet', false], 'filter' => ['filter', true, true], 'f' => ['filter', true, true], 'no-trunc' => ['no-trunc', false], 'format' => ['format', true], 'digests' => ['digests', false]], 'images');
@@ -233,9 +235,6 @@ final class Application
             $tags = $image->tags === [] ? ['<none>:<none>'] : $image->tags;
             foreach ($tags as $tag) {
                 if ($danglingOnly && $tag !== '<none>:<none>') {
-                    continue;
-                }
-                if (!$danglingOnly && $tag === '<none>:<none>' && !$args->has('all') && false) {
                     continue;
                 }
                 $separator = strrpos($tag, ':');
@@ -256,6 +255,7 @@ final class Application
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function image(array $argv): int
     {
         $sub = array_shift($argv);
@@ -274,6 +274,7 @@ final class Application
         };
     }
 
+    /** @param list<string> $argv */
     private function rmi(array $argv): int
     {
         $args = Args::parse($argv, ['f' => ['force', false], 'force' => ['force', false], 'no-prune' => ['no-prune', false]], 'rmi');
@@ -308,6 +309,7 @@ final class Application
         return $code;
     }
 
+    /** @param list<string> $argv */
     private function imagePrune(array $argv): int
     {
         $args = Args::parse($argv, ['a' => ['all', false], 'all' => ['all', false], 'f' => ['force', false], 'force' => ['force', false], 'filter' => ['filter', true, true]], 'image prune');
@@ -340,6 +342,7 @@ final class Application
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function pull(array $argv): int
     {
         $args = Args::parse($argv, ['q' => ['quiet', false], 'quiet' => ['quiet', false], 'a' => ['all', false], 'platform' => ['platform', true]], 'pull');
@@ -357,6 +360,7 @@ final class Application
         }
     }
 
+    /** @param list<string> $argv */
     private function push(array $argv): int
     {
         $reference = $argv[0] ?? '';
@@ -369,6 +373,7 @@ final class Application
         return 1;
     }
 
+    /** @param list<string> $argv */
     private function tag(array $argv): int
     {
         if (\count($argv) !== 2) {
@@ -384,6 +389,7 @@ final class Application
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function history(array $argv): int
     {
         $args = Args::parse($argv, ['no-trunc' => ['no-trunc', false], 'H' => ['human', false], 'human' => ['human', false], 'q' => ['quiet', false]], 'history');
@@ -401,6 +407,7 @@ final class Application
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function search(array $argv): int
     {
         $term = $argv[0] ?? '';
@@ -433,6 +440,7 @@ final class Application
         'expose' => ['expose', true, true], 'link' => ['link', true, true], 'stop-signal' => ['stop-signal', true], 'q' => ['quiet', false], 'quiet' => ['quiet', false],
     ];
 
+    /** @param list<string> $argv */
     private function runContainer(array $argv, bool $createOnly = false): int
     {
         $command = $createOnly ? 'create' : 'run';
@@ -622,6 +630,7 @@ final class Application
         return $this->docker->store->findContainer($name) ?? throw new DockerException(sprintf('No such container: %s', $name), 1);
     }
 
+    /** @param list<string> $argv */
     private function start(array $argv): int
     {
         $args = Args::parse($argv, ['a' => ['attach', false], 'attach' => ['attach', false], 'i' => ['interactive', false]], 'start');
@@ -653,6 +662,7 @@ final class Application
         return $code;
     }
 
+    /** @param list<string> $argv */
     private function stop(array $argv, string $command): int
     {
         $args = Args::parse($argv, ['t' => ['time', true], 'time' => ['time', true], 's' => ['signal', true], 'signal' => ['signal', true]], $command);
@@ -682,6 +692,7 @@ final class Application
         return $code;
     }
 
+    /** @param list<string> $argv */
     private function restart(array $argv): int
     {
         $args = Args::parse($argv, ['t' => ['time', true], 'time' => ['time', true]], 'restart');
@@ -699,6 +710,7 @@ final class Application
         return $code;
     }
 
+    /** @param list<string> $argv */
     private function rm(array $argv): int
     {
         $args = Args::parse($argv, ['f' => ['force', false], 'force' => ['force', false], 'v' => ['volumes', false], 'volumes' => ['volumes', false], 'l' => ['link', false]], 'rm');
@@ -725,6 +737,7 @@ final class Application
         return $code;
     }
 
+    /** @param list<string> $argv */
     private function ps(array $argv): int
     {
         $args = Args::parse($argv, ['a' => ['all', false], 'all' => ['all', false], 'q' => ['quiet', false], 'quiet' => ['quiet', false], 'no-trunc' => ['no-trunc', false], 'filter' => ['filter', true, true], 'f' => ['filter', true, true], 's' => ['size', false], 'format' => ['format', true], 'l' => ['latest', false], 'n' => ['last', true]], 'ps');
@@ -785,6 +798,7 @@ final class Application
         return $image->shortId();
     }
 
+    /** @param list<string> $argv */
     private function container(array $argv): int
     {
         $sub = array_shift($argv);
@@ -809,6 +823,7 @@ final class Application
         };
     }
 
+    /** @param list<string> $argv */
     private function containerPrune(array $argv): int
     {
         $args = Args::parse($argv, ['f' => ['force', false], 'force' => ['force', false], 'filter' => ['filter', true, true]], 'container prune');
@@ -830,6 +845,7 @@ final class Application
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function logs(array $argv): int
     {
         $args = Args::parse($argv, ['f' => ['follow', false], 'follow' => ['follow', false], 'tail' => ['tail', true], 'n' => ['tail', true], 't' => ['timestamps', false], 'timestamps' => ['timestamps', false], 'since' => ['since', true], 'details' => ['details', false]], 'logs');
@@ -851,6 +867,7 @@ final class Application
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function exec(array $argv): int
     {
         $args = Args::parse($argv, ['i' => ['interactive', false], 'interactive' => ['interactive', false], 't' => ['tty', false], 'tty' => ['tty', false], 'u' => ['user', true], 'user' => ['user', true], 'w' => ['workdir', true], 'workdir' => ['workdir', true], 'e' => ['env', true, true], 'env' => ['env', true, true], 'd' => ['detach', false], 'detach' => ['detach', false], 'privileged' => ['privileged', false]], 'exec', stopAtPositional: true);
@@ -881,6 +898,7 @@ final class Application
         return $code;
     }
 
+    /** @param list<string> $argv */
     private function inspect(array $argv, ?string $type = null): int
     {
         $args = Args::parse($argv, ['f' => ['format', true], 'format' => ['format', true], 'type' => ['type', true], 's' => ['size', false]], 'inspect');
@@ -924,6 +942,7 @@ final class Application
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function port(array $argv): int
     {
         $container = $this->findContainer($argv[0] ?? '');
@@ -939,6 +958,7 @@ final class Application
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function top(array $argv): int
     {
         $container = $this->findContainer($argv[0] ?? '');
@@ -957,6 +977,7 @@ final class Application
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function cp(array $argv): int
     {
         if (\count($argv) !== 2) {
@@ -1017,6 +1038,7 @@ final class Application
 
     // --- Réseaux, volumes, système -------------------------------------------------------------
 
+    /** @param list<string> $argv */
     private function network(array $argv): int
     {
         $sub = array_shift($argv);
@@ -1082,6 +1104,7 @@ final class Application
         }
     }
 
+    /** @param list<string> $argv */
     private function volume(array $argv): int
     {
         $sub = array_shift($argv);
@@ -1161,6 +1184,7 @@ final class Application
         return false;
     }
 
+    /** @param list<string> $argv */
     private function system(array $argv): int
     {
         $sub = array_shift($argv);

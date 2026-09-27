@@ -45,6 +45,10 @@ interface FileSystem
 
     public function chown(string $path, string $owner): void;
 
-    /** Chemins de tous les fichiers sous $path (récursif). @return list<string> */
+    /**
+     * Chemins de tous les fichiers sous $path (récursif).
+     *
+     * @return list<string>
+     */
     public function files(string $path = '/'): array;
 }

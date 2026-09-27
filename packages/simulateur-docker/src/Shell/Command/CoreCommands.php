@@ -71,6 +71,7 @@ final class CoreCommands implements Command
         );
     }
 
+    /** @param list<string> $args */
     private function dispatch(string $name, array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $p = $sh->shellPrefix($m);
@@ -154,6 +155,7 @@ final class CoreCommands implements Command
         return $lines === [''] || $lines === [] ? '' : implode("\n", $lines)."\n";
     }
 
+    /** @param list<string> $args */
     private function cat(array $args, Machine $m, string $stdin): Result
     {
         $files = array_values(array_filter($args, static fn ($a) => $a === '-' || $a[0] !== '-'));
@@ -183,6 +185,7 @@ final class CoreCommands implements Command
         return new Result($code, $out, $m->facts->os === 'alpine' ? $err : str_replace("can't open '", '', str_replace("': No", ': No', $err)));
     }
 
+    /** @param list<string> $args */
     private function ls(array $args, Machine $m): Result
     {
         $flags = implode('', array_map(static fn ($a) => ltrim($a, '-'), array_filter($args, static fn ($a) => $a !== '' && $a[0] === '-' && $a !== '-')));
@@ -288,6 +291,7 @@ final class CoreCommands implements Command
         return number_format($bytes, 1).'T';
     }
 
+    /** @param list<string> $args */
     private function mkdir(array $args, Machine $m, Interpreter $sh): Result
     {
         $parents = false;
@@ -327,6 +331,7 @@ final class CoreCommands implements Command
         return $path;
     }
 
+    /** @param list<string> $args */
     private function rm(array $args, Machine $m, Interpreter $sh): Result
     {
         $force = false;
@@ -363,6 +368,7 @@ final class CoreCommands implements Command
         return new Result($err === '' ? 0 : 1, '', $err);
     }
 
+    /** @param list<string> $args */
     private function copy(array $args, Machine $m, Interpreter $sh, bool $move): Result
     {
         $operands = array_values(array_filter($args, static fn ($a) => $a === '' || $a[0] !== '-'));
@@ -425,6 +431,7 @@ final class CoreCommands implements Command
         $m->fs->write($target, (string) $m->fs->read($source), $m->fs->mode($source), $m->isRoot() ? null : $m->userName());
     }
 
+    /** @param list<string> $args */
     private function ln(array $args, Machine $m): Result
     {
         $operands = array_values(array_filter($args, static fn ($a) => $a[0] !== '-'));
@@ -447,6 +454,7 @@ final class CoreCommands implements Command
         return Result::ok();
     }
 
+    /** @param list<string> $args */
     private function touch(array $args, Machine $m, Interpreter $sh): Result
     {
         $err = '';
@@ -471,6 +479,7 @@ final class CoreCommands implements Command
         return new Result($err === '' ? 0 : 1, '', $err);
     }
 
+    /** @param list<string> $args */
     private function chmod(array $args, Machine $m): Result
     {
         $recursive = \in_array('-R', $args, true);
@@ -520,6 +529,7 @@ final class CoreCommands implements Command
         return $current;
     }
 
+    /** @param list<string> $args */
     private function chown(array $args, Machine $m, bool $groupOnly): Result
     {
         $recursive = (bool) array_filter($args, static fn ($a) => preg_match('/^-[a-zA-Z]*R/', $a));
@@ -572,6 +582,7 @@ final class CoreCommands implements Command
         return $dirs;
     }
 
+    /** @param list<string> $args */
     private function env(string $name, array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $env = $m->env;
@@ -609,6 +620,7 @@ final class CoreCommands implements Command
         return Result::ok($out);
     }
 
+    /** @param list<string> $args */
     private function id(array $args, Machine $m): Result
     {
         $operands = array_values(array_filter($args, static fn ($a) => $a !== '' && $a[0] !== '-'));
@@ -629,6 +641,7 @@ final class CoreCommands implements Command
         return Result::ok(sprintf("uid=%d(%s) gid=%d(%s) groups=%d(%s)\n", $uid, $name ?? $uid, $uid, $name ?? $uid, $uid, $name ?? $uid));
     }
 
+    /** @param list<string> $args */
     private function sed(array $args, Machine $m, string $stdin): Result
     {
         $inPlace = false;
@@ -766,6 +779,7 @@ final class CoreCommands implements Command
         return $pattern;
     }
 
+    /** @param list<string> $args */
     private function grep(array $args, Machine $m, string $stdin, string $name = 'grep'): Result
     {
         $flags = $name === 'egrep' ? 'E' : ($name === 'fgrep' ? 'F' : '');
@@ -878,7 +892,7 @@ final class CoreCommands implements Command
                 }
                 $prefix = ($prefixName ? $source.':' : '').($has('n') ? ($number + 1).':' : '');
                 if ($has('o') && !$has('v')) {
-                    foreach (array_filter($found, static fn ($x) => $x !== '') as $piece) {
+                    foreach ($found as $piece) {
                         $out .= $prefix.$piece."\n";
                     }
                 } else {
@@ -943,6 +957,7 @@ final class CoreCommands implements Command
         return $out;
     }
 
+    /** @param list<string> $args */
     private function headTail(string $name, array $args, Machine $m, string $stdin): Result
     {
         $count = 10;
@@ -965,6 +980,7 @@ final class CoreCommands implements Command
         return Result::ok($content === '' ? '' : implode("\n", $lines)."\n");
     }
 
+    /** @param list<string> $args */
     private function wc(array $args, Machine $m, string $stdin): Result
     {
         $content = $this->input($args, $m, $stdin);
@@ -979,6 +995,7 @@ final class CoreCommands implements Command
         return Result::ok(sprintf("%7d %7d %7d\n", $lines, str_word_count($content), \strlen($content)));
     }
 
+    /** @param list<string> $args */
     private function tee(array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $append = \in_array('-a', $args, true);
@@ -993,6 +1010,7 @@ final class CoreCommands implements Command
         return Result::ok($stdin);
     }
 
+    /** @param list<string> $args */
     private function which(array $args, Machine $m): Result
     {
         $out = '';
@@ -1011,6 +1029,7 @@ final class CoreCommands implements Command
         return new Result($code, $out);
     }
 
+    /** @param list<string> $args */
     private function find(array $args, Machine $m, Interpreter $sh): Result
     {
         $start = $args !== [] && $args[0][0] !== '-' ? array_shift($args) : '.';
@@ -1088,6 +1107,7 @@ final class CoreCommands implements Command
         return Result::ok($out);
     }
 
+    /** @param list<string> $args */
     private function archive(string $name, array $args, Machine $m): Result
     {
         $m->note(sprintf('« %s » : les archives ne sont pas simulées (commande considérée comme réussie).', $name));
@@ -1095,6 +1115,7 @@ final class CoreCommands implements Command
         return Result::ok('', 0.3);
     }
 
+    /** @param list<string> $args */
     private function cut(array $args, Machine $m, string $stdin): Result
     {
         $delimiter = "\t";
@@ -1126,6 +1147,7 @@ final class CoreCommands implements Command
         return strtr($set, ['[:lower:]' => 'abcdefghijklmnopqrstuvwxyz', '[:upper:]' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'a-z' => 'abcdefghijklmnopqrstuvwxyz', 'A-Z' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '\\n' => "\n", '\\r' => "\r"]);
     }
 
+    /** @param list<string> $args */
     private function xargs(array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $items = preg_split('/\s+/', trim($stdin), -1, PREG_SPLIT_NO_EMPTY) ?: [];
@@ -1137,6 +1159,7 @@ final class CoreCommands implements Command
         return $sh->invoke([...($args ?: ['echo']), ...$items], $m);
     }
 
+    /** @param list<string> $args */
     private function shell(array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $script = null;
@@ -1179,6 +1202,7 @@ final class CoreCommands implements Command
         return $sh->runScript($script, $m, $positional);
     }
 
+    /** @param list<string> $args */
     private function du(array $args, Machine $m): Result
     {
         $targets = array_values(array_filter($args, static fn ($a) => $a[0] !== '-')) ?: ['.'];
@@ -1199,6 +1223,7 @@ final class CoreCommands implements Command
         return Result::ok("PID   USER     TIME  COMMAND\n    1 {$m->userName()}     0:00 {$command}\n   42 {$m->userName()}     0:00 ps\n");
     }
 
+    /** @param list<string> $args */
     private function diff(array $args, Machine $m): Result
     {
         $files = array_values(array_filter($args, static fn ($a) => $a[0] !== '-'));
@@ -1211,6 +1236,7 @@ final class CoreCommands implements Command
         return $a === $b ? Result::ok() : new Result(1, "--- {$files[0]}\n+++ {$files[1]}\n");
     }
 
+    /** @param list<string> $args */
     private function checksum(string $name, array $args, Machine $m, string $stdin): Result
     {
         if (\in_array('-c', $args, true)) {
@@ -1229,6 +1255,7 @@ final class CoreCommands implements Command
         return Result::ok($out);
     }
 
+    /** @param list<string> $args */
     private function awk(array $args, Machine $m, string $stdin): Result
     {
         $separator = null;
@@ -1256,7 +1283,11 @@ final class CoreCommands implements Command
         }, $lines)));
     }
 
-    /** kill [-SIGNAL] PID… : seul le processus n° 1 (le conteneur) existe vraiment pour le simulateur. */
+    /**
+     * kill [-SIGNAL] PID… : seul le processus n° 1 (le conteneur) existe vraiment pour le simulateur.
+     *
+     * @param list<string> $args
+     */
     private function kill(array $args, Machine $m): Result
     {
         $signal = 'TERM';
@@ -1287,6 +1318,7 @@ final class CoreCommands implements Command
         return Result::ok();
     }
 
+    /** @param list<string> $args */
     private function stat(array $args, Machine $m): Result
     {
         $format = null;
@@ -1330,6 +1362,7 @@ final class CoreCommands implements Command
         return strtr($format, ['%Y' => 'Y', '%m' => 'm', '%d' => 'd', '%H' => 'H', '%M' => 'i', '%S' => 's', '%s' => 'U', '%F' => 'Y-m-d', '%T' => 'H:i:s']);
     }
 
+    /** @param list<string> $args */
     private function wrapper(array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $args = array_values(array_filter($args, static fn ($a) => $a !== '--' && $a[0] !== '-'));
@@ -1337,6 +1370,7 @@ final class CoreCommands implements Command
         return $args === [] ? Result::ok() : $sh->invoke($args, $m, $stdin);
     }
 
+    /** @param list<string> $args */
     private function switchUser(string $name, array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $user = array_shift($args) ?? '';

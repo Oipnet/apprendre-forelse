@@ -83,6 +83,9 @@ final class ComposerCommand implements Command
         return \is_array($data) ? $data : [];
     }
 
+    /**
+     * @param array<string,true|list<string>> $options drapeaux de la ligne de commande (sans tirets) ; « ignored-requirements » : les --ignore-platform-req=…
+     */
     private function install(string $cwd, array $options, Machine $m, string $warning, bool $update): Result
     {
         $json = $this->readJson($m, $cwd.'/composer.json');
@@ -149,6 +152,9 @@ final class ComposerCommand implements Command
         return new Result(0, $out, $warning, $seconds);
     }
 
+    /**
+     * @param array<string,true|list<string>> $options drapeaux de la ligne de commande (sans tirets) ; « ignored-requirements » : les --ignore-platform-req=…
+     */
     private function dumpAutoload(string $cwd, array $options, Machine $m, string $warning): Result
     {
         $json = $this->readJson($m, $cwd.'/composer.json');
@@ -165,6 +171,9 @@ final class ComposerCommand implements Command
         return new Result(0, ($optimize ? 'Generating optimized autoload files (authoritative)' : 'Generating autoload files')."\nGenerated ".($optimize ? 'optimized ' : '')."autoload files\n", $warning, 0.8);
     }
 
+    /**
+     * @param array<string,true|list<string>> $options drapeaux de la ligne de commande (sans tirets) ; « ignored-requirements » : les --ignore-platform-req=…
+     */
     private function checkPlatform(string $cwd, array $options, Machine $m): Result
     {
         $json = $this->readJson($m, $cwd.'/composer.json') ?? [];
@@ -174,7 +183,11 @@ final class ComposerCommand implements Command
         return $problems === '' ? Result::ok("php ".($m->facts->phpVersion ?? '')."  success\n") : Result::error(2, $problems);
     }
 
-    /** @return list<string> */
+    /**
+     * @param array<string,mixed> $json composer.json décodé
+     *
+     * @return list<string>
+     */
     private function thirdPartyRequirements(array $json, bool $noDev): array
     {
         $requirements = array_keys([...($json['require'] ?? []), ...($noDev ? [] : ($json['require-dev'] ?? []))]);
@@ -182,7 +195,11 @@ final class ComposerCommand implements Command
         return array_values(array_filter($requirements, static fn ($r) => str_contains($r, '/')));
     }
 
-    /** @param list<string> $ignored exigences à ignorer (« ext-intl », « ext-* », « php ») */
+    /**
+     * @param array<string,mixed> $json    composer.json décodé
+     * @param array<string,mixed> $lock    composer.lock décodé
+     * @param list<string>        $ignored exigences à ignorer (« ext-intl », « ext-* », « php »)
+     */
     private function platformProblems(array $json, array $lock, bool $noDev, Machine $m, array $ignored = []): string
     {
         $problems = [];
@@ -244,7 +261,7 @@ final class ComposerCommand implements Command
         if (!preg_match('/^(\^|~|>=|<=|>|<|==|=|!=)?v?([\d.*]+)/', $part, $match)) {
             return true;
         }
-        $op = $match[1] ?? '';
+        $op = $match[1];
         $target = $match[2];
         if (str_contains($target, '*')) {
             return str_starts_with($version.'.', rtrim($target, '*'));
@@ -282,6 +299,7 @@ final class ComposerCommand implements Command
     }
 
     /**
+     * @param array<string,mixed>       $json     composer.json décodé
      * @param list<array<string,mixed>> $packages
      */
     private function writeAutoloader(Machine $m, string $cwd, array $json, array $packages, bool $noDev, bool $optimize): void
@@ -341,7 +359,11 @@ final class ComposerCommand implements Command
         }
     }
 
-    /** Scripts post-install : un « bin/console » ou « artisan » absent fait échouer l'installation. */
+    /**
+     * Scripts post-install : un « bin/console » ou « artisan » absent fait échouer l'installation.
+     *
+     * @param array<string,mixed> $json composer.json décodé
+     */
     private function runScripts(array $json, string $cwd, Machine $m): ?string
     {
         $scripts = $json['scripts'] ?? [];

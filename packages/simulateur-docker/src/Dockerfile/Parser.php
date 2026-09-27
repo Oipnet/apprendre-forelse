@@ -183,7 +183,7 @@ final class Parser
             }
         }
 
-        return array_values($decoded);
+        return $decoded;
     }
 
     private function checkFrom(Instruction $from): void

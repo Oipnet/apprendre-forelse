@@ -9,6 +9,7 @@ final class BuildOutput
 {
     private string $text = '';
     private int $counter = 0;
+    /** @var array{0: int, 1: string, 2: string}|null étape, nom, sortie du RUN en échec */
     private ?array $pendingError = null;
 
     public function line(string $line): void

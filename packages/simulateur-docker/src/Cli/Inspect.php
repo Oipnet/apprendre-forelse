@@ -111,7 +111,11 @@ final class Inspect
         return ['CreatedAt' => gmdate('Y-m-d\TH:i:s\Z', $volume->createdAt), 'Driver' => 'local', 'Labels' => $volume->labels === [] ? null : $volume->labels, 'Mountpoint' => '/var/lib/docker/volumes/'.$volume->name.'/_data', 'Name' => $volume->name, 'Options' => null, 'Scope' => 'local'];
     }
 
-    /** --format "{{.State.Status}}", "{{json .Config.Env}}", "{{range .Mounts}}{{.Destination}} {{end}}" (sous-ensemble). */
+    /**
+     * --format "{{.State.Status}}", "{{json .Config.Env}}", "{{range .Mounts}}{{.Destination}} {{end}}" (sous-ensemble).
+     *
+     * @param array<mixed> $data objet inspecté, ou élément d'un {{range}} (liste ou table, clé « . » pour un scalaire)
+     */
     public static function format(string $template, array $data): string
     {
         $template = preg_replace_callback('/\{\{\s*range\s+(\.[\w.]+)\s*\}\}(.*?)\{\{\s*end\s*\}\}/s', static function ($m) use ($data) {
@@ -140,6 +144,7 @@ final class Inspect
         }, $template) ?? $template;
     }
 
+    /** @param array<mixed> $data */
     private static function path(array $data, string $path): mixed
     {
         $value = $data;
@@ -157,6 +162,8 @@ final class Inspect
      * Comme docker inspect : les durées en nanosecondes, seulement celles qui sont déclarées.
      *
      * @param array{test: list<string>, interval?: string, timeout?: string, startPeriod?: string, retries?: int} $healthcheck
+     *
+     * @return array{Test: list<string>, Interval?: int, Timeout?: int, StartPeriod?: int, Retries?: int}
      */
     private static function healthcheck(array $healthcheck): array
     {
