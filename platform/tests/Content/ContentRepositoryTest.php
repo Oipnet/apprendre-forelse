@@ -65,6 +65,36 @@ final class ContentRepositoryTest extends TestCase
         }
     }
 
+    public function testLeChapitreDUnExerciceDependDeSonParcours(): void
+    {
+        $exercise = static fn (string $id) => [
+            "exercises/$id/exercise.yaml" => "id: $id\ntitle: $id\neditable: [a.php]\nobjectives: [{test: testA, label: A}]",
+            "exercises/$id/instructions.md" => 'Consignes',
+        ];
+        $files = ['pack.yaml' => "id: p\ntitle: P\ntracks: [t1, t2]"];
+        // Même identifiant d'exercice dans deux parcours, dans des chapitres différents.
+        foreach (['t1' => 'debut', 't2' => 'fin'] as $track => $chapter) {
+            $files["tracks/$track/track.yaml"] = "id: $track\ntitle: T\nenvironment: symfony-8\nchapters:\n  - {id: intro-$track, title: I, exercises: [e0]}\n  - {id: $chapter, title: C, exercises: [e1]}";
+            foreach ([...$exercise('e0'), ...$exercise('e1')] as $path => $content) {
+                $files["tracks/$track/$path"] = $content;
+            }
+        }
+        foreach ($files as $path => $content) {
+            (new Filesystem())->dumpFile($this->tmp.'/p/'.$path, $content);
+        }
+        $repository = $this->repository($this->tmp);
+
+        $this->assertSame('debut', $repository->chapterOf($repository->findExercise('t1', 'e1') ?? $this->fail())?->id);
+        $this->assertSame('fin', $repository->chapterOf($repository->findExercise('t2', 'e1') ?? $this->fail())?->id);
+        $this->assertSame('intro-t2', $repository->chapterOf($repository->findExercise('t2', 'e0') ?? $this->fail())?->id);
+        $this->assertTrue($repository->closesChapter($repository->findExercise('t1', 'e0') ?? $this->fail()));
+
+        // Après une écriture dans le pack (l'atelier appelle reset()), l'index est reconstruit.
+        (new Filesystem())->dumpFile($this->tmp.'/p/tracks/t1/track.yaml', "id: t1\ntitle: T\nenvironment: symfony-8\nchapters:\n  - {id: tout, title: Tout, exercises: [e0, e1]}");
+        $repository->reset();
+        $this->assertSame('tout', $repository->chapterOf($repository->findExercise('t1', 'e1') ?? $this->fail())?->id);
+    }
+
     public function testLaCleAccessEstDepreciee(): void
     {
         $repository = $this->repository(self::ROOT.'/examples/packs', __DIR__.'/../Fixtures/packs/enchainement');

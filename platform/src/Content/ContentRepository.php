@@ -47,6 +47,8 @@ final class ContentRepository
     private array $versionIntros = [];
     /** @var array<string, string> empreinte (date, taille) de chaque fichier ou dossier lu, par chemin : ce qui périme le cache */
     private array $watched = [];
+    /** @var array<string, Chapter>|null chapitre de chaque exercice, par « parcours/exercice » (voir chapterOf()) */
+    private ?array $chapterIndex = null;
 
     /** Identifiant réservé : un parcours ne peut pas s'appeler ainsi (voir les routes /atelier/pratique/…). */
     public const string PRACTICE = 'pratique';
@@ -78,6 +80,7 @@ final class ContentRepository
         $this->versionIntros = [];
         $this->deprecations = [];
         $this->watched = [];
+        $this->chapterIndex = null;
         $this->cache?->deleteItem($this->cacheKey());
     }
 
@@ -232,10 +235,28 @@ final class ContentRepository
         return null;
     }
 
-    /** Le chapitre d'un exercice. */
+    /**
+     * Le chapitre d'un exercice. Appelé pour chaque exercice affiché, et en boucle (import de la progression d'un
+     * invité) : un index, construit une fois depuis les parcours chargés, plutôt qu'un parcours de tout le contenu.
+     */
     public function chapterOf(Exercise $exercise): ?Chapter
     {
-        return $this->chaptersOf([$exercise])[0][1] ?? null;
+        if (null === $exercise->trackId) {
+            return null;
+        }
+        if (null === $this->chapterIndex) {
+            $this->chapterIndex = [];
+            foreach ($this->tracks() as $track) {
+                foreach ($track->chapters as $chapter) {
+                    foreach ($chapter->exerciseIds as $exerciseId) {
+                        // Le premier chapitre qui le cite, comme chaptersOf().
+                        $this->chapterIndex[$track->id.'/'.$exerciseId] ??= $chapter;
+                    }
+                }
+            }
+        }
+
+        return $this->chapterIndex[$exercise->trackId.'/'.$exercise->id] ?? null;
     }
 
     /** L'exercice qui clôt un chapitre est le dernier de sa liste. */
