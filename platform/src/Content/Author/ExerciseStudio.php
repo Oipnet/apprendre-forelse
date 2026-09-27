@@ -3,6 +3,7 @@
 namespace App\Content\Author;
 
 use App\Content\Author\Scaffold\ExerciseScaffolders;
+use App\Content\Chapter;
 use App\Content\Check\CheckResult;
 use App\Content\Check\ExerciseChecker;
 use App\Content\ContentDates;
@@ -53,6 +54,19 @@ final class ExerciseStudio
         $exercise = null === $track ? null : $this->content->findExercise($trackId, $exerciseId);
 
         return null === $exercise ? null : [$track, $exercise];
+    }
+
+    /**
+     * Un chapitre et son parcours, pour éditer sa fiche de cours.
+     *
+     * @return array{Track, Chapter}|null
+     */
+    public function trouverChapitre(string $trackId, string $chapterId): ?array
+    {
+        $track = $this->content->findTrack($trackId);
+        $chapter = null === $track ? null : $this->content->findChapter($track, $chapterId);
+
+        return null === $chapter ? null : [$track, $chapter];
     }
 
     /** Le fichier du parcours modifié le plus récemment : « où en étais-je ? » sans ouvrir un terminal. */
