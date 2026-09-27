@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Content\ContentException;
 use App\Content\EnvironmentRegistry;
+use App\Instance\InstallationJobs;
 use App\Instance\InstalledEnvironment;
 use App\Instance\EnvironmentBuildQueue;
 use App\Instance\InstalledEnvironments;
@@ -30,6 +31,7 @@ final class EnvironmentController extends AbstractController
     public function __construct(
         private readonly EnvironmentRegistry $environments,
         private readonly InstalledEnvironments $installed,
+        private readonly InstallationJobs $jobs,
         private readonly PackEnvironments $packEnvironments,
         private readonly EnvironmentBuildQueue $queue,
         #[Autowire('%kernel.project_dir%')]
@@ -54,7 +56,7 @@ final class EnvironmentController extends AbstractController
             'disponibles' => $this->available(),
             'portes' => $portes,
             'aEmpaqueter' => $aEmpaqueter,
-            'installations' => $this->installed->isEnabled() ? $this->installed->jobs() : [],
+            'installations' => $this->installed->isEnabled() ? $this->jobs->all() : [],
             'activable' => $this->installed->isEnabled(),
             'dossier' => $this->installed->directory(),
         ]);
@@ -131,7 +133,7 @@ final class EnvironmentController extends AbstractController
         if (!$this->isCsrfTokenValid('environments', (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException();
         }
-        $this->installed->forgetJob($cle);
+        $this->jobs->forget($cle);
 
         return $this->redirectToRoute('admin_environments');
     }

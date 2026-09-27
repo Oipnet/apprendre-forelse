@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Entity\User;
 use App\Instance\EnvironmentBuildQueue;
+use App\Instance\InstallationJobs;
 use App\Instance\InstalledEnvironments;
 use App\Tests\DatabaseTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -38,7 +39,7 @@ final class EnvironmentAdminTest extends WebTestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        $this->filesystem->remove($this->installes.'/'.InstalledEnvironments::JOBS);
+        $this->filesystem->remove($this->installes.'/'.InstallationJobs::DIRECTORY);
         $this->filesystem->remove($this->installes.'/'.EnvironmentBuildQueue::DIRECTORY);
         // Remis à la valeur de .env, et non retiré : une variable absente ferait échouer les tests suivants.
         foreach (['_ENV', '_SERVER'] as $store) {
@@ -57,7 +58,7 @@ final class EnvironmentAdminTest extends WebTestCase
         $this->client->submitForm('Installer', ['depot' => 'https://exemple.test/depot.git', 'ref' => 'v1']);
 
         $this->assertResponseRedirects();
-        $this->assertSame([], static::getContainer()->get(InstalledEnvironments::class)->jobs(), 'Aucune installation lancée dans ce conteneur.');
+        $this->assertSame([], static::getContainer()->get(InstallationJobs::class)->all(), 'Aucune installation lancée dans ce conteneur.');
         $this->assertSame(
             ['command' => 'app:environnement:installer', 'arguments' => ['https://exemple.test/depot.git', '--ref=v1']],
             static::getContainer()->get(EnvironmentBuildQueue::class)->pop(),
@@ -111,7 +112,7 @@ final class EnvironmentAdminTest extends WebTestCase
 
         $this->client->followRedirect();
         $this->assertStringContainsString('doit commencer par « https:// »', $this->client->getResponse()->getContent() ?: '');
-        $this->assertSame([], static::getContainer()->get(InstalledEnvironments::class)->jobs(), 'Rien n\'a été lancé.');
+        $this->assertSame([], static::getContainer()->get(InstallationJobs::class)->all(), 'Rien n\'a été lancé.');
     }
 
     public function testSansJetonCsrfLInstallationEstRefusee(): void
@@ -120,7 +121,7 @@ final class EnvironmentAdminTest extends WebTestCase
         $this->client->request('POST', '/admin/environnements/installer', ['depot' => 'https://exemple.test/depot.git']);
 
         $this->assertResponseStatusCodeSame(403);
-        $this->assertSame([], static::getContainer()->get(InstalledEnvironments::class)->jobs());
+        $this->assertSame([], static::getContainer()->get(InstallationJobs::class)->all());
     }
 
     public function testSansJetonCsrfLaSynchronisationEstRefusee(): void
@@ -129,7 +130,7 @@ final class EnvironmentAdminTest extends WebTestCase
         $this->client->request('POST', '/admin/environnements/synchroniser');
 
         $this->assertResponseStatusCodeSame(403);
-        $this->assertSame([], static::getContainer()->get(InstalledEnvironments::class)->jobs());
+        $this->assertSame([], static::getContainer()->get(InstallationJobs::class)->all());
     }
 
     /** Les archives passent par un contrôleur : un nom qui n'en est pas un ne descend pas dans le disque. */

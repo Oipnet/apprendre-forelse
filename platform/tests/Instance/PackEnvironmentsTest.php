@@ -5,6 +5,8 @@ namespace App\Tests\Instance;
 use App\Content\EnvironmentRegistry;
 use App\Instance\EnvironmentArtifacts;
 use App\Instance\EnvironmentInstaller;
+use App\Instance\GitCommandCheckout;
+use App\Instance\InstallationJobs;
 use App\Instance\InstalledEnvironments;
 use App\Instance\PackEnvironments;
 use PHPUnit\Framework\TestCase;
@@ -178,7 +180,7 @@ final class PackEnvironmentsTest extends TestCase
     {
         $environments = new EnvironmentRegistry([$this->tmp.'/socle'], packPaths: [$this->tmp.'/packs']);
         $installed ??= new InstalledEnvironments($this->tmp.'/installes');
-        $installer = new EnvironmentInstaller($installed, $environments, self::ROOT.'/environments/bin/build-env.sh');
+        $installer = new EnvironmentInstaller($installed, new InstallationJobs($installed), new GitCommandCheckout(), $environments, self::ROOT.'/environments/bin/build-env.sh');
 
         return new PackEnvironments($environments, $installer, new EnvironmentArtifacts($this->tmp.'/rien-de-public', $installed));
     }

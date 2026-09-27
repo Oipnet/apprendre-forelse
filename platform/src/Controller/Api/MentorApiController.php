@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Ai\Mentor;
+use App\Ai\ModelUnavailableException;
 use App\Api\ExerciseAccessGuard;
 use App\Api\ExerciseLocator;
 use App\Api\ExplainInput;
@@ -75,8 +76,11 @@ final class MentorApiController extends AbstractController
     {
         try {
             return $appel();
+        } catch (ModelUnavailableException $e) {
+            // Le modèle est injoignable ou en panne : ce n'est pas la faute de l'apprenant, et c'est passager.
+            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, 'Le mentor n\'a pas pu répondre : '.$e->getMessage(), $e);
         } catch (ContentException $e) {
-            // Le modèle n'a pas répondu ou a répondu de travers : ce n'est pas la faute de l'apprenant.
+            // Le modèle a répondu de travers : ce n'est pas la faute de l'apprenant.
             throw new HttpException(Response::HTTP_BAD_GATEWAY, 'Le mentor n\'a pas pu répondre : '.$e->getMessage(), $e);
         }
     }

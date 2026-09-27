@@ -181,6 +181,17 @@ final class MentorApiTest extends WebTestCase
         $this->assertResponseStatusCodeSame(502);
     }
 
+    public function testUnModeleEnPanneDonneUne503(): void
+    {
+        $http = new MockHttpClient(fn () => new JsonMockResponse(['type' => 'error', 'error' => ['type' => 'overloaded_error', 'message' => 'Surchargé.']], ['http_code' => 529]));
+        static::getContainer()->set(ModelClient::class, new ModelClient($http, 'cle', 'claude-sonnet-5'));
+        $this->client->loginUser($this->confirme());
+
+        $this->json($this->client, 'POST', '/api/mentor/decouverte/01-bonjour/explain', ['error' => 'Erreur', 'source' => 'tests']);
+
+        $this->assertResponseStatusCodeSame(503);
+    }
+
     public function testUnExerciceInconnuDonne404(): void
     {
         $this->faireRepondre('revue_de_code', []);

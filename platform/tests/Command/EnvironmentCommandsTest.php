@@ -7,6 +7,8 @@ use App\Command\EnvironmentSyncCommand;
 use App\Content\EnvironmentRegistry;
 use App\Instance\EnvironmentArtifacts;
 use App\Instance\EnvironmentInstaller;
+use App\Instance\GitCommandCheckout;
+use App\Instance\InstallationJobs;
 use App\Instance\InstalledEnvironments;
 use App\Instance\PackEnvironments;
 use App\Tests\GitIsolationTrait;
@@ -59,7 +61,7 @@ final class EnvironmentCommandsTest extends TestCase
 
     private function installer(InstalledEnvironments $installed): EnvironmentInstaller
     {
-        return new EnvironmentInstaller($installed, $this->registry(), self::ROOT.'/environments/bin/build-env.sh');
+        return new EnvironmentInstaller($installed, new InstallationJobs($installed), new GitCommandCheckout(), $this->registry(), self::ROOT.'/environments/bin/build-env.sh');
     }
 
     private function install(?InstalledEnvironments $installed = null): CommandTester
