@@ -8,10 +8,12 @@ use App\Content\Practice;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\PracticeVersionIndex;
 use App\Content\PracticeVisibility;
+use App\Entity\ExerciseProgress;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
 use App\Seo\SeoWriter;
 use App\Security\TrackAccessChecker;
+use App\Service\TrackProgress;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
@@ -114,7 +116,7 @@ final class PracticeController extends AbstractController
             'items' => array_map(
                 static fn (Practice $practice) => [
                     'practice' => $practice,
-                    'state' => ($progress[$practice->exercise->id] ?? null)?->getStatus()->value ?? 'todo',
+                    'state' => TrackProgress::stateFrom($progress[$practice->exercise->id] ?? null),
                 ],
                 $version['practices'],
             ),
@@ -210,7 +212,7 @@ final class PracticeController extends AbstractController
      * (et, pour un administrateur, ce qui est encore à venir).
      *
      * @param list<Practice>        $practices
-     * @param array<string, object> $progress
+     * @param array<string, ExerciseProgress> $progress
      *
      * @return list<array{label: string, items: list<array{practice: Practice, state: string}>}>
      */
@@ -228,7 +230,7 @@ final class PracticeController extends AbstractController
             };
             $groups[$label][] = [
                 'practice' => $practice,
-                'state' => ($progress[$practice->exercise->id] ?? null)?->getStatus()->value ?? 'todo',
+                'state' => TrackProgress::stateFrom($progress[$practice->exercise->id] ?? null),
             ];
         }
 

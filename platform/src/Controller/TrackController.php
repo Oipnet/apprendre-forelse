@@ -14,7 +14,7 @@ use App\Repository\ExerciseProgressRepository;
 use App\Security\TrackAccessChecker;
 use App\Seo\SeoWriter;
 use App\Service\ChapterSummary;
-use App\Service\LessonAccess;
+use App\Service\TrackProgress;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,37 +26,36 @@ final class TrackController extends AbstractController
     use TargetPathTrait;
 
     #[Route('/parcours/{trackId}', name: 'app_track', methods: ['GET'])]
-    public function show(string $trackId, ContentRepository $content, TrackVisibility $visibility, ExerciseProgressRepository $progressRepository, LessonAccess $lessonAccess, TrackAccessChecker $access, TrackOfferFactory $offers, SeoWriter $seo): Response
+    public function show(string $trackId, ContentRepository $content, TrackVisibility $visibility, ExerciseProgressRepository $progressRepository, TrackAccessChecker $access, TrackOfferFactory $offers, SeoWriter $seo): Response
     {
         $track = $visibility->find($trackId) ?? throw $this->createNotFoundException();
         $seo->track($track);
         $user = $this->getUser();
         $user = $user instanceof User ? $user : null;
-        $progress = null !== $user ? $progressRepository->findByTrack($user, $track->id) : [];
+        $progress = TrackProgress::of($track, null !== $user ? $progressRepository->findByTrack($user, $track->id) : []);
+        $reviewer = $this->isGranted(User::ROLE_AUTEUR);
 
         $chapters = [];
-        $completed = 0;
-        $xpTotal = $xpEarned = 0;
+        $xpTotal = 0;
         // « Vous en êtes là » : le premier exercice pas encore réussi, dans l'ordre du parcours.
+        $nextId = $progress->next();
         $current = null;
         foreach ($track->chapters as $number => $chapter) {
             $items = [];
             $chapterXp = 0;
             foreach ($chapter->exerciseIds as $position => $exerciseId) {
                 $exercise = $content->findExercise($track->id, $exerciseId);
-                $state = isset($progress[$exerciseId]) ? $progress[$exerciseId]->getStatus()->value : 'todo';
-                $completed += 'completed' === $state ? 1 : 0;
+                $state = $progress->stateOf($exerciseId);
                 $chapterXp += $exercise->xp ?? 0;
-                $xpEarned += ($progress[$exerciseId] ?? null)?->getXpEarned() ?? 0;
                 $items[] = [
                     'exercise' => $exercise,
                     'state' => $state,
-                    'xpEarned' => ($progress[$exerciseId] ?? null)?->getXpEarned(),
+                    'xpEarned' => $progress->xpEarnedOn($exerciseId),
                     // Le dernier exercice d'un chapitre titré « Boss » : mis en valeur.
                     'boss' => null !== $exercise && $exercise->isBoss(),
                 ];
-                if (null === $current && null !== $exercise && 'completed' !== $state) {
-                    $current = ['exercise' => $exercise, 'chapter' => $number + 1, 'position' => $position + 1, 'started' => 'todo' !== $state];
+                if ($exerciseId === $nextId && null !== $exercise) {
+                    $current = ['exercise' => $exercise, 'chapter' => $number + 1, 'position' => $position + 1, 'started' => TrackProgress::TODO !== $state];
                 }
             }
             $xpTotal += $chapterXp;
@@ -66,7 +65,7 @@ final class TrackController extends AbstractController
                 'items' => $items,
                 'xp' => $chapterXp,
                 // La fiche de cours, si le chapitre en a une : lisible ou encore verrouillée.
-                'lesson' => $chapter->hasLesson() ? $lessonAccess->status($user, $track, $chapter, $progress) : null,
+                'lesson' => $chapter->hasLesson() ? $progress->lesson($chapter, $reviewer) : null,
                 // Premier chapitre libre ; les autres demandent l'accès au parcours (la progression s'affiche quand même).
                 'free' => $track->isFreeChapter($chapter),
                 'locked' => !$access->canAccess($user, $track, $chapter),
@@ -77,16 +76,16 @@ final class TrackController extends AbstractController
             'track' => $track,
             'pack' => $content->packs()[$track->packId],
             'chapters' => $chapters,
-            'completed' => $completed,
-            'total' => \count($track->exerciseIds()),
+            'completed' => $progress->completedCount(),
+            'total' => $progress->total(),
             'xpTotal' => $xpTotal,
-            'xpEarned' => $xpEarned,
+            'xpEarned' => $progress->xpEarned(),
             'current' => $current,
-            'started' => [] !== $progress,
+            'started' => $progress->hasStarted(),
             'nextTrack' => $visibility->nextTrack($track),
             'offer' => $offers->create($track, $user),
             // Le livret regroupe les fiches : proposé quand tout le parcours est réussi (ou à un auteur).
-            'booklet' => self::lessonChapters($track) && ($this->isGranted(User::ROLE_AUTEUR) || ($total = \count($track->exerciseIds())) && $completed === $total),
+            'booklet' => self::lessonChapters($track) && ($reviewer || $progress->isComplete()),
         ]);
     }
 
@@ -118,7 +117,7 @@ final class TrackController extends AbstractController
         }
 
         $progress = $progressRepository->findByTrack($user, $track->id);
-        $remaining = \count(array_filter($track->exerciseIds(), static fn (string $id) => !isset($progress[$id]) || !$progress[$id]->isCompleted()));
+        $remaining = TrackProgress::of($track, $progress)->remaining();
         if ($remaining && !$this->isGranted(User::ROLE_AUTEUR)) {
             $this->addFlash('info', sprintf('Le livret se débloque une fois le parcours terminé : encore %d exercice%s à réussir.', $remaining, $remaining > 1 ? 's' : ''));
 

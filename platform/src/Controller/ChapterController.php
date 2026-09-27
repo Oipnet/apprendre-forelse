@@ -16,7 +16,7 @@ use App\Repository\ExerciseProgressRepository;
 use App\Security\TrackAccessChecker;
 use App\Seo\SeoWriter;
 use App\Service\ChapterSummary;
-use App\Service\LessonAccess;
+use App\Service\TrackProgress;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,7 +31,6 @@ final class ChapterController extends AbstractController
     public function __construct(
         private readonly ContentRepository $content,
         private readonly TrackVisibility $visibility,
-        private readonly LessonAccess $access,
         private readonly ExerciseProgressRepository $progressRepository,
         private readonly ChapterSummary $summary,
         private readonly TrackAccessChecker $trackAccess,
@@ -123,7 +122,7 @@ final class ChapterController extends AbstractController
         }
 
         $progress = $this->progressRepository->findByTrack($user, $track->id);
-        $status = $this->access->status($user, $track, $chapter, $progress);
+        $status = TrackProgress::of($track, $progress)->lesson($chapter, $this->isGranted(User::ROLE_AUTEUR));
         if (!$status['unlocked']) {
             $this->addFlash('info', sprintf(
                 'La fiche du chapitre « %s » se débloque une fois ses exercices réussis : encore %d à terminer.',
