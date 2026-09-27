@@ -14,7 +14,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: TrackSeoRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_TRACK_SEO_TRACK', fields: ['trackId'])]
 #[UniqueEntity(fields: ['trackId'], message: 'Ce parcours a déjà son référencement.')]
-class TrackSeo
+class TrackSeo implements Touchable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -69,7 +69,6 @@ class TrackSeo
     public function setSeoTitle(?string $seoTitle): static
     {
         $this->seoTitle = self::blankToNull($seoTitle);
-        $this->updatedAt = new \DateTimeImmutable();
 
         return $this;
     }
@@ -82,9 +81,13 @@ class TrackSeo
     public function setSeoDescription(?string $seoDescription): static
     {
         $this->seoDescription = self::blankToNull($seoDescription);
-        $this->updatedAt = new \DateTimeImmutable();
 
         return $this;
+    }
+
+    public function touch(\DateTimeImmutable $now): void
+    {
+        $this->updatedAt = $now;
     }
 
     public function getUpdatedAt(): \DateTimeImmutable

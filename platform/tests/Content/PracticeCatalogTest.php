@@ -31,7 +31,9 @@ final class PracticeCatalogTest extends TestCase
         $security = $this->createStub(Security::class);
         $security->method('isGranted')->willReturn($admin);
 
-        return new PracticeCatalog(new PracticeVisibility($content, $security), new MockClock($today.' 15:00'));
+        $clock = new MockClock($today.' 15:00');
+
+        return new PracticeCatalog(new PracticeVisibility($content, $security, $clock), $clock);
     }
 
     /** @return list<string> */
@@ -111,5 +113,11 @@ final class PracticeCatalogTest extends TestCase
         $this->assertSame('completed', $listing->groups[0]['items'][0]['state']);
         $this->assertSame('todo', $listing->groups[1]['items'][0]['state']);
         $this->assertSame(1, $listing->completedCount);
+    }
+
+    public function testUnExerciceParaitLeJourQueDitLHorloge(): void
+    {
+        $this->assertNotContains('Publié plus tard', self::titles($this->catalog('2098-12-31')->search(new PracticeFilter(), [])));
+        $this->assertContains('Publié plus tard', self::titles($this->catalog('2099-01-01')->search(new PracticeFilter(), [])), 'Le jour même, il paraît.');
     }
 }

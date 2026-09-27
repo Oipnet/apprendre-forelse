@@ -3,6 +3,7 @@
 namespace App\Tests\Content\Author;
 
 use App\Content\Author\LessonFiles;
+use App\Content\Author\PackWritability;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
@@ -43,9 +44,9 @@ final class LessonFilesTest extends TestCase
         return new ContentRepository([$this->tmp], new EnvironmentRegistry(self::ROOT.'/environments'), new Version(self::ROOT.'/VERSION'));
     }
 
-    private function files(ContentRepository $content): LessonFiles
+    private function files(ContentRepository $content, ?PackWritability $writability = null): LessonFiles
     {
-        return new LessonFiles($content, new Filesystem(), new LockFactory(new InMemoryStore()));
+        return new LessonFiles($content, new Filesystem(), new LockFactory(new InMemoryStore()), $writability ?? new PackWritability());
     }
 
     public function testEcrireNEcrasePasSansForce(): void
@@ -88,13 +89,11 @@ final class LessonFilesTest extends TestCase
     {
         $content = $this->content();
         $track = $content->findTrack('t');
-        chmod($track->directory, 0o555);
-        if (is_writable($track->directory)) {
-            $this->markTestSkipped('Exécuté en root : un dossier en lecture seule reste inscriptible.');
-        }
+        // Monté en lecture seule, comme en production (sous root, un chmod ne suffirait pas à le reproduire).
+        $lectureSeule = new PackWritability(static fn (string $dossier) => $dossier !== $track->directory);
 
         try {
-            $this->files($content)->ecrire($track, $track->chapters[0], "## Fiche\n");
+            $this->files($content, $lectureSeule)->ecrire($track, $track->chapters[0], "## Fiche\n");
             $this->fail('Un parcours en lecture seule ne doit pas être écrit.');
         } catch (ContentException $e) {
             $this->assertSame(sprintf('Le parcours « t » est en lecture seule (%s).', $track->directory), $e->getMessage());
@@ -102,6 +101,6 @@ final class LessonFilesTest extends TestCase
         $this->assertFileDoesNotExist($track->directory.'/chapters/c1/lesson.md');
 
         $this->expectException(ContentException::class);
-        $this->files($content)->supprimer($track, $track->chapters[0]);
+        $this->files($content, $lectureSeule)->supprimer($track, $track->chapters[0]);
     }
 }

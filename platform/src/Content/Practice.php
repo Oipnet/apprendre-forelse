@@ -32,8 +32,8 @@ final readonly class Practice
     }
 
     /** Daté d'un jour à venir : publié automatiquement ce jour-là, visible des seuls administrateurs d'ici là. */
-    public function isScheduled(?\DateTimeImmutable $today = null): bool
+    public function isScheduled(\DateTimeImmutable $today): bool
     {
-        return $this->published->format('Y-m-d') > ($today ?? new \DateTimeImmutable('today'))->format('Y-m-d');
+        return $this->published->format('Y-m-d') > $today->format('Y-m-d');
     }
 }

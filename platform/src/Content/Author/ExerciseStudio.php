@@ -32,6 +32,7 @@ final class ExerciseStudio
         private readonly EnvironmentRegistry $environments,
         private readonly ExerciseScaffolders $scaffolders,
         private readonly ContentDates $dates,
+        private readonly PackWritability $writability,
     ) {
     }
 
@@ -111,7 +112,7 @@ final class ExerciseStudio
     /** Le dossier du parcours, ou du pack pour un exercice de Pratique, accepte-t-il l'écriture ? */
     public function modifiable(Track|Pack $owner): bool
     {
-        return PackWritability::writable($owner);
+        return $this->writability->writable($owner);
     }
 
     /**
@@ -123,7 +124,7 @@ final class ExerciseStudio
      */
     public function enregistrer(Track|Pack $owner, Exercise $exercise, array $fichiers): ?string
     {
-        PackWritability::assert($owner);
+        $this->writability->assert($owner);
         $this->fichiers->write($exercise->directory, $fichiers);
 
         return $this->relire($exercise->trackId, $exercise->id);
@@ -138,7 +139,7 @@ final class ExerciseStudio
      */
     public function creer(Track $track, string $chapitreId, string $id, string $titre, ?string $base, ?array $brouillon = null): string
     {
-        PackWritability::assert($track);
+        $this->writability->assert($track);
         if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $id)) {
             throw new ContentException(sprintf('Identifiant « %s » : uniquement des minuscules, des chiffres et des tirets.', $id));
         }
@@ -169,7 +170,7 @@ final class ExerciseStudio
      */
     public function creerPratique(Pack $pack, string $id, string $titre, string $environment): string
     {
-        PackWritability::assert($pack);
+        $this->writability->assert($pack);
         if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $id)) {
             throw new ContentException(sprintf('Identifiant « %s » : uniquement des minuscules, des chiffres et des tirets.', $id));
         }
@@ -197,7 +198,7 @@ final class ExerciseStudio
      */
     public function supprimer(Track|Pack $owner, Exercise $exercise): void
     {
-        PackWritability::assert($owner);
+        $this->writability->assert($owner);
         if ($owner instanceof Pack) {
             (new Filesystem())->remove($exercise->directory);
             $this->content->reset();

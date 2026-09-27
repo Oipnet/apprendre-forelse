@@ -22,14 +22,14 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 /** Un ExerciseChecker monté hors du conteneur, comme le conteneur le monte : ses lanceurs et ses vérifications. */
 trait ExerciseCheckerTrait
 {
-    protected static function exerciseChecker(ContentRepository $content, EnvironmentRegistry $environments, string $platformDir = __DIR__.'/..'): ExerciseChecker
+    protected static function exerciseChecker(ContentRepository $content, EnvironmentRegistry $environments, string $platformDir = __DIR__.'/..', ?string $artifactsDir = null): ExerciseChecker
     {
         $workdirs = new ProjectWorkdir();
         $runners = new TestRunners(new ServiceLocator([
             FrameworkProfile::PHPUNIT => static fn () => new PhpunitRunner(new ProcessEnvironment($platformDir)),
             FrameworkProfile::VITEST => static fn () => new NodeModuleRunner($platformDir),
         ]));
-        $artifacts = new EnvironmentArtifacts($platformDir.'/public/envs', new InstalledEnvironments(''));
+        $artifacts = new EnvironmentArtifacts($artifactsDir ?? $platformDir.'/public/envs', new InstalledEnvironments(''));
 
         return new ExerciseChecker(
             $content,

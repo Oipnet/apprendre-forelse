@@ -19,6 +19,7 @@ final class LessonFiles
         private readonly ContentRepository $content,
         private readonly Filesystem $filesystem,
         private readonly LockFactory $locks,
+        private readonly PackWritability $writability,
     ) {
     }
 
@@ -60,7 +61,7 @@ final class LessonFiles
 
     private function assertModifiable(Track $track): void
     {
-        if (!PackWritability::writable($track)) {
+        if (!$this->writability->writable($track)) {
             throw new ContentException(sprintf('Le parcours « %s » est en lecture seule (%s).', $track->id, $track->directory));
         }
     }

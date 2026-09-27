@@ -10,6 +10,7 @@ use App\Content\EnvironmentRegistry;
 use App\Tests\BrandingTrait;
 use App\Version;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -38,7 +39,7 @@ final class PostDrafterTest extends TestCase
             return new JsonMockResponse(['content' => [['type' => 'tool_use', 'name' => 'ecrire_posts', 'input' => ['posts' => $posts]]]]);
         });
 
-        return new PostDrafter(new ModelClient($client, $cle, 'claude-sonnet-5'), $this->content(), new EnvironmentRegistry(self::ROOT.'/environments'), self::branding(), $modelePost);
+        return new PostDrafter(new ModelClient($client, $cle, 'claude-sonnet-5'), $this->content(), new EnvironmentRegistry(self::ROOT.'/environments'), self::branding(), new MockClock('2026-09-27 12:00'), $modelePost);
     }
 
     /**

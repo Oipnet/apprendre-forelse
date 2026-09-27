@@ -162,7 +162,46 @@ final class Project
 
             return false;
         }
-        // Images à construire ou à télécharger.
+        $toBuild = $this->servicesToBuild($order, $build, $noBuild);
+        if (!$this->buildImages($toBuild) || !$this->pullImages($order)) {
+            return false;
+        }
+        $events = [];
+        if (!$this->createNetworks($order, $events) || !$this->createVolumes($order, $events)) {
+            return false;
+        }
+        $started = [];
+        foreach ($order as $service) {
+            if (!$noDeps && !$this->dependenciesReady($service, $events)) {
+                return false;
+            }
+            $container = $this->startService($service, $forceRecreate || \in_array($service, $toBuild, true), $events);
+            if ($container === null) {
+                return false;
+            }
+            $started[] = $container;
+        }
+        $this->flushEvents($events);
+        if ($wait && !$this->waitHealthy($started)) {
+            return false;
+        }
+        if (!$detach) {
+            $this->attach($started);
+        }
+        $this->docker->save();
+
+        return true;
+    }
+
+    /**
+     * Images à construire : celles des services avec build, absentes ou reconstruites avec --build.
+     *
+     * @param list<string> $order
+     *
+     * @return list<string>
+     */
+    private function servicesToBuild(array $order, bool $build, bool $noBuild): array
+    {
         $toBuild = [];
         foreach ($order as $service) {
             $config = $this->file->services[$service];
@@ -170,11 +209,29 @@ final class Project
                 $toBuild[] = $service;
             }
         }
+
+        return $toBuild;
+    }
+
+    /** @param list<string> $toBuild */
+    private function buildImages(array $toBuild): bool
+    {
         foreach ($toBuild as $service) {
             if (!$this->buildService($service)) {
                 return false;
             }
         }
+
+        return true;
+    }
+
+    /**
+     * Images à télécharger : celles des services sans build, absentes du démon.
+     *
+     * @param list<string> $order
+     */
+    private function pullImages(array $order): bool
+    {
         $pulls = [];
         foreach ($order as $service) {
             $config = $this->file->services[$service];
@@ -198,8 +255,15 @@ final class Project
             }
         }
 
-        $events = [];
-        // Réseaux et volumes.
+        return true;
+    }
+
+    /**
+     * @param list<string>                             $order
+     * @param list<array{0:string,1:string,2:string}> $events
+     */
+    private function createNetworks(array $order, array &$events): bool
+    {
         $networks = [];
         foreach ($order as $service) {
             $serviceNetworks = $this->file->services[$service]['networks'] ?: ['default' => []];
@@ -222,121 +286,149 @@ final class Project
                 $events[] = ['Network', $name, 'Created'];
             }
         }
+
+        return true;
+    }
+
+    /**
+     * @param list<string>                             $order
+     * @param list<array{0:string,1:string,2:string}> $events
+     */
+    private function createVolumes(array $order, array &$events): bool
+    {
+        $warnedVolumes = [];
         foreach ($order as $service) {
             foreach ($this->file->services[$service]['volumes'] as $volume) {
-                if ($volume['type'] === 'volume' && $volume['source'] !== '') {
-                    $name = $this->volumeName($volume['source']);
-                    if (($this->file->volumes[$volume['source']]['external'] ?? false) === true) {
-                        if (!isset($this->docker->store->volumes[$name])) {
-                            $this->fail(sprintf('external volume "%s" not found', $name));
-
-                            return false;
-                        }
-                        continue;
-                    }
+                if ($volume['type'] !== 'volume' || $volume['source'] === '') {
+                    continue;
+                }
+                $name = $this->volumeName($volume['source']);
+                if (($this->file->volumes[$volume['source']]['external'] ?? false) === true) {
                     if (!isset($this->docker->store->volumes[$name])) {
-                        $this->docker->createVolume($name, ['com.docker.compose.project' => $this->file->name, 'com.docker.compose.volume' => $volume['source']]);
-                        $events[] = ['Volume', '"'.$name.'"', 'Created'];
-                    } elseif (($this->docker->store->volumes[$name]->labels['com.docker.compose.project'] ?? null) === null && empty($this->file->volumes[$volume['source']]['external']) && !isset($warnedVolumes[$name])) {
-                        $warnedVolumes[$name] = true;
-                        $this->out(sprintf('WARN[0000] volume "%s" already exists but was not created by Docker Compose. Use `external: true` to use an existing volume', $name));
+                        $this->fail(sprintf('external volume "%s" not found', $name));
+
+                        return false;
                     }
+                    continue;
+                }
+                if (!isset($this->docker->store->volumes[$name])) {
+                    $this->docker->createVolume($name, ['com.docker.compose.project' => $this->file->name, 'com.docker.compose.volume' => $volume['source']]);
+                    $events[] = ['Volume', '"'.$name.'"', 'Created'];
+                } elseif (($this->docker->store->volumes[$name]->labels['com.docker.compose.project'] ?? null) === null && empty($this->file->volumes[$volume['source']]['external']) && !isset($warnedVolumes[$name])) {
+                    $warnedVolumes[$name] = true;
+                    $this->out(sprintf('WARN[0000] volume "%s" already exists but was not created by Docker Compose. Use `external: true` to use an existing volume', $name));
                 }
             }
         }
 
-        $ok = true;
-        $started = [];
-        foreach ($order as $service) {
-            $config = $this->file->services[$service];
-            // Conditions de depends_on.
-            foreach ($config['depends_on'] as $dependency => $options) {
-                if ($noDeps) {
-                    break;
-                }
-                $container = $this->containers($dependency)[0] ?? null;
-                if ($container === null) {
-                    continue;
-                }
-                $condition = $options['condition'];
-                if ($condition === 'service_healthy') {
-                    if ($container->healthcheck === null || ($container->healthcheck['test'][0] ?? '') === 'NONE') {
-                        $events[] = ['Container', $this->containerName($service), 'Error'];
-                        $this->flushEvents($events);
-                        $this->fail(sprintf('dependency failed to start: container %s has no healthcheck configured', $container->name));
+        return true;
+    }
 
-                        return false;
-                    }
-                    if ($container->health !== 'healthy') {
-                        $events[] = ['Container', $container->name, 'Error'];
-                        $this->flushEvents($events);
-                        $this->fail(sprintf('dependency failed to start: container %s is unhealthy', $container->name));
-
-                        return false;
-                    }
-                    $this->replaceEvent($events, $container->name, 'Healthy');
-                }
-                if ($condition === 'service_completed_successfully' && ($container->isRunning() || $container->exitCode !== 0)) {
+    /**
+     * Conditions de depends_on : dépendance en bonne santé, ou terminée sans erreur.
+     *
+     * @param list<array{0:string,1:string,2:string}> $events
+     */
+    private function dependenciesReady(string $service, array &$events): bool
+    {
+        foreach ($this->file->services[$service]['depends_on'] as $dependency => $options) {
+            $container = $this->containers($dependency)[0] ?? null;
+            if ($container === null) {
+                continue;
+            }
+            $condition = $options['condition'];
+            if ($condition === 'service_healthy') {
+                if ($container->healthcheck === null || ($container->healthcheck['test'][0] ?? '') === 'NONE') {
+                    $events[] = ['Container', $this->containerName($service), 'Error'];
                     $this->flushEvents($events);
-                    $this->fail(sprintf('service "%s" didn\'t complete successfully: exit %d', $dependency, $container->exitCode));
+                    $this->fail(sprintf('dependency failed to start: container %s has no healthcheck configured', $container->name));
 
                     return false;
                 }
-            }
-            try {
-                [$container, $action] = $this->ensureContainer($service, $forceRecreate || \in_array($service, $toBuild, true));
-                $wasRunning = $container->isRunning();
-                if (!$wasRunning) {
-                    $this->docker->start($container);
-                    $action = $action === 'Recreated' ? 'Recreated' : 'Started';
-                } elseif ($action === 'Running') {
-                    $action = 'Running';
+                if ($container->health !== 'healthy') {
+                    $events[] = ['Container', $container->name, 'Error'];
+                    $this->flushEvents($events);
+                    $this->fail(sprintf('dependency failed to start: container %s is unhealthy', $container->name));
+
+                    return false;
                 }
-                $events[] = ['Container', $container->name, $action];
-                $started[] = $container;
-            } catch (DockerException $e) {
-                $events[] = ['Container', $this->containerName($service), 'Error'];
+                $this->replaceEvent($events, $container->name, 'Healthy');
+            }
+            if ($condition === 'service_completed_successfully' && ($container->isRunning() || $container->exitCode !== 0)) {
                 $this->flushEvents($events);
-                $this->fail('Error response from daemon: '.$e->getMessage());
+                $this->fail(sprintf('service "%s" didn\'t complete successfully: exit %d', $dependency, $container->exitCode));
 
                 return false;
             }
         }
-        $this->flushEvents($events);
+
+        return true;
+    }
+
+    /**
+     * Crée (ou recrée) le conteneur du service et le démarre ; null si le démon refuse.
+     *
+     * @param list<array{0:string,1:string,2:string}> $events
+     */
+    private function startService(string $service, bool $recreate, array &$events): ?Container
+    {
+        try {
+            [$container, $action] = $this->ensureContainer($service, $recreate);
+            if (!$container->isRunning()) {
+                $this->docker->start($container);
+                $action = $action === 'Recreated' ? 'Recreated' : 'Started';
+            }
+            $events[] = ['Container', $container->name, $action];
+
+            return $container;
+        } catch (DockerException $e) {
+            $events[] = ['Container', $this->containerName($service), 'Error'];
+            $this->flushEvents($events);
+            $this->fail('Error response from daemon: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * --wait : chaque conteneur doit tourner, et être en bonne santé s'il a un healthcheck.
+     *
+     * @param list<Container> $started
+     */
+    private function waitHealthy(array $started): bool
+    {
         foreach ($started as $container) {
-            if ($container->status !== Container::RUNNING && $detach) {
-                // En arrière-plan, Compose ne signale pas l'arrêt d'un conteneur : docker compose ps le montrera.
-                continue;
+            $this->docker->refreshHealth($container);
+            if ($container->health === 'healthy') {
+                $this->output = preg_replace('/^( ✔ Container '.preg_quote($container->name, '/').'\s+)Started   /m', '$1Healthy   ', $this->output) ?? $this->output;
             }
-        }
-        if ($wait) {
-            foreach ($started as $container) {
-                $this->docker->refreshHealth($container);
-                if ($container->health === 'healthy') {
-                    $this->output = preg_replace('/^( ✔ Container '.preg_quote($container->name, '/').'\s+)Started   /m', '$1Healthy   ', $this->output) ?? $this->output;
-                }
-                if (!$container->isRunning() || $container->health === 'unhealthy') {
-                    $this->fail(sprintf('container %s %s', $container->name, $container->health === 'unhealthy' ? 'is unhealthy' : 'exited ('.$container->exitCode.')'));
+            if (!$container->isRunning() || $container->health === 'unhealthy') {
+                $this->fail(sprintf('container %s %s', $container->name, $container->health === 'unhealthy' ? 'is unhealthy' : 'exited ('.$container->exitCode.')'));
 
-                    return false;
-                }
+                return false;
             }
         }
-        if (!$detach) {
-            $this->out('Attaching to '.implode(', ', array_map(fn (Container $c) => $this->shortName($c), $started)));
-            $width = max(array_map(fn (Container $c) => \strlen($this->shortName($c)), $started) ?: [0]);
-            foreach ($started as $container) {
-                foreach ($container->logs as $line) {
-                    $this->out(str_pad($this->shortName($container), $width).'  | '.$line);
-                }
-                if (!$container->isRunning()) {
-                    $this->out(sprintf('%s exited with code %d', $this->shortName($container), $container->exitCode));
-                }
-            }
-        }
-        $this->docker->save();
 
-        return $ok;
+        return true;
+    }
+
+    /**
+     * Sans -d : les journaux de chaque conteneur, préfixés par son nom court.
+     *
+     * @param list<Container> $started
+     */
+    private function attach(array $started): void
+    {
+        $this->out('Attaching to '.implode(', ', array_map(fn (Container $c) => $this->shortName($c), $started)));
+        $width = max(array_map(fn (Container $c) => \strlen($this->shortName($c)), $started) ?: [0]);
+        foreach ($started as $container) {
+            foreach ($container->logs as $line) {
+                $this->out(str_pad($this->shortName($container), $width).'  | '.$line);
+            }
+            if (!$container->isRunning()) {
+                $this->out(sprintf('%s exited with code %d', $this->shortName($container), $container->exitCode));
+            }
+        }
     }
 
     /** @param list<array{0:string,1:string,2:string}> $events */

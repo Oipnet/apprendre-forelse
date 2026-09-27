@@ -14,7 +14,7 @@ copiés par la CI (`.github/workflows/ci.yml`) ; le proxy, lui, s'installe une f
 - `compose.yaml` : les services d'une instance. Seul, l'application tient elle-même 80/443 (l'ancien fonctionnement).
 - `derriere-front.yaml` : l'instance passe derrière le proxy (plus de port publié, réseau `front`).
 - `preproduction.yaml` : ce qui distingue la préproduction (pas d'indexation, pas d'Umami).
-- `deployer.sh` : migrations, bascule, contrôle de `/sante`, retour à l'image précédente en cas d'échec.
+- `deployer.sh` : copie de la base, migrations, bascule, contrôle de `/sante`, retour à l'image précédente en cas d'échec. La copie (`pg_dump -Fc`) est gardée dans `sauvegardes/` du dossier de l'instance, les 10 plus récentes (`DEPLOY_DUMPS_DIR`, `DEPLOY_DUMPS_KEEP`). Pour restaurer : `docker compose exec -T db sh -c 'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < sauvegardes/avant-deploiement-….dump`. Ces copies restent sur le VPS : elles ne remplacent pas une sauvegarde quotidienne hors du serveur (#5).
 - `front/` : le proxy commun.
 
 Le `.env` de chaque instance choisit ses fichiers avec `COMPOSE_FILE`. Il faut **Docker Compose 2.24 ou plus**

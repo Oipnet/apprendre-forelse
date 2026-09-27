@@ -12,6 +12,7 @@ use App\Content\Framework\FrameworkProfile;
 use App\Content\Practice;
 use App\Content\Track;
 use App\Instance\Branding;
+use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -66,6 +67,7 @@ final class PostDrafter
         private readonly ContentRepository $content,
         private readonly EnvironmentRegistry $environments,
         private readonly Branding $branding,
+        private readonly ClockInterface $clock,
         /**
          * Un modèle pour les posts seulement (AI_MODEL_POST). Écrire pour LinkedIn n'est pas relire du code :
          * on peut vouloir ici un modèle plus fort qu'ailleurs, sans changer celui du mentor. Vide : AI_MODEL.
@@ -125,7 +127,7 @@ final class PostDrafter
             ($notions = self::notions([$exercise])) ? 'Notions travaillées : '.$notions : null,
             'Consignes données à l\'apprenant :'."\n".mb_substr(trim($exercise->instructions), 0, self::MAX_CONSIGNES_CHARS),
             $practice->pullRequest ? 'Pull request d\'origine : '.$practice->pullRequest : null,
-            $practice->isRestricted() || $practice->isScheduled() ? 'Cet exercice n\'est pas encore visible du public : le post est à garder pour le jour de sa parution.' : null,
+            $practice->isRestricted() || $practice->isScheduled($this->clock->now()) ? 'Cet exercice n\'est pas encore visible du public : le post est à garder pour le jour de sa parution.' : null,
         ]));
 
         return $this->ecrire($framework, $contexte, $url, $precision);

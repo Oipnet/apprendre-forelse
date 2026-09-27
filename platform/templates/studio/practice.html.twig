@@ -33,7 +33,7 @@
                                 <span class="st-ex-title">{{ practice.exercise.title }}</span>
                                 <span class="st-ex-id">{{ practice.exercise.id }}</span>
                                 {% if practice.isRestricted %}<span class="tag draft">En préparation</span>{% endif %}
-                                {% if practice.isScheduled %}<span class="tag draft">Programmé</span>{% endif %}
+                                {% if practice_scheduled(practice) %}<span class="tag draft">Programmé</span>{% endif %}
                                 {% if practice.version %}<span class="tag live">{{ practice.framework }} {{ practice.version }}</span>{% endif %}
                                 <span class="st-ex-xp">{{ practice.packId }} · {{ practice.published|date('d/m/Y') }}</span>
                             </a>

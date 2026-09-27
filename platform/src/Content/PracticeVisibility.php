@@ -3,6 +3,7 @@
 namespace App\Content;
 
 use App\Entity\User;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
 /**
@@ -15,12 +16,19 @@ final readonly class PracticeVisibility
     public function __construct(
         private ContentRepository $content,
         private Security $security,
+        private ClockInterface $clock,
     ) {
     }
 
     public function isVisible(Practice $practice): bool
     {
-        return (!$practice->isRestricted() && !$practice->isScheduled()) || $this->security->isGranted(User::ROLE_ADMIN);
+        return (!$practice->isRestricted() && !$this->isScheduled($practice)) || $this->security->isGranted(User::ROLE_ADMIN);
+    }
+
+    /** Daté d'un jour à venir, selon l'horloge. */
+    public function isScheduled(Practice $practice): bool
+    {
+        return $practice->isScheduled($this->clock->now());
     }
 
     /** @return array<string, Practice> du plus récent au plus ancien */
