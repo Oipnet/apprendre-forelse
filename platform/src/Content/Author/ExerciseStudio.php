@@ -31,6 +31,42 @@ final class ExerciseStudio
     ) {
     }
 
+    /**
+     * L'exercice et ce qui le contient : son parcours, ou son pack pour un exercice de Pratique ($trackId null).
+     *
+     * Sans le filtre de PracticeVisibility (ExerciseLocator) : l'atelier sert à écrire les exercices en préparation
+     * ou programmés, qu'un auteur doit donc trouver même s'il n'est pas administrateur.
+     *
+     * @return array{Track|Pack, Exercise}|null
+     */
+    public function trouver(?string $trackId, string $exerciseId): ?array
+    {
+        if (null === $trackId) {
+            $practice = $this->content->findPractice($exerciseId);
+
+            return null === $practice ? null : [$this->content->packs()[$practice->packId], $practice->exercise];
+        }
+        $track = $this->content->findTrack($trackId);
+        $exercise = null === $track ? null : $this->content->findExercise($trackId, $exerciseId);
+
+        return null === $exercise ? null : [$track, $exercise];
+    }
+
+    /** Le fichier du parcours modifié le plus récemment : « où en étais-je ? » sans ouvrir un terminal. */
+    public function modifieLe(Track $track): ?\DateTimeImmutable
+    {
+        if (!is_dir($track->directory)) {
+            return null;
+        }
+        $dernier = 0;
+        $fichiers = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($track->directory, \FilesystemIterator::SKIP_DOTS));
+        foreach ($fichiers as $fichier) {
+            $dernier = max($dernier, $fichier->getMTime());
+        }
+
+        return $dernier > 0 ? (new \DateTimeImmutable())->setTimestamp($dernier) : null;
+    }
+
     /** @return array<string, string> contenu par chemin relatif */
     public function lire(Exercise $exercise): array
     {

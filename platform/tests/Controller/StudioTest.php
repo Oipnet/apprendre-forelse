@@ -333,6 +333,22 @@ final class StudioTest extends WebTestCase
         $this->assertStringContainsString('« xp » n\'a pas cours', (string) json_decode((string) $client->getResponse()->getContent(), true)['format']);
     }
 
+    public function testUnAuteurOuvreUnExerciceDePratiqueEnPreparation(): void
+    {
+        // En préparation et programmé : invisible pour un apprenant, mais c'est justement ce qu'un auteur écrit.
+        $yaml = $this->packs.'/demo/practice/exemple-map-request-header/exercise.yaml';
+        file_put_contents($yaml, str_replace('published: 2026-09-16', "published: 2999-01-01\nvisibility: admin", (string) file_get_contents($yaml)));
+        $client = static::createClient();
+        $this->auteur($client);
+
+        $client->request('GET', '/atelier/pratique/exemple-map-request-header');
+        $this->assertResponseIsSuccessful('Un auteur non administrateur trouve l\'exercice en préparation.');
+        $client->request('GET', '/pratique/exemple-map-request-header');
+        $this->assertResponseStatusCodeSame(404, 'Hors de l\'atelier, il reste invisible.');
+        $client->request('GET', '/atelier/decouverte/inconnu');
+        $this->assertResponseStatusCodeSame(404);
+    }
+
     public function testVerifierRendLeVerdictDeContentCheck(): void
     {
         $client = static::createClient();
