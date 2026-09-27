@@ -15,9 +15,6 @@ use Forelse\DockerSim\Shell\Command\Command as ShellCommand;
  */
 final class Interpreter
 {
-    /** Commandes internes du shell : toujours disponibles, même sans binaire. */
-    private const BUILTINS = ['echo', 'printf', 'cd', 'pwd', 'set', 'export', 'unset', 'exit', 'true', 'false', ':', 'test', '[', 'exec', 'command', 'type', 'read', 'shift', 'return', 'local', 'eval', '.', 'source', 'trap', 'umask', 'wait', 'ulimit', 'alias', 'hash'];
-
     /** Internes qui restent utilisables sans shell (forme exec : ["echo", "…"]). */
     private const EXEC_BUILTINS = ['echo', 'true', 'false', 'test', '['];
 
@@ -26,6 +23,8 @@ final class Interpreter
 
     /** @var array<string, ShellCommand> */
     private array $commands = [];
+    /** @var array<string, ShellCommand> commandes internes du shell : toujours disponibles, même sans binaire */
+    private array $builtins = [];
     private Parser $parser;
     private int $depth = 0;
 
@@ -33,6 +32,11 @@ final class Interpreter
     public function __construct(iterable $commands = [])
     {
         $this->parser = new Parser();
+        foreach ([new Command\BuiltinCommands(), new Command\VariableBuiltins(), new Command\ControlBuiltins()] as $builtin) {
+            foreach ($builtin->names() as $name) {
+                $this->builtins[$name] = $builtin;
+            }
+        }
         foreach ($commands as $command) {
             $this->register($command);
         }
@@ -69,7 +73,13 @@ final class Interpreter
     /** Commande interne du shell ; avec $exec, seulement celles utilisables sans shell. */
     public function isBuiltin(string $name, bool $exec = false): bool
     {
-        return \in_array($name, $exec ? self::EXEC_BUILTINS : self::BUILTINS, true);
+        return $exec ? \in_array($name, self::EXEC_BUILTINS, true) : isset($this->builtins[$name]);
+    }
+
+    /** Profondeur d'imbrication des commandes en cours : exec ne remplace le shell qu'au premier niveau. */
+    public function depth(): int
+    {
+        return $this->depth;
     }
 
     /** Exécute un script ; la sortie (stdout et stderr mêlés, dans l'ordre) s'ajoute à $machine->output. */
@@ -365,7 +375,7 @@ final class Interpreter
         $name = $argv[0];
         $args = \array_slice($argv, 1);
         if ($this->isBuiltin($name, $exec)) {
-            return $this->builtin($name, $args, $m, $stdin);
+            return $this->builtins[$name]->run($name, $args, $m, $stdin, $this);
         }
 
         // Chemin explicite (./docker-entrypoint.sh, /usr/local/bin/x) ou script installé dans le PATH.
@@ -996,211 +1006,5 @@ final class Interpreter
         }
 
         return $candidates;
-    }
-
-    // --- Commandes internes ---------------------------------------------------------------
-
-    /** @param list<string> $args */
-    private function builtin(string $name, array $args, Machine $m, string $stdin): Result
-    {
-        switch ($name) {
-            case 'echo':
-                $newline = true;
-                $interpret = false;
-                while ($args !== [] && preg_match('/^-[neE]+$/', $args[0])) {
-                    $flag = array_shift($args);
-                    $newline = $newline && !str_contains($flag, 'n');
-                    $interpret = $interpret || str_contains($flag, 'e');
-                }
-                $text = implode(' ', $args);
-                if ($interpret || $m->facts->os !== 'alpine') {
-                    $text = stripcslashes(str_replace(['\\c'], [''], $text));
-                }
-
-                return Result::ok($text.($newline ? "\n" : ''));
-            case 'printf':
-                $format = array_shift($args) ?? '';
-                $format = stripcslashes($format);
-                try {
-                    $out = $args === [] ? $format : vsprintf(preg_replace('/%([^sdifxo%])/', '%%$1', $format) ?? $format, array_pad($args, substr_count($format, '%'), ''));
-                } catch (\ValueError) {
-                    $out = $format;
-                }
-
-                return Result::ok($out);
-            case 'cd':
-                $target = $m->path($args[0] ?? ($m->env['HOME'] ?? '/root'));
-                if (!$m->fs->isDir($target)) {
-                    return Result::error(2, $this->shellPrefix($m).'cd: can\'t cd to '.($args[0] ?? '~').": No such file or directory\n");
-                }
-                $m->cwd = $target;
-                $m->env['PWD'] = $target;
-
-                return Result::ok();
-            case 'pwd':
-                return Result::ok($m->cwd."\n");
-            case 'set':
-                foreach ($args as $arg) {
-                    if (preg_match('/^([-+])([a-z]+)$/', $arg, $flags)) {
-                        if (str_contains($flags[2], 'e')) {
-                            $m->errexit = $flags[1] === '-';
-                        }
-                        if (str_contains($flags[2], 'x')) {
-                            $m->xtrace = $flags[1] === '-';
-                        }
-                    } elseif ($arg === '--') {
-                        $m->positional = \array_slice($args, array_search('--', $args, true) + 1);
-                        break;
-                    }
-                }
-
-                return Result::ok();
-            case 'export':
-            case 'local':
-                foreach ($args as $arg) {
-                    if (str_contains($arg, '=')) {
-                        [$var, $value] = explode('=', $arg, 2);
-                        $m->env[$var] = $value;
-                    } elseif ($arg !== '-p') {
-                        $m->env[$arg] ??= '';
-                    }
-                }
-
-                return Result::ok();
-            case 'unset':
-                foreach ($args as $arg) {
-                    unset($m->env[$arg]);
-                }
-
-                return Result::ok();
-            case 'exit':
-            case 'return':
-                throw new ExitSignal((int) ($args[0] ?? ($m->env['?'] ?? 0)), '');
-            case 'true':
-            case ':':
-            case 'wait':
-            case 'trap':
-            case 'umask':
-            case 'ulimit':
-            case 'alias':
-            case 'hash':
-                return Result::ok();
-            case 'false':
-                return new Result(1);
-            case 'shift':
-                array_splice($m->positional, 0, (int) ($args[0] ?? 1));
-
-                return Result::ok();
-            case 'read':
-                $line = strtok($stdin, "\n") ?: '';
-                foreach (array_filter($args, static fn ($a) => $a[0] !== '-') as $i => $var) {
-                    $m->env[$var] = $line;
-                }
-
-                return new Result($stdin === '' ? 1 : 0);
-            case 'test':
-            case '[':
-                if ($name === '[') {
-                    if (end($args) !== ']') {
-                        return Result::error(2, $this->shellPrefix($m)."[: missing ]\n");
-                    }
-                    array_pop($args);
-                }
-
-                return new Result($this->test($args, $m) ? 0 : 1);
-            case 'command':
-            case 'type':
-                $query = array_values(array_filter($args, static fn ($a) => $a[0] !== '-'));
-                if ($query === []) {
-                    return Result::ok();
-                }
-                if (\in_array('-v', $args, true) || $name === 'type') {
-                    $found = \in_array($query[0], self::BUILTINS, true) || $m->facts->hasBinary($query[0]);
-
-                    return $found ? Result::ok(($name === 'type' ? $query[0].' is ' : '').(\in_array($query[0], self::BUILTINS, true) ? $query[0] : '/usr/bin/'.$query[0])."\n") : new Result(1);
-                }
-
-                return $this->invoke($query, $m, $stdin);
-            case 'exec':
-                if ($args === []) {
-                    return Result::ok();
-                }
-                // Dans un script d'entrée, « exec "$@" » remplace le shell par la commande.
-                if ($m->mode === Machine::EXEC && $this->depth <= 2) {
-                    $m->execTarget = $args;
-
-                    throw new ExitSignal(0, '');
-                }
-
-                return $this->invoke($args, $m, $stdin);
-            case 'eval':
-                $out = $this->runScript(implode(' ', $args), $m, $m->positional, $stdin);
-
-                return $out;
-            case '.':
-            case 'source':
-                $content = $m->fs->read($m->path($args[0] ?? ''));
-                if ($content === null) {
-                    return Result::error(2, $this->shellPrefix($m).'.: '.($args[0] ?? '').": not found\n");
-                }
-                $this->run($content, $m, $stdin);
-
-                return Result::ok();
-        }
-
-        return Result::ok();
-    }
-
-    /** @param list<string> $args */
-    public function test(array $args, Machine $m): bool
-    {
-        if ($args === []) {
-            return false;
-        }
-        if ($args[0] === '!') {
-            return !$this->test(\array_slice($args, 1), $m);
-        }
-        foreach (['-o', '-a'] as $logical) {
-            $position = array_search($logical, $args, true);
-            if ($position !== false && $position > 0) {
-                $left = $this->test(\array_slice($args, 0, $position), $m);
-                $right = $this->test(\array_slice($args, $position + 1), $m);
-
-                return $logical === '-o' ? $left || $right : $left && $right;
-            }
-        }
-        if (\count($args) === 1) {
-            return $args[0] !== '';
-        }
-        if (\count($args) === 2) {
-            $path = $m->path($args[1]);
-
-            return match ($args[0]) {
-                '-z' => $args[1] === '',
-                '-n' => $args[1] !== '',
-                '-f' => $m->fs->isFile($path),
-                '-d' => $m->fs->isDir($path),
-                '-e' => $m->fs->exists($path),
-                '-s' => $m->fs->isFile($path) && $m->fs->size($path) > 0,
-                '-x' => $m->fs->exists($path) && ($m->fs->mode($path) & 0111) !== 0,
-                '-r' => $m->fs->exists($path),
-                '-w' => $m->fs->exists($path) && $this->canWrite($m, $path),
-                '-L', '-h' => false,
-                default => false,
-            };
-        }
-        [$left, $op, $right] = [$args[0], $args[1], $args[2] ?? ''];
-
-        return match ($op) {
-            '=', '==' => $left === $right,
-            '!=' => $left !== $right,
-            '-eq' => (int) $left === (int) $right,
-            '-ne' => (int) $left !== (int) $right,
-            '-lt' => (int) $left < (int) $right,
-            '-le' => (int) $left <= (int) $right,
-            '-gt' => (int) $left > (int) $right,
-            '-ge' => (int) $left >= (int) $right,
-            default => false,
-        };
     }
 }

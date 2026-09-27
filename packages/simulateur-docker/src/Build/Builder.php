@@ -562,13 +562,7 @@ final class Builder
 
         // COPY <<EOF /chemin
         if ($instruction->heredoc !== null && \count($words) >= 1 && str_starts_with($words[0], '<<')) {
-            $destination = Path::normalize(end($words), $state->config->workdir);
-            $key = hash('sha256', $state->key.'|COPYHEREDOC|'.$destination.'|'.$instruction->heredoc.'|'.json_encode($keyFlags));
-            $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use ($state, $destination, $instruction, $flags): array {
-                $state->fs->write($destination, $instruction->heredoc, isset($flags['chmod']) ? octdec($flags['chmod']) : null, isset($flags['chown']) ? explode(':', $flags['chown'])[0] : null);
-
-                return [0, '', 0.0];
-            });
+            $this->copyHeredoc($name, $instruction, $state, (string) end($words), $keyFlags, $noCache);
 
             return null;
         }
@@ -580,127 +574,187 @@ final class Builder
         $destination = Path::normalize($destinationRaw, $state->config->workdir);
         $toDirectory = str_ends_with($destinationRaw, '/') || \count($sources) > 1 || $state->fs->isDir($destination) || $destinationRaw === '.';
 
-        $owner = null;
-        if (isset($flags['chown'])) {
-            $owner = explode(':', Variables::expand($flags['chown'], $variables))[0];
-            if (!ctype_digit($owner) && !isset($state->facts->users[$owner])) {
-                $step = $this->out->step($name);
-                $message = sprintf('unable to convert uid/gid chown string to host mapping: can\'t find uid for user %s: no such user: %s', $owner, $owner);
-                $this->out->stepError($step, $message);
-
-                return $this->fail('ERROR: failed to build: failed to solve: '.$message, excerptLine: $instruction->line, failedStep: $name, endLine: $instruction->endLine);
-            }
+        $owner = isset($flags['chown']) ? explode(':', Variables::expand($flags['chown'], $variables))[0] : null;
+        if ($owner !== null && !ctype_digit($owner) && !isset($state->facts->users[$owner])) {
+            return $this->stepFailure($name, $instruction, sprintf('unable to convert uid/gid chown string to host mapping: can\'t find uid for user %s: no such user: %s', $owner, $owner));
         }
         $mode = isset($flags['chmod']) ? octdec($flags['chmod']) : null;
 
         // Sources : une étape, une image, ou le contexte.
-        $plan = [];
-        $fromFs = null;
-        if (isset($flags['from'])) {
-            $fromLabel = Variables::expand($flags['from'], $globalArgs);
-            $fromStage = $parsed->stage($fromLabel);
-            if ($fromStage !== null && isset($this->stages[$fromStage->label()])) {
-                $fromFs = $this->stages[$fromStage->label()]->fs;
-                $fromKey = $this->stages[$fromStage->label()]->key;
-            } elseif (isset($resolved[$fromLabel])) {
-                $image = ImageFactory::fromBase($resolved[$fromLabel]);
-                $fromFs = new MemoryFs($image->filesystem(), $image->metadata(), $image->directories(), $this->store->blobs);
-                $fromFs = $this->withBinaries($fromFs, $resolved[$fromLabel]);
-                $fromKey = $resolved[$fromLabel]->digest();
-            } else {
-                return $this->fail(sprintf('ERROR: failed to build: failed to solve: %s: failed to resolve source metadata for docker.io/library/%s: not found', $fromLabel, $fromLabel), excerptLine: $instruction->line, endLine: $instruction->endLine);
-            }
-            foreach ($sources as $source) {
-                $path = Path::normalize($source, '/');
-                if ($fromFs->isFile($path)) {
-                    $plan[] = ['from', $path, $toDirectory ? rtrim($destination, '/').'/'.basename($path) : $destination];
-                } elseif ($fromFs->isDir($path)) {
-                    foreach ($fromFs->files($path) as $file) {
-                        $plan[] = ['from', $file, rtrim($destination, '/').substr($file, \strlen(rtrim($path, '/')))];
-                    }
-                    if ($fromFs->files($path) === []) {
-                        $plan[] = ['mkdir', '', $destination];
-                    }
-                } else {
-                    $step = $this->out->step($name);
-                    $message = sprintf('failed to compute cache key: failed to calculate checksum of ref %s::%s: "%s": not found', substr(hash('sha256', $fromLabel), 0, 25), substr(hash('sha256', $source), 0, 25), $path);
-                    $this->out->stepError($step, $message);
-
-                    return $this->fail('ERROR: failed to build: failed to solve: '.$message, excerptLine: $instruction->line, failedStep: $name, endLine: $instruction->endLine);
-                }
-            }
-            $key = hash('sha256', $state->key.'|COPYFROM|'.$fromKey.'|'.json_encode($sources).'|'.$destination.'|'.json_encode($keyFlags));
-        } else {
-            $matched = [];
-            foreach ($sources as $source) {
-                if ($instruction->name === 'ADD' && preg_match('#^https?://#', $source)) {
-                    $plan[] = ['url', $source, $toDirectory ? rtrim($destination, '/').'/'.basename(parse_url($source, PHP_URL_PATH) ?: 'index.html') : $destination];
-                    continue;
-                }
-                $files = $context->match($source);
-                if ($files === null) {
-                    $step = $this->out->step($name);
-                    $message = sprintf('failed to compute cache key: failed to calculate checksum of ref %s::%s: "/%s": not found', substr(hash('sha256', $context->directory), 0, 25), substr(hash('sha256', $source), 0, 25), trim(preg_replace('#^\./#', '', $source) ?? $source, '/'));
-                    $this->out->stepError($step, $message);
-                    if (str_starts_with(ltrim($source, './'), '..') || str_starts_with($source, '../')) {
-                        $this->notes[] = 'COPY ne peut rien prendre en dehors du contexte de build (le dossier passé à docker build).';
-                    } elseif ($context->ignore->ignores(trim($source, './'))) {
-                        $this->notes[] = sprintf('« %s » est exclu par le .dockerignore : il n\'est pas envoyé au démon.', $source);
-                    }
-
-                    return $this->fail('ERROR: failed to build: failed to solve: '.$message, excerptLine: $instruction->line, failedStep: $name, endLine: $instruction->endLine);
-                }
-                $isDirectorySource = !$context->has(trim(preg_replace('#^\./#', '', $source) ?? $source, '/')) && strpbrk($source, '*?[') === false;
-                foreach ($files as $file => $relative) {
-                    $target = $toDirectory || $isDirectorySource ? rtrim($destination, '/').'/'.$relative : $destination;
-                    $plan[] = ['context', $file, $target];
-                    $matched[] = $file;
-                }
-            }
-            $key = hash('sha256', $state->key.'|COPY|'.$context->checksum($matched).'|'.$destination.'|'.json_encode($keyFlags).'|'.json_encode($sources));
+        $resolvedSources = isset($flags['from'])
+            ? $this->copySourcesFrom(Variables::expand($flags['from'], $globalArgs), $name, $instruction, $sources, $destination, $toDirectory, $parsed, $resolved)
+            : $this->copySourcesFromContext($name, $instruction, $sources, $destination, $toDirectory, $context);
+        if ($resolvedSources instanceof BuildResult) {
+            return $resolvedSources;
         }
+        [$plan, $sourceKey, $fromFs] = $resolvedSources;
+        $key = isset($flags['from'])
+            ? hash('sha256', $state->key.'|COPYFROM|'.$sourceKey.'|'.json_encode($sources).'|'.$destination.'|'.json_encode($keyFlags))
+            : hash('sha256', $state->key.'|COPY|'.$sourceKey.'|'.$destination.'|'.json_encode($keyFlags).'|'.json_encode($sources));
 
-        $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use ($state, $plan, $context, $fromFs, $owner, $mode): array {
-            $bytes = 0;
-            foreach ($plan as [$kind, $source, $target]) {
-                if ($kind === 'mkdir') {
-                    $state->fs->mkdir($target, $owner);
-                    continue;
-                }
-                if ($kind === 'url') {
-                    $state->fs->write($target, "# téléchargé depuis {$source} (simulé)\n", $mode ?? 0600, $owner);
-                    continue;
-                }
-                if ($kind === 'from') {
-                    $blob = (string) $fromFs->blob($source);
-                    $state->fs->putBlob($target, $blob, $mode ?? $fromFs->mode($source), $owner);
-                    $bytes += Blob::size($blob);
-                    // Un binaire copié depuis une autre image (COPY --from=composer:2 /usr/bin/composer) devient disponible.
-                    if (preg_match('#^/(usr/(local/)?)?s?bin/#', $target) && \in_array(basename($source), ['composer', 'install-php-extensions', 'frankenphp', 'caddy', 'node', 'npm'], true)) {
-                        $state->facts->binaries[] = basename($target);
-                        $state->facts->binaries = array_values(array_unique($state->facts->binaries));
-                    }
-                    continue;
-                }
-                $absolute = $context->absolute($source);
-                $hostMode = @fileperms($absolute);
-                $executable = $hostMode !== false && ($hostMode & 0111) !== 0;
-                $state->fs->writeFromHost($target, $absolute, $mode ?? ($executable ? 0755 : 0644), $owner);
-                $bytes += (int) @filesize($absolute);
-                if ($owner !== null) {
-                    // --chown s'applique aussi aux dossiers créés pour l'occasion.
-                    $dir = \dirname($target);
-                    while ($dir !== '/' && $state->fs->owner($dir) === 'root' && !\in_array($dir, ['/var', '/var/www', '/usr', '/opt', '/home', '/srv', '/app'], true)) {
-                        $state->fs->chown($dir, $owner);
-                        $dir = \dirname($dir);
-                    }
-                }
-            }
-
-            return [0, '', max(0.05, $bytes / 50_000_000)];
-        });
+        $this->runCachedStep($name, $instruction, $state, $key, $noCache, fn (): array => $this->applyCopyPlan($state, $plan, $context, $fromFs, $owner, $mode));
 
         return null;
+    }
+
+    /** @param array<string,string> $keyFlags */
+    private function copyHeredoc(string $name, Instruction $instruction, StageState $state, string $target, array $keyFlags, bool $noCache): void
+    {
+        $destination = Path::normalize($target, $state->config->workdir);
+        $key = hash('sha256', $state->key.'|COPYHEREDOC|'.$destination.'|'.$instruction->heredoc.'|'.json_encode($keyFlags));
+        $flags = $instruction->flags;
+        $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use ($state, $destination, $instruction, $flags): array {
+            $state->fs->write($destination, $instruction->heredoc, isset($flags['chmod']) ? octdec($flags['chmod']) : null, isset($flags['chown']) ? explode(':', $flags['chown'])[0] : null);
+
+            return [0, '', 0.0];
+        });
+    }
+
+    /** Une étape qui échoue avec un message : affichée sous l'étape, puis en erreur finale. */
+    private function stepFailure(string $name, Instruction $instruction, string $message): BuildResult
+    {
+        $step = $this->out->step($name);
+        $this->out->stepError($step, $message);
+
+        return $this->fail('ERROR: failed to build: failed to solve: '.$message, excerptLine: $instruction->line, failedStep: $name, endLine: $instruction->endLine);
+    }
+
+    /**
+     * COPY --from : les sources viennent d'une étape déjà construite, ou d'une image.
+     *
+     * @param list<string>                                           $sources
+     * @param array<string, \Forelse\DockerSim\Catalog\BaseImage> $resolved
+     *
+     * @return array{0: list<array{0:string,1:string,2:string}>, 1: string, 2: MemoryFs}|BuildResult plan, clé de la source, système de fichiers
+     */
+    private function copySourcesFrom(string $fromLabel, string $name, Instruction $instruction, array $sources, string $destination, bool $toDirectory, Dockerfile $parsed, array $resolved): array|BuildResult
+    {
+        $fromStage = $parsed->stage($fromLabel);
+        if ($fromStage !== null && isset($this->stages[$fromStage->label()])) {
+            $fromFs = $this->stages[$fromStage->label()]->fs;
+            $fromKey = $this->stages[$fromStage->label()]->key;
+        } elseif (isset($resolved[$fromLabel])) {
+            $image = ImageFactory::fromBase($resolved[$fromLabel]);
+            $fromFs = new MemoryFs($image->filesystem(), $image->metadata(), $image->directories(), $this->store->blobs);
+            $fromFs = $this->withBinaries($fromFs, $resolved[$fromLabel]);
+            $fromKey = $resolved[$fromLabel]->digest();
+        } else {
+            return $this->fail(sprintf('ERROR: failed to build: failed to solve: %s: failed to resolve source metadata for docker.io/library/%s: not found', $fromLabel, $fromLabel), excerptLine: $instruction->line, endLine: $instruction->endLine);
+        }
+        $plan = [];
+        foreach ($sources as $source) {
+            $path = Path::normalize($source, '/');
+            if ($fromFs->isFile($path)) {
+                $plan[] = ['from', $path, $toDirectory ? rtrim($destination, '/').'/'.basename($path) : $destination];
+            } elseif ($fromFs->isDir($path)) {
+                foreach ($fromFs->files($path) as $file) {
+                    $plan[] = ['from', $file, rtrim($destination, '/').substr($file, \strlen(rtrim($path, '/')))];
+                }
+                if ($fromFs->files($path) === []) {
+                    $plan[] = ['mkdir', '', $destination];
+                }
+            } else {
+                return $this->stepFailure($name, $instruction, sprintf('failed to compute cache key: failed to calculate checksum of ref %s::%s: "%s": not found', substr(hash('sha256', $fromLabel), 0, 25), substr(hash('sha256', $source), 0, 25), $path));
+            }
+        }
+
+        return [$plan, $fromKey, $fromFs];
+    }
+
+    /**
+     * Sources prises dans le contexte de build (après le filtrage du .dockerignore), ou URL pour ADD.
+     *
+     * @param list<string> $sources
+     *
+     * @return array{0: list<array{0:string,1:string,2:string}>, 1: string, 2: null}|BuildResult plan, empreinte des fichiers, pas d'image source
+     */
+    private function copySourcesFromContext(string $name, Instruction $instruction, array $sources, string $destination, bool $toDirectory, BuildContext $context): array|BuildResult
+    {
+        $plan = [];
+        $matched = [];
+        foreach ($sources as $source) {
+            if ($instruction->name === 'ADD' && preg_match('#^https?://#', $source)) {
+                $plan[] = ['url', $source, $toDirectory ? rtrim($destination, '/').'/'.basename(parse_url($source, PHP_URL_PATH) ?: 'index.html') : $destination];
+                continue;
+            }
+            $files = $context->match($source);
+            if ($files === null) {
+                return $this->missingContextSource($name, $instruction, $source, $context);
+            }
+            $isDirectorySource = !$context->has(trim(preg_replace('#^\./#', '', $source) ?? $source, '/')) && strpbrk($source, '*?[') === false;
+            foreach ($files as $file => $relative) {
+                $target = $toDirectory || $isDirectorySource ? rtrim($destination, '/').'/'.$relative : $destination;
+                $plan[] = ['context', $file, $target];
+                $matched[] = $file;
+            }
+        }
+
+        return [$plan, $context->checksum($matched), null];
+    }
+
+    /** Source introuvable dans le contexte : hors du contexte, ou exclue par le .dockerignore. */
+    private function missingContextSource(string $name, Instruction $instruction, string $source, BuildContext $context): BuildResult
+    {
+        if (str_starts_with(ltrim($source, './'), '..') || str_starts_with($source, '../')) {
+            $this->notes[] = 'COPY ne peut rien prendre en dehors du contexte de build (le dossier passé à docker build).';
+        } elseif ($context->ignore->ignores(trim($source, './'))) {
+            $this->notes[] = sprintf('« %s » est exclu par le .dockerignore : il n\'est pas envoyé au démon.', $source);
+        }
+
+        return $this->stepFailure($name, $instruction, sprintf('failed to compute cache key: failed to calculate checksum of ref %s::%s: "/%s": not found', substr(hash('sha256', $context->directory), 0, 25), substr(hash('sha256', $source), 0, 25), trim(preg_replace('#^\./#', '', $source) ?? $source, '/')));
+    }
+
+    /**
+     * Copie les fichiers prévus dans la couche de l'étape.
+     *
+     * @param list<array{0:string,1:string,2:string}> $plan [genre, source, cible]
+     *
+     * @return array{0:int,1:string,2:float}
+     */
+    private function applyCopyPlan(StageState $state, array $plan, BuildContext $context, ?MemoryFs $fromFs, ?string $owner, int|float|null $mode): array
+    {
+        $bytes = 0;
+        foreach ($plan as [$kind, $source, $target]) {
+            if ($kind === 'mkdir') {
+                $state->fs->mkdir($target, $owner);
+                continue;
+            }
+            if ($kind === 'url') {
+                $state->fs->write($target, "# téléchargé depuis {$source} (simulé)\n", $mode ?? 0600, $owner);
+                continue;
+            }
+            if ($kind === 'from') {
+                $blob = (string) $fromFs->blob($source);
+                $state->fs->putBlob($target, $blob, $mode ?? $fromFs->mode($source), $owner);
+                $bytes += Blob::size($blob);
+                // Un binaire copié depuis une autre image (COPY --from=composer:2 /usr/bin/composer) devient disponible.
+                if (preg_match('#^/(usr/(local/)?)?s?bin/#', $target) && \in_array(basename($source), ['composer', 'install-php-extensions', 'frankenphp', 'caddy', 'node', 'npm'], true)) {
+                    $state->facts->binaries[] = basename($target);
+                    $state->facts->binaries = array_values(array_unique($state->facts->binaries));
+                }
+                continue;
+            }
+            $absolute = $context->absolute($source);
+            $hostMode = @fileperms($absolute);
+            $executable = $hostMode !== false && ($hostMode & 0111) !== 0;
+            $state->fs->writeFromHost($target, $absolute, $mode ?? ($executable ? 0755 : 0644), $owner);
+            $bytes += (int) @filesize($absolute);
+            if ($owner !== null) {
+                $this->chownParents($state, $target, $owner);
+            }
+        }
+
+        return [0, '', max(0.05, $bytes / 50_000_000)];
+    }
+
+    /** --chown s'applique aussi aux dossiers créés pour l'occasion. */
+    private function chownParents(StageState $state, string $target, string $owner): void
+    {
+        $dir = \dirname($target);
+        while ($dir !== '/' && $state->fs->owner($dir) === 'root' && !\in_array($dir, ['/var', '/var/www', '/usr', '/opt', '/home', '/srv', '/app'], true)) {
+            $state->fs->chown($dir, $owner);
+            $dir = \dirname($dir);
+        }
     }
 
     private function withBinaries(MemoryFs $fs, \Forelse\DockerSim\Catalog\BaseImage $base): MemoryFs
