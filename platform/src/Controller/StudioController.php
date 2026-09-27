@@ -66,7 +66,7 @@ final class StudioController extends AbstractController
                 'exercices' => \count($exercices),
                 'xp' => array_sum(array_map(static fn (Exercise $e) => $e->xp, $exercices)),
                 'fiches' => $fiches,
-                'modifie' => self::modifieLe($track->directory),
+                'modifie' => $this->studio->modifieLe($track),
             ];
         }
 
@@ -110,7 +110,7 @@ final class StudioController extends AbstractController
             'exercices' => array_merge(...array_column($chapitres, 'exercices')),
             'xp' => array_sum(array_column($chapitres, 'xp')),
             'fiches' => \count(array_filter($track->chapters, static fn (Chapter $c) => $c->hasLesson())),
-            'modifie' => self::modifieLe($track->directory),
+            'modifie' => $this->studio->modifieLe($track),
             'ia' => $this->drafter->disponible(),
         ]);
     }
@@ -446,21 +446,6 @@ final class StudioController extends AbstractController
         return '' === $mots || false !== mb_stripos($haystack, $mots);
     }
 
-    /** Le fichier du parcours modifié le plus récemment : « où en étais-je ? » sans ouvrir un terminal. */
-    private static function modifieLe(string $directory): ?\DateTimeImmutable
-    {
-        if (!is_dir($directory)) {
-            return null;
-        }
-        $dernier = 0;
-        $fichiers = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS));
-        foreach ($fichiers as $fichier) {
-            $dernier = max($dernier, $fichier->getMTime());
-        }
-
-        return $dernier > 0 ? (new \DateTimeImmutable())->setTimestamp($dernier) : null;
-    }
-
     /** @return array{Track, Chapter} */
     private function trouverChapitre(string $trackId, string $chapterId): array
     {
@@ -470,21 +455,9 @@ final class StudioController extends AbstractController
         return [$track, $chapter];
     }
 
-    /**
-     * L'exercice et ce qui le contient : son parcours, ou son pack pour un exercice de Pratique ($trackId null).
-     *
-     * @return array{Track|Pack, Exercise}
-     */
+    /** @return array{Track|Pack, Exercise} */
     private function trouver(?string $trackId, string $exerciseId): array
     {
-        if (null === $trackId) {
-            $practice = $this->content->findPractice($exerciseId) ?? throw $this->createNotFoundException();
-
-            return [$this->content->packs()[$practice->packId], $practice->exercise];
-        }
-        $track = $this->content->findTrack($trackId) ?? throw $this->createNotFoundException();
-        $exercise = $this->content->findExercise($trackId, $exerciseId) ?? throw $this->createNotFoundException();
-
-        return [$track, $exercise];
+        return $this->studio->trouver($trackId, $exerciseId) ?? throw $this->createNotFoundException();
     }
 }
