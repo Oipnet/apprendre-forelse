@@ -72,16 +72,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $emailVerifiedAt = null;
 
     /**
-     * Supprimer un compte (RGPD, tableau de bord) emporte sa progression et ses retours : la cascade
-     * est portée par l'ORM, en plus des clés étrangères de la base.
+     * Supprimer un compte (RGPD, tableau de bord) emporte sa progression, ses retours et ses accès : la cascade est
+     * celle des clés étrangères (onDelete: CASCADE), pas celle de l'ORM, qui chargeait puis supprimait chaque ligne
+     * une par une.
      *
      * @var Collection<int, ExerciseProgress>
      */
-    #[ORM\OneToMany(targetEntity: ExerciseProgress::class, mappedBy: 'user', cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: ExerciseProgress::class, mappedBy: 'user')]
     private Collection $progress;
 
     /** @var Collection<int, Feedback> */
-    #[ORM\OneToMany(targetEntity: Feedback::class, mappedBy: 'user', cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: Feedback::class, mappedBy: 'user')]
     private Collection $feedbacks;
 
     /**
@@ -89,7 +90,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @var Collection<int, TrackAccess>
      */
-    #[ORM\OneToMany(targetEntity: TrackAccess::class, mappedBy: 'user', cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: TrackAccess::class, mappedBy: 'user')]
     private Collection $accesses;
 
     public function __construct()

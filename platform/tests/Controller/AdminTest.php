@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Api\FeedbackInput;
 use App\Content\ContentRepository;
+use App\Entity\TrackAccess;
 use App\Entity\User;
 use App\Repository\CohortRepository;
 use App\Repository\FeedbackRepository;
@@ -193,6 +194,8 @@ final class AdminTest extends WebTestCase
         $exercise = $container->get(ContentRepository::class)->findExercise('decouverte', '01-bonjour');
         $container->get(ProgressService::class)->complete($ada, $exercise, 0);
         $container->get(FeedbackService::class)->record($ada, $exercise, new FeedbackInput('bug', 'Cassé'));
+        $container->get('doctrine')->getManager()->persist(TrackAccess::gift($ada, 'decouverte', new \DateTimeImmutable()));
+        $container->get('doctrine')->getManager()->flush();
 
         // Les requêtes HTTP redémarrent le kernel : on les fait après les écritures, et on relit Ada par son id.
         $this->client->request('GET', '/admin/apprenants/'.$admin->getId());
@@ -203,10 +206,16 @@ final class AdminTest extends WebTestCase
         // Comme dans le tableau de bord : l'apprenant est relu en base avant d'être supprimé.
         $entityManager = $container->get('doctrine')->getManager();
         $entityManager->clear();
+        $holder = $container->get('test.doctrine.debug_data_holder');
+        $holder->reset();
         $entityManager->remove($entityManager->find(User::class, $ada->getId()));
         $entityManager->flush();
 
+        // La base supprime en cascade (clés étrangères) : l'ORM ne charge ni ne supprime les lignes une par une.
+        $sql = implode("\n", array_column($holder->getData()['default'] ?? [], 'sql'));
+        $this->assertDoesNotMatchRegularExpression('/\b(exercise_progress|feedback|track_access)\b/', $sql, 'Aucune requête de l\'ORM sur les lignes du compte.');
         $this->assertSame([], $container->get(FeedbackRepository::class)->findAll());
         $this->assertSame(0, (int) $entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM exercise_progress'), 'La progression suit la suppression du compte.');
+        $this->assertSame(0, (int) $entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM track_access'), 'Les accès aussi.');
     }
 }
