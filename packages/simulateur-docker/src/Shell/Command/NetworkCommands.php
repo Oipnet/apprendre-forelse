@@ -39,7 +39,7 @@ final class NetworkCommands implements Command
             'redis-cli' => $this->redisCli($args, $m),
             'git' => $this->git($args, $m),
             'ssh', 'scp' => Result::error(255, "ssh: connect to host: Network is unreachable\n"),
-            default => Result::ok(),
+            default => throw new \LogicException(sprintf('%s : « %s » est déclarée sans implémentation.', self::class, $name)),
         };
     }
 

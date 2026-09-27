@@ -40,7 +40,7 @@ final class PhpCommands implements Command
             'php' => $this->php($args, $m, $stdin, $sh),
             'php-fpm' => $this->phpFpm($args, $m),
             'php-config' => Result::ok(Facts::extensionDir($m->facts->phpVersion)."\n"),
-            default => Result::ok(),
+            default => throw new \LogicException(sprintf('%s : « %s » est déclarée sans implémentation.', self::class, $name)),
         };
     }
 
