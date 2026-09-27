@@ -4,13 +4,11 @@ namespace App\Controller;
 
 use App\Account\EmailVerifier;
 use App\Account\RegistrationAttemptNotice;
-use App\Cohort\CohortAccessSync;
+use App\Cohort\CohortManagement;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
-use App\Repository\CohortRepository;
 use App\Repository\UserRepository;
 use App\Service\RegistrationAlert;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -43,7 +41,7 @@ final class RegistrationController extends AbstractController
     }
 
     #[Route('/inscription', name: 'app_register')]
-    public function register(Request $request, UserPasswordHasherInterface $hasher, EntityManagerInterface $entityManager, Security $security, CohortRepository $cohorts, RegistrationAlert $alert, CohortAccessSync $cohortAccess, EmailVerifier $verifier, UserRepository $users, RegistrationAttemptNotice $notice): Response
+    public function register(Request $request, UserPasswordHasherInterface $hasher, Security $security, RegistrationAlert $alert, CohortManagement $cohorts, EmailVerifier $verifier, UserRepository $users, RegistrationAttemptNotice $notice): Response
     {
         if ($this->getUser()) {
             return $this->redirectToRoute('app_home');
@@ -77,19 +75,7 @@ final class RegistrationController extends AbstractController
             }
         } elseif ($form->isSubmitted() && $form->isValid()) {
             $user->setPassword($hasher->hashPassword($user, $form->get('plainPassword')->getData()));
-            $code = $form->has('invitationCode') ? trim((string) $form->get('invitationCode')->getData()) : '';
-            if ('' !== $code) {
-                $user->setCohort($cohorts->findActiveByCode($code));
-            }
-            // Le compte et les accès de sa cohorte ensemble, ou rien : un compte sans ses accès ne pourrait plus
-            // se réinscrire (email pris), et resterait privé des parcours payés par l'établissement.
-            $entityManager->wrapInTransaction(static function () use ($entityManager, $user, $cohortAccess): void {
-                $entityManager->persist($user);
-                if (null !== $user->getCohort()) {
-                    // Cohorte financée par l'établissement : ses parcours s'ouvrent dès l'inscription.
-                    $cohortAccess->join($user, $user->getCohort());
-                }
-            });
+            $cohorts->enroll($user, $form->has('invitationCode') ? (string) $form->get('invitationCode')->getData() : null);
             $alert->notify($user);
             $confirmationSent = $verifier->send($user);
 

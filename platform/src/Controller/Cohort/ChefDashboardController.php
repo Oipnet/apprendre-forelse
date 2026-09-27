@@ -3,8 +3,9 @@
 namespace App\Controller\Cohort;
 
 use App\Admin\BetaStats;
-use App\Cohort\CohortAccessSync;
+use App\Cohort\CohortManagement;
 use App\Cohort\CohortQuoteEstimator;
+use App\Cohort\CohortRuleViolation;
 use App\Content\ContentRepository;
 use App\Entity\Cohort;
 use App\Entity\User;
@@ -39,7 +40,7 @@ final class ChefDashboardController extends AbstractDashboardController
         private readonly BetaStats $stats,
         private readonly ContentRepository $content,
         private readonly CohortQuoteEstimator $estimator,
-        private readonly CohortAccessSync $cohortAccess,
+        private readonly CohortManagement $management,
         private readonly Branding $branding,
     ) {
     }
@@ -79,7 +80,7 @@ final class ChefDashboardController extends AbstractDashboardController
      */
     #[AdminRoute('/{id}/parcours', name: 'cohort_tracks', options: ['requirements' => ['id' => '\d+'], 'methods' => ['POST']], allowedDashboards: [self::class])]
     #[IsGranted(CohortVoter::MANAGE_PARCOURS, subject: 'cohort')]
-    public function tracks(#[MapEntity(id: 'id')] Cohort $cohort, Request $request, EntityManagerInterface $entityManager): Response
+    public function tracks(#[MapEntity(id: 'id')] Cohort $cohort, Request $request): Response
     {
         $form = $this->tracksForm($cohort);
         $form->handleRequest($request);
@@ -89,22 +90,13 @@ final class ChefDashboardController extends AbstractDashboardController
             return $this->redirectToRoute('chef_cohort', ['id' => $cohort->getId()]);
         }
 
-        $locked = $this->lockedTrackIds();
-        $chosen = array_diff($form->get('trackIds')->getData(), $locked);
-        $kept = array_intersect($cohort->getAvailableTrackIds(), $locked);
-        // Ordre du catalogue, pour un affichage stable.
-        $selection = array_values(array_filter(array_keys($this->content->tracks()), static fn (string $id) => \in_array($id, [...$chosen, ...$kept], true)));
-        if (!$selection && $cohort->isFundedByInstitution()) {
-            $this->addFlash('danger', 'Une cohorte financée par l\'établissement propose au moins un parcours : rien n\'a été enregistré.');
+        try {
+            $this->management->chooseTracks($cohort, $form->get('trackIds')->getData(), $this->isGranted(User::ROLE_ADMIN));
+        } catch (CohortRuleViolation $e) {
+            $this->addFlash('danger', $e->getMessage());
 
             return $this->redirectToRoute('chef_cohort', ['id' => $cohort->getId()]);
         }
-        // Financée par l'établissement : accès ouverts pour les parcours ajoutés, révoqués pour les parcours retirés.
-        // Ensemble ou pas du tout : une sélection enregistrée sans ses accès laisserait les apprenants sans parcours.
-        $entityManager->wrapInTransaction(function () use ($cohort, $selection): void {
-            $cohort->setAvailableTrackIds($selection);
-            $this->cohortAccess->sync($cohort);
-        });
 
         $this->addFlash('success', $cohort->hasTrackSelection()
             ? sprintf('Parcours de « %s » enregistrés : %s.', $cohort->getName(), implode(', ', array_map(fn (string $id) => $this->content->findTrack($id)->title ?? $id, $cohort->getAvailableTrackIds())))
@@ -160,7 +152,7 @@ final class ChefDashboardController extends AbstractDashboardController
         return $this->createForm(CohortTracksType::class, ['trackIds' => $cohort->getAvailableTrackIds()], [
             'action' => $this->generateUrl('chef_cohort_tracks', ['id' => $cohort->getId()]),
             'tracks' => $this->content->tracks(),
-            'locked' => $this->lockedTrackIds(),
+            'locked' => $this->management->lockedTrackIds($this->isGranted(User::ROLE_ADMIN)),
         ]);
     }
 
@@ -170,15 +162,5 @@ final class ChefDashboardController extends AbstractDashboardController
         return $this->createForm(CohortHeadcountType::class, ['expectedHeadcount' => $cohort->getExpectedHeadcount()], [
             'action' => $this->generateUrl('chef_cohort_headcount', ['id' => $cohort->getId()]),
         ]);
-    }
-
-    /** @return list<string> parcours dont la case ne peut pas changer : ceux en préparation, sauf pour un administrateur */
-    private function lockedTrackIds(): array
-    {
-        if ($this->isGranted(User::ROLE_ADMIN)) {
-            return [];
-        }
-
-        return array_values(array_map(static fn ($track) => $track->id, array_filter($this->content->tracks(), static fn ($track) => $track->isRestricted())));
     }
 }
