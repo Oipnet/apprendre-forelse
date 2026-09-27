@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Entity\User;
 use App\Instance\EnvironmentBuildQueue;
+use App\Instance\EnvironmentJobLauncher;
 use App\Instance\InstallationJobs;
 use App\Instance\InstalledEnvironments;
 use App\Tests\DatabaseTrait;
@@ -63,6 +64,40 @@ final class EnvironmentAdminTest extends WebTestCase
             ['command' => 'app:environnement:installer', 'arguments' => ['https://exemple.test/depot.git', '--ref=v1']],
             static::getContainer()->get(EnvironmentBuildQueue::class)->pop(),
         );
+    }
+
+    /** Le contrôleur ne lance rien lui-même : il passe la commande et ses arguments au lanceur. */
+    public function testLInstallationEtLaMiseAJourPassentParLeLanceur(): void
+    {
+        $this->connecteUnAdmin();
+        // Le même conteneur pour toutes les requêtes : le lanceur factice y reste.
+        $this->client->disableReboot();
+        $launcher = new class implements EnvironmentJobLauncher {
+            /** @var list<array{string, list<string>}> */
+            public array $launched = [];
+
+            public function launch(string $command, array $arguments): void
+            {
+                $this->launched[] = [$command, $arguments];
+            }
+        };
+        static::getContainer()->set(EnvironmentJobLauncher::class, $launcher);
+        $crawler = $this->client->request('GET', '/admin/environnements');
+        $token = (string) $crawler->filter('input[name="_token"]')->first()->attr('value');
+
+        $this->client->submitForm('Installer', ['depot' => 'https://exemple.test/depot.git', 'ref' => 'v1', 'dossier' => 'env']);
+        $this->assertResponseRedirects();
+        $this->client->request('POST', '/admin/environnements/mon-env/mettre-a-jour', ['_token' => $token]);
+        $this->assertResponseRedirects();
+        $this->client->request('POST', '/admin/environnements/synchroniser', ['_token' => $token]);
+        $this->assertResponseRedirects();
+
+        $this->assertSame([
+            ['app:environnement:installer', ['https://exemple.test/depot.git', '--ref=v1', '--dossier=env']],
+            ['app:environnement:installer', ['mon-env']],
+            ['app:environnement:synchroniser', []],
+        ], $launcher->launched);
+        $this->assertSame([], static::getContainer()->get(InstallationJobs::class)->all(), 'Rien n\'a été lancé pour de vrai.');
     }
 
     public function testLaPageEstReserveeAuxAdmins(): void

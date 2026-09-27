@@ -2,13 +2,13 @@
 
 namespace App\Command;
 
+use App\Instance\ConsoleCommandLine;
 use App\Instance\EnvironmentBuildQueue;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
 /**
@@ -26,8 +26,7 @@ final class EnvironmentBuilderCommand
 {
     public function __construct(
         private readonly EnvironmentBuildQueue $queue,
-        #[Autowire('%kernel.project_dir%')]
-        private readonly string $projectDir,
+        private readonly ConsoleCommandLine $console,
         #[Autowire(env: 'bool:ENVIRONMENTS_AUTO_INSTALL')]
         private readonly bool $autoInstall = false,
     ) {
@@ -61,9 +60,8 @@ final class EnvironmentBuilderCommand
     private function run(SymfonyStyle $io, string $command, array $arguments): void
     {
         $io->writeln(sprintf('→ %s %s', $command, implode(' ', $arguments)));
-        $php = (new PhpExecutableFinder())->find() ?: 'php';
         // Tableau d'arguments, jamais de shell : l'adresse du dépôt vient d'un formulaire.
-        $process = new Process([$php, $this->projectDir.'/bin/console', $command, ...$arguments, '--no-interaction'], $this->projectDir, timeout: null);
+        $process = new Process($this->console->of($command, [...$arguments, '--no-interaction']), $this->console->projectDir, timeout: null);
         $process->run(static fn (string $type, string $sortie) => $io->write($sortie));
         $io->writeln($process->isSuccessful() ? '✓ terminé' : sprintf('✗ échec (code %d)', $process->getExitCode()));
     }

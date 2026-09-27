@@ -4,19 +4,16 @@ namespace App\Controller\Admin;
 
 use App\Content\ContentException;
 use App\Content\EnvironmentRegistry;
+use App\Instance\EnvironmentJobLauncher;
 use App\Instance\InstallationJobs;
 use App\Instance\InstalledEnvironment;
-use App\Instance\EnvironmentBuildQueue;
 use App\Instance\InstalledEnvironments;
 use App\Instance\PackEnvironments;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Process\ExecutableFinder;
-use Symfony\Component\Process\PhpExecutableFinder;
-use Symfony\Component\Process\Process;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 
 /**
  * Les environnements d'exécution : ceux que le moteur livre, et ceux que l'instance a installés depuis
@@ -28,14 +25,14 @@ use Symfony\Component\Process\Process;
  */
 final class EnvironmentController extends AbstractController
 {
+    private const string INSTALL = 'app:environnement:installer';
+
     public function __construct(
         private readonly EnvironmentRegistry $environments,
         private readonly InstalledEnvironments $installed,
         private readonly InstallationJobs $jobs,
         private readonly PackEnvironments $packEnvironments,
-        private readonly EnvironmentBuildQueue $queue,
-        #[Autowire('%kernel.project_dir%')]
-        private readonly string $projectDir,
+        private readonly EnvironmentJobLauncher $launcher,
     ) {
     }
 
@@ -63,11 +60,9 @@ final class EnvironmentController extends AbstractController
     }
 
     #[AdminRoute('/environnements/installer', name: 'environments_install', options: ['methods' => ['POST']], allowedDashboards: [DashboardController::class])]
+    #[IsCsrfTokenValid('environments', tokenKey: '_token')]
     public function install(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('environments', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
         $depot = trim((string) $request->request->get('depot'));
         $ref = trim((string) $request->request->get('ref'));
         $dossier = trim((string) $request->request->get('dossier'));
@@ -77,7 +72,7 @@ final class EnvironmentController extends AbstractController
         } elseif (!str_starts_with($depot, 'https://')) {
             $this->addFlash('error', 'L\'adresse du dépôt doit commencer par « https:// ».');
         } else {
-            $this->lancer([
+            $this->launcher->launch(self::INSTALL, [
                 $depot,
                 ...('' === $ref ? [] : ['--ref='.$ref]),
                 ...('' === $dossier ? [] : ['--dossier='.$dossier]),
@@ -95,30 +90,26 @@ final class EnvironmentController extends AbstractController
      * voit arriver un par un au fil des rafraîchissements.
      */
     #[AdminRoute('/environnements/synchroniser', name: 'environments_sync', options: ['methods' => ['POST']], allowedDashboards: [DashboardController::class])]
-    public function sync(Request $request): Response
+    #[IsCsrfTokenValid('environments', tokenKey: '_token')]
+    public function sync(): Response
     {
-        if (!$this->isCsrfTokenValid('environments', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
         if (!$this->installed->isEnabled()) {
             $this->addFlash('error', sprintf('Aucun dossier d\'environnements installables : %s n\'existe pas ou n\'est pas écrivable.', $this->installed->directory()));
 
             return $this->redirectToRoute('admin_environments');
         }
-        $this->lancer([], 'app:environnement:synchroniser');
+        $this->launcher->launch('app:environnement:synchroniser', []);
         $this->addFlash('success', 'Empaquetage des environnements portés par les packs lancé. Rafraîchissez cette page pour suivre.');
 
         return $this->redirectToRoute('admin_environments');
     }
 
     #[AdminRoute('/environnements/{id}/mettre-a-jour', name: 'environments_update', options: ['methods' => ['POST'], 'requirements' => ['id' => '[a-z0-9-]+']], allowedDashboards: [DashboardController::class])]
-    public function update(Request $request, string $id): Response
+    #[IsCsrfTokenValid('environments', tokenKey: '_token')]
+    public function update(string $id): Response
     {
-        if (!$this->isCsrfTokenValid('environments', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
         try {
-            $this->lancer([InstalledEnvironments::id($id)]);
+            $this->launcher->launch(self::INSTALL, [InstalledEnvironments::id($id)]);
             $this->addFlash('success', sprintf('Mise à jour de « %s » lancée.', $id));
         } catch (ContentException $e) {
             $this->addFlash('error', $e->getMessage());
@@ -128,22 +119,18 @@ final class EnvironmentController extends AbstractController
     }
 
     #[AdminRoute('/environnements/installations/{cle}/oublier', name: 'environments_forget', options: ['methods' => ['POST'], 'requirements' => ['cle' => '[a-f0-9]+']], allowedDashboards: [DashboardController::class])]
-    public function forget(Request $request, string $cle): Response
+    #[IsCsrfTokenValid('environments', tokenKey: '_token')]
+    public function forget(string $cle): Response
     {
-        if (!$this->isCsrfTokenValid('environments', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
         $this->jobs->forget($cle);
 
         return $this->redirectToRoute('admin_environments');
     }
 
     #[AdminRoute('/environnements/{id}/retirer', name: 'environments_remove', options: ['methods' => ['POST'], 'requirements' => ['id' => '[a-z0-9-]+']], allowedDashboards: [DashboardController::class])]
-    public function remove(Request $request, string $id): Response
+    #[IsCsrfTokenValid('environments', tokenKey: '_token')]
+    public function remove(string $id): Response
     {
-        if (!$this->isCsrfTokenValid('environments', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
         try {
             $this->installed->remove($id);
             $this->environments->reset();
@@ -175,34 +162,5 @@ final class EnvironmentController extends AbstractController
         }
 
         return $lignes;
-    }
-
-    /**
-     * Lance la commande d'installation en tâche de fond et rend la main tout de suite : le clone et le
-     * `composer install` dépassent de loin le temps d'une requête. Le suivi passe par l'état écrit sur
-     * disque, pas par ce processus.
-     *
-     * @param list<string> $arguments
-     */
-    private function lancer(array $arguments, string $commandeConsole = 'app:environnement:installer'): void
-    {
-        // Le code du dépôt ne tourne pas ici, à côté des secrets : le service empaqueteur s'en charge.
-        if ($this->queue->isEnabled()) {
-            $this->queue->push($commandeConsole, $arguments);
-
-            return;
-        }
-        $php = (new PhpExecutableFinder())->find() ?: 'php';
-        $commande = [$php, $this->projectDir.'/bin/console', $commandeConsole, ...$arguments];
-
-        // Detacher pour de vrai. Le destructeur de Process **tue** le processus lancé : à la fin de
-        // cette méthode, une installation démarrée par `start()` seul serait coupée net. `setsid --fork`
-        // la sort de ce groupe de processus — le fils immédiat rend la main aussitôt, le petit-fils
-        // continue seul. Jamais de shell : l'adresse vient d'un formulaire, elle reste un argument.
-        $setsid = (new ExecutableFinder())->find('setsid');
-        $process = new Process(null === $setsid ? $commande : [$setsid, '--fork', ...$commande], $this->projectDir);
-        $process->setTimeout(null);
-        $process->disableOutput();
-        $process->run();
     }
 }
