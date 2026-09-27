@@ -5,6 +5,7 @@ namespace App\Content\Author;
 use App\Content\Author\Scaffold\ExerciseScaffolders;
 use App\Content\Check\CheckResult;
 use App\Content\Check\ExerciseChecker;
+use App\Content\ContentDates;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
@@ -29,6 +30,7 @@ final class ExerciseStudio
         private readonly TrackWriter $trackWriter,
         private readonly EnvironmentRegistry $environments,
         private readonly ExerciseScaffolders $scaffolders,
+        private readonly ContentDates $dates,
     ) {
     }
 
@@ -56,16 +58,7 @@ final class ExerciseStudio
     /** Le fichier du parcours modifié le plus récemment : « où en étais-je ? » sans ouvrir un terminal. */
     public function modifieLe(Track $track): ?\DateTimeImmutable
     {
-        if (!is_dir($track->directory)) {
-            return null;
-        }
-        $dernier = 0;
-        $fichiers = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($track->directory, \FilesystemIterator::SKIP_DOTS));
-        foreach ($fichiers as $fichier) {
-            $dernier = max($dernier, $fichier->getMTime());
-        }
-
-        return $dernier > 0 ? (new \DateTimeImmutable())->setTimestamp($dernier) : null;
+        return $this->dates->latestFileNow($track->directory);
     }
 
     /** @return array<string, string> contenu par chemin relatif */

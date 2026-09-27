@@ -197,7 +197,7 @@ final class PracticeVersionIndex implements ResetInterface
 
     private function label(string $framework, string $version): string
     {
-        return trim(($this->frameworks->has($framework) ? $this->frameworks->get($framework)->label : ucfirst($framework)).' '.$version);
+        return trim($this->frameworks->labelOf($framework).' '.$version);
     }
 
     /**

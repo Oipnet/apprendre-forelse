@@ -146,4 +146,20 @@ final class SlimLike extends FakeProfile
     {
         return 50;
     }
+
+    public function testLeLibelleDUnFrameworkInconnuEstSonIdentifiant(): void
+    {
+        $registry = new FrameworkRegistry();
+
+        $this->assertSame($registry->get('symfony')->label, $registry->labelOf('symfony'));
+        $this->assertSame('Angular', $registry->labelOf('angular'));
+    }
+
+    public function testDuCodeSelonLeProfil(): void
+    {
+        $symfony = (new FrameworkRegistry())->get('symfony');
+
+        $this->assertTrue($symfony->isCode($symfony->codeDirs[0].'Exemple.php'));
+        $this->assertFalse($symfony->isCode('tests/ExempleTest.php'));
+    }
 }

@@ -56,6 +56,12 @@ final class FrameworkRegistry
         return $this->profiles[$id] ?? throw new ContentException(sprintf('Framework « %s » inconnu (%s).', $id, implode(', ', $this->ids())));
     }
 
+    /** Le libellé d'un framework, ou son identifiant capitalisé s'il n'a pas (ou plus) de profil. */
+    public function labelOf(string $id): string
+    {
+        return $this->has($id) ? $this->get($id)->label : ucfirst($id);
+    }
+
     public function default(): FrameworkProfile
     {
         return $this->profiles[self::DEFAULT];

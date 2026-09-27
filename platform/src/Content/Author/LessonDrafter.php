@@ -3,12 +3,12 @@
 namespace App\Content\Author;
 
 use App\Ai\ModelClient;
+use App\Ai\PromptFiles;
 use App\Content\Chapter;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\Framework\FrameworkProfile;
 use App\Content\EnvironmentRegistry;
-use App\Content\Exercise;
 use App\Content\Track;
 
 /**
@@ -44,7 +44,7 @@ final class LessonDrafter
      */
     public function squelette(Track $track, Chapter $chapter): string
     {
-        $exercises = $this->exercises($track, $chapter);
+        $exercises = $this->content->exercisesOfChapter($track, $chapter);
         $parConcept = [];
         foreach ($exercises as $exercise) {
             foreach ($exercise->concepts as $concept) {
@@ -104,20 +104,20 @@ final class LessonDrafter
     /** Brouillon rédigé par le modèle, à partir des consignes, solutions et liens des exercices. */
     public function brouillon(Track $track, Chapter $chapter): string
     {
-        $exercises = $this->exercises($track, $chapter);
+        $exercises = $this->content->exercisesOfChapter($track, $chapter);
         $framework = $this->environments->get($chapter->environment ?? $track->environment)->framework;
         $blocs = [sprintf("Parcours « %s » : %s\n\nChapitre « %s » (%d exercices).", $track->title, trim($track->description), $chapter->title, \count($exercises))];
         foreach ($exercises as $exercise) {
             $solution = array_filter(
                 $this->content->solutionFiles($exercise),
-                static fn (string $chemin) => ExerciseDrafter::estDuCode($chemin, $framework),
+                $framework->isCode(...),
                 \ARRAY_FILTER_USE_KEY,
             );
             $docs = array_map(static fn ($d) => sprintf('- [%s](%s)', $d->title, $d->url), $exercise->docs);
             $blocs[] = implode("\n\n", array_filter([
                 sprintf("=== Exercice %s — %s ===\nConcepts : %s", $exercise->id, $exercise->title, implode(', ', $exercise->concepts)),
                 "Consignes :\n".trim($exercise->instructions),
-                $solution ? "Solution de référence :\n".implode("\n\n", array_map(static fn ($c, $f) => sprintf("--- %s ---\n%s", $c, $f), array_keys($solution), $solution)) : null,
+                $solution ? "Solution de référence :\n".PromptFiles::render($solution) : null,
                 $docs ? "Documentation :\n".implode("\n", $docs) : null,
             ]));
         }
@@ -143,12 +143,6 @@ final class LessonDrafter
         $texte = trim($m[1]);
 
         return '' === $texte ? null : $texte;
-    }
-
-    /** @return list<Exercise> */
-    private function exercises(Track $track, Chapter $chapter): array
-    {
-        return array_values(array_filter(array_map(fn (string $id) => $this->content->findExercise($track->id, $id), $chapter->exerciseIds)));
     }
 
     private function consignes(FrameworkProfile $framework): string

@@ -3,6 +3,7 @@
 namespace App\Content\Author;
 
 use App\Ai\ModelClient;
+use App\Ai\PromptFiles;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
@@ -97,7 +98,7 @@ final class ExerciseDrafter
                 null === $track ? self::PRATIQUE : $this->presentationDuParcours($track),
                 $base ? $this->etatDeLApplication($base, $framework) : null,
                 $this->outilsDeTest($exercise->environment),
-                "L'exercice actuel :\n\n".$this->enFichiers($fichiers),
+                "L'exercice actuel :\n\n".PromptFiles::render($fichiers),
                 "content:check refuse cet exercice :\n- ".implode("\n- ", $erreurs),
                 'Corrige l\'exercice et renvoie **tous** ses fichiers, y compris ceux qui ne changent pas.',
             ])),
@@ -172,7 +173,7 @@ final class ExerciseDrafter
     {
         $interessants = [];
         foreach ($this->content->solvedFiles($base) as $chemin => $contenu) {
-            if (self::estDuCode($chemin, $framework)) {
+            if ($framework->isCode($chemin)) {
                 $interessants[$chemin] = $contenu;
             }
         }
@@ -180,7 +181,7 @@ final class ExerciseDrafter
         return sprintf(
             "État de l'application à la fin de l'exercice « %s » (le point de départ du nouvel exercice) :\n\n%s",
             $base->id,
-            $this->enFichiers($interessants),
+            PromptFiles::render($interessants),
         );
     }
 
@@ -195,7 +196,7 @@ final class ExerciseDrafter
             }
         }
 
-        return $outils ? "Outils de test fournis par l'environnement, utilisables dans tests/ :\n\n".$this->enFichiers($outils) : '';
+        return $outils ? "Outils de test fournis par l'environnement, utilisables dans tests/ :\n\n".PromptFiles::render($outils) : '';
     }
 
     private function exempleDExercice(Track $track): string
@@ -204,31 +205,8 @@ final class ExerciseDrafter
         $modele = end($exercices);
 
         return $modele instanceof Exercise
-            ? "Un exercice existant, à prendre pour modèle de style et de format :\n\n".$this->enFichiers($this->fichiers->read($modele->directory))
+            ? "Un exercice existant, à prendre pour modèle de style et de format :\n\n".PromptFiles::render($this->fichiers->read($modele->directory))
             : '';
-    }
-
-    /** @param array<string, string> $fichiers */
-    private function enFichiers(array $fichiers): string
-    {
-        $blocs = [];
-        foreach ($fichiers as $chemin => $contenu) {
-            $blocs[] = sprintf("=== %s ===\n%s", $chemin, $contenu);
-        }
-
-        return implode("\n\n", $blocs);
-    }
-
-    /** Le code qui décrit l'état de l'application, hors tests, assets et fichiers de départ du framework. */
-    public static function estDuCode(string $chemin, FrameworkProfile $framework): bool
-    {
-        foreach ($framework->codeDirs as $dossier) {
-            if (str_starts_with($chemin, $dossier)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private function consignes(FrameworkProfile $framework): string

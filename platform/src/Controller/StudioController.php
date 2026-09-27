@@ -58,7 +58,7 @@ final class StudioController extends AbstractController
 
         $parcours = [];
         foreach ($this->content->tracks() as $track) {
-            $exercices = array_filter(array_map(fn (string $id) => $this->content->findExercise($track->id, $id), $track->exerciseIds()));
+            $exercices = $this->content->exercisesOfChapter($track);
             $fiches = \count(array_filter($track->chapters, static fn (Chapter $c) => $c->hasLesson()));
             $parcours[] = [
                 'track' => $track,
@@ -96,7 +96,7 @@ final class StudioController extends AbstractController
         $track = $this->content->findTrack($trackId) ?? throw $this->createNotFoundException();
         $chapitres = [];
         foreach ($track->chapters as $chapitre) {
-            $exercices = array_values(array_filter(array_map(fn (string $id) => $this->content->findExercise($track->id, $id), $chapitre->exerciseIds)));
+            $exercices = $this->content->exercisesOfChapter($track, $chapitre);
             $chapitres[] = [
                 'chapitre' => $chapitre,
                 'exercices' => $exercices,

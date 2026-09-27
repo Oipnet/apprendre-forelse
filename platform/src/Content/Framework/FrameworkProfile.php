@@ -109,6 +109,18 @@ final readonly class FrameworkProfile
         };
     }
 
+    /** Le code qui décrit l'état de l'application, hors tests, assets et fichiers de départ du framework. */
+    public function isCode(string $path): bool
+    {
+        foreach ($this->codeDirs as $dossier) {
+            if (str_starts_with($path, $dossier)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Ce que le navigateur a besoin de savoir du framework (voir playground/src/app/types.ts).
      *

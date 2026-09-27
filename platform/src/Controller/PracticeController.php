@@ -134,7 +134,7 @@ final class PracticeController extends AbstractController
         $seo->practice($practice);
         $context = [
             'practice' => $practice,
-            'framework' => $this->frameworks->has($practice->framework) ? $this->frameworks->get($practice->framework)->label : ucfirst($practice->framework),
+            'framework' => $this->frameworks->labelOf($practice->framework),
             'instructions' => $markdown->toHtmlUnderTitle($practice->exercise->instructions),
             // La pastille de version mène aux autres exercices de cette version, quand cette page existe.
             'versionSlug' => $versions->slugOf($practice),

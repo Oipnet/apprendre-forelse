@@ -88,10 +88,7 @@ final class PostDrafter
     public function pourParcours(Track $track, string $url, string $precision = ''): array
     {
         // Tous les exercices : ce sont eux qui donnent le compte, les XP et les notions annoncés dans le post.
-        $exercices = array_values(array_filter(array_map(
-            fn (string $id) => $this->content->findExercise($track->id, $id),
-            $track->exerciseIds(),
-        )));
+        $exercices = $this->content->exercisesOfChapter($track);
         $framework = $this->environments->get($track->environment)->framework;
 
         $chapitres = array_map(

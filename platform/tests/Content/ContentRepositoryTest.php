@@ -295,6 +295,17 @@ final class ContentRepositoryTest extends TestCase
         $this->assertContains('bonjour', $repository->chapterIds());
     }
 
+    public function testLesExercicesDUnChapitre(): void
+    {
+        $repository = $this->repository(self::ROOT.'/examples/packs');
+        $track = $repository->findTrack('decouverte');
+        $this->assertNotNull($track);
+        $ids = static fn (array $exercices) => array_map(static fn ($e) => $e->id, $exercices);
+
+        $this->assertSame(['01-bonjour', '02-bonjour-prenom'], $ids($repository->exercisesOfChapter($track, $repository->findChapter($track, 'bonjour'))));
+        $this->assertSame(['01-bonjour', '02-bonjour-prenom'], $ids($repository->exercisesOfChapter($track)));
+    }
+
     public function testOrdreDesParcours(): void
     {
         $filesystem = new Filesystem();
