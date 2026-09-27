@@ -1,0 +1,83 @@
+{
+	"_": "Règle d'XP d'un exercice réussi, partagée par App\\Service\\XpCalculator (serveur) et xpFor() de playground/src/app/progress.ts (navigateur). Chaque côté la vérifie contre ces cas : modifier la règle d'un seul côté fait échouer un test.",
+	"cases": [
+		{
+			"baseXp": 100,
+			"hintsUsed": 0,
+			"xp": 100,
+			"cas": "sans indice : toute l'XP"
+		},
+		{
+			"baseXp": 100,
+			"hintsUsed": 1,
+			"xp": 75,
+			"cas": "un indice : −25 %"
+		},
+		{
+			"baseXp": 100,
+			"hintsUsed": 2,
+			"xp": 50,
+			"cas": "deux indices : −50 %"
+		},
+		{
+			"baseXp": 100,
+			"hintsUsed": 3,
+			"xp": 25,
+			"cas": "trois indices : −75 %"
+		},
+		{
+			"baseXp": 100,
+			"hintsUsed": 4,
+			"xp": 25,
+			"cas": "quatre indices : plancher à 25 %"
+		},
+		{
+			"baseXp": 100,
+			"hintsUsed": 10,
+			"xp": 25,
+			"cas": "au-delà : toujours le plancher"
+		},
+		{
+			"baseXp": 10,
+			"hintsUsed": 1,
+			"xp": 8,
+			"cas": "7,5 arrondi au supérieur"
+		},
+		{
+			"baseXp": 10,
+			"hintsUsed": 3,
+			"xp": 3,
+			"cas": "2,5 arrondi au supérieur"
+		},
+		{
+			"baseXp": 30,
+			"hintsUsed": 5,
+			"xp": 8,
+			"cas": "plancher, 7,5 arrondi au supérieur"
+		},
+		{
+			"baseXp": 15,
+			"hintsUsed": 1,
+			"xp": 11,
+			"cas": "11,25 arrondi à l'inférieur"
+		},
+		{
+			"baseXp": 15,
+			"hintsUsed": 2,
+			"xp": 8,
+			"cas": "7,5 arrondi au supérieur"
+		},
+		{
+			"baseXp": 0,
+			"hintsUsed": 0,
+			"xp": 0,
+			"cas": "exercice sans XP"
+		},
+		{
+			"baseXp": 100,
+			"hintsUsed": -1,
+			"xp": 100,
+			"cas": "nombre d'indices négatif : compté comme zéro"
+		}
+	]
+}
