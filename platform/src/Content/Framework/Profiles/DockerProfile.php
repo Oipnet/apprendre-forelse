@@ -61,6 +61,8 @@ final class DockerProfile implements FrameworkProfileProvider
             snippets: ['php', 'docker'],
             // « docker compose up » et « docker-compose up » mènent au même endroit.
             consoleAliases: ['docker' => '', 'docker-compose' => 'compose'],
+            // « sh lancer.sh » n'est pas une sous-commande de docker : la console l'affiche tel quel.
+            rawCommands: ['sh', '*.sh'],
         );
     }
 }

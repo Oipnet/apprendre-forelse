@@ -169,7 +169,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		lastConsoleError = result.exitCode === 0 ? null : stripAnsi(result.output);
 		$('#explain-console').hidden = !mentor || !lastConsoleError;
 		reload();
-	}, consoleName, framework.consoleAliases);
+	}, consoleName, framework.consoleAliases, framework.rawCommands);
 	messagesDeLApercu = (level, message) => {
 		consolePanel.logFromPreview(level, message);
 		// Le badge signale un message qu'on n'a pas encore vu, sauf si la console est déjà affichée.

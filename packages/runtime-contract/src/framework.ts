@@ -38,6 +38,8 @@ export interface FrameworkProfile {
 	snippets: string[];
 	/** Préfixes tolérés au début d'une commande => ce qui les remplace (chaîne vide : retiré). */
 	consoleAliases: Record<string, string>;
+	/** Commandes que la console affiche telles quelles, sans son nom (« sh » ; « *.sh » : ce qui finit par .sh). */
+	rawCommands: string[];
 	/** Dossiers du projet, visibles dans l'explorateur. */
 	projectDirs: string[];
 	/** Caches à vider entre deux runs de tests. */

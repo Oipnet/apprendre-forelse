@@ -17,6 +17,19 @@ export interface WorkerEndpoint {
 	postMessage(message: WorkerMessage, transfer: Transferable[]): void;
 }
 
+/** Les méthodes qu'un worker sert : toutes celles du contrat (le type oblige à n'en oublier aucune). */
+const METHODS: Record<WorkerMethod, true> = {
+	boot: true,
+	writeFile: true,
+	writeFiles: true,
+	readFile: true,
+	listFiles: true,
+	deleteFile: true,
+	request: true,
+	runTests: true,
+	runCommand: true,
+};
+
 export interface ServeOptions {
 	/**
 	 * Les corps de réponse que renvoie `request` sont des copies neuves, que le runtime ne garde pas :
@@ -56,11 +69,13 @@ export function serveRuntime(api: WorkerApi, options: ServeOptions = {}, endpoin
 
 	function invoke<M extends WorkerMethod>(call: WorkerCall<M>): Promise<WorkerResult[M]> {
 		// Le message vient d'une autre page du même site, mais rien ne garantit qu'il nomme une vraie méthode.
-		const method = (Object.hasOwn(api, call.method) ? api[call.method] : undefined) as ((...args: unknown[]) => Promise<WorkerResult[M]>) | undefined;
+		// Une méthode du contrat seulement : l'api peut être une instance de classe, dont le prototype porte aussi toString.
+		const method = (Object.hasOwn(METHODS, call.method) ? api[call.method] : undefined) as ((...args: unknown[]) => Promise<WorkerResult[M]>) | undefined;
 		if (typeof method !== 'function') {
 			return Promise.reject(new Error(`Méthode inconnue du runtime : ${String(call.method)}.`));
 		}
-		return call.method === 'boot' ? method(...call.args, progress) : method(...call.args);
+		// Appelée sur l'api : un runtime peut être une instance de classe, dont les méthodes lisent `this`.
+		return call.method === 'boot' ? method.call(api, ...call.args, progress) : method.apply(api, call.args);
 	}
 }
 

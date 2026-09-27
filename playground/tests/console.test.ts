@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ansiToHtml, finalScreen, parseCommandLine } from '../src/app/console.ts';
+import { ansiToHtml, finalScreen, isRawCommand, parseCommandLine } from '../src/app/console.ts';
 
 describe('parseCommandLine', () => {
 	it('découpe sur les espaces, en respectant les guillemets simples et doubles', () => {
@@ -62,5 +62,16 @@ describe('ansiToHtml', () => {
 
 	it('passe d\'abord par finalScreen', () => {
 		expect(ansiToHtml('0 %\r\x1b[32m100 %\x1b[0m')).toBe('<span class="fg-2">100 %</span>');
+	});
+});
+
+describe('isRawCommand', () => {
+	it('reconnaît les commandes que le profil déclare, et les motifs « *.sh »', () => {
+		const raw = ['sh', '*.sh'];
+		expect(isRawCommand('sh', raw)).toBe(true);
+		expect(isRawCommand('./lancer.sh', raw)).toBe(true);
+		expect(isRawCommand('compose', raw)).toBe(false);
+		expect(isRawCommand(undefined, raw)).toBe(false);
+		expect(isRawCommand('sh', [])).toBe(false);
 	});
 });
