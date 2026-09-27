@@ -233,6 +233,18 @@ final class MemoryFs implements FileSystem
         return $result;
     }
 
+    /** Copie des fichiers, droits et propriétaires compris (les dossiers vides ne suivent pas). */
+    public function copyFiles(): self
+    {
+        $copy = new self($this->files, [], [], $this->blobs);
+        foreach ($this->files() as $file) {
+            $copy->chmod($file, $this->mode($file));
+            $copy->chown($file, $this->owner($file));
+        }
+
+        return $copy;
+    }
+
     /** @return array<string,string> */
     public function allBlobs(): array
     {

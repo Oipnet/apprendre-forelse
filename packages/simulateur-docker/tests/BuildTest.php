@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Tests;
 
+use Forelse\DockerSim\Build\StageState;
+use Forelse\DockerSim\Fs\MemoryFs;
+use Forelse\DockerSim\Shell\Facts;
+use Forelse\DockerSim\State\ImageConfig;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 final class BuildTest extends SimulatorTestCase
@@ -233,5 +237,24 @@ final class BuildTest extends SimulatorTestCase
         $result = $this->docker()->build('.');
         $this->assertFalse($result->success);
         $this->assertStringContainsString('docker.io/library/php:9.9-apache: not found', $result->output);
+    }
+
+    /** Une étape qui part d'une autre (FROM builder) travaille sur une copie : l'originale ne bouge pas. */
+    public function testUneEtapeCloneeNeModifiePasLOriginale(): void
+    {
+        $original = new StageState(new MemoryFs(['/app/a.txt' => 'a']), new Facts('alpine', 'shell', null, [], [], [], []), new ImageConfig(), [], 'cle', 'alpine:3.20', 'shell', 'alpine', null, null);
+        $original->fs->chown('/app/a.txt', 'www-data');
+
+        $copie = clone $original;
+        $copie->fs->write('/app/b.txt', 'b');
+        $copie->facts->binaries[] = 'curl';
+        $copie->config->env['MODE'] = 'prod';
+        $copie->key = 'autre';
+
+        $this->assertSame('www-data', $copie->fs->owner('/app/a.txt'), 'Les propriétaires suivent la copie.');
+        $this->assertFalse($original->fs->exists('/app/b.txt'));
+        $this->assertSame([], $original->facts->binaries);
+        $this->assertSame([], $original->config->env);
+        $this->assertSame('cle', $original->key);
     }
 }
