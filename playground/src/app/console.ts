@@ -133,6 +133,7 @@ export class ConsolePanel {
 		this.output.append(entry);
 		this.output.scrollTop = this.output.scrollHeight;
 		try {
+			if (!this.runtime.runCommand) throw new Error('Ce runtime n\'a pas de console.');
 			const result = await this.runtime.runCommand(args);
 			entry.classList.toggle('failed', result.exitCode !== 0);
 			entry.querySelector('pre')!.innerHTML = (ansiToHtml(result.output) || '<span class="muted">(aucune sortie)</span>')

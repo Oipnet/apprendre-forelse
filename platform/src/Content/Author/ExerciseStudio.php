@@ -2,13 +2,13 @@
 
 namespace App\Content\Author;
 
+use App\Content\Author\Scaffold\ExerciseScaffolders;
 use App\Content\Check\CheckResult;
 use App\Content\Check\ExerciseChecker;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
-use App\Content\Framework\FrameworkProfile;
 use App\Content\Pack;
 use App\Content\Track;
 use Symfony\Component\Filesystem\Filesystem;
@@ -28,6 +28,7 @@ final class ExerciseStudio
         private readonly ExerciseFiles $fichiers,
         private readonly TrackWriter $trackWriter,
         private readonly EnvironmentRegistry $environments,
+        private readonly ExerciseScaffolders $scaffolders,
     ) {
     }
 
@@ -73,6 +74,33 @@ final class ExerciseStudio
         return $this->fichiers->read($exercise->directory);
     }
 
+    /**
+     * Les environnements où créer un exercice de Pratique : ceux déjà utilisés par le contenu installé, dont
+     * l'atelier sait échafauder le framework.
+     *
+     * @return list<string>
+     */
+    public function environnementsPratique(): array
+    {
+        $environnements = [];
+        foreach ($this->content->tracks() as $track) {
+            $environnements[] = $track->environment;
+            foreach ($track->chapters as $chapitre) {
+                $environnements[] = $chapitre->environment;
+            }
+        }
+        foreach ($this->content->practices() as $practice) {
+            $environnements[] = $practice->exercise->environment;
+        }
+        $environnements = array_filter(
+            array_unique(array_filter($environnements)),
+            fn (string $id) => $this->environments->has($id) && $this->scaffolders->has($this->environments->get($id)->framework),
+        );
+        sort($environnements);
+
+        return $environnements;
+    }
+
     /** Le dossier du parcours, ou du pack pour un exercice de Pratique, accepte-t-il l'écriture ? */
     public function modifiable(Track|Pack $owner): bool
     {
@@ -115,9 +143,11 @@ final class ExerciseStudio
             throw new ContentException(sprintf('La base « %s » n\'est pas un exercice de ce parcours.', $base));
         }
 
+        $fichiers = $brouillon ?? $this->scaffolders->get($this->environments->get($this->content->findChapter($track, $chapitreId)->environment ?? $track->environment)->framework)
+            ->files($this->entete($id, $titre, $base, null), $titre, false);
+
         (new Filesystem())->mkdir($directory);
-        $framework = $this->environments->get($this->content->findChapter($track, $chapitreId)->environment ?? $track->environment)->framework;
-        $this->fichiers->write($directory, $brouillon ?? $this->squelette($id, $titre, $base, $framework));
+        $this->fichiers->write($directory, $fichiers);
         $this->trackWriter->ajouterExercice($track, $chapitreId, $id);
         $this->content->reset();
 
@@ -143,10 +173,11 @@ final class ExerciseStudio
         if (is_dir($directory)) {
             throw new ContentException(sprintf('Le dossier practice/%s existe déjà dans le pack « %s ».', $id, $pack->id));
         }
-        $framework = $this->environments->get($environment)->framework;
+        $fichiers = $this->scaffolders->get($this->environments->get($environment)->framework)
+            ->files($this->entete($id, $titre, null, $environment), $titre, true);
 
         (new Filesystem())->mkdir($directory);
-        $this->fichiers->write($directory, $this->squelettePratique($id, $titre, $environment, $framework));
+        $this->fichiers->write($directory, $fichiers);
         $this->content->reset();
 
         return $id;
@@ -202,82 +233,16 @@ final class ExerciseStudio
         }
     }
 
-    /** @return array<string, string> */
-    private function squelette(string $id, string $titre, ?string $base, FrameworkProfile $framework): array
-    {
-        if ('docker' === $framework->id) {
-            return $this->squeletteDocker($id, $titre, $base);
-        }
-        $laravel = 'laravel' === $framework->id;
-        $controleur = $laravel ? 'app/Http/Controllers/MonControleur.php' : 'src/Controller/MonControleur.php';
-        $yaml = <<<YAML
-            id: {$id}
-            title: {$titre}
-            concepts: []
-            xp: 200
-
-            YAML;
-        if (null !== $base) {
-            $yaml .= "base: {$base}\n";
-        }
-        $yaml .= <<<YAML
-
-            open: {$controleur}
-            preview: /
-
-            editable:
-              - {$controleur}
-
-            objectives:
-              - test: testLaPageRepond
-                label: La page répond
-
-            hints:
-              - Premier indice.
-            YAML;
-
-        return [
-            'exercise.yaml' => $yaml."\n",
-            'instructions.md' => "# {$titre}\n\nÀ écrire.\n",
-            'starter/'.$controleur => "<?php\n\nnamespace App\\".($laravel ? 'Http\\Controllers' : 'Controller').";\n\n// TODO : le code de départ de l'apprenant\n",
-            'solution/'.$controleur => "<?php\n\nnamespace App\\".($laravel ? 'Http\\Controllers' : 'Controller').";\n\n// TODO : la solution\n",
-            ...($laravel ? ['tests/Formation/MonTest.php' => "<?php\n\nnamespace Tests\\Formation;\n\nuse Tests\\TestCase;\n\nclass MonTest extends TestCase\n{\n    public function testLaPageRepond(): void\n    {\n        \$this->get('/')->assertOk();\n    }\n}\n"] : []),
-            ...($laravel ? [] : ['tests/Exercice/MonTest.php' => "<?php\n\nnamespace App\\Tests\\Exercice;\n\nuse Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase;\n\nclass MonTest extends WebTestCase\n{\n    public function testLaPageRepond(): void\n    {\n        \$client = static::createClient();\n        \$client->request('GET', '/');\n\n        \$this->assertResponseIsSuccessful();\n    }\n}\n"]),
-        ];
-    }
-
     /**
-     * Le squelette d'un exercice de parcours, sans ce qui n'a pas cours en Pratique (XP, fil rouge) et avec ses clés.
-     *
-     * @return array<string, string>
+     * Le début d'exercise.yaml, commun à tous les frameworks : un exercice de Pratique n'a ni XP ni fil rouge, mais ses clés.
      */
-    private function squelettePratique(string $id, string $titre, string $environment, FrameworkProfile $framework): array
+    private function entete(string $id, string $titre, ?string $base, ?string $environnementPratique): string
     {
-        $cles = sprintf("environment: %s\npublished: %s\nsummary: À écrire, en une phrase.\n# version: '8.1'\n# pull_request: https://github.com/…\n# Retirez cette ligne pour publier l'exercice.\nvisibility: admin\n", $environment, date('Y-m-d'));
-        $fichiers = [];
-        foreach ($this->squelette($id, $titre, null, $framework) as $chemin => $contenu) {
-            $contenu = str_replace(['App\\Tests\\Exercice', 'namespace Tests\\Formation;'], ['App\\Tests\\Pratique', 'namespace Tests\\Pratique;'], $contenu);
-            $fichiers[str_replace(['tests/Exercice/', 'tests/Formation/'], 'tests/Pratique/', $chemin)] = 'exercise.yaml' === $chemin ? str_replace("xp: 200\n", $cles, $contenu) : $contenu;
+        $yaml = "id: {$id}\ntitle: {$titre}\nconcepts: []\n";
+        if (null !== $environnementPratique) {
+            return $yaml.sprintf("environment: %s\npublished: %s\nsummary: À écrire, en une phrase.\n# version: '8.1'\n# pull_request: https://github.com/…\n# Retirez cette ligne pour publier l'exercice.\nvisibility: admin\n", $environnementPratique, date('Y-m-d'));
         }
 
-        return $fichiers;
-    }
-
-    /** @return array<string, string> */
-    private function squeletteDocker(string $id, string $titre, ?string $base): array
-    {
-        $yaml = "id: {$id}\ntitle: {$titre}\nconcepts: []\nxp: 200\n";
-        if (null !== $base) {
-            $yaml .= "base: {$base}\n";
-        }
-        $yaml .= "\nopen: Dockerfile\npreview: /localhost:8080/\n\neditable:\n  - Dockerfile\n\nobjectives:\n  - test: testLImageSeConstruit\n    label: L'image se construit\n\nhints:\n  - Premier indice.\n";
-
-        return [
-            'exercise.yaml' => $yaml,
-            'instructions.md' => "# {$titre}\n\nÀ écrire.\n",
-            'starter/Dockerfile' => "# TODO : le Dockerfile de départ de l'apprenant\n",
-            'solution/Dockerfile' => "FROM php:8.4-apache\nCOPY public/ /var/www/html/\n",
-            'tests/Docker/MonTest.php' => "<?php\n\nnamespace Tests\\Docker;\n\nuse Forelse\\DockerSim\\Testing\\DockerTestCase;\n\nclass MonTest extends DockerTestCase\n{\n    public function testLImageSeConstruit(): void\n    {\n        \$this->assertBuildSucceeded(\$this->build('app'));\n    }\n}\n",
-        ];
+        return $yaml."xp: 200\n".(null !== $base ? "base: {$base}\n" : '');
     }
 }

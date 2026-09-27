@@ -2,7 +2,7 @@
 
 namespace App\Controller\Admin;
 
-use App\Content\ContentRepository;
+use App\Admin\TrackChoices;
 use App\Entity\PriceKind;
 use App\Entity\Purchase;
 use App\Entity\PurchaseStatus;
@@ -36,7 +36,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class PurchaseCrudController extends AbstractCrudController
 {
     public function __construct(
-        private readonly ContentRepository $content,
+        private readonly TrackChoices $tracks,
         private readonly PurchaseFulfillment $fulfillment,
     ) {
     }
@@ -61,13 +61,8 @@ final class PurchaseCrudController extends AbstractCrudController
         yield DateTimeField::new('createdAt', 'Créé le');
         yield AssociationField::new('user', 'Apprenant');
         yield EmailField::new('customerEmail', 'Email')->hideOnIndex();
-        yield ChoiceField::new('trackId', 'Parcours')->setChoices($this->trackChoices());
-        yield ChoiceField::new('status', 'Statut')->renderAsBadges([
-            PurchaseStatus::Pending->name => 'secondary',
-            PurchaseStatus::Abandoned->name => 'light',
-            PurchaseStatus::Paid->name => 'success',
-            PurchaseStatus::Refunded->name => 'warning',
-        ]);
+        yield ChoiceField::new('trackId', 'Parcours')->setChoices($this->tracks->choices());
+        yield ChoiceField::new('status', 'Statut')->renderAsBadges(PurchaseStatus::badges());
         yield ChoiceField::new('priceKind', 'Prix appliqué');
         yield MoneyField::new('price', 'Prix')->setCurrency('EUR')->setStoredAsCents();
         yield MoneyField::new('amountPaid', 'Payé')->setCurrency('EUR')->setStoredAsCents();
@@ -87,9 +82,9 @@ final class PurchaseCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            ->add(ChoiceFilter::new('status', 'Statut')->setChoices(array_combine(array_map(static fn (PurchaseStatus $s) => $s->label(), PurchaseStatus::cases()), array_column(PurchaseStatus::cases(), 'value'))))
-            ->add(ChoiceFilter::new('trackId', 'Parcours')->setChoices($this->trackChoices()))
-            ->add(ChoiceFilter::new('priceKind', 'Prix appliqué')->setChoices(array_combine(array_map(static fn (PriceKind $k) => $k->label(), PriceKind::cases()), array_column(PriceKind::cases(), 'value'))))
+            ->add(ChoiceFilter::new('status', 'Statut')->setChoices(PurchaseStatus::valueChoices()))
+            ->add(ChoiceFilter::new('trackId', 'Parcours')->setChoices($this->tracks->choices()))
+            ->add(ChoiceFilter::new('priceKind', 'Prix appliqué')->setChoices(PriceKind::valueChoices()))
             ->add(DateTimeFilter::new('createdAt', 'Période'));
     }
 
@@ -127,16 +122,5 @@ final class PurchaseCrudController extends AbstractCrudController
         }
 
         return $this->redirectToRoute('admin_purchases_detail', ['entityId' => $purchase->getId()]);
-    }
-
-    /** @return array<string, string> */
-    private function trackChoices(): array
-    {
-        $choices = [];
-        foreach ($this->content->tracks() as $track) {
-            $choices[$track->title] = $track->id;
-        }
-
-        return $choices;
     }
 }

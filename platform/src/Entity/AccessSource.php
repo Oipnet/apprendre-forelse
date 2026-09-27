@@ -3,11 +3,13 @@
 namespace App\Entity;
 
 use Symfony\Contracts\Translation\TranslatableInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** D'où vient l'accès d'un apprenant à un parcours. Traduisible : EasyAdmin affiche label() tel quel. */
 enum AccessSource: string implements TranslatableInterface
 {
+    use EnumLabels;
+    use EnumBadges;
+
     /** Acheté par l'apprenant (Stripe) : à vie, sauf remboursement. */
     case Purchase = 'purchase';
     /** Ouvert par sa cohorte financée par l'établissement, aux dates de la cohorte. */
@@ -24,8 +26,12 @@ enum AccessSource: string implements TranslatableInterface
         };
     }
 
-    public function trans(TranslatorInterface $translator, ?string $locale = null): string
+    public function badge(): string
     {
-        return $this->label();
+        return match ($this) {
+            self::Purchase => 'success',
+            self::Cohort => 'info',
+            self::Gift => 'secondary',
+        };
     }
 }

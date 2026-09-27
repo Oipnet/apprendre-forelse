@@ -13,6 +13,7 @@ use Forelse\DockerSim\Shell\Facts;
 use Forelse\DockerSim\Shell\Machine;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\Image;
+use Forelse\DockerSim\State\ProcessKind;
 
 /**
  * Ce qui se passe au démarrage d'un conteneur : le script d'entrée s'exécute, puis le processus
@@ -234,7 +235,7 @@ final class ProcessManager
 
                 return;
             case \in_array($name, ['frankenphp', 'caddy'], true):
-                $this->listen($container, $name === 'frankenphp' ? 'frankenphp' : 'static', [80, 443, 2019]);
+                $this->listen($container, $name === 'frankenphp' ? ProcessKind::FrankenPhp : ProcessKind::Static, [80, 443, 2019]);
                 $this->appendLogs($container, sprintf("{\"level\":\"info\",\"ts\":%d,\"msg\":\"using config from file\",\"file\":\"/etc/caddy/Caddyfile\"}\n{\"level\":\"info\",\"ts\":%d,\"msg\":\"serving initial configuration\"}\n", time(), time()));
                 $container->processOptions['docroot'] = $image->docroot ?? '/app/public';
 
@@ -248,26 +249,26 @@ final class ProcessManager
 
                 return;
             case $name === 'redis-server':
-                $this->listen($container, 'redis', [6379]);
+                $this->listen($container, ProcessKind::Redis, [6379]);
                 $this->appendLogs($container, sprintf("1:C %s * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo\n1:C %s * Redis version=8.2.1, bits=64, commit=00000000, modified=0, pid=1, just started\n1:M %s * Server initialized\n1:M %s * Ready to accept connections tcp\n", gmdate('d M Y H:i:s.v'), gmdate('d M Y H:i:s.v'), gmdate('d M Y H:i:s.v'), gmdate('d M Y H:i:s.v')));
 
                 return;
             case \in_array($name, ['mailpit', 'MailHog'], true):
-                $this->listen($container, 'mail', [1025, 8025]);
+                $this->listen($container, ProcessKind::Mail, [1025, 8025]);
                 $container->processOptions['docroot'] = $image->docroot ?? '/mailpit-ui';
                 $this->appendLogs($container, sprintf("time=\"%s\" level=info msg=\"[smtpd] starting on [::]:1025 (no encryption)\"\ntime=\"%s\" level=info msg=\"[http] starting on [::]:8025\"\ntime=\"%s\" level=info msg=\"[http] accessible via http://localhost:8025/\"\n", gmdate('Y/m/d H:i:s'), gmdate('Y/m/d H:i:s'), gmdate('Y/m/d H:i:s')));
 
                 return;
             case \in_array($name, ['traefik', 'rabbitmq-server', 'memcached', 'supervisord', 'crond', 'cron'], true):
                 $ports = array_map(static fn ($p) => (int) $p, $image->config->exposed);
-                $this->listen($container, $name === 'memcached' ? 'memcached' : 'static', $ports);
+                $this->listen($container, $name === 'memcached' ? ProcessKind::Memcached : ProcessKind::Static, $ports);
                 $container->processOptions['docroot'] = $image->docroot ?? '/';
                 $this->appendLogs($container, $name === 'supervisord' ? "INFO supervisord started with pid 1\n" : '');
 
                 return;
             case $name === 'sleep' && (\in_array($args[0] ?? '', ['infinity', 'inf'], true) || (int) ($args[0] ?? 0) > 60):
             case $name === 'tail' && \in_array('-f', $args, true):
-                $this->listen($container, 'idle', []);
+                $this->listen($container, ProcessKind::Idle, []);
 
                 return;
             // Un shell sans argument (ou « php -a ») attend un terminal ; « php -i » est une commande comme une autre.
@@ -278,7 +279,7 @@ final class ProcessManager
                 }
                 // Un shell interactif sans terminal attaché se termine aussitôt ; avec -it, il attend.
                 if ($container->tty) {
-                    $this->listen($container, 'idle', []);
+                    $this->listen($container, ProcessKind::Idle, []);
                     if ($name === 'php') {
                         $this->appendLogs($container, "Interactive shell\n\n");
                     }
@@ -313,7 +314,7 @@ final class ProcessManager
      * @param list<int>         $ports
      * @param array<int,string> $addresses port => adresse d'écoute (0.0.0.0, 127.0.0.1…)
      */
-    private function listen(Container $container, string $process, array $ports, array $addresses = []): void
+    private function listen(Container $container, ProcessKind $process, array $ports, array $addresses = []): void
     {
         $container->status = Container::RUNNING;
         $container->exitCode = 0;
@@ -383,7 +384,7 @@ final class ProcessManager
         }
         $date = gmdate('D M d H:i:s.u Y');
         $this->appendLogs($container, sprintf("[%s] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/%s configured -- resuming normal operations\n[%s] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'", $date, $container->env['PHP_VERSION'] ?? '8.4.11', $date));
-        $this->listen($container, 'apache', $ports);
+        $this->listen($container, ProcessKind::Apache, $ports);
         $container->processOptions['docroot'] = $root;
     }
 
@@ -399,24 +400,16 @@ final class ProcessManager
             return;
         }
         if ($signal === 'HUP') {
-            if ($container->process === 'nginx') {
+            if ($container->process === ProcessKind::Nginx) {
                 $this->reloadNginx($container, $machine);
             }
 
             return;
         }
-        $servers = ['apache', 'nginx', 'php-fpm', 'postgres', 'mysql', 'mariadb', 'redis', 'php-server', 'frankenphp', 'static', 'mailpit'];
-        if (!\in_array($signal, ['TERM', 'INT', 'QUIT'], true) || !\in_array($container->process, $servers, true)) {
+        if (!\in_array($signal, ['TERM', 'INT', 'QUIT'], true) || $container->process?->stopsGracefully() !== true) {
             return;
         }
-        $date = gmdate('d-M-Y H:i:s');
-        $this->appendLogs($container, match ($container->process) {
-            'php-fpm' => sprintf("[%s] NOTICE: Terminating ...\n[%s] NOTICE: exiting, bye-bye!", $date, $date),
-            'nginx' => sprintf("%s [notice] 1#1: signal 15 (SIGTERM) received, exiting\n%s [notice] 1#1: exit", gmdate('Y/m/d H:i:s'), gmdate('Y/m/d H:i:s')),
-            'apache' => sprintf('[%s] [mpm_prefork:notice] [pid 1:tid 1] AH00169: caught SIGTERM, shutting down', gmdate('D M d H:i:s.u Y')),
-            'postgres' => sprintf("%s UTC [1] LOG:  received fast shutdown request\n%s UTC [1] LOG:  database system is shut down", gmdate('Y-m-d H:i:s.v'), gmdate('Y-m-d H:i:s.v')),
-            default => '',
-        });
+        $this->appendLogs($container, $container->process->stopLog());
         $this->exited($container, 0);
         if ($container->status === Container::RESTARTING) {
             $this->docker->start($container);
@@ -429,7 +422,7 @@ final class ProcessManager
      */
     public function reloadNginx(Container $container, Machine $machine): void
     {
-        if ($container->process !== 'nginx') {
+        if ($container->process !== ProcessKind::Nginx) {
             return;
         }
         $date = gmdate('Y/m/d H:i:s');
@@ -519,7 +512,7 @@ final class ProcessManager
                 return;
             }
         }
-        $this->listen($container, 'nginx', $ports);
+        $this->listen($container, ProcessKind::Nginx, $ports);
         // nginx garde la configuration lue maintenant, jusqu'au prochain redémarrage ou « nginx -s reload ».
         $container->processOptions['nginxConfig'] = ConfigSnapshot::take($machine->fs);
     }
@@ -548,7 +541,7 @@ final class ProcessManager
             $this->appendLogs($container, sprintf("[%s] NOTICE: [pool www] 'user' directive is ignored when FPM is not running as root\n[%s] NOTICE: [pool www] 'group' directive is ignored when FPM is not running as root", $date, $date));
         }
         $this->appendLogs($container, sprintf("[%s] NOTICE: fpm is running, pid 1\n[%s] NOTICE: ready to handle connections", $date, $date));
-        $this->listen($container, 'php-fpm', [$port], [$port => $address]);
+        $this->listen($container, ProcessKind::PhpFpm, [$port], [$port => $address]);
     }
 
     /**
@@ -582,7 +575,7 @@ final class ProcessManager
         }
         $this->appendLogs($container, sprintf('[%s] PHP %s Development Server (http://%s) started', gmdate('D M j H:i:s Y'), $container->env['PHP_VERSION'] ?? '8.4.11', $listen));
         $address = $m[1] === '' ? '0.0.0.0' : $m[1];
-        $this->listen($container, 'php-server', [(int) $m[2]], [(int) $m[2] => \in_array($address, ['localhost', '127.0.0.1'], true) ? '127.0.0.1' : '0.0.0.0']);
+        $this->listen($container, ProcessKind::PhpServer, [(int) $m[2]], [(int) $m[2] => \in_array($address, ['localhost', '127.0.0.1'], true) ? '127.0.0.1' : '0.0.0.0']);
         $container->processOptions['docroot'] = $docroot;
         $container->processOptions['router'] = $router;
     }
@@ -600,7 +593,7 @@ final class ProcessManager
         $joined = implode(' ', $args);
         if (preg_match('/(messenger:consume|queue:work|schedule:work|horizon|reverb:start|octane:start)/', $joined)) {
             $this->appendLogs($container, sprintf("[OK] Consuming messages from transport \"async\".\n // (simulateur : le processus tourne en continu, les messages ne sont pas traités)"));
-            $this->listen($container, 'worker', []);
+            $this->listen($container, ProcessKind::Worker, []);
 
             return;
         }
@@ -649,7 +642,7 @@ final class ProcessManager
             }
         }
         $this->appendLogs($container, sprintf("%s [1] LOG:  starting PostgreSQL %s on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit\n%s [1] LOG:  listening on IPv4 address \"0.0.0.0\", port 5432\n%s [1] LOG:  listening on IPv6 address \"::\", port 5432\n%s [1] LOG:  listening on Unix socket \"/var/run/postgresql/.s.PGSQL.5432\"\n%s [1] LOG:  database system is ready to accept connections", $date, $env['PG_VERSION'] ?? '18.0', $date, $date, $date, $date));
-        $this->listen($container, 'postgres', [5432]);
+        $this->listen($container, ProcessKind::Postgres, [5432]);
     }
 
     private function startMysql(Container $container, Machine $machine, string $binary): void
@@ -670,7 +663,7 @@ final class ProcessManager
             $this->appendLogs($container, sprintf("%s [Note] [Entrypoint]: Initializing database files\n%s [Note] [Entrypoint]: Database files initialized\n%s [Note] [Entrypoint]: MySQL init process done. Ready for start up.", $date, $date, $date));
         }
         $this->appendLogs($container, sprintf("%s 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '%s'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  MySQL Community Server - GPL.", $date, $env['MYSQL_VERSION'] ?? ($env['MARIADB_VERSION'] ?? '8.4.6')));
-        $this->listen($container, $binary === 'mariadbd' ? 'mariadb' : 'mysql', [3306, 33060]);
+        $this->listen($container, $binary === 'mariadbd' ? ProcessKind::Mariadb : ProcessKind::Mysql, [3306, 33060]);
     }
 
     /**

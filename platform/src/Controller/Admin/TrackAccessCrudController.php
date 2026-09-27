@@ -2,7 +2,7 @@
 
 namespace App\Controller\Admin;
 
-use App\Content\ContentRepository;
+use App\Admin\TrackChoices;
 use App\Entity\AccessSource;
 use App\Entity\TrackAccess;
 use App\Entity\User;
@@ -34,7 +34,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class TrackAccessCrudController extends AbstractCrudController
 {
     public function __construct(
-        private readonly ContentRepository $content,
+        private readonly TrackChoices $tracks,
         private readonly UserRepository $users,
         private readonly ClockInterface $clock,
     ) {
@@ -66,18 +66,9 @@ final class TrackAccessCrudController extends AbstractCrudController
 
     public function configureFields(string $pageName): iterable
     {
-        $tracks = [];
-        foreach ($this->content->tracks() as $track) {
-            $tracks[$track->title] = $track->id;
-        }
-
         yield AssociationField::new('user', 'Apprenant')->setDisabled(Crud::PAGE_NEW !== $pageName)->autocomplete();
-        yield ChoiceField::new('trackId', 'Parcours')->setChoices($tracks)->setDisabled(Crud::PAGE_NEW !== $pageName);
-        yield ChoiceField::new('source', 'Source')->hideOnForm()->renderAsBadges([
-            AccessSource::Purchase->name => 'success',
-            AccessSource::Cohort->name => 'info',
-            AccessSource::Gift->name => 'secondary',
-        ]);
+        yield ChoiceField::new('trackId', 'Parcours')->setChoices($this->tracks->choices())->setDisabled(Crud::PAGE_NEW !== $pageName);
+        yield ChoiceField::new('source', 'Source')->hideOnForm()->renderAsBadges(AccessSource::badges());
         yield AssociationField::new('cohort', 'Cohorte')->hideOnForm();
         yield AssociationField::new('purchase', 'Achat')->onlyOnDetail();
         yield DateTimeField::new('startsAt', 'Début')->hideOnForm();
@@ -90,7 +81,7 @@ final class TrackAccessCrudController extends AbstractCrudController
     {
         return $filters
             ->add(EntityFilter::new('user', 'Apprenant'))
-            ->add(ChoiceFilter::new('source', 'Source')->setChoices(array_combine(array_map(static fn (AccessSource $s) => $s->label(), AccessSource::cases()), array_column(AccessSource::cases(), 'value'))))
+            ->add(ChoiceFilter::new('source', 'Source')->setChoices(AccessSource::valueChoices()))
             ->add(EntityFilter::new('cohort', 'Cohorte'));
     }
 

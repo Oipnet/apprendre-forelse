@@ -16,7 +16,7 @@ interface Network
     /**
      * État d'une connexion TCP.
      *
-     * @return array{status: 'open'|'refused'|'unresolved', process: ?string, container: ?\Forelse\DockerSim\State\Container}
+     * @return array{status: 'open'|'refused'|'unresolved', process: ?\Forelse\DockerSim\State\ProcessKind, container: ?\Forelse\DockerSim\State\Container}
      */
     public function connect(string $host, int $port): array;
 

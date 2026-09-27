@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity(repositoryClass: ContactMessageRepository::class)]
 #[ORM\Index(name: 'IDX_CONTACT_MESSAGE_HANDLED', fields: ['handled', 'createdAt'])]
-class ContactMessage
+class ContactMessage implements Handleable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

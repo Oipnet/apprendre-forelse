@@ -9,9 +9,12 @@ use Forelse\DockerSim\Catalog\UnknownImageException;
 use Forelse\DockerSim\Engine\ContainerSpec;
 use Forelse\DockerSim\Engine\Docker;
 use Forelse\DockerSim\Engine\DockerException;
+use Forelse\DockerSim\Engine\PortSyntax;
+use Forelse\DockerSim\Engine\VolumeSyntax;
 use Forelse\DockerSim\Fs\Path;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\Image;
+use Forelse\DockerSim\State\ProcessKind;
 use Forelse\DockerSim\State\Store;
 
 /** La commande « docker » : analyse des arguments, appel du démon simulé, sortie au format de la vraie CLI. */
@@ -479,23 +482,22 @@ final class Application
                 $spec->env[$key] = $value;
             }
         }
-        foreach ($args->all('publish') as $publish) {
-            $port = $this->parsePort($publish, $command);
-            if ($port === null) {
-                return 125;
+        try {
+            foreach ($args->all('publish') as $publish) {
+                foreach (PortSyntax::parse($publish) as $port) {
+                    // Sans port de l'hôte, Docker en choisit un libre parmi les ports éphémères.
+                    $spec->ports[] = ['host' => $port['host'] ?? 32768 + random_int(0, 20000)] + $port;
+                }
             }
-            $spec->ports[] = $port;
+            foreach ($args->all('volume') as $volume) {
+                $spec->mounts[] = VolumeSyntax::parse($volume, $this->docker->hostPath(...));
+            }
+        } catch (DockerException $e) {
+            $this->line(sprintf("docker: %s%s\n\nRun 'docker %s --help' for more information", $e->daemon ? 'Error response from daemon: ' : '', $e->getMessage(), $command));
+
+            return 125;
         }
         $spec->publishAll = $args->has('publish-all');
-        foreach ($args->all('volume') as $volume) {
-            $mount = $this->parseVolume($volume);
-            if ($mount === null) {
-                $this->line(sprintf("docker: invalid spec: %s: empty section between colons\n\nRun 'docker %s --help' for more information", $volume, $command));
-
-                return 125;
-            }
-            $spec->mounts[] = $mount;
-        }
         foreach ($args->all('mount') as $mount) {
             $options = [];
             foreach (explode(',', $mount) as $pair) {
@@ -562,7 +564,7 @@ final class Application
 
             return 0;
         }
-        if ($args->has('interactive') && $args->has('tty') && $container->isRunning() && $container->process === 'idle') {
+        if ($args->has('interactive') && $args->has('tty') && $container->isRunning() && $container->process === ProcessKind::Idle) {
             $this->write(implode("\n", $container->logs).($container->logs !== [] ? "\n" : ''));
             $this->line(sprintf('💡 La console du simulateur n\'est pas un terminal : impossible d\'entrer dans le conteneur. Il tourne en arrière-plan (%s) ; lancez vos commandes avec docker exec %s <commande>.', $container->name, $container->name));
 
@@ -578,52 +580,6 @@ final class Application
         return $container->exitCode;
     }
 
-    /** @return array{host: int, container: int, protocol: string, ip: string}|null */
-    private function parsePort(string $publish, string $command): ?array
-    {
-        $protocol = 'tcp';
-        if (str_contains($publish, '/')) {
-            [$publish, $protocol] = explode('/', $publish, 2);
-        }
-        $parts = explode(':', $publish);
-        $ip = '0.0.0.0';
-        if (\count($parts) === 3) {
-            $ip = array_shift($parts);
-        }
-        if (\count($parts) === 1) {
-            $parts = [(string) (32768 + random_int(0, 20000)), $parts[0]];
-        }
-        [$host, $container] = $parts;
-        if (!ctype_digit($host) || !ctype_digit($container) || (int) $container < 1 || (int) $container > 65535 || (int) $host > 65535) {
-            $this->line(sprintf("docker: invalid containerPort: %s\n\nRun 'docker %s --help' for more information", $container, $command));
-
-            return null;
-        }
-
-        return ['host' => (int) $host, 'container' => (int) $container, 'protocol' => $protocol, 'ip' => $ip === '' ? '0.0.0.0' : $ip];
-    }
-
-    /** @return array{type: string, source: string, target: string, readOnly: bool}|null */
-    private function parseVolume(string $volume): ?array
-    {
-        $parts = explode(':', $volume);
-        if (\in_array('', $parts, true)) {
-            return null;
-        }
-        if (\count($parts) === 1) {
-            return ['type' => 'volume', 'source' => '', 'target' => $parts[0], 'readOnly' => false];
-        }
-        [$source, $target] = $parts;
-        $readOnly = \in_array('ro', explode(',', $parts[2] ?? ''), true);
-        if (str_starts_with($source, '/') || str_starts_with($source, '.') || str_starts_with($source, '~')) {
-            return ['type' => 'bind', 'source' => $this->docker->hostPath($source), 'target' => $target, 'readOnly' => $readOnly];
-        }
-        if (!str_starts_with($target, '/')) {
-            return null;
-        }
-
-        return ['type' => 'volume', 'source' => $source, 'target' => $target, 'readOnly' => $readOnly];
-    }
 
     private function findContainer(string $name): Container
     {
@@ -967,9 +923,13 @@ final class Application
         }
         $command = implode(' ', $container->processOptions['argv'] ?? $container->command);
         $rows = [[$container->user ?? 'root', '12345', '12320', '0', '10:00', '?', '00:00:00', $command]];
-        if (\in_array($container->process, ['apache', 'php-fpm', 'nginx'], true)) {
+        if (\in_array($container->process, [ProcessKind::Apache, ProcessKind::PhpFpm, ProcessKind::Nginx], true)) {
             for ($i = 0; $i < 2; ++$i) {
-                $rows[] = [$container->process === 'nginx' ? 'nginx' : 'www-data', (string) (12350 + $i), '12345', '0', '10:00', '?', '00:00:00', $container->process === 'php-fpm' ? 'php-fpm: pool www' : ($container->process === 'nginx' ? 'nginx: worker process' : 'apache2 -DFOREGROUND')];
+                $rows[] = [$container->process === ProcessKind::Nginx ? 'nginx' : 'www-data', (string) (12350 + $i), '12345', '0', '10:00', '?', '00:00:00', match ($container->process) {
+                    ProcessKind::PhpFpm => 'php-fpm: pool www',
+                    ProcessKind::Nginx => 'nginx: worker process',
+                    default => 'apache2 -DFOREGROUND',
+                }];
             }
         }
         $this->write(Format::table(['UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD'], $rows));

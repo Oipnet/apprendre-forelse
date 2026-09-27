@@ -105,8 +105,12 @@ export interface Runtime {
 	deleteFile(path: string): Promise<void>;
 	request(request: HttpRequest): Promise<HttpResponse>;
 	runTests(grading?: Grading): Promise<TestRunResult>;
-	/** Commande bin/console (arguments déjà découpés), exécutée dans le projet de l'aperçu. */
-	runCommand(args: string[]): Promise<CommandResult>;
+	/**
+	 * Facultatif : la console du projet (bin/console, artisan, docker…), arguments déjà découpés, exécutée
+	 * dans le projet de l'aperçu. Un runtime sans console ne la déclare pas : la page n'offre alors ni champ
+	 * de commande ni commandes de préparation, plutôt qu'une console qui échoue à chaque fois.
+	 */
+	runCommand?(args: string[]): Promise<CommandResult>;
 	/**
 	 * Facultatif : prévient quand le runtime a dû être relancé parce qu'il ne répondait plus (une boucle
 	 * infinie dans le code de l'apprenant). Les fichiers sont rejoués ; ce qui ne vivait qu'en mémoire

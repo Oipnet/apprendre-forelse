@@ -7,6 +7,7 @@ namespace Forelse\DockerSim\Shell\Command;
 use Forelse\DockerSim\Shell\Interpreter;
 use Forelse\DockerSim\Shell\Machine;
 use Forelse\DockerSim\Shell\Result;
+use Forelse\DockerSim\State\ProcessKind;
 
 /**
  * Le réseau vu depuis un conteneur : curl, wget, ping, nc, getent, et les clients des bases de données
@@ -319,7 +320,7 @@ final class NetworkCommands implements Command
     }
 
     /**
-     * @param list<string> $processes processus acceptés à l'écoute sur le port (postgres, mysql…)
+     * @param list<ProcessKind> $processes processus acceptés à l'écoute sur le port (postgres, mysql…)
      *
      * @return array{0: ?string, 1: ?\Forelse\DockerSim\State\Container, 2: string} erreur, conteneur, hôte
      */
@@ -344,7 +345,7 @@ final class NetworkCommands implements Command
     {
         $o = $this->clientOptions($args);
         $port = (int) ($o['p'] ?? 5432);
-        [$error, , $host] = $this->reachDatabase($m, $o['h'] ?? ($m->env['PGHOST'] ?? ''), $port, ['postgres']);
+        [$error, , $host] = $this->reachDatabase($m, $o['h'] ?? ($m->env['PGHOST'] ?? ''), $port, [ProcessKind::Postgres]);
         $socket = $host === 'localhost' && !isset($o['h']) ? '/var/run/postgresql' : $host;
 
         return match ($error) {
@@ -359,7 +360,7 @@ final class NetworkCommands implements Command
     {
         $o = $this->clientOptions($args);
         $port = (int) ($o['p'] ?? 5432);
-        [$error, $container, $host] = $this->reachDatabase($m, $o['h'] ?? ($m->env['PGHOST'] ?? ''), $port, ['postgres']);
+        [$error, $container, $host] = $this->reachDatabase($m, $o['h'] ?? ($m->env['PGHOST'] ?? ''), $port, [ProcessKind::Postgres]);
         if ($error === 'unresolved') {
             return Result::error(2, sprintf("psql: error: could not translate host name \"%s\" to address: Name does not resolve\n", $host));
         }
@@ -414,7 +415,7 @@ final class NetworkCommands implements Command
     {
         $o = $this->clientOptions($args);
         $host = $o['h'] ?? 'localhost';
-        [$error, $container] = $this->reachDatabase($m, $host, (int) ($o['P'] ?? 3306), ['mysql', 'mariadb']);
+        [$error, $container] = $this->reachDatabase($m, $host, (int) ($o['P'] ?? 3306), [ProcessKind::Mysql, ProcessKind::Mariadb]);
         if ($name === 'healthcheck.sh') {
             return $error === null ? Result::ok() : new Result(1);
         }
@@ -432,7 +433,7 @@ final class NetworkCommands implements Command
     {
         $o = $this->clientOptions($args);
         $host = $o['h'] ?? 'localhost';
-        [$error] = $this->reachDatabase($m, $host, (int) ($o['P'] ?? 3306), ['mysql', 'mariadb']);
+        [$error] = $this->reachDatabase($m, $host, (int) ($o['P'] ?? 3306), [ProcessKind::Mysql, ProcessKind::Mariadb]);
         if ($error !== null) {
             return Result::error(1, $error === 'unresolved' ? "ERROR 2005 (HY000): Unknown MySQL server host '{$host}' (-2)\n" : "ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock' (2)\n");
         }
@@ -446,7 +447,7 @@ final class NetworkCommands implements Command
         $o = $this->clientOptions($args);
         $host = $o['h'] ?? '127.0.0.1';
         $port = (int) ($o['p'] ?? 6379);
-        [$error] = $this->reachDatabase($m, $host, $port, ['redis']);
+        [$error] = $this->reachDatabase($m, $host, $port, [ProcessKind::Redis]);
         if ($error !== null) {
             return Result::error(1, $error === 'unresolved' ? "Could not connect to Redis at {$host}:{$port}: Name does not resolve\n" : "Could not connect to Redis at {$host}:{$port}: Connection refused\n");
         }

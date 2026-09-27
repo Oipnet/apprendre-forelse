@@ -369,4 +369,23 @@ final class ContainerTest extends SimulatorTestCase
         $this->assertSame(126, $code);
         $this->assertStringContainsString('exec: "bash": executable file not found in $PATH', $output);
     }
+
+    public function testStopEtSignalSuiventLaMemeRegle(): void
+    {
+        // Les serveurs gèrent SIGTERM : docker stop les arrête proprement (0). Un PID 1 sans gestionnaire est tué (137).
+        foreach (['mail' => 'axllent/mailpit:v1.21', 'franken' => 'dunglas/frankenphp:1-php8.4', 'web' => 'nginx:alpine'] as $nom => $image) {
+            $this->cliOk("run -d --name {$nom} {$image}");
+            $this->cliOk("stop {$nom}");
+            $this->assertSame(0, $this->docker()->store->findContainer($nom)->exitCode, "{$image} s'arrête proprement.");
+        }
+        $this->cliOk('run -d --name attente alpine sleep infinity');
+        $this->cliOk('stop attente');
+        $this->assertSame(137, $this->docker()->store->findContainer('attente')->exitCode);
+
+        // kill 1 depuis le conteneur : même règle que docker stop.
+        $this->cliOk('run -d --name boite axllent/mailpit:v1.21');
+        $this->cliOk('exec boite kill 1');
+        $this->assertFalse($this->docker()->store->findContainer('boite')->isRunning(), 'Mailpit s\'arrête sur SIGTERM.');
+        $this->assertSame(0, $this->docker()->store->findContainer('boite')->exitCode);
+    }
 }

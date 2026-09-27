@@ -9,6 +9,7 @@ use Forelse\DockerSim\Fs\Path;
 use Forelse\DockerSim\Http\Nginx\ConfigSnapshot;
 use Forelse\DockerSim\Http\Nginx\NginxConfig;
 use Forelse\DockerSim\State\Container;
+use Forelse\DockerSim\State\ProcessKind;
 
 /**
  * nginx : choix du bloc server et de la location, root/index, try_files, return, proxy_pass et
@@ -251,10 +252,10 @@ final class NginxServer
 
             return HttpResponse::page(502, ErrorPages::nginx(502), self::SIGNATURE, [...$trace, sprintf('fastcgi_pass %s : %s', $target, $state === 'unresolved' ? 'nom inconnu' : 'connexion refusée')]);
         }
-        if ($process !== 'php-fpm') {
+        if ($process !== ProcessKind::PhpFpm) {
             $this->context->log($container, sprintf('%s [error] 29#29: *1 upstream sent unsupported FastCGI protocol version: 72 while reading response header from upstream, upstream: "fastcgi://%s"', gmdate('Y/m/d H:i:s'), $target));
 
-            return HttpResponse::page(502, ErrorPages::nginx(502), self::SIGNATURE, [...$trace, sprintf('fastcgi_pass %s : %s ne parle pas FastCGI', $target, $process ?? 'ce processus')]);
+            return HttpResponse::page(502, ErrorPages::nginx(502), self::SIGNATURE, [...$trace, sprintf('fastcgi_pass %s : %s ne parle pas FastCGI', $target, $process->value ?? 'ce processus')]);
         }
         $scriptName = $request->path;
         $params = [];

@@ -3,11 +3,13 @@
 namespace App\Entity;
 
 use Symfony\Contracts\Translation\TranslatableInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Objet d'un message envoyé par le formulaire de contact. Traduisible : EasyAdmin affiche label() tel quel. */
 enum ContactSubject: string implements TranslatableInterface
 {
+    use EnumLabels;
+    use EnumBadges;
+
     case Question = 'question';
     case Order = 'commande';
     case Bug = 'probleme';
@@ -25,8 +27,14 @@ enum ContactSubject: string implements TranslatableInterface
         };
     }
 
-    public function trans(TranslatorInterface $translator, ?string $locale = null): string
+    public function badge(): string
     {
-        return $this->label();
+        return match ($this) {
+            self::Question => 'info',
+            self::Order => 'warning',
+            self::Bug => 'danger',
+            self::Organization => 'success',
+            self::Other => 'secondary',
+        };
     }
 }

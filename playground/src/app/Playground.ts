@@ -156,7 +156,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		for (const name of ['preview', 'console', 'requests'] as const) $(`.pane-${name}`).hidden = pane !== name;
 		if (pane === 'console') {
 			$('.pane-tabs .badge').hidden = true;
-			$<HTMLInputElement>('#console-cmd').focus();
+			if (runtime.runCommand) $<HTMLInputElement>('#console-cmd').focus();
 		}
 	};
 	for (const tab of root.querySelectorAll<HTMLButtonElement>('.pane-tabs button')) tab.addEventListener('click', () => showPane(tab.dataset.pane as Pane));
@@ -178,9 +178,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		}
 	};
 	for (const [level, message] of enAttente.splice(0)) messagesDeLApercu(level, message);
+	// Un runtime sans console (le simulateur Nuxt) : l'onglet garde les messages de l'aperçu, sans champ de commande.
+	const commandes = exercise.setup.length > 0 && runtime.runCommand ? exercise.setup : [];
+	if (!runtime.runCommand) $('.console-input').hidden = true;
 
 	// Commandes de préparation (ex. schéma de la base de l'aperçu, qui vit en mémoire).
-	for (const command of exercise.setup) {
+	for (const command of commandes) {
 		$('#boot-label').textContent = `Préparation : ${consoleName} ${command}`;
 		const result = await consolePanel.run(command, { quiet: true });
 		if (result?.exitCode !== 0) $('.pane-tabs .badge').hidden = false;
@@ -194,7 +197,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		if (event.phase === 'restarting') status('Le code ne répond plus (boucle infinie ?) : redémarrage…', 'ko');
 		else if (event.phase === 'failed') status(`Impossible de redémarrer : ${event.error}. Rechargez la page.`, 'ko');
 		else void (async () => {
-			for (const command of exercise.setup) await consolePanel.run(command, { quiet: true });
+			for (const command of commandes) await consolePanel.run(command, { quiet: true });
 			status('Redémarré. Corrigez la boucle, puis relancez.', 'idle');
 		})();
 	});

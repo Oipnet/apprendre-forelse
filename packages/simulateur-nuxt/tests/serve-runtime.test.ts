@@ -62,6 +62,15 @@ function runtime(body: () => Uint8Array = () => new Uint8Array([1, 2, 3])): Work
 }
 
 describe('serveRuntime', () => {
+	it('refuse clairement une méthode facultative que le runtime n\'a pas', async () => {
+		const { e, envoyer, reponses } = endpoint();
+		const { runCommand: _sansConsole, ...sansConsole } = runtime();
+		serveRuntime(sansConsole, {}, e);
+		envoyer({ method: 'runCommand', args: [['info']] });
+		await attendre(10);
+		expect(reponses()[0]).toMatchObject({ type: 'error', error: expect.stringContaining('Méthode inconnue du runtime : runCommand') });
+	});
+
 	it('traite les appels un par un : une frappe pendant les mutants n\'est pas écrasée', async () => {
 		const { e, envoyer, reponses } = endpoint();
 		serveRuntime(runtime(), {}, e);

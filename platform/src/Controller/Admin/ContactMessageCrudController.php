@@ -10,7 +10,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
-use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
@@ -22,7 +21,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Messages de la page de contact et demandes des écoles : on les lit, on répond par email, on les marque traités.
@@ -32,6 +30,8 @@ use Symfony\Component\HttpFoundation\Response;
 #[AdminRoute(path: '/messages', name: 'contact_message')]
 final class ContactMessageCrudController extends AbstractCrudController
 {
+    use HandledCrudActions;
+
     public function __construct(private readonly EntityManagerInterface $entityManager)
     {
     }
@@ -54,13 +54,7 @@ final class ContactMessageCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         yield DateTimeField::new('createdAt', 'Reçu le');
-        yield ChoiceField::new('subject', 'Objet')->renderAsBadges([
-            ContactSubject::Organization->name => 'success',
-            ContactSubject::Order->name => 'warning',
-            ContactSubject::Bug->name => 'danger',
-            ContactSubject::Question->name => 'info',
-            ContactSubject::Other->name => 'secondary',
-        ]);
+        yield ChoiceField::new('subject', 'Objet')->renderAsBadges(ContactSubject::badges());
         yield TextField::new('name', 'Nom');
         yield EmailField::new('email', 'Email');
         yield TextField::new('organization', 'Établissement');
@@ -73,62 +67,30 @@ final class ContactMessageCrudController extends AbstractCrudController
 
     public function configureFilters(Filters $filters): Filters
     {
-        $subjects = [];
-        foreach (ContactSubject::cases() as $subject) {
-            $subjects[$subject->label()] = $subject->value;
-        }
-
         return $filters
             ->add(BooleanFilter::new('handled', 'Traité'))
-            ->add(ChoiceFilter::new('subject', 'Objet')->setChoices($subjects));
+            ->add(ChoiceFilter::new('subject', 'Objet')->setChoices(ContactSubject::valueChoices()));
     }
 
     public function configureActions(Actions $actions): Actions
     {
-        $handle = Action::new('handle', 'Marquer traité', 'fa fa-check')
-            ->linkToCrudAction('handle')
-            ->displayIf(static fn (ContactMessage $m) => !$m->isHandled());
-        $reopen = Action::new('reopen', 'Rouvrir', 'fa fa-rotate-left')
-            ->linkToCrudAction('reopen')
-            ->displayIf(static fn (ContactMessage $m) => $m->isHandled());
-
-        return $actions
+        return $this->addHandledActions($actions
             ->disable(Action::NEW, Action::EDIT)
-            ->add(Crud::PAGE_INDEX, Action::DETAIL)
-            ->add(Crud::PAGE_INDEX, $handle)
-            ->add(Crud::PAGE_INDEX, $reopen)
-            ->add(Crud::PAGE_DETAIL, $handle)
-            ->add(Crud::PAGE_DETAIL, $reopen);
+            ->add(Crud::PAGE_INDEX, Action::DETAIL));
     }
 
-    /** @param AdminContext<ContactMessage> $context */
-    #[AdminRoute('/{entityId}/traite', name: 'handle', options: ['methods' => ['POST', 'GET']])]
-    public function handle(AdminContext $context): Response
+    protected function handledNotice(bool $handled): string
     {
-        return $this->setHandled($context, true);
+        return $handled ? 'Message marqué comme traité.' : 'Message rouvert.';
     }
 
-    /** @param AdminContext<ContactMessage> $context */
-    #[AdminRoute('/{entityId}/rouvrir', name: 'reopen', options: ['methods' => ['POST', 'GET']])]
-    public function reopen(AdminContext $context): Response
+    protected function handledIndexRoute(): string
     {
-        return $this->setHandled($context, false);
+        return 'admin_contact_message_index';
     }
 
-    /** @param AdminContext<ContactMessage> $context */
-    private function setHandled(AdminContext $context, bool $handled): Response
+    protected function handledEntityManager(): EntityManagerInterface
     {
-        $message = $context->getEntity()->getInstance();
-        if (!$message instanceof ContactMessage) {
-            throw $this->createNotFoundException();
-        }
-        $message->setHandled($handled);
-        $this->entityManager->flush();
-        $this->addFlash('success', $handled ? 'Message marqué comme traité.' : 'Message rouvert.');
-
-        $referer = $context->getRequest()->headers->get('referer', '');
-        $sameOrigin = str_starts_with($referer, $context->getRequest()->getSchemeAndHttpHost().'/');
-
-        return $this->redirect($sameOrigin ? $referer : $this->generateUrl('admin_contact_message_index'));
+        return $this->entityManager;
     }
 }

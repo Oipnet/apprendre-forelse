@@ -3,11 +3,13 @@
 namespace App\Entity;
 
 use Symfony\Contracts\Translation\TranslatableInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Nature d'un retour d'apprenant sur un exercice. Traduisible : EasyAdmin affiche label() tel quel. */
 enum FeedbackKind: string implements TranslatableInterface
 {
+    use EnumLabels;
+    use EnumBadges;
+
     case Bug = 'bug';
     case Unclear = 'unclear';
     case TooEasy = 'too-easy';
@@ -25,14 +27,20 @@ enum FeedbackKind: string implements TranslatableInterface
         };
     }
 
-    public function trans(TranslatorInterface $translator, ?string $locale = null): string
-    {
-        return $this->label();
-    }
-
     /** @return list<string> */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');
+    }
+
+    public function badge(): string
+    {
+        return match ($this) {
+            self::Bug => 'danger',
+            self::Unclear => 'warning',
+            self::TooEasy => 'info',
+            self::TooHard => 'warning',
+            self::Other => 'secondary',
+        };
     }
 }

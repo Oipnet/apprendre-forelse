@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Compose;
 
+use Forelse\DockerSim\Engine\DockerException;
+use Forelse\DockerSim\Engine\PortSyntax;
+use Forelse\DockerSim\Engine\VolumeSyntax;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -424,25 +427,11 @@ final class ComposeFile
             // YAML lit 80:80 en base 60 dans certains cas : Compose recommande les guillemets.
             return [['host' => null, 'container' => $port, 'protocol' => 'tcp', 'ip' => '0.0.0.0']];
         }
-        $spec = (string) $port;
-        $protocol = 'tcp';
-        if (str_contains($spec, '/')) {
-            [$spec, $protocol] = explode('/', $spec, 2);
+        try {
+            return PortSyntax::parse((string) $port);
+        } catch (DockerException $e) {
+            throw new ComposeException($e->getMessage());
         }
-        $parts = explode(':', $spec);
-        $ip = '0.0.0.0';
-        if (\count($parts) === 3) {
-            $ip = array_shift($parts);
-        }
-        if (\count($parts) === 1) {
-            return [['host' => null, 'container' => (int) $parts[0], 'protocol' => $protocol, 'ip' => $ip]];
-        }
-        [$host, $container] = $parts;
-        if (!ctype_digit(str_replace('-', '', $host)) || !ctype_digit(str_replace('-', '', $container))) {
-            throw new ComposeException(sprintf('invalid containerPort: %s', $container));
-        }
-
-        return [['host' => (int) $host, 'container' => (int) $container, 'protocol' => $protocol, 'ip' => $ip]];
     }
 
     /** @return array{type: string, source: string, target: string, readOnly: bool} */
@@ -460,20 +449,17 @@ final class ComposeFile
 
             return ['type' => $type === 'bind' ? 'bind' : 'volume', 'source' => $source, 'target' => (string) ($volume['target'] ?? ''), 'readOnly' => (bool) ($volume['read_only'] ?? false)];
         }
-        $parts = explode(':', (string) $volume);
-        if (\count($parts) === 1) {
-            return ['type' => 'volume', 'source' => '', 'target' => $parts[0], 'readOnly' => false];
-        }
-        $source = $parts[0];
-        $target = $parts[1];
-        $readOnly = \in_array('ro', explode(',', $parts[2] ?? ''), true);
-        if (str_starts_with($source, '.') || str_starts_with($source, '/') || str_starts_with($source, '~')) {
+        // Une source relative l'est au dossier du projet, pas au dossier courant.
+        $hostPath = static function (string $source) use ($projectDirectory): string {
             $absolute = str_starts_with($source, '/') ? $source : rtrim($projectDirectory.'/'.preg_replace('#^\./?#', '', $source), '/');
 
-            return ['type' => 'bind', 'source' => $absolute === '' ? $projectDirectory : $absolute, 'target' => $target, 'readOnly' => $readOnly];
+            return $absolute === '' ? $projectDirectory : $absolute;
+        };
+        try {
+            return VolumeSyntax::parse((string) $volume, $hostPath);
+        } catch (DockerException $e) {
+            throw new ComposeException($e->getMessage());
         }
-
-        return ['type' => 'volume', 'source' => $source, 'target' => $target, 'readOnly' => $readOnly];
     }
 
     private function checkReferences(): void

@@ -52,8 +52,8 @@ final class Container
         public array $listening = [],
         /** Adresse d'écoute du serveur (0.0.0.0, 127.0.0.1…), par port. */
         public array $listenAddresses = [],
-        /** Ce qui tourne : apache, nginx, php-fpm, php-server, postgres… ou null. */
-        public ?string $process = null,
+        /** Ce qui tourne en PID 1, ou null. */
+        public ?ProcessKind $process = null,
         public ?string $health = null,
         public string $hostname = '',
         /** Adresses IP par réseau. */
@@ -102,7 +102,7 @@ final class Container
         $container = new self($data['id'], $data['name'], $data['imageId'], $data['imageRef'], $data['command'], $data['env'], $data['workdir'], $data['user'], $data['ports'], $data['mounts'], $data['networks'], $data['labels']);
         foreach ($data as $key => $value) {
             if (!\in_array($key, ['id', 'imageId', 'imageRef'], true) && property_exists($container, $key)) {
-                $container->{$key} = $value;
+                $container->{$key} = $key === 'process' && $value !== null ? ProcessKind::tryFrom($value) : $value;
             }
         }
 
