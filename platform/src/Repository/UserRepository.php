@@ -86,4 +86,21 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ['role' => '%'.json_encode($role).'%'],
         ));
     }
+
+    /**
+     * Nombre de membres de chaque cohorte (ce que compte Cohort::getUsers()), en une requête.
+     *
+     * @return array<int, int> identifiant de la cohorte => nombre de membres
+     */
+    public function countByCohort(): array
+    {
+        $rows = $this->createQueryBuilder('u')
+            ->select('IDENTITY(u.cohort) AS cohort', 'COUNT(u.id) AS members')
+            ->where('u.cohort IS NOT NULL')
+            ->groupBy('u.cohort')
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_combine(array_map(intval(...), array_column($rows, 'cohort')), array_map(intval(...), array_column($rows, 'members')));
+    }
 }
