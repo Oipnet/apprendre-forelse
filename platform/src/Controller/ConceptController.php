@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Content\ConceptIndex;
-use App\Seo\SeoWriter;
+use App\Seo\Page\ConceptSeo;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -15,16 +15,16 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ConceptController extends AbstractController
 {
     #[Route('/notions', name: 'app_concepts', methods: ['GET'])]
-    public function index(ConceptIndex $concepts, SeoWriter $seo): Response
+    public function index(ConceptIndex $concepts, ConceptSeo $seo): Response
     {
         $all = $concepts->all();
-        $seo->conceptList($all);
+        $seo->index($all);
 
         return $this->render('concept/index.html.twig', ['concepts' => $all]);
     }
 
     #[Route('/notions/{slug}', name: 'app_concept', methods: ['GET'])]
-    public function show(string $slug, ConceptIndex $concepts, SeoWriter $seo): Response
+    public function show(string $slug, ConceptIndex $concepts, ConceptSeo $seo): Response
     {
         $concept = $concepts->find($slug) ?? throw $this->createNotFoundException();
         $seo->concept($concept);

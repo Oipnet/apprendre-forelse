@@ -7,7 +7,7 @@ use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Les balises de la page en cours (title, description, canonical, Open Graph, JSON-LD) : remplies par le contrôleur
- * (voir SeoWriter), rendues par base.html.twig sous le nom `seo`. Une page qui n'en remplit aucune garde son bloc
+ * (voir Seo\Page et l'attribut #[Seo]), rendues par base.html.twig sous le nom `seo`. Une page qui n'en remplit aucune garde son bloc
  * `title` et n'a ni canonical ni Open Graph : c'est le cas des pages privées.
  */
 final class PageSeo implements ResetInterface

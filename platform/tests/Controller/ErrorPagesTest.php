@@ -26,6 +26,18 @@ final class ErrorPagesTest extends WebTestCase
         $this->assertSelectorNotExists('link[rel="canonical"]');
     }
 
+    /** Une page fixe (#[Seo]) qui répond 404 : la page d'erreur ne se présente pas comme la page demandée. */
+    public function testUnePageFixeIntrouvableNeGardePasSesBalises(): void
+    {
+        $client = static::createClient(['debug' => false]);
+        $client->request('GET', '/auto-hebergement');
+
+        $this->assertResponseStatusCodeSame(404);
+        $this->assertPageTitleSame('Page introuvable · Forelse');
+        $this->assertSelectorNotExists('link[rel="canonical"]');
+        $this->assertSelectorNotExists('meta[name="description"]');
+    }
+
     public function testUnAccesInterditLeDitSansAfficherLeCompte(): void
     {
         $client = static::createClient(['debug' => false]);

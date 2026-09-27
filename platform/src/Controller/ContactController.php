@@ -7,7 +7,7 @@ use App\Entity\ContactMessage;
 use App\Entity\ContactSubject;
 use App\Entity\User;
 use App\Form\ContactFormType;
-use App\Seo\SeoWriter;
+use App\Seo\Seo;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -30,7 +30,8 @@ final class ContactController extends AbstractController
     }
 
     #[Route('/contact', name: 'app_contact', methods: ['GET', 'POST'])]
-    public function contact(Request $request, SeoWriter $seo): Response
+    #[Seo('Contact', 'Une question sur un parcours, un achat ou une facture, un problème sur le site : écrivez-nous, une personne lit chaque message et vous répond par email.')]
+    public function contact(Request $request): Response
     {
         $message = $this->newMessage();
         $subject = ContactSubject::tryFrom($request->query->getString('objet'));
@@ -41,20 +42,17 @@ final class ContactController extends AbstractController
         if ($sent = $this->handle($form, $request)) {
             return $sent;
         }
-        $seo->contact();
-
         return $this->render('contact/index.html.twig', ['form' => $form, 'open' => $this->inbox->isOpen()], $this->status($form));
     }
 
     #[Route('/ecoles-et-entreprises', name: 'app_organizations', methods: ['GET', 'POST'])]
-    public function organizations(Request $request, SeoWriter $seo): Response
+    #[Seo('Former une classe ou une équipe au développement', 'Écoles, organismes de formation, entreprises : vos apprenants codent dans le navigateur, sans rien installer, et vous suivez leur progression exercice par exercice. Sur devis.', breadcrumb: 'Écoles et entreprises')]
+    public function organizations(Request $request): Response
     {
         $form = $this->createForm(ContactFormType::class, $this->newMessage()->setSubject(ContactSubject::Organization), ['organization' => true]);
         if ($sent = $this->handle($form, $request, '#demande')) {
             return $sent;
         }
-        $seo->organizations();
-
         return $this->render('contact/organizations.html.twig', ['form' => $form, 'open' => $this->inbox->isOpen()], $this->status($form));
     }
 

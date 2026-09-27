@@ -8,7 +8,7 @@ use App\Content\TrackVisibility;
 use App\Controller\View\ExercisePage;
 use App\Entity\User;
 use App\Security\TrackAccessChecker;
-use App\Seo\SeoWriter;
+use App\Seo\Page\CourseSeo;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,7 +20,7 @@ final class ExerciseController extends AbstractController
      * ni moteur WebAssembly — 200 pour un visiteur, 403 pour un apprenant connecté sans accès.
      */
     #[Route('/parcours/{trackId}/{exerciseId}', name: 'app_exercise', methods: ['GET'])]
-    public function play(string $trackId, string $exerciseId, ContentRepository $content, TrackVisibility $visibility, PlaygroundConfigFactory $configs, TrackAccessChecker $access, ExercisePage $page, SeoWriter $seo): Response
+    public function play(string $trackId, string $exerciseId, ContentRepository $content, TrackVisibility $visibility, PlaygroundConfigFactory $configs, TrackAccessChecker $access, ExercisePage $page, CourseSeo $seo): Response
     {
         $track = $visibility->find($trackId) ?? throw $this->createNotFoundException();
         $exercise = $content->findExercise($trackId, $exerciseId) ?? throw $this->createNotFoundException();

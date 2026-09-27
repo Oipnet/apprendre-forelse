@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        {# Pages publiques : balises remplies par le contrôleur (App\Seo\SeoWriter). Les autres gardent leur bloc title. #}
+        {# Pages publiques : balises remplies par App\Seo\Page ou l'attribut #[Seo] de l'action. Les autres gardent leur bloc title. #}
         <title>{% if seo.title %}{{ seo.title }}{% else %}{% block title %}{{ marque.title }}{% endblock %}{% endif %}</title>
         {% if seo.description -%}
             <meta name="description" content="{{ seo.description }}">

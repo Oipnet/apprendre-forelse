@@ -3,9 +3,9 @@
 namespace App\Controller;
 
 use App\Api\PlaygroundConfigFactory;
+use App\Content\Framework\FrameworkRegistry;
 use App\Content\LessonRenderer;
 use App\Content\Practice;
-use App\Content\Framework\FrameworkRegistry;
 use App\Content\PracticeCatalog;
 use App\Content\PracticeFilter;
 use App\Content\PracticeVersionIndex;
@@ -13,8 +13,8 @@ use App\Content\PracticeVisibility;
 use App\Entity\ExerciseProgress;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
-use App\Seo\SeoWriter;
 use App\Security\TrackAccessChecker;
+use App\Seo\Page\PracticeSeo;
 use App\Service\TrackProgress;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -44,12 +44,12 @@ final class PracticeController extends AbstractController
         ExerciseProgressRepository $progressRepository,
         PracticeVersionIndex $versions,
         PracticeCatalog $catalog,
-        SeoWriter $seo,
+        PracticeSeo $seo,
         #[MapQueryString(mapWhenEmpty: true)] PracticeFilter $filter,
     ): Response {
         $user = $this->getUser();
         $listing = $catalog->search($filter, $user instanceof User ? $progressRepository->findPractice($user) : []);
-        $seo->practiceList($listing->all);
+        $seo->index($listing->all);
 
         return $this->render('practice/index.html.twig', [
             'groups' => $listing->groups,
@@ -72,10 +72,10 @@ final class PracticeController extends AbstractController
      * Le chemin tient deux segments : « nouveautes » n'entre donc pas en conflit avec un identifiant d'exercice.
      */
     #[Route('/pratique/nouveautes/{slug}', name: 'app_practice_version', methods: ['GET'])]
-    public function version(string $slug, PracticeVersionIndex $versions, ExerciseProgressRepository $progressRepository, SeoWriter $seo, LessonRenderer $markdown): Response
+    public function version(string $slug, PracticeVersionIndex $versions, ExerciseProgressRepository $progressRepository, PracticeSeo $seo, LessonRenderer $markdown): Response
     {
         $version = $versions->find($slug) ?? throw $this->createNotFoundException();
-        $seo->practiceVersion($version);
+        $seo->version($version);
 
         $user = $this->getUser();
         $progress = $user instanceof User ? $progressRepository->findPractice($user) : [];
@@ -100,7 +100,7 @@ final class PracticeController extends AbstractController
      * publique de l'exercice — le problème et la fonctionnalité expliquée, sans éditeur (TrackAccessChecker).
      */
     #[Route('/pratique/{exerciseId}', name: 'app_exercise_pratique', methods: ['GET'])]
-    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, SeoWriter $seo, LessonRenderer $markdown, TrackAccessChecker $access): Response
+    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access): Response
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
         $seo->practice($practice);

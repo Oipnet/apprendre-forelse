@@ -4,15 +4,15 @@ namespace App\Controller;
 
 use App\Content\Chapter;
 use App\Content\ContentRepository;
-use App\Content\TrackVisibility;
 use App\Content\Track;
+use App\Content\TrackVisibility;
 use App\Entity\User;
 use App\Export\LessonPdf;
 use App\Export\PdfResponse;
 use App\Payment\TrackOfferFactory;
 use App\Repository\ExerciseProgressRepository;
 use App\Security\TrackAccessChecker;
-use App\Seo\SeoWriter;
+use App\Seo\Page\CourseSeo;
 use App\Service\ChapterSummary;
 use App\Service\TrackProgress;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -26,7 +26,7 @@ final class TrackController extends AbstractController
     use TargetPathTrait;
 
     #[Route('/parcours/{trackId}', name: 'app_track', methods: ['GET'])]
-    public function show(string $trackId, ContentRepository $content, TrackVisibility $visibility, ExerciseProgressRepository $progressRepository, TrackAccessChecker $access, TrackOfferFactory $offers, SeoWriter $seo): Response
+    public function show(string $trackId, ContentRepository $content, TrackVisibility $visibility, ExerciseProgressRepository $progressRepository, TrackAccessChecker $access, TrackOfferFactory $offers, CourseSeo $seo): Response
     {
         $track = $visibility->find($trackId) ?? throw $this->createNotFoundException();
         $seo->track($track);
