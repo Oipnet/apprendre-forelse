@@ -203,6 +203,19 @@ final class BuildTest extends SimulatorTestCase
         $this->assertStringContainsString('requires PHP extension ext-intl', $result->output);
     }
 
+    public function testUneExigenceIgnoreeNePlantePasSurUnDrapeauHomonyme(): void
+    {
+        // « --ignored-requirements » n'est pas une option de Composer ; elle ne doit pas casser la liste que remplit
+        // --ignore-platform-req (« Cannot use a scalar value as an array »).
+        $this->files([
+            'Dockerfile' => "FROM php:8.2-cli\nCOPY --from=composer:2 /usr/bin/composer /usr/bin/composer\nWORKDIR /app\nCOPY composer.json ./\nRUN composer install --ignored-requirements --ignore-platform-req=ext-intl\n",
+            'composer.json' => json_encode(['require' => ['php' => '>=8.2', 'ext-intl' => '*']]),
+        ]);
+        $result = $this->docker()->build('.');
+        $this->assertTrue($result->success, $result->output);
+        $this->assertStringNotContainsString('requires PHP extension ext-intl', $result->output, 'L\'exigence ignorée ne bloque pas l\'installation.');
+    }
+
     public function testAvertissementsDesBuildChecks(): void
     {
         $this->files(['Dockerfile' => "FROM php:8.4-cli as base\nENV DB_PASSWORD secret\nCMD php -a\n"]);
