@@ -131,11 +131,9 @@ abstract class DockerTestCase extends TestCase
      */
     protected function docker(string $command): array
     {
-        $application = new Application($this->state ?? $this->engine()->store->directory, $this->projectDirectory());
-        // Le même démon : l'application relit l'état sauvegardé.
-        $this->engine()->save();
+        // Le même démon que build() et les assertions : pas besoin de repasser par le disque.
+        $application = new Application($this->engine());
         $code = $application->run(ComposeFile::shellSplit($command));
-        $this->engine = new Docker((string) $this->state, $this->projectDirectory());
 
         return [$code, $application->output];
     }
@@ -154,12 +152,7 @@ abstract class DockerTestCase extends TestCase
         if (\Forelse\DockerSim\Cli\ScriptRunner::commands($script) === [] || array_filter(\Forelse\DockerSim\Cli\ScriptRunner::commands($script), static fn ($c) => !str_starts_with($c, '#')) === []) {
             $this->fail(sprintf('%s ne contient aucune commande docker.', $path));
         }
-        $this->engine()->save();
-        $application = new Application((string) $this->state, $this->projectDirectory());
-        $result = \Forelse\DockerSim\Cli\ScriptRunner::run($application, $script);
-        $this->engine = new Docker((string) $this->state, $this->projectDirectory());
-
-        return $result;
+        return \Forelse\DockerSim\Cli\ScriptRunner::run(new Application($this->engine()), $script);
     }
 
     /** Comme runScript(), mais le test échoue si une commande échoue. */

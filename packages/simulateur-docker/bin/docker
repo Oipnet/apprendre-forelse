@@ -12,7 +12,7 @@ foreach ([__DIR__.'/../vendor/autoload.php', __DIR__.'/../../../autoload.php', g
 require $autoload;
 
 $project = getenv('DOCKER_SIM_PROJECT') ?: getcwd();
-$application = new Forelse\DockerSim\Cli\Application(Forelse\DockerSim\Cli\Application::defaultStateDirectory($project), $project);
+$application = Forelse\DockerSim\Cli\Application::forDirectories(Forelse\DockerSim\Cli\Application::defaultStateDirectory($project), $project);
 $code = $application->run(array_slice($argv, 1));
 echo $application->output;
 exit($code);

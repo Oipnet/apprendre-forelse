@@ -23,11 +23,13 @@ final class Application
     public const VERSION = '28.4.0';
 
     public string $output = '';
-    public readonly Docker $docker;
-
-    public function __construct(string $stateDirectory, string $projectDirectory)
+    public function __construct(public readonly Docker $docker)
     {
-        $this->docker = new Docker($stateDirectory, $projectDirectory);
+    }
+
+    public static function forDirectories(string $stateDirectory, string $projectDirectory): self
+    {
+        return new self(new Docker($stateDirectory, $projectDirectory));
     }
 
     public static function defaultStateDirectory(string $projectDirectory): string

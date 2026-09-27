@@ -44,11 +44,11 @@ final class Docker implements ServerContext
     private readonly PhpExecutor $php;
     private readonly ProcessManager $processes;
 
-    public function __construct(string $stateDirectory, public readonly string $projectDirectory)
+    public function __construct(string $stateDirectory, public readonly string $projectDirectory, ?Interpreter $shell = null, ?Catalog $catalog = null)
     {
         $this->store = new Store($stateDirectory);
-        $this->catalog = new Catalog();
-        $this->shell = Interpreter::create();
+        $this->catalog = $catalog ?? new Catalog();
+        $this->shell = $shell ?? Interpreter::create();
         $this->materializer = new Materializer($this->store);
         $this->php = new PhpExecutor($this->materializer);
         $this->processes = new ProcessManager($this);

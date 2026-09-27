@@ -51,7 +51,7 @@ final class Materializer
             if (Blob::isVirtual($blob) && str_starts_with($path, '/usr/share/sim-')) {
                 continue;
             }
-            Blob::write($blob, $root.$path);
+            $this->store->blobs->write($blob, $root.$path);
             // Un fichier virtuel est vide sur disque : sa taille annoncée (ls -l, du) est gardée à part.
             if (Blob::isVirtual($blob)) {
                 $metadata[$path] = [$metadata[$path][0] ?? 0644, $metadata[$path][1] ?? 'root', Blob::size($blob)];

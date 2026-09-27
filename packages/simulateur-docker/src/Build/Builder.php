@@ -213,7 +213,7 @@ final class Builder
             $base = $resolved[$fromRef];
             $image = $this->store->findImage($base->reference()) ?? ImageFactory::fromBase($base);
             $state = [
-                'fs' => new MemoryFs($image->filesystem(), $image->metadata(), $image->directories()),
+                'fs' => new MemoryFs($image->filesystem(), $image->metadata(), $image->directories(), $this->store->blobs),
                 'facts' => Facts::fromImage($image),
                 'config' => clone $image->config,
                 'layers' => $image->layers,
@@ -554,7 +554,7 @@ final class Builder
                 $fromKey = $this->stages[$fromStage->label()]['key'];
             } elseif (isset($resolved[$fromLabel])) {
                 $image = ImageFactory::fromBase($resolved[$fromLabel]);
-                $fromFs = new MemoryFs($image->filesystem(), $image->metadata(), $image->directories());
+                $fromFs = new MemoryFs($image->filesystem(), $image->metadata(), $image->directories(), $this->store->blobs);
                 $fromFs = $this->withBinaries($fromFs, $resolved[$fromLabel]);
                 $fromKey = $resolved[$fromLabel]->digest();
             } else {
@@ -743,7 +743,7 @@ final class Builder
      */
     private function cloneState(array $state): array
     {
-        $fs = new MemoryFs($state['fs']->allBlobs(), [], []);
+        $fs = new MemoryFs($state['fs']->allBlobs(), [], [], $this->store->blobs);
         foreach ($state['fs']->files() as $file) {
             $fs->chmod($file, $state['fs']->mode($file));
             $fs->chown($file, $state['fs']->owner($file));
