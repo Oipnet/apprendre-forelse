@@ -44,11 +44,11 @@ final class Docker implements ServerContext
     private readonly PhpExecutor $php;
     private readonly ProcessManager $processes;
 
-    public function __construct(string $stateDirectory, public readonly string $projectDirectory)
+    public function __construct(string $stateDirectory, public readonly string $projectDirectory, ?Interpreter $shell = null, ?Catalog $catalog = null)
     {
         $this->store = new Store($stateDirectory);
-        $this->catalog = new Catalog();
-        $this->shell = Interpreter::create();
+        $this->catalog = $catalog ?? new Catalog();
+        $this->shell = $shell ?? Interpreter::create();
         $this->materializer = new Materializer($this->store);
         $this->php = new PhpExecutor($this->materializer);
         $this->processes = new ProcessManager($this);
@@ -57,6 +57,54 @@ final class Docker implements ServerContext
     public function save(): void
     {
         $this->store->save();
+    }
+
+    // --- Lecture de l'état (pour la CLI) ------------------------------------------------------
+
+    /** @return array<string, Image> par id */
+    public function images(): array
+    {
+        return $this->store->images;
+    }
+
+    /** @return array<string, Container> par id, dans l'ordre de création */
+    public function containers(): array
+    {
+        return $this->store->containers;
+    }
+
+    /** @return array<string, Network> par nom */
+    public function networks(): array
+    {
+        return $this->store->networks;
+    }
+
+    /** @return array<string, Volume> par nom */
+    public function volumes(): array
+    {
+        return $this->store->volumes;
+    }
+
+    public function findImage(string $reference): ?Image
+    {
+        return $this->store->findImage($reference);
+    }
+
+    public function findContainer(string $nameOrId): ?Container
+    {
+        return $this->store->findContainer($nameOrId);
+    }
+
+    /** L'image d'un conteneur, si elle n'a pas été supprimée depuis. */
+    public function imageOf(Container $container): ?Image
+    {
+        return $this->store->images[$container->imageId] ?? null;
+    }
+
+    /** Nombre d'entrées du cache de build. */
+    public function buildCacheSize(): int
+    {
+        return \count($this->store->buildCache);
     }
 
     // --- Images -----------------------------------------------------------------------------
@@ -103,6 +151,61 @@ final class Docker implements ServerContext
 
             throw new DockerException($e->getMessage(), 125);
         }
+    }
+
+    /** docker tag : le nom passe à cette image, il quitte celle qui le portait. */
+    public function tag(Image $image, string $target): void
+    {
+        $target = Store::normalizeTag($target);
+        foreach ($this->store->images as $other) {
+            $other->tags = array_values(array_diff($other->tags, [$target]));
+        }
+        $image->tags[] = $target;
+        $this->save();
+    }
+
+    /** Retire un nom à une image qui en porte d'autres (docker rmi d'un des noms). */
+    public function untag(Image $image, string $tag): void
+    {
+        $image->tags = array_values(array_diff($image->tags, [$tag]));
+        $this->save();
+    }
+
+    public function removeImage(Image $image): void
+    {
+        $this->store->removeImage($image);
+        $this->save();
+    }
+
+    /**
+     * docker image prune : les images sans conteneur, seulement celles sans nom sauf avec --all.
+     *
+     * @return list<Image> les images supprimées
+     */
+    public function pruneImages(bool $all): array
+    {
+        $used = array_map(static fn (Container $c) => $c->imageId, $this->store->containers);
+        $deleted = [];
+        foreach ($this->store->images as $image) {
+            if (\in_array($image->id, $used, true) || ($image->tags !== [] && !$all)) {
+                continue;
+            }
+            $deleted[] = $image;
+            $this->store->removeImage($image);
+        }
+        $this->save();
+
+        return $deleted;
+    }
+
+    /** Vide le cache de build ; renvoie le nombre d'entrées supprimées. */
+    public function pruneBuildCache(): int
+    {
+        $count = \count($this->store->buildCache);
+        $this->store->buildCache = [];
+        $this->save();
+
+        return $count;
     }
 
     /**
@@ -275,6 +378,32 @@ final class Docker implements ServerContext
         $this->save();
     }
 
+    /** docker kill : arrêt immédiat, sans laisser au processus le temps de finir (SIGKILL : 137). */
+    public function kill(Container $container): void
+    {
+        $this->stop($container);
+        $container->exitCode = 137;
+        $this->save();
+    }
+
+    /**
+     * docker container prune : tous les conteneurs arrêtés.
+     *
+     * @return list<string> les id des conteneurs supprimés
+     */
+    public function pruneContainers(): array
+    {
+        $deleted = [];
+        foreach ($this->store->containers as $container) {
+            if (!$container->isRunning()) {
+                $deleted[] = $container->id;
+                $this->remove($container, true);
+            }
+        }
+
+        return $deleted;
+    }
+
     public function remove(Container $container, bool $force = false, bool $volumes = false): void
     {
         if ($container->isRunning() && !$force) {
@@ -405,6 +534,37 @@ final class Docker implements ServerContext
         $this->save();
     }
 
+    public function disconnect(Container $container, string $network): void
+    {
+        unset($container->networks[$network], $container->ips[$network]);
+        $this->save();
+    }
+
+    /**
+     * docker network prune : les réseaux créés, qu'aucun conteneur n'utilise.
+     *
+     * @return list<string> les noms des réseaux supprimés
+     */
+    public function pruneNetworks(): array
+    {
+        $removed = [];
+        foreach ($this->store->networks as $name => $network) {
+            if ($network->builtin) {
+                continue;
+            }
+            foreach ($this->store->containers as $container) {
+                if (isset($container->networks[$name])) {
+                    continue 2;
+                }
+            }
+            unset($this->store->networks[$name]);
+            $removed[] = $name;
+        }
+        $this->save();
+
+        return $removed;
+    }
+
     /** @param array<string,string> $labels */
     public function createVolume(string $name, array $labels = []): Volume
     {
@@ -425,16 +585,51 @@ final class Docker implements ServerContext
 
             throw new DockerException(sprintf('get %s: no such volume', $name), 1);
         }
-        foreach ($this->store->containers as $container) {
-            foreach ($container->mounts as $mount) {
-                // --force ne délie pas un volume monté : Docker refuse aussi.
-                if ($mount['type'] === 'volume' && $mount['source'] === $name) {
-                    throw new DockerException(sprintf('remove %s: volume is in use - [%s]', $name, $container->id), 1);
-                }
-            }
+        // --force ne délie pas un volume monté : Docker refuse aussi.
+        $user = $this->volumeUser($name);
+        if ($user !== null) {
+            throw new DockerException(sprintf('remove %s: volume is in use - [%s]', $name, $user->id), 1);
         }
         $this->store->removeVolume($name);
         $this->save();
+    }
+
+    public function volumeInUse(string $name): bool
+    {
+        return $this->volumeUser($name) !== null;
+    }
+
+    /** Le premier conteneur (arrêté ou non) qui monte ce volume. */
+    private function volumeUser(string $name): ?Container
+    {
+        foreach ($this->store->containers as $container) {
+            foreach ($container->mounts as $mount) {
+                if ($mount['type'] === 'volume' && $mount['source'] === $name) {
+                    return $container;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * docker volume prune : les volumes anonymes (tous avec --all) qu'aucun conteneur ne monte.
+     *
+     * @return list<string> les noms des volumes supprimés
+     */
+    public function pruneVolumes(bool $all): array
+    {
+        $removed = [];
+        foreach ($this->store->volumes as $name => $volume) {
+            if (!$this->volumeInUse($name) && ($volume->anonymous || $all)) {
+                $this->store->removeVolume($name);
+                $removed[] = $name;
+            }
+        }
+        $this->save();
+
+        return $removed;
     }
 
     // --- HTTP ---------------------------------------------------------------------------------

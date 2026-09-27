@@ -13,7 +13,7 @@ use Forelse\DockerSim\State\ProcessKind;
 use Symfony\Component\Yaml\Yaml;
 
 /** docker compose … */
-final class ComposeCommand
+final class ComposeCommand implements CliCommand
 {
     public const VERSION = 'v2.39.2';
 
@@ -22,8 +22,23 @@ final class ComposeCommand
     {
     }
 
+    public function names(): array
+    {
+        return ['compose'];
+    }
+
+    public function run(string $name, array $argv, Output $out): int
+    {
+        $output = '';
+        try {
+            return $this->compose($argv, $output);
+        } finally {
+            $out->write($output);
+        }
+    }
+
     /** @param list<string> $argv */
-    public function run(array $argv, string &$output): int
+    private function compose(array $argv, string &$output): int
     {
         $global = [];
         $profiles = array_values(array_filter(explode(',', (string) (getenv('COMPOSE_PROFILES') ?: ''))));
@@ -168,7 +183,7 @@ final class ComposeCommand
         if ($format !== '' && !\in_array($format, ['json', 'JSON', 'table'], true)) {
             $table = str_starts_with($format, 'table ');
             $template = $table ? substr($format, 6) : $format;
-            $fields = fn (Container $c) => ['Name' => $c->name, 'Service' => (string) $c->composeService(), 'Image' => preg_replace('/:latest$/', '', $c->imageRef) ?? $c->imageRef, 'State' => $c->isRunning() ? 'running' : $c->status, 'Status' => Format::status($c), 'Health' => $c->health ?? '', 'Ports' => Format::ports($c, exposed: $this->docker->store->images[$c->imageId]->config->exposed ?? []), 'Publishers' => Format::ports($c), 'Command' => Format::command($c), 'Project' => $project->file->name, 'ID' => $c->shortId()];
+            $fields = fn (Container $c) => ['Name' => $c->name, 'Service' => (string) $c->composeService(), 'Image' => preg_replace('/:latest$/', '', $c->imageRef) ?? $c->imageRef, 'State' => $c->isRunning() ? 'running' : $c->status, 'Status' => Format::status($c), 'Health' => $c->health ?? '', 'Ports' => Format::ports($c, exposed: $this->docker->imageOf($c)?->config->exposed ?? []), 'Publishers' => Format::ports($c), 'Command' => Format::command($c), 'Project' => $project->file->name, 'ID' => $c->shortId()];
             $render = static fn (array $values) => preg_replace_callback('/\{\{\s*\.(\w+)\s*\}\}/', static fn ($m) => (string) ($values[$m[1]] ?? ''), str_replace(['\\t', '\\n'], ["\t", "\n"], $template));
             if ($table) {
                 $project->output .= strtoupper((string) $render(array_combine(array_keys($fields($containers[0] ?? new Container('x', 'x', 'x', 'x', [], [], '/', null, [], [], [], []))), array_map(static fn ($k) => strtoupper($k), array_keys($fields($containers[0] ?? new Container('x', 'x', 'x', 'x', [], [], '/', null, [], [], [], [])))))))."\n";
@@ -191,13 +206,13 @@ final class ComposeCommand
                     'State' => $c->isRunning() ? 'running' : $c->status,
                     'Status' => Format::status($c),
                     'Health' => $c->health ?? '',
-                    'Publishers' => Format::ports($c, exposed: $this->docker->store->images[$c->imageId]->config->exposed ?? []),
+                    'Publishers' => Format::ports($c, exposed: $this->docker->imageOf($c)?->config->exposed ?? []),
                 ], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n";
             }
 
             return 0;
         }
-        $rows = array_map(fn (Container $c) => [$c->name, preg_replace('/:latest$/', '', $c->imageRef) ?? $c->imageRef, Format::command($c), (string) $c->composeService(), Format::ago($c->createdAt), Format::status($c), Format::ports($c, exposed: $this->docker->store->images[$c->imageId]->config->exposed ?? [])], $containers);
+        $rows = array_map(fn (Container $c) => [$c->name, preg_replace('/:latest$/', '', $c->imageRef) ?? $c->imageRef, Format::command($c), (string) $c->composeService(), Format::ago($c->createdAt), Format::status($c), Format::ports($c, exposed: $this->docker->imageOf($c)?->config->exposed ?? [])], $containers);
         $project->output .= Format::table(['NAME', 'IMAGE', 'COMMAND', 'SERVICE', 'CREATED', 'STATUS', 'PORTS'], $rows);
 
         return 0;
@@ -388,7 +403,7 @@ final class ComposeCommand
     {
         $rows = [];
         foreach ($project->containers() as $container) {
-            $image = $this->docker->store->images[$container->imageId] ?? null;
+            $image = $this->docker->imageOf($container);
             if ($image === null) {
                 continue;
             }
@@ -442,7 +457,7 @@ final class ComposeCommand
     private function ls(string &$output): int
     {
         $projects = [];
-        foreach ($this->docker->store->containers as $container) {
+        foreach ($this->docker->containers() as $container) {
             $name = $container->composeProject();
             if ($name !== null) {
                 $projects[$name]['files'] = $container->labels['com.docker.compose.project.config_files'] ?? '';

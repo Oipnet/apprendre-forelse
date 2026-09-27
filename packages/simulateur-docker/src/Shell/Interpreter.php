@@ -18,6 +18,12 @@ final class Interpreter
     /** Commandes internes du shell : toujours disponibles, même sans binaire. */
     private const BUILTINS = ['echo', 'printf', 'cd', 'pwd', 'set', 'export', 'unset', 'exit', 'true', 'false', ':', 'test', '[', 'exec', 'command', 'type', 'read', 'shift', 'return', 'local', 'eval', '.', 'source', 'trap', 'umask', 'wait', 'ulimit', 'alias', 'hash'];
 
+    /** Internes qui restent utilisables sans shell (forme exec : ["echo", "…"]). */
+    private const EXEC_BUILTINS = ['echo', 'true', 'false', 'test', '['];
+
+    /** Internes qui n'ont de sens que dans le shell : jamais processus principal d'un conteneur. */
+    private const SHELL_ONLY = ['exit', 'return', 'cd', 'export', 'unset', 'set', 'shift', 'true', 'false', ':', 'test', '[', 'read', 'eval', '.', 'source', 'wait', 'trap', 'umask', 'alias'];
+
     /** @var array<string, ShellCommand> */
     private array $commands = [];
     private Parser $parser;
@@ -35,7 +41,10 @@ final class Interpreter
     public static function create(): self
     {
         return new self([
-            new Command\CoreCommands(),
+            new Command\FileCommands(),
+            new Command\TextCommands(),
+            new Command\ArchiveCommands(),
+            new Command\ProcessCommands(),
             new Command\PackageCommands(),
             new Command\PhpCommands(),
             new Command\ComposerCommand(),
@@ -49,6 +58,18 @@ final class Interpreter
         foreach ($command->names() as $name) {
             $this->commands[$name] = $command;
         }
+    }
+
+    /** @return array<string, ShellCommand> les commandes simulées, par nom */
+    public function commands(): array
+    {
+        return $this->commands;
+    }
+
+    /** Commande interne du shell ; avec $exec, seulement celles utilisables sans shell. */
+    public function isBuiltin(string $name, bool $exec = false): bool
+    {
+        return \in_array($name, $exec ? self::EXEC_BUILTINS : self::BUILTINS, true);
     }
 
     /** Exécute un script ; la sortie (stdout et stderr mêlés, dans l'ordre) s'ajoute à $machine->output. */
@@ -91,6 +112,72 @@ final class Interpreter
         $machine->elapsed += $result->seconds;
 
         return $result->code;
+    }
+
+    /**
+     * « migrate && apache2-foreground » : tout sauf la dernière commande s'exécute, la dernière devient
+     * le processus principal. Null si le script est trop complexe (il s'exécute alors en entier).
+     *
+     * @param list<string> $positional
+     *
+     * @return array{0: int, 1: string, 2: ?list<string>, 3?: bool}|null code et sortie du début, argv de la dernière commande, arrêt si le début échoue
+     */
+    public function splitLastCommand(string $script, Machine $machine, array $positional): ?array
+    {
+        try {
+            $ast = $this->parser->parse($script);
+        } catch (SyntaxError) {
+            return null;
+        }
+        if ($ast === []) {
+            return [0, '', null];
+        }
+        $lastAndOr = array_pop($ast);
+        $parts = $lastAndOr['parts'];
+        $lastPart = array_pop($parts);
+        $command = $lastPart[1]['commands'][0] ?? null;
+        // Une dernière commande avec redirection (echo … > fichier) n'est pas un processus principal :
+        // le script entier est exécuté par le shell.
+        if (\count($lastPart[1]['commands']) !== 1 || ($command['type'] ?? '') !== 'simple' || $lastPart[0] === '||' || ($command['redirects'] ?? []) !== []) {
+            return null;
+        }
+        // « sh -c 'exit 4' » : exit, cd, export… appartiennent au shell, ils ne deviennent pas le processus principal.
+        $head = $command['words'][0] ?? null;
+        if (\in_array(\is_array($head) ? Parser::wordText($head) : '', self::SHELL_ONLY, true)) {
+            return null;
+        }
+        $output = '';
+        $code = 0;
+        $savedPositional = $machine->positional;
+        $machine->positional = $positional;
+        if ($ast !== [] || $parts !== []) {
+            $machine->output = '';
+            $code = $this->run(self::withoutLastCommand($script), $machine);
+            $output = $machine->output;
+        }
+        $words = [];
+        foreach ($command['words'] as $word) {
+            array_push($words, ...$this->expandWord($word, $machine));
+        }
+        foreach ($command['assign'] as [$key, $word]) {
+            $machine->env[$key] = $this->expandText($word, $machine);
+        }
+        $machine->positional = $savedPositional;
+        if (($words[0] ?? '') === 'exec') {
+            array_shift($words);
+        }
+        // « a && b » : b n'est lancé que si a réussit ; « a; b » : b est lancé quoi qu'il arrive (sauf set -e).
+        $stopOnFailure = ($parts !== [] && $lastPart[0] === '&&') || $machine->errexit;
+
+        return [$code, $output, $words === [] ? null : $words, $stopOnFailure];
+    }
+
+    /** Le texte du script sans sa dernière commande (on la retrouve par sa position dans la chaîne). */
+    private static function withoutLastCommand(string $script): string
+    {
+        $separator = max(strrpos($script, '&&') ?: -1, strrpos($script, ';') ?: -1, strrpos($script, "\n") ?: -1);
+
+        return $separator > 0 ? substr($script, 0, $separator) : $script;
     }
 
     /** Le préfixe des erreurs du shell : « /bin/sh: 1: » (dash, Debian) ou « /bin/sh: » (busybox, Alpine). */
@@ -277,10 +364,7 @@ final class Interpreter
     {
         $name = $argv[0];
         $args = \array_slice($argv, 1);
-        if (!$exec && \in_array($name, self::BUILTINS, true)) {
-            return $this->builtin($name, $args, $m, $stdin);
-        }
-        if ($exec && \in_array($name, ['echo', 'true', 'false', 'test', '['], true)) {
+        if ($this->isBuiltin($name, $exec)) {
             return $this->builtin($name, $args, $m, $stdin);
         }
 

@@ -23,14 +23,15 @@ final class Store
     /** @var array<string, array<string,mixed>> clé de cache => couche sérialisée */
     public array $buildCache = [];
     public int $ipCounter = 2;
+    /** Les contenus volumineux (fichiers copiés depuis le projet) vivent à côté de state.json. */
+    public readonly BlobStore $blobs;
 
     public function __construct(public readonly string $directory)
     {
         if (!is_dir($directory)) {
             @mkdir($directory, 0777, true);
         }
-        // Les contenus volumineux (fichiers copiés depuis le projet) vivent à côté de state.json.
-        Blob::useDirectory($directory.'/blobs');
+        $this->blobs = new BlobStore($directory.'/blobs');
         $this->load();
         if (!isset($this->networks['bridge'])) {
             $this->networks['bridge'] = new Network(self::id('network-bridge'), 'bridge', 'bridge', '172.17.0.0/16', [], time(), true);

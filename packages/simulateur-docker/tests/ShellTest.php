@@ -145,4 +145,20 @@ final class ShellTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertStringContainsString('Permission denied', $output);
     }
+
+    /** Un nom annoncé par names() mais oublié dans le match ne doit pas réussir en silence. */
+    public function testChaqueCommandeDeclareeAUneImplementation(): void
+    {
+        $shell = Interpreter::create();
+        $this->assertNotEmpty($shell->commands());
+        foreach ($shell->commands() as $name => $command) {
+            try {
+                $command->run($name, [], $this->machine(), '', $shell);
+            } catch (\LogicException $e) {
+                $this->fail($e->getMessage());
+            } catch (\Throwable) {
+                // Sans arguments, une commande peut échouer autrement : seule l'implémentation compte ici.
+            }
+        }
+    }
 }

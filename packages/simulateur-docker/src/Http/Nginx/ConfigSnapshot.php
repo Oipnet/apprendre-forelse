@@ -4,25 +4,26 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Http\Nginx;
 
-use Forelse\DockerSim\Fs\FileSystem;
+use Forelse\DockerSim\Fs\ReadableFileSystem;
 use Forelse\DockerSim\Fs\Path;
 
 /**
  * La configuration que nginx a lue au démarrage (ou au dernier « nginx -s reload ») : nginx ne relit
  * pas ses fichiers à chaque requête. Modifier default.conf ne change rien tant qu'on ne recharge pas.
- * Lecture seule : les fichiers de /etc/nginx viennent de l'instantané, le reste du disque du conteneur.
+ * Lecture seule (nginx lit sa configuration, il ne la modifie pas) : les fichiers de /etc/nginx
+ * viennent de l'instantané, le reste du disque du conteneur.
  */
-final class ConfigSnapshot implements FileSystem
+final class ConfigSnapshot implements ReadableFileSystem
 {
     private const ROOT = '/etc/nginx';
 
     /** @param array<string,string> $files chemin => contenu, pour tout ce qui vivait sous /etc/nginx */
-    public function __construct(private readonly FileSystem $fs, private readonly array $files)
+    public function __construct(private readonly ReadableFileSystem $fs, private readonly array $files)
     {
     }
 
     /** @return array<string,string> */
-    public static function take(FileSystem $fs): array
+    public static function take(ReadableFileSystem $fs): array
     {
         $files = [];
         foreach ($fs->isDir(self::ROOT) ? $fs->files(self::ROOT) : [] as $file) {
@@ -44,11 +45,6 @@ final class ConfigSnapshot implements FileSystem
     public function exists(string $path): bool
     {
         return $this->covers($path) ? $this->isFile($path) || $this->isDir($path) : $this->fs->exists($path);
-    }
-
-    public function isReadOnly(string $path): bool
-    {
-        return $this->fs->isReadOnly($path);
     }
 
     public function isDir(string $path): bool
@@ -112,36 +108,5 @@ final class ConfigSnapshot implements FileSystem
     public function owner(string $path): string
     {
         return $this->fs->owner($path);
-    }
-
-    // L'instantané ne s'écrit pas : nginx lit sa configuration, il ne la modifie pas.
-    public function write(string $path, string $content, ?int $mode = null, ?string $owner = null): void
-    {
-        throw new \LogicException('La configuration chargée par nginx est en lecture seule.');
-    }
-
-    public function writeFromHost(string $path, string $hostPath, ?int $mode = null, ?string $owner = null): void
-    {
-        throw new \LogicException('La configuration chargée par nginx est en lecture seule.');
-    }
-
-    public function mkdir(string $path, ?string $owner = null): void
-    {
-        throw new \LogicException('La configuration chargée par nginx est en lecture seule.');
-    }
-
-    public function delete(string $path): void
-    {
-        throw new \LogicException('La configuration chargée par nginx est en lecture seule.');
-    }
-
-    public function chmod(string $path, int $mode): void
-    {
-        throw new \LogicException('La configuration chargée par nginx est en lecture seule.');
-    }
-
-    public function chown(string $path, string $owner): void
-    {
-        throw new \LogicException('La configuration chargée par nginx est en lecture seule.');
     }
 }

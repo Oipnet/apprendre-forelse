@@ -12,11 +12,6 @@ namespace Forelse\DockerSim\Dockerfile;
  */
 final class Parser
 {
-    private const INSTRUCTIONS = [
-        'FROM', 'RUN', 'CMD', 'LABEL', 'MAINTAINER', 'EXPOSE', 'ENV', 'ADD', 'COPY', 'ENTRYPOINT',
-        'VOLUME', 'USER', 'WORKDIR', 'ARG', 'ONBUILD', 'STOPSIGNAL', 'HEALTHCHECK', 'SHELL',
-    ];
-
     /** Drapeaux acceptés, par instruction (les autres déclenchent l'erreur de BuildKit). */
     private const FLAGS = [
         'FROM' => ['platform'],
@@ -49,7 +44,7 @@ final class Parser
             }
             $name = strtoupper($m[1]);
             $rest = trim($m[2]);
-            if (!\in_array($name, self::INSTRUCTIONS, true)) {
+            if (!\in_array($name, Instruction::NAMES, true)) {
                 throw new ParseError($lineNumber, sprintf('unknown instruction: %s', $m[1]));
             }
             $seenInstruction = true;

@@ -9,6 +9,12 @@ namespace Forelse\DockerSim\Dockerfile;
  */
 final class Instruction
 {
+    /** Les instructions connues de BuildKit : toute autre est une erreur de syntaxe. */
+    public const NAMES = [
+        'FROM', 'RUN', 'CMD', 'LABEL', 'MAINTAINER', 'EXPOSE', 'ENV', 'ADD', 'COPY', 'ENTRYPOINT',
+        'VOLUME', 'USER', 'WORKDIR', 'ARG', 'ONBUILD', 'STOPSIGNAL', 'HEALTHCHECK', 'SHELL',
+    ];
+
     /**
      * @param string               $name      FROM, RUN, COPY… (en majuscules)
      * @param string               $arguments le reste de la ligne, drapeaux retirés, continuations recollées

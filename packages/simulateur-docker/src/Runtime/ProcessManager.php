@@ -67,7 +67,7 @@ final class ProcessManager
                 if ($name === 'bash' && !$machine->facts->hasBinary('bash')) {
                     throw $this->notFound($first);
                 }
-                $split = $this->splitShellCommand($argv[2], $machine, \array_slice($argv, 3));
+                $split = $this->docker->shell->splitLastCommand($argv[2], $machine, \array_slice($argv, 3));
                 if ($split === null) {
                     break;
                 }
@@ -117,82 +117,6 @@ final class ProcessManager
         if ($container->isRunning()) {
             $this->health($container);
         }
-    }
-
-    /**
-     * « migrate && apache2-foreground » : tout sauf la dernière commande s'exécute, la dernière devient
-     * le processus principal. Null si le script est trop complexe (il s'exécute alors en entier).
-     *
-     * @param list<string> $positional
-     *
-     * @return array{0: int, 1: string, 2: ?list<string>, 3?: bool}|null
-     */
-    private function splitShellCommand(string $script, Machine $machine, array $positional): ?array
-    {
-        try {
-            $ast = (new \Forelse\DockerSim\Shell\Parser())->parse($script);
-        } catch (\Forelse\DockerSim\Shell\SyntaxError) {
-            return null;
-        }
-        if ($ast === []) {
-            return [0, '', null];
-        }
-        $lastAndOr = array_pop($ast);
-        $parts = $lastAndOr['parts'];
-        $lastPart = array_pop($parts);
-        $command = $lastPart[1]['commands'][0] ?? null;
-        // Une dernière commande avec redirection (echo … > fichier) n'est pas un processus principal :
-        // le script entier est exécuté par le shell.
-        if (\count($lastPart[1]['commands']) !== 1 || ($command['type'] ?? '') !== 'simple' || $lastPart[0] === '||' || ($command['redirects'] ?? []) !== []) {
-            return null;
-        }
-        // « sh -c 'exit 4' » : exit, cd, export… appartiennent au shell, ils ne deviennent pas le processus principal.
-        $head = $command['words'][0] ?? null;
-        $headText = \is_array($head) ? implode('', array_map(static fn ($part) => \is_array($part) ? (string) ($part[1] ?? '') : (string) $part, $head)) : '';
-        if (\in_array($headText, ['exit', 'return', 'cd', 'export', 'unset', 'set', 'shift', 'true', 'false', ':', 'test', '[', 'read', 'eval', '.', 'source', 'wait', 'trap', 'umask', 'alias'], true)) {
-            return null;
-        }
-        $output = '';
-        $code = 0;
-        $savedPositional = $machine->positional;
-        $machine->positional = $positional;
-        $prefix = [...$ast];
-        if ($parts !== []) {
-            $prefix[] = ['type' => 'andor', 'parts' => $parts];
-        }
-        if ($prefix !== []) {
-            $machine->output = '';
-            $code = $this->docker->shell->run($this->render($prefix, $script, $lastPart), $machine);
-            $output = $machine->output;
-        }
-        $words = [];
-        foreach ($command['words'] as $word) {
-            array_push($words, ...$this->docker->shell->expandWord($word, $machine));
-        }
-        foreach ($command['assign'] as [$key, $word]) {
-            $machine->env[$key] = $this->docker->shell->expandText($word, $machine);
-        }
-        $machine->positional = $savedPositional;
-        if (($words[0] ?? '') === 'exec') {
-            array_shift($words);
-        }
-        // « a && b » : b n'est lancé que si a réussit ; « a; b » : b est lancé quoi qu'il arrive (sauf set -e).
-        $stopOnFailure = ($parts !== [] && $lastPart[0] === '&&') || $machine->errexit;
-
-        return [$code, $output, $words === [] ? null : $words, $stopOnFailure];
-    }
-
-    /**
-     * Le texte du script sans sa dernière commande (on la retrouve par sa position dans la chaîne).
-     *
-     * @param list<array<string,mixed>>               $prefix   nœuds de l'AST (Shell\Parser) qui précèdent la dernière commande
-     * @param array{0: string, 1: array<string,mixed>} $lastPart la dernière commande : [opérateur, pipeline]
-     */
-    private function render(array $prefix, string $script, array $lastPart): string
-    {
-        $separator = max(strrpos($script, '&&') ?: -1, strrpos($script, ';') ?: -1, strrpos($script, "\n") ?: -1);
-
-        return $separator > 0 ? substr($script, 0, $separator) : $script;
     }
 
     private function isKnownDaemon(string $name): bool
@@ -296,7 +220,7 @@ final class ProcessManager
         }
 
         // Commande ponctuelle : exécutée comme dans un conteneur, puis le conteneur s'arrête.
-        if (!$machine->facts->hasBinary($name) && !\in_array($name, ['echo', 'true', 'false', 'test', '['], true) && $this->docker->findInPath($machine, $argv[0]) === null) {
+        if (!$machine->facts->hasBinary($name) && !$this->docker->shell->isBuiltin($name, exec: true) && $this->docker->findInPath($machine, $argv[0]) === null) {
             throw $this->notFound($argv[0]);
         }
         $machine->output = '';

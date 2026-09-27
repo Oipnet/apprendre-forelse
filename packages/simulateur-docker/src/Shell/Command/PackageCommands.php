@@ -33,7 +33,7 @@ final class PackageCommands implements Command
             'apt-get', 'apt' => $this->apt($name, $args, $m),
             'dpkg' => \in_array('-l', $args, true) ? Result::ok($this->dpkgList($m)) : Result::ok(),
             'apt-cache' => Result::ok(),
-            default => Result::ok(),
+            default => throw new \LogicException(sprintf('%s : « %s » est déclarée sans implémentation.', self::class, $name)),
         };
     }
 

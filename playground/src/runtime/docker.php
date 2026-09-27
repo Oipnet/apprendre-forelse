@@ -24,7 +24,7 @@ if (($arguments[0] ?? null) === 'docker-compose') {
 }
 
 $GLOBALS['__docker_done'] = false;
-$application = new Application('/tmp/docker-sim', '/app');
+$application = Application::forDirectories('/tmp/docker-sim', '/app');
 // Un script PHP exécuté dans un conteneur peut appeler exit() : on imprime quand même le marqueur.
 register_shutdown_function(static function () use ($application): void {
     if (!$GLOBALS['__docker_done']) {

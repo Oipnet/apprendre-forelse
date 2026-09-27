@@ -46,7 +46,7 @@ abstract class SimulatorTestCase extends TestCase
     /** @return array{0: int, 1: string} */
     protected function cli(string $command): array
     {
-        $application = new Application($this->state, $this->project);
+        $application = Application::forDirectories($this->state, $this->project);
         $code = $application->run(\Forelse\DockerSim\Compose\ComposeFile::shellSplit($command));
 
         return [$code, $application->output];
@@ -67,7 +67,7 @@ abstract class SimulatorTestCase extends TestCase
      */
     protected function script(string $file): array
     {
-        $application = new Application($this->state, $this->project);
+        $application = Application::forDirectories($this->state, $this->project);
 
         return \Forelse\DockerSim\Cli\ScriptRunner::run($application, (string) file_get_contents($this->project.'/'.$file));
     }

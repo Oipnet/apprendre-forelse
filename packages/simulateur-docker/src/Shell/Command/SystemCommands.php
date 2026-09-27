@@ -38,7 +38,7 @@ final class SystemCommands implements Command
             'locale-gen' => Result::ok("Generating locales (this might take a while)...\nGeneration complete.\n", 2.0),
             'setfacl', 'getfacl', 'crontab', 'supervisorctl' => Result::ok(),
             'install' => $this->install($args, $m),
-            default => Result::ok(),
+            default => throw new \LogicException(sprintf('%s : « %s » est déclarée sans implémentation.', self::class, $name)),
         };
     }
 

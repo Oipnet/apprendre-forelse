@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Http\Nginx;
 
-use Forelse\DockerSim\Fs\FileSystem;
+use Forelse\DockerSim\Fs\ReadableFileSystem;
 use Forelse\DockerSim\Shell\Network;
 
 /**
@@ -30,7 +30,7 @@ final class NginxConfig
     private const KNOWN = ['user', 'worker_processes', 'error_log', 'pid', 'events', 'worker_connections', 'http', 'include', 'default_type', 'log_format', 'access_log', 'sendfile', 'tcp_nopush', 'keepalive_timeout', 'gzip', 'gzip_types', 'gzip_vary', 'gzip_min_length', 'server', 'listen', 'server_name', 'root', 'index', 'location', 'try_files', 'fastcgi_pass', 'fastcgi_param', 'fastcgi_index', 'fastcgi_split_path_info', 'fastcgi_buffers', 'fastcgi_buffer_size', 'fastcgi_read_timeout', 'internal', 'return', 'rewrite', 'error_page', 'proxy_pass', 'proxy_set_header', 'proxy_http_version', 'proxy_read_timeout', 'proxy_redirect', 'add_header', 'expires', 'client_max_body_size', 'charset', 'types', 'deny', 'allow', 'autoindex', 'alias', 'server_tokens', 'upstream', 'set', 'if', 'log_not_found', 'resolver', 'real_ip_header', 'set_real_ip_from', 'http2', 'ssl_certificate', 'ssl_certificate_key', 'multi_accept', 'types_hash_max_size', 'etag', 'open_file_cache', 'absolute_redirect', 'port_in_redirect', 'map', 'default', 'hostnames', 'large_client_header_buffers', 'client_body_buffer_size'];
 
     /** @param array<string,string> $env */
-    public static function load(FileSystem $fs, ?Network $network = null, array $env = []): self
+    public static function load(ReadableFileSystem $fs, ?Network $network = null, array $env = []): self
     {
         $config = new self();
         $main = $fs->read('/etc/nginx/nginx.conf');
@@ -87,7 +87,7 @@ final class NginxConfig
     // --- Analyse ------------------------------------------------------------------------------
 
     /** @return list<NginxDirective> [nom, arguments, bloc, ligne, fichier] */
-    private function parseText(string $text, string $file, FileSystem $fs, int $depth = 0): array
+    private function parseText(string $text, string $file, ReadableFileSystem $fs, int $depth = 0): array
     {
         $tokens = $this->tokenize($text, $file);
         $position = 0;
@@ -150,7 +150,7 @@ final class NginxConfig
      *
      * @return list<NginxDirective>
      */
-    private function parseBlock(array $tokens, int &$position, string $file, FileSystem $fs, int $depth, bool $inBlock, string $parent = ''): array
+    private function parseBlock(array $tokens, int &$position, string $file, ReadableFileSystem $fs, int $depth, bool $inBlock, string $parent = ''): array
     {
         $directives = [];
         $current = [];
@@ -225,7 +225,7 @@ final class NginxConfig
     }
 
     /** @return list<string> */
-    private function includeFiles(string $pattern, FileSystem $fs): array
+    private function includeFiles(string $pattern, ReadableFileSystem $fs): array
     {
         if ($pattern === '') {
             return [];

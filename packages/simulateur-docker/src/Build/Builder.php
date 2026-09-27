@@ -31,7 +31,7 @@ use Forelse\DockerSim\State\Store;
 final class Builder
 {
     private BuildOutput $out;
-    /** @var array<string, array{fs: MemoryFs, facts: Facts, config: ImageConfig, layers: list<Layer>, key: string, base: string, kind: string, os: string, phpVersion: ?string, docroot: ?string}> */
+    /** @var array<string, StageState> par nom d'étape */
     private array $stages = [];
     /** @var list<array{name: string, instruction: string, cached: bool, seconds: float, line: int, output: string}> */
     private array $steps = [];
@@ -207,23 +207,23 @@ final class Builder
         $previous = $parsed->stage($fromRef);
         ++$number;
         if ($previous !== null && $previous->index < $stage->index) {
-            $state = $this->cloneState($this->stages[$previous->label()]);
+            $state = clone $this->stages[$previous->label()];
             $this->recordStep(sprintf('[%s%d/%d] FROM %s', $label, $number, $total, $previous->label()), $stage->from, true, 0.0, '');
         } else {
             $base = $resolved[$fromRef];
             $image = $this->store->findImage($base->reference()) ?? ImageFactory::fromBase($base);
-            $state = [
-                'fs' => new MemoryFs($image->filesystem(), $image->metadata(), $image->directories()),
-                'facts' => Facts::fromImage($image),
-                'config' => clone $image->config,
-                'layers' => $image->layers,
-                'key' => hash('sha256', $base->digest()),
-                'base' => $base->reference(),
-                'kind' => $base->kind,
-                'os' => $base->os,
-                'phpVersion' => $base->phpVersion,
-                'docroot' => $base->docroot,
-            ];
+            $state = new StageState(
+                fs: new MemoryFs($image->filesystem(), $image->metadata(), $image->directories(), $this->store->blobs),
+                facts: Facts::fromImage($image),
+                config: clone $image->config,
+                layers: $image->layers,
+                key: hash('sha256', $base->digest()),
+                base: $base->reference(),
+                kind: $base->kind,
+                os: $base->os,
+                phpVersion: $base->phpVersion,
+                docroot: $base->docroot,
+            );
             [$repository, $tag] = Catalog::split($fromRef);
             $step = $this->out->step(sprintf('[%s%d/%d] FROM %s@%s', $label, $number, $total, Catalog::canonical($repository, $tag), $base->digest()));
             $pulled = $this->store->findImage($base->reference()) !== null || isset($this->store->buildCache['base:'.$base->reference()]);
@@ -240,13 +240,13 @@ final class Builder
 
         // Variables de l'étape : ARG redéclarés et ENV de l'image.
         $args = [];
-        $user = $state['config']->user ?? 'root';
+        $user = $state->config->user ?? 'root';
 
         foreach ($stage->instructions as $instruction) {
             if ($instruction === $stage->from) {
                 continue;
             }
-            $variables = $state['config']->env + $args;
+            $variables = $state->config->env + $args;
             $undefined = [];
             switch ($instruction->name) {
                 case 'ARG':
@@ -267,74 +267,47 @@ final class Builder
                     // et à rien d'autre. Changer une valeur ne rejoue ni WORKDIR ni COPY.
                     break;
                 case 'ENV':
-                    [$pairs] = Variables::pairs($instruction->arguments);
-                    foreach ($pairs as $key => $value) {
-                        $state['config']->env[$key] = Variables::expand($value, $state['config']->env + $args, $undefined);
-                    }
-                    $this->undefinedWarnings($undefined, $instruction);
-                    $state['layers'][] = $this->metadataLayer($instruction, $state);
+                    $this->env($instruction, $state, $args);
                     break;
                 case 'LABEL':
-                    [$pairs] = Variables::pairs($instruction->arguments);
-                    foreach ($pairs as $key => $value) {
-                        $state['config']->labels[Variables::unquote($key)] = Variables::expand($value, $variables);
-                    }
-                    $state['layers'][] = $this->metadataLayer($instruction, $state);
+                    $this->label($instruction, $state, $variables);
                     break;
                 case 'EXPOSE':
-                    foreach (preg_split('/\s+/', Variables::expand($instruction->arguments, $variables)) ?: [] as $port) {
-                        $state['config']->exposed[] = str_contains($port, '/') ? $port : $port.'/tcp';
-                    }
-                    $state['config']->exposed = array_values(array_unique($state['config']->exposed));
-                    $state['layers'][] = $this->metadataLayer($instruction, $state);
+                    $this->expose($instruction, $state, $variables);
                     break;
                 case 'CMD':
-                    $state['config']->cmd = $instruction->exec ?? [...$state['config']->shell, $instruction->arguments];
-                    $state['layers'][] = $this->metadataLayer($instruction, $state);
+                    $this->cmd($instruction, $state);
                     break;
                 case 'ENTRYPOINT':
-                    $state['config']->entrypoint = $instruction->exec ?? [...$state['config']->shell, $instruction->arguments];
-                    // Définir ENTRYPOINT efface le CMD hérité de l'image de base.
-                    if (!$this->stageDefinesCmdBefore($stage, $instruction)) {
-                        $state['config']->cmd = null;
-                    }
-                    $state['layers'][] = $this->metadataLayer($instruction, $state);
+                    $this->entrypoint($instruction, $state, $stage);
                     break;
                 case 'USER':
-                    $user = Variables::expand(trim($instruction->arguments), $variables);
-                    $state['config']->user = $user;
-                    $state['layers'][] = $this->metadataLayer($instruction, $state);
+                    $user = $this->user($instruction, $state, $variables);
                     break;
                 case 'VOLUME':
-                    $volumes = $instruction->exec ?? (preg_split('/\s+/', trim($instruction->arguments)) ?: []);
-                    foreach ($volumes as $volume) {
-                        $state['config']->volumes[] = Variables::expand($volume, $variables);
-                        $state['fs']->mkdir(Variables::expand($volume, $variables));
-                    }
-                    $state['layers'][] = $this->metadataLayer($instruction, $state);
+                    $this->volume($instruction, $state, $variables);
                     break;
                 case 'STOPSIGNAL':
-                    $state['config']->stopSignal = trim($instruction->arguments);
+                    $state->config->stopSignal = trim($instruction->arguments);
                     break;
                 case 'SHELL':
-                    $state['config']->shell = $instruction->exec ?? ['/bin/sh', '-c'];
+                    $state->config->shell = $instruction->exec ?? ['/bin/sh', '-c'];
                     break;
                 case 'HEALTHCHECK':
-                    $state['config']->healthcheck = $this->healthcheck($instruction);
-                    $state['layers'][] = $this->metadataLayer($instruction, $state);
+                    $this->healthcheck($instruction, $state);
                     break;
                 case 'ONBUILD':
                 case 'MAINTAINER':
                     break;
                 case 'WORKDIR':
                     ++$number;
-                    $path = Path::normalize(Variables::expand(trim($instruction->arguments), $variables, $undefined), $state['config']->workdir);
+                    $path = Path::normalize(Variables::expand(trim($instruction->arguments), $variables, $undefined), $state->config->workdir);
                     $this->undefinedWarnings($undefined, $instruction);
-                    $state['config']->workdir = $path;
+                    $state->config->workdir = $path;
                     $name = sprintf('[%s%d/%d] WORKDIR %s', $label, $number, $total, $path);
                     // Le dossier appartient à l'utilisateur courant : changer USER rejoue WORKDIR (vérifié avec BuildKit).
-                    $key = hash('sha256', $state['key'].'|WORKDIR|'.$path.'|'.$user);
-                    $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use (&$state, $path, $user): array {
+                    $key = hash('sha256', $state->key.'|WORKDIR|'.$path.'|'.$user);
+                    $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use ($state, $path, $user): array {
                         // Comme BuildKit : les dossiers qu'il faut créer (parents compris) appartiennent à
                         // l'utilisateur courant, ceux qui existent gardent le leur. Créés en root, ils refusaient
                         // l'écriture au RUN suivant d'un USER non root, ce qu'un vrai build accepte.
@@ -342,8 +315,8 @@ final class Builder
                         $dir = '';
                         foreach (array_filter(explode('/', $path), static fn (string $segment): bool => $segment !== '') as $segment) {
                             $dir .= '/'.$segment;
-                            if (!$state['fs']->isDir($dir)) {
-                                $state['fs']->mkdir($dir, $owner === 'root' || $owner === '0' ? null : $owner);
+                            if (!$state->fs->isDir($dir)) {
+                                $state->fs->mkdir($dir, $owner === 'root' || $owner === '0' ? null : $owner);
                             }
                         }
 
@@ -367,10 +340,85 @@ final class Builder
                     break;
             }
         }
-        $state['config']->user = $user === 'root' && ($state['config']->user === null) ? null : $state['config']->user;
+        $state->config->user = $user === 'root' && ($state->config->user === null) ? null : $state->config->user;
         $this->stages[$stage->label()] = $state;
 
         return null;
+    }
+
+    // --- Instructions de métadonnées : la configuration change, une couche vide s'ajoute ---------
+
+    /** @param array<string,string> $args */
+    private function env(Instruction $instruction, StageState $state, array $args): void
+    {
+        $undefined = [];
+        [$pairs] = Variables::pairs($instruction->arguments);
+        foreach ($pairs as $key => $value) {
+            $state->config->env[$key] = Variables::expand($value, $state->config->env + $args, $undefined);
+        }
+        $this->undefinedWarnings($undefined, $instruction);
+        $state->layers[] = $this->metadataLayer($instruction, $state);
+    }
+
+    /** @param array<string,string> $variables */
+    private function label(Instruction $instruction, StageState $state, array $variables): void
+    {
+        [$pairs] = Variables::pairs($instruction->arguments);
+        foreach ($pairs as $key => $value) {
+            $state->config->labels[Variables::unquote($key)] = Variables::expand($value, $variables);
+        }
+        $state->layers[] = $this->metadataLayer($instruction, $state);
+    }
+
+    /** @param array<string,string> $variables */
+    private function expose(Instruction $instruction, StageState $state, array $variables): void
+    {
+        foreach (preg_split('/\s+/', Variables::expand($instruction->arguments, $variables)) ?: [] as $port) {
+            $state->config->exposed[] = str_contains($port, '/') ? $port : $port.'/tcp';
+        }
+        $state->config->exposed = array_values(array_unique($state->config->exposed));
+        $state->layers[] = $this->metadataLayer($instruction, $state);
+    }
+
+    private function cmd(Instruction $instruction, StageState $state): void
+    {
+        $state->config->cmd = $instruction->exec ?? [...$state->config->shell, $instruction->arguments];
+        $state->layers[] = $this->metadataLayer($instruction, $state);
+    }
+
+    private function entrypoint(Instruction $instruction, StageState $state, Stage $stage): void
+    {
+        $state->config->entrypoint = $instruction->exec ?? [...$state->config->shell, $instruction->arguments];
+        // Définir ENTRYPOINT efface le CMD hérité de l'image de base.
+        if (!$this->stageDefinesCmdBefore($stage, $instruction)) {
+            $state->config->cmd = null;
+        }
+        $state->layers[] = $this->metadataLayer($instruction, $state);
+    }
+
+    /**
+     * @param array<string,string> $variables
+     *
+     * @return string l'utilisateur des instructions suivantes
+     */
+    private function user(Instruction $instruction, StageState $state, array $variables): string
+    {
+        $user = Variables::expand(trim($instruction->arguments), $variables);
+        $state->config->user = $user;
+        $state->layers[] = $this->metadataLayer($instruction, $state);
+
+        return $user;
+    }
+
+    /** @param array<string,string> $variables */
+    private function volume(Instruction $instruction, StageState $state, array $variables): void
+    {
+        $volumes = $instruction->exec ?? (preg_split('/\s+/', trim($instruction->arguments)) ?: []);
+        foreach ($volumes as $volume) {
+            $state->config->volumes[] = Variables::expand($volume, $variables);
+            $state->fs->mkdir(Variables::expand($volume, $variables));
+        }
+        $state->layers[] = $this->metadataLayer($instruction, $state);
     }
 
     private function stageDefinesCmdBefore(Stage $stage, Instruction $entrypoint): bool
@@ -387,8 +435,14 @@ final class Builder
         return false;
     }
 
+    private function healthcheck(Instruction $instruction, StageState $state): void
+    {
+        $state->config->healthcheck = $this->parseHealthcheck($instruction);
+        $state->layers[] = $this->metadataLayer($instruction, $state);
+    }
+
     /** @return array{test: list<string>, interval?: string, timeout?: string, startPeriod?: string, retries?: int}|null */
-    private function healthcheck(Instruction $instruction): ?array
+    private function parseHealthcheck(Instruction $instruction): ?array
     {
         $arguments = trim($instruction->arguments);
         if (strtoupper($arguments) === 'NONE') {
@@ -417,51 +471,48 @@ final class Builder
      * une variable dans le chemin qu'elle développe ; LABEL, EXPOSE, CMD, ENTRYPOINT, HEALTHCHECK, VOLUME
      * n'entrent dans aucune. Les chaîner apprenait un faux ordre des couches : modifier un LABEL rejouait
      * tous les COPY et RUN suivants, ce qu'un vrai `docker build` ne fait pas.
-     *
-     * @param array<string,mixed> $state
      */
-    private function metadataLayer(Instruction $instruction, array $state): Layer
+    private function metadataLayer(Instruction $instruction, StageState $state): Layer
     {
-        $id = hash('sha256', $state['key'].'|'.$instruction->name.'|'.$instruction->arguments.'|'.json_encode($instruction->exec));
+        $id = hash('sha256', $state->key.'|'.$instruction->name.'|'.$instruction->arguments.'|'.json_encode($instruction->exec));
 
         return new Layer('sha256:'.$id, $instruction->summary(200), 0, $id, [], [], time(), true);
     }
 
     /**
-     * @param array<string,mixed>  $state
      * @param array<string,string> $args
      */
-    private function runStep(Instruction $instruction, array &$state, array $args, string $user, string $label, int $number, int $total, bool $noCache, BuildContext $context): ?BuildResult
+    private function runStep(Instruction $instruction, StageState $state, array $args, string $user, string $label, int $number, int $total, bool $noCache, BuildContext $context): ?BuildResult
     {
         $display = $instruction->exec !== null ? 'RUN '.json_encode($instruction->exec, \JSON_UNESCAPED_SLASHES) : 'RUN '.preg_replace('/\s+/', ' ', $instruction->arguments);
         $name = sprintf('[%s%d/%d] %s', $label, $number, $total, $display);
         // Ce que la commande reçoit : l'environnement de l'image et tous les ARG de l'étape, qu'elle les lise ou non
         // (BuildKit les passe tous en variables d'environnement : changer un ARG inutilisé rejoue le RUN).
-        $key = hash('sha256', $state['key'].'|RUN|'.$instruction->arguments.'|'.($instruction->heredoc ?? '').'|'.json_encode($instruction->exec).'|'.json_encode($state['config']->env).'|'.json_encode($args).'|'.$user.'|'.json_encode($state['config']->shell));
-        $processLabel = $instruction->exec !== null ? json_encode($instruction->exec, \JSON_UNESCAPED_SLASHES) : implode(' ', $state['config']->shell).' '.$instruction->arguments;
+        $key = hash('sha256', $state->key.'|RUN|'.$instruction->arguments.'|'.($instruction->heredoc ?? '').'|'.json_encode($instruction->exec).'|'.json_encode($state->config->env).'|'.json_encode($args).'|'.$user.'|'.json_encode($state->config->shell));
+        $processLabel = $instruction->exec !== null ? json_encode($instruction->exec, \JSON_UNESCAPED_SLASHES) : implode(' ', $state->config->shell).' '.$instruction->arguments;
         $failure = null;
-        $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use (&$state, $instruction, $args, $user, $context, &$failure, $processLabel): array {
+        $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use ($state, $instruction, $args, $user, $context, &$failure, $processLabel): array {
             $machine = new Machine(
-                fs: $state['fs'],
-                facts: $state['facts'],
-                env: $state['config']->env + $args,
-                cwd: $state['config']->workdir,
+                fs: $state->fs,
+                facts: $state->facts,
+                env: $state->config->env + $args,
+                cwd: $state->config->workdir,
                 user: $user,
                 mode: Machine::BUILD,
                 hostProject: $context->directory,
             );
             if (!$machine->isRoot()) {
                 $name = explode(':', $user)[0];
-                if (!ctype_digit($name) && !isset($state['facts']->users[$name])) {
+                if (!ctype_digit($name) && !isset($state->facts->users[$name])) {
                     $failure = sprintf('unable to find user %s: invalid argument', $name);
 
                     return [1, '', 0.0];
                 }
             }
-            $shell = $state['config']->shell;
+            $shell = $state->config->shell;
             if ($instruction->exec !== null) {
                 $code = $this->shell->runArgv($instruction->exec, $machine);
-            } elseif (\in_array(basename($shell[0]), ['bash'], true) && !$state['facts']->hasBinary('bash')) {
+            } elseif (\in_array(basename($shell[0]), ['bash'], true) && !$state->facts->hasBinary('bash')) {
                 $failure = sprintf('process "%s" did not complete successfully: exit code: 127', $processLabel);
                 $machine->output = sprintf("runc run failed: unable to start container process: error during container init: exec: \"%s\": stat %s: no such file or directory\n", $shell[0], $shell[0]);
 
@@ -494,12 +545,11 @@ final class Builder
     }
 
     /**
-     * @param array<string,mixed>  $state
      * @param array<string,string> $variables
      * @param array<string, \Forelse\DockerSim\Catalog\BaseImage> $resolved
      * @param array<string,string> $globalArgs
      */
-    private function copyStep(Instruction $instruction, array &$state, array $variables, string $label, int $number, int $total, bool $noCache, BuildContext $context, Dockerfile $parsed, array $resolved, array $globalArgs, Stage $stage): ?BuildResult
+    private function copyStep(Instruction $instruction, StageState $state, array $variables, string $label, int $number, int $total, bool $noCache, BuildContext $context, Dockerfile $parsed, array $resolved, array $globalArgs, Stage $stage): ?BuildResult
     {
         $undefined = [];
         // Docker retire les guillemets autour des chemins : COPY x "$PHP_INI_DIR/conf.d/y.ini".
@@ -512,10 +562,10 @@ final class Builder
 
         // COPY <<EOF /chemin
         if ($instruction->heredoc !== null && \count($words) >= 1 && str_starts_with($words[0], '<<')) {
-            $destination = Path::normalize(end($words), $state['config']->workdir);
-            $key = hash('sha256', $state['key'].'|COPYHEREDOC|'.$destination.'|'.$instruction->heredoc.'|'.json_encode($keyFlags));
-            $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use (&$state, $destination, $instruction, $flags): array {
-                $state['fs']->write($destination, $instruction->heredoc, isset($flags['chmod']) ? octdec($flags['chmod']) : null, isset($flags['chown']) ? explode(':', $flags['chown'])[0] : null);
+            $destination = Path::normalize(end($words), $state->config->workdir);
+            $key = hash('sha256', $state->key.'|COPYHEREDOC|'.$destination.'|'.$instruction->heredoc.'|'.json_encode($keyFlags));
+            $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use ($state, $destination, $instruction, $flags): array {
+                $state->fs->write($destination, $instruction->heredoc, isset($flags['chmod']) ? octdec($flags['chmod']) : null, isset($flags['chown']) ? explode(':', $flags['chown'])[0] : null);
 
                 return [0, '', 0.0];
             });
@@ -527,13 +577,13 @@ final class Builder
         }
         $destinationRaw = array_pop($words);
         $sources = $words;
-        $destination = Path::normalize($destinationRaw, $state['config']->workdir);
-        $toDirectory = str_ends_with($destinationRaw, '/') || \count($sources) > 1 || $state['fs']->isDir($destination) || $destinationRaw === '.';
+        $destination = Path::normalize($destinationRaw, $state->config->workdir);
+        $toDirectory = str_ends_with($destinationRaw, '/') || \count($sources) > 1 || $state->fs->isDir($destination) || $destinationRaw === '.';
 
         $owner = null;
         if (isset($flags['chown'])) {
             $owner = explode(':', Variables::expand($flags['chown'], $variables))[0];
-            if (!ctype_digit($owner) && !isset($state['facts']->users[$owner])) {
+            if (!ctype_digit($owner) && !isset($state->facts->users[$owner])) {
                 $step = $this->out->step($name);
                 $message = sprintf('unable to convert uid/gid chown string to host mapping: can\'t find uid for user %s: no such user: %s', $owner, $owner);
                 $this->out->stepError($step, $message);
@@ -550,11 +600,11 @@ final class Builder
             $fromLabel = Variables::expand($flags['from'], $globalArgs);
             $fromStage = $parsed->stage($fromLabel);
             if ($fromStage !== null && isset($this->stages[$fromStage->label()])) {
-                $fromFs = $this->stages[$fromStage->label()]['fs'];
-                $fromKey = $this->stages[$fromStage->label()]['key'];
+                $fromFs = $this->stages[$fromStage->label()]->fs;
+                $fromKey = $this->stages[$fromStage->label()]->key;
             } elseif (isset($resolved[$fromLabel])) {
                 $image = ImageFactory::fromBase($resolved[$fromLabel]);
-                $fromFs = new MemoryFs($image->filesystem(), $image->metadata(), $image->directories());
+                $fromFs = new MemoryFs($image->filesystem(), $image->metadata(), $image->directories(), $this->store->blobs);
                 $fromFs = $this->withBinaries($fromFs, $resolved[$fromLabel]);
                 $fromKey = $resolved[$fromLabel]->digest();
             } else {
@@ -579,7 +629,7 @@ final class Builder
                     return $this->fail('ERROR: failed to build: failed to solve: '.$message, excerptLine: $instruction->line, failedStep: $name, endLine: $instruction->endLine);
                 }
             }
-            $key = hash('sha256', $state['key'].'|COPYFROM|'.$fromKey.'|'.json_encode($sources).'|'.$destination.'|'.json_encode($keyFlags));
+            $key = hash('sha256', $state->key.'|COPYFROM|'.$fromKey.'|'.json_encode($sources).'|'.$destination.'|'.json_encode($keyFlags));
         } else {
             $matched = [];
             foreach ($sources as $source) {
@@ -607,41 +657,41 @@ final class Builder
                     $matched[] = $file;
                 }
             }
-            $key = hash('sha256', $state['key'].'|COPY|'.$context->checksum($matched).'|'.$destination.'|'.json_encode($keyFlags).'|'.json_encode($sources));
+            $key = hash('sha256', $state->key.'|COPY|'.$context->checksum($matched).'|'.$destination.'|'.json_encode($keyFlags).'|'.json_encode($sources));
         }
 
-        $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use (&$state, $plan, $context, $fromFs, $owner, $mode): array {
+        $this->runCachedStep($name, $instruction, $state, $key, $noCache, function () use ($state, $plan, $context, $fromFs, $owner, $mode): array {
             $bytes = 0;
             foreach ($plan as [$kind, $source, $target]) {
                 if ($kind === 'mkdir') {
-                    $state['fs']->mkdir($target, $owner);
+                    $state->fs->mkdir($target, $owner);
                     continue;
                 }
                 if ($kind === 'url') {
-                    $state['fs']->write($target, "# téléchargé depuis {$source} (simulé)\n", $mode ?? 0600, $owner);
+                    $state->fs->write($target, "# téléchargé depuis {$source} (simulé)\n", $mode ?? 0600, $owner);
                     continue;
                 }
                 if ($kind === 'from') {
                     $blob = (string) $fromFs->blob($source);
-                    $state['fs']->putBlob($target, $blob, $mode ?? $fromFs->mode($source), $owner);
+                    $state->fs->putBlob($target, $blob, $mode ?? $fromFs->mode($source), $owner);
                     $bytes += Blob::size($blob);
                     // Un binaire copié depuis une autre image (COPY --from=composer:2 /usr/bin/composer) devient disponible.
                     if (preg_match('#^/(usr/(local/)?)?s?bin/#', $target) && \in_array(basename($source), ['composer', 'install-php-extensions', 'frankenphp', 'caddy', 'node', 'npm'], true)) {
-                        $state['facts']->binaries[] = basename($target);
-                        $state['facts']->binaries = array_values(array_unique($state['facts']->binaries));
+                        $state->facts->binaries[] = basename($target);
+                        $state->facts->binaries = array_values(array_unique($state->facts->binaries));
                     }
                     continue;
                 }
                 $absolute = $context->absolute($source);
                 $hostMode = @fileperms($absolute);
                 $executable = $hostMode !== false && ($hostMode & 0111) !== 0;
-                $state['fs']->writeFromHost($target, $absolute, $mode ?? ($executable ? 0755 : 0644), $owner);
+                $state->fs->writeFromHost($target, $absolute, $mode ?? ($executable ? 0755 : 0644), $owner);
                 $bytes += (int) @filesize($absolute);
                 if ($owner !== null) {
                     // --chown s'applique aussi aux dossiers créés pour l'occasion.
                     $dir = \dirname($target);
-                    while ($dir !== '/' && $state['fs']->owner($dir) === 'root' && !\in_array($dir, ['/var', '/var/www', '/usr', '/opt', '/home', '/srv', '/app'], true)) {
-                        $state['fs']->chown($dir, $owner);
+                    while ($dir !== '/' && $state->fs->owner($dir) === 'root' && !\in_array($dir, ['/var', '/var/www', '/usr', '/opt', '/home', '/srv', '/app'], true)) {
+                        $state->fs->chown($dir, $owner);
                         $dir = \dirname($dir);
                     }
                 }
@@ -670,48 +720,47 @@ final class Builder
     /**
      * Joue une étape, ou la reprend du cache si sa clé est connue.
      *
-     * @param array<string,mixed>              $state
      * @param callable(): array{0:int,1:string,2:float} $execute
      */
-    private function runCachedStep(string $name, Instruction $instruction, array &$state, string $key, bool $noCache, callable $execute): void
+    private function runCachedStep(string $name, Instruction $instruction, StageState $state, string $key, bool $noCache, callable $execute): void
     {
         $step = $this->out->step($name);
         if (!$noCache && isset($this->store->buildCache[$key]['layer'])) {
             $cached = $this->store->buildCache[$key];
             $layer = Layer::fromArray($cached['layer']);
             foreach ($layer->deleted as $path) {
-                $state['fs']->delete($path);
+                $state->fs->delete($path);
             }
             foreach ($layer->dirs as $dir) {
-                $state['fs']->mkdir($dir);
+                $state->fs->mkdir($dir);
             }
             foreach ($layer->files as $path => $blob) {
-                $state['fs']->putBlob($path, $blob, $layer->meta[$path][0] ?? null, $layer->meta[$path][1] ?? null);
+                $state->fs->putBlob($path, $blob, $layer->meta[$path][0] ?? null, $layer->meta[$path][1] ?? null);
             }
             foreach ($layer->meta as $path => [$mode, $owner]) {
-                if ($state['fs']->exists($path)) {
-                    $state['fs']->chmod($path, $mode);
-                    $state['fs']->chown($path, $owner);
+                if ($state->fs->exists($path)) {
+                    $state->fs->chmod($path, $mode);
+                    $state->fs->chown($path, $owner);
                 }
             }
             $factsData = $cached['facts'];
-            $state['facts']->packages = [];
-            $restored = Facts::fromImage(new Image('x', [], [], new ImageConfig(), '', $state['facts']->kind, $state['facts']->os, $factsData['packages'], $factsData['phpExtensions'], $factsData['binaries'], $factsData['apacheModules'], $state['facts']->phpVersion, null, 0, false, null, $factsData['users']));
-            $state['facts']->packages = $restored->packages;
-            $state['facts']->phpExtensions = $restored->phpExtensions;
-            $state['facts']->peclBuilt = $restored->peclBuilt;
-            $state['facts']->binaries = $restored->binaries;
-            $state['facts']->apacheModules = $restored->apacheModules;
-            $state['facts']->users = $restored->users;
-            $state['layers'][] = $layer;
-            $state['key'] = $key;
+            $state->facts->packages = [];
+            $restored = Facts::fromImage(new Image('x', [], [], new ImageConfig(), '', $state->facts->kind, $state->facts->os, $factsData['packages'], $factsData['phpExtensions'], $factsData['binaries'], $factsData['apacheModules'], $state->facts->phpVersion, null, 0, false, null, $factsData['users']));
+            $state->facts->packages = $restored->packages;
+            $state->facts->phpExtensions = $restored->phpExtensions;
+            $state->facts->peclBuilt = $restored->peclBuilt;
+            $state->facts->binaries = $restored->binaries;
+            $state->facts->apacheModules = $restored->apacheModules;
+            $state->facts->users = $restored->users;
+            $state->layers[] = $layer;
+            $state->key = $key;
             $this->out->stepCached($step);
             $this->steps[] = ['name' => $name, 'instruction' => $instruction->name, 'cached' => true, 'seconds' => (float) ($cached['seconds'] ?? 0), 'line' => $instruction->line, 'output' => (string) ($cached['output'] ?? '')];
             $this->out->stepDone($step, null);
 
             return;
         }
-        $state['fs']->beginLayer();
+        $state->fs->beginLayer();
         [$code, $output, $seconds] = $execute();
         $this->out->stepOutput($step, $output, $seconds);
         $this->steps[] = ['name' => $name, 'instruction' => $instruction->name, 'cached' => false, 'seconds' => $seconds, 'line' => $instruction->line, 'output' => $output];
@@ -720,11 +769,11 @@ final class Builder
 
             return;
         }
-        $changes = $state['fs']->layerChanges();
+        $changes = $state->fs->layerChanges();
         $layer = new Layer('sha256:'.$key, $this->historyLine($instruction), $changes['size'], $key, $changes['files'], $changes['deleted'], time(), false, $changes['meta'], $changes['dirs']);
-        $state['layers'][] = $layer;
-        $state['key'] = $key;
-        $this->store->buildCache[$key] = ['layer' => $layer->toArray(), 'facts' => $state['facts']->export(), 'seconds' => $seconds, 'output' => $output];
+        $state->layers[] = $layer;
+        $state->key = $key;
+        $this->store->buildCache[$key] = ['layer' => $layer->toArray(), 'facts' => $state->facts->export(), 'seconds' => $seconds, 'output' => $output];
         $this->out->stepDone($step, $seconds);
     }
 
@@ -737,33 +786,13 @@ final class Builder
     }
 
     /**
-     * @param array<string,mixed> $state
-     *
-     * @return array<string,mixed>
+     * @param list<string> $tags
      */
-    private function cloneState(array $state): array
+    private function exportImage(StageState $state, array $tags, Stage $stage): Image
     {
-        $fs = new MemoryFs($state['fs']->allBlobs(), [], []);
-        foreach ($state['fs']->files() as $file) {
-            $fs->chmod($file, $state['fs']->mode($file));
-            $fs->chown($file, $state['fs']->owner($file));
-        }
-        $state['fs'] = $fs;
-        $state['facts'] = clone $state['facts'];
-        $state['config'] = clone $state['config'];
-
-        return $state;
-    }
-
-    /**
-     * @param array<string,mixed> $state
-     * @param list<string>        $tags
-     */
-    private function exportImage(array $state, array $tags, Stage $stage): Image
-    {
-        $facts = $state['facts']->export();
-        $config = $state['config'];
-        $id = 'sha256:'.hash('sha256', $state['key'].json_encode($config->toArray()));
+        $facts = $state->facts->export();
+        $config = $state->config;
+        $id = 'sha256:'.hash('sha256', $state->key.json_encode($config->toArray()));
         $existing = $this->store->images[$id] ?? null;
         $normalized = array_map(Store::normalizeTag(...), $tags);
         foreach ($this->store->images as $other) {
@@ -774,17 +803,17 @@ final class Builder
         $image = new Image(
             id: $id,
             tags: array_values(array_unique([...($existing->tags ?? []), ...$normalized])),
-            layers: $state['layers'],
+            layers: $state->layers,
             config: $config,
-            base: $state['base'],
-            kind: $state['kind'],
-            os: $state['os'],
+            base: $state->base,
+            kind: $state->kind,
+            os: $state->os,
             packages: $facts['packages'],
             phpExtensions: $facts['phpExtensions'],
             binaries: $facts['binaries'],
             apacheModules: $facts['apacheModules'],
-            phpVersion: $state['phpVersion'],
-            docroot: $state['docroot'],
+            phpVersion: $state->phpVersion,
+            docroot: $state->docroot,
             createdAt: $existing->createdAt ?? time(),
             pulled: false,
             stage: $stage->name,
@@ -946,7 +975,7 @@ final class Builder
     {
         $best = null;
         $distance = 3;
-        foreach (['FROM', 'RUN', 'CMD', 'LABEL', 'EXPOSE', 'ENV', 'ADD', 'COPY', 'ENTRYPOINT', 'VOLUME', 'USER', 'WORKDIR', 'ARG', 'HEALTHCHECK', 'SHELL'] as $candidate) {
+        foreach (Instruction::NAMES as $candidate) {
             $d = levenshtein(strtoupper($word), $candidate);
             if ($d < $distance) {
                 $distance = $d;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Fs;
 
 use Forelse\DockerSim\State\Blob;
+use Forelse\DockerSim\State\BlobStore;
 
 /**
  * Système de fichiers d'une image en cours de construction : l'état hérité des couches précédentes,
@@ -32,8 +33,9 @@ final class MemoryFs implements FileSystem
      * @param array<string,string>                $files
      * @param array<string,array{0:int,1:string}> $meta
      * @param list<string>                        $dirs
+     * @param ?BlobStore                          $blobs dépôt des contenus volumineux (sans lui, tout reste dans l'état)
      */
-    public function __construct(array $files = [], array $meta = [], array $dirs = [])
+    public function __construct(array $files = [], array $meta = [], array $dirs = [], private readonly ?BlobStore $blobs = null)
     {
         $this->files = $files;
         $this->meta = $meta;
@@ -91,7 +93,7 @@ final class MemoryFs implements FileSystem
 
     public function read(string $path): ?string
     {
-        return isset($this->files[$path]) ? Blob::decode($this->files[$path]) : null;
+        return isset($this->files[$path]) ? ($this->blobs?->decode($this->files[$path]) ?? Blob::decode($this->files[$path])) : null;
     }
 
     public function blob(string $path): ?string
@@ -101,12 +103,12 @@ final class MemoryFs implements FileSystem
 
     public function write(string $path, string $content, ?int $mode = null, ?string $owner = null): void
     {
-        $this->put($path, Blob::store($content), $mode, $owner);
+        $this->put($path, $this->blobs?->store($content) ?? Blob::encode($content), $mode, $owner);
     }
 
     public function writeFromHost(string $path, string $hostPath, ?int $mode = null, ?string $owner = null): void
     {
-        $this->put($path, Blob::fromHostFile($hostPath), $mode, $owner);
+        $this->put($path, $this->blobs?->fromHostFile($hostPath) ?? Blob::encode((string) @file_get_contents($hostPath)), $mode, $owner);
     }
 
     public function putBlob(string $path, string $blob, ?int $mode = null, ?string $owner = null): void
@@ -229,6 +231,18 @@ final class MemoryFs implements FileSystem
         sort($result);
 
         return $result;
+    }
+
+    /** Copie des fichiers, droits et propriétaires compris (les dossiers vides ne suivent pas). */
+    public function copyFiles(): self
+    {
+        $copy = new self($this->files, [], [], $this->blobs);
+        foreach ($this->files() as $file) {
+            $copy->chmod($file, $this->mode($file));
+            $copy->chown($file, $this->owner($file));
+        }
+
+        return $copy;
     }
 
     /** @return array<string,string> */
