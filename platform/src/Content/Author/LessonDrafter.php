@@ -3,19 +3,18 @@
 namespace App\Content\Author;
 
 use App\Ai\ModelClient;
+use App\Ai\PromptFiles;
 use App\Content\Chapter;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\Framework\FrameworkProfile;
 use App\Content\EnvironmentRegistry;
-use App\Content\Exercise;
 use App\Content\Track;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Point de départ d'une fiche de cours (chapters/<chapitre>/lesson.md), pour ne pas partir
  * d'une page blanche : un squelette assemblé à partir des exercices du chapitre, ou un brouillon
- * rédigé par le modèle. Dans les deux cas, l'auteur relit et réécrit.
+ * rédigé par le modèle. Dans les deux cas, l'auteur relit et réécrit ; LessonFiles l'écrit dans le pack.
  */
 final class LessonDrafter
 {
@@ -39,18 +38,13 @@ final class LessonDrafter
     ) {
     }
 
-    public function chemin(Track $track, Chapter $chapter): string
-    {
-        return sprintf('%s/chapters/%s/lesson.md', $track->directory, $chapter->id);
-    }
-
     /**
      * Squelette mécanique : concepts, une section vide par concept, les « Rappel » des consignes,
      * les liens de documentation. Les commentaires HTML guident l'auteur et disparaissent au rendu.
      */
     public function squelette(Track $track, Chapter $chapter): string
     {
-        $exercises = $this->exercises($track, $chapter);
+        $exercises = $this->content->exercisesOfChapter($track, $chapter);
         $parConcept = [];
         foreach ($exercises as $exercise) {
             foreach ($exercise->concepts as $concept) {
@@ -110,20 +104,20 @@ final class LessonDrafter
     /** Brouillon rédigé par le modèle, à partir des consignes, solutions et liens des exercices. */
     public function brouillon(Track $track, Chapter $chapter): string
     {
-        $exercises = $this->exercises($track, $chapter);
+        $exercises = $this->content->exercisesOfChapter($track, $chapter);
         $framework = $this->environments->get($chapter->environment ?? $track->environment)->framework;
         $blocs = [sprintf("Parcours « %s » : %s\n\nChapitre « %s » (%d exercices).", $track->title, trim($track->description), $chapter->title, \count($exercises))];
         foreach ($exercises as $exercise) {
             $solution = array_filter(
                 $this->content->solutionFiles($exercise),
-                static fn (string $chemin) => ExerciseDrafter::estDuCode($chemin, $framework),
+                $framework->isCode(...),
                 \ARRAY_FILTER_USE_KEY,
             );
             $docs = array_map(static fn ($d) => sprintf('- [%s](%s)', $d->title, $d->url), $exercise->docs);
             $blocs[] = implode("\n\n", array_filter([
                 sprintf("=== Exercice %s — %s ===\nConcepts : %s", $exercise->id, $exercise->title, implode(', ', $exercise->concepts)),
                 "Consignes :\n".trim($exercise->instructions),
-                $solution ? "Solution de référence :\n".implode("\n\n", array_map(static fn ($c, $f) => sprintf("--- %s ---\n%s", $c, $f), array_keys($solution), $solution)) : null,
+                $solution ? "Solution de référence :\n".PromptFiles::render($solution) : null,
                 $docs ? "Documentation :\n".implode("\n", $docs) : null,
             ]));
         }
@@ -140,38 +134,6 @@ final class LessonDrafter
         return rtrim($fiche)."\n";
     }
 
-    /** Écrit la fiche dans le pack. Refuse d'écraser une fiche existante sans $force. */
-    public function ecrire(Track $track, Chapter $chapter, string $markdown, bool $force = false): string
-    {
-        $chemin = $this->chemin($track, $chapter);
-        if (is_file($chemin) && !$force) {
-            throw new ContentException(sprintf('%s existe déjà : relisez-le, ou passez --force pour le remplacer.', $chemin));
-        }
-        if (!is_writable($track->directory)) {
-            throw new ContentException(sprintf('Le parcours « %s » est en lecture seule (%s).', $track->id, $track->directory));
-        }
-        (new Filesystem())->dumpFile($chemin, $markdown);
-        $this->content->reset();
-
-        return $chemin;
-    }
-
-    /** Retire la fiche du pack : le chapitre n'en a plus. */
-    public function supprimer(Track $track, Chapter $chapter): void
-    {
-        if (!is_writable($track->directory)) {
-            throw new ContentException(sprintf('Le parcours « %s » est en lecture seule (%s).', $track->id, $track->directory));
-        }
-        $chemin = $this->chemin($track, $chapter);
-        $filesystem = new Filesystem();
-        $filesystem->remove($chemin);
-        // Le dossier du chapitre ne sert qu'à la fiche : on ne laisse pas un dossier vide.
-        if (is_dir(\dirname($chemin)) && !glob(\dirname($chemin).'/*')) {
-            $filesystem->remove(\dirname($chemin));
-        }
-        $this->content->reset();
-    }
-
     /** La section « ## Rappel » des consignes d'un exercice, s'il y en a une. */
     public static function rappel(string $instructions): ?string
     {
@@ -181,12 +143,6 @@ final class LessonDrafter
         $texte = trim($m[1]);
 
         return '' === $texte ? null : $texte;
-    }
-
-    /** @return list<Exercise> */
-    private function exercises(Track $track, Chapter $chapter): array
-    {
-        return array_values(array_filter(array_map(fn (string $id) => $this->content->findExercise($track->id, $id), $chapter->exerciseIds)));
     }
 
     private function consignes(FrameworkProfile $framework): string

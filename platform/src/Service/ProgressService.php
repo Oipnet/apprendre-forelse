@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Clock\ClockInterface;
 
 final readonly class ProgressService
 {
@@ -20,6 +21,7 @@ final readonly class ProgressService
         private XpCalculator $xpCalculator,
         private ContentRepository $content,
         private ExerciseAccessGuard $guard,
+        private ClockInterface $clock,
     ) {
     }
 
@@ -34,7 +36,7 @@ final readonly class ProgressService
     public function saveDraft(User $user, Exercise $exercise, array $files, int $hintsUsed): ExerciseProgress
     {
         $progress = $this->findOrCreate($user, $exercise);
-        $progress->saveDraft($this->onlyEditable($exercise, $files), min($hintsUsed, \count($exercise->hints)));
+        $progress->saveDraft($this->onlyEditable($exercise, $files), min($hintsUsed, \count($exercise->hints)), $this->clock->now());
         $this->entityManager->flush();
 
         return $progress;
@@ -60,7 +62,7 @@ final readonly class ProgressService
             $alreadyCompleted = $progress->isCompleted();
             $hints = max($progress->getHintsUsed(), min($hintsUsed, \count($exercise->hints)));
             // La solution consultée ne rapporte rien : c'est ce que promet la page d'accueil.
-            $xp = $progress->complete($hints, $progress->isSolutionRevealed() ? 0 : $this->xpCalculator->xpFor($exercise->xp, $hints));
+            $xp = $progress->complete($hints, $progress->isSolutionRevealed() ? 0 : $this->xpCalculator->xpFor($exercise->xp, $hints), $this->clock->now());
             $user->addXp($xp);
 
             return ['xpEarned' => $xp, 'totalXp' => $user->getXp(), 'alreadyCompleted' => $alreadyCompleted];
@@ -76,7 +78,7 @@ final readonly class ProgressService
     public function revealSolution(User $user, Exercise $exercise): array
     {
         $progress = $this->findOrCreate($user, $exercise);
-        $progress->revealSolution();
+        $progress->revealSolution($this->clock->now());
         $this->entityManager->flush();
 
         return $this->content->solutionFiles($exercise);
@@ -87,7 +89,7 @@ final readonly class ProgressService
      */
     public function saveReview(User $user, Exercise $exercise, array $review): void
     {
-        $this->findOrCreate($user, $exercise)->setReview($review);
+        $this->findOrCreate($user, $exercise)->setReview($review, $this->clock->now());
         $this->entityManager->flush();
     }
 

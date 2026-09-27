@@ -12,6 +12,7 @@ use App\Entity\User;
 use App\Payment\TrackOfferFactory;
 use App\Repository\ExerciseProgressRepository;
 use App\Repository\TrackAccessRepository;
+use App\Service\TrackProgress;
 use Psr\Clock\ClockInterface;
 
 /**
@@ -49,26 +50,24 @@ final readonly class AccountProgress
         $rows = [];
         foreach (array_values($this->visibility->tracks()) as $rank => $track) {
             $progress = $this->progress->findByTrack($user, $track->id);
-            $completed = array_filter($progress, static fn (ExerciseProgress $p) => $p->isCompleted());
-            $total = \count($track->exerciseIds());
-            $done = \count(array_intersect_key($completed, array_flip($track->exerciseIds())));
+            $trackProgress = TrackProgress::of($track, $progress);
             // Reprendre au premier exercice pas encore réussi, dans l'ordre du parcours.
-            $nextId = array_find($track->exerciseIds(), static fn (string $id) => !isset($completed[$id]));
+            $nextId = $trackProgress->next();
             $dates = array_map(static fn (ExerciseProgress $p) => $p->getUpdatedAt(), $progress);
             $offer = $this->offers->create($track, $user);
 
             $rows[] = [
                 'track' => $track,
                 'state' => match (true) {
-                    $total > 0 && $done === $total => self::DONE,
-                    [] !== $progress => self::STARTED,
+                    $trackProgress->isComplete() => self::DONE,
+                    $trackProgress->hasStarted() => self::STARTED,
                     $offer->quote->isFree() => self::FREE,
                     $offer->fullAccess => self::OPEN,
                     default => self::NOT_STARTED,
                 },
-                'completed' => $done,
-                'total' => $total,
-                'xp' => array_sum(array_map(static fn (ExerciseProgress $p) => $p->getXpEarned(), $progress)),
+                'completed' => $trackProgress->completedCount(),
+                'total' => $trackProgress->total(),
+                'xp' => $trackProgress->xpEarned(),
                 'next' => null === $nextId ? null : $this->content->findExercise($track->id, $nextId),
                 'lastActivity' => $dates ? max($dates) : null,
                 'rank' => $rank,

@@ -5,6 +5,7 @@ namespace App\Content\Author;
 use App\Content\Author\Scaffold\ExerciseScaffolders;
 use App\Content\Check\CheckResult;
 use App\Content\Check\ExerciseChecker;
+use App\Content\ContentDates;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
@@ -29,6 +30,7 @@ final class ExerciseStudio
         private readonly TrackWriter $trackWriter,
         private readonly EnvironmentRegistry $environments,
         private readonly ExerciseScaffolders $scaffolders,
+        private readonly ContentDates $dates,
     ) {
     }
 
@@ -56,16 +58,7 @@ final class ExerciseStudio
     /** Le fichier du parcours modifié le plus récemment : « où en étais-je ? » sans ouvrir un terminal. */
     public function modifieLe(Track $track): ?\DateTimeImmutable
     {
-        if (!is_dir($track->directory)) {
-            return null;
-        }
-        $dernier = 0;
-        $fichiers = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($track->directory, \FilesystemIterator::SKIP_DOTS));
-        foreach ($fichiers as $fichier) {
-            $dernier = max($dernier, $fichier->getMTime());
-        }
-
-        return $dernier > 0 ? (new \DateTimeImmutable())->setTimestamp($dernier) : null;
+        return $this->dates->latestFileNow($track->directory);
     }
 
     /** @return array<string, string> contenu par chemin relatif */
@@ -104,7 +97,7 @@ final class ExerciseStudio
     /** Le dossier du parcours, ou du pack pour un exercice de Pratique, accepte-t-il l'écriture ? */
     public function modifiable(Track|Pack $owner): bool
     {
-        return is_writable($owner->directory);
+        return PackWritability::writable($owner);
     }
 
     /**
@@ -116,7 +109,7 @@ final class ExerciseStudio
      */
     public function enregistrer(Track|Pack $owner, Exercise $exercise, array $fichiers): ?string
     {
-        $this->assertModifiable($owner);
+        PackWritability::assert($owner);
         $this->fichiers->write($exercise->directory, $fichiers);
 
         return $this->relire($exercise->trackId, $exercise->id);
@@ -131,7 +124,7 @@ final class ExerciseStudio
      */
     public function creer(Track $track, string $chapitreId, string $id, string $titre, ?string $base, ?array $brouillon = null): string
     {
-        $this->assertModifiable($track);
+        PackWritability::assert($track);
         if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $id)) {
             throw new ContentException(sprintf('Identifiant « %s » : uniquement des minuscules, des chiffres et des tirets.', $id));
         }
@@ -162,7 +155,7 @@ final class ExerciseStudio
      */
     public function creerPratique(Pack $pack, string $id, string $titre, string $environment): string
     {
-        $this->assertModifiable($pack);
+        PackWritability::assert($pack);
         if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $id)) {
             throw new ContentException(sprintf('Identifiant « %s » : uniquement des minuscules, des chiffres et des tirets.', $id));
         }
@@ -190,7 +183,7 @@ final class ExerciseStudio
      */
     public function supprimer(Track|Pack $owner, Exercise $exercise): void
     {
-        $this->assertModifiable($owner);
+        PackWritability::assert($owner);
         if ($owner instanceof Pack) {
             (new Filesystem())->remove($exercise->directory);
             $this->content->reset();
@@ -224,13 +217,6 @@ final class ExerciseStudio
         }
 
         return null;
-    }
-
-    private function assertModifiable(Track|Pack $owner): void
-    {
-        if (!$this->modifiable($owner)) {
-            throw new ContentException(sprintf('%s « %s » n\'est pas modifiable (dossier en lecture seule).', $owner instanceof Pack ? 'Le pack' : 'Le parcours', $owner->id));
-        }
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Handleable;
+use App\Security\SafeRedirect;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
@@ -73,9 +74,9 @@ trait HandledCrudActions
         $this->addFlash('success', $this->handledNotice($handled));
 
         // Retour à la liste ou au détail d'où l'on vient, tant que cela reste sur cette origine.
-        $referer = $context->getRequest()->headers->get('referer', '');
-        $sameOrigin = str_starts_with($referer, $context->getRequest()->getSchemeAndHttpHost().'/');
+        $request = $context->getRequest();
+        $back = SafeRedirect::sameOrigin($request->headers->get('referer'), $request->getSchemeAndHttpHost());
 
-        return $this->redirect($sameOrigin ? $referer : $this->generateUrl($this->handledIndexRoute()));
+        return $this->redirect($back ?? $this->generateUrl($this->handledIndexRoute()));
     }
 }

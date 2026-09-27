@@ -140,6 +140,20 @@ final class ContentRepository
     }
 
     /**
+     * Les exercices d'un chapitre (de tout le parcours sans chapitre), dans l'ordre de track.yaml ; un identifiant
+     * sans exercice lisible est ignoré.
+     *
+     * @return list<Exercise>
+     */
+    public function exercisesOfChapter(Track $track, ?Chapter $chapter = null): array
+    {
+        return array_values(array_filter(array_map(
+            fn (string $id) => $this->findExercise($track->id, $id),
+            null === $chapter ? $track->exerciseIds() : $chapter->exerciseIds,
+        )));
+    }
+
+    /**
      * Les exercices désignés par un pack, un parcours, « parcours/exercice », « pratique » ou « pratique/exercice »
      * (tous si null), éventuellement limités à un chapitre (utile pour répartir une vérification en parallèle).
      * Un pack comprend ses exercices de Pratique ; un chapitre les exclut.

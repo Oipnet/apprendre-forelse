@@ -14,6 +14,7 @@ use App\Service\XpCalculator;
 use App\Tests\DatabaseTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\MockClock;
 
 /**
  * Réussites concurrentes. Une autre requête est simulée par une mise à jour SQL faite derrière le dos de l'EntityManager :
@@ -104,6 +105,24 @@ final class ProgressServiceTest extends KernelTestCase
         $this->assertTrue($this->entityManager->getRepository(ExerciseProgress::class)->findOneBy(['exerciseId' => '01-bonjour'])?->isCompleted());
     }
 
+    public function testLaDateDeReussiteEstCelleDeLHorloge(): void
+    {
+        $ada = $this->createUser();
+        $exercise = $this->exercise('01-bonjour');
+        $container = static::getContainer();
+        $clock = new MockClock('2026-03-02 10:15:00');
+        $progress = new ProgressService($container->get(ExerciseProgressRepository::class), $this->entityManager, $container->get(XpCalculator::class), $container->get(ContentRepository::class), $container->get(ExerciseAccessGuard::class), $clock);
+
+        $progress->saveDraft($ada, $exercise, [], 0);
+        $clock->sleep(90);
+        $progress->complete($ada, $exercise, 0);
+
+        $this->entityManager->clear();
+        $done = $this->entityManager->getRepository(ExerciseProgress::class)->findOneBy(['exerciseId' => '01-bonjour']);
+        $this->assertEquals(new \DateTimeImmutable('2026-03-02 10:16:30'), $done?->getCompletedAt());
+        $this->assertEquals($done?->getCompletedAt(), $done?->getUpdatedAt());
+    }
+
     public function testUnPremierBrouillonCreeEnMemeTempsParUneAutreRequeteNEchouePas(): void
     {
         $ada = $this->createUser();
@@ -157,7 +176,7 @@ final class ProgressServiceTest extends KernelTestCase
         };
         $container = static::getContainer();
 
-        return new ProgressService($repository, $this->entityManager, $container->get(XpCalculator::class), $container->get(ContentRepository::class), $container->get(ExerciseAccessGuard::class));
+        return new ProgressService($repository, $this->entityManager, $container->get(XpCalculator::class), $container->get(ContentRepository::class), $container->get(ExerciseAccessGuard::class), new MockClock());
     }
 
     private function progressRows(User $user): int

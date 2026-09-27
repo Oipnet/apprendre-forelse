@@ -37,7 +37,7 @@ final readonly class PackEnvironments
             $lignes[] = [
                 'id' => $id,
                 'directory' => $directory,
-                'built' => null !== $this->artifacts->path($id.'.zip'),
+                'built' => null !== $this->artifacts->path(EnvironmentArtifacts::archiveName($id)),
             ];
         }
 

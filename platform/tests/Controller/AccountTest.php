@@ -86,7 +86,7 @@ final class AccountTest extends WebTestCase
         $this->assertSelectorNotExists('.ac-featured', 'Rien en cours.');
 
         $done = new ExerciseProgress($ada, 'payant', 'e1');
-        $done->complete(0, 50);
+        $done->complete(0, 50, new \DateTimeImmutable());
         $this->entityManager()->persist($done);
         $this->entityManager()->flush();
 

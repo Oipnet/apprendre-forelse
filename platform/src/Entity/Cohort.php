@@ -105,10 +105,11 @@ class Cohort implements \Stringable
     #[Assert\PositiveOrZero]
     private ?int $quoteAmount = null;
 
-    public function __construct()
+    /** $today : début des accès par défaut, selon l'horloge de l'appelant. */
+    public function __construct(?\DateTimeImmutable $today = null)
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->accessStartsAt = new \DateTimeImmutable('today');
+        $this->accessStartsAt = ($today ?? new \DateTimeImmutable())->setTime(0, 0);
         $this->accessEndsAt = $this->accessStartsAt->modify('+1 year');
         $this->users = new ArrayCollection();
         $this->chefs = new ArrayCollection();

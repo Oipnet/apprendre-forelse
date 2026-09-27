@@ -3,7 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Admin\TrackChoices;
-use App\Cohort\CohortAccessSync;
+use App\Cohort\CohortManagement;
 use App\Cohort\CohortQuoteEstimator;
 use App\Entity\Cohort;
 use App\Entity\FundingMode;
@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
+use Psr\Clock\ClockInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -61,13 +62,20 @@ final class CohortCrudController extends AbstractCrudController implements Reset
         private readonly TrackChoices $tracks,
         private readonly UserRepository $users,
         private readonly CohortQuoteEstimator $estimator,
-        private readonly CohortAccessSync $cohortAccess,
+        private readonly CohortManagement $management,
+        private readonly ClockInterface $clock,
     ) {
     }
 
     public static function getEntityFqcn(): string
     {
         return Cohort::class;
+    }
+
+    /** Accès ouverts à partir d'aujourd'hui, selon l'horloge de l'application. */
+    public function createEntity(string $entityFqcn): Cohort
+    {
+        return new Cohort($this->clock->now());
     }
 
     public function configureCrud(Crud $crud): Crud
@@ -176,34 +184,20 @@ final class CohortCrudController extends AbstractCrudController implements Reset
             ->add(ChoiceFilter::new('fundingMode', 'Financement')->setChoices(FundingMode::valueChoices()));
     }
 
-    /**
-     * Les accès de la cohorte suivent ses parcours, ses dates et son mode de financement : enregistrés dans la même
-     * transaction que la cohorte, pour qu'un échec n'enregistre pas l'une sans les autres.
-     */
+    /** Les accès de la cohorte suivent ses parcours, ses dates et son mode de financement (voir CohortManagement). */
     public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
-        $entityInstance->addRandomCodePart();
-        $entityManager->wrapInTransaction(function () use ($entityManager, $entityInstance): void {
-            parent::persistEntity($entityManager, $entityInstance);
-            $this->cohortAccess->sync($entityInstance);
-        });
+        $this->management->create($entityInstance);
     }
 
     public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
-        $entityManager->wrapInTransaction(function () use ($entityManager, $entityInstance): void {
-            parent::updateEntity($entityManager, $entityInstance);
-            $this->cohortAccess->sync($entityInstance);
-        });
+        $this->management->update($entityInstance);
     }
 
-    /** Les accès ouverts par la cohorte ne lui survivent pas (la progression, si). */
     public function deleteEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
-        $entityManager->wrapInTransaction(function () use ($entityManager, $entityInstance): void {
-            $this->cohortAccess->revokeAll($entityInstance);
-            parent::deleteEntity($entityManager, $entityInstance);
-        });
+        $this->management->delete($entityInstance);
     }
 
     /**

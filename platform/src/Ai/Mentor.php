@@ -134,7 +134,7 @@ final class Mentor
 
         $sources = ['preview' => 'l\'aperçu de l\'application (réponse HTTP en erreur)', 'tests' => 'l\'exécution des tests', 'console' => 'une commande de la console du projet (bin/console, php artisan ou docker, selon le projet)'];
         $contexte = $this->contexte($exercise, $fichiers);
-        $contexte .= "\n\n# L'erreur\nSource : ".$sources[$source]."\n\n```\n".$this->tronquer($erreur, self::MAX_ERROR_CHARS)."\n```";
+        $contexte .= "\n\n# L'erreur\nSource : ".$sources[$source]."\n\n```\n".PromptFiles::truncate($erreur, self::MAX_ERROR_CHARS)."\n```";
 
         $reponse = $this->modele->appeler($consignes, [['role' => 'user', 'content' => $contexte]], [
             'name' => 'expliquer_erreur',
@@ -181,16 +181,7 @@ final class Mentor
         if (!$fichiers) {
             return '(aucun fichier)';
         }
-        $blocs = [];
-        foreach ($fichiers as $chemin => $contenu) {
-            $blocs[] = "## {$chemin}\n```\n".$this->tronquer($contenu, self::MAX_FILE_CHARS)."\n```";
-        }
 
-        return implode("\n\n", $blocs);
-    }
-
-    private function tronquer(string $texte, int $max): string
-    {
-        return mb_strlen($texte) > $max ? mb_substr($texte, 0, $max)."\n… (tronqué)" : $texte;
+        return PromptFiles::render($fichiers, self::MAX_FILE_CHARS);
     }
 }

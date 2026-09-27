@@ -3,6 +3,7 @@
 namespace App\Seo;
 
 use App\Content\Chapter;
+use App\Content\ContentDates;
 use App\Content\ContentRepository;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\EnvironmentRegistry;
@@ -34,6 +35,7 @@ final readonly class SeoWriter
         private Branding $branding,
         private FrameworkRegistry $frameworks,
         private ExerciseStory $stories,
+        private ContentDates $dates,
     ) {
     }
 
@@ -233,7 +235,7 @@ final readonly class SeoWriter
     /** @param list<Practice> $practices ceux que la liste montre sans filtre */
     public function practiceList(array $practices): void
     {
-        $frameworks = array_values(array_unique(array_map(fn (Practice $p) => $this->frameworkLabel($p->framework), $practices)));
+        $frameworks = array_values(array_unique(array_map(fn (Practice $p) => $this->frameworks->labelOf($p->framework), $practices)));
         $subject = match (\count($frameworks)) {
             0 => 'des frameworks',
             1 => $frameworks[0],
@@ -292,7 +294,7 @@ final readonly class SeoWriter
 
     public function practice(Practice $practice): void
     {
-        $framework = trim($this->frameworkLabel($practice->framework).' '.$practice->version);
+        $framework = trim($this->frameworks->labelOf($practice->framework).' '.$practice->version);
         $feature = self::lowerFirst($practice->exercise->title);
 
         $this->seo
@@ -312,13 +314,13 @@ final readonly class SeoWriter
                 'inLanguage' => 'fr',
                 ...(null === ($image = $this->branding->shareUrl()) ? [] : ['image' => $this->absolute($image)]),
                 'datePublished' => $practice->published->format('Y-m-d'),
-                'dateModified' => Sitemap::practiceModified($practice),
+                'dateModified' => $this->dates->practiceModified($practice),
                 'author' => $this->author(),
                 'publisher' => [
                     ...$this->organization(),
                     ...(null === ($logo = $this->branding->logoLargeUrl()) ? [] : ['logo' => ['@type' => 'ImageObject', 'url' => $this->absolute($logo)]]),
                 ],
-                'keywords' => implode(', ', [$this->frameworkLabel($practice->framework), ...$practice->exercise->concepts]),
+                'keywords' => implode(', ', [$this->frameworks->labelOf($practice->framework), ...$practice->exercise->concepts]),
             ])
             ->addStructuredData($this->breadcrumb([
                 'Pratique' => $this->url('app_practice'),
@@ -393,22 +395,22 @@ final readonly class SeoWriter
     }
 
     /**
-     * L'auteur des parcours et des exercices. La personne derrière Forelse ne vaut que pour Forelse :
-     * une autre instance publie son organisation.
+     * L'auteur des parcours et des exercices : la personne que déclare la marque du moteur (voir son marque.yaml).
+     * Une autre instance publie son organisation.
      *
      * @return array<string, mixed>
      */
     private function author(): array
     {
-        if (!$this->branding->isDefault()) {
+        if (null === ($person = $this->branding->person())) {
             return ['@id' => $this->url('app_home').'#organisation'];
         }
 
         return [
             '@type' => 'Person',
             '@id' => $this->url('app_home').'#auteur',
-            'name' => 'Arnaud Pointet',
-            'jobTitle' => 'Développeur indépendant',
+            'name' => $person['name'],
+            'jobTitle' => $person['jobTitle'],
             'worksFor' => ['@id' => $this->url('app_home').'#organisation'],
             'url' => $this->branding->url(),
         ];
@@ -438,11 +440,6 @@ final readonly class SeoWriter
     private static function plain(string $text): string
     {
         return trim((string) preg_replace('/\s+/u', ' ', $text));
-    }
-
-    private function frameworkLabel(string $framework): string
-    {
-        return $this->frameworks->has($framework) ? $this->frameworks->get($framework)->label : ucfirst($framework);
     }
 
     /** « Lire un en-tête » → « lire un en-tête », mais « PHP 8.4 » reste tel quel. */

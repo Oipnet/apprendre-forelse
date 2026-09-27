@@ -11,6 +11,7 @@ use App\Api\StudioSaveInput;
 use App\Content\Author\ExerciseDrafter;
 use App\Content\Author\ExerciseStudio;
 use App\Content\Author\LessonDrafter;
+use App\Content\Author\LessonFiles;
 use App\Content\Author\PostDrafter;
 use App\Content\Chapter;
 use App\Content\ContentException;
@@ -41,6 +42,7 @@ final class StudioController extends AbstractController
         private readonly ExerciseStudio $studio,
         private readonly ExerciseDrafter $drafter,
         private readonly LessonDrafter $lessons,
+        private readonly LessonFiles $lessonFiles,
         private readonly PostDrafter $posts,
     ) {
     }
@@ -56,7 +58,7 @@ final class StudioController extends AbstractController
 
         $parcours = [];
         foreach ($this->content->tracks() as $track) {
-            $exercices = array_filter(array_map(fn (string $id) => $this->content->findExercise($track->id, $id), $track->exerciseIds()));
+            $exercices = $this->content->exercisesOfChapter($track);
             $fiches = \count(array_filter($track->chapters, static fn (Chapter $c) => $c->hasLesson()));
             $parcours[] = [
                 'track' => $track,
@@ -94,7 +96,7 @@ final class StudioController extends AbstractController
         $track = $this->content->findTrack($trackId) ?? throw $this->createNotFoundException();
         $chapitres = [];
         foreach ($track->chapters as $chapitre) {
-            $exercices = array_values(array_filter(array_map(fn (string $id) => $this->content->findExercise($track->id, $id), $chapitre->exerciseIds)));
+            $exercices = $this->content->exercisesOfChapter($track, $chapitre);
             $chapitres[] = [
                 'chapitre' => $chapitre,
                 'exercices' => $exercices,
@@ -304,9 +306,9 @@ final class StudioController extends AbstractController
 
         try {
             if ('' === trim($input->markdown)) {
-                $this->lessons->supprimer($track, $chapter);
+                $this->lessonFiles->supprimer($track, $chapter);
             } else {
-                $this->lessons->ecrire($track, $chapter, rtrim($input->markdown)."\n", force: true);
+                $this->lessonFiles->ecrire($track, $chapter, rtrim($input->markdown)."\n", force: true);
             }
         } catch (ContentException $e) {
             return $this->json(['erreur' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);

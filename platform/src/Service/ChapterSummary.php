@@ -23,7 +23,7 @@ final readonly class ChapterSummary
     public function summarize(Track $track, Chapter $chapter, array $progress): array
     {
         /** @var list<Exercise> $exercises */
-        $exercises = array_values(array_filter(array_map(fn (string $id) => $this->content->findExercise($track->id, $id), $chapter->exerciseIds)));
+        $exercises = $this->content->exercisesOfChapter($track, $chapter);
         $position = (int) array_search($chapter->id, array_map(static fn (Chapter $c) => $c->id, $track->chapters), true);
 
         return [

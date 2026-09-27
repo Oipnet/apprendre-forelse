@@ -7,7 +7,6 @@ use App\Entity\PurchaseStatus;
 use App\Entity\TrackAccess;
 use App\Repository\PurchaseRepository;
 use App\Repository\TrackAccessRepository;
-use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
@@ -43,13 +42,8 @@ final readonly class PurchaseFulfillment
         $unknownSession = false;
         $purchase = $this->entityManager->wrapInTransaction(function () use ($sessionId, $amountPaid, $paymentIntentId, $invoiceId, &$unknownSession): ?Purchase {
             // Verrou sur la ligne : deux livraisons simultanées du webhook se suivent au lieu de se croiser.
-            $purchase = $this->purchases->createQueryBuilder('p')
-                ->andWhere('p.stripeSessionId = :session')
-                ->setParameter('session', $sessionId)
-                ->getQuery()
-                ->setLockMode(LockMode::PESSIMISTIC_WRITE)
-                ->getOneOrNullResult();
-            if (!$purchase instanceof Purchase) {
+            $purchase = $this->purchases->findOneBySessionForUpdate($sessionId);
+            if (null === $purchase) {
                 $unknownSession = true;
 
                 return null;

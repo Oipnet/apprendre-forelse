@@ -6,8 +6,6 @@ use App\Content\ContentException;
 use App\Content\EnvironmentRegistry;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Process\ExecutableFinder;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -31,11 +29,12 @@ final readonly class EnvironmentInstaller
     /** Au-delà, on refuse avant d'exécuter quoi que ce soit : un environnement n'est pas une sauvegarde. */
     private const int MAX_MEGABYTES = 512;
 
-    private const int CLONE_TIMEOUT = 300;
     private const int BUILD_TIMEOUT = 1800;
 
     public function __construct(
         private InstalledEnvironments $installed,
+        private InstallationJobs $jobs,
+        private GitCheckout $git,
         private EnvironmentRegistry $environments,
         /** Le script d'empaquetage, livré avec les environnements du moteur. */
         #[Autowire('%kernel.project_dir%/../environments/bin/build-env.sh')]
@@ -44,6 +43,7 @@ final readonly class EnvironmentInstaller
         #[Autowire(env: 'ENVIRONMENT_SOURCES_ALLOWLIST')]
         private string $allowlist = '',
         private Filesystem $filesystem = new Filesystem(),
+        private CommandRunner $runner = new CommandRunner(),
     ) {
     }
 
@@ -64,13 +64,13 @@ final readonly class EnvironmentInstaller
 
         // Noté avant le clone : tant que le dépôt n'est pas lu, on ignore quel environnement en sortira,
         // et un clone qui échoue doit laisser une trace visible dans l'administration.
-        $this->installed->startJob($url, $ref, $dossier);
+        $this->jobs->start($url, $ref, $dossier);
 
         $clone = sys_get_temp_dir().'/env-clone-'.bin2hex(random_bytes(6));
         try {
             $say(sprintf('Clonage de %s…', $url));
-            $this->clone($url, $ref, $clone);
-            $commit = $this->commitOf($clone);
+            $this->git->clone($url, $ref, $clone);
+            $commit = $this->git->commit($clone);
 
             // Un dépôt peut porter plusieurs environnements : on n'installe que le dossier demandé,
             // mais la taille se mesure sur le clone entier — c'est lui qu'on a rapatrié.
@@ -95,7 +95,7 @@ final readonly class EnvironmentInstaller
             $say('Empaquetage (composer install, archive, index de complétion)…');
             $this->build($id);
             $this->record($id, $url, $ref, $dossier, $commit, InstalledEnvironment::READY, 'Installé.');
-            $this->installed->finishJob($url, $ref, $dossier);
+            $this->jobs->finish($url, $ref, $dossier);
             $say('Terminé.');
 
             return $id;
@@ -103,7 +103,7 @@ final readonly class EnvironmentInstaller
             if (isset($id) && $this->installed->has($id)) {
                 $this->record($id, $url, $ref, $dossier, $commit ?? '', InstalledEnvironment::FAILED, $e->getMessage());
             }
-            $this->installed->finishJob($url, $ref, $dossier, $e->getMessage());
+            $this->jobs->finish($url, $ref, $dossier, $e->getMessage());
 
             throw $e;
         } finally {
@@ -152,25 +152,6 @@ final readonly class EnvironmentInstaller
         }
 
         return $dossier;
-    }
-
-    private function clone(string $url, string $ref, string $destination): void
-    {
-        if (null === (new ExecutableFinder())->find('git')) {
-            throw new ContentException('git est introuvable sur ce serveur : impossible d\'installer un environnement depuis un dépôt.');
-        }
-        // Tableau d'arguments, jamais de shell : une adresse ne peut pas devenir une commande.
-        $command = ['git', 'clone', '--depth', '1', '--single-branch', '--no-tags'];
-        if ('' !== $ref) {
-            $command[] = '--branch';
-            $command[] = $ref;
-        }
-        $this->run([...$command, '--', $url, $destination], null, self::CLONE_TIMEOUT, 'Clonage');
-    }
-
-    private function commitOf(string $clone): string
-    {
-        return trim($this->run(['git', 'rev-parse', 'HEAD'], $clone, 30, 'Lecture du commit'));
     }
 
     /** L'identifiant vient de l'environnement lui-même : c'est lui qui se nomme, pas l'administrateur. */
@@ -229,32 +210,13 @@ final readonly class EnvironmentInstaller
             throw new ContentException(sprintf('Aucun dossier où déposer les archives : %s n\'existe pas ou n\'est pas écrivable (voir INSTALLED_ENVIRONMENTS_DIR).', $this->installed->directory()));
         }
         $this->filesystem->mkdir($this->installed->artifactsDirectory());
-        $this->run(
+        $this->runner->run(
             [$this->buildScript, $id, $this->installed->artifactsDirectory()],
             null,
             self::BUILD_TIMEOUT,
             'Empaquetage',
             ['ENVIRONMENTS_PATH' => implode(',', $this->environments->roots()), 'COMPOSER_ALLOW_SUPERUSER' => '1'],
         );
-    }
-
-    /**
-     * @param list<string>          $command
-     * @param array<string, string> $env
-     */
-    private function run(array $command, ?string $cwd, int $timeout, string $etape, array $env = []): string
-    {
-        $process = new Process($command, $cwd, $env ?: null, timeout: $timeout);
-        $process->run();
-        if (!$process->isSuccessful()) {
-            // La sortie d'erreur d'un git ou d'un composer dit précisément ce qui manque : on la garde,
-            // tronquée, plutôt que de la remplacer par « échec ».
-            $sortie = trim($process->getErrorOutput()) ?: trim($process->getOutput());
-
-            throw new ContentException(sprintf('%s : échec. %s', $etape, mb_substr($sortie, -2000)));
-        }
-
-        return $process->getOutput();
     }
 
     private function record(string $id, string $url, string $ref, string $dossier, string $commit, string $state, string $message): void

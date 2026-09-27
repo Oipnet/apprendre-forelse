@@ -1,0 +1,55 @@
+# La marque du moteur : servie tant que l'instance ne monte pas la sienne (BRANDING_DIR/marque.yaml).
+# Ses textes d'accueil et sa « person » parlent de Forelse : ils disparaissent dès qu'une autre marque est posée.
+# Même format que marque.yaml (voir examples/marque), plus « person », réservée au moteur.
+
+name: Forelse
+chip: apprendre
+title: 'Forelse · apprendre à développer'
+tagline: 'Apprendre à développer en codant dans le navigateur, sans vidéo ni installation.'
+url: 'https://forelse.fr'
+person:
+  name: 'Arnaud Pointet'
+  jobTitle: 'Développeur indépendant'
+home:
+  demo:
+    files:
+      - MenuController.php
+      - index.html.twig
+    code: |-
+      <span class="cm">// Bruna veut une carte visible à l'adresse /menu</span>
+      <span class="at">#[Route(</span><span class="st">'/menu'</span><span class="at">, name: </span><span class="st">'app_menu'</span><span class="at">)]</span>
+      <span class="kw">public function</span> index(): Response
+      {
+          <span class="kw">return</span> $this->render(<span class="st">'menu/index.html.twig'</span>, [
+              <span class="st">'taverne'</span>    => <span class="st">'La Taverne du Dragon Ivre'</span>,
+              <span class="st">'platDuJour'</span> => <span class="st">'Ragoût de sanglier'</span>,
+          ]);
+      }<span class="cursor">▌</span>
+    preview:
+      url: localhost/menu
+      name: 'La Taverne du Dragon Ivre'
+      label: 'Plat du jour'
+      value: 'Ragoût de sanglier'
+      row:
+        - 'Hydromel de la maison'
+        - '3 po'
+    goals:
+      - 'La carte est accessible'
+      - 'Le plat du jour est affiché'
+      - "Les prix sont en pièces d'or"
+  showcase:
+    eyebrow: 'Le fil rouge'
+    title: 'Chaque parcours a son fil rouge. Le premier : une taverne.'
+    lead:
+      - "Pas de catalogue d'exemples sans lien entre eux. Dans le parcours Symfony, Bruna vient de reprendre la Taverne du Dragon Ivre et n'a jamais eu de site. La carte, les réservations, les employés, le livre d'or : chaque chapitre répond à un besoin réel de l'auberge."
+      - "Le code du premier exercice sert encore au dernier chapitre. Vous apprenez comme on développe pour de vrai : sur un projet qui grandit, qu'on relit et qu'on fait évoluer."
+    sign:
+      name: |-
+        La Taverne du
+        Dragon Ivre
+      note: 'Fondée au chapitre 1'
+      alt: 'Enseigne de la Taverne du Dragon Ivre, fil rouge du premier parcours'
+  author:
+    eyebrow: 'Qui est derrière'
+    title: 'Un développeur, pas une plateforme de cours en masse.'
+    lead: 'Conçu par Arnaud Pointet, développeur indépendant (Forelse, Bordeaux), qui écrit chaque exercice comme il aurait voulu apprendre.'

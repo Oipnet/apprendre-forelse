@@ -5,6 +5,7 @@ namespace App\Tests\Command;
 use App\Ai\ModelClient;
 use App\Command\ContentLessonDraftCommand;
 use App\Content\Author\LessonDrafter;
+use App\Content\Author\LessonFiles;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Version;
@@ -14,6 +15,8 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore;
 
 /** content:lesson-draft : écrit la fiche de cours d'un chapitre dans un pack (temporaire), squelette ou brouillon. */
 final class LessonDraftCommandTest extends TestCase
@@ -45,7 +48,7 @@ final class LessonDraftCommandTest extends TestCase
         $content = new ContentRepository([$this->tmp], new EnvironmentRegistry(self::ROOT.'/environments'), new Version(self::ROOT.'/VERSION'));
         $drafter = new LessonDrafter($content, new ModelClient($client ?? new MockHttpClient(), 'cle-de-test', 'claude-sonnet-5'), new EnvironmentRegistry(self::ROOT.'/environments'));
 
-        return new CommandTester(new Command(null, new ContentLessonDraftCommand($content, $drafter)));
+        return new CommandTester(new Command(null, new ContentLessonDraftCommand($content, $drafter, new LessonFiles($content, new Filesystem(), new LockFactory(new InMemoryStore())))));
     }
 
     private function lesson(): string

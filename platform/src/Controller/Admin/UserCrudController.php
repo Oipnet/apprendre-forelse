@@ -3,8 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Admin\BetaStats;
-use App\Cohort\CohortAccessSync;
-use App\Entity\Cohort;
+use App\Cohort\CohortManagement;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
@@ -35,7 +34,7 @@ final class UserCrudController extends AbstractCrudController
     public function __construct(
         private readonly AdminUrlGenerator $urls,
         private readonly BetaStats $stats,
-        private readonly CohortAccessSync $cohortAccess,
+        private readonly CohortManagement $management,
     ) {
     }
 
@@ -68,21 +67,7 @@ final class UserCrudController extends AbstractCrudController
     /** Changer la cohorte d'un apprenant ferme les accès de l'ancienne et ouvre ceux de la nouvelle. */
     public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
-        $previous = $entityManager->getUnitOfWork()->getOriginalEntityData($entityInstance)['cohort'] ?? null;
-        // Le compte et ses accès ensemble : un échec ne laisse pas l'apprenant dans une cohorte sans ses parcours.
-        $entityManager->wrapInTransaction(function () use ($entityManager, $entityInstance, $previous): void {
-            parent::updateEntity($entityManager, $entityInstance);
-            $current = $entityInstance->getCohort();
-            if ($previous === $current) {
-                return;
-            }
-            if ($previous instanceof Cohort) {
-                $this->cohortAccess->leave($entityInstance, $previous);
-            }
-            if (null !== $current) {
-                $this->cohortAccess->join($entityInstance, $current);
-            }
-        });
+        $this->management->moveLearner($entityInstance);
     }
 
     public function configureFields(string $pageName): iterable

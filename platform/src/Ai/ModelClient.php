@@ -46,7 +46,7 @@ final class ModelClient
     public function appeler(string $consignes, array $messages, array $outil, int $maxTokens = 16000, string $modele = ''): array
     {
         if (!$this->disponible()) {
-            throw new ContentException('Aucune clé d\'API : la génération est désactivée (voir ANTHROPIC_API_KEY).');
+            throw new ModelUnavailableException('Aucune clé d\'API : la génération est désactivée (voir ANTHROPIC_API_KEY).');
         }
 
         // PHP coupe une requête web après max_execution_time (30 s par défaut ; sous macOS, en temps réel) :
@@ -66,11 +66,11 @@ final class ModelClient
                 'timeout' => self::TIMEOUT,
             ])->toArray(false);
         } catch (ExceptionInterface $e) {
-            throw new ContentException('Le modèle n\'a pas répondu : '.$e->getMessage());
+            throw new ModelUnavailableException('Le modèle n\'a pas répondu : '.$e->getMessage());
         }
 
         if (isset($reponse['error'])) {
-            throw new ContentException(sprintf('Le modèle a refusé : %s', $reponse['error']['message'] ?? 'erreur inconnue'));
+            throw new ModelUnavailableException(sprintf('Le modèle a refusé : %s', $reponse['error']['message'] ?? 'erreur inconnue'));
         }
 
         foreach ($reponse['content'] ?? [] as $bloc) {

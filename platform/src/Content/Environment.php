@@ -3,6 +3,7 @@
 namespace App\Content;
 
 use App\Content\Framework\FrameworkProfile;
+use App\Instance\EnvironmentArtifacts;
 
 /**
  * Environnement d'exécution (projet de base) décrit par environments/<id>/environment.yaml.
@@ -94,11 +95,11 @@ final readonly class Environment
     /** Archive servie au navigateur, produite par environments/bin/build-env.sh. */
     public function archivePath(): string
     {
-        return 'envs/'.$this->id.'.zip';
+        return 'envs/'.EnvironmentArtifacts::archiveName($this->id);
     }
 
     public function completionIndexPath(): string
     {
-        return 'envs/'.$this->id.'.completion.json';
+        return 'envs/'.EnvironmentArtifacts::completionName($this->id);
     }
 }

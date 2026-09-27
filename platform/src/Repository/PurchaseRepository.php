@@ -8,6 +8,7 @@ use App\Entity\PurchaseStatus;
 use App\Entity\User;
 use App\Payment\CheckoutSession;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -51,6 +52,17 @@ class PurchaseRepository extends ServiceEntityRepository
     public function findOneBySession(string $sessionId): ?Purchase
     {
         return $this->findOneBy(['stripeSessionId' => $sessionId]);
+    }
+
+    /** Verrouillé jusqu'à la fin de la transaction : deux livraisons simultanées du webhook se suivent. */
+    public function findOneBySessionForUpdate(string $sessionId): ?Purchase
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.stripeSessionId = :session')
+            ->setParameter('session', $sessionId)
+            ->getQuery()
+            ->setLockMode(LockMode::PESSIMISTIC_WRITE)
+            ->getOneOrNullResult();
     }
 
     public function findOneByPaymentIntent(string $paymentIntentId): ?Purchase

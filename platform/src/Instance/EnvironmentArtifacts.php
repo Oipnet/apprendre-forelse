@@ -20,11 +20,26 @@ final readonly class EnvironmentArtifacts
     ) {
     }
 
-    /** Le chemin d'un artefact (`<id>.zip`, `<id>.completion.json`), ou null s'il n'a pas été construit. */
+    private const string ARCHIVE = '.zip';
+    private const string COMPLETION = '.completion.json';
+
+    /** L'archive d'un environnement, servie au navigateur (produite par environments/bin/build-env.sh). */
+    public static function archiveName(string $id): string
+    {
+        return $id.self::ARCHIVE;
+    }
+
+    /** L'index de complétion d'un environnement (produit par environments/bin/build-env.sh). */
+    public static function completionName(string $id): string
+    {
+        return $id.self::COMPLETION;
+    }
+
+    /** Le chemin d'un artefact (archiveName(), completionName()), ou null s'il n'a pas été construit. */
     public function path(string $file): ?string
     {
         // Un nom de fichier, jamais un chemin : ces valeurs viennent d'une URL.
-        if (1 !== preg_match('/^[a-z0-9-]{1,64}\.(zip|completion\.json)$/', $file)) {
+        if (1 !== preg_match('/^[a-z0-9-]{1,64}('.preg_quote(self::ARCHIVE, '/').'|'.preg_quote(self::COMPLETION, '/').')$/', $file)) {
             return null;
         }
         foreach ([$this->publicDirectory, $this->installed->artifactsDirectory()] as $directory) {

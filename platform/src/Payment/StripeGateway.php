@@ -3,6 +3,7 @@
 namespace App\Payment;
 
 use App\Entity\Purchase;
+use Psr\Clock\ClockInterface;
 use Stripe\Charge;
 use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
@@ -26,6 +27,7 @@ final class StripeGateway implements PaymentGateway
         private readonly string $taxCode,
         #[Autowire('%kernel.environment%')]
         private readonly string $kernelEnvironment,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -69,7 +71,7 @@ final class StripeGateway implements PaymentGateway
                 'success_url' => $successUrl,
                 'cancel_url' => $cancelUrl,
                 // Au-delà, la place réservée au prix fondateur est rendue : la session ne doit plus pouvoir être payée.
-                'expires_at' => time() + CheckoutSession::LIFETIME,
+                'expires_at' => $this->clock->now()->getTimestamp() + CheckoutSession::LIFETIME,
             ], ['idempotency_key' => 'purchase-'.$purchase->getId()]);
         } catch (ApiErrorException $e) {
             throw new PaymentException('Le paiement n\'a pas pu démarrer : '.$e->getMessage(), previous: $e);

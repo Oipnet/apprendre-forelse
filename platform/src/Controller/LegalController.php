@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Ai\Mentor;
 use App\Legal\LegalInfo;
+use App\Legal\LegalVersions;
 use App\Payment\PaymentGateway;
 use App\Seo\SeoWriter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,15 +20,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  */
 final class LegalController extends AbstractController
 {
-    /** Dernière révision des deux textes : affichée en bas de page et donnée au sitemap. */
-    public const string UPDATED_AT = '2026-09-17';
-
-    /**
-     * Version des conditions générales de vente : la date de leur dernière révision. Enregistrée avec chaque achat
-     * (Purchase::$termsVersion). À changer à chaque modification du texte de legal/terms.html.twig.
-     */
-    public const string TERMS_VERSION = '2026-09-17';
-
     public function __construct(
         private readonly LegalInfo $legal,
         private readonly Mentor $mentor,
@@ -65,7 +57,7 @@ final class LegalController extends AbstractController
         return $this->render('legal/terms.html.twig', [
             ...$this->context(),
             'missing' => $this->legal->termsMissing(),
-            'termsVersion' => new \DateTimeImmutable(self::TERMS_VERSION),
+            'termsVersion' => new \DateTimeImmutable(LegalVersions::TERMS_VERSION),
         ]);
     }
 
@@ -104,7 +96,7 @@ final class LegalController extends AbstractController
             'inviteOnly' => $this->inviteOnly,
             'siteHost' => parse_url($this->siteUrl, \PHP_URL_HOST) ?: $this->siteUrl,
             'sandboxHost' => parse_url($this->sandboxOrigin, \PHP_URL_HOST) ?: $this->sandboxOrigin,
-            'updatedAt' => new \DateTimeImmutable(self::UPDATED_AT),
+            'updatedAt' => new \DateTimeImmutable(LegalVersions::UPDATED_AT),
         ];
     }
 }
