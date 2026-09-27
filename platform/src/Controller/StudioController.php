@@ -122,24 +122,10 @@ final class StudioController extends AbstractController
     #[Route('/pratique', name: 'app_studio_practice', methods: ['GET'], priority: 2)]
     public function practice(): Response
     {
-        // On crée dans un pack modifiable, avec l'un des environnements déjà utilisés par le contenu installé.
-        $environnements = [];
-        foreach ($this->content->tracks() as $track) {
-            $environnements[] = $track->environment;
-            foreach ($track->chapters as $chapitre) {
-                $environnements[] = $chapitre->environment;
-            }
-        }
-        foreach ($this->content->practices() as $practice) {
-            $environnements[] = $practice->exercise->environment;
-        }
-        $environnements = array_values(array_unique(array_filter($environnements)));
-        sort($environnements);
-
         return $this->render('studio/practice.html.twig', [
             'pratique' => $this->content->practices(),
             'packsModifiables' => array_filter($this->content->packs(), $this->studio->modifiable(...)),
-            'environnements' => $environnements,
+            'environnements' => $this->studio->environnementsPratique(),
         ]);
     }
 

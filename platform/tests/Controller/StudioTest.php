@@ -333,6 +333,18 @@ final class StudioTest extends WebTestCase
         $this->assertStringContainsString('« xp » n\'a pas cours', (string) json_decode((string) $client->getResponse()->getContent(), true)['format']);
     }
 
+    public function testUnFrameworkSansSqueletteNeSeCreePasDepuisLAtelier(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+
+        $client->jsonRequest('POST', '/atelier/pratique/nouveau', ['pack' => 'demo', 'id' => 'mon-essai-nuxt', 'titre' => 'Mon essai', 'environnement' => 'nuxt-4']);
+
+        $this->assertResponseStatusCodeSame(422, 'Nuxt n\'a pas de squelette : plus de projet Symfony dans un exercice Nuxt.');
+        $this->assertStringContainsString('Nuxt', json_decode((string) $client->getResponse()->getContent(), true)['erreur']);
+        $this->assertDirectoryDoesNotExist($this->packs.'/demo/practice/mon-essai-nuxt', 'Rien n\'est créé.');
+    }
+
     public function testUnAuteurOuvreUnExerciceDePratiqueEnPreparation(): void
     {
         // En préparation et programmé : invisible pour un apprenant, mais c'est justement ce qu'un auteur écrit.
