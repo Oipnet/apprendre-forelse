@@ -41,9 +41,9 @@ final class BetaStatsTest extends KernelTestCase
         $bob = $this->createUser('bob@example.test', 'Bob', 'iut');
         // Ada a réussi le parcours Symfony ; Bob est en cours sur Laravel, avec deux indices et un gros brouillon.
         $done = new ExerciseProgress($ada, 'symfony-bases', 'e1');
-        $done->complete(0, 10);
+        $done->complete(0, 10, new \DateTimeImmutable());
         $draft = new ExerciseProgress($bob, 'laravel-bases', 'e1');
-        $draft->saveDraft(['src/Kernel.php' => str_repeat('<?php // brouillon', 1000)], 2);
+        $draft->saveDraft(['src/Kernel.php' => str_repeat('<?php // brouillon', 1000)], 2, new \DateTimeImmutable());
         $entityManager->persist($done);
         $entityManager->persist($draft);
         $entityManager->flush();

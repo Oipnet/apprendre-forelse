@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
+use Psr\Clock\ClockInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -62,12 +63,19 @@ final class CohortCrudController extends AbstractCrudController implements Reset
         private readonly UserRepository $users,
         private readonly CohortQuoteEstimator $estimator,
         private readonly CohortAccessSync $cohortAccess,
+        private readonly ClockInterface $clock,
     ) {
     }
 
     public static function getEntityFqcn(): string
     {
         return Cohort::class;
+    }
+
+    /** Accès ouverts à partir d'aujourd'hui, selon l'horloge de l'application. */
+    public function createEntity(string $entityFqcn): Cohort
+    {
+        return new Cohort($this->clock->now());
     }
 
     public function configureCrud(Crud $crud): Crud

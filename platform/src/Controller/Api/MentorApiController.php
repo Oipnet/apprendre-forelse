@@ -12,6 +12,7 @@ use App\Content\ContentException;
 use App\Content\Exercise;
 use App\Entity\User;
 use App\Service\ProgressService;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -41,6 +42,7 @@ final class MentorApiController extends AbstractController
         private readonly RateLimiterFactoryInterface $budget,
         private readonly RequestStack $requests,
         private readonly ExerciseAccessGuard $guard,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -112,7 +114,7 @@ final class MentorApiController extends AbstractController
         foreach ([$this->mentorLimiter->create((string) $user->getId()), $this->ipLimiter->create($ip)] as $limiter) {
             $limit = $limiter->consume();
             if (!$limit->isAccepted()) {
-                throw new TooManyRequestsHttpException($limit->getRetryAfter()->getTimestamp() - time(), 'Le mentor a beaucoup travaillé : réessayez un peu plus tard.');
+                throw new TooManyRequestsHttpException($limit->getRetryAfter()->getTimestamp() - $this->clock->now()->getTimestamp(), 'Le mentor a beaucoup travaillé : réessayez un peu plus tard.');
             }
         }
         if (!$this->budget->create('instance')->consume()->isAccepted()) {

@@ -130,10 +130,10 @@ class ExerciseProgress
         return $this->solutionRevealed;
     }
 
-    public function revealSolution(): void
+    public function revealSolution(\DateTimeImmutable $now): void
     {
         $this->solutionRevealed = true;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = $now;
     }
 
     /** @return array<string, mixed>|null */
@@ -143,27 +143,27 @@ class ExerciseProgress
     }
 
     /** @param array<string, mixed> $review */
-    public function setReview(array $review): void
+    public function setReview(array $review, \DateTimeImmutable $now): void
     {
         $this->review = $review;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = $now;
     }
 
     /**
      * @param array<string, string> $files
      */
-    public function saveDraft(array $files, int $hintsUsed): void
+    public function saveDraft(array $files, int $hintsUsed, \DateTimeImmutable $now): void
     {
         $this->files = $files;
         // Un indice consulté ne se « rend » pas.
         $this->hintsUsed = max($this->hintsUsed, $hintsUsed);
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = $now;
     }
 
     /**
      * Marque l'exercice réussi. Renvoie l'XP gagnée : 0 s'il l'était déjà.
      */
-    public function complete(int $hintsUsed, int $xp): int
+    public function complete(int $hintsUsed, int $xp, \DateTimeImmutable $now): int
     {
         if ($this->isCompleted()) {
             return 0;
@@ -171,7 +171,7 @@ class ExerciseProgress
         $this->hintsUsed = max($this->hintsUsed, $hintsUsed);
         $this->status = ProgressStatus::Completed;
         $this->xpEarned = $xp;
-        $this->completedAt = $this->updatedAt = new \DateTimeImmutable();
+        $this->completedAt = $this->updatedAt = $now;
 
         return $xp;
     }
