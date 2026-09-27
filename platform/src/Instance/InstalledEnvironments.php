@@ -97,8 +97,8 @@ final class InstalledEnvironments
         $id = self::id($id);
         $this->filesystem->remove([
             $this->directoryOf($id),
-            $this->artifactsDirectory().'/'.$id.'.zip',
-            $this->artifactsDirectory().'/'.$id.'.completion.json',
+            $this->artifactsDirectory().'/'.EnvironmentArtifacts::archiveName($id),
+            $this->artifactsDirectory().'/'.EnvironmentArtifacts::completionName($id),
         ]);
     }
 

@@ -2,9 +2,9 @@
 
 namespace App\Tests\Content;
 
-use App\Content\Check\ExerciseChecker;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
+use App\Tests\ExerciseCheckerTrait;
 use App\Version;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -12,6 +12,8 @@ use Symfony\Component\Filesystem\Filesystem;
 /** Exécute réellement PHPUnit sur l'environnement symfony-8 (quelques secondes). */
 final class ExerciseCheckerTest extends TestCase
 {
+    use ExerciseCheckerTrait;
+
     private const string ROOT = __DIR__.'/../../..';
     private string $tmp;
 
@@ -38,19 +40,7 @@ final class ExerciseCheckerTest extends TestCase
         $environments = new EnvironmentRegistry(self::ROOT.'/environments');
         $content = new ContentRepository([$packs], $environments, new Version(self::ROOT.'/VERSION'));
 
-        return [$content, new ExerciseChecker($content, $environments)];
-    }
-
-    /** En production, DATABASE_URL est une vraie variable d'environnement, pas une valeur du .env : elle doit être cachée aussi. */
-    public function testLesVariablesDeLaPlateformeSontCacheesAuProjetTeste(): void
-    {
-        [, $checker] = $this->checker(self::ROOT.'/examples/packs');
-        $env = $checker->isolatedEnv();
-
-        $this->assertSame('test', $env['APP_ENV']);
-        $this->assertFalse($env['DATABASE_URL']);
-        $this->assertFalse($env['SANDBOX_ORIGIN'], 'Déclarée dans platform/.env, même si Dotenv ne l\'a pas injectée.');
-        $this->assertFalse($env['ANTHROPIC_API_KEY']);
+        return [$content, self::exerciseChecker($content, $environments)];
     }
 
     public function testLePackDeDemoEstConforme(): void

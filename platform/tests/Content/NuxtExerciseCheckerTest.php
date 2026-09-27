@@ -2,9 +2,9 @@
 
 namespace App\Tests\Content;
 
-use App\Content\Check\ExerciseChecker;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
+use App\Tests\ExerciseCheckerTrait;
 use App\Version;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -13,6 +13,8 @@ use Symfony\Component\Process\ExecutableFinder;
 /** Exercices Nuxt : leurs tests Vitest sont lancés par le simulateur (packages/simulateur-nuxt), sous Node. */
 final class NuxtExerciseCheckerTest extends TestCase
 {
+    use ExerciseCheckerTrait;
+
     private const string ROOT = __DIR__.'/../../..';
     private string $tmp;
 
@@ -53,7 +55,7 @@ final class NuxtExerciseCheckerTest extends TestCase
         $environments = new EnvironmentRegistry(self::ROOT.'/environments');
         $content = new ContentRepository([$this->tmp], $environments, new Version(self::ROOT.'/VERSION'));
 
-        return [$content, new ExerciseChecker($content, $environments, self::ROOT.'/platform')];
+        return [$content, self::exerciseChecker($content, $environments, self::ROOT.'/platform')];
     }
 
     private const string PAGE_DE_DEPART = "<template>\n\t<h1>Nuxt</h1>\n</template>\n";
