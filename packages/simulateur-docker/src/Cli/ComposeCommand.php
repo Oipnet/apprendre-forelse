@@ -21,6 +21,7 @@ final class ComposeCommand
     {
     }
 
+    /** @param list<string> $argv */
     public function run(array $argv, string &$output): int
     {
         $global = [];
@@ -111,12 +112,17 @@ final class ComposeCommand
         return $code;
     }
 
-    /** @return list<string> */
+    /**
+     * @param list<string> $argv
+     *
+     * @return list<string>
+     */
     private function services(array $argv): array
     {
         return array_values(array_filter($argv, static fn ($a) => !str_starts_with($a, '-')));
     }
 
+    /** @param list<string> $argv */
     private function up(Project $project, array $argv): int
     {
         $args = Args::parse($argv, ['d' => ['detach', false], 'detach' => ['detach', false], 'build' => ['build', false], 'no-build' => ['no-build', false], 'force-recreate' => ['force-recreate', false], 'no-deps' => ['no-deps', false], 'wait' => ['wait', false], 'remove-orphans' => ['remove-orphans', false], 'pull' => ['pull', true], 'no-recreate' => ['no-recreate', false], 'abort-on-container-exit' => ['abort', false], 'quiet-pull' => ['quiet-pull', false], 'y' => ['yes', false], 'watch' => ['watch', false], 'w' => ['watch', false]], 'compose up');
@@ -128,6 +134,7 @@ final class ComposeCommand
         return $ok ? 0 : ($project->exitCode ?: 1);
     }
 
+    /** @param list<string> $argv */
     private function down(Project $project, array $argv): int
     {
         $args = Args::parse($argv, ['v' => ['volumes', false], 'volumes' => ['volumes', false], 'remove-orphans' => ['remove-orphans', false], 'rmi' => ['rmi', true], 't' => ['timeout', true]], 'compose down');
@@ -135,6 +142,7 @@ final class ComposeCommand
         return $project->down($args->has('volumes'), $args->has('remove-orphans'), $args->get('rmi')) ? 0 : 1;
     }
 
+    /** @param list<string> $argv */
     private function ps(Project $project, array $argv): int
     {
         $args = Args::parse($argv, ['a' => ['all', false], 'all' => ['all', false], 'q' => ['quiet', false], 'quiet' => ['quiet', false], 'services' => ['services', false], 'format' => ['format', true], 'status' => ['status', true, true]], 'compose ps');
@@ -194,6 +202,7 @@ final class ComposeCommand
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function logs(Project $project, array $argv): int
     {
         $args = Args::parse($argv, ['f' => ['follow', false], 'follow' => ['follow', false], 'tail' => ['tail', true], 'n' => ['tail', true], 'no-log-prefix' => ['no-prefix', false], 't' => ['timestamps', false], 'timestamps' => ['timestamps', false], 'since' => ['since', true]], 'compose logs');
@@ -207,6 +216,7 @@ final class ComposeCommand
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function exec(Project $project, array $argv): int
     {
         $args = Args::parse($argv, ['T' => ['no-tty', false], 'no-TTY' => ['no-tty', false], 'u' => ['user', true], 'user' => ['user', true], 'w' => ['workdir', true], 'workdir' => ['workdir', true], 'e' => ['env', true, true], 'env' => ['env', true, true], 'd' => ['detach', false], 'i' => ['interactive', false], 't' => ['tty', false], 'index' => ['index', true], 'privileged' => ['privileged', false]], 'compose exec', stopAtPositional: true);
@@ -227,6 +237,7 @@ final class ComposeCommand
         return $code;
     }
 
+    /** @param list<string> $argv */
     private function runService(Project $project, array $argv): int
     {
         $args = Args::parse($argv, ['rm' => ['rm', false], 'no-deps' => ['no-deps', false], 'e' => ['env', true, true], 'env' => ['env', true, true], 'entrypoint' => ['entrypoint', true], 'u' => ['user', true], 'user' => ['user', true], 'T' => ['no-tty', false], 'd' => ['detach', false], 'i' => ['interactive', false], 't' => ['tty', false], 'name' => ['name', true], 'service-ports' => ['service-ports', false], 'build' => ['build', false], 'w' => ['workdir', true], 'P' => ['publish', false], 'p' => ['publish-list', true, true], 'v' => ['volume', true, true]], 'compose run', stopAtPositional: true);
@@ -243,6 +254,7 @@ final class ComposeCommand
         return $project->run($service, $args->positional === [] ? null : $args->positional, $args->has('rm'), $args->has('no-deps'), $args->get('entrypoint'), $env, $args->get('user'));
     }
 
+    /** @param list<string> $argv */
     private function build(Project $project, array $argv): int
     {
         $args = Args::parse($argv, ['no-cache' => ['no-cache', false], 'pull' => ['pull', false], 'q' => ['quiet', false], 'build-arg' => ['build-arg', true, true], 'progress' => ['progress', true]], 'compose build');
@@ -255,6 +267,7 @@ final class ComposeCommand
         return $project->build($args->positional, $args->has('no-cache')) ? 0 : 1;
     }
 
+    /** @param list<string> $argv */
     private function config(Project $project, array $argv): int
     {
         if (\in_array('--services', $argv, true)) {
@@ -351,6 +364,7 @@ final class ComposeCommand
         return implode("\n", $result);
     }
 
+    /** @param list<string> $argv */
     private function pull(Project $project, array $argv): int
     {
         $pulled = [];
@@ -396,6 +410,7 @@ final class ComposeCommand
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function rm(Project $project, array $argv): int
     {
         $removed = [];
@@ -410,10 +425,11 @@ final class ComposeCommand
         return 0;
     }
 
+    /** @param list<string> $argv */
     private function port(Project $project, array $argv): int
     {
         $container = $project->containers($argv[0] ?? '')[0] ?? null;
-        foreach ($container?->ports ?? [] as $port) {
+        foreach ($container->ports ?? [] as $port) {
             if ((int) ($argv[1] ?? 0) === $port['container']) {
                 $project->output .= $port['ip'].':'.$port['host']."\n";
             }

@@ -39,6 +39,7 @@ final class PackageCommands implements Command
 
     // --- apk ------------------------------------------------------------------------------
 
+    /** @param list<string> $args */
     private function apk(array $args, Machine $m): Result
     {
         $subcommand = null;
@@ -160,6 +161,7 @@ final class PackageCommands implements Command
 
     // --- apt ------------------------------------------------------------------------------
 
+    /** @param list<string> $args */
     private function apt(string $binary, array $args, Machine $m): Result
     {
         $subcommand = null;
@@ -215,7 +217,10 @@ final class PackageCommands implements Command
         }
     }
 
-    /** @param array<string,bool> $options */
+    /**
+     * @param list<string>       $names
+     * @param array<string,bool> $options
+     */
     private function aptInstall(array $names, bool $yes, array $options, Machine $m, string $prefix): Result
     {
         $out = $prefix."Reading package lists...\n";

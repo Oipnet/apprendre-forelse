@@ -95,13 +95,6 @@ final class PhpExecutor
     }
 
     /**
-     * L'exécution elle-même (dans ce processus ou dans le sous-processus).
-     *
-     * @param array<string,mixed> $payload
-     *
-     * @return array{status: int, headers: array<string,string>, output: string, errors: list<string>, fatal: bool, exit: int}
-     */
-    /**
      * La pile d'appels telle que PHP l'afficherait dans le conteneur : les appels du simulateur qui
      * incluent le script (PhpExecutor, bin/php-exec) disparaissent, la pile s'arrête sur {main}.
      */
@@ -110,10 +103,10 @@ final class PhpExecutor
         $lines = [];
         foreach ($e->getTrace() as $frame) {
             $file = (string) ($frame['file'] ?? '');
-            if ($file === __FILE__ || str_ends_with($file, '/bin/php-exec') || str_contains((string) ($frame['function'] ?? ''), '{closure')) {
+            if ($file === __FILE__ || str_ends_with($file, '/bin/php-exec') || str_contains($frame['function'], '{closure')) {
                 break;
             }
-            $call = isset($frame['class']) ? $frame['class'].($frame['type'] ?? '->').$frame['function'] : ($frame['function'] ?? '');
+            $call = isset($frame['class']) ? $frame['class'].($frame['type'] ?? '->').$frame['function'] : $frame['function'];
             $lines[] = sprintf('#%d %s: %s()', \count($lines), $file !== '' ? $file.'('.($frame['line'] ?? 0).')' : '[internal function]', $call);
         }
         $lines[] = sprintf('#%d {main}', \count($lines));
@@ -121,6 +114,13 @@ final class PhpExecutor
         return implode("\n", $lines);
     }
 
+    /**
+     * L'exécution elle-même (dans ce processus ou dans le sous-processus).
+     *
+     * @param array<string,mixed> $payload
+     *
+     * @return array{status: int, headers: array<string,string>, output: string, errors: list<string>, fatal: bool, exit: int}
+     */
     public static function execute(array $payload): array
     {
         if (!class_exists(PhpExit::class)) {
@@ -256,7 +256,11 @@ final class PhpExecutor
         return $result + ['status' => 200, 'headers' => [], 'errors' => [], 'fatal' => false, 'exit' => 0];
     }
 
-    /** @return array<string,string> */
+    /**
+     * @param array<string,string> $extra
+     *
+     * @return array<string,string>
+     */
     private function environment(Container $container, array $extra = []): array
     {
         $env = [];

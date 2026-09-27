@@ -42,6 +42,7 @@ final class SystemCommands implements Command
         };
     }
 
+    /** @param list<string> $args */
     private function addUser(string $name, array $args, Machine $m): Result
     {
         if (!$m->isRoot()) {
@@ -92,6 +93,7 @@ final class SystemCommands implements Command
         return Result::ok('', 0.2);
     }
 
+    /** @param list<string> $args */
     private function usermod(array $args, Machine $m): Result
     {
         if (!$m->isRoot()) {
@@ -109,6 +111,7 @@ final class SystemCommands implements Command
         return Result::ok();
     }
 
+    /** @param list<string> $args */
     private function deleteUser(array $args, Machine $m): Result
     {
         $user = end($args) ?: '';
@@ -117,6 +120,7 @@ final class SystemCommands implements Command
         return Result::ok();
     }
 
+    /** @param list<string> $args */
     private function apacheToggle(string $name, array $args, Machine $m): Result
     {
         if (!$m->facts->hasBinary('apache2')) {
@@ -164,6 +168,7 @@ final class SystemCommands implements Command
         return Result::ok($out, 0.2);
     }
 
+    /** @param list<string> $args */
     private function apacheCtl(array $args, Machine $m): Result
     {
         if (\in_array('-M', $args, true)) {
@@ -181,6 +186,7 @@ final class SystemCommands implements Command
         return Result::ok();
     }
 
+    /** @param list<string> $args */
     private function nginx(array $args, Machine $m): Result
     {
         if (\in_array('-v', $args, true) || \in_array('-V', $args, true)) {
@@ -208,6 +214,7 @@ final class SystemCommands implements Command
         return Result::ok();
     }
 
+    /** @param list<string> $args */
     private function npm(string $name, array $args, Machine $m): Result
     {
         $sub = $args[0] ?? '';
@@ -246,6 +253,7 @@ final class SystemCommands implements Command
         return Result::ok();
     }
 
+    /** @param list<string> $args */
     private function install(array $args, Machine $m): Result
     {
         $operands = array_values(array_filter($args, static fn ($a) => $a[0] !== '-'));

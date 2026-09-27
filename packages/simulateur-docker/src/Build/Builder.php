@@ -736,7 +736,11 @@ final class Builder
         };
     }
 
-    /** @param array<string,mixed> $state */
+    /**
+     * @param array<string,mixed> $state
+     *
+     * @return array<string,mixed>
+     */
     private function cloneState(array $state): array
     {
         $fs = new MemoryFs($state['fs']->allBlobs(), [], []);
@@ -751,7 +755,10 @@ final class Builder
         return $state;
     }
 
-    /** @param array<string,mixed> $state */
+    /**
+     * @param array<string,mixed> $state
+     * @param list<string>        $tags
+     */
     private function exportImage(array $state, array $tags, Stage $stage): Image
     {
         $facts = $state['facts']->export();
@@ -766,7 +773,7 @@ final class Builder
         }
         $image = new Image(
             id: $id,
-            tags: array_values(array_unique([...($existing?->tags ?? []), ...$normalized])),
+            tags: array_values(array_unique([...($existing->tags ?? []), ...$normalized])),
             layers: $state['layers'],
             config: $config,
             base: $state['base'],
@@ -778,7 +785,7 @@ final class Builder
             apacheModules: $facts['apacheModules'],
             phpVersion: $state['phpVersion'],
             docroot: $state['docroot'],
-            createdAt: $existing?->createdAt ?? time(),
+            createdAt: $existing->createdAt ?? time(),
             pulled: false,
             stage: $stage->name,
             users: $facts['users'],

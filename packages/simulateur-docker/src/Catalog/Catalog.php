@@ -439,6 +439,8 @@ uwsgi_param  SERVER_NAME        $server_name;
      * @param list<string>|null     $binaries
      * @param list<string>          $phpExtensions
      * @param array<string,string|int> $files
+     * @param array<string,string>  $owners
+     * @param array{test: list<string>, interval?: string, timeout?: string, startPeriod?: string, retries?: int}|null $healthcheck
      */
     private function image(string $repository, string $tag, string $os, string $kind, int $size, int $layers, array $cmd = [], ?array $entrypoint = null, array $exposed = [], array $volumes = [], ?string $workdir = null, array $env = [], ?array $binaries = null, array $phpExtensions = [], array $files = [], ?string $phpVersion = null, ?string $docroot = null, ?string $user = null, array $owners = [], ?array $healthcheck = null): BaseImage
     {

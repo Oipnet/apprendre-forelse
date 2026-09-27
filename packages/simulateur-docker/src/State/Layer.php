@@ -14,6 +14,7 @@ final class Layer
      * @param array<string,string> $files   chemin absolu dans l'image => contenu
      * @param list<string>         $deleted chemins retirés par cette couche (rm dans un RUN)
      * @param array<string,array{0:int,1:string}> $meta chemin => [mode, propriétaire] (défaut : 0644, root)
+     * @param list<string>         $dirs    dossiers créés par la couche
      */
     public function __construct(
         public readonly string $id,

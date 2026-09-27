@@ -41,7 +41,11 @@ final class Parser
         return $result;
     }
 
-    /** Texte brut d'un mot (sans expansion), pour les messages et la détection des mots réservés. */
+    /**
+     * Texte brut d'un mot (sans expansion), pour les messages et la détection des mots réservés.
+     *
+     * @param list<array{0:string,1:string}> $word segments [genre, texte]
+     */
     public static function wordText(array $word): string
     {
         return implode('', array_map(static fn ($s) => $s[1], $word));
@@ -55,7 +59,9 @@ final class Parser
         $tokens = [];
         $length = \strlen($script);
         $i = 0;
+        /** @var list<array{string, mixed}> $word rempli par les fermetures ci-dessous */
         $word = [];
+        /** @var string $raw */
         $raw = '';
         $flushRaw = static function () use (&$word, &$raw): void {
             if ($raw !== '') {
@@ -218,7 +224,13 @@ final class Parser
         }
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * Avance dans les jetons.
+     *
+     * @phpstan-impure
+     *
+     * @return array<string,mixed>
+     */
     private function parseAndOr(): array
     {
         $parts = [['', $this->parsePipeline()]];
@@ -332,7 +344,11 @@ final class Parser
         return ['type' => 'simple', 'assign' => $assign, 'words' => $words, 'redirects' => $redirects];
     }
 
-    /** @param array<string,mixed> $command */
+    /**
+     * @param array<string,mixed> $command
+     *
+     * @return array<string,mixed>
+     */
     private function withRedirects(array $command): array
     {
         $command['redirects'] = [];

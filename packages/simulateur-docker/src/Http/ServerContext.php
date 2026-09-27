@@ -20,6 +20,10 @@ interface ServerContext
 
     public function log(Container $container, string $line): void;
 
-    /** Conteneur qui écoute sur ce port (vu depuis $from), et son processus. @return array{0: ?Container, 1: ?string, 2: string} conteneur, processus, état */
+    /**
+     * Conteneur qui écoute sur ce port (vu depuis $from), et son processus.
+     *
+     * @return array{0: ?Container, 1: ?string, 2: 'open'|'refused'|'unresolved'} conteneur, processus, état
+     */
     public function upstream(Container $from, string $host, int $port): array;
 }

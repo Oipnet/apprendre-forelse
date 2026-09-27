@@ -31,7 +31,7 @@ final class BuildContext
         }
         $this->files = [];
         $root = rtrim($this->directory, '/');
-        $walk = function (string $dir, string $relative) use (&$walk, $root): void {
+        $walk = function (string $dir, string $relative) use (&$walk): void {
             foreach (scandir($dir) ?: [] as $entry) {
                 if ($entry === '.' || $entry === '..') {
                     continue;
@@ -147,7 +147,11 @@ final class BuildContext
         return null;
     }
 
-    /** Empreinte d'un ensemble de fichiers (clé de cache d'un COPY). @param list<string> $files */
+    /**
+     * Empreinte d'un ensemble de fichiers (clé de cache d'un COPY).
+     *
+     * @param list<string> $files
+     */
     public function checksum(array $files): string
     {
         $hash = hash_init('xxh128');

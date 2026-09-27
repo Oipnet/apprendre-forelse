@@ -15,6 +15,7 @@ final class ImageConfig
      * @param list<string>         $volumes
      * @param array<string,string> $labels
      * @param array{test: list<string>, interval?: string, timeout?: string, startPeriod?: string, retries?: int}|null $healthcheck
+     * @param list<string>         $shell      « /bin/sh -c » par défaut (instruction SHELL)
      */
     public function __construct(
         public array $env = [],

@@ -11,15 +11,25 @@ use Forelse\DockerSim\Shell\Network;
  * La configuration nginx d'un conteneur : nginx.conf, les include (conf.d/*.conf), les blocs server
  * et location. Assez pour servir une application PHP derrière php-fpm, un site statique, un
  * reverse proxy, et produire les erreurs de démarrage classiques ([emerg]).
+ *
+ * Une directive lue : [nom, arguments, bloc (directives enfants, ou null), ligne, fichier]. Le bloc
+ * enfant reste list<mixed> : PHPStan n'accepte pas d'alias de type récursif.
+ * @phpstan-type NginxDirective array{0: string, 1: list<string>, 2: ?list<mixed>, 3: int, 4: string}
+ * Une location : modificateur (=, ~, ~*, ^~), motif, directives (nom => chaque occurrence et ses
+ * arguments), ligne et fichier de chaque directive, règles allow/deny, locations imbriquées.
+ * @phpstan-type NginxLocation array{modifier: string, pattern: string, directives: array<string, list<list<string>>>, lines: array<string, list<array{0: int, 1: string}>>, rules: list<array{0: string, 1: string}>, line: int, file: string, locations: list<mixed>}
+ * Un bloc server.
+ * @phpstan-type NginxServerBlock array{listen: list<int>, serverName: list<string>, root: ?string, index: list<string>, locations: list<NginxLocation>, directives: array<string, list<list<string>>>, rules: list<array{0: string, 1: string}>, file: string}
  */
 final class NginxConfig
 {
-    /** @var list<array{listen: list<int>, serverName: list<string>, root: ?string, index: list<string>, locations: list<array<string,mixed>>, directives: array<string, list<list<string>>>, file: string}> */
+    /** @var list<NginxServerBlock> */
     public array $servers = [];
     private ?string $problem = null;
 
     private const KNOWN = ['user', 'worker_processes', 'error_log', 'pid', 'events', 'worker_connections', 'http', 'include', 'default_type', 'log_format', 'access_log', 'sendfile', 'tcp_nopush', 'keepalive_timeout', 'gzip', 'gzip_types', 'gzip_vary', 'gzip_min_length', 'server', 'listen', 'server_name', 'root', 'index', 'location', 'try_files', 'fastcgi_pass', 'fastcgi_param', 'fastcgi_index', 'fastcgi_split_path_info', 'fastcgi_buffers', 'fastcgi_buffer_size', 'fastcgi_read_timeout', 'internal', 'return', 'rewrite', 'error_page', 'proxy_pass', 'proxy_set_header', 'proxy_http_version', 'proxy_read_timeout', 'proxy_redirect', 'add_header', 'expires', 'client_max_body_size', 'charset', 'types', 'deny', 'allow', 'autoindex', 'alias', 'server_tokens', 'upstream', 'set', 'if', 'log_not_found', 'resolver', 'real_ip_header', 'set_real_ip_from', 'http2', 'ssl_certificate', 'ssl_certificate_key', 'multi_accept', 'types_hash_max_size', 'etag', 'open_file_cache', 'absolute_redirect', 'port_in_redirect', 'map', 'default', 'hostnames', 'large_client_header_buffers', 'client_body_buffer_size'];
 
+    /** @param array<string,string> $env */
     public static function load(FileSystem $fs, ?Network $network = null, array $env = []): self
     {
         $config = new self();
@@ -61,7 +71,7 @@ final class NginxConfig
         return array_values(array_unique($ports));
     }
 
-    /** @return array<string,mixed>|null */
+    /** @return NginxServerBlock|null */
     public function serverFor(int $port, string $host): ?array
     {
         $candidates = array_values(array_filter($this->servers, static fn ($s) => \in_array($port, $s['listen'], true)));
@@ -76,7 +86,7 @@ final class NginxConfig
 
     // --- Analyse ------------------------------------------------------------------------------
 
-    /** @return list<array{0: string, 1: list<string>, 2: ?list<mixed>, 3: int, 4: string}> [nom, arguments, bloc, ligne, fichier] */
+    /** @return list<NginxDirective> [nom, arguments, bloc, ligne, fichier] */
     private function parseText(string $text, string $file, FileSystem $fs, int $depth = 0): array
     {
         $tokens = $this->tokenize($text, $file);
@@ -135,7 +145,11 @@ final class NginxConfig
         return $tokens;
     }
 
-    /** @param list<array{0: string, 1: int}> $tokens */
+    /**
+     * @param list<array{0: string, 1: int}> $tokens
+     *
+     * @return list<NginxDirective>
+     */
     private function parseBlock(array $tokens, int &$position, string $file, FileSystem $fs, int $depth, bool $inBlock, string $parent = ''): array
     {
         $directives = [];
@@ -239,6 +253,7 @@ final class NginxConfig
         return $files;
     }
 
+    /** @param list<NginxDirective> $tree */
     private function collect(array $tree, string $file): void
     {
         foreach ($tree as [$name, $args, $block, $line, $source]) {
@@ -250,6 +265,11 @@ final class NginxConfig
         }
     }
 
+    /**
+     * @param list<NginxDirective> $block
+     *
+     * @return NginxServerBlock
+     */
     private function server(array $block, string $file): array
     {
         $server = ['listen' => [], 'serverName' => [], 'root' => null, 'index' => ['index.html'], 'locations' => [], 'directives' => [], 'rules' => [], 'file' => $file];
@@ -288,6 +308,12 @@ final class NginxConfig
         return $server;
     }
 
+    /**
+     * @param list<string>         $args
+     * @param list<NginxDirective> $block
+     *
+     * @return NginxLocation
+     */
     private function location(array $args, array $block, int $line, string $file): array
     {
         $modifier = '';

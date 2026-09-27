@@ -49,6 +49,7 @@ final class PhpCommands implements Command
         return $m->isRoot() ? null : Result::error(1, "{$command}: cannot write to /usr/local/etc/php/conf.d: Permission denied\n");
     }
 
+    /** @param list<string> $args */
     private function extInstall(array $args, Machine $m): Result
     {
         if ($error = $this->requireRoot($m, 'docker-php-ext-install')) {
@@ -105,6 +106,7 @@ final class PhpCommands implements Command
         $m->facts->peclBuilt = array_values(array_diff($m->facts->peclBuilt, [$extension]));
     }
 
+    /** @param list<string> $args */
     private function extEnable(array $args, Machine $m): Result
     {
         if ($error = $this->requireRoot($m, 'docker-php-ext-enable')) {
@@ -125,6 +127,7 @@ final class PhpCommands implements Command
         return Result::ok('', 0.3);
     }
 
+    /** @param list<string> $args */
     private function extConfigure(array $args, Machine $m): Result
     {
         $extension = $args[0] ?? '';
@@ -153,6 +156,7 @@ final class PhpCommands implements Command
         return Result::ok("Configuring for:\nPHP Api Version:         ".Facts::phpApi($m->facts->phpVersion)."\n", 1.0);
     }
 
+    /** @param list<string> $args */
     private function pecl(array $args, Machine $m): Result
     {
         $subcommand = array_shift($args) ?? '';
@@ -201,6 +205,7 @@ final class PhpCommands implements Command
         return Result::ok($out, $seconds);
     }
 
+    /** @param list<string> $args */
     private function installPhpExtensions(array $args, Machine $m): Result
     {
         if ($error = $this->requireRoot($m, 'install-php-extensions')) {
@@ -233,6 +238,7 @@ final class PhpCommands implements Command
         return Result::ok($out, $seconds);
     }
 
+    /** @param list<string> $args */
     private function php(array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $version = $m->facts->phpVersion ?? '8.4.11';
@@ -382,6 +388,7 @@ final class PhpCommands implements Command
         return Result::ok($startup);
     }
 
+    /** @param list<string> $args */
     private function phpFpm(array $args, Machine $m): Result
     {
         if (\in_array('-t', $args, true) || \in_array('--test', $args, true)) {

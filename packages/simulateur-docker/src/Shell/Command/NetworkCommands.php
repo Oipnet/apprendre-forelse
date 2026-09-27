@@ -59,6 +59,7 @@ final class NetworkCommands implements Command
         return str_contains($host, '.') && !preg_match('/^\d+\.\d+\.\d+\.\d+$/', $host) && !str_ends_with($host, '.local') && $host !== 'host.docker.internal';
     }
 
+    /** @param list<string> $args */
     private function curl(array $args, Machine $m): Result
     {
         $url = null;
@@ -171,6 +172,7 @@ final class NetworkCommands implements Command
         return Result::ok($stdout, 0.1);
     }
 
+    /** @param list<string> $args */
     private function wget(array $args, Machine $m): Result
     {
         $output = null;
@@ -230,6 +232,7 @@ final class NetworkCommands implements Command
         return Result::ok($quiet ? '' : "Connecting to {$host}:{$port}\nsaving to 'index.html'\n");
     }
 
+    /** @param list<string> $args */
     private function ping(array $args, Machine $m): Result
     {
         $host = end($args) ?: '';
@@ -241,6 +244,7 @@ final class NetworkCommands implements Command
         return Result::ok(sprintf("PING %s (%s): 56 data bytes\n64 bytes from %s: seq=0 ttl=64 time=0.087 ms\n64 bytes from %s: seq=1 ttl=64 time=0.112 ms\n\n--- %s ping statistics ---\n2 packets transmitted, 2 packets received, 0%% packet loss\nround-trip min/avg/max = 0.087/0.099/0.112 ms\n", $host, $ip, $ip, $ip, $host), 1.0);
     }
 
+    /** @param list<string> $args */
     private function nc(array $args, Machine $m): Result
     {
         $operands = array_values(array_filter($args, static fn ($a) => $a[0] !== '-' && !is_numeric($a) || preg_match('/^\d+$/', $a)));
@@ -259,6 +263,7 @@ final class NetworkCommands implements Command
         };
     }
 
+    /** @param list<string> $args */
     private function lookup(string $name, array $args, Machine $m): Result
     {
         if ($name === 'getent' && \in_array($args[0] ?? '', ['passwd', 'group'], true)) {
@@ -292,7 +297,11 @@ final class NetworkCommands implements Command
         });
     }
 
-    /** @return array<string,string> options -h, -p, -U, -d… */
+    /**
+     * @param list<string> $args
+     *
+     * @return array<string,string> options -h, -p, -U, -d…
+     */
     private function clientOptions(array $args): array
     {
         $options = [];
@@ -309,7 +318,11 @@ final class NetworkCommands implements Command
         return $options;
     }
 
-    /** @return array{0: ?string, 1: ?\Forelse\DockerSim\State\Container, 2: string} erreur, conteneur, hôte */
+    /**
+     * @param list<string> $processes processus acceptés à l'écoute sur le port (postgres, mysql…)
+     *
+     * @return array{0: ?string, 1: ?\Forelse\DockerSim\State\Container, 2: string} erreur, conteneur, hôte
+     */
     private function reachDatabase(Machine $m, string $host, int $port, array $processes): array
     {
         if ($host === '' || $host === 'localhost' || $host === '127.0.0.1') {
@@ -326,6 +339,7 @@ final class NetworkCommands implements Command
         return [null, $connection['container'], $host];
     }
 
+    /** @param list<string> $args */
     private function pgIsReady(array $args, Machine $m): Result
     {
         $o = $this->clientOptions($args);
@@ -340,6 +354,7 @@ final class NetworkCommands implements Command
         };
     }
 
+    /** @param list<string> $args */
     private function psql(array $args, Machine $m): Result
     {
         $o = $this->clientOptions($args);
@@ -353,7 +368,7 @@ final class NetworkCommands implements Command
                 ? "psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory\n\tIs the server running locally and accepting connections on that socket?\n"
                 : sprintf("psql: error: connection to server at \"%s\" (%s), port %d failed: Connection refused\n\tIs the server running on that host and accepting TCP/IP connections?\n", $host, $m->network?->resolve($host), $port));
         }
-        $env = $container?->env ?? [];
+        $env = $container->env ?? [];
         // Une base déjà initialisée garde les identifiants de sa création (volume réutilisé).
         if (isset($container?->processOptions['postgres'])) {
             $saved = $container->processOptions['postgres'];
@@ -394,6 +409,7 @@ final class NetworkCommands implements Command
         return Result::ok("(le simulateur ne rejoue pas les requêtes SQL : seule la connexion est vérifiée)\n");
     }
 
+    /** @param list<string> $args */
     private function mysqlAdmin(string $name, array $args, Machine $m): Result
     {
         $o = $this->clientOptions($args);
@@ -411,6 +427,7 @@ final class NetworkCommands implements Command
         return Result::ok("mysqld is alive\n");
     }
 
+    /** @param list<string> $args */
     private function mysql(array $args, Machine $m): Result
     {
         $o = $this->clientOptions($args);
@@ -423,6 +440,7 @@ final class NetworkCommands implements Command
         return Result::ok("(le simulateur ne rejoue pas les requêtes SQL : seule la connexion est vérifiée)\n");
     }
 
+    /** @param list<string> $args */
     private function redisCli(array $args, Machine $m): Result
     {
         $o = $this->clientOptions($args);
@@ -437,6 +455,7 @@ final class NetworkCommands implements Command
         return Result::ok(match ($command) { 'PING' => "PONG\n", '' => "{$host}:{$port}> (session interactive non simulée)\n", default => "OK\n" });
     }
 
+    /** @param list<string> $args */
     private function git(array $args, Machine $m): Result
     {
         $sub = $args[0] ?? '';

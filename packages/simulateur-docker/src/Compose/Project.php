@@ -84,7 +84,11 @@ final class Project
         return $this->file->services[$service]['container_name'] ?? $this->file->name.'-'.$service.'-1';
     }
 
-    /** @param list<string> $services */
+    /**
+     * @param list<string> $services
+     *
+     * @return list<string>
+     */
     private function activeServices(array $services): array
     {
         if ($services !== []) {

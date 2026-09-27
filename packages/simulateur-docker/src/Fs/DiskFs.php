@@ -16,7 +16,9 @@ final class DiskFs implements FileSystem
      * Modes et propriétaires, par « territoire » : '' pour la couche du conteneur, et la cible de
      * chaque volume monté pour le volume lui-même — un volume garde ses droits d'un conteneur à l'autre.
      *
-     * @var array<string,array<string,array{0:int,1:string}>>
+     * Un fichier virtuel de l'image (binaire vide sur disque) y garde aussi sa taille annoncée (Materializer).
+     *
+     * @var array<string,array<string,array{0:int,1:string,2?:int}>>
      */
     private array $meta = [];
 

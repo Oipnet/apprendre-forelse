@@ -438,7 +438,11 @@ final class Docker implements ServerContext
 
     // --- HTTP ---------------------------------------------------------------------------------
 
-    /** Une requête depuis l'hôte (le navigateur, curl sur la machine) : http://localhost:8080/chemin. */
+    /**
+     * Une requête depuis l'hôte (le navigateur, curl sur la machine) : http://localhost:8080/chemin.
+     *
+     * @param array<string,string> $headers
+     */
     public function http(string $method, string $url, array $headers = [], string $body = ''): HttpResponse
     {
         if (!preg_match('#^[a-z]+://#', $url)) {
@@ -540,6 +544,7 @@ final class Docker implements ServerContext
         $this->processes->appendLogs($container, $line);
     }
 
+    /** @return array{0: ?Container, 1: ?string, 2: 'open'|'refused'|'unresolved'} conteneur, processus, état */
     public function upstream(Container $from, string $host, int $port): array
     {
         $connection = $this->network($from)->connect($host, $port);
@@ -554,7 +559,7 @@ final class Docker implements ServerContext
     {
         $image = $this->store->images[$container->imageId] ?? null;
         $facts = $container->facts !== null
-            ? Facts::fromImage(new Image('x', [], [], new \Forelse\DockerSim\State\ImageConfig(), '', $image?->kind ?? 'shell', $image?->os ?? 'debian', $container->facts['packages'], $container->facts['phpExtensions'], $container->facts['binaries'], $container->facts['apacheModules'], $image?->phpVersion, null, 0, false, null, $container->facts['users']))
+            ? Facts::fromImage(new Image('x', [], [], new \Forelse\DockerSim\State\ImageConfig(), '', $image->kind ?? 'shell', $image->os ?? 'debian', $container->facts['packages'], $container->facts['phpExtensions'], $container->facts['binaries'], $container->facts['apacheModules'], $image?->phpVersion, null, 0, false, null, $container->facts['users']))
             : ($image !== null ? Facts::fromImage($image) : new Facts('debian', 'shell', null));
         $env = $container->env;
         $env['__SIM_MAIN_PROCESS'] = implode(' ', $container->processOptions['argv'] ?? $container->command);
@@ -585,7 +590,9 @@ final class Docker implements ServerContext
         }
         foreach (explode(':', $machine->env['PATH'] ?? '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') as $dir) {
             $candidate = rtrim($dir, '/').'/'.$name;
-            if ($machine->fs->isFile($candidate) && filesize($machine->fs->real($candidate)) > 0) {
+            // Un binaire virtuel (vide sur disque) n'est pas un script : read() le rend vide sur les deux systèmes de
+            // fichiers, là où size() annoncerait sa taille simulée. real() n'existait que sur DiskFs.
+            if ($machine->fs->isFile($candidate) && '' !== (string) $machine->fs->read($candidate)) {
                 return $candidate;
             }
         }

@@ -98,9 +98,9 @@ final class ProcessManager
                     $machine->execTarget = null;
                     $result = $this->docker->shell->runScript($content, $machine, \array_slice($argv, 1));
                     $this->appendLogs($container, $result->stdout);
-                    if ($machine->execTarget !== null) {
-                        $argv = $machine->execTarget;
-                        $machine->execTarget = null;
+                    $target = $machine->takeExecTarget();
+                    if ($target !== null) {
+                        $argv = $target;
                         continue;
                     }
                     $this->exited($container, $result->code);
@@ -124,7 +124,7 @@ final class ProcessManager
      *
      * @param list<string> $positional
      *
-     * @return array{0: int, 1: string, 2: ?list<string>}|null
+     * @return array{0: int, 1: string, 2: ?list<string>, 3?: bool}|null
      */
     private function splitShellCommand(string $script, Machine $machine, array $positional): ?array
     {
@@ -181,7 +181,12 @@ final class ProcessManager
         return [$code, $output, $words === [] ? null : $words, $stopOnFailure];
     }
 
-    /** Le texte du script sans sa dernière commande (on la retrouve par sa position dans la chaîne). */
+    /**
+     * Le texte du script sans sa dernière commande (on la retrouve par sa position dans la chaîne).
+     *
+     * @param list<array<string,mixed>>               $prefix   nœuds de l'AST (Shell\Parser) qui précèdent la dernière commande
+     * @param array{0: string, 1: array<string,mixed>} $lastPart la dernière commande : [opérateur, pipeline]
+     */
     private function render(array $prefix, string $script, array $lastPart): string
     {
         $separator = max(strrpos($script, '&&') ?: -1, strrpos($script, ';') ?: -1, strrpos($script, "\n") ?: -1);
@@ -283,7 +288,7 @@ final class ProcessManager
                 $this->exited($container, 0);
 
                 return;
-            case $name === 'php' && isset($args[0]) && !str_starts_with($args[0], '-'):
+            case $name === 'php' && !str_starts_with($args[0], '-'):
                 $this->runPhpScript($container, $machine, $args);
 
                 return;
@@ -304,7 +309,10 @@ final class ProcessManager
         return new DockerException(sprintf('failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: "%s": executable file not found in $PATH: unknown', $command), 127);
     }
 
-    /** @param list<int> $ports */
+    /**
+     * @param list<int>         $ports
+     * @param array<int,string> $addresses port => adresse d'écoute (0.0.0.0, 127.0.0.1…)
+     */
     private function listen(Container $container, string $process, array $ports, array $addresses = []): void
     {
         $container->status = Container::RUNNING;
@@ -652,7 +660,7 @@ final class ProcessManager
         $date = gmdate('Y-m-d H:i:sP');
         if (!$initialized) {
             $has = static fn (string $key) => ($env[$prefix.'_'.$key] ?? ($env['MYSQL_'.$key] ?? '')) !== '';
-            if (!$has('ROOT_PASSWORD') && !$has('ALLOW_EMPTY_PASSWORD') && !$has('RANDOM_ROOT_PASSWORD') && !$has('ALLOW_EMPTY_ROOT_PASSWORD') && !$has('RANDOM_ROOT_PASSWORD')) {
+            if (!$has('ROOT_PASSWORD') && !$has('ALLOW_EMPTY_PASSWORD') && !$has('RANDOM_ROOT_PASSWORD') && !$has('ALLOW_EMPTY_ROOT_PASSWORD')) {
                 $this->appendLogs($container, sprintf("%s [Note] [Entrypoint]: Entrypoint script for %s Server started.\n%s [ERROR] [Entrypoint]: Database is uninitialized and password option is not specified\n    You need to specify one of the following as an environment variable:\n    - %s_ROOT_PASSWORD\n    - %s_ALLOW_EMPTY%s_PASSWORD\n    - %s_RANDOM_ROOT_PASSWORD", $date, $binary === 'mariadbd' ? 'MariaDB' : 'MySQL', $date, $prefix, $prefix, $prefix === 'MARIADB' ? '_ROOT' : '', $prefix));
                 $this->exited($container, 1);
 
@@ -673,7 +681,7 @@ final class ProcessManager
     public function health(Container $container): void
     {
         $test = $container->healthcheck['test'] ?? null;
-        if ($test === null || $test === [] || ($test[0] ?? '') === 'NONE') {
+        if ($test === null || $test === [] || $test[0] === 'NONE') {
             $container->health = null;
 
             return;
