@@ -23,10 +23,11 @@
 
 # Préproduction : hors des moteurs de recherche, et la plateforme derrière un mot de passe. Le bac à sable n'en a
 # pas : il ne sert que la page relais et son Service Worker, sans donnée, et un mot de passe y gênerait l'aperçu.
-# /sante reste ouvert : le déploiement l'interroge pour savoir si la nouvelle version tient.
+# /sante reste ouvert : le déploiement l'interroge pour savoir si la nouvelle version tient. Le webhook Stripe aussi :
+# Stripe n'a pas le mot de passe, et la plateforme vérifie la signature de chaque appel (StripeWebhookController).
 {$PREPRODUCTION_APP_HOST} {
 	header X-Robots-Tag "noindex, nofollow"
-	@protege not path /sante
+	@protege not path /sante /paiement/stripe/webhook
 	basic_auth @protege {
 		{$PREPRODUCTION_USER} {$PREPRODUCTION_PASSWORD_HASH}
 	}

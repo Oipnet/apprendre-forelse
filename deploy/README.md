@@ -106,6 +106,15 @@ docker compose exec front caddy reload --config /etc/caddy/Caddyfile
 
 Un email qui n'arrive pas : `docker compose logs worker` dans `/srv/forelse-staging`.
 
+### Les paiements de la préproduction
+
+Stripe en mode test : `STRIPE_SECRET_KEY=sk_test_…` et `STRIPE_WEBHOOK_SECRET=whsec_…` dans son `.env`, puis
+`docker compose up -d app worker`. Chez Stripe (mode test), un point d'entrée
+`https://<plateforme de préproduction>/paiement/stripe/webhook` avec les événements `checkout.session.completed`,
+`checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `charge.refunded`,
+`charge.dispute.created` et `charge.dispute.closed`. Ce chemin échappe au mot de passe du proxy, comme `/sante` :
+Stripe ne l'a pas, et la plateforme vérifie la signature de chaque appel.
+
 ## 3. Suivi des erreurs
 
 Un seul projet Sentry (type Symfony, région UE) pour les deux instances : la préproduction y range ses erreurs
