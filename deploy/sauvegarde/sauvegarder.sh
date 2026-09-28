@@ -39,10 +39,8 @@ trap 'echec' EXIT
 echo "$(date -u +%FT%TZ) Sauvegarde du $JOUR."
 mkdir -p "$DOSSIER"
 
-# 1. La base, relue avant d'être gardée : un fichier illisible passerait sinon pour une sauvegarde.
-docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > "$DOSSIER/base.dump.partiel"
-docker compose exec -T db pg_restore -l < "$DOSSIER/base.dump.partiel" > /dev/null
-mv "$DOSSIER/base.dump.partiel" "$DOSSIER/base.dump"
+# 1. La base, relue avant d'être gardée (../copier-base.sh, partagé avec deployer.sh).
+sh copier-base.sh "$DOSSIER/base.dump"
 
 # 2. Le volume data, lu à travers le conteneur de l'application (pas besoin de connaître le nom du volume).
 APP="$(docker compose ps -q app)"
