@@ -4,6 +4,7 @@ namespace App\Contact;
 
 use App\Entity\ContactMessage;
 use App\Legal\LegalInfo;
+use App\Security\QuotaExceeded;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -11,6 +12,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 /**
  * Reçoit un message de contact : enregistré d'abord (rien ne se perd), puis transmis par email à l'équipe, avec
@@ -28,6 +30,9 @@ final readonly class ContactInbox
         private string $mailerFrom,
         #[Autowire(env: 'CONTACT_EMAIL')]
         private string $contactEmail,
+        /** Par adresse IP (config/packages/rate_limiter.yaml) : de quoi écrire, pas de quoi remplir la boîte. */
+        #[Autowire(service: 'limiter.contact')]
+        private RateLimiterFactoryInterface $limiter,
     ) {
     }
 
@@ -42,8 +47,12 @@ final readonly class ContactInbox
         return trim($this->contactEmail) ?: trim($this->legal->publisherEmail);
     }
 
-    public function receive(ContactMessage $message): void
+    /** @throws QuotaExceeded trop de messages depuis cette adresse IP : rien n'est enregistré */
+    public function receive(ContactMessage $message, string $senderIp): void
     {
+        if (!$this->limiter->create($senderIp)->consume()->isAccepted()) {
+            throw new QuotaExceeded('Beaucoup de messages en peu de temps depuis votre connexion : réessayez dans une heure, ou écrivez-nous directement par email.');
+        }
         $this->entityManager->persist($message);
         $this->entityManager->flush();
 

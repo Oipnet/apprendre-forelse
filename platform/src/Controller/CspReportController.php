@@ -23,6 +23,7 @@ final class CspReportController
     ) {
     }
 
+    /** La limite par IP protège les journaux, pas une règle métier : elle reste ici, avec l'écriture qu'elle protège. */
     #[Route(ContentSecurityPolicy::REPORT_PATH, name: 'app_csp_report', methods: ['POST'])]
     public function __invoke(Request $request): Response
     {
