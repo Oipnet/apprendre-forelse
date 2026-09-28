@@ -42,7 +42,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const framework = exercise.environment.framework;
 	/** La console du projet, telle qu'un développeur la tape dans son terminal. */
 	const consoleName = framework.console;
-	// Un invité ne joue que des exercices de parcours (la Pratique demande un compte) : la clé locale a toujours son parcours.
+	// Un invité joue la Pratique (sans parcours : clé `formation:null/<id>`, reprise telle quelle par entries/site.ts).
 	const progress: ProgressStore =
 		config.progress.mode === 'api' ? new ApiProgressStore(config.progress.url) : new LocalProgressStore(`formation:${exercise.trackId}/${exercise.id}`, exercise.xp);
 	const practice = config.context === 'practice';

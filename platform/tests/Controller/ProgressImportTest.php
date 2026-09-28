@@ -36,6 +36,25 @@ final class ProgressImportTest extends WebTestCase
         $this->assertResponseStatusCodeSame(404, 'Le parcours en préparation reste invisible.');
     }
 
+    /** La Pratique se joue sans compte (clé locale sans parcours) : son code suit l'invité dans le compte qu'il crée. */
+    public function testLaPratiqueJoueeEnInviteEstReprise(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
+        $files = ['src/Controller/VersionController.php' => '<?php // mon code'];
+
+        $result = $this->json($client, 'POST', '/api/progress/import', [
+            ['trackId' => null, 'exerciseId' => 'exemple-map-request-header', 'files' => $files, 'completed' => true],
+            ['trackId' => null, 'exerciseId' => 'inconnu', 'files' => []],
+        ]);
+
+        $this->assertSame(['imported' => 1], $result);
+        $progress = $this->json($client, 'GET', '/api/progress/pratique/exemple-map-request-header');
+        $this->assertSame($files, $progress['files']);
+        $this->assertTrue($progress['completed']);
+    }
+
     public function testUneListeTropLongueEstRefusee(): void
     {
         $client = static::createClient();

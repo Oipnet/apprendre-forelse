@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Api\ExerciseAccessGuard;
+use App\Api\ExerciseLocator;
 use App\Api\GuestProgressInput;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
@@ -20,6 +21,7 @@ final readonly class ProgressService
         private EntityManagerInterface $entityManager,
         private XpCalculator $xpCalculator,
         private ContentRepository $content,
+        private ExerciseLocator $exercises,
         private ExerciseAccessGuard $guard,
         private ClockInterface $clock,
     ) {
@@ -94,8 +96,8 @@ final readonly class ProgressService
     }
 
     /**
-     * Reprend la progression laissée dans le navigateur par les versions où le premier chapitre se jouait sans compte,
-     * sans écraser celle du compte.
+     * Reprend la progression laissée dans le navigateur par un invité, sans écraser celle du compte : la Pratique (qui se
+     * joue sans compte), et les exercices de parcours des versions où le premier chapitre se jouait sans compte.
      *
      * @param list<GuestProgressInput> $items
      */
@@ -104,8 +106,8 @@ final readonly class ProgressService
         $imported = 0;
         foreach ($items as $item) {
             // On ne reprend que ce que le compte peut ouvrir, dans un parcours visible : une progression importée dans
-            // un parcours en préparation le ferait apparaître (hasStarted). La Pratique n'a de toute façon rien à importer.
-            $exercise = $this->content->findExercise($item->trackId, $item->exerciseId);
+            // un parcours en préparation le ferait apparaître (hasStarted). Un exercice de Pratique en préparation reste fermé.
+            $exercise = $this->exercises->find($item->trackId, $item->exerciseId);
             if (!$exercise || !$this->guard->allows($user, $exercise) || $this->find($user, $exercise)) {
                 continue;
             }
