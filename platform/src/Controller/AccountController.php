@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Account\AccountManagement;
+use App\Account\Github\RecentSignIn;
 use App\Account\AccountPage;
 use App\Account\EmailChange;
 use App\Account\EmailChangeOutcome;
@@ -35,6 +36,7 @@ final class AccountController extends AbstractController
         private readonly AccountManagement $account,
         private readonly EmailChange $emailChange,
         private readonly AccountPage $page,
+        private readonly RecentSignIn $recent,
     ) {
     }
 
@@ -55,9 +57,11 @@ final class AccountController extends AbstractController
             /** @var array{displayName: string, email: string, currentPassword: string|null} $data */
             $data = $form->getData();
             $email = trim($data['email']);
-            $outcome = $this->emailChange->request($user, $data['displayName'], $email, $data['currentPassword'] ?? null);
+            $outcome = $this->emailChange->request($user, $data['displayName'], $email, $data['currentPassword'] ?? null, $this->recent->isRecent($user));
             match ($outcome) {
-                EmailChangeOutcome::PasswordRequired => $form->get('currentPassword')->addError(new FormError('Votre mot de passe actuel est demandé pour changer d\'adresse.')),
+                EmailChangeOutcome::PasswordRequired => $user->hasPassword()
+                    ? $form->get('currentPassword')->addError(new FormError('Votre mot de passe actuel est demandé pour changer d\'adresse.'))
+                    : $form->addError(new FormError('Confirmez d\'abord votre identité avec GitHub pour changer d\'adresse.')),
                 EmailChangeOutcome::EmailTaken => $form->get('email')->addError(new FormError('Un compte existe déjà avec cet email.')),
                 EmailChangeOutcome::Saved => $this->addFlash('success', 'Profil enregistré.'),
                 EmailChangeOutcome::Sent => $this->addFlash('success', sprintf('Un lien de confirmation vient de partir à %s. Votre adresse actuelle reste valable jusqu\'à ce que vous l\'ouvriez.', $email)),
@@ -150,7 +154,10 @@ final class AccountController extends AbstractController
     public function delete(Request $request, Security $security): Response
     {
         $user = $this->user();
-        $form = $this->createForm(DeleteAccountFormType::class, options: ['action' => $this->generateUrl('app_account_delete')])->handleRequest($request);
+        $form = $this->deleteForm($user)->handleRequest($request);
+        if ($form->isSubmitted() && !$user->hasPassword() && !$this->recent->isRecent($user)) {
+            $form->addError(new FormError('Confirmez d\'abord votre identité avec GitHub.'));
+        }
         if (!$form->isSubmitted() || !$form->isValid()) {
             return $this->renderPage(delete: $form);
         }
@@ -189,7 +196,13 @@ final class AccountController extends AbstractController
     /** @return FormInterface<array{displayName: string|null, email: string|null, currentPassword?: string|null}> */
     private function profileForm(User $user): FormInterface
     {
-        return $this->createForm(ProfileFormType::class, ['displayName' => $user->getDisplayName(), 'email' => $user->getEmail()], ['action' => $this->generateUrl('app_account_profile')]);
+        return $this->createForm(ProfileFormType::class, ['displayName' => $user->getDisplayName(), 'email' => $user->getEmail()], ['action' => $this->generateUrl('app_account_profile'), 'with_password' => $user->hasPassword()]);
+    }
+
+    /** @return FormInterface<array{password?: string|null}> */
+    private function deleteForm(User $user): FormInterface
+    {
+        return $this->createForm(DeleteAccountFormType::class, options: ['action' => $this->generateUrl('app_account_delete'), 'with_password' => $user->hasPassword()]);
     }
 
     /**
@@ -208,8 +221,10 @@ final class AccountController extends AbstractController
             ...$this->page->of($user),
             'profileForm' => $profile ?? $this->profileForm($user),
             'passwordForm' => $password ?? $this->createForm(PasswordFormType::class, options: ['action' => $this->generateUrl('app_account_password')]),
-            'deleteForm' => $delete ?? $this->createForm(DeleteAccountFormType::class, options: ['action' => $this->generateUrl('app_account_delete')]),
+            'deleteForm' => $delete ?? $this->deleteForm($user),
             'deleteOpen' => null !== $delete,
+            // Compte sans mot de passe : GitHub confirme l'identité (changer d'adresse, supprimer le compte).
+            'recentSignIn' => $this->recent->isRecent($user),
         ], new Response(status: $failed ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 

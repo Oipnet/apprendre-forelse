@@ -8,6 +8,21 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Connexion avec GitHub** (facultative) : « Continuer avec GitHub » sur les pages de connexion et
+  d'inscription, dès que `GITHUB_CLIENT_ID` et `GITHUB_CLIENT_SECRET` sont renseignés (application OAuth à créer
+  sur GitHub, avec pour URL de retour `<APP_URL>/connexion/github/retour`). Vides, rien ne change.
+  - Un nouvel apprenant choisit son pseudo (proposé d'après GitHub) et, s'il en a un, son code d'invitation :
+    l'inscription sur invitation (`REGISTRATION_INVITE_ONLY`) s'applique de même. Son compte n'a pas de mot de
+    passe, et son adresse est celle que GitHub a vérifiée, sans email de confirmation.
+  - Un compte existant est rattaché d'office seulement si GitHub a vérifié l'adresse **et** que le compte l'a
+    confirmée ; sinon, on se connecte avec son mot de passe et on lie GitHub depuis son compte.
+  - Depuis son compte : lier ou délier GitHub. Un compte sans mot de passe confirme son identité en repassant par
+    GitHub (moins de cinq minutes) pour changer d'adresse ou se supprimer, et ne peut pas délier GitHub avant
+    d'avoir choisi un mot de passe (« Mot de passe oublié ? »).
+  - La politique de confidentialité mentionne GitHub quand la connexion est active.
+
 ### Corrigé
 
 - **Comptes : les adresses email ne dépendent plus de la casse.** Inscrit en `Ada@example.test`, on ne pouvait

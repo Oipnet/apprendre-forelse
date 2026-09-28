@@ -7,6 +7,7 @@ use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -14,7 +15,8 @@ use Symfony\Component\Validator\Constraints as Assert;
  * connecté, et une nouvelle adresse n'est enregistrée qu'une fois confirmée (voir EmailVerifier).
  *
  * Changer d'adresse demande le mot de passe (vérifié par AccountController) : sur un poste partagé ou avec une
- * session volée, remplacer l'adresse puis réinitialiser le mot de passe suffirait à s'approprier le compte.
+ * session volée, remplacer l'adresse puis réinitialiser le mot de passe suffirait à s'approprier le compte. Un compte
+ * sans mot de passe (créé avec GitHub) n'a pas ce champ : il repasse par GitHub (voir RecentSignIn).
  *
  * @extends AbstractType<array{displayName: string, email: string, currentPassword: string|null}>
  */
@@ -37,12 +39,20 @@ final class ProfileFormType extends AbstractType
                     new Assert\Email(message: 'Cet email n\'est pas valide.'),
                     new Assert\Length(max: 180),
                 ],
-            ])
-            ->add('currentPassword', PasswordType::class, [
+            ]);
+        if ($options['with_password']) {
+            $builder->add('currentPassword', PasswordType::class, [
                 'label' => 'Mot de passe actuel',
                 'help' => 'Demandé seulement pour changer d\'adresse.',
                 'required' => false,
                 'attr' => ['autocomplete' => 'current-password'],
             ]);
+        }
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults(['with_password' => true]);
+        $resolver->setAllowedTypes('with_password', 'bool');
     }
 }

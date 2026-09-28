@@ -1256,6 +1256,16 @@ body.site-page {
 .site-page .form-card ul {
 	color: var(--ko);
 }
+/* « Continuer avec GitHub », sous le formulaire de connexion ou d'inscription */
+.site-page .form-card .oauth {
+	margin-top: 1.4rem;
+	padding-top: 1.2rem;
+	border-top: 1px solid var(--lp-line-2);
+}
+.site-page .form-card .oauth .ac-btn {
+	width: 100%;
+	justify-content: center;
+}
 .site-page .alert {
 	background: rgba(192, 57, 43, 0.08);
 	border-color: #e0a29a;

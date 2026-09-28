@@ -106,6 +106,17 @@ final class EmailChangeTest extends KernelTestCase
         $this->assertSame('ada.nouvelle@example.test', $this->ada->getEmail());
     }
 
+    public function testSansMotDePasseChangerDAdresseDemandeUneConnexionGithubRecente(): void
+    {
+        $bob = (new User())->setEmail('bob@example.test')->setDisplayName('Bob');
+        $this->entityManager->persist($bob);
+        $this->entityManager->flush();
+
+        $this->assertSame(EmailChangeOutcome::PasswordRequired, $this->emailChange()->request($bob, 'Bob', 'bob.nouveau@example.test', null));
+        $this->assertEmailCount(0);
+        $this->assertSame(EmailChangeOutcome::Sent, $this->emailChange()->request($bob, 'Bob', 'bob.nouveau@example.test', null, recentlySignedIn: true));
+    }
+
     public function testLeLienPartALaNouvelleAdresse(): void
     {
         $this->assertSame(EmailChangeOutcome::Sent, $this->emailChange()->request($this->ada, 'Ada', 'nouvelle@example.test', self::PASSWORD));
