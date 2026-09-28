@@ -4,6 +4,7 @@ namespace App\Content;
 
 use App\Entity\User;
 use App\Payment\TrackOfferFactory;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /** Ce que l'accueil montre des parcours : ceux qui sont ouverts, ceux en préparation, et les questions fréquentes. */
@@ -15,8 +16,12 @@ final readonly class HomePage
     public function __construct(
         private ContentRepository $content,
         private TrackVisibility $visibility,
+        private PracticeVisibility $practices,
         private TrackOfferFactory $offers,
         private UrlGeneratorInterface $urls,
+        /** Instance sur invitation : la Pratique demande un compte, le visiteur n'a rien à essayer. */
+        #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
+        private bool $inviteOnly = false,
     ) {
     }
 
@@ -26,6 +31,7 @@ final readonly class HomePage
      *     upcoming: list<Track>,
      *     faq: list<array{question: string, answer: string}>,
      *     tryUrl: string,
+     *     tryPractice: bool,
      * }
      */
     public function of(?User $user): array
@@ -33,15 +39,26 @@ final readonly class HomePage
         $published = array_values($this->visibility->tracks());
         $tracks = array_map(fn (Track $track) => $this->card($track, $user), $published);
         $upcoming = $this->upcoming();
-        // Le bouton principal mène au premier exercice du premier parcours ; à défaut, à l'inscription.
-        $tryUrl = array_values(array_filter(array_column($tracks, 'tryUrl')))[0] ?? $this->urls->generate('app_register');
+        // Le bouton principal : pour un visiteur, un exercice de Pratique, qui se joue sans compte (le premier chapitre
+        // d'un parcours en demande un) ; pour un compte, le premier exercice du premier parcours ; à défaut, l'inscription.
+        $practiceUrl = null === $user ? $this->practiceUrl() : null;
+        $tryUrl = $practiceUrl ?? array_values(array_filter(array_column($tracks, 'tryUrl')))[0] ?? $this->urls->generate('app_register');
 
         return [
             'tracks' => $tracks,
             'upcoming' => $upcoming,
             'faq' => self::faq($published, $upcoming),
             'tryUrl' => $tryUrl,
+            'tryPractice' => null !== $practiceUrl,
         ];
+    }
+
+    /** Le plus récent des exercices de Pratique publiés, sauf sur une instance sur invitation. */
+    private function practiceUrl(): ?string
+    {
+        $practice = $this->inviteOnly ? null : array_values($this->practices->practices())[0] ?? null;
+
+        return null === $practice ? null : $this->urls->generate('app_exercise_pratique', ['exerciseId' => $practice->exercise->id]);
     }
 
     /** @return array<string, mixed> */

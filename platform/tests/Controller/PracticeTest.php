@@ -231,6 +231,45 @@ final class PracticeTest extends WebTestCase
         }
     }
 
+    /** « Essayer » mène un visiteur à ce qu'il peut jouer sans compte : la Pratique, pas un chapitre verrouillé. */
+    public function testLeBoutonEssayerDeLAccueilMeneUnVisiteurALaPratique(): void
+    {
+        $crawler = $this->client->request('GET', '/');
+
+        $essayer = $crawler->filter('.lp-cta a.lp-btn.primary');
+        $this->assertSame('/pratique/exemple-map-request-header', $essayer->attr('href'), 'Le plus récent des exercices publiés.');
+        $this->assertStringContainsString('sans compte', $essayer->text());
+
+        $this->client->request('GET', (string) $essayer->attr('href'));
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('[data-playground]', 'Le visiteur arrive dans l\'éditeur.');
+    }
+
+    public function testLeBoutonEssayerDeLAccueilMeneUnCompteAuPremierExerciceDuParcours(): void
+    {
+        $this->client->loginUser($this->createUser());
+        $crawler = $this->client->request('GET', '/');
+
+        $href = (string) $crawler->filter('.lp-cta a.lp-btn.primary')->attr('href');
+        $this->assertStringStartsWith('/parcours/', $href);
+        $this->client->request('GET', $href);
+        $this->assertSelectorExists('[data-playground]', 'Le premier chapitre est ouvert à tout compte.');
+    }
+
+    public function testSurInvitationLeBoutonEssayerNeMenePasALaPratique(): void
+    {
+        $initial = $_SERVER['REGISTRATION_INVITE_ONLY'] ?? '0';
+        $_SERVER['REGISTRATION_INVITE_ONLY'] = $_ENV['REGISTRATION_INVITE_ONLY'] = '1';
+        try {
+            self::ensureKernelShutdown();
+            $crawler = static::createClient()->request('GET', '/');
+
+            $this->assertStringStartsNotWith('/pratique', (string) $crawler->filter('.lp-cta a.lp-btn.primary')->attr('href'));
+        } finally {
+            $_SERVER['REGISTRATION_INVITE_ONLY'] = $_ENV['REGISTRATION_INVITE_ONLY'] = $initial;
+        }
+    }
+
     public function testUnExerciceEnPreparationOuInconnuEstIntrouvable(): void
     {
         $this->client->loginUser($this->createUser());
