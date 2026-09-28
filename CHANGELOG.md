@@ -14,6 +14,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   taggés avec `before` / `after`. La complétion de l'éditeur connaît les écouteurs du noyau
   (`Symfony\Component\HttpKernel\EventListener\`), les cibles naturelles de ces contraintes.
 
+### Modifié
+
+- **Packs : `access` n'est plus validée.** La clé, dépréciée depuis la 0.8.0 et sans effet, n'est plus lue :
+  `content:check` continue de signaler sa présence, quelle que soit sa valeur, et une valeur inconnue ne bloque
+  plus le chargement du pack. Retirez-la de vos `exercise.yaml` : elle sera refusée à la 3.0. Côté moteur,
+  `Exercise::$access` et l'énumération `App\Content\Access` disparaissent.
+
 ### Corrigé
 
 - **Auto-hébergement : une instance neuve démarre en 2.x.** L'image par défaut de

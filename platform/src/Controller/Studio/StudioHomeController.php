@@ -94,6 +94,8 @@ final class StudioHomeController extends AbstractController
             'fiches' => \count(array_filter($track->chapters, static fn (Chapter $c) => $c->hasLesson())),
             'modifie' => $this->studio->modifieLe($track),
             'ia' => $this->drafter->disponible(),
+            // Clés dépréciées, par « parcours/exercice » : l'auteur les voit sans lancer content:check.
+            'depreciations' => $this->content->deprecations(),
         ]);
     }
 
