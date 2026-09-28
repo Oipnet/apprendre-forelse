@@ -8,6 +8,24 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Données structurées des parcours : `courseWorkload`.** Le `CourseInstance` d'un parcours annonce sa durée,
+  que le résultat enrichi « Cours » de Google exige ; l'image du `Course` retombe sur le logo quand la marque n'a
+  pas d'image de partage (#177).
+
+### Modifié
+
+- **Accueil : « Essayer » mène un visiteur à la Pratique.** Le premier chapitre d'un parcours demande un compte :
+  le bouton ouvrait donc une page verrouillée. Il mène désormais au plus récent des exercices de Pratique, qui se
+  joue sans compte ; un compte connecté, ou une instance sur invitation, garde le premier exercice du premier
+  parcours (#166).
+
+### Corrigé
+
+- **Pratique : le code écrit sans compte n'est plus perdu à la connexion.** Il était envoyé à l'import, ignoré
+  par le serveur, puis effacé du navigateur. Il est désormais repris dans le compte (#167).
+
 ## 2.3.0 — 2026-09-28
 
 ### Ajouté
