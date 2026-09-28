@@ -107,6 +107,8 @@ const NAMESPACES = [
     'Symfony\\Component\\EventDispatcher\\EventDispatcherInterface',
     'Symfony\\Component\\HttpKernel\\Event\\',
     'Symfony\\Component\\HttpKernel\\KernelEvents',
+    // Les écouteurs du noyau : les cibles des « before »/« after » de #[AsEventListener] (Symfony 8.2)
+    'Symfony\\Component\\HttpKernel\\EventListener\\',
     'Symfony\\Component\\Workflow\\WorkflowInterface',
     'Symfony\\Component\\Workflow\\Workflow',
     'Symfony\\Component\\Workflow\\Transition',
