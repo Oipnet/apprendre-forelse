@@ -27,7 +27,7 @@ trait ExerciseCheckerTrait
         $workdirs = new ProjectWorkdir();
         $runners = new TestRunners(new ServiceLocator([
             FrameworkProfile::PHPUNIT => static fn () => new PhpunitRunner(new ProcessEnvironment($platformDir)),
-            FrameworkProfile::VITEST => static fn () => new NodeModuleRunner($platformDir),
+            FrameworkProfile::VITEST => static fn () => new NodeModuleRunner(new ProcessEnvironment($platformDir), $platformDir),
         ]));
         $artifacts = new EnvironmentArtifacts($artifactsDir ?? $platformDir.'/public/envs', new InstalledEnvironments(''));
 

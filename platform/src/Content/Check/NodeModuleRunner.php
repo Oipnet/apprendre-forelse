@@ -16,11 +16,15 @@ use Symfony\Component\Process\Process;
  * Le moteur ne connaît ni le module ni son emplacement — il demande à Node de résoudre le
  * spécificateur depuis le playground, là où les paquets de runtime sont installés. Ajouter un
  * runtime avec son propre lanceur ne demande donc rien ici.
+ *
+ * Node tourne sans les variables de la plateforme (ProcessEnvironment), comme PHPUnit : le code de test d'un pack
+ * ne doit lire ni DATABASE_URL, ni APP_SECRET, ni les clés Stripe ou Anthropic dans process.env.
  */
 #[AsTaggedItem(FrameworkProfile::VITEST)]
 final readonly class NodeModuleRunner implements TestRunner
 {
     public function __construct(
+        private ProcessEnvironment $processEnvironment,
         /** Dossier de la plateforme : le playground est à côté. */
         #[Autowire('%kernel.project_dir%')]
         private string $platformDir = __DIR__.'/../../..',
@@ -64,7 +68,7 @@ final readonly class NodeModuleRunner implements TestRunner
             return RunReport::none(sprintf('Module de test « %s » introuvable : installez le paquet qui le fournit (npm install, dans playground/).', $module));
         }
 
-        $process = new Process([(string) $this->nodeBinary(), '--experimental-transform-types', '--no-warnings', $script, $workdir, ...$paths], $workdir, ['NODE_ENV' => false], timeout: 120);
+        $process = new Process([(string) $this->nodeBinary(), '--experimental-transform-types', '--no-warnings', $script, $workdir, ...$paths], $workdir, $this->environment(), timeout: 120);
         $process->run();
         $report = json_decode($process->getOutput(), true);
         if (!\is_array($report) || !\is_array($report['cases'] ?? null)) {
@@ -97,6 +101,7 @@ final readonly class NodeModuleRunner implements TestRunner
         $process = new Process(
             [$node, '--input-type=module', '-e', sprintf('process.stdout.write(import.meta.resolve(%s))', json_encode($module, \JSON_THROW_ON_ERROR))],
             $this->platformDir.'/../playground',
+            $this->environment(),
             timeout: 30,
         );
         $process->run();
@@ -107,6 +112,16 @@ final readonly class NodeModuleRunner implements TestRunner
         return $process->isSuccessful() && str_starts_with($url, 'file://')
             ? rawurldecode((string) parse_url($url, \PHP_URL_PATH))
             : null;
+    }
+
+    /**
+     * Sans les variables de la plateforme, ni APP_ENV ni NODE_ENV : le lanceur choisit lui-même son mode.
+     *
+     * @return array<string, string|false>
+     */
+    private function environment(): array
+    {
+        return [...$this->processEnvironment->isolated(), 'APP_ENV' => false, 'NODE_ENV' => false];
     }
 
     private function nodeBinary(): ?string

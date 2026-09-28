@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Sécurité
+
+- **Vérification des exercices Nuxt : les tests ne voient plus les secrets de la plateforme.** Lancé par
+  « Vérifier » dans l'atelier ou par `content:check`, le code de test d'un exercice Nuxt lisait dans
+  `process.env` les variables de la plateforme (`DATABASE_URL`, `APP_SECRET`, clés Stripe et Anthropic…).
+  Node tourne désormais sans elles, comme PHPUnit pour les exercices PHP.
+
 ## 2.3.0 — 2026-09-28
 
 ### Ajouté
