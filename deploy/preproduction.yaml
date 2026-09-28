@@ -12,6 +12,36 @@ services:
       ANALYTICS_WEBSITE_ID: ""
       # Ses erreurs dans le même projet Sentry que la production, rangées à part.
       SENTRY_ENVIRONMENT: preproduction
+      # Les emails vont dans Mailpit, jamais à une vraie adresse (quel que soit MAILER_DSN dans .env).
+      MAILER_DSN: smtp://mailpit:1025
+
+  # C'est le worker qui envoie les emails (file d'attente) : même destination.
+  worker:
+    environment:
+      MAILER_DSN: smtp://mailpit:1025
+
+  # Capteur d'emails : garde tout ce que la préproduction envoie, pour tester l'inscription, le changement d'adresse
+  # ou le mot de passe oublié. Son interface est servie par le proxy sous /mails de la plateforme, derrière le même
+  # mot de passe (deploy/front/Caddyfile) ; les messages restent en mémoire, perdus à son redémarrage.
+  mailpit:
+    image: ghcr.io/axllent/mailpit:v1.31.3
+    # Comme les autres services (compose.yaml) : une ancre YAML ne passe pas d'un fichier à l'autre.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    restart: unless-stopped
+    environment:
+      MP_WEBROOT: /mails/
+      MP_MAX_MESSAGES: "500"
+    networks:
+      default:
+      front:
+        aliases:
+          - forelse-preprod-mail
+    mem_limit: 128m
+    pids_limit: 64
 
   # Pas d'Umami : un profil qu'on n'active jamais le laisse éteint.
   umami:

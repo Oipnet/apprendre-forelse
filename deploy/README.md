@@ -91,6 +91,21 @@ plateforme (même « site » pour le navigateur, voir `auto-hebergement/README.m
    `docker compose exec app php bin/console app:admin votre@adresse`.
 8. `docker stats` : la production garde de la marge avec les deux instances en marche.
 
+### Les emails de la préproduction
+
+Elle n'envoie rien au monde réel : `preproduction.yaml` dirige tous ses emails (celui de `app` comme celui de
+`worker`) vers **Mailpit**, qui les garde en mémoire, 500 au plus, perdus à son redémarrage. On les lit sur
+`https://<plateforme de préproduction>/mails/`, derrière le même mot de passe que la plateforme.
+
+Le service démarre avec le déploiement suivant de la préproduction. L'adresse `/mails` passe par le proxy, qui ne se
+redéploie pas : après avoir copié le nouveau `front/Caddyfile` dans `/srv/front`, rechargez-le sans coupure :
+
+```sh
+docker compose exec front caddy reload --config /etc/caddy/Caddyfile
+```
+
+Un email qui n'arrive pas : `docker compose logs worker` dans `/srv/forelse-staging`.
+
 ## 3. Suivi des erreurs
 
 Un seul projet Sentry (type Symfony, région UE) pour les deux instances : la préproduction y range ses erreurs

@@ -30,7 +30,13 @@
 	basic_auth @protege {
 		{$PREPRODUCTION_USER} {$PREPRODUCTION_PASSWORD_HASH}
 	}
-	import instance forelse-preprod
+	# Les emails captés par Mailpit (deploy/preproduction.yaml), derrière le même mot de passe.
+	handle /mails* {
+		reverse_proxy forelse-preprod-mail:8025
+	}
+	handle {
+		import instance forelse-preprod
+	}
 }
 
 {$PREPRODUCTION_SANDBOX_HOST} {
