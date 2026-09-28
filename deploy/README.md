@@ -14,7 +14,8 @@ copiés par la CI (`.github/workflows/ci.yml`) ; le proxy, lui, s'installe une f
 - `compose.yaml` : les services d'une instance. Seul, l'application tient elle-même 80/443 (l'ancien fonctionnement).
 - `derriere-front.yaml` : l'instance passe derrière le proxy (plus de port publié, réseau `front`).
 - `preproduction.yaml` : ce qui distingue la préproduction (pas d'indexation, pas d'Umami).
-- `deployer.sh` : copie de la base, migrations, bascule, contrôle de `/sante`, retour à l'image précédente en cas d'échec. La copie (`pg_dump -Fc`) est gardée dans `sauvegardes/` du dossier de l'instance, les 10 plus récentes (`DEPLOY_DUMPS_DIR`, `DEPLOY_DUMPS_KEEP`). Pour restaurer : `docker compose exec -T db sh -c 'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < sauvegardes/avant-deploiement-….dump`. Ces copies restent sur le VPS : elles ne remplacent pas une sauvegarde quotidienne hors du serveur (#5).
+- `deployer.sh` : copie de la base, migrations, bascule, contrôle de `/sante`, retour à l'image précédente en cas d'échec. La copie (`pg_dump -Fc`) est gardée dans `sauvegardes/` du dossier de l'instance, les 10 plus récentes (`DEPLOY_DUMPS_DIR`, `DEPLOY_DUMPS_KEEP`). Pour restaurer : `docker compose exec -T db sh -c 'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < sauvegardes/avant-deploiement-….dump`. Ces copies restent sur le VPS : la sauvegarde hors du serveur est `sauvegarde/` (section 5).
+- `sauvegarde/` : la sauvegarde quotidienne de la production sur le NAS de la Freebox Pro, par son VPN.
 - `front/` : le proxy commun.
 
 Le `.env` de chaque instance choisit ses fichiers avec `COMPOSE_FILE`. Il faut **Docker Compose 2.24 ou plus**
@@ -135,3 +136,47 @@ sous `preproduction` (`preproduction.yaml`), la production sous `production`.
 
 Une poussée sur `main` ne touche plus la production. Un passage relancé sur un commit ancien ne remet pas non plus une
 version dépassée en préproduction : seul le commit en tête de `main` s'y déploie.
+
+## 5. Sauvegarde quotidienne
+
+Chaque nuit, `sauvegarde/sauvegarder.sh` copie la base (`pg_dump -Fc`, relue avant d'être gardée) et le volume
+`data` de l'application (`APP_SECRET`, certificats de Caddy), puis les dépose sur le NAS de la Freebox Pro. Un
+conteneur éphémère (`sauvegarde/envoi/`) ouvre pour cela le VPN IPsec IKEv2 de la Freebox, limité à la seule adresse
+du NAS, dépose, vérifie la taille de chaque fichier arrivé, retire les sauvegardes de plus de 30 jours, et s'arrête.
+Rien à installer sur le serveur : l'utilisateur `deploy` lance déjà Docker. La CI copie `sauvegarde/` à chaque mise en
+production ; son `sauvegarde.env` reste.
+
+Mise en place, une fois :
+
+1. Freebox Pro (espace client → Ma Freebox Pro → VPN) : serveur VPN activé, un utilisateur réservé au serveur
+   (`vps-sauvegarde`). Sur le NAS, un partage réservé aux sauvegardes (`saveForelse`), ouvert en invité depuis le
+   réseau de la Freebox.
+2. Sur le serveur, `/srv/forelse/sauvegarde/sauvegarde.env` à partir de `sauvegarde.env.example`, puis
+   `chmod 600 sauvegarde.env` : il porte les mots de passe du VPN et du NAS.
+3. Un premier essai, à la main : `sh /srv/forelse/sauvegarde/sauvegarder.sh`. Le dossier `forelse-AAAA-MM-JJ` doit
+   apparaître sur le NAS avec `base.dump` et `data.tar.gz`.
+4. La programmation, `crontab -e` avec l'utilisateur `deploy` :
+   `17 3 * * * sh /srv/forelse/sauvegarde/sauvegarder.sh >> /srv/forelse/sauvegardes/sauvegarde.log 2>&1`
+5. Conseillé : une adresse de surveillance (`SAUVEGARDE_PING_URL`, healthchecks.io ou équivalent) qui prévient si la
+   sauvegarde n'est pas passée. Sans elle, un échec ne se voit que dans `sauvegardes/sauvegarde.log`.
+
+Le serveur détient les identifiants du VPN, et le NAS s'ouvre en invité à qui est sur ce réseau : un serveur
+compromis pourrait écraser les sauvegardes. La gestion des versions du NAS (30 jours) les garde récupérables. La base
+d'Umami (statistiques de visite) n'est pas sauvegardée.
+
+### Restaurer
+
+Récupérer `base.dump` et `data.tar.gz` du jour voulu (sur le NAS, ou dans `sauvegardes/quotidiennes/` pour les 7
+derniers jours), puis dans `/srv/forelse` :
+
+```sh
+docker compose stop app worker
+docker compose exec -T db sh -c 'pg_restore --clean --if-exists --no-owner -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < base.dump
+docker run --rm --volumes-from "$(docker compose ps -aq app)" -v "$PWD:/depuis:ro" alpine:3.22 \
+    sh -c 'rm -rf /data/* && tar -xzf /depuis/data.tar.gz -C /data'
+docker compose up -d app worker
+```
+
+Une sauvegarde n'est bonne que si elle se restaure : essayez de temps en temps dans une base jetable,
+`docker run --rm -d --name essai -e POSTGRES_PASSWORD=essai postgres:17-alpine`, puis
+`docker exec -i essai pg_restore -U postgres -d postgres --no-owner < base.dump` et une requête sur `"user"`.
