@@ -66,6 +66,8 @@ final readonly class StudioCatalog
             'xp' => array_sum(array_column($chapitres, 'xp')),
             'fiches' => \count($track->lessonChapters()),
             'modifie' => $this->studio->modifieLe($track),
+            // Clés dépréciées, par « parcours/exercice » : l'auteur les voit sans lancer content:check.
+            'depreciations' => $this->content->deprecations(),
         ];
     }
 

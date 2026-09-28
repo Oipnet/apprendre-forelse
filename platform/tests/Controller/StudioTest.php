@@ -95,6 +95,23 @@ final class StudioTest extends WebTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
+    /** La clé « access » n'a plus d'effet : l'atelier la signale, quelle que soit sa valeur. */
+    public function testUneCleDeprecieeEstSignaleeDansLeParcours(): void
+    {
+        $yaml = $this->exercice.'/exercise.yaml';
+        file_put_contents($yaml, "access: vip\n".file_get_contents($yaml));
+        $client = static::createClient();
+        $this->auteur($client);
+
+        $crawler = $client->request('GET', '/atelier/decouverte');
+
+        $this->assertResponseIsSuccessful();
+        $badges = $crawler->filter('.st-exercises .tag.free');
+        $this->assertCount(1, $badges, 'Seul l\'exercice qui a la clé est signalé.');
+        $this->assertSame('Clé dépréciée', $badges->text());
+        $this->assertStringContainsString('« access » est dépréciée', (string) $badges->attr('title'));
+    }
+
     public function testLesParcoursSeFiltrentEtSeCherchent(): void
     {
         $client = static::createClient();

@@ -23,7 +23,6 @@ final readonly class Exercise
         public string $title,
         public array $concepts,
         public int $xp,
-        public Access $access,
         public string $environment,
         public ?string $base,
         public string $open,

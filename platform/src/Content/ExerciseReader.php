@@ -99,8 +99,6 @@ final class ExerciseReader
             // YAML lit « 404 » comme un entier : les étiquettes restent des chaînes.
             concepts: array_map('strval', $meta['concepts'] ?? []),
             xp: (int) ($meta['xp'] ?? 0),
-            access: Access::tryFrom($meta['access'] ?? Access::Account->value)
-                ?? throw new ContentException(sprintf('%s : « access » doit valoir %s.', $file, implode(' ou ', array_column(Access::cases(), 'value')))),
             environment: $environment,
             base: $meta['base'] ?? null,
             open: $open,

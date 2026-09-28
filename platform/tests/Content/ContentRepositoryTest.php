@@ -2,7 +2,6 @@
 
 namespace App\Tests\Content;
 
-use App\Content\Access;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
@@ -99,7 +98,7 @@ final class ContentRepositoryTest extends TestCase
     {
         $repository = $this->repository(self::ROOT.'/examples/packs', __DIR__.'/../Fixtures/packs/enchainement');
 
-        $this->assertSame(Access::Free, $repository->findExercise('debut', 'e1')?->access, 'Encore lue, pour ne casser aucun pack.');
+        $this->assertNotNull($repository->findExercise('debut', 'e1'), 'Encore acceptée, pour ne casser aucun pack.');
         $this->assertArrayHasKey('debut/e1', $repository->deprecations(), 'Mais signalée par content:check.');
         $this->assertArrayNotHasKey('decouverte/02-bonjour-prenom', $repository->deprecations(), 'Un exercice sans la clé n\'est pas concerné.');
     }
@@ -272,7 +271,7 @@ final class ContentRepositoryTest extends TestCase
     public function testUnMotifRendModifiablesLesFichiersQuUneCommandeVaCreer(): void
     {
         $exercice = new \App\Content\Exercise(
-            id: 'e', trackId: 't', title: 'E', concepts: [], xp: 0, access: Access::Account, environment: 'symfony-8',
+            id: 'e', trackId: 't', title: 'E', concepts: [], xp: 0, environment: 'symfony-8',
             base: null, open: 'src/A.php', preview: '/', editable: ['src/A.php', 'migrations/*.php'], readonly: [],
             objectives: [], hints: [], instructions: '', directory: '/tmp',
         );
@@ -364,7 +363,6 @@ final class ContentRepositoryTest extends TestCase
         $this->assertSame('8.1', $practice->version);
         $this->assertSame('https://github.com/symfony/symfony/pull/1', $practice->pullRequest);
         $this->assertSame('2026-09-10', $practice->published->format('Y-m-d'));
-        $this->assertSame(Access::Account, $practice->exercise->access, 'La Pratique demande toujours un compte.');
         $this->assertSame(0, $practice->exercise->xp, 'La Pratique ne rapporte pas d\'XP.');
         $this->assertFalse($practice->isRestricted());
         $this->assertTrue($repository->findPractice('en-preparation')?->isRestricted());
@@ -540,10 +538,6 @@ final class ContentRepositoryTest extends TestCase
         yield 'sans objectif' => [
             ['tracks/t/exercises/e2/exercise.yaml' => "id: e2\ntitle: E2\neditable: [a.php]"],
             'au moins un objectif est requis',
-        ];
-        yield 'accès inconnu' => [
-            ['tracks/t/exercises/e2/exercise.yaml' => "id: e2\ntitle: E2\naccess: vip\neditable: [a.php]\nobjectives: [{test: testA, label: A}]"],
-            '« access » doit valoir free ou account',
         ];
         yield 'chapitre déclaré deux fois' => [
             ['tracks/t/track.yaml' => "id: t\ntitle: T\nenvironment: symfony-8\nchapters:\n  - {id: c, title: C, exercises: [e1]}\n  - {id: c, title: C bis, exercises: [e2]}"],
