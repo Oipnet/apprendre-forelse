@@ -14,7 +14,6 @@ use App\Form\CohortTracksType;
 use App\Instance\Branding;
 use App\Repository\CohortRepository;
 use App\Security\CohortVoter;
-use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Asset;
@@ -23,6 +22,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -108,13 +108,12 @@ final class ChefDashboardController extends AbstractDashboardController
     /** L'effectif prévu, base de l'estimation du devis : seul champ du financement ouvert au chef. */
     #[AdminRoute('/{id}/effectif', name: 'cohort_headcount', options: ['requirements' => ['id' => '\d+'], 'methods' => ['POST']], allowedDashboards: [self::class])]
     #[IsGranted(CohortVoter::MANAGE_PARCOURS, subject: 'cohort')]
-    public function headcount(#[MapEntity(id: 'id')] Cohort $cohort, Request $request, EntityManagerInterface $entityManager): Response
+    public function headcount(#[MapEntity(id: 'id')] Cohort $cohort, Request $request): Response
     {
         $form = $this->headcountForm($cohort);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            $cohort->setExpectedHeadcount($form->get('expectedHeadcount')->getData());
-            $entityManager->flush();
+            $this->management->changeExpectedHeadcount($cohort, $form->get('expectedHeadcount')->getData());
             $this->addFlash('success', sprintf('Effectif prévu de « %s » : %d.', $cohort->getName(), $cohort->getExpectedHeadcount()));
         } else {
             $this->addFlash('danger', 'L\'effectif n\'a pas été enregistré : indiquez un nombre entre 0 et 10 000.');
@@ -146,8 +145,8 @@ final class ChefDashboardController extends AbstractDashboardController
         yield MenuItem::linkToUrl('Retour au site', 'fa fa-arrow-left', $this->generateUrl('app_home'));
     }
 
-    /** @return \Symfony\Component\Form\FormInterface<array{trackIds: list<string>}> */
-    private function tracksForm(Cohort $cohort): \Symfony\Component\Form\FormInterface
+    /** @return FormInterface<array{trackIds: list<string>}> */
+    private function tracksForm(Cohort $cohort): FormInterface
     {
         return $this->createForm(CohortTracksType::class, ['trackIds' => $cohort->getAvailableTrackIds()], [
             'action' => $this->generateUrl('chef_cohort_tracks', ['id' => $cohort->getId()]),
@@ -156,8 +155,8 @@ final class ChefDashboardController extends AbstractDashboardController
         ]);
     }
 
-    /** @return \Symfony\Component\Form\FormInterface<array{expectedHeadcount: int}> */
-    private function headcountForm(Cohort $cohort): \Symfony\Component\Form\FormInterface
+    /** @return FormInterface<array{expectedHeadcount: int}> */
+    private function headcountForm(Cohort $cohort): FormInterface
     {
         return $this->createForm(CohortHeadcountType::class, ['expectedHeadcount' => $cohort->getExpectedHeadcount()], [
             'action' => $this->generateUrl('chef_cohort_headcount', ['id' => $cohort->getId()]),

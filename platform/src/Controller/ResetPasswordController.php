@@ -2,17 +2,16 @@
 
 namespace App\Controller;
 
+use App\Account\AccountManagement;
 use App\Account\PasswordResetRequested;
 use App\Entity\User;
 use App\Form\ChangePasswordFormType;
 use App\Form\ResetPasswordRequestFormType;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ExpiredResetPasswordTokenException;
@@ -34,7 +33,7 @@ final class ResetPasswordController extends AbstractController
 
     public function __construct(
         private readonly ResetPasswordHelperInterface $resetPasswordHelper,
-        private readonly EntityManagerInterface $entityManager,
+        private readonly AccountManagement $account,
     ) {
     }
 
@@ -67,7 +66,7 @@ final class ResetPasswordController extends AbstractController
 
     /** Lien reçu par email : vérifie le jeton, puis propose de choisir le nouveau mot de passe. */
     #[Route('/nouveau/{token}', name: 'app_reset_password')]
-    public function reset(Request $request, UserPasswordHasherInterface $hasher, Security $security, ?string $token = null): Response
+    public function reset(Request $request, Security $security, ?string $token = null): Response
     {
         if (null !== $token) {
             // Le jeton passe en session et disparaît de l'URL : il ne doit pas fuiter via l'historique
@@ -100,8 +99,7 @@ final class ResetPasswordController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Le lien ne sert qu'une fois.
             $this->resetPasswordHelper->removeResetRequest($token);
-            $user->setPassword($hasher->hashPassword($user, $form->get('plainPassword')->getData()));
-            $this->entityManager->flush();
+            $this->account->changePassword($user, $form->get('plainPassword')->getData());
             $this->cleanSessionAfterReset();
 
             // L'apprenant vient de prouver qu'il contrôle l'adresse du compte : inutile de lui redemander

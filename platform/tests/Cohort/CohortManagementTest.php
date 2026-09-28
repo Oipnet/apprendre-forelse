@@ -4,6 +4,7 @@ namespace App\Tests\Cohort;
 
 use App\Cohort\CohortAccessSync;
 use App\Cohort\CohortManagement;
+use App\Cohort\CohortQuoteEstimator;
 use App\Cohort\CohortRuleViolation;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
@@ -36,7 +37,7 @@ final class CohortManagementTest extends TestCase
         });
         $sync = new CohortAccessSync($this->createStub(TrackAccessRepository::class), $this->createStub(UserRepository::class), $entityManager, new MockClock());
 
-        return new CohortManagement($entityManager, $sync, $this->createStub(CohortRepository::class), $this->content);
+        return new CohortManagement($entityManager, $sync, $this->createStub(CohortRepository::class), $this->content, new CohortQuoteEstimator($this->content, 10000, '1:100'));
     }
 
     /** @param list<string> $ids */

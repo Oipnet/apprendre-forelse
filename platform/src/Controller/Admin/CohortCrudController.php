@@ -206,15 +206,13 @@ final class CohortCrudController extends AbstractCrudController implements Reset
      * @param AdminContext<Cohort> $context
      */
     #[AdminRoute('/{entityId}/appliquer-estimation', name: 'apply_quote', options: ['methods' => ['POST']])]
-    public function applyQuote(AdminContext $context, EntityManagerInterface $entityManager): Response
+    public function applyQuote(AdminContext $context): Response
     {
         $cohort = $context->getEntity()->getInstance();
         if (!$cohort instanceof Cohort) {
             throw $this->createNotFoundException();
         }
-        $quote = $this->estimator->estimate($cohort);
-        $cohort->setQuoteAmount($quote->amount);
-        $entityManager->flush();
+        $quote = $this->management->applyEstimatedQuote($cohort);
         $this->addFlash('success', sprintf('Devis de « %s » : %s TTC, repris de l\'estimation.', $cohort->getName(), number_format($quote->amount / 100, 2, ',', ' ').' €'));
 
         return $this->redirectToRoute('admin_cohorts_detail', ['entityId' => $cohort->getId()]);
@@ -247,7 +245,6 @@ final class CohortCrudController extends AbstractCrudController implements Reset
     {
         return $this->learnerCounts ??= $this->users->countByCohort();
     }
-
 
     private function invitationUrl(Cohort $cohort): string
     {

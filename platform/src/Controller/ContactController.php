@@ -7,15 +7,14 @@ use App\Entity\ContactMessage;
 use App\Entity\ContactSubject;
 use App\Entity\User;
 use App\Form\ContactFormType;
+use App\Security\QuotaExceeded;
 use App\Seo\Seo;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 /** Page de contact, et page Écoles et entreprises avec sa demande de devis : les deux arrivent dans la même boîte. */
@@ -24,8 +23,6 @@ final class ContactController extends AbstractController
     public function __construct(
         private readonly ContactInbox $inbox,
         private readonly ClockInterface $clock,
-        #[Autowire(service: 'limiter.contact')]
-        private readonly RateLimiterFactoryInterface $limiter,
     ) {
     }
 
@@ -76,12 +73,13 @@ final class ContactController extends AbstractController
         if (!$form->isValid()) {
             return null;
         }
-        if (!$this->limiter->create($request->getClientIp() ?? 'inconnu')->consume()->isAccepted()) {
-            $form->addError(new FormError('Beaucoup de messages en peu de temps depuis votre connexion : réessayez dans une heure, ou écrivez-nous directement par email.'));
+        try {
+            $this->inbox->receive($form->getData(), $request->getClientIp() ?? 'inconnu');
+        } catch (QuotaExceeded $e) {
+            $form->addError(new FormError($e->getMessage()));
 
             return null;
         }
-        $this->inbox->receive($form->getData());
         $this->addFlash('success', 'Message envoyé, merci. Nous vous répondons par email.');
 
         return $done();

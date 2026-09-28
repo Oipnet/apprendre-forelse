@@ -82,7 +82,7 @@ final class PurchaseController extends AbstractController
     public function thanks(#[MapEntity(id: 'id')] Purchase $purchase): Response
     {
         $user = $this->getUser();
-        if (!$user instanceof User || $purchase->getUser()?->getId() !== $user->getId()) {
+        if (!$user instanceof User || !$purchase->isOwnedBy($user)) {
             throw $this->createNotFoundException();
         }
 
