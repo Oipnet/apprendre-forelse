@@ -2,16 +2,12 @@
 
 namespace App\Controller;
 
-use App\Entity\WaitlistEntry;
-use App\Repository\WaitlistEntryRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Account\Waitlist;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Liste d'attente de la page d'accueil (bêta fermée) : une adresse, rien d'autre.
@@ -21,7 +17,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class WaitlistController extends AbstractController
 {
     #[Route('/liste-d-attente', name: 'app_waitlist', methods: ['POST'])]
-    public function join(Request $request, WaitlistEntryRepository $entries, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
+    public function join(Request $request, Waitlist $waitlist): Response
     {
         // 403 direct : l'exception « accès refusé » de la sécurité enverrait l'invité vers la page de connexion.
         if (!$this->isCsrfTokenValid('submit', $request->request->getString('_token'))) {
@@ -33,18 +29,7 @@ final class WaitlistController extends AbstractController
             return $this->backToForm('ok');
         }
 
-        $email = trim($request->request->getString('email'));
-        $violations = $validator->validate($email, [new Assert\NotBlank(), new Assert\Email(), new Assert\Length(max: 180)]);
-        if (\count($violations) > 0) {
-            return $this->backToForm('invalide');
-        }
-
-        if (!$entries->findOneByEmail($email)) {
-            $entityManager->persist(new WaitlistEntry($email));
-            $entityManager->flush();
-        }
-
-        return $this->backToForm('ok');
+        return $this->backToForm($waitlist->join($request->request->getString('email')) ? 'ok' : 'invalide');
     }
 
     private function backToForm(string $state): Response

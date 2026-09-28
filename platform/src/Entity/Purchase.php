@@ -190,6 +190,12 @@ class Purchase
         return $this->id;
     }
 
+    /** L'achat de ce compte : un achat dont le compte a été supprimé n'appartient plus à personne. */
+    public function isOwnedBy(User $user): bool
+    {
+        return null !== $this->user && $this->user->getId() === $user->getId();
+    }
+
     public function getUser(): ?User
     {
         return $this->user;

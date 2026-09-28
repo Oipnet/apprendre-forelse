@@ -24,10 +24,10 @@ class WaitlistEntry implements \Stringable
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
-    public function __construct(string $email)
+    public function __construct(string $email, \DateTimeImmutable $createdAt)
     {
         $this->email = self::normalize($email);
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = $createdAt;
     }
 
     /** Même adresse, quelle que soit la casse ou les espaces autour. */

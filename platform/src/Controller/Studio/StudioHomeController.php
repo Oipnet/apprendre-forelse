@@ -4,7 +4,6 @@ namespace App\Controller\Studio;
 
 use App\Content\Author\ExerciseDrafter;
 use App\Content\Author\ExerciseStudio;
-use App\Content\Chapter;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -39,7 +38,7 @@ final class StudioHomeController extends AbstractController
         $parcours = [];
         foreach ($this->content->tracks() as $track) {
             $exercices = $this->content->exercisesOfChapter($track);
-            $fiches = \count(array_filter($track->chapters, static fn (Chapter $c) => $c->hasLesson()));
+            $fiches = \count($track->lessonChapters());
             $parcours[] = [
                 'track' => $track,
                 'pack' => $this->content->packs()[$track->packId],
@@ -91,7 +90,7 @@ final class StudioHomeController extends AbstractController
             'chapitres' => $chapitres,
             'exercices' => array_merge(...array_column($chapitres, 'exercices')),
             'xp' => array_sum(array_column($chapitres, 'xp')),
-            'fiches' => \count(array_filter($track->chapters, static fn (Chapter $c) => $c->hasLesson())),
+            'fiches' => \count($track->lessonChapters()),
             'modifie' => $this->studio->modifieLe($track),
             'ia' => $this->drafter->disponible(),
         ]);

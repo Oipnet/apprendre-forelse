@@ -4,24 +4,18 @@ namespace App\Controller\Api;
 
 use App\Ai\Mentor;
 use App\Ai\ModelUnavailableException;
-use App\Api\ExerciseAccessGuard;
-use App\Api\ExerciseLocator;
 use App\Api\ExplainInput;
+use App\Api\MentorGate;
 use App\Api\ReviewInput;
 use App\Content\ContentException;
 use App\Content\Exercise;
 use App\Entity\User;
 use App\Service\ProgressService;
-use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
-use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -32,17 +26,9 @@ use Symfony\Component\Routing\Attribute\Route;
 final class MentorApiController extends AbstractController
 {
     public function __construct(
-        private readonly ExerciseLocator $exercises,
         private readonly Mentor $mentor,
+        private readonly MentorGate $gate,
         private readonly ProgressService $progress,
-        private readonly RateLimiterFactoryInterface $mentorLimiter,
-        #[Autowire(service: 'limiter.mentor_ip')]
-        private readonly RateLimiterFactoryInterface $ipLimiter,
-        #[Autowire(service: 'limiter.mentor_budget')]
-        private readonly RateLimiterFactoryInterface $budget,
-        private readonly RequestStack $requests,
-        private readonly ExerciseAccessGuard $guard,
-        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -95,32 +81,7 @@ final class MentorApiController extends AbstractController
             // 401 (et non une redirection vers la connexion) : c'est une API.
             throw new HttpException(Response::HTTP_UNAUTHORIZED, 'Connectez-vous pour faire appel au mentor.');
         }
-        if (!$this->mentor->disponible()) {
-            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, 'Le mentor n\'est pas activé sur cette plateforme.');
-        }
-        $exercise = $this->exercises->find($trackId, $exerciseId) ?? throw $this->createNotFoundException();
-        $this->guard->check($user, $exercise);
-        // La revue compare au code de référence, que le modèle reçoit : avant la réussite, du code qui lui
-        // demanderait de la recopier livrerait la solution sans passer par « Voir la solution » (et sa perte d'XP).
-        if ($requireCompleted && !$this->progress->find($user, $exercise)?->isCompleted()) {
-            throw new HttpException(Response::HTTP_CONFLICT, 'La revue de code vient après la réussite : faites d\'abord passer les tests.');
-        }
 
-        // Une inscription ne coûte rien : sans adresse confirmée, des comptes jetables multiplieraient la facture.
-        if (!$user->isEmailVerified()) {
-            throw new HttpException(Response::HTTP_PRECONDITION_REQUIRED, 'Confirmez votre adresse email pour faire appel au mentor : le lien est dans l\'email reçu à l\'inscription, ou à renvoyer depuis votre compte.');
-        }
-        $ip = $this->requests->getMainRequest()?->getClientIp() ?? 'inconnue';
-        foreach ([$this->mentorLimiter->create((string) $user->getId()), $this->ipLimiter->create($ip)] as $limiter) {
-            $limit = $limiter->consume();
-            if (!$limit->isAccepted()) {
-                throw new TooManyRequestsHttpException($limit->getRetryAfter()->getTimestamp() - $this->clock->now()->getTimestamp(), 'Le mentor a beaucoup travaillé : réessayez un peu plus tard.');
-            }
-        }
-        if (!$this->budget->create('instance')->consume()->isAccepted()) {
-            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, 'Le mentor a atteint sa limite du jour sur cette plateforme : il revient demain.');
-        }
-
-        return [$user, $exercise];
+        return [$user, $this->gate->admit($user, $trackId, $exerciseId, $requireCompleted)];
     }
 }
