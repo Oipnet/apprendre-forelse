@@ -7,8 +7,8 @@
 # Les migrations de la nouvelle image sont jouées avant de basculer, dans un conteneur à part (compose.yaml met
 # MIGRATIONS_AT_STARTUP=0) : si elles échouent (--all-or-nothing, tout est annulé), la version en service n'a pas bougé.
 #
-# Avant les migrations, une copie de la base est gardée dans sauvegardes/ (DEPLOY_DUMPS_DIR), les 10 plus récentes
-# (DEPLOY_DUMPS_KEEP). Le retour arrière remet l'image, pas la base : les migrations de la nouvelle version restent appliquées. L'ancienne
+# Avant les migrations, sauvegarder.sh garde une copie de la base dans sauvegardes/ (DEPLOY_DUMPS_DIR), les 10 plus
+# récentes (DEPLOY_DUMPS_KEEP). Le retour arrière remet l'image, pas la base : les migrations de la nouvelle version restent appliquées. L'ancienne
 # image redémarre quand même (Doctrine signale des migrations qu'il ne connaît pas, sans échouer), mais son code doit
 # supporter le nouveau schéma : une migration qui retire ou renomme une colonne se fait en deux déploiements.
 set -u
@@ -52,23 +52,13 @@ fi
 APP_IMAGE="$NEW" docker compose pull --quiet app || exit 1
 
 # Une copie de la base avant toute migration : une migration qui détruit des données ne se rattrape pas par le retour
-# à l'image précédente (voir plus haut). Format personnalisé de pg_dump (restauration : pg_restore --clean), gardée
-# dans le dossier de l'instance, les $KEEP plus récentes. Sans base en service (premier déploiement), rien à copier ;
-# si la copie échoue, on ne migre pas.
-DUMPS="${DEPLOY_DUMPS_DIR:-sauvegardes}"
-KEEP="${DEPLOY_DUMPS_KEEP:-10}"
+# à l'image précédente (voir plus haut). Sans base en service (premier déploiement), rien à copier ; si la copie
+# échoue, on ne migre pas.
 if [ -n "$(docker compose ps --status running -q db)" ]; then
-    mkdir -p "$DUMPS" || exit 1
-    DUMP="$DUMPS/avant-deploiement-$(date -u +%Y%m%dT%H%M%SZ).dump"
-    echo "Copie de la base : $DUMP"
-    if ! docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > "$DUMP.partiel"; then
-        rm -f "$DUMP.partiel"
+    if ! sh sauvegarder.sh avant-deploiement "${DEPLOY_DUMPS_KEEP:-10}"; then
         echo "::error::Copie de la base en échec : rien n'a été migré ni basculé, la version en service continue."
         exit 1
     fi
-    mv "$DUMP.partiel" "$DUMP"
-    # shellcheck disable=SC2012 # noms horodatés sans espace : l'ordre de ls -t suffit.
-    ls -1t "$DUMPS"/avant-deploiement-*.dump | tail -n "+$((KEEP + 1))" | xargs -r rm -f
 else
     echo "Pas de base en service : pas de copie avant migration."
 fi

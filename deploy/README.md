@@ -14,7 +14,8 @@ copiés par la CI (`.github/workflows/ci.yml`) ; le proxy, lui, s'installe une f
 - `compose.yaml` : les services d'une instance. Seul, l'application tient elle-même 80/443 (l'ancien fonctionnement).
 - `derriere-front.yaml` : l'instance passe derrière le proxy (plus de port publié, réseau `front`).
 - `preproduction.yaml` : ce qui distingue la préproduction (pas d'indexation, pas d'Umami).
-- `deployer.sh` : copie de la base, migrations, bascule, contrôle de `/sante`, retour à l'image précédente en cas d'échec. La copie (`pg_dump -Fc`) est gardée dans `sauvegardes/` du dossier de l'instance, les 10 plus récentes (`DEPLOY_DUMPS_DIR`, `DEPLOY_DUMPS_KEEP`). Pour restaurer : `docker compose exec -T db sh -c 'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < sauvegardes/avant-deploiement-….dump`. Ces copies restent sur le VPS : elles ne remplacent pas une sauvegarde quotidienne hors du serveur (#5).
+- `deployer.sh` : copie de la base, migrations, bascule, contrôle de `/sante`, retour à l'image précédente en cas d'échec. La copie passe par `sauvegarder.sh` (voir « Sauvegardes de la base »).
+- `sauvegarder.sh` et `verifier-sauvegarde.sh` : copie de la base, et vérification qu'une copie se restaure.
 - `front/` : le proxy commun.
 
 Le `.env` de chaque instance choisit ses fichiers avec `COMPOSE_FILE`. Il faut **Docker Compose 2.24 ou plus**
@@ -111,3 +112,37 @@ sous `preproduction` (`preproduction.yaml`), la production sous `production`.
 
 Une poussée sur `main` ne touche plus la production. Un passage relancé sur un commit ancien ne remet pas non plus une
 version dépassée en préproduction : seul le commit en tête de `main` s'y déploie.
+
+## 5. Sauvegardes de la base
+
+`sauvegarder.sh <préfixe> [nombre à garder]` copie la base de l'instance (`pg_dump -Fc`) dans `sauvegardes/` de son
+dossier (`DEPLOY_DUMPS_DIR`), et ne garde que les plus récentes de ce préfixe. Deux usages :
+
+- `avant-deploiement` : lancé par `deployer.sh` avant chaque migration, 10 copies (`DEPLOY_DUMPS_KEEP`) ;
+- `quotidienne` : lancé chaque nuit par la crontab du compte `deploy`, 14 copies.
+
+La crontab de la production, une fois, avec le compte `deploy` (`crontab -e`) :
+
+```
+17 3 * * * cd /srv/forelse && mkdir -p sauvegardes && sh sauvegarder.sh quotidienne 14 >> sauvegardes/quotidienne.log 2>&1
+```
+
+Vérifier qu'une copie se restaure, sans toucher à la base en service (elle est chargée dans une base temporaire, qui
+est ensuite supprimée) :
+
+```sh
+cd /srv/forelse
+sh verifier-sauvegarde.sh                                   # la copie la plus récente
+sh verifier-sauvegarde.sh sauvegardes/quotidienne-….dump    # une copie précise
+```
+
+Restaurer pour de vrai remplace la base en service : arrêter l'application d'abord.
+
+```sh
+docker compose stop app worker
+docker compose exec -T db sh -c 'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < sauvegardes/quotidienne-….dump
+docker compose start app worker
+```
+
+Ces copies restent sur le VPS : elles protègent d'une erreur (migration, suppression), pas de la perte du serveur.
+L'envoi hors du VPS reste à faire (#5).
