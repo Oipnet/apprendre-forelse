@@ -17,7 +17,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 			<button data-pane="code" class="active">Code</button>
 			<button data-pane="preview">Aperçu</button>
 		</nav>
-		<div class="status">Démarrage…</div>
+		<div class="status" role="status">Démarrage…</div>
 		${
 			config.user
 				? `<div class="who" title="Connecté·e"><span>👤 ${escapeHtml(config.user.name)}</span><span class="xp-badge" id="user-xp">⭐ ${config.user.xp} XP</span></div>`
@@ -38,7 +38,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 			<article class="instructions">${markdown(exercise.instructions)}</article>
 			<h3>Objectifs</h3>
 			<ul class="objectives">
-				${exercise.objectives.map((o) => `<li data-test="${escapeHtml(o.test)}"><span class="dot"></span><span>${escapeHtml(o.label)}</span></li>`).join('')}
+				${exercise.objectives.map((o) => `<li data-test="${escapeHtml(o.test)}"><span class="dot" aria-hidden="true"></span><span class="sr-only objective-state"></span><span>${escapeHtml(o.label)}</span></li>`).join('')}
 			</ul>
 			${
 				exercise.docs.length
@@ -109,7 +109,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 	<div class="overlay">
 		<div class="boot">
 			<div class="logo">🐉</div>
-			<p id="boot-label">Préparation de l'environnement…</p>
+			<p id="boot-label" role="status">Préparation de l'environnement…</p>
 			<div class="bar"><div id="boot-bar"></div></div>
 			<small>${escapeHtml(framework.bootNote)}</small>
 		</div>

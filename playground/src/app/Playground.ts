@@ -19,7 +19,7 @@ import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
 import { ExerciseSession } from './session';
 import { SuccessPanel } from './SuccessPanel';
-import { TestResultsView } from './TestResultsView';
+import { spokenSummary, TestResultsView } from './TestResultsView';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 
 /** Monte l'environnement d'exercice complet dans `root`. */
@@ -51,9 +51,20 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	root.innerHTML = layout(exercise, config);
 	const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
-	const status = (text: string, kind: 'idle' | 'busy' | 'ok' | 'ko' = 'idle') => {
+	/** La barre de statut est annoncée (role="status") : `spoken` remplace, pour un lecteur d'écran, un texte trop abrégé. */
+	const status = (text: string, kind: 'idle' | 'busy' | 'ok' | 'ko' = 'idle', spoken?: string) => {
 		const el = $('.status');
-		el.textContent = text;
+		if (spoken) {
+			const visible = document.createElement('span');
+			visible.setAttribute('aria-hidden', 'true');
+			visible.textContent = text;
+			const said = document.createElement('span');
+			said.className = 'sr-only';
+			said.textContent = spoken;
+			el.replaceChildren(visible, said);
+		} else {
+			el.textContent = text;
+		}
 		el.dataset.kind = kind;
 	};
 
@@ -233,7 +244,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			metrics[metrics.firstTestRun ? 'lastTestRun' : 'firstTestRun'] = Math.round(result.durationMs);
 			const passed = results.show(result);
 			const total = exercise.objectives.length;
-			status(`${passed}/${total} objectifs · tests en ${Math.round(result.durationMs)} ms`, passed === total ? 'ok' : 'ko');
+			status(`${passed}/${total} objectifs · tests en ${Math.round(result.durationMs)} ms`, passed === total ? 'ok' : 'ko', spokenSummary(passed, total));
 			revealPane('brief');
 			if (passed === total) void success.show();
 			else success.hide();
@@ -256,7 +267,11 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	// --- Prêt ----------------------------------------------------------------------------
 	runButton.disabled = false;
-	$('.overlay').classList.add('hidden');
+	const overlay = $('.overlay');
+	overlay.classList.add('hidden');
+	// Estompé, il resterait lu au clavier et par les lecteurs d'écran : il sort de l'arbre d'accessibilité.
+	overlay.inert = true;
+	overlay.setAttribute('aria-hidden', 'true');
 	mark('ready');
 	mesurer('exercice-ouvert', { ...mesure, compte: config.progress.mode === 'api' });
 	status(`Prêt en ${(metrics.ready / 1000).toFixed(1)} s`, 'ok');
