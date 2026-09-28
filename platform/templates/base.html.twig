@@ -63,6 +63,9 @@
     </head>
     {# data-import-url : la progression d'invité est remontée au compte après connexion (voir site.ts). #}
     <body class="{% block body_class %}site-page{% endblock %}"{% if app.user %} data-import-url="{{ path('api_progress_import') }}"{% endif %}>
+    {# Le lien « Connexion » ramène à la page courante (voir SecurityController::login), sauf depuis l'accueil, les pages de compte et d'erreur. #}
+    {% set current_route = app.request.attributes.get('_route') %}
+    {% set login_suite = current_route is null or current_route in ['app_home', 'app_login', 'app_register'] ? null : app.request.pathInfo %}
         {% block header %}
             <header class="lp-header">
                 <div class="lp-wrap">
@@ -96,7 +99,7 @@
                                 </div>
                             </details>
                         {% else %}
-                            <a href="{{ path('app_login') }}">Connexion</a>
+                            <a href="{{ path('app_login', {suite: login_suite}) }}">Connexion</a>
                             <a class="lp-btn" rel="nofollow" href="{{ path('app_register') }}">Créer un compte</a>
                         {% endif %}
                     </nav>

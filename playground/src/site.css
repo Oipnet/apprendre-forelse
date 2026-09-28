@@ -321,6 +321,12 @@ a.card:hover {
 	color: var(--muted);
 	font-size: 14px;
 }
+.form-card label.checkbox {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--text);
+}
 .form-card input[type='text'],
 .form-card input[type='email'],
 .form-card input[type='password'] {

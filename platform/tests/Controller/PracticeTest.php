@@ -189,6 +189,7 @@ final class PracticeTest extends WebTestCase
         $this->assertSame(['mode' => 'local'], $config['progress'], 'Sans compte, la progression reste dans le navigateur.');
         $this->assertNull($config['user']);
         $this->assertSame('/inscription', parse_url((string) $config['registerUrl'], \PHP_URL_PATH), 'Le compte est proposé après la réussite, pas avant.');
+        $this->assertSame('/connexion?suite=/pratique/point-precis', $config['loginUrl'], 'La connexion ramène à cet exercice.');
 
         $this->json($this->client, 'GET', '/api/exercises/pratique/point-precis');
         $this->assertResponseIsSuccessful();

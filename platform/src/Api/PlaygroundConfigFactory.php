@@ -65,7 +65,7 @@ final readonly class PlaygroundConfigFactory
                 'reviewUrl' => $this->exerciseUrls->generate('api_mentor_review', $exercise),
                 'explainUrl' => $this->exerciseUrls->generate('api_mentor_explain', $exercise),
             ] : null,
-            'loginUrl' => $user ? null : $this->urls->generate('app_login'),
+            'loginUrl' => $user ? null : $this->urls->generate('app_login', ['suite' => $this->exerciseUrls->generate('app_exercise', $exercise)]),
             'registerUrl' => $user ? null : $this->urls->generate('app_register', $next ? [
                 'suite' => $this->exerciseUrls->generate('app_exercise', $next),
             ] : []),

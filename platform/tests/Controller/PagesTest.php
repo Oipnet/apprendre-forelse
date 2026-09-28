@@ -89,7 +89,7 @@ final class PagesTest extends WebTestCase
         $this->assertSelectorNotExists('[data-playground]', '… mais l\'éditeur demande un compte.');
         $this->assertSelectorTextContains('.exercise-access h2', 'gratuit');
         $this->assertSelectorExists('.exercise-access a[href="/inscription?suite=/parcours/decouverte/01-bonjour"]', 'L\'inscription ramène à cet exercice.');
-        $this->assertSelectorExists('.exercise-access a[href="/connexion"]');
+        $this->assertSelectorExists('.exercise-access a[href="/connexion?suite=/parcours/decouverte/01-bonjour"]', 'La connexion aussi.');
         $this->assertSelectorNotExists('.exercise-access .price-box', 'Le premier chapitre ne se vend pas : il se déverrouille avec un compte.');
     }
 

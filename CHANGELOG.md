@@ -20,6 +20,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   le bouton ouvrait donc une page verrouillée. Il mène désormais au plus récent des exercices de Pratique, qui se
   joue sans compte ; un compte connecté, ou une instance sur invitation, garde le premier exercice du premier
   parcours (#166).
+- **Connexion : retour à la page d'origine.** `/connexion?suite=/chemin` (chemin local uniquement) ramène après la
+  connexion, et après un échec le formulaire s'en souvient. Les liens « Se connecter » d'un exercice verrouillé, du
+  playground, de l'en-tête et du pied de page passent la page courante. Case « Rester connecté·e » : cookie signé de
+  30 jours, invalidé par un changement de mot de passe. L'erreur de connexion est annoncée (`role="alert"`) (#174).
+- **Playground : lecteurs d'écran.** Barre de statut et étape de démarrage en `role="status"`, résultat des tests
+  dit en toutes lettres, état de chaque objectif en texte masqué, focus sur la réussite, écran de démarrage `inert`
+  une fois estompé (#168).
 
 ### Corrigé
 
