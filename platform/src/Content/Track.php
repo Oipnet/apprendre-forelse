@@ -22,7 +22,7 @@ final readonly class Track
         public string $visibility = self::VISIBILITY_PUBLIC,
         /** Rang d'affichage parmi les parcours (clé « order » de track.yaml) : le plus petit d'abord, sans rang à la fin. */
         public ?int $order = null,
-        /** Fichiers de DOWNLOADS_DIR réservés à ce parcours (clé « downloads » de track.yaml), voir DownloadController. */
+        /** Fichiers de DOWNLOADS_DIR réservés à ce parcours (clé « downloads » de track.yaml), voir DownloadPolicy. */
         public array $downloads = [],
     ) {
     }
@@ -47,5 +47,11 @@ final readonly class Track
     public function exerciseIds(): array
     {
         return array_merge(...array_map(static fn (Chapter $c) => $c->exerciseIds, $this->chapters));
+    }
+
+    /** @return list<Chapter> les chapitres dotés d'une fiche de cours, dans l'ordre du parcours */
+    public function lessonChapters(): array
+    {
+        return array_values(array_filter($this->chapters, static fn (Chapter $c) => $c->hasLesson()));
     }
 }

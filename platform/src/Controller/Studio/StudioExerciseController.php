@@ -6,6 +6,7 @@ use App\Api\ExerciseUrls;
 use App\Api\StudioCreateInput;
 use App\Api\StudioPracticeInput;
 use App\Api\StudioSaveInput;
+use App\Content\Author\ExerciseAssistant;
 use App\Content\Author\ExerciseDrafter;
 use App\Content\Author\ExerciseStudio;
 use App\Content\ContentException;
@@ -31,6 +32,7 @@ final class StudioExerciseController extends AbstractController
         private readonly ContentRepository $content,
         private readonly ExerciseStudio $studio,
         private readonly ExerciseDrafter $drafter,
+        private readonly ExerciseAssistant $assistant,
     ) {
     }
 
@@ -140,9 +142,7 @@ final class StudioExerciseController extends AbstractController
         $track = $this->content->findTrack($trackId) ?? throw $this->createNotFoundException();
 
         try {
-            $base = $input->base ? $this->content->findExercise($trackId, $input->base) : null;
-            $brouillon = '' === trim($input->sujet) ? null : $this->drafter->brouillon($track, $input->id, $input->titre, $input->sujet, $base);
-            $id = $this->studio->creer($track, $input->chapitre, $input->id, $input->titre, $input->base ?: null, $brouillon);
+            $id = $this->assistant->creer($track, $input->chapitre, $input->id, $input->titre, $input->base, $input->sujet);
         } catch (ContentException $e) {
             return $this->json(['erreur' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
@@ -158,20 +158,15 @@ final class StudioExerciseController extends AbstractController
     public function fix(?string $trackId, string $exerciseId): JsonResponse
     {
         [$owner, $exercise] = $this->trouver($trackId, $exerciseId);
-        $track = $owner instanceof Track ? $owner : null;
-        $verdict = $this->studio->verifier($exercise);
-        if ($verdict->isOk()) {
-            return $this->json(['erreur' => 'L\'exercice est déjà conforme : rien à corriger.'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
 
         try {
-            $fichiers = $this->drafter->corriger($track, $exercise, $this->studio->lire($exercise), $verdict->errors);
+            $correction = $this->assistant->proposerCorrection($owner, $exercise);
         } catch (ContentException $e) {
             return $this->json(['erreur' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         // Proposé, pas enregistré : l'auteur relit avant d'écrire quoi que ce soit.
-        return $this->json(['fichiers' => $fichiers, 'erreurs' => $verdict->errors]);
+        return $this->json($correction);
     }
 
     /** @return array{Track|Pack, Exercise} */

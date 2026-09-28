@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Account\AccountManagement;
 use App\Account\AccountPage;
 use App\Account\EmailChange;
 use App\Account\EmailChangeOutcome;
@@ -13,7 +14,6 @@ use App\Form\Account\PasswordFormType;
 use App\Form\Account\ProfileFormType;
 use App\Payment\PaymentException;
 use App\Payment\PaymentGateway;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\FormError;
@@ -21,7 +21,6 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -33,7 +32,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class AccountController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly AccountManagement $account,
         private readonly EmailChange $emailChange,
         private readonly AccountPage $page,
     ) {
@@ -74,13 +73,12 @@ final class AccountController extends AbstractController
 
     #[Route('/compte/mot-de-passe', name: 'app_account_password', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function password(Request $request, UserPasswordHasherInterface $hasher, Security $security): Response
+    public function password(Request $request, Security $security): Response
     {
         $user = $this->user();
         $form = $this->createForm(PasswordFormType::class, options: ['action' => $this->generateUrl('app_account_password')])->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword($hasher->hashPassword($user, $form->get('plainPassword')->getData()));
-            $this->entityManager->flush();
+            $this->account->changePassword($user, $form->get('plainPassword')->getData());
             // Le mot de passe fait partie de la session : on reconnecte l'apprenant ; ses autres appareils sont déconnectés.
             $security->login($user, 'form_login', 'main');
             $this->addFlash('success', 'Mot de passe changé. Vos autres appareils devront se reconnecter.');
@@ -130,7 +128,7 @@ final class AccountController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function invoice(Purchase $purchase, PaymentGateway $payments): Response
     {
-        if ($purchase->getUser()?->getId() !== $this->user()->getId() || null === $purchase->getStripeInvoiceId()) {
+        if (!$purchase->isOwnedBy($this->user()) || null === $purchase->getStripeInvoiceId()) {
             throw $this->createNotFoundException();
         }
         try {
@@ -157,9 +155,7 @@ final class AccountController extends AbstractController
             return $this->renderPage(delete: $form);
         }
 
-        // Progression, avis et accès partent avec le compte ; les achats restent, sans lien vers lui (pièces comptables).
-        $this->entityManager->remove($user);
-        $this->entityManager->flush();
+        $this->account->delete($user);
         $security->logout(false);
         $this->addFlash('success', 'Votre compte a été supprimé, avec votre progression. Merci d\'être passé.');
 

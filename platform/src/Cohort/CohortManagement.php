@@ -19,6 +19,7 @@ final readonly class CohortManagement
         private CohortAccessSync $access,
         private CohortRepository $cohorts,
         private ContentRepository $content,
+        private CohortQuoteEstimator $estimator,
     ) {
     }
 
@@ -76,6 +77,23 @@ final readonly class CohortManagement
             $cohort->setAvailableTrackIds($selection);
             $this->access->sync($cohort);
         });
+    }
+
+    /** L'effectif prévu, base de l'estimation du devis : le seul champ du financement ouvert au chef de cohorte. */
+    public function changeExpectedHeadcount(Cohort $cohort, int $headcount): void
+    {
+        $cohort->setExpectedHeadcount($headcount);
+        $this->entityManager->flush();
+    }
+
+    /** Copie l'estimation dans le devis : point de départ, à corriger avant de l'envoyer. */
+    public function applyEstimatedQuote(Cohort $cohort): CohortQuote
+    {
+        $quote = $this->estimator->estimate($cohort);
+        $cohort->setQuoteAmount($quote->amount);
+        $this->entityManager->flush();
+
+        return $quote;
     }
 
     /** @return list<string> parcours dont la case ne peut pas changer : ceux en préparation, sauf pour un administrateur */
