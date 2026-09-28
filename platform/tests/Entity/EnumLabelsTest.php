@@ -25,6 +25,6 @@ final class EnumLabelsTest extends TestCase
     public function testLesChoixSuiventLesCas(): void
     {
         $this->assertSame(['Normal' => 'normal', 'Fondateur' => 'founder', 'Cohorte' => 'cohort'], PriceKind::valueChoices());
-        $this->assertSame(['Établissement' => FundingMode::Institution, 'Apprenants' => FundingMode::Learners], FundingMode::choices());
+        $this->assertSame(['Établissement' => 'institution', 'Apprenants' => 'learners'], FundingMode::valueChoices());
     }
 }
