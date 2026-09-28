@@ -62,6 +62,20 @@ final class ResetPasswordTest extends WebTestCase
         $this->assertSelectorTextContains('.flash-error', 'Ce lien de réinitialisation n\'est pas valide, ou a déjà servi.');
     }
 
+    public function testLEmailEstRetrouveQuelleQueSoitLaCasse(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->createUser('ada@example.test');
+
+        $client->request('GET', '/mot-de-passe-oublie');
+        $client->submitForm('Recevoir le lien', ['reset_password_request_form[email]' => 'Ada@Example.test'], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
+
+        $this->assertResponseRedirects('/mot-de-passe-oublie/email-envoye');
+        $this->assertEmailCount(1);
+        $this->assertEmailAddressContains($this->getMailerMessage(), 'to', 'ada@example.test');
+    }
+
     public function testUnEmailInconnuNeRevelRien(): void
     {
         $client = static::createClient();

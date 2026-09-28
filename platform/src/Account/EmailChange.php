@@ -32,13 +32,14 @@ final readonly class EmailChange
     /** Enregistre le profil ; si l'adresse change, envoie le lien qui la confirmera. */
     public function request(User $user, string $displayName, string $email, ?string $password): EmailChangeOutcome
     {
-        $email = trim($email);
-        $emailChanged = 0 !== strcasecmp($email, (string) $user->getEmail());
+        // Même forme que l'adresse enregistrée : une adresse qui ne diffère que par la casse est la même.
+        $email = User::normalizeEmail($email);
+        $emailChanged = $email !== $user->getEmail();
         if ($emailChanged && !$this->hasher->isPasswordValid($user, (string) $password)) {
             // Avant de dire si l'adresse est prise : sans le mot de passe, on n'apprend rien.
             return EmailChangeOutcome::PasswordRequired;
         }
-        if ($emailChanged && null !== $this->users->findOneBy(['email' => $email])) {
+        if ($emailChanged && null !== $this->users->findOneByEmail($email)) {
             return EmailChangeOutcome::EmailTaken;
         }
 
@@ -58,7 +59,8 @@ final readonly class EmailChange
     public function confirm(Request $request): EmailConfirmationOutcome
     {
         $user = $this->users->find($request->query->getInt('id'));
-        $email = $request->query->getString('email');
+        // Les liens envoyés avant que les adresses soient mises en minuscules gardent la casse saisie.
+        $email = User::normalizeEmail($request->query->getString('email'));
         if (null === $user || !$this->verifier->isSigned($request)) {
             return EmailConfirmationOutcome::Invalid;
         }
@@ -68,7 +70,7 @@ final readonly class EmailChange
         if (!$this->verifier->matches($user, $request->query->getString('check'))) {
             return EmailConfirmationOutcome::Outdated;
         }
-        $other = $this->users->findOneBy(['email' => $email]);
+        $other = $this->users->findOneByEmail($email);
         if (null !== $other && $other->getId() !== $user->getId()) {
             return EmailConfirmationOutcome::EmailTaken;
         }

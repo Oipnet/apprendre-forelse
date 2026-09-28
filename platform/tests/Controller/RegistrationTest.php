@@ -99,6 +99,39 @@ final class RegistrationTest extends WebTestCase
         $this->assertEmailTextBodyContains($email, 'essayer de créer un compte');
     }
 
+    public function testUnEmailNeDifferantQueParLaCasseEstDejaPris(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->createUser('gorm@example.test');
+
+        $this->register($client, 'Gorm@Example.test');
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSelectorTextContains('.form-card', User::EMAIL_TAKEN);
+        $this->assertCount(1, static::getContainer()->get(UserRepository::class)->findAll(), 'Pas de second compte.');
+        $this->assertEmailCount(1);
+        $this->assertEmailAddressContains($this->getMailerMessage(), 'To', 'gorm@example.test', 'Le titulaire est prévenu.');
+    }
+
+    public function testInscriptionEnMajusculesPuisConnexionEnMinuscules(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        // Le clavier du téléphone a mis une majuscule.
+        $this->register($client, ' Gorm@Example.TEST ');
+        $this->assertResponseRedirects();
+        $this->assertNotNull(static::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'gorm@example.test']), 'Enregistré en minuscules.');
+
+        $client->request('GET', '/deconnexion?_csrf_token=csrf-token', server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+        $client->request('GET', '/connexion');
+        $client->submitForm('Se connecter', ['email' => 'gorm@example.test', 'password' => 'une-longue-phrase'], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
+        $this->assertResponseRedirects('/');
+        $client->followRedirect();
+        $this->assertSelectorTextContains('.lp-user', 'Gorm');
+    }
+
     public function testLeTitulaireNEstPrevenuQuUneFoisParJour(): void
     {
         $client = static::createClient();

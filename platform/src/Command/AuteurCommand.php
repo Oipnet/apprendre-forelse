@@ -28,7 +28,7 @@ final class AuteurCommand
         #[Argument('Adresse e-mail du compte')] string $email,
         #[Option('Retirer le droit au lieu de le donner')] bool $retirer = false,
     ): int {
-        $utilisateur = $this->utilisateurs->findOneBy(['email' => $email]);
+        $utilisateur = $this->utilisateurs->findOneByEmail($email);
         if (!$utilisateur instanceof User) {
             $io->error(sprintf('Aucun compte avec l\'adresse « %s ».', $email));
 
