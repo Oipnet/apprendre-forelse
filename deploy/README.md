@@ -15,6 +15,10 @@ copiés par la CI (`.github/workflows/ci.yml`) ; le proxy, lui, s'installe une f
 - `derriere-front.yaml` : l'instance passe derrière le proxy (plus de port publié, réseau `front`).
 - `preproduction.yaml` : ce qui distingue la préproduction (pas d'indexation, pas d'Umami).
 - `deployer.sh` : copie de la base, migrations, bascule, contrôle de `/sante`, retour à l'image précédente en cas d'échec. La copie (`pg_dump -Fc`) est gardée dans `sauvegardes/` du dossier de l'instance, les 10 plus récentes (`DEPLOY_DUMPS_DIR`, `DEPLOY_DUMPS_KEEP`). Pour restaurer : `docker compose exec -T db sh -c 'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < sauvegardes/avant-deploiement-….dump`. Ces copies restent sur le VPS : la sauvegarde hors du serveur est `sauvegarde/` (section 5).
+- `copier-base.sh` : une copie de la base (`pg_dump -Fc` dans un `.partiel`, relue par `pg_restore -l`, puis renommée ;
+  en échec, aucun fichier). Partagé par `deployer.sh` et la sauvegarde quotidienne.
+- `verifier-sauvegarde.sh [copie.dump]` : restaure une copie (la plus récente de `sauvegardes/` par défaut) dans une
+  base temporaire, y compte les comptes et la progression, puis la supprime. La base en service n'est pas touchée.
 - `sauvegarde/` : la sauvegarde quotidienne de la production sur le NAS de la Freebox Pro, par son VPN.
 - `front/` : le proxy commun.
 
@@ -177,6 +181,7 @@ docker run --rm --volumes-from "$(docker compose ps -aq app)" -v "$PWD:/depuis:r
 docker compose up -d app worker
 ```
 
-Une sauvegarde n'est bonne que si elle se restaure : essayez de temps en temps dans une base jetable,
-`docker run --rm -d --name essai -e POSTGRES_PASSWORD=essai postgres:17-alpine`, puis
-`docker exec -i essai pg_restore -U postgres -d postgres --no-owner < base.dump` et une requête sur `"user"`.
+Une sauvegarde n'est bonne que si elle se restaure : de temps en temps, dans `/srv/forelse`,
+`sh verifier-sauvegarde.sh` (la plus récente) ou `sh verifier-sauvegarde.sh chemin/vers/base.dump`. Elle la charge
+dans une base temporaire du même PostgreSQL, affiche le nombre de comptes et d'exercices suivis, puis supprime cette
+base.

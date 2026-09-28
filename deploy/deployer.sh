@@ -58,15 +58,10 @@ APP_IMAGE="$NEW" docker compose pull --quiet app || exit 1
 DUMPS="${DEPLOY_DUMPS_DIR:-sauvegardes}"
 KEEP="${DEPLOY_DUMPS_KEEP:-10}"
 if [ -n "$(docker compose ps --status running -q db)" ]; then
-    mkdir -p "$DUMPS" || exit 1
-    DUMP="$DUMPS/avant-deploiement-$(date -u +%Y%m%dT%H%M%SZ).dump"
-    echo "Copie de la base : $DUMP"
-    if ! docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > "$DUMP.partiel"; then
-        rm -f "$DUMP.partiel"
+    if ! sh copier-base.sh "$DUMPS/avant-deploiement-$(date -u +%Y%m%dT%H%M%SZ).dump"; then
         echo "::error::Copie de la base en échec : rien n'a été migré ni basculé, la version en service continue."
         exit 1
     fi
-    mv "$DUMP.partiel" "$DUMP"
     # shellcheck disable=SC2012 # noms horodatés sans espace : l'ordre de ls -t suffit.
     ls -1t "$DUMPS"/avant-deploiement-*.dump | tail -n "+$((KEEP + 1))" | xargs -r rm -f
 else
