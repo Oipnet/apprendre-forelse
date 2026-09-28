@@ -58,8 +58,9 @@ final class AdminTest extends WebTestCase
     public function testCreerUneCohorteDepuisLAdminDonneUnLienDInvitation(): void
     {
         $this->loginAsAdmin();
-        $this->client->request('GET', '/admin/cohortes/new');
+        $crawler = $this->client->request('GET', '/admin/cohortes/new');
         $this->assertResponseIsSuccessful();
+        $this->assertSame(['Établissement', 'Apprenants'], array_values(array_filter($crawler->filter('#Cohort_fundingMode option')->each(static fn ($option) => trim($option->text())))), 'Les modes de financement se lisent (et non « 0 » et « 1 », #150).');
         $this->client->submitForm('Créer', [
             'Cohort[name]' => 'BUT Info Annecy 2026',
             'Cohort[code]' => 'IUT-Annecy-2026',

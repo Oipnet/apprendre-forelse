@@ -23,6 +23,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Administration des cohortes : le mode de financement se lit.** La liste proposait « 0 » et « 1 » au lieu
+  d'« Établissement » et « Apprenants ». La section du formulaire s'appelle désormais « Financement et accès ».
 - **Auto-hébergement : une instance neuve démarre en 2.x.** L'image par défaut de
   `auto-hebergement/compose.yaml` et de `.env.example` était encore `:1`, une branche qui ne reçoit plus rien.
   Une instance existante qui a `APP_IMAGE=…:1` dans son `.env` y reste : passez à `:2` après avoir lu les
