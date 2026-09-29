@@ -590,6 +590,30 @@ final class PurchaseTest extends WebTestCase
         $this->assertResponseIsSuccessful();
     }
 
+    public function testUneContestationArriveeAvantLePaiementRevoqueLAccesQuandStripeLaRenvoie(): void
+    {
+        $this->setPrice('payant', 7900);
+        $ada = $this->createUser();
+        $this->client->loginUser($ada);
+        $this->checkout();
+        $purchase = $this->onlyPurchase();
+        $dispute = ['id' => 'dp_1', 'object' => 'dispute', 'payment_intent' => 'pi_cs_test_'.$purchase->getId(), 'status' => 'needs_response'];
+
+        // Stripe n'ordonne pas ses événements : la contestation arrive avant le paiement, qui n'est pas encore connu.
+        $this->sendWebhook($this->client, 'charge.dispute.created', $dispute, 'evt_dispute');
+        $this->assertResponseStatusCodeSame(500, 'Refusée pour l\'instant : Stripe la renverra.');
+        $this->sendPaidWebhook($this->client, 'cs_test_'.$purchase->getId(), 7900);
+        $this->assertSame(PurchaseStatus::Paid, $this->onlyPurchase()->getStatus());
+
+        // Renvoyée par Stripe (même événement) : l'achat est payé, la contestation s'applique.
+        $this->sendWebhook($this->client, 'charge.dispute.created', $dispute, 'evt_dispute');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(PurchaseStatus::Disputed, $this->onlyPurchase()->getStatus());
+        $this->client->loginUser($ada);
+        $this->client->request('GET', '/parcours/payant/e2');
+        $this->assertResponseStatusCodeSame(403);
+    }
+
     public function testUnRemboursementFaitDepuisStripeRevoqueLAcces(): void
     {
         $ada = $this->paidPurchase();
