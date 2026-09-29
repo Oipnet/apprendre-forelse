@@ -43,7 +43,7 @@ final readonly class PracticeSeo
             )
             ->setDescription('Des exercices courts, à part des parcours : un code écrit à l\'ancienne à réécrire avec la nouveauté du framework, directement dans le navigateur.')
             ->setCanonical($url = $this->schema->url('app_practice'))
-            ->addStructuredData($this->schema->breadcrumb(['Pratique' => $url]));
+            ->addStructuredData($this->schema->breadcrumb([['Pratique', $url]]));
     }
 
     /**
@@ -80,8 +80,8 @@ final readonly class PracticeSeo
             )
             ->setCanonical($url = $this->schema->url('app_practice_version', ['slug' => $version['slug']]))
             ->addStructuredData($this->schema->breadcrumb([
-                'Pratique' => $this->schema->url('app_practice'),
-                'Nouveautés '.$version['label'] => $url,
+                ['Pratique', $this->schema->url('app_practice')],
+                ['Nouveautés '.$version['label'], $url],
             ]));
     }
 
@@ -116,8 +116,8 @@ final readonly class PracticeSeo
                 'keywords' => implode(', ', [$this->frameworks->labelOf($practice->framework), ...$practice->exercise->concepts]),
             ])
             ->addStructuredData($this->schema->breadcrumb([
-                'Pratique' => $this->schema->url('app_practice'),
-                $practice->exercise->title => $url,
+                ['Pratique', $this->schema->url('app_practice')],
+                [$practice->exercise->title, $url],
             ]));
     }
 

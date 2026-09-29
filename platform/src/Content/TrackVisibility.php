@@ -4,6 +4,7 @@ namespace App\Content;
 
 use App\Entity\Cohort;
 use App\Entity\User;
+use App\Repository\CohortRepository;
 use App\Repository\ExerciseProgressRepository;
 use App\Repository\TrackAccessRepository;
 use Psr\Clock\ClockInterface;
@@ -15,11 +16,12 @@ use Symfony\Contracts\Service\ResetInterface;
  * conseillés comme parcours suivant.
  *
  * - Un parcours en préparation (`visibility: admin` dans track.yaml) n'existe que pour les administrateurs,
- *   et pour les apprenants d'une cohorte qui l'a explicitement choisi. Il reste vérifié par content:check,
+ *   et pour les apprenants et les chefs d'une cohorte qui l'a explicitement choisi. Il reste vérifié par content:check,
  *   modifiable dans l'atelier et compté dans les exports.
  * - Un apprenant rattaché à une cohorte ne voit que les parcours qu'elle propose (tous, tant qu'aucun n'a été
  *   choisi), plus ceux qu'il a déjà commencés (retirer un parcours à une cohorte n'interrompt personne)
  *   et ceux auxquels il a un accès actif (un parcours acheté hors de la sélection de sa cohorte).
+ * - Un chef de cohorte voit en plus ce que proposent les cohortes qu'il encadre (comme TrackAccessChecker).
  * - Sans cohorte (visiteur, inscription libre), rien ne change.
  */
 final class TrackVisibility implements ResetInterface
@@ -28,12 +30,15 @@ final class TrackVisibility implements ResetInterface
     private array $startedTrackIds = [];
     /** @var array<int, list<string>> parcours à accès actif, par apprenant */
     private array $accessibleTrackIds = [];
+    /** @var array<int, list<Cohort>> cohortes encadrées, par chef */
+    private array $chefCohorts = [];
 
     public function __construct(
         private readonly ContentRepository $content,
         private readonly Security $security,
         private readonly ExerciseProgressRepository $progress,
         private readonly TrackAccessRepository $accesses,
+        private readonly CohortRepository $cohorts,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -46,10 +51,10 @@ final class TrackVisibility implements ResetInterface
         $user = $this->security->getUser();
         $cohort = $user instanceof User ? $user->getCohort() : null;
         if (null === $cohort) {
-            return !$track->isRestricted();
+            return !$track->isRestricted() || ($user instanceof User && $this->chefOffers($user, $track));
         }
 
-        return self::isOfferedBy([$cohort], $track) || $this->hasStarted($user, $track->id) || $this->hasAccess($user, $track->id);
+        return self::isOfferedBy([$cohort], $track) || $this->chefOffers($user, $track) || $this->hasStarted($user, $track->id) || $this->hasAccess($user, $track->id);
     }
 
     /**
@@ -94,6 +99,18 @@ final class TrackVisibility implements ResetInterface
     {
         $this->startedTrackIds = [];
         $this->accessibleTrackIds = [];
+        $this->chefCohorts = [];
+    }
+
+    /** Une des cohortes que l'utilisateur encadre propose le parcours. */
+    private function chefOffers(User $user, Track $track): bool
+    {
+        if (null === $user->getId() || !$this->security->isGranted(User::ROLE_CHEF_COHORTE)) {
+            return false;
+        }
+        $this->chefCohorts[$user->getId()] ??= $this->cohorts->findByChef($user);
+
+        return self::isOfferedBy($this->chefCohorts[$user->getId()], $track);
     }
 
     private function hasAccess(User $user, string $trackId): bool

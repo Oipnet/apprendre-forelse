@@ -62,15 +62,16 @@ final readonly class SchemaOrg
     }
 
     /**
-     * @param array<string, string> $trail nom => adresse, après l'accueil
+     * @param list<array{string, string}> $trail [nom, adresse], après l'accueil : une liste, car deux étapes peuvent
+     *                                          porter le même nom (un exercice titré comme son chapitre)
      *
      * @return array<string, mixed>
      */
     public function breadcrumb(array $trail): array
     {
         $items = [];
-        foreach (['Accueil' => $this->url('app_home'), ...$trail] as $name => $url) {
-            $items[] = ['@type' => 'ListItem', 'position' => \count($items) + 1, 'name' => (string) $name, 'item' => $url];
+        foreach ([['Accueil', $this->url('app_home')], ...$trail] as [$name, $url]) {
+            $items[] = ['@type' => 'ListItem', 'position' => \count($items) + 1, 'name' => $name, 'item' => $url];
         }
 
         return ['@type' => 'BreadcrumbList', 'itemListElement' => $items];
