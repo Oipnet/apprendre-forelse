@@ -41,6 +41,9 @@ final class ResetPasswordTest extends WebTestCase
         $client->request('GET', $link);
         $this->assertResponseRedirects('/mot-de-passe-oublie/nouveau');
         $client->followRedirect();
+        $client->submitForm('Enregistrer et me connecter', ['change_password_form[plainPassword]' => 'motdepasse'], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSelectorTextContains('.form-card', 'trop facile à deviner');
         $client->submitForm('Enregistrer et me connecter', ['change_password_form[plainPassword]' => 'une-nouvelle-phrase'], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
 
         $this->assertResponseRedirects('/');

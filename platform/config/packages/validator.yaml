@@ -4,6 +4,10 @@ framework:
         # For instance, basic validation constraints will be inferred from Doctrine's metadata.
         #auto_mapping:
         #    App\Entity\: []
+        # Mots de passe publiés dans une fuite, refusés (App\Validator\StrongPassword) : PASSWORD_BREACH_CHECK=0 coupe
+        # l'appel à Have I Been Pwned, pour une instance sans accès à l'internet.
+        not_compromised_password:
+            enabled: '%env(bool:PASSWORD_BREACH_CHECK)%'
 
 when@test:
     framework:

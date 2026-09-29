@@ -70,6 +70,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **Mots de passe plus robustes.** À l'inscription, au changement depuis le compte et à la réinitialisation, une
+  même règle refuse désormais les mots de passe faciles à deviner (`12345678`, `motdepasse`, `azertyuiop`…), mesurés
+  par leur entropie plutôt que par des règles « une majuscule, un chiffre », et ceux publiés dans une fuite connue
+  (Have I Been Pwned : seuls 5 caractères de l'empreinte partent ; si le service ne répond pas, le mot de passe
+  passe). `PASSWORD_BREACH_CHECK=0` coupe cette seconde vérification, pour une instance sans accès à l'internet.
+  Les mots de passe existants restent valables.
+
 - **Vérification des exercices Nuxt : les tests ne voient plus les secrets de la plateforme.** Lancé par
   « Vérifier » dans l'atelier ou par `content:check`, le code de test d'un exercice Nuxt lisait dans
   `process.env` les variables de la plateforme (`DATABASE_URL`, `APP_SECRET`, clés Stripe et Anthropic…).

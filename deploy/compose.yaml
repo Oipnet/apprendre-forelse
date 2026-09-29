@@ -81,6 +81,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      PASSWORD_BREACH_CHECK: ${PASSWORD_BREACH_CHECK:-1}
       # Appels au mentor par jour pour toute l'instance ; atteint, il se tait jusqu'au lendemain.
       MENTOR_DAILY_LIMIT: ${MENTOR_DAILY_LIMIT:-500}
       # Paiement des parcours : vide, pas de bouton d'achat actif (voir .env.example).

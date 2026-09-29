@@ -130,7 +130,7 @@
                             {% if user.hasPassword %}
                                 {{ form_start(passwordForm) }}
                                     {{ form_row(passwordForm.currentPassword, {attr: {placeholder: '••••••••'}}) }}
-                                    {{ form_row(passwordForm.plainPassword, {attr: {placeholder: '8 caractères minimum'}}) }}
+                                    {{ form_row(passwordForm.plainPassword, {attr: {placeholder: 'une phrase de plusieurs mots'}}) }}
                                     <button class="ac-btn outline" type="submit">Changer le mot de passe</button>
                                 {{ form_end(passwordForm) }}
                             {% else %}

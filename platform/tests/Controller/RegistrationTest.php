@@ -75,6 +75,23 @@ final class RegistrationTest extends WebTestCase
         $this->assertResponseIsSuccessful('Connecté après inscription (parcours sans tarif : ouvert à tout compte).');
     }
 
+    public function testUnMotDePasseFacileADevinerEstRefuse(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $client->request('GET', '/inscription');
+        $client->submitForm('Créer mon compte', [
+            'registration_form[displayName]' => 'Gorm',
+            'registration_form[email]' => 'gorm@example.test',
+            'registration_form[plainPassword]' => '12345678',
+        ], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSelectorTextContains('.form-card', 'trop facile à deviner');
+        $this->assertNull(static::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'gorm@example.test']));
+    }
+
     public function testUnEmailNePeutServirQuUneFois(): void
     {
         $client = static::createClient();

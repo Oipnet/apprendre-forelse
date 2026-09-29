@@ -216,6 +216,14 @@ final class AccountTest extends WebTestCase
 
         $this->client->submitForm('Changer le mot de passe', [
             'password_form[currentPassword]' => self::PASSWORD,
+            'password_form[plainPassword]' => 'azertyuiop',
+        ], serverParameters: self::ORIGIN);
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSelectorTextContains('#mot-de-passe', 'trop facile à deviner');
+        $this->assertSame($before, $this->reload($ada)->getPassword(), 'Un mot de passe faible n\'est pas enregistré.');
+
+        $this->client->submitForm('Changer le mot de passe', [
+            'password_form[currentPassword]' => self::PASSWORD,
             'password_form[plainPassword]' => 'un-nouveau-mot-de-passe',
         ], serverParameters: self::ORIGIN);
         $this->assertResponseRedirects('/compte#mot-de-passe', 303);
