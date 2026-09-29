@@ -2,6 +2,8 @@
 
 namespace App\Content;
 
+use App\Content\Framework\FrameworkProfile;
+use App\Content\Framework\FrameworkRegistry;
 use App\Entity\User;
 use App\Payment\TrackOfferFactory;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -17,6 +19,8 @@ final readonly class HomePage
         private ContentRepository $content,
         private TrackVisibility $visibility,
         private PracticeVisibility $practices,
+        private EnvironmentRegistry $environments,
+        private FrameworkRegistry $frameworks,
         private TrackOfferFactory $offers,
         private UrlGeneratorInterface $urls,
         /** Instance sur invitation : la Pratique demande un compte, le visiteur n'a rien à essayer. */
@@ -51,6 +55,37 @@ final readonly class HomePage
             'tryUrl' => $tryUrl,
             'tryPractice' => null !== $practiceUrl,
         ];
+    }
+
+    /**
+     * Le catalogue (/parcours) : les fiches des parcours publiés, filtrées par framework si on le demande, et les
+     * frameworks qu'on peut choisir (seulement ceux des parcours publiés).
+     *
+     * @return array{tracks: list<array<string, mixed>>, upcoming: list<Track>, frameworks: array<string, string>, framework: string|null}
+     */
+    public function catalogue(?User $user, ?string $framework): array
+    {
+        $published = array_values($this->visibility->tracks());
+        $frameworks = [];
+        foreach ($published as $track) {
+            $profile = $this->frameworkOf($track);
+            $frameworks[$profile->id] ??= $profile->label;
+        }
+        // Un framework inconnu (lien ancien, faute de frappe) montre tout, plutôt qu'une page vide.
+        $framework = null !== $framework && isset($frameworks[$framework]) ? $framework : null;
+        $shown = null === $framework ? $published : array_values(array_filter($published, fn (Track $track) => $this->frameworkOf($track)->id === $framework));
+
+        return [
+            'tracks' => array_map(fn (Track $track) => $this->card($track, $user), $shown),
+            'upcoming' => null === $framework ? $this->upcoming() : [],
+            'frameworks' => $frameworks,
+            'framework' => $framework,
+        ];
+    }
+
+    private function frameworkOf(Track $track): FrameworkProfile
+    {
+        return $this->environments->has($track->environment) ? $this->environments->get($track->environment)->framework : $this->frameworks->default();
     }
 
     /** Le plus récent des exercices de Pratique publiés, sauf sur une instance sur invitation. */

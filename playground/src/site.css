@@ -1832,7 +1832,7 @@ body.site-page {
 	flex-wrap: wrap;
 	margin-bottom: 8px;
 }
-.lp-track-head h3 {
+.lp-track-head :is(h2, h3) {
 	margin: 0;
 	font-family: var(--lp-serif);
 	font-weight: 500;
@@ -1840,10 +1840,10 @@ body.site-page {
 	letter-spacing: -0.018em;
 	line-height: 1.1;
 }
-.lp-track-head h3 a {
+.lp-track-head :is(h2, h3) a {
 	color: var(--lp-ink);
 }
-.lp-track-head h3 a:hover {
+.lp-track-head :is(h2, h3) a:hover {
 	color: var(--lp-rust);
 }
 .lp-track-head p {
@@ -1917,13 +1917,47 @@ body.site-page {
 	flex-wrap: wrap;
 	margin-top: 10px;
 }
-.lp-pills span {
+/* Une notion qui a sa page est un lien : même pastille, à la couleur des liens. */
+.lp-pills span,
+.lp-pills a {
 	font-size: 12px;
 	color: #6b6356;
 	border: 1px solid var(--lp-line);
 	background: var(--lp-card);
 	padding: 3px 8px;
 	border-radius: 20px;
+}
+/* Catalogue des parcours (/parcours) : le filtre par framework, et le renvoi vers la Pratique. */
+.catalogue-filters {
+	margin: 0 0 28px;
+}
+.catalogue-filters a {
+	font-size: 14px;
+	color: var(--lp-ink-2);
+	border: 1px solid var(--lp-line);
+	background: var(--lp-card);
+	padding: 5px 12px;
+	border-radius: 20px;
+	text-decoration: none;
+}
+.catalogue-filters a[aria-current='page'] {
+	background: var(--lp-ink);
+	border-color: var(--lp-ink);
+	color: var(--lp-bg);
+}
+.tracks-catalogue .lp-lead {
+	margin-bottom: 32px;
+}
+.lp-callout-link {
+	margin-top: 28px;
+	color: var(--lp-ink-2);
+}
+.lp-pills a {
+	color: var(--lp-rust);
+	text-decoration: none;
+}
+.lp-pills a:hover {
+	border-color: var(--lp-rust);
 }
 .lp-callout {
 	border: 1px dashed #d3c7b0;
@@ -4366,7 +4400,7 @@ body.site-page {
 .lp-upcoming {
 	margin-top: 28px;
 }
-.lp-upcoming h3 {
+.lp-upcoming :is(h2, h3) {
 	margin: 0 0 12px;
 	font-family: var(--lp-serif);
 	font-weight: 500;

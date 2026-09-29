@@ -47,6 +47,7 @@ final readonly class Sitemap
         return $this->cache->get('sitemap', function (ItemInterface $item): array {
             $entries = [];
             $latest = LegalVersions::UPDATED_AT;
+            $tracksLatest = null;
 
             foreach ($this->published->tracks() as $track) {
                 $trackEntries = [];
@@ -68,6 +69,11 @@ final readonly class Sitemap
                 $entries[] = $this->entry('app_track', ['trackId' => $track->id], $modified);
                 array_push($entries, ...$chapterEntries, ...$trackEntries);
                 $latest = max($latest, $modified);
+                $tracksLatest = max($tracksLatest ?? '', $modified);
+            }
+            // Le catalogue change quand un parcours change.
+            if (null !== $tracksLatest) {
+                array_unshift($entries, $this->entry('app_tracks', [], $tracksLatest));
             }
 
             $practiceEntries = [];

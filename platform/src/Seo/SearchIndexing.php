@@ -18,6 +18,7 @@ final readonly class SearchIndexing
     /** Routes indexables : ce qu'un visiteur sans compte peut lire. */
     public const array ROUTES = [
         'app_home',
+        'app_tracks',
         'app_track',
         'app_chapter_summary',
         'app_exercise',
@@ -38,6 +39,9 @@ final readonly class SearchIndexing
 
     /** Filtres de la liste de Pratique : la page filtrée se suit, mais ne s'indexe pas. */
     public const array PRACTICE_FILTERS = ['framework', 'notion', 'nouveautes'];
+
+    /** Filtre du catalogue des parcours : même règle. */
+    public const array TRACK_FILTERS = ['framework'];
 
     public const string NOINDEX = 'noindex';
     public const string NOINDEX_FOLLOW = 'noindex, follow';
@@ -61,7 +65,12 @@ final readonly class SearchIndexing
         if (!$this->isEnabled($request) || $status >= 400 || !\in_array($request->attributes->get('_route'), self::ROUTES, true)) {
             return self::NOINDEX;
         }
-        if ('app_practice' === $request->attributes->get('_route') && array_intersect(self::PRACTICE_FILTERS, array_keys($request->query->all()))) {
+        $filters = match ($request->attributes->get('_route')) {
+            'app_practice' => self::PRACTICE_FILTERS,
+            'app_tracks' => self::TRACK_FILTERS,
+            default => [],
+        };
+        if (array_intersect($filters, array_keys($request->query->all()))) {
             return self::NOINDEX_FOLLOW;
         }
 
