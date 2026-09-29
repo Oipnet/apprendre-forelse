@@ -104,7 +104,7 @@
                                 {% for entry in item.items %}
                                     <li data-state="{{ entry.state }}"{% if entry.boss %} class="boss"{% endif %}>
                                         <a href="{{ path('app_exercise', {trackId: track.id, exerciseId: entry.exercise.id}) }}"{% if entry.exercise.concepts %} aria-describedby="notions-{{ entry.exercise.id }}"{% endif %}>
-                                            <span class="state">{{ entry.state == 'completed' ? '✓' : (entry.boss ? '★' : loop.index) }}</span>
+                                            <span class="state"><span aria-hidden="true">{{ entry.state == 'completed' ? '✓' : (entry.boss ? '★' : loop.index) }}</span><span class="sr-only">{{ entry.state == 'completed' ? 'Réussi : ' : (entry.boss ? 'Exercice final : ' : 'Exercice ' ~ loop.index ~ ' : ') }}</span></span>
                                             <span class="title">{{ entry.exercise.title }}</span>
                                             <span class="meta">{% if entry.exercise.duration and entry.state != 'completed' %}{{ entry.exercise.duration|duree }} · {% endif %}{{ entry.state == 'completed' ? '+' ~ entry.xpEarned : entry.exercise.xp }} XP</span>
                                             {% if entry.exercise.concepts %}

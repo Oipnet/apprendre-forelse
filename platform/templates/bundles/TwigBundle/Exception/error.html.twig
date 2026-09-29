@@ -56,12 +56,17 @@
         <p class="error-code lp-mono" aria-hidden="true">{{ status_code }}</p>
         <h1 class="lp-serif">{{ message.title }}</h1>
         <p class="lead">{{ message.lead }}</p>
-        <p class="error-request lp-mono">
-            <span>{{ app.request.method }} {{ app.request.pathInfo }}</span>
-            <span>→ {{ status_code }} {{ status_text }}</span>
-        </p>
+        {# La requête en clair : utile à qui développe, du bruit pour un apprenant. #}
+        {% if app.debug %}
+            <p class="error-request lp-mono">
+                <span>{{ app.request.method }} {{ app.request.pathInfo }}</span>
+                <span>→ {{ status_code }} {{ status_text }}</span>
+            </p>
+        {% endif %}
         <p class="error-actions">
             <a class="lp-btn" href="{{ path('app_home') }}">Retour à l'accueil</a>
+            {# Sans lire app.user (voir plus haut) : le compte montre « Reprendre où j'en suis », ou demande de se connecter. #}
+            <a class="secondary" href="{{ path('app_account') }}">Reprendre où j'en étais</a>
             <a class="secondary" href="{{ path('app_home') }}#parcours">Voir les parcours</a>
         </p>
     </main>

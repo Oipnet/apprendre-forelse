@@ -104,12 +104,12 @@ export class MentorPanel {
 		button.disabled = true;
 		button.textContent = 'Le mentor regarde…';
 		box.hidden = false;
-		box.innerHTML = '<strong>🩺 Le mentor</strong><p class="muted">Il lit l\'erreur et votre code…</p>';
+		box.innerHTML = '<strong><span aria-hidden="true">🩺</span> Le mentor</strong><p class="muted">Il lit l\'erreur et votre code…</p>';
 		try {
 			box.innerHTML = renderExplanation(await this.mentor.explain(this.deps.files(), error, source), (s) => markdown(s, true));
 			this.bindFileLinks(box);
 		} catch (e) {
-			box.innerHTML = `<strong>🩺 Le mentor</strong><p class="muted">${escapeHtml(e instanceof Error ? e.message : String(e))}</p>`;
+			box.innerHTML = `<strong><span aria-hidden="true">🩺</span> Le mentor</strong><p class="muted">${escapeHtml(e instanceof Error ? e.message : String(e))}</p>`;
 		} finally {
 			button.disabled = false;
 			button.textContent = label;

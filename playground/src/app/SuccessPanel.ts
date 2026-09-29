@@ -1,4 +1,5 @@
 import { mesurer } from '../mesure';
+import { xpBadge } from './layout';
 import { escapeHtml } from './html';
 import type { Review } from './mentor';
 import type { MentorPanel } from './MentorPanel';
@@ -113,7 +114,10 @@ export class SuccessPanel {
 			const result = await session.complete();
 			if (!result.alreadyCompleted) mesurer('exercice-reussi', { ...this.deps.mesure, indices: session.hintsUsed, solution: session.solutionRevealed });
 			this.markCompleted();
-			if (result.totalXp !== null) this.root.querySelector('#user-xp')?.replaceChildren(`⭐ ${result.totalXp} XP`);
+			if (result.totalXp !== null) {
+				const badge = this.root.querySelector('#user-xp');
+				if (badge) badge.innerHTML = xpBadge(result.totalXp);
+			}
 			panel.innerHTML = `<strong>🎉 Exercice réussi ! ${gainText(result, this.config, session.solutionRevealed)}</strong>${lessonLinkHtml(this.exercise, this.config, '<p>Vous avez terminé le chapitre.</p>')}${nextStepHtml(this.exercise, this.config)}`;
 			if (practice) panel.querySelector('.button')?.before(this.beforeAfterButton(), ' ');
 			const ask = this.deps.savedReview ? null : this.deps.mentor.reviewButton();

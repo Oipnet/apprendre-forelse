@@ -1,5 +1,6 @@
 import type { EditorPanel } from '../editor/monaco';
 import { mesurer } from '../mesure';
+import { confirmDialog, noticeDialog } from './dialogs';
 import { markdown } from './markdown';
 import type { ExerciseSession } from './session';
 import type { ExercisePayload, PlaygroundConfig } from './types';
@@ -49,7 +50,7 @@ export class HintsAndSolution {
 	private updateHintButton() {
 		const cost = this.deps.session.hintCost(this.exercise.xp);
 		this.hintButton.hidden = this.deps.session.hintsUsed >= this.exercise.hints.length;
-		this.hintButton.textContent = cost <= 0 ? '💡 Un indice ?' : `💡 Un indice ? (−${cost} XP)`;
+		this.hintButton.innerHTML = `<span aria-hidden="true">💡</span> ${cost <= 0 ? 'Un indice ?' : `Un indice ? (−${cost} XP)`}`;
 	}
 
 	/** La solution de référence, à côté du code de l'apprenant (onglets en lecture seule), contre l'XP. */
@@ -79,7 +80,18 @@ export class HintsAndSolution {
 			solutionButton.title = exercise.xp === 0 ? 'La solution de référence.' : 'La solution de référence. La consulter ne rapporte pas l\'XP de cet exercice.';
 			if (session.solutionRevealed) noteSolution();
 			solutionButton.addEventListener('click', async () => {
-				if (!session.completed && !session.solutionRevealed && exercise.xp > 0 && !confirm('Consulter la solution ? Cet exercice ne rapportera alors pas d\'XP, même réussi ensuite avec votre code.')) return;
+				if (
+					!session.completed &&
+					!session.solutionRevealed &&
+					exercise.xp > 0 &&
+					!(await confirmDialog(this.root, {
+						title: 'Consulter la solution ?',
+						message: 'Cet exercice ne rapportera alors pas d\'XP, même réussi ensuite avec votre code.',
+						confirm: 'Voir la solution',
+						cancel: 'Continuer à chercher',
+					}))
+				)
+					return;
 				solutionButton.disabled = true;
 				try {
 					const files = await session.revealSolution();
@@ -88,7 +100,7 @@ export class HintsAndSolution {
 					noteSolution();
 					showSolution(files);
 				} catch (error) {
-					alert(`Solution indisponible : ${error instanceof Error ? error.message : error}`);
+					void noticeDialog(this.root, 'Solution indisponible', error instanceof Error ? error.message : String(error));
 				} finally {
 					solutionButton.disabled = false;
 				}

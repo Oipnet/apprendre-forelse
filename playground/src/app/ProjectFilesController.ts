@@ -1,5 +1,6 @@
 import type { CommandResult, Runtime } from '@forelse/runtime-contract';
 import type { EditorPanel } from '../editor/monaco';
+import { confirmDialog, noticeDialog, undoToast } from './dialogs';
 import { cheminsExplicites, contenuDeDepart, estModifiable } from './editable';
 import { FileTree } from './filetree';
 import type { ExerciseSession } from './session';
@@ -40,8 +41,16 @@ export class ProjectFilesController {
 			this.$('#filetree').hidden = true;
 			this.$('#toggle-tree').classList.remove('open');
 		}
-		this.$('#reset').addEventListener('click', () => {
-			if (confirm('Revenir au code de départ ? Vos modifications seront perdues.')) this.reset();
+		this.$('#reset').addEventListener('click', async () => {
+			const ok = await confirmDialog(this.root, {
+				title: 'Revenir au code de départ ?',
+				message: 'Vos modifications seront remplacées par le code de départ. Vous pourrez annuler juste après.',
+				confirm: 'Réinitialiser',
+			});
+			if (!ok) return;
+			const avant = { ...this.session.current };
+			this.reset();
+			undoToast(this.root, 'Code de départ rétabli.', 'Annuler', () => this.restore(avant));
 		});
 	}
 
@@ -125,7 +134,7 @@ export class ProjectFilesController {
 			const chemin = prompt(`Chemin du nouveau fichier (autorisés : ${autorises})`, motifsModifiables[0].replace('*', 'Nouveau'))?.trim().replace(/^\/+/, '');
 			if (!chemin) return;
 			if (chemin.split('/').includes('..') || !estModifiable(chemin, editable)) {
-				alert(`« ${chemin} » ne fait pas partie des fichiers modifiables de cet exercice (${autorises}).`);
+				void noticeDialog(this.root, 'Fichier non modifiable', `« ${chemin} » ne fait pas partie des fichiers modifiables de cet exercice (${autorises}).`);
 				return;
 			}
 			if (this.paths.has(chemin) || this.editor.has(chemin)) {
@@ -158,6 +167,21 @@ export class ProjectFilesController {
 				void this.runtime.deleteFile(path);
 			} else {
 				this.editor.setContent(path, '');
+			}
+		}
+		this.drawTree();
+		this.session.saveDraft();
+	}
+
+	/** Annule une réinitialisation : le code d'avant revient, fichiers créés depuis compris. */
+	restore(avant: Record<string, string>): void {
+		for (const [path, content] of Object.entries(avant)) {
+			if (this.editor.has(path)) {
+				this.editor.setContent(path, content);
+			} else {
+				this.session.current[path] = content;
+				this.paths.add(path);
+				void this.runtime.writeFile(path, content);
 			}
 		}
 		this.drawTree();
