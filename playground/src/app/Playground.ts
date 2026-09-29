@@ -54,6 +54,16 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	root.innerHTML = layout(exercise, config);
 	const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
+
+	// L'aide « Raccourcis clavier » : lisible dès l'affichage, même si le démarrage échoue ensuite.
+	const mod = modifierLabel(navigator.platform);
+	const help = document.createElement('dialog');
+	help.className = 'feedback shortcuts';
+	help.setAttribute('aria-labelledby', 'shortcuts-title');
+	help.innerHTML = shortcutsHelpHtml(mod);
+	root.append(help);
+	help.querySelector('[data-close]')!.addEventListener('click', () => help.close());
+	$('#shortcuts').addEventListener('click', () => help.showModal());
 	/** La barre de statut est annoncée (role="status") : `spoken` remplace, pour un lecteur d'écran, un texte trop abrégé. */
 	const status = (text: string, kind: 'idle' | 'busy' | 'ok' | 'ko' = 'idle', spoken?: string) => {
 		const el = $('.status');
@@ -143,6 +153,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	} catch (error) {
 		$('#boot-label').textContent = `Impossible de démarrer ${runtimeLabel(framework.runtime)} : ${error instanceof Error ? error.message.split('\n')[0] : error}`;
 		$('#boot-first').textContent = '';
+		status('Démarrage impossible', 'ko');
 		$('.boot').insertAdjacentHTML('beforeend', bootFailureActionsHtml());
 		bindRetry(root, () => {
 			const overlay = $('.overlay');
@@ -263,6 +274,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const runButton = $<HTMLButtonElement>('#run');
 	runButton.addEventListener('click', async () => {
 		runButton.disabled = true;
+		runButton.setAttribute('aria-busy', 'true');
 		mesurer('tests-lances', mesure);
 		status('Tests en cours…', 'busy');
 		try {
@@ -281,6 +293,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			results.showError(error);
 		} finally {
 			runButton.disabled = false;
+			runButton.removeAttribute('aria-busy');
 		}
 	});
 
@@ -288,7 +301,6 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });
 
 	// --- Raccourcis clavier : Monaco les reçoit quand il a le focus, le document ailleurs --------
-	const mod = modifierLabel(navigator.platform);
 	runButton.title = `Lancer les tests (${mod} + Entrée)`;
 	const saveNow = async () => {
 		try {
@@ -311,13 +323,6 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		event.preventDefault(); // Ctrl+S : pas la boîte « Enregistrer la page » du navigateur
 		act(shortcut);
 	});
-	const help = document.createElement('dialog');
-	help.className = 'feedback shortcuts';
-	help.setAttribute('aria-labelledby', 'shortcuts-title');
-	help.innerHTML = shortcutsHelpHtml(mod);
-	root.append(help);
-	help.querySelector('[data-close]')!.addEventListener('click', () => help.close());
-	$('#shortcuts').addEventListener('click', () => help.showModal());
 
 	// --- Retour sur l'exercice (apprenant connecté) ----------------------------------------
 	if (config.feedbackUrl) new FeedbackDialog(root, $<HTMLButtonElement>('#feedback'), config.feedbackUrl, () => ({ hintsUsed: session.hintsUsed, completed: session.completed }));
