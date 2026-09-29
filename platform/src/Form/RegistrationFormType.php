@@ -3,13 +3,13 @@
 namespace App\Form;
 
 use App\Entity\User;
+use App\Validator\StrongPassword;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints as Assert;
 
 /** @extends AbstractType<User> */
 final class RegistrationFormType extends AbstractType
@@ -23,10 +23,7 @@ final class RegistrationFormType extends AbstractType
                 'label' => 'Mot de passe',
                 'mapped' => false,
                 'attr' => ['autocomplete' => 'new-password'],
-                'constraints' => [
-                    new Assert\NotBlank(message: 'Choisissez un mot de passe.'),
-                    new Assert\Length(min: 8, max: 4096, minMessage: 'Au moins {{ limit }} caractères.'),
-                ],
+                'constraints' => [new StrongPassword()],
             ]);
 
         // Le champ apparaît si l'inscription est sur invitation, ou si un lien d'invitation a fourni un code.

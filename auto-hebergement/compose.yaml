@@ -73,6 +73,8 @@ services:
       MAILER_DSN: ${MAILER_DSN:-null://null}
       MAILER_FROM: ${MAILER_FROM:-ne-pas-repondre@example.com}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}
+      # Refuser un mot de passe publié dans une fuite (Have I Been Pwned) ; 0 sans accès sortant.
+      PASSWORD_BREACH_CHECK: ${PASSWORD_BREACH_CHECK:-1}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}

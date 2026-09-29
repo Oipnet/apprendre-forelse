@@ -78,6 +78,8 @@ services:
       MAILER_FROM: ${MAILER_FROM:-Forelse <ne-pas-repondre@forelse.fr>}
       REGISTRATION_ALERT_EMAIL: ${REGISTRATION_ALERT_EMAIL:-}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}
+      # Refuser un mot de passe publié dans une fuite (Have I Been Pwned) ; 0 sans accès sortant.
+      PASSWORD_BREACH_CHECK: ${PASSWORD_BREACH_CHECK:-1}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
