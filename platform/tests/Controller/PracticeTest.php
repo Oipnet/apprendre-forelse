@@ -299,6 +299,8 @@ final class PracticeTest extends WebTestCase
         $this->assertNull($exercise['trackId']);
         $this->assertSame(0, $exercise['xp']);
         $this->assertNull($exercise['next']);
+        $this->assertNull($exercise['previous']);
+        $this->assertNull($exercise['chapter'], 'Une Pratique n\'a pas de chapitre.');
         $this->assertNull($exercise['nextTrack']);
         $this->assertNull($exercise['lesson']);
         $this->assertSame(['framework' => 'symfony', 'version' => '8.1', 'versionUrl' => '/pratique/nouveautes/symfony-8-1', 'pullRequest' => 'https://github.com/symfony/symfony/pull/1', 'published' => '2026-09-10'], $exercise['practice']);

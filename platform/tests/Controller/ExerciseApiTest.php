@@ -34,6 +34,7 @@ final class ExerciseApiTest extends WebTestCase
             $this->assertStringContainsString('?v='.filemtime(__DIR__.'/../../public/envs/symfony-8.completion.json'), $payload['environment']['completionIndexUrl'], 'Un index reconstruit change d\'URL : le cache du navigateur ne le masque pas.');
         }
         $this->assertSame('/parcours/decouverte/02-bonjour-prenom', $payload['next']['url']);
+        $this->assertNull($payload['previous'], 'Premier exercice du parcours : rien avant.');
     }
 
     /**
@@ -102,6 +103,9 @@ final class ExerciseApiTest extends WebTestCase
         $this->assertStringContainsString("#[Route('/bonjour'", $payload['files']['src/Controller/BonjourController.php']);
         $this->assertNull($payload['next']);
         $this->assertNull($payload['nextTrack'], 'Le parcours conseillé (symfony-pour-dev-php) n\'est pas installé ici : rien à proposer.');
+        // Le fil d'Ariane du playground : le chapitre, la place de l'exercice, et le retour à l'exercice précédent.
+        $this->assertSame(['title' => 'Bonjour Symfony', 'number' => 1, 'position' => 2, 'total' => 2, 'url' => '/parcours/decouverte/chapitre/bonjour/sommaire'], $payload['chapter']);
+        $this->assertSame(['id' => '01-bonjour', 'title' => $this->json($client, 'GET', '/api/exercises/decouverte/01-bonjour')['title'], 'url' => '/parcours/decouverte/01-bonjour'], $payload['previous']);
     }
 
     public function testLeDernierExerciceConseilleLeParcoursSuivant(): void

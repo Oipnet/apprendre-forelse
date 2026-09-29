@@ -217,6 +217,11 @@ final class ContentRepository
         return $this->index()->next($exercise);
     }
 
+    public function previous(Exercise $exercise): ?Exercise
+    {
+        return $this->index()->previous($exercise);
+    }
+
     /**
      * État de départ de l'exercice : état final de l'exercice `base` (s'il y en a un), puis starter/.
      *

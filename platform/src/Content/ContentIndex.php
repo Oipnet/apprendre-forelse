@@ -155,12 +155,23 @@ final class ContentIndex
 
     public function next(Exercise $exercise): ?Exercise
     {
+        return $this->neighbour($exercise, 1);
+    }
+
+    public function previous(Exercise $exercise): ?Exercise
+    {
+        return $this->neighbour($exercise, -1);
+    }
+
+    /** L'exercice à `offset` places dans l'ordre du parcours ; une Pratique n'a pas de voisin. */
+    private function neighbour(Exercise $exercise, int $offset): ?Exercise
+    {
         if (null === $exercise->trackId) {
             return null;
         }
         $ids = array_keys($this->content->exercises[$exercise->trackId] ?? []);
         $position = array_search($exercise->id, $ids, true);
 
-        return false === $position ? null : $this->findExercise($exercise->trackId, $ids[$position + 1] ?? '');
+        return false === $position ? null : $this->findExercise($exercise->trackId, (string) ($ids[$position + $offset] ?? ''));
     }
 }

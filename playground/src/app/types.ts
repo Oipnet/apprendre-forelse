@@ -38,6 +38,9 @@ export interface ExercisePayload {
 		archiveUrl: string;
 		completionIndexUrl: string;
 	};
+	/** Exercice de parcours : son chapitre et sa place (« exercice 2 sur 5 »), pour le fil d'Ariane. Null en Pratique. */
+	chapter: { title: string; number: number; position: number; total: number; url: string } | null;
+	previous: { id: string; title: string; url: string } | null;
 	next: { id: string; title: string; url: string } | null;
 	/** Sur le dernier exercice d'un parcours : le parcours conseillé ensuite. */
 	nextTrack: { id: string; title: string; description: string; url: string } | null;

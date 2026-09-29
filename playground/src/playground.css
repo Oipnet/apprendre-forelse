@@ -253,6 +253,34 @@ body.playground-page {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+.crumbs .crumb-chapter {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 16rem;
+}
+.crumbs .crumb-position {
+	flex: none;
+	font-size: 12px;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+.crumbs .crumb-nav {
+	display: flex;
+	flex: none;
+	gap: 0.15rem;
+}
+.crumbs .crumb-arrow {
+	padding: 0 0.35rem;
+	border-radius: 4px;
+	color: var(--muted);
+}
+.crumbs a.crumb-arrow {
+	color: var(--text);
+}
+.crumbs a.crumb-arrow:hover {
+	background: var(--panel-2);
+	text-decoration: none;
+}
 .done-chip {
 	font-size: 12px;
 	font-weight: 600;
@@ -888,6 +916,7 @@ dialog.feedback::backdrop {
 	.topbar .lp-brand .lp-serif,
 	.topbar .lp-brand .lp-chip,
 	.crumbs .crumb-track,
+	.crumbs .crumb-chapter,
 	.who:not(.guest),
 	.who.guest > span,
 	.actions .label {
@@ -957,8 +986,9 @@ dialog.feedback::backdrop {
 		flex: 1;
 		min-width: 0;
 	}
+	/* Le titre reste, tronqué : sans lui, on ne sait plus quel exercice on joue. */
 	.crumbs .crumb-current {
-		display: none;
+		max-width: 10rem;
 	}
 	.playground:not(.studio) .workspace {
 		grid-template-columns: 1fr;
