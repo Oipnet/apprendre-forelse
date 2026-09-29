@@ -23,6 +23,9 @@
             <h1>Paiement non abouti</h1>
             <p>Le paiement n'a pas abouti : rien n'a été débité et l'accès n'est pas ouvert.</p>
             {% if track %}<a class="button primary" href="{{ path('app_purchase', {trackId: track.id}) }}">Réessayer le paiement</a>{% endif %}
+        {% elseif purchase.status.value == 'disputed' %}
+            <h1>Paiement contesté</h1>
+            <p>Le paiement est contesté auprès de votre banque : l'accès au parcours est suspendu le temps de la procédure, votre progression est conservée. Il se rouvre si la contestation est close en faveur de l'achat.</p>
         {% else %}
             <h1>Achat remboursé</h1>
             <p>Cet achat a été remboursé ; l'accès au parcours est fermé, votre progression est conservée.</p>

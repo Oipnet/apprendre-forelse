@@ -90,6 +90,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Paiement : compte supprimé pendant un paiement ouvert, achat contesté (#158).**
+  - Supprimer son compte ferme d'abord la session Stripe encore ouverte : plus rien ne peut y être payé.
+  - Si Stripe n'a pas pu la fermer (paiement différé déjà lancé) et que le paiement aboutit, l'achat sans compte
+    est remboursé automatiquement, sans l'email « votre accès est ouvert » ; si le remboursement échoue, une erreur
+    critique demande de le faire depuis l'administration.
+  - La page de remerciement d'un achat contesté dit « Paiement contesté » (accès suspendu le temps de la
+    procédure) au lieu d'« Achat remboursé ».
 - **Simulateur Docker : six écarts avec le vrai Docker (#159).**
   - Un montage `:ro` n'est plus contourné par `sed -i`, `find -delete` (ou `-exec`), `ln`, ni par le PHP du
     conteneur : « Read-only file system », et le fichier de l'hôte reste intact.

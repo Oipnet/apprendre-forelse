@@ -87,6 +87,19 @@ class PurchaseRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /** @return list<Purchase> les achats de l'apprenant dont la session Stripe est peut-être encore ouverte, tous parcours */
+    public function findPendingCheckouts(User $user): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.status = :pending')
+            ->andWhere('p.stripeSessionId IS NOT NULL')
+            ->setParameter('user', $user)
+            ->setParameter('pending', PurchaseStatus::Pending)
+            ->getQuery()
+            ->getResult();
+    }
+
     /** @return list<Purchase> les achats de l'apprenant, les plus récents d'abord (sessions abandonnées exclues) */
     public function findByUser(User $user): array
     {
