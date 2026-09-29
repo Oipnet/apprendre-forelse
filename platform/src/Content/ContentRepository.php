@@ -250,6 +250,42 @@ final class ContentRepository
         return $this->sources()->testFiles($exercise);
     }
 
+    /** L'identifiant actuel du parcours qui portait autrefois cet identifiant (clé « former_ids »), ou null. */
+    public function currentTrackId(string $formerId): ?string
+    {
+        foreach ($this->content()->tracks as $track) {
+            if (\in_array($formerId, $track->formerIds, true)) {
+                return $track->id;
+            }
+        }
+
+        return null;
+    }
+
+    /** L'identifiant actuel de l'exercice du parcours qui portait autrefois cet identifiant, ou null. */
+    public function currentExerciseId(string $trackId, string $formerId): ?string
+    {
+        foreach ($this->content()->exercises[$trackId] ?? [] as $exercise) {
+            if (\in_array($formerId, $exercise->formerIds, true)) {
+                return $exercise->id;
+            }
+        }
+
+        return null;
+    }
+
+    /** L'identifiant actuel de l'exercice de Pratique qui portait autrefois cet identifiant, ou null. */
+    public function currentPracticeId(string $formerId): ?string
+    {
+        foreach ($this->content()->practices as $practice) {
+            if (\in_array($formerId, $practice->exercise->formerIds, true)) {
+                return $practice->exercise->id;
+            }
+        }
+
+        return null;
+    }
+
     private function content(): LoadedContent
     {
         return $this->content ??= $this->loader->load();

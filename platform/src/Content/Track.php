@@ -7,6 +7,7 @@ final readonly class Track
     /**
      * @param list<Chapter> $chapters
      * @param list<string>  $downloads fichiers de DOWNLOADS_DIR proposés au téléchargement (clé « downloads »)
+     * @param list<string>  $formerIds
      */
     public function __construct(
         public string $id,
@@ -26,6 +27,8 @@ final readonly class Track
         public array $downloads = [],
         /** Image de partage (clé « image » de track.yaml, relative au dossier du parcours) : chemin absolu, déjà validé. */
         public ?string $image = null,
+        /** Anciens identifiants (clé « former_ids ») : leurs adresses redirigent vers celles du parcours. */
+        public array $formerIds = [],
     ) {
     }
 

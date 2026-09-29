@@ -421,6 +421,28 @@ final class ContentRepositoryTest extends TestCase
         }
     }
 
+    /** @param array<string, string> $files */
+    #[DataProvider('anciensIdsInvalides')]
+    public function testUnAncienIdentifiantNeMeneQuAUnSeulEndroit(array $files, string $message): void
+    {
+        $filesystem = new Filesystem();
+        foreach ($files + ['p/pack.yaml' => "id: p\ntitle: P\ntracks: [a, b]"] as $path => $content) {
+            $filesystem->dumpFile($this->tmp.'/'.$path, $content);
+        }
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage($message);
+        $this->repository($this->tmp)->tracks();
+    }
+
+    public static function anciensIdsInvalides(): iterable
+    {
+        $track = static fn (string $id, string $former) => "id: {$id}\ntitle: T\nenvironment: symfony-8\nformer_ids: {$former}\nchapters:\n  - {id: c, title: C, exercises: []}";
+        yield 'ancien id d\'un parcours actuel' => [['p/tracks/a/track.yaml' => $track('a', '[b]'), 'p/tracks/b/track.yaml' => $track('b', '[]')], 'l\'ancien identifiant « b » est celui d\'un autre, actuel'];
+        yield 'deux fois le même ancien id' => [['p/tracks/a/track.yaml' => $track('a', '[x]'), 'p/tracks/b/track.yaml' => $track('b', '[x]')], 'déclarent tous deux l\'ancien identifiant « x »'];
+        yield 'pas une liste' => [['p/tracks/a/track.yaml' => $track('a', 'ancien'), 'p/tracks/b/track.yaml' => $track('b', '[]')], '« former_ids » est une liste'];
+    }
+
     public function testUnParcoursDeclareSonImageDePartage(): void
     {
         $this->trackWithImage('partage.png', ['p/tracks/t/partage.png' => self::pngHeader(1200, 630)]);
