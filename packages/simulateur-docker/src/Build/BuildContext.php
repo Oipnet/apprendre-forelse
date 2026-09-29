@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Build;
 
 use Forelse\DockerSim\Context\DockerIgnore;
+use Forelse\DockerSim\Fs\Path;
 
 /**
  * Le contexte de build : les fichiers du dossier envoyés au démon, moins ceux du .dockerignore.
@@ -100,10 +101,9 @@ final class BuildContext
      */
     public function match(string $source): ?array
     {
-        $source = trim(preg_replace('#^\./#', '', $source) ?? $source, '/');
-        if (str_starts_with($source, '..')) {
-            return null;
-        }
+        // Comme BuildKit : la source est relative à la racine du contexte, « .. » n'en sort jamais
+        // (src/../composer.json => composer.json ; ../x => x).
+        $source = ltrim(Path::normalize('/'.$source), '/');
         if ($source === '' || $source === '.') {
             $result = [];
             foreach (array_keys($this->files()) as $file) {
@@ -117,13 +117,9 @@ final class BuildContext
             $regex = '#^'.str_replace(['\*', '\?'], ['[^/]*', '[^/]'], preg_quote($source, '#')).'(/.*)?$#';
             foreach (array_keys($this->files()) as $file) {
                 if (preg_match($regex, $file, $m)) {
-                    // Un motif qui désigne un dossier copie son contenu sous le nom du dossier ? Non : comme Docker,
-                    // chaque correspondance est copiée à la racine de la destination.
-                    $matchedTop = substr($file, 0, \strlen($file) - \strlen($m[1] ?? ''));
-                    $result[$file] = basename($matchedTop).($m[1] ?? '');
-                    if (!isset($m[1])) {
-                        $result[$file] = basename($file);
-                    }
+                    // Comme Docker : un fichier trouvé par le motif est copié sous son nom ; un dossier trouvé par le
+                    // motif est copié par son contenu, pas sous son nom (COPY sr* /x/ donne /x/a.php, pas /x/src/a.php).
+                    $result[$file] = isset($m[1]) ? ltrim($m[1], '/') : basename($file);
                 }
             }
 

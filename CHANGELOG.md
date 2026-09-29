@@ -90,6 +90,20 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Simulateur Docker : six écarts avec le vrai Docker (#159).**
+  - Un montage `:ro` n'est plus contourné par `sed -i`, `find -delete` (ou `-exec`), `ln`, ni par le PHP du
+    conteneur : « Read-only file system », et le fichier de l'hôte reste intact.
+  - `env_file: .env` est trouvé (le point n'est plus retiré), et `../commun.env` garde son dossier parent.
+  - `find` refuse un prédicat qu'il ne connaît pas (`find: unrecognized: …`, code 1) au lieu de l'ignorer puis
+    d'appliquer `-delete` ; il gère `!`/`-not`, `-o`, les parenthèses, `-path`, `-mindepth`, `-empty`,
+    `-exec … +` et plusieurs points de départ, et `-delete` ne vide plus un dossier plein.
+  - `${VAR:?}` vide dans la dernière commande de `sh -c` arrête le conteneur avec le message du shell et le code 1,
+    au lieu d'une erreur fatale du simulateur.
+  - Un chemin absolu dans le PHP d'un conteneur (`/data/compteur.txt`) est celui du conteneur : un volume garde ce
+    qui y est écrit. Limite : SQLite ouvre ses fichiers sans PHP, un DSN écrit en dur (`new PDO('sqlite:/data/…')`)
+    n'est pas traduit ; passé par une variable d'environnement, il l'est.
+  - `COPY sr* /x/` copie le contenu du dossier trouvé ; `COPY src/../composer.json /y/` est normalisé, sans
+    jamais sortir du contexte.
 - **Atelier : un enregistrement ne casse plus le chargement du contenu.** Un format invalide (faute de syntaxe YAML,
   liste écrite comme une valeur, objectif manquant…) n'est plus gardé sur le disque : les fichiers d'avant sont remis,
   l'éditeur affiche l'erreur et garde le travail (réponse 422). Jusqu'ici, il était écrit, et toutes les pages

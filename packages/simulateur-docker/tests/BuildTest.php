@@ -257,4 +257,22 @@ final class BuildTest extends SimulatorTestCase
         $this->assertSame([], $original->config->env);
         $this->assertSame('cle', $original->key);
     }
+
+    /**
+     * COPY avec un motif qui désigne un dossier : Docker copie son contenu, pas le dossier. Une source est relative au
+     * contexte : « .. » ne peut pas en sortir, et src/../composer.json désigne composer.json.
+     */
+    public function testCopyDUnMotifEtDUnCheminANormaliser(): void
+    {
+        $this->files([
+            'Dockerfile' => "FROM alpine:3.20\nCOPY sr* /x/\nCOPY src/../composer.json /y/\n",
+            'src/a.php' => '<?php',
+            'src/lib/b.php' => '<?php',
+            'composer.json' => '{}',
+        ]);
+        $this->cliOk('build -t motif .');
+
+        $this->assertSame("/x/a.php\n/x/lib/b.php\n/y/composer.json\n", $this->cliOk('run --rm motif find /x /y -type f'));
+    }
 }
+

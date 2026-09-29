@@ -125,6 +125,71 @@ final class ContainerTest extends SimulatorTestCase
         $this->assertSame(0, $code, 'Le :ro ne vaut que pour le dossier monté.');
     }
 
+    /** sed -i, find -delete (et -exec), ln, et le PHP du conteneur : aucun n'écrit sous un montage :ro. */
+    public function testUnMontageEnLectureSeuleResisteATousLesOutils(): void
+    {
+        $this->files([
+            'Dockerfile' => "FROM php:8.4-cli\nCOPY ecrire.php /ecrire.php\n",
+            'ecrire.php' => "<?php var_dump(file_put_contents('/src/c.txt', 'PHP'));",
+            'src/c.txt' => "abc\n",
+        ]);
+        $this->cliOk('build -t ro .');
+
+        foreach ([
+            "sh -c 'sed -i s/c/Z/ /src/c.txt'",
+            "sh -c 'find /src -name c.txt -delete'",
+            "sh -c 'find /src -name c.txt -exec sed -i s/c/Z/ {} \;'",
+            "sh -c 'ln -s /etc/hostname /src/lien'",
+        ] as $commande) {
+            [, $sortie] = $this->cli('run --rm -v ./src:/src:ro ro '.$commande);
+            $this->assertStringContainsString('Read-only file system', $sortie, $commande);
+            $this->assertSame("abc\n", file_get_contents($this->project.'/src/c.txt'), $commande.' : le fichier de l\'hôte est intact.');
+            $this->assertFileDoesNotExist($this->project.'/src/lien', $commande);
+        }
+
+        // Sous PHPUnit, le mode « dans le processus » (DOCKER_SIM_INPROCESS=1) hérite d'un error_reporting sans les
+        // avertissements : on le rétablit, comme dans le navigateur.
+        $niveau = error_reporting(\E_ALL);
+        try {
+            $sortie = $this->cliOk('run --rm -v ./src:/src:ro ro php /ecrire.php');
+        } finally {
+            error_reporting($niveau);
+        }
+        $this->assertStringContainsString('bool(false)', $sortie, 'file_put_contents échoue.');
+        $this->assertStringContainsString('Read-only file system', $sortie);
+        $this->assertSame("abc\n", file_get_contents($this->project.'/src/c.txt'));
+
+        $this->cliOk('run --rm -v ./src:/src ro sh -c "sed -i s/c/Z/ /src/c.txt"');
+        $this->assertSame("abZ\n", file_get_contents($this->project.'/src/c.txt'), 'Sans :ro, sed -i écrit.');
+    }
+
+    /** Un chemin absolu dans le PHP du conteneur est celui du conteneur : le volume garde le compteur. */
+    public function testLePhpDuConteneurEcritDansLeVolumeParUnCheminAbsolu(): void
+    {
+        $this->files([
+            'Dockerfile' => "FROM php:8.4-cli\nCOPY compteur.php /compteur.php\n",
+            'compteur.php' => "<?php \$n = (int) @file_get_contents('/data/compteur.txt') + 1; file_put_contents('/data/compteur.txt', \$n); echo \"visite \$n\";",
+        ]);
+        $this->cliOk('build -t compteur .');
+
+        $this->assertStringContainsString('visite 1', $this->cliOk('run --rm -v donnees:/data compteur php /compteur.php'));
+        $this->assertStringContainsString('visite 2', $this->cliOk('run --rm -v donnees:/data compteur php /compteur.php'), 'Le volume garde ce que le conteneur précédent a écrit.');
+        $this->assertStringContainsString('visite 1', $this->cliOk('run --rm compteur php /compteur.php'), 'Sans volume, rien ne reste.');
+        $this->assertFileDoesNotExist('/data/compteur.txt', 'Rien n\'est écrit sur le disque de l\'hôte.');
+    }
+
+    /** « ${X:?} » vide dans la dernière commande : le shell s'arrête avec son message et le code 1, sans planter. */
+    public function testUneVariableObligatoireVideArreteLeConteneur(): void
+    {
+        foreach (['alpine' => '/bin/sh: X: parameter not set', 'debian:bookworm' => '/bin/sh: 1: X: parameter not set'] as $image => $message) {
+            [$code, $sortie] = $this->cli("run --name v-{$image[0]} {$image} sh -c 'echo avant; echo \${X:?}'");
+            $this->assertStringContainsString('avant', $sortie, $image);
+            $this->assertStringContainsString($message, $sortie, $image);
+            $this->assertStringNotContainsString('Fatal error', $sortie, $image);
+            $this->assertSame(1, $code, $image);
+        }
+    }
+
     public function testUnVolumeGardeSesDroitsDUnConteneurALAutre(): void
     {
         $this->files(['Dockerfile' => "FROM php:8.4-apache\nRUN mkdir -p /var/lib/criee && chown www-data:www-data /var/lib/criee\n"]);

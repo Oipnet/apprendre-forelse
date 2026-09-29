@@ -391,4 +391,19 @@ final class ComposeTest extends SimulatorTestCase
         $this->assertStringContainsString('Container criee-web-1  Recreated', $third);
         $this->assertStringContainsString('criée', $this->page('localhost:8081/'));
     }
+
+    /** env_file: .env (l'usage le plus courant) et un fichier du dossier parent : le chemin reste celui écrit. */
+    public function testEnvFilePointDotEnvEtDossierParent(): void
+    {
+        file_put_contents(\dirname($this->project).'/commun.env', "COMMUN=partage\n");
+        $this->files([
+            '.env' => "PORT_NOM=Port-Bigorneau\n",
+            'compose.yaml' => "services:\n  app:\n    image: alpine:3.20\n    command: sh -c 'echo \$\$PORT_NOM/\$\$COMMUN'\n    env_file: [.env, ../commun.env]\n",
+        ]);
+
+        $this->cliOk('compose up');
+
+        $this->assertStringContainsString('Port-Bigorneau/partage', $this->cliOk('compose logs app'));
+    }
 }
+

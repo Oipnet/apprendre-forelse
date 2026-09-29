@@ -20,7 +20,7 @@ final class TextCommands extends CoreutilsCommands
     protected function dispatch(string $name, array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         return match ($name) {
-            'sed' => $this->sed($args, $m, $stdin),
+            'sed' => $this->sed($args, $m, $stdin, $sh),
             'grep', 'egrep', 'fgrep' => $this->grep($args, $m, $stdin, $name),
             'head', 'tail' => $this->headTail($name, $args, $m, $stdin),
             'wc' => $this->wc($args, $m, $stdin),
@@ -61,7 +61,7 @@ final class TextCommands extends CoreutilsCommands
     }
 
     /** @param list<string> $args */
-    private function sed(array $args, Machine $m, string $stdin): Result
+    private function sed(array $args, Machine $m, string $stdin, Interpreter $sh): Result
     {
         $inPlace = false;
         $extended = false;
@@ -109,6 +109,14 @@ final class TextCommands extends CoreutilsCommands
             }
             $result = $apply((string) $m->fs->read($path));
             if ($inPlace) {
+                // sed -i écrit un fichier temporaire à côté, puis le renomme : il faut pouvoir écrire dans le dossier.
+                if (!$sh->canWrite($m, \dirname($path)) || !$sh->canWrite($m, $path)) {
+                    $raison = $sh->writeDenied($m, $sh->canWrite($m, \dirname($path)) ? $path : \dirname($path));
+
+                    return $m->facts->os === 'alpine'
+                        ? Result::error(1, $err."sed: can't create temp file '{$path}XXXXXX': {$raison}\n")
+                        : Result::error(4, $err."sed: couldn't open temporary file ".\dirname($path)."/sedXXXXXX: {$raison}\n");
+                }
                 $m->fs->write($path, $result);
             } else {
                 $out .= $result;
