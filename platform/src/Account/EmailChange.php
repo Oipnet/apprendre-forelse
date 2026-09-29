@@ -29,13 +29,18 @@ final readonly class EmailChange
     ) {
     }
 
-    /** Enregistre le profil ; si l'adresse change, envoie le lien qui la confirmera. */
-    public function request(User $user, string $displayName, string $email, ?string $password): EmailChangeOutcome
+    /**
+     * Enregistre le profil ; si l'adresse change, envoie le lien qui la confirmera.
+     *
+     * @param bool $recentlySignedIn pour un compte sans mot de passe : il vient de repasser par GitHub (RecentSignIn)
+     */
+    public function request(User $user, string $displayName, string $email, ?string $password, bool $recentlySignedIn = false): EmailChangeOutcome
     {
         // Même forme que l'adresse enregistrée : une adresse qui ne diffère que par la casse est la même.
         $email = User::normalizeEmail($email);
         $emailChanged = $email !== $user->getEmail();
-        if ($emailChanged && !$this->hasher->isPasswordValid($user, (string) $password)) {
+        $identityConfirmed = $user->hasPassword() ? $this->hasher->isPasswordValid($user, (string) $password) : $recentlySignedIn;
+        if ($emailChanged && !$identityConfirmed) {
             // Avant de dire si l'adresse est prise : sans le mot de passe, on n'apprend rien.
             return EmailChangeOutcome::PasswordRequired;
         }

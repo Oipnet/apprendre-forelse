@@ -14,6 +14,8 @@ twig:
         seo: '@App\Seo\PageSeo'
         # Mesure d'audience (Umami auto-hébergé) : sans les deux variables ANALYTICS_*, aucune balise.
         analytics: '@App\Instance\Analytics'
+        # Connexion avec GitHub : sans GITHUB_CLIENT_ID ni GITHUB_CLIENT_SECRET, aucun bouton (github.enabled).
+        github: '@App\Account\Github\GithubClient'
 
 when@test:
     twig:

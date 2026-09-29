@@ -15,6 +15,12 @@
             <p class="meta">Votre adresse ne sert qu'à votre compte : <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
             <button class="primary" type="submit">Créer mon compte</button>
         {{ form_end(form) }}
+        {% if github.enabled %}
+            <div class="oauth">
+                <a class="ac-btn outline" href="{{ path('app_github_start', app.request.query.get('suite') ? {suite: app.request.query.get('suite')} : {}) }}">S'inscrire avec GitHub</a>
+                <p class="meta">Sans mot de passe : votre adresse est celle que GitHub a vérifiée.</p>
+            </div>
+        {% endif %}
         <p class="meta">Déjà inscrit ? <a href="{{ path('app_login') }}">Connectez-vous</a>.</p>
         {% if inviteOnly %}
             <p class="meta">Pas de code d'invitation ? <a href="{{ path('app_home') }}#liste-attente">Laissez votre adresse sur la liste d'attente</a> : vous serez prévenu à l'ouverture.</p>
