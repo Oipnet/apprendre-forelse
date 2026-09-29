@@ -296,7 +296,7 @@ final class ComposeFile
         foreach ((array) ($service['env_file'] ?? []) as $envFile) {
             $file = \is_array($envFile) ? ($envFile['path'] ?? '') : (string) $envFile;
             $required = !\is_array($envFile) || ($envFile['required'] ?? true);
-            $absolute = str_starts_with($file, '/') ? $file : $projectDirectory.'/'.ltrim($file, './');
+            $absolute = str_starts_with($file, '/') ? $file : $projectDirectory.'/'.preg_replace('#^(\./)+#', '', $file);
             if (!is_file($absolute)) {
                 if ($required) {
                     throw new ComposeException(sprintf('env file %s not found: stat %s: no such file or directory', $absolute, $absolute));

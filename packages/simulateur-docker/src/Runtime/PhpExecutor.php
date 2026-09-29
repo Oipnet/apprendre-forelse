@@ -67,7 +67,7 @@ final class PhpExecutor
                 $server[strtoupper(str_replace('-', '_', $name))] = $value;
             }
         }
-        $payload = ['mode' => 'http', 'script' => $real, 'server' => $server + $env, 'env' => $env, 'body' => $request->body, 'query' => $request->query, 'headers' => $request->headers, 'display' => $this->displayErrors($container)];
+        $payload = ['mode' => 'http', 'script' => $real, 'server' => $server + $env, 'env' => $env, 'body' => $request->body, 'query' => $request->query, 'headers' => $request->headers, 'display' => $this->displayErrors($container), 'fs' => $this->filesystem($container)];
         $result = self::inProcess() ? self::execute($payload) : $this->subprocess($payload);
         $body = $this->translatePaths($container, $result['output']);
         $response = new HttpResponse($result['status'] ?: 200, $result['headers'], $body, null, $result['errors'], $container->name, $script);
@@ -88,7 +88,7 @@ final class PhpExecutor
     {
         $real = $this->materializer->real($container, $argv[0]);
         $environment = $this->environment($container, $env);
-        $payload = ['mode' => 'cli', 'script' => $real, 'argv' => [$argv[0], ...\array_slice($argv, 1)], 'cwd' => $this->materializer->real($container, $cwd), 'server' => $environment, 'env' => $environment, 'stdin' => $stdin, 'display' => true];
+        $payload = ['mode' => 'cli', 'script' => $real, 'argv' => [$argv[0], ...\array_slice($argv, 1)], 'cwd' => $this->materializer->real($container, $cwd), 'server' => $environment, 'env' => $environment, 'stdin' => $stdin, 'display' => true, 'fs' => $this->filesystem($container)];
         $result = self::inProcess() ? self::execute($payload) : $this->subprocess($payload);
 
         return [$result['exit'], $this->translatePaths($container, $result['output'])];
@@ -125,6 +125,9 @@ final class PhpExecutor
     {
         if (!class_exists(PhpExit::class)) {
             require_once __DIR__.'/PhpExit.php';
+        }
+        if (!class_exists(ContainerFileWrapper::class)) {
+            require_once __DIR__.'/ContainerFileWrapper.php';
         }
         $saved = [$_SERVER, $_GET, $_POST, $_COOKIE, $_FILES, $_REQUEST, $_ENV, getcwd()];
         $previousEnv = [];
@@ -172,6 +175,8 @@ final class PhpExecutor
             if (!(error_reporting() & $severity)) {
                 return true;
             }
+            // Un fichier ouvert par le script passe par ContainerFileWrapper : l'échec se dit comme PHP le dirait.
+            $message = ContainerFileWrapper::rewrite($message);
             $label = match ($severity) { \E_WARNING, \E_USER_WARNING => 'Warning', \E_NOTICE, \E_USER_NOTICE => 'Notice', \E_DEPRECATED, \E_USER_DEPRECATED => 'Deprecated', default => 'Warning' };
             $errors[] = sprintf('PHP %s:  %s in %s on line %d', $label, $message, $file, $line);
             if ($display) {
@@ -183,6 +188,10 @@ final class PhpExecutor
         $level = ob_get_level();
         ob_start();
         try {
+            if (isset($payload['fs'])) {
+                // Les chemins absolus du script sont ceux du conteneur (voir ContainerFileWrapper).
+                ContainerFileWrapper::activate($payload['fs']['root'], $payload['fs']['real'], $payload['fs']['readOnly']);
+            }
             (static function (string $__script): void {
                 include $__script;
             })((string) $payload['script']);
@@ -197,6 +206,7 @@ final class PhpExecutor
                 echo sprintf("<br />\n<b>Fatal error</b>:  Uncaught %s: %s in %s:%d\nStack trace:\n%s\n  thrown in <b>%s</b> on line <b>%d</b><br />\n", $e::class, htmlspecialchars($e->getMessage()), $e->getFile(), $e->getLine(), self::trace($e), $e->getFile(), $e->getLine());
             }
         } finally {
+            ContainerFileWrapper::deactivate();
             restore_error_handler();
         }
         $output = '';
@@ -254,6 +264,29 @@ final class PhpExecutor
         $result['output'] = substr($stdout, 0, $marker);
 
         return $result + ['status' => 200, 'headers' => [], 'errors' => [], 'fatal' => false, 'exit' => 0];
+    }
+
+    /**
+     * Ce que ContainerFileWrapper doit savoir : la racine du conteneur sur disque, les dossiers réels de ses montages,
+     * et ceux qui sont en lecture seule.
+     *
+     * @return array{root: string, real: list<string>, readOnly: list<string>}
+     */
+    private function filesystem(Container $container): array
+    {
+        $root = $this->materializer->rootfs($container);
+        $real = [];
+        $readOnly = [];
+        foreach ($container->mounts as $mount) {
+            $source = $this->materializer->source($mount);
+            $sources = array_values(array_unique([$source, realpath($source) ?: $source]));
+            array_push($real, ...$sources);
+            if ($mount['readOnly']) {
+                array_push($readOnly, $root.Path::normalize($mount['target']), ...$sources);
+            }
+        }
+
+        return ['root' => realpath($root) ?: $root, 'real' => array_values(array_unique([$root, ...$real])), 'readOnly' => $readOnly];
     }
 
     /**

@@ -27,7 +27,7 @@ final class FileCommands extends CoreutilsCommands
             'rmdir' => $this->rm(['-r', ...$args], $m, $sh),
             'cp' => $this->copy($args, $m, $sh, move: false),
             'mv' => $this->copy($args, $m, $sh, move: true),
-            'ln' => $this->ln($args, $m),
+            'ln' => $this->ln($args, $m, $sh),
             'touch' => $this->touch($args, $m, $sh),
             'chmod' => $this->chmod($args, $m),
             'chown', 'chgrp' => $this->chown($args, $m, $name === 'chgrp'),
@@ -320,13 +320,23 @@ final class FileCommands extends CoreutilsCommands
     }
 
     /** @param list<string> $args */
-    private function ln(array $args, Machine $m): Result
+    private function ln(array $args, Machine $m, Interpreter $sh): Result
     {
         $operands = array_values(array_filter($args, static fn ($a) => $a[0] !== '-'));
         if (\count($operands) < 2) {
             return Result::ok();
         }
         [$source, $target] = [$m->path($operands[0]), $m->path($operands[1])];
+        if ($m->fs->isDir($target)) {
+            $target = rtrim($target, '/').'/'.basename($source);
+        }
+        if (!$sh->canWrite($m, \dirname($target))) {
+            $symbolique = (bool) array_filter($args, static fn ($a) => $a[0] === '-' && str_contains($a, 's'));
+
+            return Result::error(1, $m->facts->os === 'alpine'
+                ? sprintf("ln: can't create %slink '%s' to '%s': %s\n", $symbolique ? 'sym' : 'hard ', $operands[1], $operands[0], $sh->writeDenied($m, \dirname($target)))
+                : sprintf("ln: failed to create %s link '%s': %s\n", $symbolique ? 'symbolic' : 'hard', $operands[1], $sh->writeDenied($m, \dirname($target))));
+        }
         // Lien symbolique simulé par une copie : suffisant pour /usr/share/zoneinfo, /dev/stdout…
         if (str_starts_with($source, '/dev/') || str_starts_with($source, '/proc/')) {
             $m->fs->write($target, '');
@@ -470,82 +480,278 @@ final class FileCommands extends CoreutilsCommands
         return $dirs;
     }
 
-    /** @param list<string> $args */
+    /**
+     * find : chemins de départ, puis une expression (tests, actions, !, -a, -o, parenthèses), comme le vrai.
+     * Un prédicat inconnu est refusé avant tout parcours : l'ignorer et appliquer quand même -delete supprimerait trop.
+     *
+     * @param list<string> $args
+     */
     private function find(array $args, Machine $m, Interpreter $sh): Result
     {
-        $start = $args !== [] && $args[0][0] !== '-' ? array_shift($args) : '.';
-        $root = $m->path($start);
-        $name = null;
-        $type = null;
-        $delete = false;
-        $exec = null;
-        $maxDepth = PHP_INT_MAX;
-        for ($i = 0; $i < \count($args); ++$i) {
-            switch ($args[$i]) {
-                case '-name':
-                case '-iname':
-                    $name = $args[++$i] ?? '*';
-                    break;
-                case '-type':
-                    $type = $args[++$i] ?? null;
-                    break;
-                case '-delete':
-                    $delete = true;
-                    break;
-                case '-maxdepth':
-                    $maxDepth = (int) ($args[++$i] ?? 0);
-                    break;
-                case '-exec':
-                    $exec = [];
-                    while (++$i < \count($args) && $args[$i] !== ';' && $args[$i] !== '+' && $args[$i] !== '\;') {
-                        $exec[] = $args[$i];
-                    }
-                    break;
-            }
+        $starts = [];
+        while ($args !== [] && $args[0] !== '' && $args[0][0] !== '-' && $args[0] !== '!' && $args[0] !== '(') {
+            $starts[] = array_shift($args);
         }
-        if (!$m->fs->exists($root)) {
-            return Result::error(1, "find: {$start}: No such file or directory\n");
-        }
-        $found = [];
-        $walk = function (string $dir, int $depth) use (&$walk, &$found, $m, $maxDepth): void {
-            if ($depth > $maxDepth) {
-                return;
+        $starts = $starts ?: ['.'];
+
+        $options = ['mindepth' => 0, 'maxdepth' => PHP_INT_MAX, 'depth' => false, 'action' => false, 'plus' => []];
+        try {
+            $position = 0;
+            $expression = $args === [] ? null : $this->findOr($args, $position, $options);
+            if ($position < \count($args)) {
+                throw new \InvalidArgumentException($args[$position]);
             }
-            foreach ($m->fs->list($dir) as $entry) {
-                $child = rtrim($dir, '/').'/'.$entry;
-                $found[] = [$child, $m->fs->isDir($child), $depth];
-                if ($m->fs->isDir($child)) {
-                    $walk($child, $depth + 1);
-                }
-            }
-        };
-        $found[] = [$root, $m->fs->isDir($root), 0];
-        if ($m->fs->isDir($root)) {
-            $walk($root, 1);
-        }
-        $out = '';
-        foreach ($found as [$path, $isDir, $depth]) {
-            if ($name !== null && !fnmatch($name, basename($path))) {
-                continue;
-            }
-            if ($type === 'f' && $isDir || $type === 'd' && !$isDir) {
-                continue;
-            }
-            $display = $start === '.' ? '.'.substr($path, \strlen(rtrim($root, '/'))) : $path;
-            if ($delete) {
-                $m->fs->delete($path);
-                continue;
-            }
-            if ($exec !== null) {
-                $argv = array_map(static fn ($a) => $a === '{}' ? $path : $a, $exec);
-                $result = $sh->invoke($argv, $m);
-                $out .= $result->stdout.$result->stderr;
-                continue;
-            }
-            $out .= $display."\n";
+        } catch (\InvalidArgumentException $e) {
+            return Result::error(1, $m->facts->os === 'alpine'
+                ? "find: unrecognized: {$e->getMessage()}\n"
+                : "find: unknown predicate `{$e->getMessage()}'\n");
         }
 
-        return Result::ok($out);
+        $out = '';
+        $err = '';
+        $failed = false;
+        foreach ($starts as $start) {
+            $root = $m->path($start);
+            if (!$m->fs->exists($root)) {
+                $err .= "find: {$start}: No such file or directory\n";
+                continue;
+            }
+            // -delete implique -depth : un dossier après son contenu.
+            foreach ($this->findWalk($m, $root, rtrim($start, '/') === '' ? '/' : $start, 0, $options) as [$path, $display, $depth]) {
+                if ($depth < $options['mindepth']) {
+                    continue;
+                }
+                $item = ['path' => $path, 'display' => $display, 'dir' => $m->fs->isDir($path)];
+                $matched = $expression === null || $expression($item, $m, $sh, $out, $err);
+                if ($matched && !$options['action']) {
+                    $out .= $display."\n";
+                }
+            }
+        }
+        foreach ($options['plus'] as $batch) {
+            if ($batch->paths !== []) {
+                $result = $sh->invoke($this->findExecArgv($batch->command, $batch->paths), $m);
+                $out .= $result->stdout.$result->stderr;
+                // Avec « + », l'échec de la commande est celui de find.
+                $failed = $failed || $result->code !== 0;
+            }
+        }
+
+        return new Result($err === '' && !$failed ? 0 : 1, $out, $err);
+    }
+
+    /**
+     * Les entrées sous $path, avec leur profondeur, dans l'ordre de find (un dossier avant son contenu, ou après avec -depth).
+     *
+     * @param array{mindepth:int, maxdepth:int, depth:bool, action:bool, plus:list<object>} $options
+     *
+     * @return \Generator<array{0:string,1:string,2:int}>
+     */
+    private function findWalk(Machine $m, string $path, string $display, int $depth, array $options): \Generator
+    {
+        if (!$options['depth']) {
+            yield [$path, $display, $depth];
+        }
+        if ($depth < $options['maxdepth'] && $m->fs->isDir($path)) {
+            foreach ($m->fs->list($path) as $entry) {
+                yield from $this->findWalk($m, rtrim($path, '/').'/'.$entry, rtrim($display, '/').'/'.$entry, $depth + 1, $options);
+            }
+        }
+        if ($options['depth']) {
+            yield [$path, $display, $depth];
+        }
+    }
+
+    /**
+     * expression : terme (-o terme)*.
+     *
+     * @param list<string> $args
+     * @param array<string, mixed> $options
+     */
+    private function findOr(array $args, int &$i, array &$options): \Closure
+    {
+        $left = $this->findAnd($args, $i, $options);
+        while ($i < \count($args) && \in_array($args[$i], ['-o', '-or'], true)) {
+            ++$i;
+            $right = $this->findAnd($args, $i, $options);
+            $left = static fn (array $item, Machine $m, Interpreter $sh, string &$out, string &$err): bool => $left($item, $m, $sh, $out, $err) || $right($item, $m, $sh, $out, $err);
+        }
+
+        return $left;
+    }
+
+    /**
+     * terme : facteur ([-a] facteur)* ; deux tests côte à côte valent -a.
+     *
+     * @param list<string> $args
+     * @param array<string, mixed> $options
+     */
+    private function findAnd(array $args, int &$i, array &$options): \Closure
+    {
+        $left = $this->findNot($args, $i, $options);
+        while ($i < \count($args) && !\in_array($args[$i], ['-o', '-or', ')'], true)) {
+            if (\in_array($args[$i], ['-a', '-and'], true)) {
+                ++$i;
+            }
+            $right = $this->findNot($args, $i, $options);
+            $left = static fn (array $item, Machine $m, Interpreter $sh, string &$out, string &$err): bool => $left($item, $m, $sh, $out, $err) && $right($item, $m, $sh, $out, $err);
+        }
+
+        return $left;
+    }
+
+    /**
+     * facteur : ! facteur | ( expression ) | test ou action.
+     *
+     * @param list<string> $args
+     * @param array<string, mixed> $options
+     */
+    private function findNot(array $args, int &$i, array &$options): \Closure
+    {
+        $token = $args[$i] ?? throw new \InvalidArgumentException('(fin de l\'expression)');
+        if ($token === '!' || $token === '-not') {
+            ++$i;
+            $inner = $this->findNot($args, $i, $options);
+
+            return static fn (array $item, Machine $m, Interpreter $sh, string &$out, string &$err): bool => !$inner($item, $m, $sh, $out, $err);
+        }
+        if ($token === '(') {
+            ++$i;
+            $inner = $this->findOr($args, $i, $options);
+            if (($args[$i] ?? null) !== ')') {
+                throw new \InvalidArgumentException('(');
+            }
+            ++$i;
+
+            return $inner;
+        }
+        ++$i;
+        $value = function () use ($args, &$i, $token): string {
+            if (!isset($args[$i])) {
+                throw new \InvalidArgumentException($token);
+            }
+
+            return $args[$i++];
+        };
+
+        switch ($token) {
+            case '-name':
+            case '-iname':
+                $pattern = $value();
+                $flags = $token === '-iname' ? FNM_CASEFOLD : 0;
+
+                return static fn (array $item): bool => fnmatch($pattern, basename($item['display']) ?: $item['display'], $flags);
+            case '-path':
+            case '-wholename':
+            case '-ipath':
+                $pattern = $value();
+                $flags = $token === '-ipath' ? FNM_CASEFOLD : 0;
+
+                // Sans FNM_PATHNAME : dans find, « * » traverse aussi les « / ».
+                return static fn (array $item): bool => fnmatch($pattern, $item['display'], $flags);
+            case '-type':
+                $type = $value();
+                if (!\in_array($type, ['f', 'd', 'l'], true)) {
+                    throw new \InvalidArgumentException("-type {$type}");
+                }
+
+                // Le simulateur n'a pas de liens symboliques (ln copie) : -type l ne trouve rien.
+                return static fn (array $item): bool => $type === 'd' ? $item['dir'] : ($type === 'f' && !$item['dir']);
+            case '-empty':
+                return static fn (array $item, Machine $m): bool => $item['dir'] ? $m->fs->list($item['path']) === [] : $m->fs->size($item['path']) === 0;
+            case '-mindepth':
+            case '-maxdepth':
+                $depth = $value();
+                if (!ctype_digit($depth)) {
+                    throw new \InvalidArgumentException("{$token} {$depth}");
+                }
+                $options[substr($token, 1)] = (int) $depth;
+
+                return static fn (): bool => true;
+            case '-depth':
+                $options['depth'] = true;
+
+                return static fn (): bool => true;
+            case '-print':
+                $options['action'] = true;
+
+                return static function (array $item, Machine $m, Interpreter $sh, string &$out): bool {
+                    $out .= $item['display']."\n";
+
+                    return true;
+                };
+            case '-delete':
+                $options['action'] = true;
+                $options['depth'] = true;
+
+                return static function (array $item, Machine $m, Interpreter $sh, string &$out, string &$err): bool {
+                    $refus = match (true) {
+                        !$sh->canWrite($m, \dirname($item['path'])) => $sh->writeDenied($m, \dirname($item['path'])),
+                        $item['dir'] && $m->fs->list($item['path']) !== [] => 'Directory not empty',
+                        default => null,
+                    };
+                    if ($refus !== null) {
+                        $err .= ($m->facts->os === 'alpine' ? "find: can't delete '{$item['display']}': " : "find: cannot delete '{$item['display']}': ").$refus."\n";
+
+                        return false;
+                    }
+                    $m->fs->delete($item['path']);
+
+                    return true;
+                };
+            case '-exec':
+                $options['action'] = true;
+                $command = [];
+                while ($i < \count($args) && !\in_array($args[$i], [';', '\;', '+'], true)) {
+                    $command[] = $args[$i++];
+                }
+                if ($i >= \count($args) || $command === []) {
+                    throw new \InvalidArgumentException('-exec');
+                }
+                if ($args[$i++] === '+') {
+                    // « + » : une seule commande, avec tous les chemins à la place de {} (lancée après le parcours).
+                    $batch = (object) ['command' => $command, 'paths' => []];
+                    $options['plus'][] = $batch;
+
+                    return static function (array $item) use ($batch): bool {
+                        $batch->paths[] = $item['display'];
+
+                        return true;
+                    };
+                }
+
+                return function (array $item, Machine $m, Interpreter $sh, string &$out, string &$err) use ($command): bool {
+                    // Avec « ; », l'échec de la commande rend le test faux, sans changer le code de sortie de find.
+                    $result = $sh->invoke($this->findExecArgv($command, [$item['display']]), $m);
+                    $out .= $result->stdout.$result->stderr;
+
+                    return $result->code === 0;
+                };
+        }
+
+        throw new \InvalidArgumentException($token);
+    }
+
+    /**
+     * La commande de -exec, {} remplacé par le ou les chemins.
+     *
+     * @param list<string> $command
+     * @param list<string> $paths
+     *
+     * @return list<string>
+     */
+    private function findExecArgv(array $command, array $paths): array
+    {
+        $argv = [];
+        foreach ($command as $word) {
+            if ($word === '{}') {
+                array_push($argv, ...$paths);
+            } else {
+                $argv[] = str_replace('{}', $paths[0], $word);
+            }
+        }
+
+        return $argv;
     }
 
     /** @param list<string> $args */

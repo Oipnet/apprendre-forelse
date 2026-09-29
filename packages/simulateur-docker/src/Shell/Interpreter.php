@@ -166,11 +166,18 @@ final class Interpreter
             $output = $machine->output;
         }
         $words = [];
-        foreach ($command['words'] as $word) {
-            array_push($words, ...$this->expandWord($word, $machine));
-        }
-        foreach ($command['assign'] as [$key, $word]) {
-            $machine->env[$key] = $this->expandText($word, $machine);
+        try {
+            foreach ($command['words'] as $word) {
+                array_push($words, ...$this->expandWord($word, $machine));
+            }
+            foreach ($command['assign'] as [$key, $word]) {
+                $machine->env[$key] = $this->expandText($word, $machine);
+            }
+        } catch (ExitSignal $exit) {
+            // « ${VAR:?} » vide : le shell s'arrête avec son message, avant de lancer la commande.
+            $machine->positional = $savedPositional;
+
+            return [$exit->exitCode, $output.$exit->output, null];
         }
         $machine->positional = $savedPositional;
         if (($words[0] ?? '') === 'exec') {
