@@ -79,7 +79,7 @@ final readonly class CourseSeo
                     'availability' => $offer->quote->isFree() || $offer->paymentsEnabled ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
                 ],
             ])
-            ->addStructuredData($this->schema->breadcrumb([$track->title => $url]));
+            ->addStructuredData($this->schema->breadcrumb([[$track->title, $url]]));
     }
 
     /**
@@ -110,8 +110,8 @@ final readonly class CourseSeo
             )
             ->setCanonical($url = $this->schema->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]))
             ->addStructuredData($this->schema->breadcrumb([
-                $track->title => $this->schema->url('app_track', ['trackId' => $track->id]),
-                $chapter->title => $url,
+                [$track->title, $this->schema->url('app_track', ['trackId' => $track->id])],
+                [$chapter->title, $url],
             ]));
         $this->shareImage($track);
     }
@@ -130,9 +130,9 @@ final readonly class CourseSeo
             )
             ->setCanonical($url = $this->schema->url('app_exercise', ['trackId' => $track->id, 'exerciseId' => $exercise->id]))
             ->addStructuredData($this->schema->breadcrumb([
-                $track->title => $this->schema->url('app_track', ['trackId' => $track->id]),
-                $chapter->title => $this->schema->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]),
-                $exercise->title => $url,
+                [$track->title, $this->schema->url('app_track', ['trackId' => $track->id])],
+                [$chapter->title, $this->schema->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id])],
+                [$exercise->title, $url],
             ]))
             ->addStructuredData([
                 '@type' => 'LearningResource',
@@ -213,7 +213,7 @@ final readonly class CourseSeo
                     ],
                 ], $tracks, array_keys($tracks)),
             ])
-            ->addStructuredData($this->schema->breadcrumb(['Parcours' => $url]));
+            ->addStructuredData($this->schema->breadcrumb([['Parcours', $url]]));
     }
 
     /** « Symfony », « Laravel »… d'après l'environnement d'exécution. */

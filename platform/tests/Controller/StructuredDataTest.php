@@ -118,8 +118,12 @@ final class StructuredDataTest extends WebTestCase
         $data = $this->structuredData($client, '/parcours/decouverte/01-bonjour');
 
         $this->assertSame(['BreadcrumbList', 'LearningResource'], array_keys($data));
-        $this->assertCount(3, $data['BreadcrumbList']['itemListElement']);
-        $this->assertSame('http://localhost/parcours/decouverte/01-bonjour', $data['BreadcrumbList']['itemListElement'][2]['item']);
+        // Le chapitre « Bonjour Symfony » et son exercice « Bonjour Symfony » : deux étapes, pas une.
+        $trail = $data['BreadcrumbList']['itemListElement'];
+        $this->assertSame(['Accueil', 'Découverte', 'Bonjour Symfony', 'Bonjour Symfony'], array_column($trail, 'name'));
+        $this->assertSame([1, 2, 3, 4], array_column($trail, 'position'));
+        $this->assertSame('http://localhost/parcours/decouverte/chapitre/bonjour/sommaire', $trail[2]['item']);
+        $this->assertSame('http://localhost/parcours/decouverte/01-bonjour', $trail[3]['item']);
 
         // Un exercice est une ressource pédagogique, rattachée au cours de son parcours.
         $resource = $data['LearningResource'];

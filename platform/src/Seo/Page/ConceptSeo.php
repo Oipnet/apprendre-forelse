@@ -34,7 +34,7 @@ final readonly class ConceptSeo
                 \count($concepts),
             ))
             ->setCanonical($url)
-            ->addStructuredData($this->schema->breadcrumb(['Les notions' => $url]));
+            ->addStructuredData($this->schema->breadcrumb([['Les notions', $url]]));
     }
 
     /**
@@ -59,8 +59,8 @@ final readonly class ConceptSeo
             ))
             ->setCanonical($url = $this->schema->url('app_concept', ['slug' => $concept['slug']]))
             ->addStructuredData($this->schema->breadcrumb([
-                'Les notions' => $this->schema->url('app_concepts'),
-                $concept['name'] => $url,
+                ['Les notions', $this->schema->url('app_concepts')],
+                [$concept['name'], $url],
             ]));
     }
 }

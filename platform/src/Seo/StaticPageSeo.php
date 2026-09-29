@@ -40,7 +40,7 @@ final readonly class StaticPageSeo
             ->setDescription(str_replace('%marque%', $this->branding->name(), $page->description))
             ->setCanonical($url);
         if (null !== $page->breadcrumb) {
-            $this->seo->addStructuredData($this->schema->breadcrumb([$page->breadcrumb => $url]));
+            $this->seo->addStructuredData($this->schema->breadcrumb([[$page->breadcrumb, $url]]));
         }
     }
 

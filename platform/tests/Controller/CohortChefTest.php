@@ -259,11 +259,21 @@ final class CohortChefTest extends WebTestCase
         $this->client->request('GET', '/parcours/atelier-secret');
         $this->assertResponseStatusCodeSame(404, 'Pas aux autres.');
 
-        // Un chef qui enregistre ensuite ses parcours ne referme pas ce que l'admin a ouvert.
+        // Le chef, qui n'est pas apprenant de sa cohorte, voit le parcours qu'elle propose : pas seulement dans /cohorte.
         $cohorte = $this->recharger($cohorte);
         $chef = $this->chef();
         $cohorte->addChef($chef);
         static::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->client->loginUser($chef);
+        $this->client->request('GET', '/parcours/atelier-secret');
+        $this->assertResponseIsSuccessful('Le chef ouvre le parcours en préparation que propose sa cohorte.');
+        $this->client->request('GET', '/parcours');
+        $this->assertStringContainsString('/parcours/atelier-secret', (string) $this->client->getResponse()->getContent(), 'Et le trouve dans la liste.');
+        $this->client->loginUser($this->chef('autre-prof@example.test', 'Autre prof'));
+        $this->client->request('GET', '/parcours/atelier-secret');
+        $this->assertResponseStatusCodeSame(404, 'Pas un chef d\'une autre cohorte.');
+
+        // Un chef qui enregistre ensuite ses parcours ne referme pas ce que l'admin a ouvert.
         $this->client->loginUser($chef);
         $crawler = $this->client->request('GET', '/cohorte/'.$cohorte->getId());
         $form = $crawler->selectButton('Enregistrer les parcours')->form();
