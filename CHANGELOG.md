@@ -10,6 +10,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Sauvegarde quotidienne de la production (#5, #148).** Chaque nuit, `deploy/sauvegarde/sauvegarder.sh` copie la
+  base (`pg_dump -Fc`, relue avant d'être gardée) et le volume `data`, puis les dépose sur le NAS de la Freebox Pro
+  par un VPN IPsec éphémère ; les copies de plus de 30 jours sont retirées. `deploy/copier-base.sh` est partagé avec
+  `deployer.sh`, qui copie la base avant chaque migration, et `deploy/verifier-sauvegarde.sh` restaure une copie dans
+  une base temporaire pour vérifier qu'elle se relit. Mise en place : `deploy/README.md`, section 5.
 - **Thème sombre des pages du site.** Accueil, parcours, fiches, compte, Pratique et atelier suivent la préférence du
   système (`prefers-color-scheme`) : un apprenant en mode sombre n'est plus ébloui en quittant l'éditeur. Les couleurs
   claires écrites en dur dans `site.css` deviennent des variables (`--lp-on-ink`, `--lp-sand`, `--lp-ko-bg`…),
@@ -111,6 +116,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Paiement : une contestation arrivée avant le paiement n'est plus ignorée.** Stripe n'ordonne pas ses
+  événements : `charge.dispute.created` pouvait précéder `checkout.session.completed` (quelques secondes après le
+  paiement). Ignorée, la contestation laissait ensuite le paiement ouvrir l'accès pour de bon. Sans achat payé, elle
+  répond maintenant en erreur, et Stripe la renvoie une fois l'achat payé.
+- **Chef de cohorte : un parcours en préparation que propose sa cohorte s'ouvre (#165).** Le chef le voyait dans
+  `/cohorte` mais recevait une 404 sur sa page s'il n'était pas lui-même apprenant de la cohorte.
+- **Fil d'Ariane des données structurées : un exercice titré comme son chapitre ne l'efface plus (#165).**
+  `SchemaOrg::breadcrumb()` prend une liste de paires `[nom, adresse]`.
 - **CI : une poussée sur main n'interrompt plus le déploiement de la préproduction (#164).** Sur main, un nouveau
   passage attend la fin du précédent au lieu de l'annuler : l'annulation tuait `deployer.sh` au milieu des
   migrations ou de `compose up`. Les PR gardent l'annulation du passage précédent.
