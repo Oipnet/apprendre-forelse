@@ -1,10 +1,11 @@
 import '../site.css';
 
 /**
- * Progression jouée en invité (localStorage, exercices `free`) : une fois connecté,
- * on la remonte au compte, puis on l'efface du navigateur.
+ * Progression jouée en invité (localStorage) : une fois connecté, on la remonte au compte,
+ * puis on l'efface du navigateur. La Pratique n'a pas de parcours : sa clé est `formation:null/<id>`.
  */
 const GUEST_PREFIX = 'formation:';
+const PRACTICE = 'null';
 
 async function importGuestProgress(url: string) {
 	const items: unknown[] = [];
@@ -16,7 +17,7 @@ async function importGuestProgress(url: string) {
 			if (!match) continue;
 			const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as { files?: Record<string, string>; hintsUsed?: number; completed?: boolean } | null;
 			if (!saved) continue;
-			items.push({ trackId: match[1], exerciseId: match[2], files: saved.files ?? {}, hintsUsed: saved.hintsUsed ?? 0, completed: !!saved.completed });
+			items.push({ trackId: match[1] === PRACTICE ? null : match[1], exerciseId: match[2], files: saved.files ?? {}, hintsUsed: saved.hintsUsed ?? 0, completed: !!saved.completed });
 			keys.push(key);
 		}
 	} catch {

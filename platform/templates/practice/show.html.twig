@@ -17,7 +17,7 @@
             <p class="exercise-access-actions">
                 <a class="button primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Créer un compte</a>
                 <a class="button" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>
-                <a class="button ghost" href="{{ path('app_login') }}">Se connecter</a>
+                <a class="button ghost" href="{{ path('app_login', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Se connecter</a>
             </p>
         </aside>
     </main>

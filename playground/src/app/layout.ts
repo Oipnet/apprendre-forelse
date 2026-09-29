@@ -10,14 +10,14 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 	<header class="topbar">
 		<div class="crumbs">
 			<a class="lp-brand" href="/" title="${escapeHtml(config.brand.title)}">${config.brand.logoUrl ? `<img src="${escapeHtml(config.brand.logoUrl)}" alt="" width="240" height="280">` : ''}<span class="lp-serif">${escapeHtml(config.brand.name)}</span>${config.brand.chip ? `<span class="lp-chip">${escapeHtml(config.brand.chip)}</span>` : ''}</a>
-			<span class="sep">›</span><a class="crumb-track" href="${escapeHtml(config.back.url)}">${escapeHtml(config.back.title)}</a><span class="sep crumb-track">›</span><span class="crumb-current">${escapeHtml(exercise.title)}</span><span class="done-chip" id="done-chip" hidden title="Exercice réussi">✓ Réussi</span>
+			<span class="sep">›</span><a class="crumb-track" href="${escapeHtml(config.back.url)}">${escapeHtml(config.back.title)}</a><span class="sep crumb-track">›</span>${crumbs(exercise)}<span class="done-chip" id="done-chip" hidden title="Exercice réussi">✓ Réussi</span>
 		</div>
 		<nav class="pane-switch" aria-label="Volet affiché">
 			<button data-pane="brief">Consignes</button>
 			<button data-pane="code" class="active">Code</button>
 			<button data-pane="preview">Aperçu</button>
 		</nav>
-		<div class="status">Démarrage…</div>
+		<div class="status" role="status">Démarrage…</div>
 		${
 			config.user
 				? `<div class="who" title="Connecté·e"><span>👤 ${escapeHtml(config.user.name)}</span><span class="xp-badge" id="user-xp">⭐ ${config.user.xp} XP</span></div>`
@@ -27,7 +27,8 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 			${config.feedbackUrl ? `<button id="feedback" class="ghost" title="Signaler un problème ou donner votre avis sur cet exercice"><span class="icon">💬</span><span class="label"> Un avis ?</span></button>` : ''}
 			<button id="solution" class="ghost" hidden><span class="icon">📖</span><span class="label">Solution</span></button>
 			<button id="reset" class="ghost" title="Revenir au code de départ"><span class="icon">⟲</span><span class="label">Réinitialiser</span></button>
-			<button id="run" class="primary" disabled>▶ <span class="label">Lancer les </span>tests</button>
+			<button id="shortcuts" class="ghost" title="Raccourcis clavier" aria-label="Raccourcis clavier" aria-haspopup="dialog"><span aria-hidden="true">⌨</span></button>
+			<button id="run" class="primary" disabled aria-keyshortcuts="Control+Enter Meta+Enter">▶ <span class="label">Lancer les </span>tests</button>
 		</div>
 	</header>
 	<div class="small-screen-note" role="note"><span>Cet exercice se joue mieux sur un écran large : ici, un volet à la fois.</span><button class="ghost small" aria-label="Fermer">✕</button></div>
@@ -38,7 +39,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 			<article class="instructions">${markdown(exercise.instructions)}</article>
 			<h3>Objectifs</h3>
 			<ul class="objectives">
-				${exercise.objectives.map((o) => `<li data-test="${escapeHtml(o.test)}"><span class="dot"></span><span>${escapeHtml(o.label)}</span></li>`).join('')}
+				${exercise.objectives.map((o) => `<li data-test="${escapeHtml(o.test)}"><span class="dot" aria-hidden="true"></span><span class="sr-only objective-state"></span><span>${escapeHtml(o.label)}</span></li>`).join('')}
 			</ul>
 			${
 				exercise.docs.length
@@ -109,9 +110,30 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 	<div class="overlay">
 		<div class="boot">
 			<div class="logo">🐉</div>
-			<p id="boot-label">Préparation de l'environnement…</p>
+			<p id="boot-label" role="status">Préparation de l'environnement…</p>
 			<div class="bar"><div id="boot-bar"></div></div>
 			<small>${escapeHtml(framework.bootNote)}</small>
+			<small id="boot-first" class="boot-first"></small>
 		</div>
 	</div>`;
+}
+
+/**
+ * Le fil d'Ariane après le parcours : chapitre, exercice, « n/N », et les exercices voisins. Sur petit écran, le chapitre
+ * disparaît le premier (playground.css) ; la position et les flèches restent.
+ */
+export function crumbs(exercise: Pick<ExercisePayload, 'title' | 'chapter' | 'previous' | 'next'>): string {
+	const { chapter, previous, next } = exercise;
+	const arrow = (neighbour: ExercisePayload['next'], rel: 'prev' | 'next') =>
+		neighbour
+			? `<a class="crumb-arrow" rel="${rel}" href="${escapeHtml(neighbour.url)}" title="${rel === 'prev' ? 'Exercice précédent' : 'Exercice suivant'} : ${escapeHtml(neighbour.title)}" aria-label="${rel === 'prev' ? 'Exercice précédent' : 'Exercice suivant'} : ${escapeHtml(neighbour.title)}">${rel === 'prev' ? '←' : '→'}</a>`
+			: `<span class="crumb-arrow" aria-hidden="true">${rel === 'prev' ? '←' : '→'}</span>`;
+	return [
+		chapter
+			? `<a class="crumb-chapter" href="${escapeHtml(chapter.url)}" title="Chapitre ${chapter.number} : ${escapeHtml(chapter.title)}">Ch. ${chapter.number} · ${escapeHtml(chapter.title)}</a><span class="sep crumb-chapter">›</span>`
+			: '',
+		`<span class="crumb-current">${escapeHtml(exercise.title)}</span>`,
+		chapter ? `<span class="crumb-position" title="Exercice ${chapter.position} sur ${chapter.total} du chapitre"><span aria-hidden="true">${chapter.position}/${chapter.total}</span><span class="sr-only">Exercice ${chapter.position} sur ${chapter.total} du chapitre</span></span>` : '',
+		previous || next ? `<nav class="crumb-nav" aria-label="Exercices voisins">${arrow(previous, 'prev')}${arrow(next, 'next')}</nav>` : '',
+	].join('');
 }

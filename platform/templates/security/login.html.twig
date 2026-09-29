@@ -6,22 +6,28 @@
     <main class="form-card">
         <h1>Connexion</h1>
         {% if error %}
-            <div class="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+            <div class="alert" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
         {% endif %}
         <form method="post">
             <label for="email">Email</label>
             <input type="email" id="email" name="email" value="{{ last_username }}" autocomplete="email" required autofocus>
             <label for="password">Mot de passe</label>
             <input type="password" id="password" name="password" autocomplete="current-password" required>
+            <label class="checkbox"><input type="checkbox" name="_remember_me" value="1"> Rester connecté·e sur cet appareil</label>
             <p class="meta"><a href="{{ path('app_forgot_password_request') }}">Mot de passe oublié ?</a></p>
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            {% if suite %}
+                {# Après la connexion, la page d'où l'on vient ; après un échec, ce même formulaire, qui s'en souvient. #}
+                <input type="hidden" name="_target_path" value="{{ suite }}">
+                <input type="hidden" name="_failure_path" value="{{ path('app_login', {suite: suite}) }}">
+            {% endif %}
             <button class="primary" type="submit">Se connecter</button>
         </form>
         {% if github.enabled %}
             <div class="oauth">
-                <a class="ac-btn outline" href="{{ path('app_github_start') }}">Continuer avec GitHub</a>
+                <a class="ac-btn outline" href="{{ path('app_github_start', suite ? {suite: suite} : {}) }}">Continuer avec GitHub</a>
             </div>
         {% endif %}
-        <p class="meta">Pas encore de compte ? <a rel="nofollow" href="{{ path('app_register') }}">Créez-en un</a>.</p>
+        <p class="meta">Pas encore de compte ? <a rel="nofollow" href="{{ path('app_register', suite ? {suite: suite} : {}) }}">Créez-en un</a>.</p>
     </main>
 {% endblock %}

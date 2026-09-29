@@ -189,6 +189,7 @@ final class PracticeTest extends WebTestCase
         $this->assertSame(['mode' => 'local'], $config['progress'], 'Sans compte, la progression reste dans le navigateur.');
         $this->assertNull($config['user']);
         $this->assertSame('/inscription', parse_url((string) $config['registerUrl'], \PHP_URL_PATH), 'Le compte est proposé après la réussite, pas avant.');
+        $this->assertSame('/connexion?suite=/pratique/point-precis', $config['loginUrl'], 'La connexion ramène à cet exercice.');
 
         $this->json($this->client, 'GET', '/api/exercises/pratique/point-precis');
         $this->assertResponseIsSuccessful();
@@ -231,6 +232,45 @@ final class PracticeTest extends WebTestCase
         }
     }
 
+    /** « Essayer » mène un visiteur à ce qu'il peut jouer sans compte : la Pratique, pas un chapitre verrouillé. */
+    public function testLeBoutonEssayerDeLAccueilMeneUnVisiteurALaPratique(): void
+    {
+        $crawler = $this->client->request('GET', '/');
+
+        $essayer = $crawler->filter('.lp-cta a.lp-btn.primary');
+        $this->assertSame('/pratique/exemple-map-request-header', $essayer->attr('href'), 'Le plus récent des exercices publiés.');
+        $this->assertStringContainsString('sans compte', $essayer->text());
+
+        $this->client->request('GET', (string) $essayer->attr('href'));
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('[data-playground]', 'Le visiteur arrive dans l\'éditeur.');
+    }
+
+    public function testLeBoutonEssayerDeLAccueilMeneUnCompteAuPremierExerciceDuParcours(): void
+    {
+        $this->client->loginUser($this->createUser());
+        $crawler = $this->client->request('GET', '/');
+
+        $href = (string) $crawler->filter('.lp-cta a.lp-btn.primary')->attr('href');
+        $this->assertStringStartsWith('/parcours/', $href);
+        $this->client->request('GET', $href);
+        $this->assertSelectorExists('[data-playground]', 'Le premier chapitre est ouvert à tout compte.');
+    }
+
+    public function testSurInvitationLeBoutonEssayerNeMenePasALaPratique(): void
+    {
+        $initial = $_SERVER['REGISTRATION_INVITE_ONLY'] ?? '0';
+        $_SERVER['REGISTRATION_INVITE_ONLY'] = $_ENV['REGISTRATION_INVITE_ONLY'] = '1';
+        try {
+            self::ensureKernelShutdown();
+            $crawler = static::createClient()->request('GET', '/');
+
+            $this->assertStringStartsNotWith('/pratique', (string) $crawler->filter('.lp-cta a.lp-btn.primary')->attr('href'));
+        } finally {
+            $_SERVER['REGISTRATION_INVITE_ONLY'] = $_ENV['REGISTRATION_INVITE_ONLY'] = $initial;
+        }
+    }
+
     public function testUnExerciceEnPreparationOuInconnuEstIntrouvable(): void
     {
         $this->client->loginUser($this->createUser());
@@ -259,6 +299,8 @@ final class PracticeTest extends WebTestCase
         $this->assertNull($exercise['trackId']);
         $this->assertSame(0, $exercise['xp']);
         $this->assertNull($exercise['next']);
+        $this->assertNull($exercise['previous']);
+        $this->assertNull($exercise['chapter'], 'Une Pratique n\'a pas de chapitre.');
         $this->assertNull($exercise['nextTrack']);
         $this->assertNull($exercise['lesson']);
         $this->assertSame(['framework' => 'symfony', 'version' => '8.1', 'versionUrl' => '/pratique/nouveautes/symfony-8-1', 'pullRequest' => 'https://github.com/symfony/symfony/pull/1', 'published' => '2026-09-10'], $exercise['practice']);

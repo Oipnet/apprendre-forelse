@@ -121,5 +121,8 @@ export class SuccessPanel {
 		} catch (error) {
 			panel.innerHTML = `<strong>🎉 Exercice réussi !</strong><p>La progression n'a pas pu être enregistrée : ${escapeHtml(String(error))}</p>`;
 		}
+		// Le focus y va : un lecteur d'écran lit la réussite, et le clavier trouve tout de suite l'exercice suivant.
+		panel.tabIndex = -1;
+		panel.focus();
 	}
 }

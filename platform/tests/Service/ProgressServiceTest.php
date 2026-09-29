@@ -3,6 +3,7 @@
 namespace App\Tests\Service;
 
 use App\Api\ExerciseAccessGuard;
+use App\Api\ExerciseLocator;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Entity\ExerciseProgress;
@@ -111,7 +112,7 @@ final class ProgressServiceTest extends KernelTestCase
         $exercise = $this->exercise('01-bonjour');
         $container = static::getContainer();
         $clock = new MockClock('2026-03-02 10:15:00');
-        $progress = new ProgressService($container->get(ExerciseProgressRepository::class), $this->entityManager, $container->get(XpCalculator::class), $container->get(ContentRepository::class), $container->get(ExerciseAccessGuard::class), $clock);
+        $progress = new ProgressService($container->get(ExerciseProgressRepository::class), $this->entityManager, $container->get(XpCalculator::class), $container->get(ContentRepository::class), $container->get(ExerciseLocator::class), $container->get(ExerciseAccessGuard::class), $clock);
 
         $progress->saveDraft($ada, $exercise, [], 0);
         $clock->sleep(90);
@@ -176,7 +177,7 @@ final class ProgressServiceTest extends KernelTestCase
         };
         $container = static::getContainer();
 
-        return new ProgressService($repository, $this->entityManager, $container->get(XpCalculator::class), $container->get(ContentRepository::class), $container->get(ExerciseAccessGuard::class), new MockClock());
+        return new ProgressService($repository, $this->entityManager, $container->get(XpCalculator::class), $container->get(ContentRepository::class), $container->get(ExerciseLocator::class), $container->get(ExerciseAccessGuard::class), new MockClock());
     }
 
     private function progressRows(User $user): int

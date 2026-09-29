@@ -4,14 +4,14 @@ namespace App\Api;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
-/** Progression d'un exercice joué en invité, remontée après inscription ou connexion. */
+/** Progression d'un exercice joué en invité, remontée après inscription ou connexion. Sans parcours : la Pratique. */
 final readonly class GuestProgressInput
 {
     /**
      * @param array<string, string> $files
      */
     public function __construct(
-        #[Assert\NotBlank] public string $trackId,
+        #[Assert\NotBlank(allowNull: true)] public ?string $trackId,
         #[Assert\NotBlank] public string $exerciseId,
         #[Assert\Count(max: 20)]
         #[Assert\All([new Assert\Type('string'), new Assert\Length(max: 100_000)])]

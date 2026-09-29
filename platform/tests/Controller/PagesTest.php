@@ -29,9 +29,11 @@ final class PagesTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.lp-parcours', 'Découverte');
         $this->assertSelectorTextContains('.lp-chapters li:first-child', 'Bonjour Symfony');
-        $this->assertSelectorExists('.lp-hero a.primary[href="/parcours/decouverte/01-bonjour"]', 'Le bouton principal mène au premier exercice du premier parcours.');
+        $this->assertSelectorExists('.lp-hero a.primary[href="/pratique/exemple-map-request-header"]', 'Le bouton principal mène un visiteur à la Pratique, qui se joue sans compte (voir PracticeTest).');
         $this->assertSelectorExists('#liste-attente a[href="/inscription"]', 'Inscription libre : pas de liste d\'attente.');
         $this->assertSelectorNotExists('form.lp-form');
+        $this->assertSelectorExists('body > a.skip-link[href="#contenu"]:first-child', 'Le premier arrêt du clavier : aller au contenu, par-dessus l\'en-tête.');
+        $this->assertSelectorExists('#contenu[tabindex="-1"]');
     }
 
     public function testLeMenuDuCompteRegroupeLesEspacesReserves(): void
@@ -89,7 +91,7 @@ final class PagesTest extends WebTestCase
         $this->assertSelectorNotExists('[data-playground]', '… mais l\'éditeur demande un compte.');
         $this->assertSelectorTextContains('.exercise-access h2', 'gratuit');
         $this->assertSelectorExists('.exercise-access a[href="/inscription?suite=/parcours/decouverte/01-bonjour"]', 'L\'inscription ramène à cet exercice.');
-        $this->assertSelectorExists('.exercise-access a[href="/connexion"]');
+        $this->assertSelectorExists('.exercise-access a[href="/connexion?suite=/parcours/decouverte/01-bonjour"]', 'La connexion aussi.');
         $this->assertSelectorNotExists('.exercise-access .price-box', 'Le premier chapitre ne se vend pas : il se déverrouille avec un compte.');
     }
 

@@ -10,6 +10,7 @@ import { FeedbackDialog } from './feedback';
 import { HintsAndSolution } from './HintsAndSolution';
 import { escapeHtml } from './html';
 import { layout } from './layout';
+import { bindRetry, bootFailureActionsHtml, bootKey, firstLoadNote, loadErrorHtml } from './boot';
 import { MentorClient, errorTextOf, stripAnsi } from './mentor';
 import { MentorPanel } from './MentorPanel';
 import { mesurer } from '../mesure';
@@ -18,8 +19,9 @@ import { ApiProgressStore, LocalProgressStore, type ProgressStore } from './prog
 import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
 import { ExerciseSession } from './session';
+import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
-import { TestResultsView } from './TestResultsView';
+import { spokenSummary, TestResultsView } from './TestResultsView';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 
 /** Monte l'environnement d'exercice complet dans `root`. */
@@ -32,9 +34,10 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const editeur = Promise.all([import('../editor/monaco'), import('../editor/completion'), import('./diff')]);
 	editeur.catch(() => {}); // attendu plus bas : son échec éventuel s'y affiche
 
-	const response = await fetch(config.exerciseUrl, { headers: { accept: 'application/json' }, credentials: 'same-origin' });
-	if (!response.ok) {
-		root.textContent = `Impossible de charger l'exercice (${response.status}).`;
+	const response = await fetch(config.exerciseUrl, { headers: { accept: 'application/json' }, credentials: 'same-origin' }).catch(() => null);
+	if (!response?.ok) {
+		root.innerHTML = loadErrorHtml(response?.status ?? null, config.loginUrl);
+		bindRetry(root);
 		return;
 	}
 	const exercise = (await response.json()) as ExercisePayload;
@@ -42,7 +45,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const framework = exercise.environment.framework;
 	/** La console du projet, telle qu'un développeur la tape dans son terminal. */
 	const consoleName = framework.console;
-	// Un invité ne joue que des exercices de parcours (la Pratique demande un compte) : la clé locale a toujours son parcours.
+	// Un invité joue la Pratique (sans parcours : clé `formation:null/<id>`, reprise telle quelle par entries/site.ts).
 	const progress: ProgressStore =
 		config.progress.mode === 'api' ? new ApiProgressStore(config.progress.url) : new LocalProgressStore(`formation:${exercise.trackId}/${exercise.id}`, exercise.xp);
 	const practice = config.context === 'practice';
@@ -51,9 +54,30 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	root.innerHTML = layout(exercise, config);
 	const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
-	const status = (text: string, kind: 'idle' | 'busy' | 'ok' | 'ko' = 'idle') => {
+
+	// L'aide « Raccourcis clavier » : lisible dès l'affichage, même si le démarrage échoue ensuite.
+	const mod = modifierLabel(navigator.platform);
+	const help = document.createElement('dialog');
+	help.className = 'feedback shortcuts';
+	help.setAttribute('aria-labelledby', 'shortcuts-title');
+	help.innerHTML = shortcutsHelpHtml(mod);
+	root.append(help);
+	help.querySelector('[data-close]')!.addEventListener('click', () => help.close());
+	$('#shortcuts').addEventListener('click', () => help.showModal());
+	/** La barre de statut est annoncée (role="status") : `spoken` remplace, pour un lecteur d'écran, un texte trop abrégé. */
+	const status = (text: string, kind: 'idle' | 'busy' | 'ok' | 'ko' = 'idle', spoken?: string) => {
 		const el = $('.status');
-		el.textContent = text;
+		if (spoken) {
+			const visible = document.createElement('span');
+			visible.setAttribute('aria-hidden', 'true');
+			visible.textContent = text;
+			const said = document.createElement('span');
+			said.className = 'sr-only';
+			said.textContent = spoken;
+			el.replaceChildren(visible, said);
+		} else {
+			el.textContent = text;
+		}
 		el.dataset.kind = kind;
 	};
 
@@ -102,6 +126,17 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// besoin du runtime qu'à la première requête. Il attendait la fin du boot et l'écriture des fichiers.
 	const relais = bridge.start();
 	relais.catch(() => {}); // attendu plus bas : son échec éventuel s'y affiche
+	// Premier téléchargement de cette archive : on prévient que c'est long, et que ce ne sera plus le cas.
+	const archiveUrl = new URL(exercise.environment.archiveUrl, location.href).href;
+	const seen = (() => {
+		try {
+			return localStorage.getItem(bootKey(exercise.environment.id));
+		} catch {
+			return null; // stockage indisponible : on prévient par défaut
+		}
+	})();
+	const note = firstLoadNote(seen, archiveUrl);
+	if (note) $('#boot-first').textContent = note;
 	try {
 		await runtime.boot(
 			{
@@ -109,7 +144,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 				framework,
 				options: { phpVersion: exercise.environment.phpVersion },
 				// URL absolue : le worker peut tourner depuis une URL blob: (dev), sans base relative.
-				archiveUrl: new URL(exercise.environment.archiveUrl, location.href).href,
+				archiveUrl,
 				previewBasePath: bridge.base,
 				previewSecure: new URL(config.sandboxUrl).protocol === 'https:',
 			},
@@ -117,9 +152,24 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		);
 	} catch (error) {
 		$('#boot-label').textContent = `Impossible de démarrer ${runtimeLabel(framework.runtime)} : ${error instanceof Error ? error.message.split('\n')[0] : error}`;
+		$('#boot-first').textContent = '';
+		status('Démarrage impossible', 'ko');
+		$('.boot').insertAdjacentHTML('beforeend', bootFailureActionsHtml());
+		bindRetry(root, () => {
+			const overlay = $('.overlay');
+			overlay.classList.add('hidden');
+			overlay.inert = true;
+			revealPane('brief');
+		});
+		root.dataset.bootFailed = '';
 		throw error;
 	}
 	mark('runtimeReady');
+	try {
+		localStorage.setItem(bootKey(exercise.environment.id), archiveUrl);
+	} catch {
+		// stockage indisponible : le prochain démarrage préviendra encore, sans conséquence
+	}
 
 	const saved = await progress.load().catch(() => null);
 	const initial: Record<string, string> = { ...exercise.files };
@@ -224,6 +274,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const runButton = $<HTMLButtonElement>('#run');
 	runButton.addEventListener('click', async () => {
 		runButton.disabled = true;
+		runButton.setAttribute('aria-busy', 'true');
 		mesurer('tests-lances', mesure);
 		status('Tests en cours…', 'busy');
 		try {
@@ -233,7 +284,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			metrics[metrics.firstTestRun ? 'lastTestRun' : 'firstTestRun'] = Math.round(result.durationMs);
 			const passed = results.show(result);
 			const total = exercise.objectives.length;
-			status(`${passed}/${total} objectifs · tests en ${Math.round(result.durationMs)} ms`, passed === total ? 'ok' : 'ko');
+			status(`${passed}/${total} objectifs · tests en ${Math.round(result.durationMs)} ms`, passed === total ? 'ok' : 'ko', spokenSummary(passed, total));
 			revealPane('brief');
 			if (passed === total) void success.show();
 			else success.hide();
@@ -242,11 +293,36 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			results.showError(error);
 		} finally {
 			runButton.disabled = false;
+			runButton.removeAttribute('aria-busy');
 		}
 	});
 
 	// --- Indices et solution -------------------------------------------------------------
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });
+
+	// --- Raccourcis clavier : Monaco les reçoit quand il a le focus, le document ailleurs --------
+	runButton.title = `Lancer les tests (${mod} + Entrée)`;
+	const saveNow = async () => {
+		try {
+			if (await session.flush()) reload();
+			await session.saveNow();
+			status('Brouillon enregistré', 'ok');
+		} catch (error) {
+			status(`Brouillon non enregistré : ${error instanceof Error ? error.message : String(error)}`, 'ko');
+		}
+	};
+	const act = (shortcut: Shortcut) => {
+		if (shortcut === 'save') void saveNow();
+		else if (!runButton.disabled) runButton.click();
+	};
+	editor.instance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => act('run'));
+	editor.instance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => act('save'));
+	document.addEventListener('keydown', (event) => {
+		const shortcut = event.defaultPrevented ? null : shortcutOf(event);
+		if (!shortcut) return;
+		event.preventDefault(); // Ctrl+S : pas la boîte « Enregistrer la page » du navigateur
+		act(shortcut);
+	});
 
 	// --- Retour sur l'exercice (apprenant connecté) ----------------------------------------
 	if (config.feedbackUrl) new FeedbackDialog(root, $<HTMLButtonElement>('#feedback'), config.feedbackUrl, () => ({ hintsUsed: session.hintsUsed, completed: session.completed }));
@@ -256,7 +332,11 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	// --- Prêt ----------------------------------------------------------------------------
 	runButton.disabled = false;
-	$('.overlay').classList.add('hidden');
+	const overlay = $('.overlay');
+	overlay.classList.add('hidden');
+	// Estompé, il resterait lu au clavier et par les lecteurs d'écran : il sort de l'arbre d'accessibilité.
+	overlay.inert = true;
+	overlay.setAttribute('aria-hidden', 'true');
 	mark('ready');
 	mesurer('exercice-ouvert', { ...mesure, compte: config.progress.mode === 'api' });
 	status(`Prêt en ${(metrics.ready / 1000).toFixed(1)} s`, 'ok');

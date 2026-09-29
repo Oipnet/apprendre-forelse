@@ -99,6 +99,7 @@ final class StructuredDataTest extends WebTestCase
 
         $course = $this->structuredData($client, '/parcours/payant')['Course'];
         $this->assertSame('PT1H45M', $course['timeRequired'], '20 + 35 + 50 minutes.');
+        $this->assertSame('PT1H45M', $course['hasCourseInstance']['courseWorkload'], 'Google l\'attend sur la session, pas sur le cours.');
         $this->assertSelectorTextContains('.track-duration', 'Environ 1 h 45 de pratique');
         $this->assertSelectorTextContains('#chapitre-2 .tr-chapter-meta', '≈ 1 h 30', 'Chapitre : 85 minutes, au quart d\'heure près.');
         $this->assertSelectorTextContains('.exercises li:first-child .meta', '20 min');

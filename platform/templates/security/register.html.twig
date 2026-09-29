@@ -21,7 +21,7 @@
                 <p class="meta">Sans mot de passe : votre adresse est celle que GitHub a vérifiée.</p>
             </div>
         {% endif %}
-        <p class="meta">Déjà inscrit ? <a href="{{ path('app_login') }}">Connectez-vous</a>.</p>
+        <p class="meta">Déjà inscrit ? <a href="{{ path('app_login', {suite: app.request.query.get('suite')}) }}">Connectez-vous</a>.</p>
         {% if inviteOnly %}
             <p class="meta">Pas de code d'invitation ? <a href="{{ path('app_home') }}#liste-attente">Laissez votre adresse sur la liste d'attente</a> : vous serez prévenu à l'ouverture.</p>
         {% endif %}

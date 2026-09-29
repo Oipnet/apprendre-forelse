@@ -44,6 +44,9 @@ final readonly class CourseSeo
 
         // Le prix affiché à un visiteur : prix courant (fondateur compris), en euros TTC.
         $offer = $this->offers->create($track, null);
+        $duration = null === ($minutes = $this->content->durationOf($track)) ? null : DurationExtension::iso($minutes);
+        // Google exige une image : celle du partage, à défaut le logo.
+        $image = $this->branding->shareUrl() ?? $this->branding->logoLargeUrl() ?? $this->branding->logoUrl();
         $this->seo
             ->addStructuredData([
                 '@type' => 'Course',
@@ -52,13 +55,16 @@ final readonly class CourseSeo
                 'url' => $url,
                 'inLanguage' => 'fr',
                 'provider' => $this->schema->organization(),
-                ...(null === ($image = $this->branding->shareUrl()) ? [] : ['image' => $this->schema->absolute($image)]),
+                ...(null === $image ? [] : ['image' => $this->schema->absolute($image)]),
+                // Le résultat enrichi « Cours » de Google demande la charge de travail sur chaque session (courseWorkload) ;
+                // timeRequired, au niveau du cours, ne la remplace pas.
                 'hasCourseInstance' => [
                     '@type' => 'CourseInstance',
                     'courseMode' => 'Online',
                     'inLanguage' => 'fr',
+                    ...(null === $duration ? [] : ['courseWorkload' => $duration]),
                 ],
-                ...(null !== ($minutes = $this->content->durationOf($track)) ? ['timeRequired' => DurationExtension::iso($minutes)] : []),
+                ...(null === $duration ? [] : ['timeRequired' => $duration]),
                 'syllabusSections' => array_map(static fn (Chapter $chapter) => ['@type' => 'Syllabus', 'name' => $chapter->title], $track->chapters),
                 'offers' => [
                     '@type' => 'Offer',

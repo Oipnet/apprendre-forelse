@@ -22,6 +22,33 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
     GitHub (moins de cinq minutes) pour changer d'adresse ou se supprimer, et ne peut pas délier GitHub avant
     d'avoir choisi un mot de passe (« Mot de passe oublié ? »).
   - La politique de confidentialité mentionne GitHub quand la connexion est active.
+- **Données structurées des parcours : `courseWorkload`.** Le `CourseInstance` d'un parcours annonce sa durée,
+  que le résultat enrichi « Cours » de Google exige ; l'image du `Course` retombe sur le logo quand la marque n'a
+  pas d'image de partage (#177).
+
+### Modifié
+
+- **Accueil : « Essayer » mène un visiteur à la Pratique.** Le premier chapitre d'un parcours demande un compte :
+  le bouton ouvrait donc une page verrouillée. Il mène désormais au plus récent des exercices de Pratique, qui se
+  joue sans compte ; un compte connecté, ou une instance sur invitation, garde le premier exercice du premier
+  parcours (#166).
+- **Connexion : retour à la page d'origine.** `/connexion?suite=/chemin` (chemin local uniquement) ramène après la
+  connexion, et après un échec le formulaire s'en souvient. Les liens « Se connecter » d'un exercice verrouillé, du
+  playground, de l'en-tête et du pied de page passent la page courante. Case « Rester connecté·e » : cookie signé de
+  30 jours, invalidé par un changement de mot de passe. L'erreur de connexion est annoncée (`role="alert"`) (#174).
+- **Playground : lecteurs d'écran.** Barre de statut et étape de démarrage en `role="status"`, résultat des tests
+  dit en toutes lettres, état de chaque objectif en texte masqué, focus sur la réussite, écran de démarrage `inert`
+  une fois estompé (#168).
+- **Playground : se repérer et aller plus vite.** Le fil d'Ariane donne le chapitre, la place de l'exercice
+  (« 3/5 ») et des flèches vers les exercices voisins ; le titre reste sur petit écran. `ExercisePayload` gagne
+  `chapter` et `previous` (#170). Ctrl+Entrée (⌘ sur Mac) lance les tests, Ctrl+S enregistre le brouillon tout de
+  suite, et le bouton ⌨ liste les raccourcis (#169).
+- **Playground : démarrage.** Le premier téléchargement d'un environnement est annoncé comme tel ; un démarrage en
+  échec propose « Réessayer » et « Lire la consigne » ; un exercice qui ne se charge pas dit pourquoi (session
+  expirée, accès terminé, introuvable, serveur absent) au lieu d'un code HTTP (#172).
+- **Accessibilité.** Focus clavier visible partout (`:focus-visible`), lien « Aller au contenu », objectifs marqués
+  ✓ / ✕ en plus de leur couleur, `--accent-fill` et `--accent-text` pour un contraste AA (texte blanc sur les
+  boutons principaux, liens sur fond sombre), `cursor: not-allowed` sur un bouton désactivé (#173).
 
 ### Corrigé
 
@@ -34,6 +61,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   **sans rien fusionner** : gardez-en un par adresse, changez l'adresse des autres (ou supprimez-les) dans
   `/admin`, puis relancez le déploiement. Les liens de confirmation d'adresse envoyés avant la mise à jour à
   une adresse qui contenait des majuscules ne sont plus valables : demandez-en un nouveau depuis le compte.
+- **Pratique : le code écrit sans compte n'est plus perdu à la connexion.** Il était envoyé à l'import, ignoré
+  par le serveur, puis effacé du navigateur. Il est désormais repris dans le compte (#167).
 
 ### Sécurité
 

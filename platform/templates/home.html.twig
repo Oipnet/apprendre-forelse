@@ -15,8 +15,13 @@
                             l'aperçu se met à jour, les tests valident vos objectifs.
                         </p>
                         <div class="lp-cta">
-                            <a class="lp-btn lg primary" href="{{ tryUrl }}">Essayer le premier exercice <span class="lp-mono">→</span></a>
-                            <span class="lp-muted">Gratuit : créez votre compte, vous codez en deux minutes.</span>
+                            {% if tryPractice %}
+                                <a class="lp-btn lg primary" href="{{ tryUrl }}">Essayer un exercice, sans compte <span class="lp-mono">→</span></a>
+                                <span class="lp-muted">Le premier chapitre de chaque parcours est gratuit avec un compte.</span>
+                            {% else %}
+                                <a class="lp-btn lg primary" href="{{ tryUrl }}">Essayer le premier exercice <span class="lp-mono">→</span></a>
+                                <span class="lp-muted">Gratuit : créez votre compte, vous codez en deux minutes.</span>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -223,7 +228,7 @@
                     <span class="lp-eyebrow">Prêt à commencer ?</span>
                     <h2 class="lp-h2">Le premier chapitre de chaque parcours est gratuit. Créez votre compte : votre progression vous suit.</h2>
                     <div class="lp-cta">
-                        <a class="lp-btn lg gold" href="{{ tryUrl }}">Essayer le premier exercice <span class="lp-mono">→</span></a>
+                        <a class="lp-btn lg gold" href="{{ tryUrl }}">{{ tryPractice ? 'Essayer un exercice, sans compte' : 'Essayer le premier exercice' }} <span class="lp-mono">→</span></a>
                         <a class="lp-btn lg outline" rel="nofollow" href="{{ path('app_register') }}">Créer un compte</a>
                     </div>
                 {% endif %}

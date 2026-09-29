@@ -2,6 +2,7 @@
 
 namespace App\Api;
 
+use App\Content\ChapterOutline;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
@@ -50,14 +51,15 @@ final readonly class ExercisePayloadFactory
             return $absolute($path).(false === $built ? '' : '?v='.$built);
         };
         $next = $this->content->next($exercise);
+        $previous = $this->content->previous($exercise);
         // Dernier exercice du parcours : on conseille le parcours suivant, s'il y en a un.
         $track = null === $exercise->trackId ? null : $this->content->findTrack($exercise->trackId);
         $nextTrack = null === $next && null !== $track ? $this->visibility->nextTrack($track) : null;
         // Un exercice de Pratique n'a ni suite ni fiche : il dit d'où vient la fonctionnalité.
         $practice = null === $exercise->trackId ? $this->content->findPractice($exercise->id) : null;
         // Dernier exercice d'un chapitre doté d'une fiche de cours : la réussite la débloque.
-        $chapter = $this->content->closesChapter($exercise) ? $this->content->chapterOf($exercise) : null;
-        $lesson = $chapter?->hasLesson() ? $chapter : null;
+        $inChapter = null === $track ? null : $this->content->chapterOf($exercise);
+        $lesson = $inChapter?->hasLesson() && $this->content->closesChapter($exercise) ? $inChapter : null;
 
         $payload = [
             'id' => $exercise->id,
@@ -97,6 +99,19 @@ final readonly class ExercisePayloadFactory
                 'archiveUrl' => $versioned($environment->archivePath()),
                 'completionIndexUrl' => $versioned($environment->completionIndexPath()),
             ],
+            // Où l'on est dans le parcours : le fil d'Ariane du playground (chapitre, « exercice n sur N »).
+            'chapter' => null !== $track && null !== $inChapter ? [
+                'title' => $inChapter->title,
+                'number' => ChapterOutline::numberOf($track, $inChapter),
+                'position' => (int) array_search($exercise->id, $inChapter->exerciseIds, true) + 1,
+                'total' => \count($inChapter->exerciseIds),
+                'url' => $this->urls->generate('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $inChapter->id]),
+            ] : null,
+            'previous' => $previous ? [
+                'id' => $previous->id,
+                'title' => $previous->title,
+                'url' => $this->exerciseUrls->generate('app_exercise', $previous),
+            ] : null,
             'next' => $next ? [
                 'id' => $next->id,
                 'title' => $next->title,

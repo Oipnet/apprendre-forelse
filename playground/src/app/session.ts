@@ -76,6 +76,12 @@ export class ExerciseSession {
 		return changes.length > 0;
 	}
 
+	/** Enregistre le brouillon tout de suite (Ctrl+S), sans attendre son délai ; l'échec remonte à l'appelant. */
+	async saveNow(): Promise<void> {
+		clearTimeout(this.saveTimer);
+		await this.progress.saveDraft(this.current, this.hintsUsed);
+	}
+
 	/** Enregistre le brouillon après son délai (les appels rapprochés n'en font qu'un). */
 	saveDraft(): void {
 		clearTimeout(this.saveTimer);

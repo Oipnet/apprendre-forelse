@@ -26,6 +26,11 @@ security:
                 default_target_path: app_home
                 username_parameter: email
                 password_parameter: password
+            # « Rester connecté·e » (case du formulaire) : un cookie signé, invalidé par un changement de mot de passe.
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 2592000 # 30 jours
+                signature_properties: [password]
             # Contre la force brute et les mots de passe fuités : 5 échecs par compte et par adresse IP en 15 minutes
             # (et 25 par adresse IP, tous comptes confondus), puis la connexion attend.
             login_throttling:
