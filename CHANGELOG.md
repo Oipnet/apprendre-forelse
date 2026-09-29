@@ -8,6 +8,18 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Corrigé
+
+- **Comptes : les adresses email ne dépendent plus de la casse.** Inscrit en `Ada@example.test`, on ne pouvait
+  pas se connecter en `ada@example.test`, le mot de passe oublié ne trouvait pas le compte, et une nouvelle
+  inscription créait un second compte. Les adresses sont désormais enregistrées et cherchées en minuscules
+  (connexion, mot de passe oublié, inscription, changement d'adresse, `app:admin`, `app:auteur`), et la base
+  refuse deux adresses qui ne diffèrent que par la casse. La migration met les adresses existantes en
+  minuscules ; si des comptes ne diffèrent que par la casse de leur adresse, elle s'arrête et les liste
+  **sans rien fusionner** : gardez-en un par adresse, changez l'adresse des autres (ou supprimez-les) dans
+  `/admin`, puis relancez le déploiement. Les liens de confirmation d'adresse envoyés avant la mise à jour à
+  une adresse qui contenait des majuscules ne sont plus valables : demandez-en un nouveau depuis le compte.
+
 ### Sécurité
 
 - **Vérification des exercices Nuxt : les tests ne voient plus les secrets de la plateforme.** Lancé par

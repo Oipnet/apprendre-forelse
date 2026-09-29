@@ -155,10 +155,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /** L'adresse (nouvelle ou non) vient d'être confirmée par un lien envoyé à cette adresse. */
     public function confirmEmail(string $email, \DateTimeImmutable $now): static
     {
-        $this->email = $email;
+        $this->email = self::normalizeEmail($email);
         $this->emailVerifiedAt = $now;
 
         return $this;
+    }
+
+    /**
+     * L'adresse telle qu'on l'enregistre et la cherche : sans espaces autour, en minuscules. PostgreSQL compare le
+     * texte en tenant compte de la casse : sans cela, « Ada@… » et « ada@… » seraient deux comptes.
+     */
+    public static function normalizeEmail(string $email): string
+    {
+        return mb_strtolower(trim($email));
     }
 
     public function getId(): ?int
@@ -173,7 +182,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setEmail(string $email): static
     {
-        $this->email = $email;
+        $this->email = self::normalizeEmail($email);
 
         return $this;
     }

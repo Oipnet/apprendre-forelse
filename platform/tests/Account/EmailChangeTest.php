@@ -88,6 +88,24 @@ final class EmailChangeTest extends KernelTestCase
         $this->assertEmailCount(0);
     }
 
+    public function testUneAdressePriseLEstQuelleQueSoitLaCasse(): void
+    {
+        $this->createUser('prise@example.test', 'Autre');
+
+        $this->assertSame(EmailChangeOutcome::EmailTaken, $this->emailChange()->request($this->ada, 'Ada', 'Prise@Example.test', self::PASSWORD));
+        $this->assertEmailCount(0);
+    }
+
+    public function testLaNouvelleAdresseEstEnregistreeEnMinuscules(): void
+    {
+        $emailChange = $this->emailChange();
+        $this->assertSame(EmailChangeOutcome::Sent, $emailChange->request($this->ada, 'Ada', ' Ada.Nouvelle@Example.test ', self::PASSWORD));
+        $this->assertEmailAddressContains($this->getMailerMessage(), 'to', 'ada.nouvelle@example.test');
+
+        $this->assertSame(EmailConfirmationOutcome::Changed, $emailChange->confirm($this->openedLink()));
+        $this->assertSame('ada.nouvelle@example.test', $this->ada->getEmail());
+    }
+
     public function testLeLienPartALaNouvelleAdresse(): void
     {
         $this->assertSame(EmailChangeOutcome::Sent, $this->emailChange()->request($this->ada, 'Ada', 'nouvelle@example.test', self::PASSWORD));
