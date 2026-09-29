@@ -90,6 +90,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Atelier : un enregistrement ne casse plus le chargement du contenu.** Un format invalide (faute de syntaxe YAML,
+  liste écrite comme une valeur, objectif manquant…) n'est plus gardé sur le disque : les fichiers d'avant sont remis,
+  l'éditeur affiche l'erreur et garde le travail (réponse 422). Jusqu'ici, il était écrit, et toutes les pages
+  répondaient 500, atelier compris. Un titre avec « : », « [ » ou « # » est cité dans `exercise.yaml` au lieu de le
+  casser ou d'y être tronqué ; une faute de syntaxe YAML et une liste mal écrite (`concepts`, `hints`, `editable`,
+  `readonly`, `objectives`, `docs`, `requests`, `setup`, `mutants`) sont des erreurs de format signalées, plus des
+  erreurs 500. Le premier exercice d'un chapitre vide s'ajoute ; une création ratée ne laisse ni dossier ni ligne dans
+  `track.yaml`. Une frappe pendant l'enregistrement reste marquée « non enregistrée », et un aperçu de fiche arrivé en
+  retard ne remplace plus le plus récent (#156).
 - **Marque blanche : titres de secours.** Le sommaire de chapitre et les pages de notions écrivaient « Forelse » en
   dur dans leur titre de secours ; ils prennent le nom de la marque de l'instance (#182).
 - **Comptes : les adresses email ne dépendent plus de la casse.** Inscrit en `Ada@example.test`, on ne pouvait

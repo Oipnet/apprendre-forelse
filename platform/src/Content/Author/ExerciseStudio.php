@@ -14,6 +14,7 @@ use App\Content\Exercise;
 use App\Content\Pack;
 use App\Content\Track;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * L'atelier des auteurs : lire, enregistrer, créer et vérifier un exercice d'un pack.
@@ -116,18 +117,21 @@ final class ExerciseStudio
     }
 
     /**
-     * Enregistre les fichiers puis relit l'exercice : les erreurs de format remontent tout de suite.
+     * Enregistre les fichiers puis relit tout le contenu. Un format invalide n'est pas gardé : les fichiers d'avant sont
+     * remis, et l'erreur remonte. Un exercice mal formé sur le disque empêcherait de charger tout le contenu (toutes les
+     * pages en 500, atelier compris) ; le travail en cours, lui, reste dans l'éditeur.
      *
      * @param array<string, string> $fichiers
      *
-     * @return string|null le message d'erreur du format, ou null si tout est bon
+     * @return string|null le message d'erreur du format (rien n'a été enregistré), ou null si tout est bon
      */
     public function enregistrer(Track|Pack $owner, Exercise $exercise, array $fichiers): ?string
     {
         $this->writability->assert($owner);
+        $avant = $this->fichiers->read($exercise->directory);
         $this->fichiers->write($exercise->directory, $fichiers);
 
-        return $this->relire($exercise->trackId, $exercise->id);
+        return $this->validerOuAnnuler($exercise->trackId, $exercise->id, fn () => $this->fichiers->write($exercise->directory, $avant));
     }
 
     /**
@@ -154,10 +158,24 @@ final class ExerciseStudio
         $fichiers = $brouillon ?? $this->scaffolders->get($this->environments->get($this->content->findChapter($track, $chapitreId)->environment ?? $track->environment)->framework)
             ->files($this->entete($id, $titre, $base, null), $titre, false);
 
-        (new Filesystem())->mkdir($directory);
-        $this->fichiers->write($directory, $fichiers);
-        $this->trackWriter->ajouterExercice($track, $chapitreId, $id);
-        $this->content->reset();
+        // Un échec, à l'écriture comme à la relecture, ne laisse ni dossier ni ligne dans track.yaml : un nouvel essai
+        // sous le même identifiant reste possible.
+        $filesystem = new Filesystem();
+        $filesystem->mkdir($directory);
+        try {
+            $this->fichiers->write($directory, $fichiers);
+            $this->trackWriter->ajouterExercice($track, $chapitreId, $id);
+        } catch (\Throwable $e) {
+            $filesystem->remove($directory);
+            throw $e;
+        }
+        $erreur = $this->validerOuAnnuler($track->id, $id, function () use ($filesystem, $directory, $track, $id) {
+            $this->trackWriter->retirerExercice($track, $id);
+            $filesystem->remove($directory);
+        });
+        if (null !== $erreur) {
+            throw new ContentException(sprintf('L\'exercice n\'a pas été créé : %s', $erreur));
+        }
 
         return $id;
     }
@@ -184,9 +202,18 @@ final class ExerciseStudio
         $fichiers = $this->scaffolders->get($this->environments->get($environment)->framework)
             ->files($this->entete($id, $titre, null, $environment), $titre, true);
 
-        (new Filesystem())->mkdir($directory);
-        $this->fichiers->write($directory, $fichiers);
-        $this->content->reset();
+        $filesystem = new Filesystem();
+        $filesystem->mkdir($directory);
+        try {
+            $this->fichiers->write($directory, $fichiers);
+        } catch (\Throwable $e) {
+            $filesystem->remove($directory);
+            throw $e;
+        }
+        $erreur = $this->validerOuAnnuler(null, $id, static fn () => $filesystem->remove($directory));
+        if (null !== $erreur) {
+            throw new ContentException(sprintf('L\'exercice n\'a pas été créé : %s', $erreur));
+        }
 
         return $id;
     }
@@ -222,13 +249,29 @@ final class ExerciseStudio
         return $this->checker->check($exercise);
     }
 
-    private function relire(?string $trackId, string $exerciceId): ?string
+    /**
+     * Relit tout le contenu après une écriture de l'atelier. S'il ne se charge plus, $annuler remet le disque dans son
+     * état d'avant : ce qui a été écrit ici ne casse jamais le chargement du contenu.
+     *
+     * @param callable(): void $annuler
+     *
+     * @return string|null le message d'erreur du format, ou null si tout est bon
+     */
+    private function validerOuAnnuler(?string $trackId, string $exerciceId, callable $annuler): ?string
     {
         $this->content->reset();
         try {
-            null === $trackId ? $this->content->findPractice($exerciceId) : $this->content->findExercise($trackId, $exerciceId);
-        } catch (ContentException $e) {
-            return $e->getMessage();
+            $trouve = null === $trackId ? $this->content->findPractice($exerciceId) : $this->content->findExercise($trackId, $exerciceId);
+            if (null === $trouve) {
+                throw new ContentException(sprintf('L\'exercice « %s » ne se retrouve pas après l\'écriture.', $exerciceId));
+            }
+        } catch (\Throwable $e) {
+            $annuler();
+            $this->content->reset();
+            if ($e instanceof ContentException) {
+                return $e->getMessage();
+            }
+            throw $e;
         }
 
         return null;
@@ -239,11 +282,14 @@ final class ExerciseStudio
      */
     private function entete(string $id, string $titre, ?string $base, ?string $environnementPratique): string
     {
-        $yaml = "id: {$id}\ntitle: {$titre}\nconcepts: []\n";
+        // Les valeurs passent par Yaml::dump() : un titre comme « Boss : le ménage », « [Bonus] … » ou « #[Route] »
+        // est cité, au lieu de casser le fichier ou d'y être tronqué.
+        $ligne = static fn (string $cle, string $valeur): string => $cle.': '.Yaml::dump($valeur)."\n";
+        $yaml = $ligne('id', $id).$ligne('title', $titre)."concepts: []\n";
         if (null !== $environnementPratique) {
-            return $yaml.sprintf("environment: %s\npublished: %s\nsummary: À écrire, en une phrase.\n# version: '8.1'\n# pull_request: https://github.com/…\n# Retirez cette ligne pour publier l'exercice.\nvisibility: admin\n", $environnementPratique, date('Y-m-d'));
+            return $yaml.$ligne('environment', $environnementPratique).sprintf("published: %s\nsummary: À écrire, en une phrase.\n# version: '8.1'\n# pull_request: https://github.com/…\n# Retirez cette ligne pour publier l'exercice.\nvisibility: admin\n", date('Y-m-d'));
         }
 
-        return $yaml."xp: 200\n".(null !== $base ? "base: {$base}\n" : '');
+        return $yaml."xp: 200\n".(null !== $base ? $ligne('base', $base) : '');
     }
 }

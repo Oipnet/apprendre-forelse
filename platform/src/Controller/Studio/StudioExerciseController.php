@@ -77,8 +77,13 @@ final class StudioExerciseController extends AbstractController
             return $this->json(['erreur' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        // Le format peut être invalide : c'est enregistré quand même, mais on le dit tout de suite.
-        return $this->json(['enregistre' => true, 'format' => $erreur]);
+        // Un format invalide n'est pas gardé sur le disque (il empêcherait de charger tout le contenu) : l'éditeur garde
+        // le travail et affiche l'erreur.
+        if (null !== $erreur) {
+            return $this->json(['erreur' => 'Format invalide : rien n\'a été enregistré.', 'format' => $erreur], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return $this->json(['enregistre' => true, 'format' => null]);
     }
 
     #[Route('/{trackId}/{exerciseId}', name: 'app_studio_delete', methods: ['DELETE'])]

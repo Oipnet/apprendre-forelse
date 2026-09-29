@@ -2,6 +2,7 @@
 
 namespace App\Content;
 
+use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -46,7 +47,12 @@ final class PackFiles
         if (!is_file($file)) {
             throw new ContentException(sprintf('Fichier manquant : %s', $file));
         }
-        $data = Yaml::parseFile($file);
+        try {
+            $data = Yaml::parseFile($file);
+        } catch (ParseException $e) {
+            // Une erreur de format comme une autre : signalée avec le fichier et la ligne, jamais une page 500.
+            throw new ContentException(sprintf('%s : YAML invalide, %s', $file, lcfirst($e->getMessage())), previous: $e);
+        }
         if (!\is_array($data)) {
             throw new ContentException(sprintf('%s : contenu YAML invalide.', $file));
         }
@@ -59,6 +65,9 @@ final class PackFiles
     {
         if (!isset($data[$key]) || '' === $data[$key]) {
             throw new ContentException(sprintf('%s : clé « %s » manquante.', $file, $key));
+        }
+        if (!\is_scalar($data[$key])) {
+            throw new ContentException(sprintf('%s : « %s » est un texte, pas une liste ni un objet.', $file, $key));
         }
 
         return (string) $data[$key];

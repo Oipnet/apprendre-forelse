@@ -70,36 +70,67 @@ final class TrackWriter
     {
         $lignes = explode("\n", (string) file_get_contents($fichier));
 
+        $trouve = false;
         $dansLeChapitre = false;
         $dansLaListe = false;
-        $indentation = '      ';
+        $indentation = null;
         $insertion = null;
+        $cleIndentation = '    ';
+        $listeVide = null;      // « exercises: [] »
+        $cleExercices = null;   // « exercises: », suivie ou non d'entrées
+        $derniereLigne = null;  // dernière ligne utile du chapitre
         foreach ($lignes as $numero => $ligne) {
-            if (preg_match('/^\s*-?\s*id:\s*([\w-]+)\s*$/', $ligne, $trouve)) {
+            // « id » en début de ligne est celui du parcours, pas d'un chapitre.
+            if (preg_match('/^(\s*)(-?\s*)id:\s*([\w-]+)\s*$/', $ligne, $id) && '' !== $id[1].$id[2]) {
                 if ($dansLeChapitre) {
                     break; // chapitre suivant : on insère juste avant
                 }
-                $dansLeChapitre = $trouve[1] === $chapitreId;
+                $dansLeChapitre = $id[3] === $chapitreId;
                 $dansLaListe = false;
+                if ($dansLeChapitre) {
+                    $trouve = true;
+                    // Les clés du chapitre s'alignent sur « id », après le tiret.
+                    $cleIndentation = $id[1].str_repeat(' ', \strlen($id[2]));
+                }
             }
-            if ($dansLeChapitre && preg_match('/^\s*exercises:\s*$/', $ligne)) {
-                $dansLaListe = true;
+            if (!$dansLeChapitre) {
                 continue;
             }
-            if ($dansLaListe && preg_match('/^(\s*)-\s*([\w-]+)\s*$/', $ligne, $trouve)) {
-                if ($trouve[2] === $exerciceId) {
+            if ('' !== trim($ligne) && !str_starts_with(ltrim($ligne), '#')) {
+                $derniereLigne = $numero;
+            }
+            if (preg_match('/^(\s*)exercises:\s*\[\s*\]\s*(#.*)?$/', $ligne, $vide)) {
+                $listeVide = [$numero, $vide[1]];
+                continue;
+            }
+            if (preg_match('/^(\s*)exercises:\s*(#.*)?$/', $ligne, $cle)) {
+                $dansLaListe = true;
+                $cleExercices = [$numero, $cle[1]];
+                continue;
+            }
+            if ($dansLaListe && preg_match('/^(\s*)-\s*([\w-]+)\s*$/', $ligne, $entree)) {
+                if ($entree[2] === $exerciceId) {
                     return; // déjà inscrit
                 }
-                $indentation = $trouve[1];
+                $indentation = $entree[1];
                 $insertion = $numero + 1;
             }
         }
 
-        if (null === $insertion) {
-            throw new ContentException(sprintf('Chapitre « %s » introuvable (ou sans exercices) dans %s.', $chapitreId, $fichier));
+        if (!$trouve) {
+            throw new ContentException(sprintf('Chapitre « %s » introuvable dans %s.', $chapitreId, $fichier));
         }
-
-        array_splice($lignes, $insertion, 0, [$indentation.'- '.$exerciceId]);
+        if (null !== $insertion) {
+            array_splice($lignes, $insertion, 0, [$indentation.'- '.$exerciceId]);
+        } elseif (null !== $listeVide) {
+            // Premier exercice d'un chapitre « exercises: [] » : la liste s'ouvre.
+            array_splice($lignes, $listeVide[0], 1, [$listeVide[1].'exercises:', $listeVide[1].'  - '.$exerciceId]);
+        } elseif (null !== $cleExercices) {
+            array_splice($lignes, $cleExercices[0] + 1, 0, [$cleExercices[1].'  - '.$exerciceId]);
+        } else {
+            // Chapitre sans clé « exercises » : elle s'ajoute après sa dernière ligne.
+            array_splice($lignes, (int) $derniereLigne + 1, 0, [$cleIndentation.'exercises:', $cleIndentation.'  - '.$exerciceId]);
+        }
         (new Filesystem())->dumpFile($fichier, implode("\n", $lignes));
     }
 }
