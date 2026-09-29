@@ -105,6 +105,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **CI : une poussée sur main n'interrompt plus le déploiement de la préproduction (#164).** Sur main, un nouveau
+  passage attend la fin du précédent au lieu de l'annuler : l'annulation tuait `deployer.sh` au milieu des
+  migrations ou de `compose up`. Les PR gardent l'annulation du passage précédent.
 - **Environnements des packs : l'archive est refaite quand ses sources changent (#162).** Une empreinte du contenu
   de la chaîne de dossiers (`extends:` compris, hors `vendor/`, `node_modules/`, `var/`) est notée à côté de
   l'archive ; quand elle change, `app:environnement:synchroniser`, le bouton de l'administration et
