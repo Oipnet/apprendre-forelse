@@ -233,7 +233,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		hintsUsed: saved?.hintsUsed ?? 0,
 		solutionRevealed: saved?.solutionRevealed ?? false,
 		completed: saved?.completed ?? false,
-	}, { onWritten: reload });
+	}, {
+		onWritten: reload,
+		// L'enregistrement automatique échoue (session expirée, accès terminé) : l'apprenant doit le savoir avant de fermer.
+		onDraftError: (error) => status(`Brouillon non enregistré : ${error.message}`, 'ko'),
+	});
+	window.addEventListener('pagehide', () => session.saveOnExit());
 	const [{ EditorPanel, monaco }, { registerCompletion }, { BeforeAfterDialog }] = await editeur;
 	mark('editorLoaded');
 	const editor = new EditorPanel($('#tabs'), $('#editor'), (path, content) => session.edit(path, content));

@@ -25,6 +25,8 @@ export interface CompletionResult {
 export interface ProgressStore {
 	load(): Promise<SavedProgress | null>;
 	saveDraft(files: Record<string, string>, hintsUsed: number): Promise<void>;
+	/** Le brouillon, envoyé pendant que la page se ferme : la requête lui survit, personne n'attend la réponse. */
+	saveDraftOnExit?(files: Record<string, string>, hintsUsed: number): void;
 	complete(hintsUsed: number): Promise<CompletionResult>;
 	/** La solution de référence, contre l'XP de l'exercice ; null quand elle n'est pas accessible (invité). */
 	revealSolution(): Promise<Record<string, string> | null>;
@@ -79,13 +81,18 @@ export class LocalProgressStore implements ProgressStore {
 export class ApiProgressStore implements ProgressStore {
 	constructor(private readonly url: string) {}
 
-	private async send(method: string, path = '', body?: unknown) {
-		const response = await fetch(this.url + path, {
+	private request(method: string, path: string, body: unknown, keepalive = false) {
+		return fetch(this.url + path, {
 			method,
 			headers: { accept: 'application/json', ...(body ? { 'content-type': 'application/json' } : {}) },
 			body: body ? JSON.stringify(body) : undefined,
 			credentials: 'same-origin',
+			keepalive,
 		});
+	}
+
+	private async send(method: string, path = '', body?: unknown) {
+		const response = await this.request(method, path, body);
 		if (response.status === 401) throw new Error('votre session a expiré : reconnectez-vous, puis rechargez la page (votre code reste dans l\'éditeur)');
 		// Accès au parcours terminé (cohorte expirée, remboursement) : la progression reste sur le serveur.
 		if (response.status === 403) throw new Error('votre accès à ce parcours a pris fin : la progression déjà enregistrée est conservée, et vous la retrouverez avec un nouvel accès');
@@ -99,6 +106,11 @@ export class ApiProgressStore implements ProgressStore {
 
 	async saveDraft(files: Record<string, string>, hintsUsed: number) {
 		await this.send('PUT', '', { files, hintsUsed });
+	}
+
+	/** keepalive : la requête part même si la page se ferme (au-delà de 64 Kio, le navigateur la refuse : tant pis). */
+	saveDraftOnExit(files: Record<string, string>, hintsUsed: number) {
+		this.request('PUT', '', { files, hintsUsed }, true).catch(() => {});
 	}
 
 	async complete(hintsUsed: number) {

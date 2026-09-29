@@ -90,6 +90,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Playground : les tests voient toujours le dernier code, et un brouillon non enregistré se dit (#160).**
+  - Les frappes partent vers le runtime en un seul lot (`writeFiles`) ; un « Lancer les tests » ou une requête
+    pendant une écriture en cours l'attend, au lieu de tester l'ancien code. Un lot refusé reste en attente et part
+    avec l'écriture suivante (le runtime rejoue de toute façon le lot entier après un redémarrage).
+  - L'échec de l'enregistrement automatique du brouillon (session expirée, accès terminé) s'affiche dans la barre
+    de statut au lieu de la seule console.
+  - À la fermeture de la page (`pagehide`), le brouillon en attente part tout de suite (`fetch` avec `keepalive`) :
+    les dernières frappes ne sont plus perdues.
 - **Paiement : compte supprimé pendant un paiement ouvert, achat contesté (#158).**
   - Supprimer son compte ferme d'abord la session Stripe encore ouverte : plus rien ne peut y être payé.
   - Si Stripe n'a pas pu la fermer (paiement différé déjà lancé) et que le paiement aboutit, l'achat sans compte
