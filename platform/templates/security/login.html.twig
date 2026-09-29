@@ -17,6 +17,11 @@
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
             <button class="primary" type="submit">Se connecter</button>
         </form>
+        {% if github.enabled %}
+            <div class="oauth">
+                <a class="ac-btn outline" href="{{ path('app_github_start') }}">Continuer avec GitHub</a>
+            </div>
+        {% endif %}
         <p class="meta">Pas encore de compte ? <a rel="nofollow" href="{{ path('app_register') }}">Créez-en un</a>.</p>
     </main>
 {% endblock %}

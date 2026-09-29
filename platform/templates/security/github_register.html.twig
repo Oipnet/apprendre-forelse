@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un compte avec GitHub · {{ marque.name }}{% endblock %}
+
+{% block body %}
+    <main class="form-card">
+        <h1>Créer un compte</h1>
+        <p class="meta">Avec votre compte GitHub <strong>{{ profile.login }}</strong>, à l'adresse <strong>{{ profile.primaryEmail }}</strong>. Pas de mot de passe : vous vous connecterez avec GitHub.</p>
+        {{ form_start(form) }}
+            {{ form_errors(form) }}
+            {{ form_row(form.displayName) }}
+            {{ form_row(form.invitationCode) }}
+            <p class="meta">Votre adresse ne sert qu'à votre compte : <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
+            <button class="primary" type="submit">Créer mon compte</button>
+        {{ form_end(form) }}
+        {% if inviteOnly %}
+            <p class="meta">Pas de code d'invitation ? <a href="{{ path('app_home') }}#liste-attente">Laissez votre adresse sur la liste d'attente</a> : vous serez prévenu à l'ouverture.</p>
+        {% endif %}
+    </main>
+{% endblock %}

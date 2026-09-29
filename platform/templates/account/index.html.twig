@@ -116,18 +116,46 @@
                             {{ form_start(profileForm) }}
                                 {{ form_row(profileForm.displayName) }}
                                 {{ form_row(profileForm.email) }}
-                                {{ form_row(profileForm.currentPassword, {attr: {placeholder: '••••••••'}}) }}
+                                {% if profileForm.currentPassword is defined %}
+                                    {{ form_row(profileForm.currentPassword, {attr: {placeholder: '••••••••'}}) }}
+                                {% elseif not recentSignIn %}
+                                    <p class="ac-muted">Pour changer d'adresse, <a href="{{ path('app_github_start', {mode: 'confirmer', suite: path('app_account') ~ '#profil'}) }}">confirmez d'abord votre identité avec GitHub</a>.</p>
+                                {% endif %}
+                                {{ form_errors(profileForm) }}
                                 <button class="ac-btn primary" type="submit">Enregistrer</button>
                             {{ form_end(profileForm) }}
                         </div>
                         <div class="ac-card site-form" id="mot-de-passe">
                             <div class="ac-eyebrow">Mot de passe</div>
-                            {{ form_start(passwordForm) }}
-                                {{ form_row(passwordForm.currentPassword, {attr: {placeholder: '••••••••'}}) }}
-                                {{ form_row(passwordForm.plainPassword, {attr: {placeholder: '8 caractères minimum'}}) }}
-                                <button class="ac-btn outline" type="submit">Changer le mot de passe</button>
-                            {{ form_end(passwordForm) }}
+                            {% if user.hasPassword %}
+                                {{ form_start(passwordForm) }}
+                                    {{ form_row(passwordForm.currentPassword, {attr: {placeholder: '••••••••'}}) }}
+                                    {{ form_row(passwordForm.plainPassword, {attr: {placeholder: '8 caractères minimum'}}) }}
+                                    <button class="ac-btn outline" type="submit">Changer le mot de passe</button>
+                                {{ form_end(passwordForm) }}
+                            {% else %}
+                                <p class="ac-muted">Vous vous connectez avec GitHub. Pour pouvoir aussi vous connecter avec votre adresse, choisissez un mot de passe avec <a href="{{ path('app_forgot_password_request') }}">« Mot de passe oublié ? »</a> : le lien part à {{ user.email }}.</p>
+                            {% endif %}
                         </div>
+                        {% if githubEnabled or githubIdentity %}
+                            <div class="ac-card" id="github">
+                                <div class="ac-eyebrow">GitHub</div>
+                                {% if githubIdentity %}
+                                    <p class="ac-muted">Lié au compte GitHub <strong>{{ githubIdentity.username }}</strong> depuis le {{ githubIdentity.linkedAt|date('d/m/Y') }} : vous pouvez vous connecter avec.</p>
+                                    {% if user.hasPassword %}
+                                        <form method="post" action="{{ path('app_account_github_unlink') }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                                            <button class="ac-btn outline small" type="submit">Délier GitHub</button>
+                                        </form>
+                                    {% else %}
+                                        <p class="ac-muted">C'est votre seul moyen de connexion : pour le délier, choisissez d'abord un mot de passe.</p>
+                                    {% endif %}
+                                {% else %}
+                                    <p class="ac-muted">Liez votre compte GitHub pour vous connecter sans mot de passe.</p>
+                                    <a class="ac-btn outline small" href="{{ path('app_github_start', {mode: 'lier'}) }}">Lier mon compte GitHub</a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     </div>
                 </section>
 
@@ -142,7 +170,12 @@
                         </summary>
                         <div class="ac-danger-body site-form">
                             {{ form_start(deleteForm) }}
-                                {{ form_row(deleteForm.password, {label: 'Votre mot de passe, pour confirmer'}) }}
+                                {{ form_errors(deleteForm) }}
+                                {% if deleteForm.password is defined %}
+                                    {{ form_row(deleteForm.password, {label: 'Votre mot de passe, pour confirmer'}) }}
+                                {% elseif not recentSignIn %}
+                                    <p><a href="{{ path('app_github_start', {mode: 'confirmer', suite: path('app_account') ~ '#suppression'}) }}">Confirmez d'abord votre identité avec GitHub</a>, puis revenez ici.</p>
+                                {% endif %}
                                 <button class="ac-btn danger" type="submit">Supprimer définitivement</button>
                             {{ form_end(deleteForm) }}
                         </div>
