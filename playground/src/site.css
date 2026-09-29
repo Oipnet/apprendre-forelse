@@ -525,41 +525,41 @@ a.lesson-link:hover {
 	padding-top: 1.5rem;
 	border-top: 1px solid var(--border);
 }
-/* Coloration des blocs de code (classes hl-… de tempest/highlight) */
-.lesson .hl-keyword {
+/* Coloration des blocs de code (classes hl-… de tempest/highlight) : fiches de cours et consignes du playground */
+:is(.lesson, .instructions) .hl-keyword {
 	color: #c792ea;
 }
-.lesson .hl-type {
+:is(.lesson, .instructions) .hl-type {
 	color: #82aaff;
 }
-.lesson .hl-property {
+:is(.lesson, .instructions) .hl-property {
 	color: #f0a35e;
 }
-.lesson .hl-attribute {
+:is(.lesson, .instructions) .hl-attribute {
 	color: #e0b04a;
 }
-.lesson .hl-value {
+:is(.lesson, .instructions) .hl-value {
 	color: #c3e88d;
 }
-.lesson .hl-variable {
+:is(.lesson, .instructions) .hl-variable {
 	color: #e6e6ea;
 }
-.lesson .hl-number,
-.lesson .hl-literal {
+:is(.lesson, .instructions) .hl-number,
+:is(.lesson, .instructions) .hl-literal {
 	color: #f78c6c;
 }
-.lesson .hl-generic {
+:is(.lesson, .instructions) .hl-generic {
 	color: #89ddff;
 }
-.lesson .hl-comment,
-.lesson .hl-comment span {
+:is(.lesson, .instructions) .hl-comment,
+:is(.lesson, .instructions) .hl-comment span {
 	color: var(--muted);
 	font-style: italic;
 }
-.lesson .hl-strong {
+:is(.lesson, .instructions) .hl-strong {
 	font-weight: 600;
 }
-.lesson .hl-em {
+:is(.lesson, .instructions) .hl-em {
 	font-style: italic;
 }
 

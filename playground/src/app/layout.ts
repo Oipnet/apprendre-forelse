@@ -1,5 +1,5 @@
 import { escapeHtml } from './html';
-import { markdown } from './markdown';
+import { sanitize } from './markdown';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 
 /** Le squelette HTML de l'environnement d'exercice : consignes, code, aperçu, écran de démarrage. */
@@ -36,7 +36,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 		<aside class="panel brief">
 			<div class="already-done" id="already-done" hidden></div>
 			<div class="xp">${exercise.concepts.map((c) => `<span class="chip">${escapeHtml(c)}</span>`).join('')}${exercise.xp > 0 ? `<span class="chip gold">${exercise.xp} XP</span>` : ''}${exercise.practice?.version ? (exercise.practice.versionUrl ? `<a class="chip gold" href="${escapeHtml(exercise.practice.versionUrl)}" title="Les autres exercices de cette version">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</a>` : `<span class="chip gold">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</span>`) : ''}</div>
-			<article class="instructions">${markdown(exercise.instructions)}</article>
+			<article class="instructions">${sanitize(exercise.instructionsHtml)}</article>
 			<h3>Objectifs</h3>
 			<ul class="objectives">
 				${exercise.objectives.map((o) => `<li data-test="${escapeHtml(o.test)}"><span class="dot" aria-hidden="true"></span><span class="sr-only objective-state"></span><span>${escapeHtml(o.label)}</span></li>`).join('')}

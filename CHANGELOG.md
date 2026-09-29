@@ -49,6 +49,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Accessibilité.** Focus clavier visible partout (`:focus-visible`), lien « Aller au contenu », objectifs marqués
   ✓ / ✕ en plus de leur couleur, `--accent-fill` et `--accent-text` pour un contraste AA (texte blanc sur les
   boutons principaux, liens sur fond sombre), `cursor: not-allowed` sur un bouton désactivé (#173).
+- **Playground : la consigne, telle que la page publique la montre.** `ExercisePayload` gagne `instructionsHtml`,
+  rendu par `LessonRenderer` : le code y est coloré et le titre de tête, qui répétait l'en-tête, disparaît. Le
+  playground l'affiche (après DOMPurify) au lieu de refaire le rendu avec `marked` ; `instructions` reste envoyé
+  en markdown (#171).
 
 ### Corrigé
 

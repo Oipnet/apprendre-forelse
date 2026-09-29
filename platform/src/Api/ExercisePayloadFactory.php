@@ -5,6 +5,7 @@ namespace App\Api;
 use App\Content\ChapterOutline;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
+use App\Content\LessonRenderer;
 use App\Content\Exercise;
 use App\Content\PracticeVersionIndex;
 use App\Content\TrackVisibility;
@@ -31,6 +32,7 @@ final readonly class ExercisePayloadFactory
         private PracticeVersionIndex $versions,
         private TrackAccessChecker $access,
         private EnvironmentArtifacts $artifacts,
+        private LessonRenderer $markdown,
         #[Autowire('%kernel.environment%')] private string $kernelEnvironment,
         #[Autowire('%kernel.project_dir%/public')] private string $publicDir = __DIR__.'/../../public',
     ) {
@@ -76,6 +78,9 @@ final readonly class ExercisePayloadFactory
             'objectives' => array_map(static fn ($o) => ['test' => $o->test, 'label' => $o->label], $exercise->objectives),
             'hints' => $exercise->hints,
             'instructions' => $exercise->instructions,
+            // La consigne telle que la page publique la montre (code coloré, sans le titre qui répète l'en-tête) :
+            // le playground l'affiche au lieu de refaire le rendu avec un autre moteur.
+            'instructionsHtml' => $this->markdown->toHtmlUnderTitle($exercise->instructions),
             'setup' => $exercise->setup,
             'requests' => array_map(static fn ($r) => [
                 'title' => $r->title,

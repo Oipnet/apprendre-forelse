@@ -37,6 +37,22 @@ final class ExerciseApiTest extends WebTestCase
         $this->assertNull($payload['previous'], 'Premier exercice du parcours : rien avant.');
     }
 
+    /** La consigne arrive rendue par la plateforme, comme sur la page publique : un seul moteur markdown, code coloré. */
+    public function testLaConsigneArriveRendueCodeColoreSansSonTitre(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
+        $payload = $this->json($client, 'GET', '/api/exercises/pratique/exemple-map-request-header');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringStartsWith('# Lire un en-tête', $payload['instructions'], 'Le markdown reste disponible.');
+        $this->assertStringNotContainsString('<h1', $payload['instructionsHtml'], 'Le titre de tête répète l\'en-tête du playground : il disparaît.');
+        $this->assertStringNotContainsString('Lire un en-tête avec', $payload['instructionsHtml']);
+        $this->assertStringContainsString('<h2>Avant</h2>', $payload['instructionsHtml']);
+        $this->assertMatchesRegularExpression('#<span class="hl-keyword">(public|function|return)</span>#', $payload['instructionsHtml'], 'Le code est coloré, comme sur la page publique.');
+    }
+
     /**
      * Le navigateur ne redéclare plus rien du framework : tout ce qu'il en sait arrive ici. Les clés de
      * ce bloc sont le contrat avec playground/src/app/types.ts (FrameworkProfile) — les changer casse
