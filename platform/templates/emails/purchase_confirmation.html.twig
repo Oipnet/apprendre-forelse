@@ -1,22 +1,34 @@
+{% extends 'emails/_layout.html.twig' %}
+
 {% set title = track ? track.title : purchase.trackId %}
-<p>Bonjour{{ purchase.user ? ' ' ~ purchase.user.displayName : '' }},</p>
+{% set compte = url('app_account') ~ '#achats' %}
+{% set vendeur = include('emails/_seller.twig') %}
 
-<p>Merci pour votre achat : votre accès au parcours « {{ title }} » est ouvert, à vie, avec ses mises à jour.</p>
+{% block preheader %}Votre accès au parcours « {{ title }} » est ouvert, à vie.{% endblock %}
 
-<p>Montant payé : {{ (purchase.amountPaid ?? purchase.price)|euros }} TTC, le {{ purchase.paidAt|date('d/m/Y') }}.</p>
+{% block content %}
+<p style="margin:0 0 12px;">Bonjour{{ purchase.user ? ' ' ~ purchase.user.displayName : '' }},</p>
 
-{% if track %}<p>Reprendre le parcours : <a href="{{ url('app_track', {trackId: track.id}) }}">{{ url('app_track', {trackId: track.id}) }}</a></p>{% endif %}
+<p style="margin:0 0 12px;">Merci pour votre achat : votre accès au parcours « {{ title }} » est ouvert, à vie, avec ses mises à jour.</p>
 
+{% if track %}{{ include('emails/_button.html.twig', {href: url('app_track', {trackId: track.id}), label: 'Commencer le parcours'}) }}{% endif %}
+
+<p style="margin:0 0 12px;">Montant payé : {{ (purchase.amountPaid ?? purchase.price)|euros }} TTC{% if purchase.paidAt %}, le {{ purchase.paidAt|date('d/m/Y') }}{% endif %}.</p>
+
+{# Reçu et facture : un lien chacun quand ils mènent à deux endroits, une seule ligne quand c'est le compte. #}
 {% if purchase.receiptUrl %}
-    <p>Votre reçu : <a href="{{ purchase.receiptUrl }}">{{ purchase.receiptUrl }}</a></p>
+<p style="margin:0 0 12px;"><a class="lien" href="{{ purchase.receiptUrl }}" style="color:#9a5b18;">Voir le reçu</a>{% if purchase.stripeInvoiceId %} · <a class="lien" href="{{ compte }}" style="color:#9a5b18;">Télécharger la facture</a> (depuis votre compte){% endif %}</p>
+{% elseif purchase.stripeInvoiceId %}
+<p style="margin:0 0 12px;">Votre reçu et votre facture sont dans <a class="lien" href="{{ compte }}" style="color:#9a5b18;">votre compte, rubrique Achats</a>.</p>
 {% else %}
-    <p>Votre reçu sera disponible dans votre compte : <a href="{{ url('app_account') }}">{{ url('app_account') }}</a></p>
+<p style="margin:0 0 12px;">Votre reçu sera disponible dans <a class="lien" href="{{ compte }}" style="color:#9a5b18;">votre compte, rubrique Achats</a>.</p>
 {% endif %}
 
-{% if purchase.stripeInvoiceId %}<p>Votre facture se télécharge depuis votre compte : <a href="{{ url('app_account') }}#achats">{{ url('app_account') }}</a></p>{% endif %}
+{% if purchase.termsVersion %}<p style="margin:0 0 12px;">Vous avez accepté les <a class="lien" href="{{ url('app_terms') }}" style="color:#9a5b18;">conditions générales de vente</a> (version du {{ purchase.termsVersion|date('d/m/Y') }}).</p>{% endif %}
 
-{% if purchase.termsVersion %}<p>Conditions générales de vente acceptées (version du {{ purchase.termsVersion|date('d/m/Y') }}) : <a href="{{ url('app_terms') }}">{{ url('app_terms') }}</a></p>{% endif %}
+<p style="margin:0;">Vous avez demandé l'accès immédiat au parcours et renoncé à votre droit de rétractation le {{ purchase.withdrawalWaiverAcceptedAt|date('d/m/Y à H:i') }}.</p>
+{% endblock %}
 
-<p>Vous avez demandé l'accès immédiat au parcours et renoncé à votre droit de rétractation le {{ purchase.withdrawalWaiverAcceptedAt|date('d/m/Y à H:i') }}.</p>
+{% block reason %}Vous recevez cet email parce que vous avez acheté un parcours sur {{ marque.name }}.{% endblock %}
 
-<p>{{ marque.signature }}</p>
+{% block legal %}{% if vendeur %}<p style="margin:6px 0 0;">Vendeur : {{ vendeur }}.</p>{% endif %}{% endblock %}

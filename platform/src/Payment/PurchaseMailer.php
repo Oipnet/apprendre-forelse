@@ -4,9 +4,10 @@ namespace App\Payment;
 
 use App\Content\ContentRepository;
 use App\Entity\Purchase;
+use App\Instance\Branding;
+use App\Legal\LegalInfo;
+use App\Mail\Sender;
 use Psr\Log\LoggerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -18,8 +19,9 @@ final readonly class PurchaseMailer
         private MailerInterface $mailer,
         private ContentRepository $content,
         private LoggerInterface $logger,
-        #[Autowire(env: 'MAILER_FROM')]
-        private string $mailerFrom,
+        private Sender $sender,
+        private Branding $branding,
+        private LegalInfo $legal,
     ) {
     }
 
@@ -27,13 +29,13 @@ final readonly class PurchaseMailer
     public function sendConfirmation(Purchase $purchase): void
     {
         $track = $this->content->findTrack($purchase->getTrackId());
-        $email = (new TemplatedEmail())
-            ->from(Address::create($this->mailerFrom))
-            ->to($purchase->getCustomerEmail())
-            ->subject(sprintf('Votre accès au parcours « %s »', $track->title ?? $purchase->getTrackId()))
+        $email = $this->sender->email()
+            ->to(new Address($purchase->getCustomerEmail(), (string) $purchase->getUser()?->getDisplayName()))
+            ->subject(sprintf('Votre accès au parcours « %s » sur %s', $track->title ?? $purchase->getTrackId(), $this->branding->name()))
             ->htmlTemplate('emails/purchase_confirmation.html.twig')
             ->textTemplate('emails/purchase_confirmation.txt.twig')
-            ->context(['purchase' => $purchase, 'track' => $track]);
+            // L'identité du vendeur : la confirmation d'une vente à distance est le support durable du contrat.
+            ->context(['purchase' => $purchase, 'track' => $track, 'seller' => $this->legal]);
 
         try {
             $this->mailer->send($email);

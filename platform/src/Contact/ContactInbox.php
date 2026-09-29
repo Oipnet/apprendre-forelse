@@ -3,7 +3,7 @@
 namespace App\Contact;
 
 use App\Entity\ContactMessage;
-use App\Legal\LegalInfo;
+use App\Mail\Sender;
 use App\Security\QuotaExceeded;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -24,12 +24,8 @@ final readonly class ContactInbox
     public function __construct(
         private EntityManagerInterface $entityManager,
         private MailerInterface $mailer,
-        private LegalInfo $legal,
         private LoggerInterface $logger,
-        #[Autowire(env: 'MAILER_FROM')]
-        private string $mailerFrom,
-        #[Autowire(env: 'CONTACT_EMAIL')]
-        private string $contactEmail,
+        private Sender $sender,
         /** Par adresse IP (config/packages/rate_limiter.yaml) : de quoi écrire, pas de quoi remplir la boîte. */
         #[Autowire(service: 'limiter.contact')]
         private RateLimiterFactoryInterface $limiter,
@@ -44,7 +40,7 @@ final readonly class ContactInbox
 
     public function recipient(): string
     {
-        return trim($this->contactEmail) ?: trim($this->legal->publisherEmail);
+        return $this->sender->contact();
     }
 
     /** @throws QuotaExceeded trop de messages depuis cette adresse IP : rien n'est enregistré */
@@ -57,7 +53,7 @@ final readonly class ContactInbox
         $this->entityManager->flush();
 
         $email = (new TemplatedEmail())
-            ->from(Address::create($this->mailerFrom))
+            ->from($this->sender->from())
             ->to($this->recipient())
             ->replyTo(new Address((string) $message->getEmail(), (string) $message->getName()))
             ->subject(sprintf('[Contact] %s : %s', $message->getSubject()?->label(), $message->getOrganization() ?? $message->getName()))

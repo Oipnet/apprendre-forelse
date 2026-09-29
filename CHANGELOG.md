@@ -52,6 +52,21 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Modifié
 
+- **Emails : un gabarit commun, un bouton par action, l'expéditeur de la marque (#194, #195, #196, #197, #198).**
+  - Un layout HTML commun (`emails/_layout.html.twig`) : `lang="fr"`, 600 px, texte d'aperçu propre à chaque email,
+    en-tête au nom et au logo de la marque (PNG, adresse absolue ; le nom seul pour un logo webp), pied avec
+    signature, lien vers le site et « Vous recevez cet email parce que… ». Les versions texte ont le même pied.
+  - Un bouton pour l'action principale (« Confirmer mon adresse », « Choisir un mot de passe », « Commencer le
+    parcours », « Me connecter »), l'adresse en clair dessous ; des libellés pour les liens secondaires.
+  - Confirmation d'achat : reçu et facture sur une ligne quand ils mènent au compte, `#achats` dans les deux
+    versions, plus de lignes vides en double, destinataire avec son nom, date de paiement protégée, identité du
+    vendeur (`LEGAL_*`) en pied quand elle est renseignée.
+  - Un service `App\Mail\Sender` : un `MAILER_FROM` sans nom prend celui de la marque, et les emails aux apprenants
+    répondent à l'adresse de contact. Objets harmonisés (« Choisissez un nouveau mot de passe sur … », le nom de
+    la marque partout, l'instance dans l'alerte d'inscription) ; sans adresse de contact, l'avis de changement
+    d'adresse renvoie aux mentions légales au lieu de « répondez à cet email ».
+  - `EmailTemplatesTest` rend chaque gabarit dans ses variantes : mêmes liens en HTML et en texte, pas de lignes
+    vides en double, langue et pied de page, marque blanche sans trace du moteur.
 - **Polices préchargées.** Les pages du site annoncent (`<link rel="preload">`) les deux polices du haut de page,
   Newsreader et Instrument Sans, avec leur URL tirée du manifeste Vite : le titre s'affiche plus tôt, sans changer de
   police en cours de route. Une police que la marque de l'instance remplace n'est pas préchargée ; l'éditeur

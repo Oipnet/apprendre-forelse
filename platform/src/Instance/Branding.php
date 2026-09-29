@@ -112,6 +112,20 @@ final class Branding
         return $this->imageUrl('logo', 'img/logo-168.webp');
     }
 
+    /**
+     * Le logo des emails, ou null (le nom seul). Le webp du site passe mal dans Outlook et bien des clients : le moteur
+     * fournit un PNG, et le logo d'une marque n'est repris que s'il est en PNG, JPEG ou GIF.
+     */
+    public function emailLogoUrl(): ?string
+    {
+        $file = $this->config()->images['logo'] ?? null;
+        if (null !== $file && !preg_match('/\.(png|jpe?g|gif)$/i', $file)) {
+            return null;
+        }
+
+        return $this->imageUrl('logo', 'img/logo.png');
+    }
+
     public function iconUrl(): ?string
     {
         return $this->imageUrl('icon', 'img/favicon.svg');
