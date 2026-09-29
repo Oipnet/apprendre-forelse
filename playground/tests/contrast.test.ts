@@ -24,3 +24,40 @@ describe('contraste des couleurs d\'accent (WCAG AA, 4,5:1 pour le texte)', () =
 		for (const fond of ['bg', 'panel', 'panel-2']) expect(contrast(token('accent-text'), token(fond)), fond).toBeGreaterThanOrEqual(4.5);
 	});
 });
+
+/** Les couleurs des pages du site : thème clair (body.site-page), et thème sombre qui en redéfinit une partie. */
+const block = (selector: string) => {
+	const start = css.indexOf(`${selector} {`);
+	return css.slice(start, css.indexOf('}', start));
+};
+const palette = (text: string) => Object.fromEntries([...text.matchAll(/--(lp-[\w-]+|ok|ko):\s*(#[0-9a-f]{6})/gi)].map((m) => [m[1], m[2]]));
+const light = palette(block('\nbody.site-page'));
+const themes = { clair: light, sombre: { ...light, ...palette(block("html[data-theme='auto'] body.site-page")) } };
+
+/** Paires texte / fond du site, telles que les règles de site.css les emploient. */
+const pairs: [string, string[]][] = [
+	['lp-ink', ['lp-bg', 'lp-bg-2', 'lp-card', 'lp-sand', 'lp-tint-3']],
+	['lp-ink-2', ['lp-bg', 'lp-bg-2', 'lp-card']],
+	['lp-ink-3', ['lp-bg', 'lp-bg-2', 'lp-card']],
+	['lp-ink-4', ['lp-bg', 'lp-bg-2', 'lp-card']],
+	['lp-ink-5', ['lp-bg', 'lp-card', 'lp-sand']],
+	['lp-rust', ['lp-bg', 'lp-bg-2', 'lp-card', 'lp-gold-bg']],
+	['lp-on-ink', ['lp-ink', 'lp-ink-hover']],
+	['lp-green-ink', ['lp-bg', 'lp-card', 'lp-ok-bg']],
+	['lp-ok-ink', ['lp-ok-bg']],
+	['lp-ko-text', ['lp-bg', 'lp-card', 'lp-ko-bg']],
+	['lp-ko-ink', ['lp-ko-bg', 'lp-card']],
+	['lp-ko-ink-2', ['lp-ko-bg', 'lp-ko-field']],
+	['lp-rust-ink', ['lp-gold-bg']],
+	['lp-dark-ink', ['lp-dark', 'lp-dark-2']],
+];
+
+describe.each(Object.entries(themes))('contraste des pages du site, thème %s (WCAG AA)', (_nom, couleurs) => {
+	it.each(pairs)('--%s sur ses fonds', (texte, fonds) => {
+		for (const fond of fonds) expect(contrast(couleurs[texte], couleurs[fond]), `--${texte} sur --${fond}`).toBeGreaterThanOrEqual(4.5);
+	});
+
+	it('texte clair sur les boutons de suppression (--lp-ko, --lp-ko-hover)', () => {
+		for (const fond of ['lp-ko', 'lp-ko-hover']) expect(contrast('#fdf4f2', couleurs[fond]), fond).toBeGreaterThanOrEqual(4.5);
+	});
+});

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="fr">
+{# data-theme="auto" : les pages du site suivent le thème du système (voir le thème sombre de site.css). #}
+<html lang="fr"{% if marque.followsSystemTheme %} data-theme="auto"{% endif %}>
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">

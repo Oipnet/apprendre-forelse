@@ -130,6 +130,15 @@ final class Branding
     }
 
     /**
+     * Vrai tant que la marque ne déclare pas de couleurs : le site suit alors le thème du système (clair ou sombre).
+     * Une palette imposée est claire (BrandingStylesheet::COLORS) : on ne la mélange pas aux encres du thème sombre.
+     */
+    public function followsSystemTheme(): bool
+    {
+        return [] === $this->config()->colors;
+    }
+
+    /**
      * Les textes de l'accueil propres à la marque. Chaque clé vaut null quand la section n'est pas
      * déclarée : la page ne l'affiche pas.
      *
