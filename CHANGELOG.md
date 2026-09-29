@@ -47,6 +47,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Modifié
 
+- **Polices préchargées.** Les pages du site annoncent (`<link rel="preload">`) les deux polices du haut de page,
+  Newsreader et Instrument Sans, avec leur URL tirée du manifeste Vite : le titre s'affiche plus tôt, sans changer de
+  police en cours de route. Une police que la marque de l'instance remplace n'est pas préchargée ; l'éditeur
+  d'exercice n'en précharge aucune (#182).
 - **Accueil : « Essayer » mène un visiteur à la Pratique.** Le premier chapitre d'un parcours demande un compte :
   le bouton ouvrait donc une page verrouillée. Il mène désormais au plus récent des exercices de Pratique, qui se
   joue sans compte ; un compte connecté, ou une instance sur invitation, garde le premier exercice du premier
@@ -81,6 +85,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Marque blanche : titres de secours.** Le sommaire de chapitre et les pages de notions écrivaient « Forelse » en
+  dur dans leur titre de secours ; ils prennent le nom de la marque de l'instance (#182).
 - **Comptes : les adresses email ne dépendent plus de la casse.** Inscrit en `Ada@example.test`, on ne pouvait
   pas se connecter en `ada@example.test`, le mot de passe oublié ne trouvait pas le compte, et une nouvelle
   inscription créait un second compte. Les adresses sont désormais enregistrées et cherchées en minuscules

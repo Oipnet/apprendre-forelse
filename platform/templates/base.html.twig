@@ -53,6 +53,10 @@
            Le script vient du domaine du site, pas d'un tiers. Absent du bac à sable, qui n'hérite pas de ce gabarit. #}
         <script defer src="{{ analytics.scriptUrl }}" data-website-id="{{ analytics.websiteId }}"></script>
         {%- endif %}
+        {# Les polices du haut de page, annoncées avant la feuille de styles qui les nomme (voir FontPreloadExtension). #}
+        {% block font_preloads %}{% for url in font_preloads() -%}
+            <link rel="preload" href="{{ url }}" as="font" type="font/woff2" crossorigin>
+        {% endfor %}{% endblock %}
         {% block stylesheets %}
             {{ vite_entry_link_tags('site') }}
         {% endblock %}
