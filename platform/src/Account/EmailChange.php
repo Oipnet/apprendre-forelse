@@ -32,7 +32,7 @@ final readonly class EmailChange
     /**
      * Enregistre le profil ; si l'adresse change, envoie le lien qui la confirmera.
      *
-     * @param bool $recentlySignedIn pour un compte sans mot de passe : il vient de repasser par GitHub (RecentSignIn)
+     * @param bool $recentlySignedIn pour un compte sans mot de passe : il vient de repasser par un fournisseur lié (RecentSignIn)
      */
     public function request(User $user, string $displayName, string $email, ?string $password, bool $recentlySignedIn = false): EmailChangeOutcome
     {

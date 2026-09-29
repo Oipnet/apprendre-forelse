@@ -9,12 +9,12 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Finaliser une inscription commencée avec GitHub : le pseudo (proposé d'après GitHub) et le code d'invitation.
- * L'adresse est celle que GitHub a vérifiée, et il n'y a pas de mot de passe.
+ * Finaliser une inscription commencée avec un fournisseur (GitHub, Google, LinkedIn) : le pseudo (proposé d'après
+ * lui) et le code d'invitation. L'adresse est celle qu'il a vérifiée, et il n'y a pas de mot de passe.
  *
  * @extends AbstractType<array{displayName: string|null, invitationCode: string|null}>
  */
-final class GithubRegistrationFormType extends AbstractType
+final class ExternalRegistrationFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {

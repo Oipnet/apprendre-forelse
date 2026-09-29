@@ -10,7 +10,7 @@ use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 
 /**
  * Supprimer son compte : le mot de passe confirme que c'est bien le titulaire, et pas un onglet resté ouvert. Un compte
- * sans mot de passe (créé avec GitHub) repasse par GitHub à la place (voir RecentSignIn) : le formulaire est vide.
+ * sans mot de passe (créé avec un fournisseur) repasse par un fournisseur lié à la place (voir RecentSignIn) : le formulaire est vide.
  *
  * @extends AbstractType<array{password: string|null}>
  */

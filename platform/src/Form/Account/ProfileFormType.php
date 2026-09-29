@@ -16,7 +16,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *
  * Changer d'adresse demande le mot de passe (vérifié par AccountController) : sur un poste partagé ou avec une
  * session volée, remplacer l'adresse puis réinitialiser le mot de passe suffirait à s'approprier le compte. Un compte
- * sans mot de passe (créé avec GitHub) n'a pas ce champ : il repasse par GitHub (voir RecentSignIn).
+ * sans mot de passe (créé avec un fournisseur) n'a pas ce champ : il repasse par un fournisseur lié (voir RecentSignIn).
  *
  * @extends AbstractType<array{displayName: string, email: string, currentPassword: string|null}>
  */

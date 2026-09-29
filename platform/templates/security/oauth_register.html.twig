@@ -1,11 +1,11 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Créer un compte avec GitHub · {{ marque.name }}{% endblock %}
+{% block title %}Créer un compte avec {{ provider.label }} · {{ marque.name }}{% endblock %}
 
 {% block body %}
     <main class="form-card">
         <h1>Créer un compte</h1>
-        <p class="meta">Avec votre compte GitHub <strong>{{ profile.login }}</strong>, à l'adresse <strong>{{ profile.primaryEmail }}</strong>. Pas de mot de passe : vous vous connecterez avec GitHub.</p>
+        <p class="meta">Avec votre compte {{ provider.label }} <strong>{{ profile.username }}</strong>, à l'adresse <strong>{{ profile.primaryEmail }}</strong>. Pas de mot de passe : vous vous connecterez avec {{ provider.label }}.</p>
         {{ form_start(form) }}
             {{ form_errors(form) }}
             {{ form_row(form.displayName) }}

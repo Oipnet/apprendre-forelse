@@ -83,6 +83,10 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
+      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
       # Appels au mentor par jour pour toute l'instance ; atteint, il se tait jusqu'au lendemain.
       MENTOR_DAILY_LIMIT: ${MENTOR_DAILY_LIMIT:-500}
       # Paiement des parcours : vide, pas de bouton d'achat actif (voir .env.example).

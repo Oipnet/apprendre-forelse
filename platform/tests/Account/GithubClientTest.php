@@ -2,8 +2,8 @@
 
 namespace App\Tests\Account;
 
-use App\Account\Github\GithubClient;
-use App\Account\Github\GithubException;
+use App\Account\Oauth\GithubClient;
+use App\Account\Oauth\OauthException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -38,7 +38,7 @@ final class GithubClientTest extends TestCase
 
     public function testUnCodeRefuseParGithubEstUneErreur(): void
     {
-        $this->expectException(GithubException::class);
+        $this->expectException(OauthException::class);
         $this->expectExceptionMessage('bad_verification_code');
 
         $this->client([], ['error' => 'bad_verification_code'])->fetchProfile('code', self::CALLBACK);

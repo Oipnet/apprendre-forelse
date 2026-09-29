@@ -2,7 +2,7 @@
 
 namespace App\Tests\Controller;
 
-use App\Account\Github\GithubClient;
+use App\Account\Oauth\GithubClient;
 use App\Entity\ExternalIdentity;
 use App\Entity\User;
 use App\Repository\ExternalIdentityRepository;
@@ -131,9 +131,9 @@ final class GithubTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         $this->assertSelectorTextContains('.form-card', 'ada-l');
         $this->assertSelectorTextContains('.form-card', 'ada@example.test');
-        $this->assertSame('Ada Lovelace', $crawler->filter('#github_registration_form_displayName')->attr('value'), 'Pseudo proposé d\'après GitHub.');
+        $this->assertSame('Ada Lovelace', $crawler->filter('#external_registration_form_displayName')->attr('value'), 'Pseudo proposé d\'après GitHub.');
 
-        $this->client->submitForm('Créer mon compte', ['github_registration_form[displayName]' => 'Ada L.'], serverParameters: self::ORIGIN);
+        $this->client->submitForm('Créer mon compte', ['external_registration_form[displayName]' => 'Ada L.'], serverParameters: self::ORIGIN);
         $this->assertResponseRedirects('/');
         $this->client->followRedirect();
         $this->assertSelectorTextContains('.lp-user', 'Ada L.', 'Connectée dans la foulée.');
@@ -238,11 +238,11 @@ final class GithubTest extends WebTestCase
 
         $this->roundTrip();
         $this->client->followRedirect();
-        $this->client->submitForm('Créer mon compte', ['github_registration_form[displayName]' => 'Ada'], serverParameters: self::ORIGIN);
+        $this->client->submitForm('Créer mon compte', ['external_registration_form[displayName]' => 'Ada'], serverParameters: self::ORIGIN);
         $this->assertResponseStatusCodeSame(422);
         $this->assertSelectorTextContains('.form-card', 'Indiquez votre code d\'invitation.');
 
-        $this->client->submitForm('Créer mon compte', ['github_registration_form[displayName]' => 'Ada', 'github_registration_form[invitationCode]' => 'PROMO-A'], serverParameters: self::ORIGIN);
+        $this->client->submitForm('Créer mon compte', ['external_registration_form[displayName]' => 'Ada', 'external_registration_form[invitationCode]' => 'PROMO-A'], serverParameters: self::ORIGIN);
         $this->assertResponseRedirects('/');
         $this->assertSame('promo-a', static::getContainer()->get(UserRepository::class)->findOneByEmail('ada@example.test')?->getCohort()?->getCode(), 'Code saisi en majuscules, enregistré normalisé.');
     }

@@ -6,7 +6,7 @@ use App\Repository\ExternalIdentityRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Un compte chez un fournisseur d'identité (GitHub) lié à un compte de la plateforme : on s'y connecte sans mot de
+ * Un compte chez un fournisseur d'identité (GitHub, Google, LinkedIn) lié à un compte de la plateforme : on s'y connecte sans mot de
  * passe. Le compte est retrouvé par l'identifiant du fournisseur, jamais par l'email, qui peut changer chez lui.
  */
 #[ORM\Entity(repositoryClass: ExternalIdentityRepository::class)]
@@ -15,6 +15,8 @@ use Doctrine\ORM\Mapping as ORM;
 class ExternalIdentity
 {
     public const string GITHUB = 'github';
+    public const string GOOGLE = 'google';
+    public const string LINKEDIN = 'linkedin';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -45,7 +47,7 @@ class ExternalIdentity
         $this->user = $user;
         $this->provider = $provider;
         $this->providerUserId = $providerUserId;
-        $this->username = $username;
+        $this->setUsername($username);
         $this->linkedAt = $linkedAt;
     }
 
@@ -76,7 +78,8 @@ class ExternalIdentity
 
     public function setUsername(string $username): static
     {
-        $this->username = $username;
+        // Une adresse (Google) peut dépasser la colonne : l'affichage n'en demande pas tant.
+        $this->username = mb_substr($username, 0, 100);
 
         return $this;
     }

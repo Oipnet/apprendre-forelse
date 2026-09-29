@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Account\Github;
+namespace App\Account\Oauth;
 
 use App\Entity\User;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
- * Un compte sans mot de passe confirme son identité en repassant par GitHub : changer d'adresse ou supprimer le
- * compte demande une connexion GitHub de moins de cinq minutes, dans cette session.
+ * Un compte sans mot de passe confirme son identité en repassant par un fournisseur qui lui est lié : changer
+ * d'adresse ou supprimer le compte demande une connexion de moins de cinq minutes, dans cette session.
  */
 final readonly class RecentSignIn
 {
     public const int WINDOW_SECONDS = 300;
-    private const string KEY = 'github.signed_in_at';
+    private const string KEY = 'oauth.signed_in_at';
 
     public function __construct(
         private RequestStack $requests,

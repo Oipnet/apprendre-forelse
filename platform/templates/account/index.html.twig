@@ -119,7 +119,7 @@
                                 {% if profileForm.currentPassword is defined %}
                                     {{ form_row(profileForm.currentPassword, {attr: {placeholder: '••••••••'}}) }}
                                 {% elseif not recentSignIn %}
-                                    <p class="ac-muted">Pour changer d'adresse, <a href="{{ path('app_github_start', {mode: 'confirmer', suite: path('app_account') ~ '#profil'}) }}">confirmez d'abord votre identité avec GitHub</a>.</p>
+                                    <p class="ac-muted">Pour changer d'adresse, confirmez d'abord votre identité avec {% for name, identity in identities|filter((identity, name) => oauth.get(name)) %}{{ not loop.first ? (loop.last ? ' ou ' : ', ') }}<a href="{{ path('app_oauth_start', {fournisseur: name, mode: 'confirmer', suite: path('app_account') ~ '#profil'}) }}">{{ oauth.label(name) }}</a>{% else %}un compte lié{% endfor %}.</p>
                                 {% endif %}
                                 {{ form_errors(profileForm) }}
                                 <button class="ac-btn primary" type="submit">Enregistrer</button>
@@ -134,28 +134,32 @@
                                     <button class="ac-btn outline" type="submit">Changer le mot de passe</button>
                                 {{ form_end(passwordForm) }}
                             {% else %}
-                                <p class="ac-muted">Vous vous connectez avec GitHub. Pour pouvoir aussi vous connecter avec votre adresse, choisissez un mot de passe avec <a href="{{ path('app_forgot_password_request') }}">« Mot de passe oublié ? »</a> : le lien part à {{ user.email }}.</p>
+                                <p class="ac-muted">Vous vous connectez avec {{ identities|keys|map(name => oauth.label(name))|join(', ', ' ou ') }}. Pour pouvoir aussi vous connecter avec votre adresse, choisissez un mot de passe avec <a href="{{ path('app_forgot_password_request') }}">« Mot de passe oublié ? »</a> : le lien part à {{ user.email }}.</p>
                             {% endif %}
                         </div>
-                        {% if githubEnabled or githubIdentity %}
-                            <div class="ac-card" id="github">
-                                <div class="ac-eyebrow">GitHub</div>
-                                {% if githubIdentity %}
-                                    <p class="ac-muted">Lié au compte GitHub <strong>{{ githubIdentity.username }}</strong> depuis le {{ githubIdentity.linkedAt|date('d/m/Y') }} : vous pouvez vous connecter avec.</p>
-                                    {% if user.hasPassword %}
-                                        <form method="post" action="{{ path('app_account_github_unlink') }}">
+                        {# Un fournisseur activé, ou retiré de la configuration mais encore lié : on peut toujours le délier. #}
+                        {% set shown = oauthProviders|map(provider => provider.name)|merge(identities|keys)|reduce((names, name) => name in names ? names : names|merge([name]), []) %}
+                        {% for name in shown %}
+                            {% set identity = identities[name] ?? null %}
+                            {% set label = oauth.label(name) %}
+                            <div class="ac-card" id="{{ name }}">
+                                <div class="ac-eyebrow">{{ label }}</div>
+                                {% if identity %}
+                                    <p class="ac-muted">Lié au compte {{ label }} <strong>{{ identity.username }}</strong> depuis le {{ identity.linkedAt|date('d/m/Y') }} : vous pouvez vous connecter avec.</p>
+                                    {% if user.hasPassword or identities|length > 1 %}
+                                        <form method="post" action="{{ path('app_account_oauth_unlink', {fournisseur: name}) }}">
                                             <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
-                                            <button class="ac-btn outline small" type="submit">Délier GitHub</button>
+                                            <button class="ac-btn outline small" type="submit">Délier {{ label }}</button>
                                         </form>
                                     {% else %}
                                         <p class="ac-muted">C'est votre seul moyen de connexion : pour le délier, choisissez d'abord un mot de passe.</p>
                                     {% endif %}
                                 {% else %}
-                                    <p class="ac-muted">Liez votre compte GitHub pour vous connecter sans mot de passe.</p>
-                                    <a class="ac-btn outline small" href="{{ path('app_github_start', {mode: 'lier'}) }}">Lier mon compte GitHub</a>
+                                    <p class="ac-muted">Liez votre compte {{ label }} pour vous connecter sans mot de passe.</p>
+                                    <a class="ac-btn outline small" href="{{ path('app_oauth_start', {fournisseur: name, mode: 'lier'}) }}">Lier mon compte {{ label }}</a>
                                 {% endif %}
                             </div>
-                        {% endif %}
+                        {% endfor %}
                     </div>
                 </section>
 
@@ -174,7 +178,7 @@
                                 {% if deleteForm.password is defined %}
                                     {{ form_row(deleteForm.password, {label: 'Votre mot de passe, pour confirmer'}) }}
                                 {% elseif not recentSignIn %}
-                                    <p><a href="{{ path('app_github_start', {mode: 'confirmer', suite: path('app_account') ~ '#suppression'}) }}">Confirmez d'abord votre identité avec GitHub</a>, puis revenez ici.</p>
+                                    <p>Confirmez d'abord votre identité avec {% for name, identity in identities|filter((identity, name) => oauth.get(name)) %}{{ not loop.first ? (loop.last ? ' ou ' : ', ') }}<a href="{{ path('app_oauth_start', {fournisseur: name, mode: 'confirmer', suite: path('app_account') ~ '#suppression'}) }}">{{ oauth.label(name) }}</a>{% else %}un compte lié{% endfor %}, puis revenez ici.</p>
                                 {% endif %}
                                 <button class="ac-btn danger" type="submit">Supprimer définitivement</button>
                             {{ form_end(deleteForm) }}
