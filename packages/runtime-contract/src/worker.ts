@@ -12,7 +12,11 @@ export function createModuleWorker(url: string, name?: string): Worker {
 	const absolute = new URL(url, import.meta.url);
 	if (absolute.origin === location.origin) return new Worker(absolute, { type: 'module', name });
 	const shim = new Blob([`import ${JSON.stringify(absolute.href)};`], { type: 'text/javascript' });
-	return new Worker(URL.createObjectURL(shim), { type: 'module', name });
+	const shimUrl = URL.createObjectURL(shim);
+	const worker = new Worker(shimUrl, { type: 'module', name });
+	// Le navigateur a résolu l'URL à la construction : la garder retiendrait le blob à chaque worker créé.
+	URL.revokeObjectURL(shimUrl);
+	return worker;
 }
 
 export interface WorkerRuntimeOptions {
@@ -22,6 +26,11 @@ export interface WorkerRuntimeOptions {
 	silenceMs?: number;
 	/** Intervalle du battement de cœur. */
 	pingMs?: number;
+	/**
+	 * Silence au-delà duquel un démarrage (le premier, ou la reprise après un redémarrage) est tenu pour raté. Un
+	 * téléchargement qui avance donne signe de vie à chaque progression : seul un démarrage figé est interrompu.
+	 */
+	bootSilenceMs?: number;
 	/** Fabrique du worker ; par défaut createModuleWorker (remplacée dans les tests). */
 	spawn?: () => Worker;
 	/** Le worker sert-il la console du projet (runCommand) ? Par défaut, oui. */
@@ -50,6 +59,11 @@ export class WorkerRuntime implements Runtime {
 	private readonly label: string;
 	private readonly silenceMs: number;
 	private readonly pingMs: number;
+	private readonly bootSilenceMs: number;
+	/** Le worker courant a démarré : une exception qu'il lève ensuite n'est plus un échec de chargement. */
+	private started = false;
+	/** Le worker courant n'a pas pu se charger : les appels suivants échouent tout de suite, avec cette erreur. */
+	private loadError: Error | null = null;
 	private readonly spawn: () => Worker;
 	/** L'environnement démarré : de quoi relancer un worker neuf. Absent tant que le premier boot n'a pas réussi. */
 	private env?: EnvironmentSpec;
@@ -66,6 +80,7 @@ export class WorkerRuntime implements Runtime {
 		this.label = options.label ?? workerName;
 		this.silenceMs = options.silenceMs ?? 10_000;
 		this.pingMs = options.pingMs ?? 1_000;
+		this.bootSilenceMs = options.bootSilenceMs ?? 90_000;
 		this.spawn = options.spawn ?? (() => createModuleWorker(workerUrl, workerName));
 		// Sans console, la méthode n'existe pas : la page le voit, au lieu d'essuyer un échec par commande.
 		if (options.commands === false) this.runCommand = undefined;
@@ -74,6 +89,8 @@ export class WorkerRuntime implements Runtime {
 
 	private start(): Worker {
 		const worker = this.spawn();
+		this.started = false;
+		this.loadError = null;
 		worker.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
 			if (worker !== this.worker) return;
 			this.lastSign = performance.now();
@@ -88,11 +105,16 @@ export class WorkerRuntime implements Runtime {
 			if (message.type === 'result') call?.resolve(message.result);
 			else call?.reject(new Error(message.error));
 		});
-		// Échec de chargement du worker (import cassé…) : on échoue bruyamment plutôt que d'attendre.
+		// « error » signale aussi une exception non rattrapée dans le worker (un setTimeout qui lève, dans une route
+		// de l'apprenant) : le worker vit toujours, et ses réponses suivantes arriveront. Seul un échec avant la fin du
+		// démarrage (import cassé, chargement impossible) fait échouer les appels ; ensuite, un vrai blocage est
+		// l'affaire du battement de cœur.
 		worker.addEventListener('error', (event) => {
 			if (worker !== this.worker) return;
 			const error = new Error(`Worker ${this.workerName} : ${event.message || 'échec du chargement'}`);
 			console.error(error, event);
+			if (this.started) return;
+			this.loadError = error;
 			this.rejectAll(error);
 		});
 		return worker;
@@ -107,6 +129,7 @@ export class WorkerRuntime implements Runtime {
 	private send<M extends WorkerMethod>(method: M, args: WorkerArgs[M]): Promise<WorkerResult[M]> {
 		const id = this.nextId++;
 		return new Promise<WorkerResult[M]>((resolve, reject) => {
+			if (this.loadError) return reject(this.loadError);
 			// Rien n'était en cours : le silence se compte à partir de maintenant, pas du dernier message.
 			if (this.pending.size === 0) this.lastSign = performance.now();
 			this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
@@ -118,6 +141,23 @@ export class WorkerRuntime implements Runtime {
 	private async call<M extends WorkerMethod>(method: M, ...args: WorkerArgs[M]): Promise<WorkerResult[M]> {
 		await this.restarting;
 		return this.send(method, args);
+	}
+
+	/**
+	 * Surveille un démarrage : sans signe de vie du worker (progression, réponse) pendant bootSilenceMs, les appels en
+	 * cours échouent. Un démarrage figé (instanciation Wasm qui n'aboutit jamais) ne laisse plus l'écran tourner sans
+	 * fin. Rend de quoi arrêter la surveillance.
+	 */
+	private guardBoot(): () => void {
+		this.lastSign = performance.now();
+		const timer = setInterval(() => {
+			if (performance.now() - this.lastSign <= this.bootSilenceMs) return;
+			clearInterval(timer);
+			const seconds = Math.round(this.bootSilenceMs / 1000);
+			this.rejectAll(new Error(`${this.label} ne démarre pas (aucun signe depuis ${seconds} s) : rechargez la page.`));
+		}, this.pingMs);
+
+		return () => clearInterval(timer);
 	}
 
 	/** Surveille le worker une fois démarré : le premier boot (téléchargement, décompression) n'est pas concerné. */
@@ -143,8 +183,10 @@ export class WorkerRuntime implements Runtime {
 		this.worker = this.start();
 		this.emit({ phase: 'restarting', reason });
 		this.restarting = (async () => {
+			const stopGuard = this.guardBoot();
 			try {
 				await this.send('boot', [this.env!]);
+				this.started = true;
 				const written: Record<string, string> = {};
 				for (const [path, content] of this.files) {
 					if (content !== null) written[path] = content;
@@ -156,6 +198,8 @@ export class WorkerRuntime implements Runtime {
 				const message = error instanceof Error ? error.message.split('\n')[0] : String(error);
 				this.emit({ phase: 'failed', error: message });
 				throw new Error(`${this.label} n'a pas pu redémarrer (${message}) : rechargez la page.`);
+			} finally {
+				stopGuard();
 			}
 			this.restarting = null;
 			this.watch();
@@ -177,7 +221,13 @@ export class WorkerRuntime implements Runtime {
 
 	async boot(env: EnvironmentSpec, onProgress?: (p: BootProgress) => void) {
 		this.onProgress = onProgress;
-		await this.call('boot', env);
+		const stopGuard = this.guardBoot();
+		try {
+			await this.call('boot', env);
+		} finally {
+			stopGuard();
+		}
+		this.started = true;
 		// Un redémarrage se fait en silence : la barre de progression n'est plus affichée.
 		this.onProgress = undefined;
 		this.env = env;

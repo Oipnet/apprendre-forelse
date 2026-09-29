@@ -57,14 +57,18 @@ let nextProcessId = 1;
 async function loadPhp(requested: string): Promise<PHP> {
 	const version = requested as '8.4';
 	const wasm = await compilePhpWasm(version);
+	// Emscripten n'offre pas de voie d'échec à instantiateWasm : sans elle, une instanciation refusée (mémoire Wasm
+	// indisponible, plausible sur mobile) laissait le démarrage en suspens pour toujours.
+	let instantiationFailed!: (error: unknown) => void;
+	const failure = new Promise<never>((_, reject) => (instantiationFailed = reject));
 	const emscriptenOptions = {
 		processId: nextProcessId++,
 		instantiateWasm(imports: WebAssembly.Imports, receive: (instance: WebAssembly.Instance, module: WebAssembly.Module) => void) {
-			WebAssembly.instantiate(wasm, imports).then((instance) => receive(instance, wasm));
+			WebAssembly.instantiate(wasm, imports).then((instance) => receive(instance, wasm), instantiationFailed);
 			return {};
 		},
 	};
-	const php = new PHP(await loadWebRuntime(version, { emscriptenOptions: emscriptenOptions as never }));
+	const php = new PHP(await Promise.race([loadWebRuntime(version, { emscriptenOptions: emscriptenOptions as never }), failure]));
 	// Pas de processus dans le navigateur : une commande externe (le php-cs-fixer que lance MakerBundle
 	// après make:entity, par exemple) se termine sans rien faire, au lieu de faire échouer la commande.
 	await php.setSpawnHandler(createSpawnHandler((_command, processApi) => processApi.exit(0)));
