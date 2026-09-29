@@ -309,7 +309,9 @@ une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
   `--bg`…). Toutes sont posées après la feuille de styles. Hexadécimal seulement ; une valeur mal écrite
   **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire qu'une
   erreur. Les deux palettes se déclarent séparément et l'une n'est jamais déduite de l'autre : une
-  couleur claire assombrie automatiquement, c'est un contraste perdu au hasard.
+  couleur claire assombrie automatiquement, c'est un contraste perdu au hasard. Sans `colors`, les pages du
+  site suivent la préférence du système et passent en sombre quand elle l'est ; dès que `colors` est déclaré,
+  elles restent claires, dans la palette de la marque.
 - `logo`, `icon` et `share` nomment des fichiers **de ce dossier** (jamais un chemin), servis sur
   `/marque/<rôle>` avec la date du fichier dans l'URL : une image remplacée change d'URL. Sans `icon`,
   l'onglet n'affiche aucune icône plutôt que celle du moteur : mieux vaut rien que la marque d'un autre.

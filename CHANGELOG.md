@@ -10,6 +10,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Thème sombre des pages du site.** Accueil, parcours, fiches, compte, Pratique et atelier suivent la préférence du
+  système (`prefers-color-scheme`) : un apprenant en mode sombre n'est plus ébloui en quittant l'éditeur. Les couleurs
+  claires écrites en dur dans `site.css` deviennent des variables (`--lp-on-ink`, `--lp-sand`, `--lp-ko-bg`…),
+  redéfinies par le thème sombre ; les contrastes AA des deux thèmes sont vérifiés par un test. Une instance qui
+  déclare `colors` dans `marque.yaml` garde sa palette claire. L'éditeur d'exercice reste sombre (#175).
 - **Champs SEO des parcours : `level` et `description` de chapitre.** `level` (beginner, intermediate, advanced)
   devient `educationalLevel` du `Course` et des exercices ; la `description` d'un chapitre s'affiche sur son sommaire
   et en devient la meta description. Les exercices de parcours déclarent un `LearningResource` (notions en `teaches`,

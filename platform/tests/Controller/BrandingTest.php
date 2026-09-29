@@ -141,6 +141,26 @@ final class BrandingTest extends WebTestCase
         $this->assertStringContainsString(':root{--accent:#5ab0cc}', (string) $client->getResponse()->getContent());
     }
 
+    /** Le thème sombre suit le système, sauf quand la marque impose sa palette (claire) : les deux ne se mélangent pas. */
+    public function testLeThemeSombreSuitLeSystemeSaufPaletteDeMarque(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/');
+        $this->assertSelectorExists('html[data-theme="auto"]', 'Marque du moteur : clair ou sombre, selon le système.');
+
+        self::ensureKernelShutdown();
+        $client = $this->clientAvecMarque("name: Atelier Bigorneau\nfonts:\n  serif: \"Georgia, serif\"\n");
+        $client->request('GET', '/');
+        $this->assertSelectorExists('html[data-theme="auto"]', 'Des polices seules ne touchent pas aux couleurs.');
+
+        self::ensureKernelShutdown();
+        file_put_contents($this->tmp.'/marque.yaml', "name: Atelier Bigorneau\ncolors:\n  accent: '#1f6f8b'\n");
+        $client = static::createClient();
+        $client->request('GET', '/');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorNotExists('html[data-theme]', 'Une palette de marque reste claire.');
+    }
+
     /** L'échappatoire : ce que marque.yaml ne règle pas, un gabarit déposé le remplace. */
     public function testUnGabaritDeposeRemplaceCeluiDuMoteur(): void
     {
