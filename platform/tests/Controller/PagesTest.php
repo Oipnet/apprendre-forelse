@@ -30,8 +30,8 @@ final class PagesTest extends WebTestCase
         $this->assertSelectorTextContains('.lp-parcours', 'Découverte');
         $this->assertSelectorTextContains('.lp-chapters li:first-child', 'Bonjour Symfony');
         $this->assertSelectorExists('.lp-hero a.primary[href="/pratique/exemple-map-request-header"]', 'Le bouton principal mène un visiteur à la Pratique, qui se joue sans compte (voir PracticeTest).');
-        $this->assertSelectorExists('#liste-attente a[href="/inscription"]', 'Inscription libre : pas de liste d\'attente.');
-        $this->assertSelectorNotExists('form.lp-form');
+        $this->assertSelectorExists('#liste-attente a[href="/inscription"]', 'Inscription libre : on propose le compte…');
+        $this->assertSelectorExists('#liste-attente form.lp-form', '… et, pour qui n\'est pas prêt, la liste d\'attente (voir WaitlistTest).');
         $this->assertSelectorExists('body > a.skip-link[href="#contenu"]:first-child', 'Le premier arrêt du clavier : aller au contenu, par-dessus l\'en-tête.');
         $this->assertSelectorExists('#contenu[tabindex="-1"]');
     }

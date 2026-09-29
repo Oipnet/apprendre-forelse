@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 
-/** Liste d'attente de la page d'accueil, proposée en bêta fermée (REGISTRATION_INVITE_ONLY). */
+/** Liste d'attente de la page d'accueil : l'ouverture en bêta fermée (REGISTRATION_INVITE_ONLY), les nouveaux parcours sinon. */
 final class WaitlistTest extends WebTestCase
 {
     use DatabaseTrait;
@@ -80,6 +80,25 @@ final class WaitlistTest extends WebTestCase
         $this->assertCount(0, static::getContainer()->get(EntityManagerInterface::class)->getRepository(WaitlistEntry::class)->findAll(), '… mais rien n\'est enregistré.');
     }
 
+    public function testEnInscriptionLibreLaListeAnnonceLesNouveauxParcours(): void
+    {
+        foreach (['_ENV', '_SERVER'] as $store) {
+            $GLOBALS[$store]['REGISTRATION_INVITE_ONLY'] = '0';
+        }
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/');
+        $this->assertSelectorExists('#liste-attente a[href="/inscription"]', 'Le compte reste proposé en premier.');
+        $this->assertSelectorTextContains('#liste-attente .note', 'Un email par nouveau parcours');
+        $this->assertSelectorTextNotContains('#liste-attente', 'bêta');
+
+        $this->submit($client, 'ada@example.test');
+        $this->assertSelectorTextContains('#liste-attente .lp-notice.ok', 'quand un nouveau parcours ouvre');
+        $this->assertCount(1, static::getContainer()->get(EntityManagerInterface::class)->getRepository(WaitlistEntry::class)->findAll());
+        $this->assertNotNull($crawler);
+    }
+
     public function testSansJetonCsrf(): void
     {
         $client = static::createClient();
@@ -92,7 +111,7 @@ final class WaitlistTest extends WebTestCase
     private function submit(KernelBrowser $client, string $email, string $trap = ''): Crawler
     {
         $crawler = $client->request('GET', '/');
-        $this->assertSelectorExists('form.lp-form', 'Bêta fermée : la page propose la liste d\'attente.');
+        $this->assertSelectorExists('form.lp-form', 'La page d\'accueil propose la liste d\'attente.');
         $form = $crawler->filter('form.lp-form')->form();
         $form['email'] = $email;
         $form['site'] = $trap;

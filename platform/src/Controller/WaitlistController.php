@@ -10,7 +10,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Liste d'attente de la page d'accueil (bêta fermée) : une adresse, rien d'autre.
+ * Liste d'attente de la page d'accueil (l'ouverture en bêta fermée, les nouveaux parcours sinon) : une adresse, rien d'autre.
  * Le résultat est rendu par la page d'accueil elle-même (?liste=ok|invalide), pas par un flash
  * qui s'afficherait en haut de page, loin du formulaire.
  */

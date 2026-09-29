@@ -9,7 +9,7 @@ use Psr\Clock\ClockInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-/** La liste d'attente de la bêta fermée : une adresse, inscrite une seule fois. */
+/** La liste d'attente de la page d'accueil : une adresse, inscrite une seule fois. */
 final readonly class Waitlist
 {
     public function __construct(

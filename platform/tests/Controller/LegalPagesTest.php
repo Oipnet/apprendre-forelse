@@ -70,7 +70,8 @@ final class LegalPagesTest extends WebTestCase
         $this->assertSelectorExists('#droits a[href="mailto:contact@example.test"]');
         $this->assertSelectorTextContains('#destinataires', 'Hébergeur Test');
         $this->assertSelectorTextNotContains('#destinataires', 'Anthropic', 'Sans clé d\'API, le mentor n\'existe pas : on ne cite pas Anthropic.');
-        $this->assertSelectorTextNotContains('#donnees', 'liste d\'attente', 'Inscription libre : pas de liste d\'attente.');
+        $this->assertSelectorTextContains('#donnees', 'nouveau parcours', 'Inscription libre : la liste d\'attente annonce les nouveaux parcours.');
+        $this->assertSelectorTextNotContains('#donnees', 'bêta', 'Inscription libre : pas de bêta à promettre.');
         $this->assertSelectorTextContains('#cookies', 'localStorage');
     }
 

@@ -75,14 +75,12 @@
                             <td>Vous répondre ; préparer une proposition pour votre groupe.</td>
                             <td>Intérêt légitime (répondre à qui nous écrit) ; mesures précontractuelles pour une demande de devis.</td>
                         </tr>
-                        {% if inviteOnly %}
-                            <tr>
-                                <td>Vous rejoignez la liste d'attente</td>
-                                <td>Votre adresse e‑mail et la date.</td>
-                                <td>Vous prévenir de l'ouverture et, s'il y a des places, vous inviter à la bêta. Rien d'autre.</td>
-                                <td>Consentement : vous avez laissé votre adresse pour cela.</td>
-                            </tr>
-                        {% endif %}
+                        <tr>
+                            <td>Vous rejoignez la liste d'attente</td>
+                            <td>Votre adresse e‑mail et la date.</td>
+                            <td>{{ inviteOnly ? 'Vous prévenir de l\'ouverture et, s\'il y a des places, vous inviter à la bêta.' : 'Vous prévenir quand un nouveau parcours ouvre.' }} Rien d'autre.</td>
+                            <td>Consentement : vous avez laissé votre adresse pour cela.</td>
+                        </tr>
                         {% if aiEnabled %}
                             <tr>
                                 <td>Vous demandez une revue ou une explication au mentor</td>
@@ -150,9 +148,7 @@
                 {% endif %}
                 <div><dt>Messages de contact</dt><dd>Le temps de vous répondre, puis trois ans au plus pour une demande de devis sans suite ; un an pour les autres.</dd></div>
                 <div><dt>Avis sur les exercices</dt><dd>Jusqu'à leur traitement, puis supprimés ; en tout état de cause avec le compte.</dd></div>
-                {% if inviteOnly %}
-                    <div><dt>Liste d'attente</dt><dd>Jusqu'à l'ouverture, puis l'adresse est supprimée ; douze mois au plus.</dd></div>
-                {% endif %}
+                <div><dt>Liste d'attente</dt><dd>{{ inviteOnly ? 'Jusqu\'à l\'ouverture, puis l\'adresse est supprimée ; douze mois au plus.' : 'Jusqu\'à ce que vous demandiez à en sortir, et douze mois au plus après le dernier email envoyé.' }}</dd></div>
                 {% if aiEnabled %}
                     <div><dt>Échanges avec le mentor</dt><dd>La plateforme ne conserve que la revue de code affichée avec votre exercice, supprimée avec lui. Le reste n'est pas stocké de notre côté.</dd></div>
                 {% endif %}
