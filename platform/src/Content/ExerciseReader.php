@@ -118,6 +118,7 @@ final class ExerciseReader
             docs: array_map(fn ($doc) => $this->docLink($doc, $file), $meta['docs'] ?? []),
             mutants: array_values($mutants),
             duration: $this->duration($meta['duration'] ?? null, $file),
+            formerIds: FormerIds::parse($meta['former_ids'] ?? null, $file),
         );
         if (($mutants || array_filter($objectives, static fn (Objective $o) => !$o->isHiddenTest())) && !$exercise->ownTests()) {
             throw new ContentException(sprintf('%s : des objectifs portent sur les tests de l\'apprenant, mais aucun fichier éditable tests/…Test.php ne les accueille.', $file));

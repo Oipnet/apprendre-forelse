@@ -15,6 +15,7 @@ final readonly class Exercise
      * @param list<ExampleRequest> $requests requêtes d'exemple de l'onglet « Requêtes »
      * @param list<DocLink>        $docs     documentation utile pour résoudre l'exercice
      * @param list<Mutant>         $mutants  versions cassées de l'application, que les tests de l'apprenant doivent détecter
+     * @param list<string>         $formerIds
      */
     public function __construct(
         public string $id,
@@ -39,6 +40,8 @@ final readonly class Exercise
         public array $mutants = [],
         /** Durée estimée, en minutes, pour le public du parcours (clé `duration`, facultative). */
         public ?int $duration = null,
+        /** Anciens identifiants (clé « former_ids ») : leurs adresses redirigent vers celle de l'exercice. */
+        public array $formerIds = [],
     ) {
     }
 

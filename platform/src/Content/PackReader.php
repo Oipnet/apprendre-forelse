@@ -60,6 +60,12 @@ final class PackReader
             }
         }
 
+        FormerIds::assertNoCollision(array_map(static fn (Track $track) => $track->formerIds, $this->tracks), 'Parcours');
+        foreach ($this->exercises as $trackId => $exercises) {
+            FormerIds::assertNoCollision(array_map(static fn (Exercise $exercise) => $exercise->formerIds, $exercises), sprintf('Parcours « %s », exercice', $trackId));
+        }
+        FormerIds::assertNoCollision(array_map(static fn (Practice $practice) => $practice->exercise->formerIds, $this->practices), 'Exercice de Pratique');
+
         // L'ordre de chargement dépend des chemins configurés et du nom des dossiers : il ne doit pas décider
         // de l'accueil. Les parcours qui ont un rang passent devant ; les autres gardent l'ordre de chargement
         // (uasort est stable, comme toutes les fonctions de tri depuis PHP 8.0).
@@ -215,7 +221,7 @@ final class PackReader
 
         $image = isset($meta['image']) ? $this->shareImage($meta['image'], $directory, $file) : null;
 
-        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads, $image);
+        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads, $image, FormerIds::parse($meta['former_ids'] ?? null, $file));
         $this->tracks[$id] = $track;
         $this->exercises[$id] = [];
 

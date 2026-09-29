@@ -10,6 +10,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Anciennes adresses : clé `former_ids`.** Dans `track.yaml` ou l'`exercise.yaml` d'un exercice (parcours ou
+  Pratique), les anciens identifiants d'un parcours ou d'un exercice renommé : une page introuvable sous l'un d'eux
+  redirige (301) vers la même page sous l'identifiant actuel (parcours, sommaire, exercice, Pratique ; pas l'API).
+  Le chargement refuse un ancien identifiant qui en désigne deux. La progression enregistrée sous l'ancien
+  identifiant n'est pas reprise (#180).
 - **Image de partage par parcours : clé `image` de `track.yaml`.** Un PNG, JPEG ou WebP du dossier du parcours,
   d'au moins 1200 × 630 au format 1,91:1, servi par `/parcours/<id>/image-de-partage` (URL datée du fichier, en cache
   immuable). Les pages du parcours, de ses sommaires et de ses exercices l'annoncent (`og:image`, `og:image:alt`) et
