@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 2.4.0 — 2026-09-29
+
 ### Ajouté
 
 - **Sauvegarde quotidienne de la production (#5, #148).** Chaque nuit, `deploy/sauvegarde/sauvegarder.sh` copie la
