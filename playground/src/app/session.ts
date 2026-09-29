@@ -16,6 +16,8 @@ export interface SessionOptions {
 	saveDelayMs?: number;
 	/** Des frappes viennent d'être écrites dans le runtime (l'aperçu se recharge). */
 	onWritten?: () => void;
+	/** L'enregistrement différé du brouillon a échoué (session expirée, accès terminé…) : à dire à l'apprenant. */
+	onDraftError?: (error: Error) => void;
 }
 
 /**
@@ -34,13 +36,15 @@ export class ExerciseSession {
 	 * modification d'un fichier quand un autre change juste après.
 	 */
 	private readonly pending = new Map<string, string>();
+	/** L'écriture en cours vers le runtime : un flush qui arrive pendant ce temps l'attend. */
+	private flushing: Promise<void> | undefined;
 	private writeTimer: ReturnType<typeof setTimeout> | undefined;
 	private saveTimer: ReturnType<typeof setTimeout> | undefined;
 	private readonly writeDelayMs: number;
 	private readonly saveDelayMs: number;
 
 	constructor(
-		private readonly runtime: Pick<Runtime, 'writeFile'>,
+		private readonly runtime: Pick<Runtime, 'writeFiles'>,
 		private readonly progress: ProgressStore,
 		state: SessionState,
 		private readonly options: SessionOptions = {},
@@ -61,31 +65,69 @@ export class ExerciseSession {
 		this.writeTimer = setTimeout(() => {
 			this.flush()
 				.then((changed) => changed && this.options.onWritten?.())
-				// Runtime redémarré en cours d'écriture : l'écriture est rejouée par le runtime neuf, rien n'est perdu.
+				// Runtime redémarré en cours d'écriture : il a retenu le lot et le rejoue dans le worker neuf. Autre échec :
+				// le lot reste en attente, et part avec l'écriture suivante.
 				.catch((error) => console.warn('Écriture différée vers le runtime', error));
 		}, this.writeDelayMs);
 		this.saveDraft();
 	}
 
-	/** Écrit tout de suite les frappes en attente ; vrai s'il y en avait. */
+	/**
+	 * Écrit tout de suite les frappes en attente ; vrai si quelque chose a été écrit. Une écriture déjà en cours est
+	 * attendue d'abord : sans cela, « Lancer les tests » partirait avant elle, sur l'ancien code.
+	 */
 	async flush(): Promise<boolean> {
 		clearTimeout(this.writeTimer);
-		const changes = [...this.pending];
+		let written = false;
+		while (this.flushing) written = (await this.flushing.then(() => true, () => false)) || written;
+		if (this.pending.size === 0) return written;
+
+		// Tout le lot en un appel : le runtime le retient en entier, et le rejoue en entier après un redémarrage.
+		const batch = Object.fromEntries(this.pending);
 		this.pending.clear();
-		for (const [path, content] of changes) await this.runtime.writeFile(path, content);
-		return changes.length > 0;
+		this.flushing = this.runtime
+			.writeFiles(batch)
+			.catch((error: unknown) => {
+				// Refusé : le lot reste en attente, sauf un fichier modifié depuis (sa version plus récente l'emporte).
+				for (const [path, content] of Object.entries(batch)) if (!this.pending.has(path)) this.pending.set(path, content);
+				throw error;
+			})
+			.finally(() => {
+				this.flushing = undefined;
+			});
+		await this.flushing;
+		return true;
 	}
 
 	/** Enregistre le brouillon tout de suite (Ctrl+S), sans attendre son délai ; l'échec remonte à l'appelant. */
 	async saveNow(): Promise<void> {
 		clearTimeout(this.saveTimer);
+		this.saveTimer = undefined;
 		await this.progress.saveDraft(this.current, this.hintsUsed);
 	}
 
-	/** Enregistre le brouillon après son délai (les appels rapprochés n'en font qu'un). */
+	/** Enregistre le brouillon après son délai (les appels rapprochés n'en font qu'un) ; un échec est signalé. */
 	saveDraft(): void {
 		clearTimeout(this.saveTimer);
-		this.saveTimer = setTimeout(() => this.progress.saveDraft(this.current, this.hintsUsed).catch((e) => console.warn(e)), this.saveDelayMs);
+		this.saveTimer = setTimeout(() => {
+			this.saveTimer = undefined;
+			this.progress.saveDraft(this.current, this.hintsUsed).catch((error: unknown) => {
+				console.warn(error);
+				this.options.onDraftError?.(error instanceof Error ? error : new Error(String(error)));
+			});
+		}, this.saveDelayMs);
+	}
+
+	/**
+	 * La page se ferme (pagehide) : le brouillon qui attendait son délai part tout de suite, sans quoi les dernières
+	 * frappes seraient perdues. La requête doit survivre à la page (voir ProgressStore.saveDraftOnExit).
+	 */
+	saveOnExit(): void {
+		if (this.saveTimer === undefined) return;
+		clearTimeout(this.saveTimer);
+		this.saveTimer = undefined;
+		if (this.progress.saveDraftOnExit) this.progress.saveDraftOnExit(this.current, this.hintsUsed);
+		else void this.progress.saveDraft(this.current, this.hintsUsed).catch(() => {});
 	}
 
 	/** Ce qu'un indice de plus coûterait en XP (0 une fois réussi ou la solution consultée). */
@@ -103,6 +145,7 @@ export class ExerciseSession {
 	/** La réussite : le code qui a réussi est enregistré d'abord (le brouillon attendrait sinon son délai). */
 	async complete(): Promise<CompletionResult> {
 		clearTimeout(this.saveTimer);
+		this.saveTimer = undefined;
 		await this.progress.saveDraft(this.current, this.hintsUsed);
 		const result = await this.progress.complete(this.hintsUsed);
 		this.completed = true;
