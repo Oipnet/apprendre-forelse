@@ -36,6 +36,16 @@ describe('ExerciseSession', () => {
 		expect(onWritten).toHaveBeenCalledOnce();
 	});
 
+	it('saveNow enregistre le brouillon sans attendre, et une seule fois', async () => {
+		const { brouillons, runtime, progress } = doublures();
+		const session = new ExerciseSession(runtime, progress, etat());
+		session.edit('src/Menu.php', 'a');
+		await session.saveNow();
+		expect(brouillons).toEqual([[{ 'src/Menu.php': 'a' }, 0]]);
+		await vi.advanceTimersByTimeAsync(2000);
+		expect(brouillons).toHaveLength(1);
+	});
+
 	it('flush écrit tout de suite, et dit s\'il y avait quelque chose à écrire', async () => {
 		const { ecrits, runtime, progress } = doublures();
 		const onWritten = vi.fn();

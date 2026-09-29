@@ -27,7 +27,8 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 			${config.feedbackUrl ? `<button id="feedback" class="ghost" title="Signaler un problème ou donner votre avis sur cet exercice"><span class="icon">💬</span><span class="label"> Un avis ?</span></button>` : ''}
 			<button id="solution" class="ghost" hidden><span class="icon">📖</span><span class="label">Solution</span></button>
 			<button id="reset" class="ghost" title="Revenir au code de départ"><span class="icon">⟲</span><span class="label">Réinitialiser</span></button>
-			<button id="run" class="primary" disabled>▶ <span class="label">Lancer les </span>tests</button>
+			<button id="shortcuts" class="ghost" title="Raccourcis clavier" aria-label="Raccourcis clavier" aria-haspopup="dialog"><span aria-hidden="true">⌨</span></button>
+			<button id="run" class="primary" disabled aria-keyshortcuts="Control+Enter Meta+Enter">▶ <span class="label">Lancer les </span>tests</button>
 		</div>
 	</header>
 	<div class="small-screen-note" role="note"><span>Cet exercice se joue mieux sur un écran large : ici, un volet à la fois.</span><button class="ghost small" aria-label="Fermer">✕</button></div>

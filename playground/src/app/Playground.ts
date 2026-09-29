@@ -18,6 +18,7 @@ import { ApiProgressStore, LocalProgressStore, type ProgressStore } from './prog
 import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
 import { ExerciseSession } from './session';
+import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
 import { spokenSummary, TestResultsView } from './TestResultsView';
 import type { ExercisePayload, PlaygroundConfig } from './types';
@@ -258,6 +259,38 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	// --- Indices et solution -------------------------------------------------------------
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });
+
+	// --- Raccourcis clavier : Monaco les reçoit quand il a le focus, le document ailleurs --------
+	const mod = modifierLabel(navigator.platform);
+	runButton.title = `Lancer les tests (${mod} + Entrée)`;
+	const saveNow = async () => {
+		try {
+			if (await session.flush()) reload();
+			await session.saveNow();
+			status('Brouillon enregistré', 'ok');
+		} catch (error) {
+			status(`Brouillon non enregistré : ${error instanceof Error ? error.message : String(error)}`, 'ko');
+		}
+	};
+	const act = (shortcut: Shortcut) => {
+		if (shortcut === 'save') void saveNow();
+		else if (!runButton.disabled) runButton.click();
+	};
+	editor.instance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => act('run'));
+	editor.instance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => act('save'));
+	document.addEventListener('keydown', (event) => {
+		const shortcut = event.defaultPrevented ? null : shortcutOf(event);
+		if (!shortcut) return;
+		event.preventDefault(); // Ctrl+S : pas la boîte « Enregistrer la page » du navigateur
+		act(shortcut);
+	});
+	const help = document.createElement('dialog');
+	help.className = 'feedback shortcuts';
+	help.setAttribute('aria-labelledby', 'shortcuts-title');
+	help.innerHTML = shortcutsHelpHtml(mod);
+	root.append(help);
+	help.querySelector('[data-close]')!.addEventListener('click', () => help.close());
+	$('#shortcuts').addEventListener('click', () => help.showModal());
 
 	// --- Retour sur l'exercice (apprenant connecté) ----------------------------------------
 	if (config.feedbackUrl) new FeedbackDialog(root, $<HTMLButtonElement>('#feedback'), config.feedbackUrl, () => ({ hintsUsed: session.hintsUsed, completed: session.completed }));

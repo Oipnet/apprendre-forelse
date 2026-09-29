@@ -771,6 +771,32 @@ dialog.feedback {
 dialog.feedback::backdrop {
 	background: rgba(0, 0, 0, 0.55);
 }
+/* Aide « Raccourcis clavier » : même boîte que « Un avis ? ». */
+dialog.shortcuts h2 {
+	margin: 0 0 0.8rem;
+	font-size: 1.1rem;
+}
+.shortcuts-list {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.5rem 1rem;
+	margin: 0 0 1rem;
+	font-size: 14px;
+}
+.shortcuts-list dt,
+.shortcuts-list dd {
+	margin: 0;
+}
+.shortcuts-list kbd {
+	font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+	font-size: 12px;
+	padding: 0.1rem 0.4rem;
+	border: 1px solid var(--border);
+	border-bottom-width: 2px;
+	border-radius: 4px;
+	background: var(--panel-2);
+	white-space: nowrap;
+}
 .feedback-form {
 	display: grid;
 	gap: 0.8rem;
