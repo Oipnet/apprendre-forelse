@@ -435,6 +435,24 @@ final class ContentRepositoryTest extends TestCase
         $this->repository($this->tmp)->tracks();
     }
 
+    public function testUnNiveauInconnuOuUneDescriptionEnHtmlSontSignales(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P\ntracks: [t]");
+        $filesystem->dumpFile($this->tmp.'/p/tracks/t/track.yaml', "id: t\ntitle: T\nenvironment: symfony-8\nlevel: expert\nchapters:\n  - {id: c, title: C, exercises: []}");
+        try {
+            $this->repository($this->tmp)->tracks();
+            $this->fail('Niveau inconnu accepté.');
+        } catch (ContentException $e) {
+            $this->assertStringContainsString('niveau « expert » inconnu (beginner, intermediate, advanced)', $e->getMessage());
+        }
+
+        $filesystem->dumpFile($this->tmp.'/p/tracks/t/track.yaml', "id: t\ntitle: T\nenvironment: symfony-8\nchapters:\n  - {id: c, title: C, description: '<b>Gras</b>', exercises: []}");
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage('chapitre « c », « description » est un texte, sans balise HTML');
+        $this->repository($this->tmp)->tracks();
+    }
+
     public static function anciensIdsInvalides(): iterable
     {
         $track = static fn (string $id, string $former) => "id: {$id}\ntitle: T\nenvironment: symfony-8\nformer_ids: {$former}\nchapters:\n  - {id: c, title: C, exercises: []}";

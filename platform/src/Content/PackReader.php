@@ -198,6 +198,7 @@ final class PackReader
                 exerciseIds: $chapter['exercises'] ?? [],
                 environment: $chapter['environment'] ?? null,
                 lesson: is_file($lesson) ? (string) file_get_contents($lesson) : null,
+                description: $this->optionalText($chapter['description'] ?? null, sprintf('%s : chapitre « %s », « description »', $file, $chapterId)),
             );
         }
         if (!$chapters) {
@@ -219,9 +220,14 @@ final class PackReader
             throw new ContentException(sprintf('%s : « downloads » est une liste de noms de fichiers de DOWNLOADS_DIR (lettres, chiffres, « . », « _ », « - »).', $file));
         }
 
+        $level = $meta['level'] ?? null;
+        if (null !== $level && !isset(Track::LEVELS[$level])) {
+            throw new ContentException(sprintf('%s : niveau « %s » inconnu (%s).', $file, \is_scalar($level) ? $level : \gettype($level), implode(', ', array_keys(Track::LEVELS))));
+        }
+
         $image = isset($meta['image']) ? $this->shareImage($meta['image'], $directory, $file) : null;
 
-        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads, $image, FormerIds::parse($meta['former_ids'] ?? null, $file));
+        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads, $image, FormerIds::parse($meta['former_ids'] ?? null, $file), $level);
         $this->tracks[$id] = $track;
         $this->exercises[$id] = [];
 
@@ -332,5 +338,18 @@ final class PackReader
         }
 
         return $path;
+    }
+
+    /** Un texte facultatif d'une ligne : une chaîne non vide, sans balise (il finit en meta description). */
+    private function optionalText(mixed $value, string $where): ?string
+    {
+        if (null === $value) {
+            return null;
+        }
+        if (!\is_string($value) || '' === trim($value) || $value !== strip_tags($value)) {
+            throw new ContentException(sprintf('%s est un texte, sans balise HTML.', $where));
+        }
+
+        return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
     }
 }
