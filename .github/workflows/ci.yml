@@ -16,10 +16,13 @@ on:
 permissions:
   contents: read
 
-# Un seul passage à la fois par branche : les suivants annulent le précédent.
+# Un seul passage à la fois par branche. Sur une PR, le suivant annule le précédent : il n'y a rien à finir.
+# Sur main, jamais : un passage peut être en train de déployer la préproduction (deployer.sh sur le serveur, par
+# ssh), et l'annuler tuerait le script au milieu des migrations ou de « compose up ». Le suivant attend donc ;
+# s'il en arrive un troisième, GitHub ne garde que le plus récent en attente.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   # Xdebug ferait planter le serveur interne de PHP et ralentirait PHPUnit.
