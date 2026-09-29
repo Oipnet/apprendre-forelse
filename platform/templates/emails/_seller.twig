@@ -1,0 +1,5 @@
+{#-
+  L'identité du vendeur (LEGAL_*), en une ligne : la confirmation d'une vente à distance est le support durable du
+  contrat. Vide tant que les mentions légales ne sont pas renseignées. Variable : seller (App\Legal\LegalInfo).
+-#}
+{{- [seller.publisherName, seller.publisherLegalForm, seller.publisherRegistration, seller.publisherAddress]|filter(v => v)|join(', ') -}}

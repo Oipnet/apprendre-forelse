@@ -10,4 +10,4 @@ Mot de passe oublié ? Choisissez-en un nouveau :
 
 Si ce n'était pas vous, ignorez cet email : aucun compte n'a été créé et le vôtre n'a pas changé.
 
-{{ marque.signature }}
+{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce qu\'une inscription à ' ~ marque.name ~ ' a été tentée avec votre adresse.'}) }}

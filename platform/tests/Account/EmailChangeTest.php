@@ -8,6 +8,8 @@ use App\Account\EmailChangeOutcome;
 use App\Account\EmailConfirmationOutcome;
 use App\Account\EmailVerifier;
 use App\Entity\User;
+use App\Instance\Branding;
+use App\Mail\Sender;
 use App\Repository\UserRepository;
 use App\Tests\DatabaseTrait;
 use Doctrine\ORM\EntityManagerInterface;
@@ -45,7 +47,7 @@ final class EmailChangeTest extends KernelTestCase
     private function emailChange(?MailerInterface $mailer = null, int $limit = 5): EmailChange
     {
         $container = static::getContainer();
-        $verifier = null === $mailer ? $container->get(EmailVerifier::class) : new EmailVerifier($container->get(UriSigner::class), $container->get(UrlGeneratorInterface::class), $mailer, new NullLogger(), 'ne-pas-repondre@example.test');
+        $verifier = null === $mailer ? $container->get(EmailVerifier::class) : new EmailVerifier($container->get(UriSigner::class), $container->get(UrlGeneratorInterface::class), $mailer, new NullLogger(), $container->get(Sender::class), $container->get(Branding::class));
 
         return new EmailChange(
             $this->entityManager,

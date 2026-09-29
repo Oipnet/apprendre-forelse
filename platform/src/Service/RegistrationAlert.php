@@ -3,12 +3,13 @@
 namespace App\Service;
 
 use App\Entity\User;
+use App\Instance\Branding;
+use App\Mail\Sender;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
@@ -21,8 +22,8 @@ final class RegistrationAlert
         private readonly MailerInterface $mailer,
         private readonly UrlGeneratorInterface $router,
         private readonly LoggerInterface $logger,
-        #[Autowire(env: 'MAILER_FROM')]
-        private readonly string $mailerFrom,
+        private readonly Sender $sender,
+        private readonly Branding $branding,
         #[Autowire(env: 'REGISTRATION_ALERT_EMAIL')]
         private readonly string $recipient,
     ) {
@@ -40,9 +41,10 @@ final class RegistrationAlert
         $adminUrl = $this->router->generate('admin_users_detail', ['entityId' => $user->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $email = (new TemplatedEmail())
-            ->from(Address::create($this->mailerFrom))
+            ->from($this->sender->from())
             ->to($recipient)
-            ->subject(sprintf('Nouvelle inscription : %s', $user->getDisplayName()))
+            // Plusieurs instances peuvent écrire à la même personne : l'objet dit laquelle.
+            ->subject(sprintf('[%s] Nouvelle inscription : %s', $this->branding->name(), $user->getDisplayName()))
             ->textTemplate('emails/registration_alert.txt.twig')
             ->context(['user' => $user, 'adminUrl' => $adminUrl]);
 

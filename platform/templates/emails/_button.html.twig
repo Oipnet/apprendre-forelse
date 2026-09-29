@@ -1,0 +1,9 @@
+{#- L'action principale d'un email : un bouton, et l'adresse en clair dessous, pour qui ne peut pas cliquer. Variables : href, label. -#}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 8px;">
+    <tr>
+        <td class="bouton" style="border-radius:8px;background:#16120e;">
+            <a href="{{ href }}" style="display:inline-block;padding:12px 22px;border-radius:8px;font-weight:bold;color:#fbf6ec;text-decoration:none;">{{ label }}</a>
+        </td>
+    </tr>
+</table>
+<p class="discret" style="margin:0 0 16px;font-size:13px;color:#6a6252;">Le bouton ne s'ouvre pas ? Copiez ce lien dans votre navigateur :<br><a class="lien" href="{{ href }}" style="color:#9a5b18;word-break:break-all;">{{ href }}</a></p>

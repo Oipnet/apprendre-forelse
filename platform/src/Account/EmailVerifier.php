@@ -3,9 +3,9 @@
 namespace App\Account;
 
 use App\Entity\User;
+use App\Instance\Branding;
+use App\Mail\Sender;
 use Psr\Log\LoggerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -29,8 +29,8 @@ final readonly class EmailVerifier
         private UrlGeneratorInterface $urls,
         private MailerInterface $mailer,
         private LoggerInterface $logger,
-        #[Autowire(env: 'MAILER_FROM')]
-        private string $mailerFrom,
+        private Sender $sender,
+        private Branding $branding,
     ) {
     }
 
@@ -47,10 +47,9 @@ final readonly class EmailVerifier
             new \DateInterval(sprintf('PT%dH', self::VALIDITY_HOURS)),
         );
 
-        $message = (new TemplatedEmail())
-            ->from(Address::create($this->mailerFrom))
-            ->to($email)
-            ->subject(null === $newEmail ? 'Confirmez votre adresse email' : 'Confirmez votre nouvelle adresse email')
+        $message = $this->sender->email()
+            ->to(new Address($email, (string) $user->getDisplayName()))
+            ->subject(sprintf(null === $newEmail ? 'Confirmez votre adresse email sur %s' : 'Confirmez votre nouvelle adresse email sur %s', $this->branding->name()))
             ->htmlTemplate('emails/confirm_email.html.twig')
             ->textTemplate('emails/confirm_email.txt.twig')
             ->context(['user' => $user, 'link' => $link, 'change' => null !== $newEmail, 'hours' => self::VALIDITY_HOURS]);

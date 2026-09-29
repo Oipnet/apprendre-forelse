@@ -1,19 +1,25 @@
-<p>Bonjour {{ user.displayName }},</p>
+{% extends 'emails/_layout.html.twig' %}
+
+{% block preheader %}{{ change ? 'Confirmez votre nouvelle adresse' : 'Confirmez votre adresse' }} : le lien est valable {{ hours }} heures.{% endblock %}
+
+{% block content %}
+<p style="margin:0 0 12px;">Bonjour {{ user.displayName }},</p>
 
 {% if change %}
-<p>Vous avez demandé à utiliser cette adresse pour votre compte {{ marque.name }}. Pour la confirmer, ouvrez ce lien :</p>
+<p style="margin:0 0 12px;">Vous avez demandé à utiliser cette adresse pour votre compte {{ marque.name }}. Pour la confirmer :</p>
 {% else %}
-<p>Bienvenue sur {{ marque.name }}. Pour confirmer votre adresse email, ouvrez ce lien :</p>
+<p style="margin:0 0 12px;">Bienvenue sur {{ marque.name }}. Il reste à confirmer votre adresse email :</p>
 {% endif %}
 
-<p><a href="{{ link }}">{{ link }}</a></p>
+{{ include('emails/_button.html.twig', {href: link, label: 'Confirmer mon adresse'}) }}
 
-<p>Il est valable {{ hours }} heures et ne sert qu'une fois.</p>
+<p style="margin:0 0 12px;">Le lien est valable {{ hours }} heures et ne sert qu'une fois.</p>
 
 {% if change %}
-<p>Si vous n'avez rien demandé, ignorez cet email : l'adresse de votre compte reste inchangée.</p>
+<p style="margin:0;">Si vous n'avez rien demandé, ignorez cet email : l'adresse de votre compte reste inchangée.</p>
 {% else %}
-<p>Si vous n'avez pas créé de compte, ignorez cet email.</p>
+<p style="margin:0;">Si vous n'avez pas créé de compte, ignorez cet email.</p>
 {% endif %}
+{% endblock %}
 
-<p>{{ marque.signature }}</p>
+{% block reason %}Vous recevez cet email parce que cette adresse a été indiquée pour un compte {{ marque.name }}.{% endblock %}

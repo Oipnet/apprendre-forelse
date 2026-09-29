@@ -4,8 +4,8 @@ namespace App\Account;
 
 use App\Entity\User;
 use App\Instance\Branding;
+use App\Mail\Sender;
 use Psr\Log\LoggerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
@@ -27,8 +27,7 @@ final readonly class RegistrationAttemptNotice
         private Branding $branding,
         #[Autowire(service: 'limiter.registration_notice')]
         private RateLimiterFactoryInterface $limiter,
-        #[Autowire(env: 'MAILER_FROM')]
-        private string $mailerFrom,
+        private Sender $sender,
     ) {
     }
 
@@ -39,8 +38,7 @@ final readonly class RegistrationAttemptNotice
         }
 
         try {
-            $this->mailer->send((new TemplatedEmail())
-                ->from(Address::create($this->mailerFrom))
+            $this->mailer->send($this->sender->email()
                 ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
                 ->subject(sprintf('Vous avez déjà un compte %s', $this->branding->name()))
                 ->htmlTemplate('emails/registration_attempt.html.twig')
