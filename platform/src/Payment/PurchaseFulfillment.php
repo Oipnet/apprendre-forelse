@@ -9,6 +9,7 @@ use App\Repository\PurchaseRepository;
 use App\Repository\TrackAccessRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Ce qui suit un paiement, son remboursement ou sa contestation bancaire.
@@ -25,6 +26,7 @@ final readonly class PurchaseFulfillment
         private PaymentGateway $gateway,
         private PurchaseMailer $mailer,
         private ClockInterface $clock,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -67,6 +69,11 @@ final readonly class PurchaseFulfillment
             return false;
         }
 
+        if (null === $purchase->getUser()) {
+            $this->refundOrphan($purchase);
+
+            return true;
+        }
         if (null !== $purchase->getStripePaymentIntentId()) {
             $purchase->setReceiptUrl($this->gateway->receiptUrl($purchase->getStripePaymentIntentId()));
             $this->entityManager->flush();
@@ -143,6 +150,21 @@ final readonly class PurchaseFulfillment
             $access->restore();
         }
         $this->entityManager->flush();
+    }
+
+    /**
+     * Payé après la suppression du compte (onglet Stripe resté ouvert, paiement différé) : aucun accès ne peut s'ouvrir,
+     * et l'email « votre accès est ouvert » mentirait. Le paiement est remboursé ; si Stripe refuse, l'administration
+     * doit le faire à la main, d'où l'erreur critique.
+     */
+    private function refundOrphan(Purchase $purchase): void
+    {
+        try {
+            $this->refund($purchase);
+            $this->logger->warning('Achat {purchase} payé après la suppression du compte : remboursé automatiquement.', ['purchase' => $purchase->getId()]);
+        } catch (PaymentException $e) {
+            $this->logger->critical('Achat {purchase} payé après la suppression du compte, remboursement impossible ({message}) : à rembourser depuis l\'administration.', ['purchase' => $purchase->getId(), 'message' => $e->getMessage()]);
+        }
     }
 
     /** L'accès ouvert par l'achat se termine ; la progression reste. */

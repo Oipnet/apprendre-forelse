@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use App\Account\AccountManagement;
 use App\Entity\AccessSource;
 use App\Entity\PriceKind;
 use App\Entity\Purchase;
@@ -625,6 +626,65 @@ final class PurchaseTest extends WebTestCase
     }
 
     /** Ada achète le parcours « payant », le paiement est confirmé. */
+    /** Supprimer son compte ferme d'abord le paiement encore ouvert chez Stripe : plus rien ne peut y être payé. */
+    public function testSupprimerSonCompteFermeLePaiementOuvert(): void
+    {
+        $this->setPrice('payant', 7900);
+        $ada = $this->createUser();
+        $this->client->loginUser($ada);
+        $this->checkout();
+        $session = 'cs_test_'.$this->onlyPurchase()->getId();
+
+        static::getContainer()->get(AccountManagement::class)->delete($this->entityManager()->find(User::class, $ada->getId()));
+
+        $this->assertSame([$session], FakePaymentGateway::$expired);
+        $purchase = $this->onlyPurchase();
+        $this->assertSame(PurchaseStatus::Abandoned, $purchase->getStatus());
+        $this->assertNull($purchase->getUser(), 'L\'achat reste, sans compte : pièce comptable.');
+    }
+
+    /**
+     * Payé quand même après la suppression (Stripe n'a pas pu fermer la session : paiement déjà lancé) : aucun accès, pas
+     * d'email « votre accès est ouvert », et le paiement est remboursé.
+     */
+    public function testUnPaiementConfirmeApresLaSuppressionDuCompteEstRembourse(): void
+    {
+        $this->setPrice('payant', 7900);
+        $ada = $this->createUser();
+        $this->client->loginUser($ada);
+        $this->checkout();
+        $session = 'cs_test_'.$this->onlyPurchase()->getId();
+        FakePaymentGateway::$statuses[$session] = CheckoutSession::COMPLETE; // paiement différé lancé avant la suppression
+
+        static::getContainer()->get(AccountManagement::class)->delete($this->entityManager()->find(User::class, $ada->getId()));
+        $this->assertSame(PurchaseStatus::Pending, $this->onlyPurchase()->getStatus(), 'La session n\'a pas pu être fermée : l\'achat attend.');
+
+        $this->sendPaidWebhook($this->client, $session, 7900);
+
+        $this->assertResponseStatusCodeSame(204);
+        $this->assertEmailCount(0);
+        $this->assertSame(['pi_'.$session], FakePaymentGateway::$refunds);
+        $purchase = $this->onlyPurchase();
+        $this->assertSame(PurchaseStatus::Refunded, $purchase->getStatus());
+        $this->assertSame(0, $this->entityManager()->getRepository(TrackAccess::class)->count(), 'Aucun accès ouvert.');
+    }
+
+    /** Un achat contesté ne se dit pas « remboursé » : l'accès est suspendu le temps de la procédure. */
+    public function testLaPageDUnAchatContesteLeDit(): void
+    {
+        $ada = $this->paidPurchase();
+        $purchase = $this->onlyPurchase();
+        $this->sendWebhook($this->client, 'charge.dispute.created', ['id' => 'dp_1', 'object' => 'dispute', 'payment_intent' => 'pi_cs_test_'.$purchase->getId(), 'status' => 'needs_response'], 'evt_dispute');
+
+        $this->client->loginUser($ada);
+        $this->client->request('GET', '/achat/'.$purchase->getId().'/merci');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'Paiement contesté');
+        $this->assertSelectorTextContains('main', 'suspendu le temps de la procédure');
+        $this->assertSelectorTextNotContains('main', 'remboursé');
+    }
+
     private function paidPurchase(): User
     {
         $this->setPrice('payant', 7900);
