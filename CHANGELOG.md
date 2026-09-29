@@ -53,6 +53,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   rendu par `LessonRenderer` : le code y est coloré et le titre de tête, qui répétait l'en-tête, disparaît. Le
   playground l'affiche (après DOMPurify) au lieu de refaire le rendu avec `marked` ; `instructions` reste envoyé
   en markdown (#171).
+- **Finitions UX.** Les emojis décoratifs sont masqués aux lecteurs d'écran (`aria-hidden`), les boutons réduits à
+  leur icône sur petit écran gardent leur libellé pour eux, et la liste des exercices dit l'état (« Réussi »,
+  « Exercice final ») au lieu de « coche » ou « étoile ». Consulter la solution et réinitialiser passent par une
+  boîte de dialogue du playground au lieu de `confirm()` / `alert()`, et une réinitialisation s'annule pendant dix
+  secondes. `prefers-reduced-motion` couvre le démarrage et la réussite, qui arrive d'un petit rebond. La page
+  d'erreur ne montre la requête (méthode, chemin) qu'en debug, et propose « Reprendre où j'en étais » (#176).
 
 ### Corrigé
 

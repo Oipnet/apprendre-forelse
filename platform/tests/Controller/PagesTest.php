@@ -74,6 +74,9 @@ final class PagesTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorCount(2, '.exercises li[data-state]', 'Deux exercices, plus la fiche de cours.');
+        // Le numéro (ou ✓, ★) est décoratif ; un lecteur d'écran entend ce qu'il signifie.
+        $this->assertSelectorTextSame('.exercises li:first-child .state .sr-only', 'Exercice 1 :');
+        $this->assertSelectorExists('.exercises li:first-child .state span[aria-hidden="true"]');
         $this->assertSelectorTextContains('.chapter h2 .tag', 'Gratuit', 'Le premier chapitre est gratuit.');
         // L'infobulle liste les notions abordées par l'exercice, reliée au lien pour les lecteurs d'écran.
         $this->assertSelectorExists('.exercises li:first-child a[aria-describedby="notions-01-bonjour"] #notions-01-bonjour[role="tooltip"]');

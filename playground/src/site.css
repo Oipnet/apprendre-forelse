@@ -72,6 +72,19 @@ button[aria-busy='true'] {
 	outline: 2px solid var(--accent-text);
 	outline-offset: 2px;
 }
+/* Lu par les lecteurs d'écran, invisible à l'œil (état d'un objectif ou d'un exercice, résultat des tests en toutes lettres). */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 /* « Aller au contenu » : invisible jusqu'à ce que le clavier l'atteigne. body > a : l'emporte sur les liens du site. */
 body > a.skip-link {
 	position: absolute;

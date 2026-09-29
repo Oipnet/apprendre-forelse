@@ -220,6 +220,23 @@ body.playground-page {
 	white-space: pre-wrap;
 }
 
+/* La réussite : le panneau arrive d'un petit rebond (rien, avec prefers-reduced-motion). */
+@keyframes success-in {
+	from {
+		transform: scale(0.96);
+		opacity: 0;
+	}
+	60% {
+		transform: scale(1.02);
+		opacity: 1;
+	}
+	to {
+		transform: none;
+	}
+}
+.success:not([hidden]) {
+	animation: success-in 0.45s ease-out;
+}
 .success {
 	margin-top: 1rem;
 	padding: 0.8rem 1rem;
@@ -632,19 +649,6 @@ body.playground-page {
 	padding: 0.5rem 0.6rem;
 }
 
-/* Lu par les lecteurs d'écran, invisible à l'œil (état des objectifs, résultat des tests en toutes lettres). */
-.sr-only {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	padding: 0;
-	margin: -1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
-	border: 0;
-}
-
 /* Démarrage */
 .overlay {
 	position: fixed;
@@ -1005,9 +1009,17 @@ dialog.shortcuts h2 {
 	.crumbs .crumb-track,
 	.crumbs .crumb-chapter,
 	.who:not(.guest),
-	.who.guest > span,
-	.actions .label {
+	.who.guest > span {
 		display: none;
+	}
+	/* Le libellé disparaît à l'œil mais reste lu : c'est le nom du bouton réduit à son icône. */
+	.actions .label {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
 	}
 	.actions .icon {
 		display: inline;
@@ -1186,4 +1198,49 @@ dialog.before-after .meta {
 	border: 1px solid var(--border);
 	border-radius: var(--radius);
 	overflow: hidden;
+}
+
+/* --- Boîtes de dialogue (dialogs.ts) et « Annuler » après une réinitialisation --------- */
+dialog.confirm h2 {
+	margin: 0 0 0.5rem;
+	font-size: 1.1rem;
+}
+dialog.confirm p {
+	margin: 0 0 1rem;
+	color: var(--muted);
+}
+.confirm-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin: 0 !important;
+}
+.undo-toast {
+	position: fixed;
+	left: 50%;
+	bottom: 1.2rem;
+	transform: translateX(-50%);
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	padding: 0.55rem 0.9rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--panel);
+	color: var(--text);
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+	font-size: 14px;
+}
+
+/* Moins de mouvement demandé : ni pulsation, ni fondu, ni rebond. */
+@media (prefers-reduced-motion: reduce) {
+	.overlay,
+	#boot-bar {
+		transition: none;
+	}
+	#boot-bar.indeterminate,
+	.success:not([hidden]) {
+		animation: none;
+	}
 }
