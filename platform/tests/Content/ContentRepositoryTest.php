@@ -5,6 +5,7 @@ namespace App\Tests\Content;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
+use App\Tests\TrackImageTrait;
 use App\Version;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -12,6 +13,8 @@ use Symfony\Component\Filesystem\Filesystem;
 
 final class ContentRepositoryTest extends TestCase
 {
+    use TrackImageTrait;
+
     private const string ROOT = __DIR__.'/../../..';
     private string $tmp;
 
@@ -403,6 +406,45 @@ final class ContentRepositoryTest extends TestCase
         $this->assertSame(['decouverte/01-bonjour', 'decouverte/02-bonjour-prenom', 'pratique/exemple-map-request-header'], $ids($repository->select('demo')));
         $this->assertContains('pratique/point-precis', $ids($repository->select(null)));
         $this->assertSame(['decouverte/01-bonjour', 'decouverte/02-bonjour-prenom'], $ids($repository->select(null, 'bonjour')), 'Un chapitre exclut la Pratique.');
+    }
+
+    /** @param array<string, string> $extra */
+    private function trackWithImage(string $image, array $extra = []): void
+    {
+        $filesystem = new Filesystem();
+        $files = $extra + [
+            'p/pack.yaml' => "id: p\ntitle: P\ntracks: [t]",
+            'p/tracks/t/track.yaml' => "id: t\ntitle: T\nenvironment: symfony-8\nimage: {$image}\nchapters:\n  - {id: c, title: C, exercises: []}",
+        ];
+        foreach ($files as $path => $content) {
+            $filesystem->dumpFile($this->tmp.'/'.$path, $content);
+        }
+    }
+
+    public function testUnParcoursDeclareSonImageDePartage(): void
+    {
+        $this->trackWithImage('partage.png', ['p/tracks/t/partage.png' => self::pngHeader(1200, 630)]);
+
+        $this->assertSame($this->tmp.'/p/tracks/t/partage.png', $this->repository($this->tmp)->findTrack('t')?->image);
+    }
+
+    #[DataProvider('imagesInvalides')]
+    public function testUneImageDePartageInvalideEstSignalee(string $image, ?string $content, string $message): void
+    {
+        $this->trackWithImage($image, null === $content ? [] : ['p/tracks/t/'.$image => $content]);
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage($message);
+        $this->repository($this->tmp)->tracks();
+    }
+
+    public static function imagesInvalides(): iterable
+    {
+        yield 'introuvable' => ['partage.png', null, 'image « partage.png » introuvable'];
+        yield 'hors du dossier' => ['../../secret.png', null, 'chemin d\'un fichier du dossier du parcours'];
+        yield 'pas une image' => ['partage.png', 'bonjour', 'PNG, JPEG ou WebP attendu'];
+        yield 'trop petite' => ['partage.png', self::pngHeader(600, 315), 'en 600 × 315 : il faut au moins 1200 × 630'];
+        yield 'carrée' => ['partage.png', self::pngHeader(1200, 1200), 'au format 1,91:1'];
     }
 
     /**

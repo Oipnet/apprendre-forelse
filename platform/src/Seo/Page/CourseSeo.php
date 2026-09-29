@@ -45,8 +45,9 @@ final readonly class CourseSeo
         // Le prix affiché à un visiteur : prix courant (fondateur compris), en euros TTC.
         $offer = $this->offers->create($track, null);
         $duration = null === ($minutes = $this->content->durationOf($track)) ? null : DurationExtension::iso($minutes);
-        // Google exige une image : celle du partage, à défaut le logo.
-        $image = $this->branding->shareUrl() ?? $this->branding->logoLargeUrl() ?? $this->branding->logoUrl();
+        $this->shareImage($track);
+        // Google exige une image : celle du parcours, sinon celle du partage de la marque, à défaut le logo.
+        $image = $this->shareImageUrl($track) ?? $this->branding->shareUrl() ?? $this->branding->logoLargeUrl() ?? $this->branding->logoUrl();
         $this->seo
             ->addStructuredData([
                 '@type' => 'Course',
@@ -108,6 +109,7 @@ final readonly class CourseSeo
                 $track->title => $this->schema->url('app_track', ['trackId' => $track->id]),
                 $chapter->title => $url,
             ]));
+        $this->shareImage($track);
     }
 
     public function exercise(Track $track, Chapter $chapter, Exercise $exercise): void
@@ -128,6 +130,21 @@ final readonly class CourseSeo
                 $chapter->title => $this->schema->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]),
                 $exercise->title => $url,
             ]));
+        $this->shareImage($track);
+    }
+
+    /** L'image de partage du parcours (clé « image » de track.yaml) sur ses pages ; sans elle, celle de la marque. */
+    private function shareImage(Track $track): void
+    {
+        if (null !== ($url = $this->shareImageUrl($track))) {
+            $this->seo->setImage($url, sprintf('%s · %s', $track->title, $this->branding->name()));
+        }
+    }
+
+    /** L'adresse de l'image du parcours, datée de son fichier : une image remplacée change d'URL (voir TrackController::image). */
+    private function shareImageUrl(Track $track): ?string
+    {
+        return null === $track->image ? null : $this->schema->url('app_track_image', ['trackId' => $track->id, 'v' => (int) filemtime($track->image)]);
     }
 
     /**

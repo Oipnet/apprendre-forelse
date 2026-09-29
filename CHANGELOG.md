@@ -10,6 +10,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Image de partage par parcours : clé `image` de `track.yaml`.** Un PNG, JPEG ou WebP du dossier du parcours,
+  d'au moins 1200 × 630 au format 1,91:1, servi par `/parcours/<id>/image-de-partage` (URL datée du fichier, en cache
+  immuable). Les pages du parcours, de ses sommaires et de ses exercices l'annoncent (`og:image`, `og:image:alt`) et
+  le `Course` la reprend ; sans elle, rien ne change. Le chargement du pack refuse une image absente, hors du dossier
+  ou mal dimensionnée. Sans image du tout, `twitter:card` vaut désormais `summary` au lieu d'être absent (#179).
 - **Catalogue des parcours : `/parcours`.** Une page indexable qui liste les parcours publiés, avec les mêmes fiches
   que l'accueil (`home/_track_card.html.twig`), les parcours en préparation et un filtre par framework
   (`?framework=`, suivi mais non indexé). Titre et description nomment les frameworks, données structurées

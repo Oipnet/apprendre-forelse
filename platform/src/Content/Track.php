@@ -24,6 +24,8 @@ final readonly class Track
         public ?int $order = null,
         /** Fichiers de DOWNLOADS_DIR réservés à ce parcours (clé « downloads » de track.yaml), voir DownloadPolicy. */
         public array $downloads = [],
+        /** Image de partage (clé « image » de track.yaml, relative au dossier du parcours) : chemin absolu, déjà validé. */
+        public ?string $image = null,
     ) {
     }
 

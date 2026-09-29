@@ -27,6 +27,9 @@
             {% if seo.image or marque.shareUrl -%}
                 <meta property="og:image:alt" content="{{ seo.imageAlt ?? (marque.name ~ ' : ' ~ marque.tagline) }}">
                 <meta name="twitter:card" content="summary_large_image">
+            {%- else -%}
+                {# Sans image, X affiche quand même une carte : titre et description. #}
+                <meta name="twitter:card" content="summary">
             {% endif -%}
         {% endif -%}
         {% for data in seo.structuredData -%}
