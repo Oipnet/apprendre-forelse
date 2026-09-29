@@ -1,0 +1,58 @@
+{#
+    La fiche d'un parcours : titre, description, offre, chapitres et leurs notions. Accueil et catalogue (/parcours).
+    Variables : item (voir HomePage::card), tabbed (onglets de l'accueil), inviteOnly, heading (h3 par défaut ; h2 au catalogue).
+#}
+{% set heading = heading ?? 'h3' %}
+<article class="lp-track"{% if tabbed %} id="lp-panel-{{ item.track.id }}" role="tabpanel" aria-labelledby="lp-tab-{{ item.track.id }}" tabindex="0"{% endif %}>
+    <div class="lp-track-head">
+        <div>
+            <div class="head">
+                <{{ heading }}><a href="{{ path('app_track', {trackId: item.track.id}) }}">{{ item.track.title }}</a></{{ heading }}>
+                {% if inviteOnly %}<span class="lp-badge">En bêta</span>{% endif %}
+            </div>
+            <p>{{ item.track.description }}</p>
+        </div>
+        <div class="lp-track-offer">
+            {% set trackDuration = track_duration(item.track) %}
+            <span class="count">{{ item.chapters|length }} chapitre{{ item.chapters|length > 1 ? 's' }} · {{ item.exercises }} exercice{{ item.exercises > 1 ? 's' }}{% if trackDuration %} · environ {{ trackDuration|duree }}{% endif %}</span>
+            {% set quote = item.offer.quote %}
+            {# Prix et places restantes : seulement pour qui n'a pas encore tout le parcours. #}
+            {% if item.offer.locked %}
+                <span class="lp-price">
+                    {% if quote.discounted %}<s aria-label="Prix normal">{{ quote.normalPrice|euros }}</s>{% endif %}
+                    <strong>{{ quote.price|euros }}</strong> TTC, accès à vie
+                </span>
+                {% if quote.founder %}
+                    <span class="lp-muted">Prix fondateur{% if quote.founderEndsAt %} jusqu'au {{ quote.founderEndsAt|date('d/m/Y') }}{% endif %}{% if quote.founderSeatsLeft is not null %}{{ quote.founderEndsAt ? ',' : '' }} encore {{ quote.founderSeatsLeft }} place{{ quote.founderSeatsLeft > 1 ? 's' }}{% endif %}</span>
+                {% endif %}
+            {% endif %}
+            {% if item.offer.fullAccess and app.user %}
+                <a class="lp-btn" href="{{ path('app_track', {trackId: item.track.id}) }}">Continuer <span class="lp-mono">→</span></a>
+            {% elseif item.offer.purchasable %}
+                <a class="lp-btn primary" href="{{ path('app_purchase', {trackId: item.track.id}) }}">Acheter</a>
+            {% elseif item.offer.comingSoon %}
+                <span class="lp-muted">Achat bientôt disponible</span>
+            {% endif %}
+            {% if item.tryUrl and not item.offer.fullAccess %}<span class="lp-muted">Premier chapitre gratuit</span>{% endif %}
+        </div>
+    </div>
+    <ol class="lp-chapters">
+        {% for row in item.chapters %}
+            <li data-reveal>
+                <div class="head">
+                    <span class="num">{{ '%02d'|format(loop.index) }}</span>
+                    <span class="title">{{ row.chapter.title }}</span>
+                    {% set freeRow = loop.first and item.tryUrl and not item.offer.fullAccess %}<span class="meta{{ freeRow ? ' free' }}">{{ freeRow ? 'gratuit · ' }}{{ row.exercises }} ex.{% set chapterDuration = track_duration(item.track, row.chapter) %}{% if chapterDuration %} · ≈ {{ chapterDuration|duree }}{% endif %}</span>
+                </div>
+                {% if row.concepts %}
+                    <div class="lp-pills">
+                        {%- for concept in row.concepts -%}
+                            {%- set url = notion_url(concept) -%}
+                            {%- if url %}<a href="{{ url }}">{{ concept }}</a>{% else %}<span>{{ concept }}</span>{% endif -%}
+                        {%- endfor -%}
+                    </div>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+</article>

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Content\Chapter;
 use App\Content\ContentRepository;
+use App\Content\HomePage;
 use App\Content\TrackVisibility;
 use App\Entity\User;
 use App\Export\LessonPdf;
@@ -16,13 +17,30 @@ use App\Service\TrackOverview;
 use App\Service\TrackProgress;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 final class TrackController extends AbstractController
 {
     use TargetPathTrait;
+
+    /** Le catalogue : tous les parcours publiés, à filtrer par framework (?framework=, non indexé : voir SearchIndexing). */
+    #[Route('/parcours', name: 'app_tracks', methods: ['GET'])]
+    public function index(
+        HomePage $page,
+        TrackVisibility $visibility,
+        CourseSeo $seo,
+        #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')] bool $inviteOnly,
+        #[MapQueryParameter] ?string $framework = null,
+    ): Response {
+        $seo->catalogue(array_values($visibility->tracks()));
+        $user = $this->getUser();
+
+        return $this->render('track/index.html.twig', [...$page->catalogue($user instanceof User ? $user : null, $framework), 'inviteOnly' => $inviteOnly]);
+    }
 
     #[Route('/parcours/{trackId}', name: 'app_track', methods: ['GET'])]
     public function show(string $trackId, TrackVisibility $visibility, TrackOverview $overview, CourseSeo $seo): Response

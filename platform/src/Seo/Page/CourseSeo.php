@@ -130,6 +130,52 @@ final readonly class CourseSeo
             ]));
     }
 
+    /**
+     * Le catalogue (/parcours) : la page qui répond à « apprendre Symfony en ligne », « formation Laravel »… Le titre
+     * nomme les frameworks des parcours publiés ; les données structurées listent les cours (ItemList de Course).
+     *
+     * @param list<Track> $tracks les parcours publiés, sans filtre
+     */
+    public function catalogue(array $tracks): void
+    {
+        $frameworks = array_values(array_unique(array_map(fn (Track $track) => $this->framework($track->environment), $tracks)));
+        $subject = match (\count($frameworks)) {
+            0 => 'le développement web',
+            1 => $frameworks[0],
+            default => implode(', ', \array_slice($frameworks, 0, -1)).' et '.end($frameworks),
+        };
+        $name = $this->branding->name();
+        $this->seo
+            ->setTitle(
+                sprintf('Parcours pour apprendre %s en codant | %s', $subject, $name),
+                sprintf('Apprendre %s en codant : les parcours', $subject),
+                'Les parcours : apprendre en codant',
+            )
+            ->setDescription(
+                sprintf('Apprenez %s en écrivant du code dans votre navigateur : un vrai projet, un aperçu en direct, des tests qui valident chaque objectif.', $subject),
+                'Premier chapitre gratuit avec un compte.',
+            )
+            ->setCanonical($url = $this->schema->url('app_tracks'))
+            ->addStructuredData([
+                '@type' => 'ItemList',
+                'name' => 'Les parcours',
+                'url' => $url,
+                'numberOfItems' => \count($tracks),
+                'itemListElement' => array_map(fn (Track $track, int $index) => [
+                    '@type' => 'ListItem',
+                    'position' => $index + 1,
+                    'item' => [
+                        '@type' => 'Course',
+                        'name' => $track->title,
+                        'description' => self::plain($track->description),
+                        'url' => $this->schema->url('app_track', ['trackId' => $track->id]),
+                        'provider' => $this->schema->organization(),
+                    ],
+                ], $tracks, array_keys($tracks)),
+            ])
+            ->addStructuredData($this->schema->breadcrumb(['Parcours' => $url]));
+    }
+
     /** « Symfony », « Laravel »… d'après l'environnement d'exécution. */
     public function framework(string $environmentId): string
     {

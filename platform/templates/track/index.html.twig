@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{# Le catalogue : tous les parcours publiés, avec les mêmes fiches que l'accueil (home/_track_card.html.twig). #}
+{% block body_class %}site-page landing{% endblock %}
+
+{% block body %}
+    <main class="lp-section tracks-catalogue">
+        <div class="lp-wrap">
+            <span class="lp-eyebrow">Les parcours</span>
+            <h1 class="lp-h2 spaced">Apprendre en codant, un parcours à la fois</h1>
+            <p class="lp-lead">Chaque parcours est un vrai projet, écrit exercice après exercice dans votre navigateur : un aperçu en direct, des tests qui valident chaque objectif, une fiche de cours à la fin de chaque chapitre. Le premier chapitre est gratuit avec un compte.</p>
+
+            {% if frameworks|length > 1 %}
+                <nav class="lp-pills catalogue-filters" aria-label="Filtrer par framework">
+                    <a href="{{ path('app_tracks') }}"{% if framework is null %} aria-current="page"{% endif %}>Tous</a>
+                    {% for id, label in frameworks %}
+                        <a href="{{ path('app_tracks', {framework: id}) }}"{% if framework == id %} aria-current="page"{% endif %}>{{ label }}</a>
+                    {% endfor %}
+                </nav>
+            {% endif %}
+
+            <div class="lp-parcours">
+                {% for item in tracks %}
+                    {{ include('home/_track_card.html.twig', {tabbed: false, heading: 'h2'}) }}
+                {% else %}
+                    <p class="lp-lead">Aucun parcours publié pour l'instant.</p>
+                {% endfor %}
+            </div>
+
+            {% if upcoming %}
+                <div class="lp-upcoming">
+                    <h2>En préparation</h2>
+                    <ul>
+                        {% for track in upcoming %}
+                            <li>
+                                <span class="name">{{ track.title }}</span> <span class="lp-badge">Bientôt</span>
+                                <p>{{ track.description }}</p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <p class="lp-callout-link">Envie d'un exercice court, sans parcours ? <a href="{{ path('app_practice') }}">La Pratique</a> se joue sans compte.</p>
+        </div>
+    </main>
+{% endblock %}

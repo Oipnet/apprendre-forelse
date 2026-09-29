@@ -10,6 +10,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Catalogue des parcours : `/parcours`.** Une page indexable qui liste les parcours publiés, avec les mêmes fiches
+  que l'accueil (`home/_track_card.html.twig`), les parcours en préparation et un filtre par framework
+  (`?framework=`, suivi mais non indexé). Titre et description nomment les frameworks, données structurées
+  `ItemList` de `Course`, entrée dans le sitemap. Le lien « Parcours » de l'en-tête, du pied de page, de la page
+  d'erreur et des pages qui renvoyaient à `/#parcours` y mène (#178).
 - **Connexion avec GitHub** (facultative) : « Continuer avec GitHub » sur les pages de connexion et
   d'inscription, dès que `GITHUB_CLIENT_ID` et `GITHUB_CLIENT_SECRET` sont renseignés (application OAuth à créer
   sur GitHub, avec pour URL de retour `<APP_URL>/connexion/github/retour`). Vides, rien ne change.

@@ -63,7 +63,7 @@
                 <section id="progression">
                     <div class="ac-section-head">
                         <h2>Reprendre où j'en suis</h2>
-                        <a href="{{ path('app_home') }}#parcours">Tous les parcours →</a>
+                        <a href="{{ path('app_tracks') }}">Tous les parcours →</a>
                     </div>
 
                     {% if featured %}
@@ -104,7 +104,7 @@
                             {% endfor %}
                         </ul>
                     {% elseif not featured %}
-                        <p class="ac-muted">Aucun parcours ouvert pour l'instant. <a href="{{ path('app_home') }}#parcours">Choisir un parcours</a> : le premier chapitre est toujours gratuit.</p>
+                        <p class="ac-muted">Aucun parcours ouvert pour l'instant. <a href="{{ path('app_tracks') }}">Choisir un parcours</a> : le premier chapitre est toujours gratuit.</p>
                     {% endif %}
                 </section>
 

@@ -73,6 +73,7 @@ final class SearchIndexingTest extends WebTestCase
 
         $this->assertSame([
             'http://localhost/',
+            'http://localhost/parcours',
             'http://localhost/parcours/decouverte',
             'http://localhost/parcours/decouverte/chapitre/bonjour/sommaire',
             'http://localhost/parcours/decouverte/01-bonjour',
