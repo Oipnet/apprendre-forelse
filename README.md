@@ -383,7 +383,9 @@ complet, plus mes trois entités » tenable en une poignée de fichiers.
 Il reste à l'**empaqueter** — `composer install`, archive, index de complétion —, ce que fait
 `bin/console app:environnement:synchroniser` (ou le bouton de `/admin` → Environnements, ou
 `ENVIRONMENTS_AUTO_INSTALL=1` au démarrage). Les archives vont dans `INSTALLED_ENVIRONMENTS_DIR`, hors
-de l'arborescence publique.
+de l'arborescence publique. Une nouvelle version du pack qui modifie le décor, ou le socle qu'il prolonge,
+le fait réempaqueter à la synchronisation suivante : une empreinte du contenu des sources (hors `vendor/`)
+est notée à côté de l'archive (`<id>.sources`).
 
 Un pack ne peut pas s'approprier un identifiant déjà pris : `symfony-8` déclaré deux fois arrête le
 chargement en nommant les deux dossiers, plutôt que d'en masquer un au hasard.

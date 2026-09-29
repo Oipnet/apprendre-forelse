@@ -74,7 +74,7 @@ final class EnvironmentCommandsTest extends TestCase
     private function sync(?InstalledEnvironments $installed = null): CommandTester
     {
         $installed ??= $this->installed();
-        $packs = new PackEnvironments($this->registry(), $this->installer($installed), new EnvironmentArtifacts($this->tmp.'/rien-de-public', $installed));
+        $packs = new PackEnvironments($this->registry(), $this->installer($installed), new EnvironmentArtifacts($this->tmp.'/rien-de-public', $installed), $installed);
 
         return new CommandTester(new Command(null, new EnvironmentSyncCommand($packs, $installed)));
     }

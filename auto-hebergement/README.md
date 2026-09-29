@@ -220,7 +220,8 @@ docker compose exec app bin/console app:environnement:synchroniser
 ```
 
 (ou le bouton dans `/admin` → Environnements, ou `ENVIRONMENTS_AUTO_INSTALL=1` pour que ce soit fait au
-démarrage). L'archive va dans le volume `environnements`, pas dans l'image.
+démarrage). L'archive va dans le volume `environnements`, pas dans l'image. Après une mise à jour du pack
+qui touche son décor, la même commande le réempaquette : elle voit que les sources ont changé.
 
 ## Réglages
 

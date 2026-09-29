@@ -64,8 +64,8 @@
                         <tr>
                             <td><code>{{ ligne.id }}</code></td>
                             <td class="text-muted">{{ ligne.directory }}</td>
-                            <td class="{{ ligne.built ? 'text-success' : 'text-danger' }}">
-                                {{ ligne.built ? 'Empaqueté' : 'Pas encore empaqueté' }}
+                            <td class="{{ ligne.built and not ligne.stale ? 'text-success' : 'text-danger' }}">
+                                {{ not ligne.built ? 'Pas encore empaqueté' : (ligne.stale ? 'Sources modifiées : à réempaqueter' : 'Empaqueté') }}
                             </td>
                         </tr>
                     {% endfor %}

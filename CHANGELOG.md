@@ -90,6 +90,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Environnements des packs : l'archive est refaite quand ses sources changent (#162).** Une empreinte du contenu
+  de la chaîne de dossiers (`extends:` compris, hors `vendor/`, `node_modules/`, `var/`) est notée à côté de
+  l'archive ; quand elle change, `app:environnement:synchroniser`, le bouton de l'administration et
+  `ENVIRONMENTS_AUTO_INSTALL` réempaquettent l'environnement. Jusqu'ici, l'apprenant téléchargeait l'ancien projet
+  pendant que `content:check` vérifiait le nouveau. L'administration affiche « Sources modifiées : à
+  réempaqueter ». Une archive faite avant cette version est réempaquetée une fois.
 - **Runtimes : une exception du worker ne fait plus échouer tous les appels, et un démarrage ne bloque plus sans
   fin (#161).**
   - Une exception non rattrapée dans le worker après son démarrage (un `setTimeout` qui lève dans une route Nuxt)
