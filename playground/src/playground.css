@@ -109,6 +109,21 @@ body.playground-page {
 	border-radius: 4px;
 	font-size: 12.5px;
 }
+/* Blocs de code de la consigne (rendus par la plateforme, colorés en hl-…) : un cadre qui défile, pas le panneau. */
+.instructions pre {
+	margin: 0.6rem 0;
+	padding: 0.6rem 0.75rem;
+	border-radius: 6px;
+	background: var(--panel-2);
+	border: 1px solid var(--border);
+	overflow-x: auto;
+	font-size: 12.5px;
+	line-height: 1.5;
+}
+.instructions pre code {
+	padding: 0;
+	background: none;
+}
 .xp {
 	display: flex;
 	flex-wrap: wrap;

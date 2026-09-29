@@ -17,6 +17,8 @@ export interface ExercisePayload {
 	hints: string[];
 	/** Markdown. */
 	instructions: string;
+	/** La consigne rendue par la plateforme (LessonRenderer : code coloré, titre de tête retiré). */
+	instructionsHtml: string;
 	/** Commandes bin/console lancées au chargement (ex. doctrine:schema:update --force). */
 	setup: string[];
 	/** Tests écrits par l'apprenant, et mutants qu'ils doivent détecter (voir Grading). */
