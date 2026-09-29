@@ -30,7 +30,13 @@ interface Verdict {
 export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 	const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
 	const fichiers = new Map(Object.entries(config.fichiers));
-	let modifie = false;
+	/** Chaque changement incrémente la version ; est enregistrée celle qui a été envoyée, pas forcément la dernière. */
+	let version = 0;
+	let versionEnregistree = 0;
+	const modifie = () => version !== versionEnregistree;
+	const changer = () => {
+		version++;
+	};
 
 	const etat = (texte: string, genre: 'idle' | 'busy' | 'ok' | 'ko' = 'idle') => {
 		const el = $('.status');
@@ -40,7 +46,7 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 
 	const editor = new EditorPanel($('#tabs'), $('#editor'), (chemin, contenu) => {
 		fichiers.set(chemin, contenu);
-		modifie = true;
+		changer();
 		etat('Modifications non enregistrées');
 	});
 
@@ -64,7 +70,7 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 		if (!chemin) return;
 		if (fichiers.has(chemin)) return ouvrir(chemin);
 		fichiers.set(chemin, '');
-		modifie = true;
+		changer();
 		dessinerArbre();
 		ouvrir(chemin);
 	});
@@ -73,7 +79,7 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 		if (!chemin || !confirm(`Supprimer « ${chemin} » ?`)) return;
 		fichiers.delete(chemin);
 		editor.removeFile(chemin);
-		modifie = true;
+		changer();
 		dessinerArbre();
 		const suivant = [...fichiers.keys()][0];
 		if (suivant) ouvrir(suivant);
@@ -85,7 +91,7 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 		const reponse = await fetch(config.urls.supprimer, { method: 'DELETE' });
 		const corps = (await reponse.json().catch(() => ({}))) as { url?: string; erreur?: string };
 		if (reponse.ok && corps.url) {
-			modifie = false;
+			versionEnregistree = version;
 			location.href = corps.url;
 			return;
 		}
@@ -95,20 +101,23 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 	// --- Enregistrer ----------------------------------------------------------------------
 	const enregistrer = async (): Promise<boolean> => {
 		etat('Enregistrement…', 'busy');
+		// Le corps est figé ici : une frappe pendant l'envoi reste « non enregistrée ».
+		const envoyee = version;
 		const reponse = await fetch(config.urls.enregistrer, {
 			method: 'PUT',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ fichiers: Object.fromEntries(fichiers) }),
 		});
-		const corps = await reponse.json().catch(() => ({}));
+		const corps = (await reponse.json().catch(() => ({}))) as { erreur?: string; format?: string | null };
 		if (!reponse.ok) {
+			// Format invalide : rien n'a été écrit, le travail reste ici.
 			etat(corps.erreur ?? `Enregistrement refusé (${reponse.status})`, 'ko');
+			if (corps.format) afficherVerdict({ ok: false, erreurs: [corps.format], avertissements: [], objectifs: [], secondes: 0 });
 			return false;
 		}
-		modifie = false;
-		if (corps.format) {
-			etat('Enregistré, mais le format est invalide', 'ko');
-			afficherVerdict({ ok: false, erreurs: [corps.format], avertissements: [], objectifs: [], secondes: 0 });
+		versionEnregistree = Math.max(versionEnregistree, envoyee);
+		if (modifie()) {
+			etat('Enregistré, mais modifié depuis');
 			return false;
 		}
 		etat('Enregistré', 'ok');
@@ -119,7 +128,7 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 	// --- Vérifier -------------------------------------------------------------------------
 	$('#verifier').addEventListener('click', async () => {
 		const boutons = root.querySelectorAll<HTMLButtonElement>('.actions button');
-		if (modifie && !(await enregistrer())) return;
+		if (modifie() && !(await enregistrer())) return;
 		for (const bouton of boutons) bouton.disabled = true;
 		etat('Vérification en cours (tests au départ, puis avec la solution)…', 'busy');
 		try {
@@ -154,7 +163,7 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 				editor.removeFile(chemin);
 			}
 			for (const chemin of [...fichiers.keys()]) if (!(chemin in corps.fichiers)) fichiers.delete(chemin);
-			modifie = true;
+			changer();
 			dessinerArbre();
 			ouvrir(fichiers.has('exercise.yaml') ? 'exercise.yaml' : [...fichiers.keys()][0]);
 			etat('Proposition du modèle chargée : relisez, puis vérifiez', 'ok');
@@ -179,6 +188,6 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 	}
 
 	window.addEventListener('beforeunload', (e) => {
-		if (modifie) e.preventDefault();
+		if (modifie()) e.preventDefault();
 	});
 }

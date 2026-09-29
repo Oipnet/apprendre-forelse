@@ -49,29 +49,32 @@ final class ExerciseReader
         $this->environments->get($environment);
 
         $mutants = [];
-        foreach ($meta['mutants'] ?? [] as $mutant) {
+        foreach ($this->items($meta, 'mutants', $file) as $mutant) {
             $mutant = $this->mutant($mutant, $file);
             if (isset($mutants[$mutant->id])) {
                 throw new ContentException(sprintf('%s : mutant « %s » déclaré deux fois.', $file, $mutant->id));
             }
             $mutants[$mutant->id] = $mutant;
         }
-        $objectives = array_map(function (array $o) use ($file, $mutants) {
+        $objectives = array_map(function (mixed $o) use ($file, $mutants) {
+            if (!\is_array($o)) {
+                throw new ContentException(sprintf('%s : chaque objectif est un objet {label, test} (ou {label, mutant}).', $file));
+            }
             $label = $this->files->required($o, 'label', $file);
             if (isset($o['mutant'])) {
-                return isset($mutants[$o['mutant']])
+                return \is_string($o['mutant']) && isset($mutants[$o['mutant']])
                     ? new Objective(Objective::MUTANT_PREFIX.$o['mutant'], $label)
-                    : throw new ContentException(sprintf('%s : l\'objectif cite le mutant « %s », qui n\'est pas déclaré dans « mutants ».', $file, $o['mutant']));
+                    : throw new ContentException(sprintf('%s : l\'objectif cite le mutant « %s », qui n\'est pas déclaré dans « mutants ».', $file, \is_scalar($o['mutant']) ? $o['mutant'] : get_debug_type($o['mutant'])));
             }
 
             return new Objective(isset($o['own-tests']) ? Objective::OWN_TESTS : $this->files->required($o, 'test', $file), $label);
-        }, $meta['objectives'] ?? []);
+        }, $this->items($meta, 'objectives', $file));
         if (!$objectives) {
             throw new ContentException(sprintf('%s : au moins un objectif est requis.', $file));
         }
 
-        $editable = $meta['editable'] ?? [];
-        $readonly = $meta['readonly'] ?? [];
+        $editable = $this->strings($meta, 'editable', $file);
+        $readonly = $this->strings($meta, 'readonly', $file);
         // Un fichier à la fois modifiable et verrouillé serait ouvert deux fois dans l'éditeur.
         foreach ($readonly as $verrouille) {
             foreach ($editable as $entree) {
@@ -82,7 +85,7 @@ final class ExerciseReader
         }
         // Un motif (migrations/*.php) désigne des fichiers à venir : il ne peut pas être ouvert.
         $explicites = array_values(array_filter($editable, static fn (string $entree) => !str_contains($entree, '*')));
-        $open = $meta['open'] ?? ($explicites[0] ?? $readonly[0] ?? throw new ContentException(sprintf('%s : aucun fichier éditable ni en lecture seule à ouvrir (précisez « open »).', $file)));
+        $open = $this->optionalString($meta, 'open', $file) ?? ($explicites[0] ?? $readonly[0] ?? throw new ContentException(sprintf('%s : aucun fichier éditable ni en lecture seule à ouvrir (précisez « open »).', $file)));
         if (str_contains($open, '*')) {
             throw new ContentException(sprintf('%s : « open » (%s) doit désigner un fichier, pas un motif.', $file, $open));
         }
@@ -96,26 +99,25 @@ final class ExerciseReader
             id: $id,
             trackId: $trackId,
             title: $this->files->required($meta, 'title', $file),
-            // YAML lit « 404 » comme un entier : les étiquettes restent des chaînes.
-            concepts: array_map('strval', $meta['concepts'] ?? []),
+            concepts: $this->strings($meta, 'concepts', $file),
             xp: (int) ($meta['xp'] ?? 0),
             environment: $environment,
-            base: $meta['base'] ?? null,
+            base: $this->optionalString($meta, 'base', $file),
             open: $open,
-            preview: $meta['preview'] ?? '/',
+            preview: $this->optionalString($meta, 'preview', $file) ?? '/',
             editable: $editable,
             readonly: $readonly,
             objectives: $objectives,
-            hints: $meta['hints'] ?? [],
+            hints: $this->strings($meta, 'hints', $file),
             instructions: (string) file_get_contents($directory.'/instructions.md'),
             directory: $directory,
             setup: array_map(
                 static fn ($command) => \is_string($command) && '' !== trim($command) ? trim($command)
                     : throw new ContentException(sprintf('%s : chaque commande de « setup » est une chaîne (ex. « doctrine:schema:update --force »).', $file)),
-                $meta['setup'] ?? [],
+                $this->items($meta, 'setup', $file),
             ),
-            requests: array_map(fn ($request) => $this->exampleRequest($request, $file), $meta['requests'] ?? []),
-            docs: array_map(fn ($doc) => $this->docLink($doc, $file), $meta['docs'] ?? []),
+            requests: array_map(fn ($request) => $this->exampleRequest($request, $file), $this->items($meta, 'requests', $file)),
+            docs: array_map(fn ($doc) => $this->docLink($doc, $file), $this->items($meta, 'docs', $file)),
             mutants: array_values($mutants),
             duration: $this->duration($meta['duration'] ?? null, $file),
             formerIds: FormerIds::parse($meta['former_ids'] ?? null, $file),
@@ -125,6 +127,55 @@ final class ExerciseReader
         }
 
         return $exercise;
+    }
+
+    /**
+     * Une liste de textes (concepts, hints, editable, readonly). Écrite comme une valeur simple (« concepts: Route »),
+     * c'est une erreur de format, pas une page 500.
+     *
+     * @param array<string, mixed> $meta
+     *
+     * @return list<string>
+     */
+    private function strings(array $meta, string $key, string $file): array
+    {
+        $items = $this->items($meta, $key, $file);
+        foreach ($items as $item) {
+            if (!\is_scalar($item)) {
+                throw new ContentException(sprintf('%s : chaque entrée de « %s » est un texte.', $file, $key));
+            }
+        }
+
+        // YAML lit « 404 » comme un entier : les étiquettes restent des chaînes.
+        return array_map('strval', $items);
+    }
+
+    /**
+     * Une liste YAML (« - … » ou « [] »), quel que soit le type de ses entrées.
+     *
+     * @param array<string, mixed> $meta
+     *
+     * @return list<mixed>
+     */
+    private function items(array $meta, string $key, string $file): array
+    {
+        $items = $meta[$key] ?? [];
+        if (!\is_array($items) || !array_is_list($items)) {
+            throw new ContentException(sprintf('%s : « %s » est une liste, une entrée par ligne commençant par « - » (ou « [] » pour aucune).', $file, $key));
+        }
+
+        return $items;
+    }
+
+    /** @param array<string, mixed> $meta */
+    private function optionalString(array $meta, string $key, string $file): ?string
+    {
+        $value = $meta[$key] ?? null;
+        if (null !== $value && !\is_scalar($value)) {
+            throw new ContentException(sprintf('%s : « %s » est un texte, pas une liste ni un objet.', $file, $key));
+        }
+
+        return null === $value ? null : (string) $value;
     }
 
     /** Durée estimée d'un exercice : des minutes, entre 1 et 600. */
@@ -147,6 +198,9 @@ final class ExerciseReader
         }
         $changes = [];
         foreach ($mutant['changes'] as $change) {
+            if (!\is_array($change)) {
+                throw new ContentException(sprintf('%s : chaque changement d\'un mutant est un objet {file, search, replace}.', $file));
+            }
             $changes[] = [
                 'file' => $this->files->required($change, 'file', $file),
                 'search' => $this->files->required($change, 'search', $file),
@@ -190,7 +244,9 @@ final class ExerciseReader
             title: (string) ($request['title'] ?? $method.' '.$path),
             method: $method,
             path: $path,
-            headers: array_map('strval', $request['headers'] ?? []),
+            headers: \is_array($request['headers'] ?? [])
+                ? array_map('strval', $request['headers'] ?? [])
+                : throw new ContentException(sprintf('%s : « headers » d\'une requête est un objet (nom: valeur).', $file)),
             // Un objet YAML devient du JSON indenté ; une chaîne est envoyée telle quelle.
             body: \is_array($body) ? json_encode($body, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES) : (null === $body ? null : (string) $body),
         );

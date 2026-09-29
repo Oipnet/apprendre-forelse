@@ -173,20 +173,48 @@ final class StudioTest extends WebTestCase
     }
 
     /** Comme un montage « :ro » : plus aucun dossier ni fichier du pack n'accepte l'écriture. */
-    public function testUnFormatInvalideEstSignaleSansPerdreLeTravail(): void
+    /**
+     * Un format invalide n'est pas gardé : écrit sur le disque, il empêcherait de charger tout le contenu (toutes les
+     * pages en 500, atelier compris). Les fichiers d'avant restent, l'erreur est dite, l'éditeur se rouvre.
+     *
+     * @return iterable<string, array{?string, string}>
+     */
+    public static function formatsInvalides(): iterable
+    {
+        yield 'sans objectif ni fichier éditable' => ["id: 01-bonjour\ntitle: Bonjour\n", 'objectif'];
+        yield 'faute de syntaxe YAML' => ["id: 01-bonjour\ntitle: Boss : le grand ménage\n", 'YAML invalide'];
+        yield 'une liste écrite comme une valeur' => [null, '« concepts » est une liste'];
+        yield 'des fichiers verrouillés écrits comme une valeur' => [null, '« readonly » est une liste'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('formatsInvalides')]
+    public function testUnFormatInvalideNEstPasEnregistreEtNeCasseRien(?string $yaml, string $message): void
     {
         $client = static::createClient();
         $this->auteur($client);
+        $avant = (string) file_get_contents($this->exercice.'/exercise.yaml');
+        $yaml ??= match (true) {
+            str_contains($message, 'concepts') => preg_replace('/^concepts:.*(\n\s+-.*)*/m', 'concepts: Route', $avant),
+            default => $avant."readonly: src/Kernel.php\n",
+        };
 
         $client->jsonRequest('PUT', '/atelier/decouverte/01-bonjour', ['fichiers' => [
-            'exercise.yaml' => "id: 01-bonjour\ntitle: Bonjour\n", // ni objectifs ni fichier éditable
+            'exercise.yaml' => $yaml,
             'instructions.md' => "# Bonjour\n",
+            'starter/nouveau.txt' => 'x',
         ]]);
 
-        $this->assertResponseIsSuccessful();
+        $this->assertResponseStatusCodeSame(422);
         $corps = json_decode((string) $client->getResponse()->getContent(), true);
-        $this->assertTrue($corps['enregistre'], 'Le travail est enregistré même s\'il ne compile pas encore.');
-        $this->assertStringContainsString('objectif', (string) $corps['format']);
+        $this->assertStringContainsString('rien n\'a été enregistré', $corps['erreur']);
+        $this->assertStringContainsString($message, (string) $corps['format']);
+        $this->assertSame($avant, file_get_contents($this->exercice.'/exercise.yaml'), 'Les fichiers d\'avant sont remis.');
+        $this->assertFileDoesNotExist($this->exercice.'/starter/nouveau.txt', 'Un fichier ajouté par l\'envoi refusé disparaît.');
+
+        $client->request('GET', '/atelier/decouverte/01-bonjour');
+        $this->assertResponseIsSuccessful('L\'éditeur se rouvre.');
+        $client->request('GET', '/parcours/decouverte');
+        $this->assertResponseIsSuccessful('Le reste du site se charge toujours.');
     }
 
     public function testUnCheminSuspectEstRefuse(): void
@@ -213,6 +241,53 @@ final class StudioTest extends WebTestCase
         $this->assertSame('/atelier/decouverte/03-mon-exercice', json_decode((string) $client->getResponse()->getContent(), true)['url']);
         $this->assertFileExists($this->packs.'/demo/tracks/decouverte/exercises/03-mon-exercice/exercise.yaml');
         $this->assertStringContainsString('- 03-mon-exercice', (string) file_get_contents($this->packs.'/demo/tracks/decouverte/track.yaml'));
+    }
+
+    /** Un titre est écrit tel quel dans exercise.yaml, même avec « : », « [ » ou « # » : cité, ni cassé ni tronqué. */
+    public function testUnTitreAvecDesCaracteresYamlEstGardeTelQuel(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+
+        foreach (['03-boss' => 'Boss : le grand ménage', '04-bonus' => '[Bonus] Un détour', '05-route' => 'Lire #[Route] et #[MapQueryParameter]'] as $id => $titre) {
+            $client->jsonRequest('POST', '/atelier/decouverte/nouveau', ['id' => $id, 'titre' => $titre, 'chapitre' => 'bonjour']);
+            $this->assertResponseStatusCodeSame(201, $titre);
+            $client->request('GET', '/atelier/decouverte/'.$id);
+            $this->assertResponseIsSuccessful($titre);
+            $this->assertSelectorTextContains('title', $titre);
+        }
+    }
+
+    /** Le premier exercice d'un chapitre vide s'inscrit : la liste « exercises » s'ouvre. */
+    public function testLePremierExerciceDUnChapitreVideSAjoute(): void
+    {
+        $trackYaml = $this->packs.'/demo/tracks/decouverte/track.yaml';
+        file_put_contents($trackYaml, (string) file_get_contents($trackYaml)."  - id: vide\n    title: Un chapitre à écrire\n    exercises: []\n");
+        $client = static::createClient();
+        $this->auteur($client);
+
+        $client->jsonRequest('POST', '/atelier/decouverte/nouveau', ['id' => '03-premier', 'titre' => 'Premier', 'chapitre' => 'vide']);
+
+        $this->assertResponseStatusCodeSame(201);
+        $this->assertStringContainsString("    exercises:\n      - 03-premier", (string) file_get_contents($trackYaml));
+        $client->request('GET', '/atelier/decouverte/03-premier');
+        $this->assertResponseIsSuccessful();
+    }
+
+    /** Une création qui échoue ne laisse ni dossier ni ligne : un nouvel essai sous le même identifiant reste possible. */
+    public function testUneCreationRateeNeLaissePasDeTrace(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+        $trackYaml = (string) file_get_contents($this->packs.'/demo/tracks/decouverte/track.yaml');
+
+        $client->jsonRequest('POST', '/atelier/decouverte/nouveau', ['id' => '03-perdu', 'titre' => 'Perdu', 'chapitre' => 'inconnu']);
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertDirectoryDoesNotExist($this->packs.'/demo/tracks/decouverte/exercises/03-perdu');
+        $this->assertSame($trackYaml, file_get_contents($this->packs.'/demo/tracks/decouverte/track.yaml'));
+        $client->jsonRequest('POST', '/atelier/decouverte/nouveau', ['id' => '03-perdu', 'titre' => 'Perdu', 'chapitre' => 'bonjour']);
+        $this->assertResponseStatusCodeSame(201);
     }
 
     public function testSupprimerUnExerciceLeRetireDuParcours(): void
@@ -339,10 +414,11 @@ final class StudioTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertDirectoryDoesNotExist($this->packs.'/demo/practice/exemple-map-request-header');
 
-        // Comme pour un exercice de parcours, le travail est enregistré et le format signalé.
+        // Comme pour un exercice de parcours, un format invalide est signalé et n'est pas gardé.
         $client->jsonRequest('PUT', '/atelier/pratique/mon-essai', ['fichiers' => [...$config['fichiers'], 'exercise.yaml' => $yaml."xp: 10\n"]]);
-        $this->assertResponseIsSuccessful();
+        $this->assertResponseStatusCodeSame(422);
         $this->assertStringContainsString('« xp » n\'a pas cours', (string) json_decode((string) $client->getResponse()->getContent(), true)['format']);
+        $this->assertSame($yaml, file_get_contents($dossier.'/exercise.yaml'));
     }
 
     public function testUnFrameworkSansSqueletteNeSeCreePasDepuisLAtelier(): void

@@ -90,6 +90,39 @@ final class TrackWriterTest extends TestCase
         $this->writer()->ajouterExercice($this->track(), 'c9', '99-neuf');
     }
 
+    /**
+     * Le premier exercice d'un chapitre vide : « exercises: [] », « exercises: » sans entrée, ou pas de clé du tout.
+     *
+     * @return iterable<string, array{string, string}>
+     */
+    public static function chapitresVides(): iterable
+    {
+        yield 'liste vide' => ["  - id: c3\n    title: C3\n    exercises: []\n", "  - id: c3\n    title: C3\n    exercises:\n      - 99-neuf\n"];
+        yield 'clé sans entrée' => ["  - id: c3\n    title: C3\n    exercises:\n", "  - id: c3\n    title: C3\n    exercises:\n      - 99-neuf\n"];
+        yield 'sans clé' => ["  - id: c3\n    title: C3\n", "  - id: c3\n    title: C3\n    exercises:\n      - 99-neuf\n"];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('chapitresVides')]
+    public function testLePremierExerciceDUnChapitreVideOuvreLaListe(string $chapitre, string $attendu): void
+    {
+        (new Filesystem())->dumpFile($this->tmp.'/track.yaml', self::TRACK_YAML."\n".$chapitre);
+
+        $this->writer()->ajouterExercice($this->track(), 'c3', '99-neuf');
+
+        $this->assertStringEndsWith($attendu, $this->yaml());
+        $this->assertStringContainsString("      - 03-trois\n  - id: c3", $this->yaml(), 'Le chapitre précédent ne bouge pas.');
+    }
+
+    /** Un chapitre qui porte l'identifiant du parcours n'est pas confondu avec la ligne « id » du parcours. */
+    public function testLIdDuParcoursNEstPasUnChapitre(): void
+    {
+        (new Filesystem())->dumpFile($this->tmp.'/track.yaml', self::TRACK_YAML."\n  - id: t\n    title: Homonyme\n    exercises:\n      - 04-quatre\n");
+
+        $this->writer()->ajouterExercice($this->track(), 't', '99-neuf');
+
+        $this->assertStringEndsWith("      - 04-quatre\n      - 99-neuf\n", $this->yaml());
+    }
+
     public function testUnSecondEcrivainAttendQueLePremierAitFini(): void
     {
         (new Filesystem())->mkdir($this->tmp.'/verrous');

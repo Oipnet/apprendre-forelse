@@ -18,7 +18,11 @@ const FICHIER = 'lesson.md';
 export function mountLessonStudio(root: HTMLElement, config: LessonStudioConfig) {
 	const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
 	let markdown = config.markdown;
-	let modifie = false;
+	/** Chaque frappe incrémente la version : l'enregistrement et l'aperçu savent laquelle ils portent. */
+	let version = 0;
+	let versionEnregistree = 0;
+	let versionApercue = -1;
+	const modifie = () => version !== versionEnregistree;
 	let apercuTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const etat = (texte: string, genre: 'idle' | 'busy' | 'ok' | 'ko' = 'idle') => {
@@ -35,8 +39,12 @@ export function mountLessonStudio(root: HTMLElement, config: LessonStudioConfig)
 
 	// --- Aperçu -----------------------------------------------------------------------------
 	const apercu = async () => {
+		const demandee = version;
 		const { ok, json } = await poster(config.urls.apercu, { markdown });
-		if (ok && typeof json.html === 'string') $('#apercu').innerHTML = json.html;
+		// Les réponses peuvent arriver dans le désordre : un aperçu plus ancien que celui affiché est ignoré.
+		if (!ok || typeof json.html !== 'string' || demandee < versionApercue) return;
+		versionApercue = demandee;
+		$('#apercu').innerHTML = json.html;
 	};
 	const programmerApercu = () => {
 		clearTimeout(apercuTimer);
@@ -45,7 +53,7 @@ export function mountLessonStudio(root: HTMLElement, config: LessonStudioConfig)
 
 	const editor = new EditorPanel($('#tabs'), $('#editor'), (_chemin, contenu) => {
 		markdown = contenu;
-		modifie = true;
+		version++;
 		etat('Modifications non enregistrées');
 		programmerApercu();
 	});
@@ -57,7 +65,7 @@ export function mountLessonStudio(root: HTMLElement, config: LessonStudioConfig)
 	const proposer = (contenu: string) => {
 		editor.removeFile(FICHIER);
 		markdown = contenu;
-		modifie = true;
+		version++;
 		editor.addFile(FICHIER, markdown, !config.modifiable);
 		editor.open(FICHIER);
 		programmerApercu();
@@ -66,19 +74,21 @@ export function mountLessonStudio(root: HTMLElement, config: LessonStudioConfig)
 	// --- Enregistrer ------------------------------------------------------------------------
 	const enregistrer = async () => {
 		etat('Enregistrement…', 'busy');
+		const envoyee = version;
 		const { ok, statut, json } = await poster(config.urls.enregistrer, { markdown }, 'PUT');
 		if (!ok) {
 			etat((json.erreur as string | undefined) ?? `Enregistrement refusé (${statut})`, 'ko');
 			return;
 		}
-		modifie = false;
-		etat(json.fiche ? 'Enregistré' : 'Fiche retirée du chapitre', 'ok');
+		versionEnregistree = Math.max(versionEnregistree, envoyee);
+		if (modifie()) etat('Enregistré, mais modifié depuis');
+		else etat(json.fiche ? 'Enregistré' : 'Fiche retirée du chapitre', 'ok');
 	};
 	$('#enregistrer').addEventListener('click', () => void enregistrer());
 
 	// --- Squelette / brouillon --------------------------------------------------------------
 	const demander = async (url: string, attente: string) => {
-		if (modifie && !confirm('Le contenu actuel sera remplacé par la proposition. Continuer ?')) return;
+		if (modifie() && !confirm('Le contenu actuel sera remplacé par la proposition. Continuer ?')) return;
 		const boutons = root.querySelectorAll<HTMLButtonElement>('.actions button');
 		for (const bouton of boutons) bouton.disabled = true;
 		etat(attente, 'busy');
@@ -105,6 +115,6 @@ export function mountLessonStudio(root: HTMLElement, config: LessonStudioConfig)
 	});
 
 	window.addEventListener('beforeunload', (e) => {
-		if (modifie) e.preventDefault();
+		if (modifie()) e.preventDefault();
 	});
 }

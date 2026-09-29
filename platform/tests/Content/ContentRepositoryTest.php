@@ -589,6 +589,18 @@ final class ContentRepositoryTest extends TestCase
 
     public static function packsInvalides(): iterable
     {
+        // Une liste écrite comme une valeur simple, ou une faute de syntaxe : une erreur de format, jamais une page 500.
+        $e1 = static fn (string $yaml) => ['tracks/t/exercises/e1/exercise.yaml' => $yaml];
+        $valide = "id: e1\ntitle: E1\neditable: [a.php]\nobjectives: [{test: testA, label: A}]\n";
+        foreach (['concepts' => 'Route', 'hints' => 'un indice', 'readonly' => 'b.php', 'docs' => 'x', 'requests' => 'x', 'setup' => 'cache:clear', 'mutants' => 'x'] as $cle => $valeur) {
+            yield $cle.' écrit comme une valeur' => [$e1($valide."{$cle}: {$valeur}"), sprintf('« %s » est une liste', $cle)];
+        }
+        yield 'editable écrit comme une valeur' => [$e1("id: e1\ntitle: E1\neditable: src/a.php\nobjectives: [{test: testA, label: A}]"), '« editable » est une liste'];
+        yield 'objectives écrit comme une valeur' => [$e1("id: e1\ntitle: E1\neditable: [a.php]\nobjectives: x"), '« objectives » est une liste'];
+        yield 'un objectif qui n\'est pas un objet' => [$e1("id: e1\ntitle: E1\neditable: [a.php]\nobjectives: [testA]"), 'chaque objectif est un objet'];
+        yield 'un titre qui est une liste' => [$e1("id: e1\ntitle: [Bonus, Un détour]\neditable: [a.php]\nobjectives: [{test: testA, label: A}]"), '« title » est un texte'];
+        yield 'open qui est une liste' => [$e1($valide.'open: [a.php]'), '« open » est un texte'];
+        yield 'faute de syntaxe YAML' => [$e1("id: e1\ntitle: Boss : le grand ménage\n"), 'YAML invalide'];
         yield 'moteur trop ancien pour le pack' => [
             ['pack.yaml' => "id: cassé\ntitle: Cassé\nmoteur: '^99.0'\ntracks: [t]"],
             'demande un moteur ^99.0',
