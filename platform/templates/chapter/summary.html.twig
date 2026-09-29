@@ -20,6 +20,7 @@
 
         <p class="meta">Chapitre {{ number }} du parcours <a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></p>
         <h1>{{ chapter.title }}</h1>
+        {% if chapter.description %}<p class="lead">{{ chapter.description }}</p>{% endif %}
         <p class="meta chapter-outline-facts">
             {{ exercises|length }} exercice{{ exercises|length > 1 ? 's' }}
             · {{ xp|number_format(0, ',', ' ') }} XP

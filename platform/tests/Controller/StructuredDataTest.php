@@ -117,9 +117,18 @@ final class StructuredDataTest extends WebTestCase
         $client = static::createClient();
         $data = $this->structuredData($client, '/parcours/decouverte/01-bonjour');
 
-        $this->assertSame(['BreadcrumbList'], array_keys($data));
+        $this->assertSame(['BreadcrumbList', 'LearningResource'], array_keys($data));
         $this->assertCount(3, $data['BreadcrumbList']['itemListElement']);
         $this->assertSame('http://localhost/parcours/decouverte/01-bonjour', $data['BreadcrumbList']['itemListElement'][2]['item']);
+
+        // Un exercice est une ressource pédagogique, rattachée au cours de son parcours.
+        $resource = $data['LearningResource'];
+        $this->assertSame('exercise', $resource['learningResourceType']);
+        $this->assertSame('http://localhost/parcours/decouverte/01-bonjour', $resource['url']);
+        $this->assertSame(['Route', 'Contrôleur'], $resource['teaches'], 'Les notions de l\'exercice.');
+        $this->assertTrue($resource['isAccessibleForFree'], 'Premier chapitre : gratuit avec un compte.');
+        $this->assertSame('http://localhost/parcours/decouverte#cours', $resource['isPartOf']['@id']);
+        $this->assertSame('http://localhost/parcours/decouverte#cours', $this->structuredData($client, '/parcours/decouverte')['Course']['@id'], 'Le même @id que le Course du parcours.');
     }
 
     public function testPratique(): void

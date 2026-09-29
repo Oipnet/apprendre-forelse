@@ -10,6 +10,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Champs SEO des parcours : `level` et `description` de chapitre.** `level` (beginner, intermediate, advanced)
+  devient `educationalLevel` du `Course` et des exercices ; la `description` d'un chapitre s'affiche sur son sommaire
+  et en devient la meta description. Les exercices de parcours déclarent un `LearningResource` (notions en `teaches`,
+  durée, gratuité, `isPartOf` vers le `Course`, qui gagne un `@id`) (#181).
 - **Anciennes adresses : clé `former_ids`.** Dans `track.yaml` ou l'`exercise.yaml` d'un exercice (parcours ou
   Pratique), les anciens identifiants d'un parcours ou d'un exercice renommé : une page introuvable sous l'un d'eux
   redirige (301) vers la même page sous l'identifiant actuel (parcours, sommaire, exercice, Pratique ; pas l'API).

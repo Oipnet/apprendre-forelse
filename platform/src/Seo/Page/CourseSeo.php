@@ -51,9 +51,12 @@ final readonly class CourseSeo
         $this->seo
             ->addStructuredData([
                 '@type' => 'Course',
+                // Désigné par ses exercices (LearningResource, isPartOf).
+                '@id' => $url.'#cours',
                 'name' => $track->title,
                 'description' => self::plain($track->description),
                 'url' => $url,
+                ...(null === $track->level ? [] : ['educationalLevel' => Track::LEVELS[$track->level]]),
                 'inLanguage' => 'fr',
                 'provider' => $this->schema->organization(),
                 ...(null === $image ? [] : ['image' => $this->schema->absolute($image)]),
@@ -94,7 +97,8 @@ final readonly class CourseSeo
                 ...[sprintf('%s – chapitre %d, parcours %s', $chapter->title, $number, $framework), $chapter->title],
             )
             ->setDescription(
-                sprintf(
+                // La description écrite pour le chapitre, quand il en a une (clé « description ») ; sinon, ce qu'il fait travailler.
+                $chapter->description ?? sprintf(
                     'Chapitre %d du parcours %s : %s. %d exercice%s à faire en écrivant du code, corrigé%s par des tests.',
                     $number,
                     $track->title,
@@ -129,7 +133,26 @@ final readonly class CourseSeo
                 $track->title => $this->schema->url('app_track', ['trackId' => $track->id]),
                 $chapter->title => $this->schema->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]),
                 $exercise->title => $url,
-            ]));
+            ]))
+            ->addStructuredData([
+                '@type' => 'LearningResource',
+                'name' => $exercise->title,
+                'description' => $this->seo->getDescription(),
+                'url' => $url,
+                'learningResourceType' => 'exercise',
+                'inLanguage' => 'fr',
+                'isAccessibleForFree' => $track->isFreeChapter($chapter),
+                ...(null === $exercise->duration ? [] : ['timeRequired' => DurationExtension::iso($exercise->duration)]),
+                ...([] === $exercise->concepts ? [] : ['teaches' => $exercise->concepts]),
+                ...(null === $track->level ? [] : ['educationalLevel' => Track::LEVELS[$track->level]]),
+                'isPartOf' => [
+                    '@type' => 'Course',
+                    '@id' => $this->schema->url('app_track', ['trackId' => $track->id]).'#cours',
+                    'name' => $track->title,
+                    'url' => $this->schema->url('app_track', ['trackId' => $track->id]),
+                ],
+                'provider' => $this->schema->organization(),
+            ]);
         $this->shareImage($track);
     }
 

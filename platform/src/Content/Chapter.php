@@ -15,6 +15,8 @@ final readonly class Chapter
         public ?string $environment = null,
         /** Fiche de cours de fin de chapitre (markdown de chapters/<id>/lesson.md), null si le chapitre n'en a pas. */
         public ?string $lesson = null,
+        /** Ce que le chapitre fait apprendre, en une ou deux phrases (clé « description ») : meta description et sommaire. */
+        public ?string $description = null,
     ) {
     }
 

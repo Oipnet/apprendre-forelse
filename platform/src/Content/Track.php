@@ -29,8 +29,13 @@ final readonly class Track
         public ?string $image = null,
         /** Anciens identifiants (clé « former_ids ») : leurs adresses redirigent vers celles du parcours. */
         public array $formerIds = [],
+        /** Niveau visé (clé « level ») : une des clés de LEVELS, repris en educationalLevel du Course. */
+        public ?string $level = null,
     ) {
     }
+
+    /** Niveaux d'un parcours, et leur libellé. */
+    public const array LEVELS = ['beginner' => 'Débutant', 'intermediate' => 'Intermédiaire', 'advanced' => 'Avancé'];
 
     public const string VISIBILITY_PUBLIC = 'public';
     public const string VISIBILITY_ADMIN = 'admin';
