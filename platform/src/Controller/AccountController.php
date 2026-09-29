@@ -199,7 +199,7 @@ final class AccountController extends AbstractController
         return $this->createForm(ProfileFormType::class, ['displayName' => $user->getDisplayName(), 'email' => $user->getEmail()], ['action' => $this->generateUrl('app_account_profile'), 'with_password' => $user->hasPassword()]);
     }
 
-    /** @return FormInterface<array{password?: string|null}> */
+    /** @return FormInterface<array{password: string|null}|null> */
     private function deleteForm(User $user): FormInterface
     {
         return $this->createForm(DeleteAccountFormType::class, options: ['action' => $this->generateUrl('app_account_delete'), 'with_password' => $user->hasPassword()]);
