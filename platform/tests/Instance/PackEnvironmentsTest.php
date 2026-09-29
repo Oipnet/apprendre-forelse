@@ -118,6 +118,43 @@ final class PackEnvironmentsTest extends TestCase
         $this->assertFileDoesNotExist($this->tmp.'/installes/.artefacts/ma-boutique.zip');
     }
 
+    /**
+     * Une nouvelle version du pack modifie le décor, ou le socle qu'il prolonge : l'archive est refaite. Sans cela,
+     * l'apprenant téléchargerait l'ancien projet, pendant que content:check lirait le nouveau.
+     */
+    public function testUneSourceModifieeRefaitLArchive(): void
+    {
+        $this->pack('houblon', ['ma-boutique' => "id: ma-boutique\nextends: base-test\n"]);
+        $boutique = $this->tmp.'/packs/houblon/environments/ma-boutique/src/Boutique.php';
+        $this->filesystem->dumpFile($boutique, '<?php // v1');
+        $this->service()->synchronize();
+        $this->assertSame([], $this->service()->toBuild(), 'À jour.');
+
+        // Ce que l'empaquetage installe dans le dossier (vendor/) ne compte pas comme une source.
+        $this->filesystem->dumpFile($this->tmp.'/packs/houblon/environments/ma-boutique/vendor/autoload.php', '<?php');
+        $this->assertSame([], $this->service()->toBuild(), 'vendor/ n\'est pas une source.');
+
+        $this->filesystem->dumpFile($boutique, '<?php // v2');
+        $this->assertSame(['ma-boutique'], $this->service()->toBuild(), 'Le fichier du pack a changé.');
+        $this->assertTrue($this->service()->state()[0]['stale']);
+        $this->assertSame(['ma-boutique'], $this->service()->synchronize()['built']);
+        $this->assertStringContainsString('v2', $this->fichierDe($this->tmp.'/installes/.artefacts/ma-boutique.zip', 'src/Boutique.php'));
+        $this->assertSame([], $this->service()->toBuild());
+
+        $this->filesystem->dumpFile($this->tmp.'/socle/base-test/src/Base.php', '<?php // socle v2');
+        $this->assertSame(['ma-boutique'], $this->service()->toBuild(), 'Le socle prolongé a changé.');
+    }
+
+    /** Une archive empaquetée avant que l'empreinte existe est refaite une fois, puis suivie. */
+    public function testUneArchiveSansEmpreinteEstRefaite(): void
+    {
+        $this->pack('houblon', ['ma-boutique' => "id: ma-boutique\nphp: '8.4'\n"]);
+        $this->service()->synchronize();
+        $this->filesystem->remove($this->tmp.'/installes/.artefacts/ma-boutique.sources');
+
+        $this->assertSame(['ma-boutique'], $this->service()->toBuild());
+    }
+
     /** Un décor qui ne compile pas n'emporte pas les autres. */
     public function testUnEchecNempechePasLesAutres(): void
     {
@@ -176,12 +213,22 @@ final class PackEnvironmentsTest extends TestCase
         return $fichiers;
     }
 
+    private function fichierDe(string $archive, string $nom): string
+    {
+        $zip = new \ZipArchive();
+        $this->assertTrue(true === $zip->open($archive), 'Archive illisible : '.$archive);
+        $contenu = (string) $zip->getFromName($nom);
+        $zip->close();
+
+        return $contenu;
+    }
+
     private function service(?InstalledEnvironments $installed = null): PackEnvironments
     {
         $environments = new EnvironmentRegistry([$this->tmp.'/socle'], packPaths: [$this->tmp.'/packs']);
         $installed ??= new InstalledEnvironments($this->tmp.'/installes');
         $installer = new EnvironmentInstaller($installed, new InstallationJobs($installed), new GitCommandCheckout(), $environments, self::ROOT.'/environments/bin/build-env.sh');
 
-        return new PackEnvironments($environments, $installer, new EnvironmentArtifacts($this->tmp.'/rien-de-public', $installed));
+        return new PackEnvironments($environments, $installer, new EnvironmentArtifacts($this->tmp.'/rien-de-public', $installed), $installed);
     }
 }

@@ -41,7 +41,7 @@ final class EnvironmentSyncCommand
 
         $aFaire = $this->packEnvironments->toBuild();
         if ([] === $aFaire) {
-            $io->success('Rien à faire : les environnements portés par les packs sont tous empaquetés.');
+            $io->success('Rien à faire : les environnements portés par les packs sont tous empaquetés, et à jour de leurs sources.');
 
             return Command::SUCCESS;
         }

@@ -2,7 +2,10 @@
 
 namespace App\Instance;
 
+use App\Content\ContentException;
 use App\Content\EnvironmentRegistry;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 
 /**
  * Les environnements que les packs **portent** (`<pack>/environments/<id>/`), et leur empaquetage.
@@ -15,6 +18,11 @@ use App\Content\EnvironmentRegistry;
  * minutes et exécute le code du pack. Ce service ne fait que lire, sauf quand on l'appelle depuis la
  * commande `app:environnement:synchroniser` ou depuis l'administration — c'est-à-dire depuis un geste
  * d'exploitation, jamais depuis la visite d'un apprenant.
+ *
+ * Une archive se refait quand ses sources changent : une nouvelle version du pack qui touche le décor, ou
+ * le socle qu'il prolonge (`extends:`). Sans cela, l'apprenant téléchargerait l'ancien projet pendant que
+ * content:check et la vérification côté serveur liraient le nouveau. L'empreinte des sources (voir
+ * fingerprint()) est notée à côté de l'archive à chaque empaquetage.
  */
 final readonly class PackEnvironments
 {
@@ -22,22 +30,30 @@ final readonly class PackEnvironments
         private EnvironmentRegistry $environments,
         private EnvironmentInstaller $installer,
         private EnvironmentArtifacts $artifacts,
+        private InstalledEnvironments $installed,
     ) {
     }
+
+    /** Ce qu'installe l'empaquetage dans les dossiers, et ce qui n'est pas une source : hors de l'empreinte. */
+    private const array NOT_SOURCES = ['vendor', 'node_modules', 'var', '.git'];
 
     /**
      * Ce que les packs portent, et si c'est prêt à jouer.
      *
-     * @return list<array{id: string, directory: string, built: bool}>
+     * `stale` : l'archive existe, mais ses sources ont changé depuis (ou son empreinte n'a jamais été notée).
+     *
+     * @return list<array{id: string, directory: string, built: bool, stale: bool}>
      */
     public function state(): array
     {
         $lignes = [];
         foreach ($this->environments->carried() as $id => $directory) {
+            $built = null !== $this->artifacts->path(EnvironmentArtifacts::archiveName($id));
             $lignes[] = [
                 'id' => $id,
                 'directory' => $directory,
-                'built' => null !== $this->artifacts->path(EnvironmentArtifacts::archiveName($id)),
+                'built' => $built,
+                'stale' => $built && $this->fingerprint($id) !== $this->recordedFingerprint($id),
             ];
         }
 
@@ -45,7 +61,7 @@ final readonly class PackEnvironments
     }
 
     /**
-     * Ceux dont l'archive manque encore.
+     * Ceux dont l'archive manque encore, ou n'est plus à jour de ses sources.
      *
      * @return list<string> identifiants, dans l'ordre alphabétique
      */
@@ -53,7 +69,7 @@ final readonly class PackEnvironments
     {
         $aFaire = [];
         foreach ($this->state() as $ligne) {
-            if (!$ligne['built']) {
+            if (!$ligne['built'] || $ligne['stale']) {
                 $aFaire[] = $ligne['id'];
             }
         }
@@ -86,6 +102,11 @@ final readonly class PackEnvironments
             $say(sprintf('Environnement « %s », porté par un pack : empaquetage…', $id));
             try {
                 $this->installer->build($id);
+                // Après l'empaquetage : composer install peut avoir écrit un composer.lock dans le dossier.
+                $fingerprint = $this->fingerprint($id);
+                if (null !== $fingerprint) {
+                    (new Filesystem())->dumpFile($this->fingerprintFile($id), $fingerprint);
+                }
                 $built[] = $id;
             } catch (\Throwable $e) {
                 $failed[$id] = $e->getMessage();
@@ -93,5 +114,42 @@ final readonly class PackEnvironments
         }
 
         return ['built' => $built, 'failed' => $failed];
+    }
+
+    /**
+     * L'empreinte des sources d'un environnement : le contenu de chaque fichier de sa chaîne `extends:`, de la base
+     * à lui-même. Le contenu, pas la date : un pack recopié à chaque déploiement (image Docker) garde son empreinte, et
+     * ne relance pas des minutes de composer install pour rien. Null si la chaîne ne se résout pas (base
+     * introuvable) : l'empaquetage le dira.
+     */
+    public function fingerprint(string $id): ?string
+    {
+        try {
+            $directories = $this->environments->get($id)->directories;
+        } catch (ContentException) {
+            return null;
+        }
+        $context = hash_init('xxh128');
+        foreach ($directories as $index => $directory) {
+            $files = (new Finder())->files()->in($directory)->ignoreDotFiles(false)->ignoreVCS(true)
+                ->exclude(self::NOT_SOURCES)->sortByName();
+            foreach ($files as $file) {
+                hash_update($context, $index."\0".str_replace('\\', '/', $file->getRelativePathname())."\0".hash_file('xxh128', $file->getPathname())."\n");
+            }
+        }
+
+        return hash_final($context);
+    }
+
+    private function recordedFingerprint(string $id): ?string
+    {
+        $file = $this->fingerprintFile($id);
+
+        return is_file($file) ? trim((string) file_get_contents($file)) : null;
+    }
+
+    private function fingerprintFile(string $id): string
+    {
+        return $this->installed->artifactsDirectory().'/'.$id.'.sources';
     }
 }
