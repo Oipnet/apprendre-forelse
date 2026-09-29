@@ -52,6 +52,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Modifié
 
+- **Mots de passe : la même règle partout, et plus robuste (#183).** Une contrainte `App\Validator\StrongPassword`
+  sert l'inscription, le compte et la réinitialisation : au moins 8 caractères, une entropie « moyenne »
+  (`PasswordStrength`, sans règle de composition), et le refus d'un mot de passe publié dans une fuite connue
+  (Have I Been Pwned, par k-anonymat ; accepté si le service ne répond pas, `PASSWORD_BREACH_CHECK=0` pour une
+  instance sans accès sortant). Les messages proposent une phrase de passe. Les mots de passe existants ne sont
+  pas invalidés : la règle vaut à la prochaine saisie.
 - **Emails : un gabarit commun, un bouton par action, l'expéditeur de la marque (#194, #195, #196, #197, #198).**
   - Un layout HTML commun (`emails/_layout.html.twig`) : `lang="fr"`, 600 px, texte d'aperçu propre à chaque email,
     en-tête au nom et au logo de la marque (PNG, adresse absolue ; le nom seul pour un logo webp), pied avec
