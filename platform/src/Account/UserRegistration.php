@@ -31,10 +31,17 @@ final readonly class UserRegistration
         return new RegistrationResult($this->verifier->send($user));
     }
 
+    /** Compte venu de GitHub : pas de mot de passe, et l'adresse est déjà confirmée (par GitHub), sans email à envoyer. */
+    public function registerWithoutPassword(User $user, ?string $code): void
+    {
+        $this->cohorts->enroll($user, $code);
+        $this->alert->notify($user);
+    }
+
     /** Inscription refusée, l'email étant pris : son titulaire l'apprend (oubli de son compte, ou adresses testées). */
     public function notifyHolder(User $attempt): void
     {
-        $holder = $this->users->findOneBy(['email' => $attempt->getEmail()]);
+        $holder = $this->users->findOneByEmail((string) $attempt->getEmail());
         if ($holder instanceof User) {
             $this->notice->send($holder);
         }

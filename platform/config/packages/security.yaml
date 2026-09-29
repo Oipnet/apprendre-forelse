@@ -8,8 +8,8 @@ security:
         # used to reload user from session & other features (e.g. switch_user)
         app_user_provider:
             entity:
+                # Sans « property » : UserRepository::loadUserByIdentifier() cherche l'email sans tenir compte de la casse.
                 class: App\Entity\User
-                property: email
 
     firewalls:
         dev:

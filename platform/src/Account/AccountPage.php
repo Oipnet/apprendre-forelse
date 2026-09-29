@@ -3,12 +3,15 @@
 namespace App\Account;
 
 use App\Content\ContentRepository;
+use App\Account\Github\GithubClient;
+use App\Entity\ExternalIdentity;
 use App\Entity\User;
+use App\Repository\ExternalIdentityRepository;
 use App\Repository\PurchaseRepository;
 use App\Repository\TrackAccessRepository;
 use Psr\Clock\ClockInterface;
 
-/** Ce que la page du compte affiche, hors formulaires : progression, accès, achats. */
+/** Ce que la page du compte affiche, hors formulaires : progression, accès, achats, compte GitHub lié. */
 final readonly class AccountPage
 {
     public function __construct(
@@ -17,6 +20,8 @@ final readonly class AccountPage
         private PurchaseRepository $purchases,
         private ContentRepository $content,
         private ClockInterface $clock,
+        private GithubClient $github,
+        private ExternalIdentityRepository $identities,
     ) {
     }
 
@@ -32,6 +37,8 @@ final readonly class AccountPage
             'purchases' => $this->purchases->findByUser($user),
             'tracks' => $this->content->tracks(),
             'now' => $this->clock->now(),
+            'githubEnabled' => $this->github->isEnabled(),
+            'githubIdentity' => $this->identities->findOneByUser($user, ExternalIdentity::GITHUB),
         ];
     }
 }

@@ -44,10 +44,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private array $roles = [];
 
-    /**
-     * @var string The hashed password
-     */
-    #[ORM\Column]
+    /** Mot de passe haché ; null pour un compte créé avec GitHub, tant qu'il n'en a pas choisi (mot de passe oublié). */
+    #[ORM\Column(nullable: true)]
     private ?string $password = null;
 
     #[ORM\Column(length: 40)]
@@ -155,10 +153,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /** L'adresse (nouvelle ou non) vient d'être confirmée par un lien envoyé à cette adresse. */
     public function confirmEmail(string $email, \DateTimeImmutable $now): static
     {
-        $this->email = $email;
+        $this->email = self::normalizeEmail($email);
         $this->emailVerifiedAt = $now;
 
         return $this;
+    }
+
+    /**
+     * L'adresse telle qu'on l'enregistre et la cherche : sans espaces autour, en minuscules. PostgreSQL compare le
+     * texte en tenant compte de la casse : sans cela, « Ada@… » et « ada@… » seraient deux comptes.
+     */
+    public static function normalizeEmail(string $email): string
+    {
+        return mb_strtolower(trim($email));
     }
 
     public function getId(): ?int
@@ -173,7 +180,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setEmail(string $email): static
     {
-        $this->email = $email;
+        $this->email = self::normalizeEmail($email);
 
         return $this;
     }
@@ -225,6 +232,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    /** Sans mot de passe, le compte se connecte avec GitHub : c'est lui qui confirme l'identité (voir RecentSignIn). */
+    public function hasPassword(): bool
+    {
+        return null !== $this->password;
+    }
+
     public function __toString(): string
     {
         return (string) $this->displayName;
@@ -236,7 +249,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __serialize(): array
     {
         $data = (array) $this;
-        $data["\0" . self::class . "\0password"] = hash('crc32c', $this->password);
+        // Sans mot de passe (compte GitHub), rien à empreinter : null, que la session ne compare pas.
+        $data["\0" . self::class . "\0password"] = null === $this->password ? null : hash('crc32c', $this->password);
         
         return $data;
     }

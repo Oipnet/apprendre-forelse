@@ -10,6 +10,18 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Connexion avec GitHub** (facultative) : « Continuer avec GitHub » sur les pages de connexion et
+  d'inscription, dès que `GITHUB_CLIENT_ID` et `GITHUB_CLIENT_SECRET` sont renseignés (application OAuth à créer
+  sur GitHub, avec pour URL de retour `<APP_URL>/connexion/github/retour`). Vides, rien ne change.
+  - Un nouvel apprenant choisit son pseudo (proposé d'après GitHub) et, s'il en a un, son code d'invitation :
+    l'inscription sur invitation (`REGISTRATION_INVITE_ONLY`) s'applique de même. Son compte n'a pas de mot de
+    passe, et son adresse est celle que GitHub a vérifiée, sans email de confirmation.
+  - Un compte existant est rattaché d'office seulement si GitHub a vérifié l'adresse **et** que le compte l'a
+    confirmée ; sinon, on se connecte avec son mot de passe et on lie GitHub depuis son compte.
+  - Depuis son compte : lier ou délier GitHub. Un compte sans mot de passe confirme son identité en repassant par
+    GitHub (moins de cinq minutes) pour changer d'adresse ou se supprimer, et ne peut pas délier GitHub avant
+    d'avoir choisi un mot de passe (« Mot de passe oublié ? »).
+  - La politique de confidentialité mentionne GitHub quand la connexion est active.
 - **Données structurées des parcours : `courseWorkload`.** Le `CourseInstance` d'un parcours annonce sa durée,
   que le résultat enrichi « Cours » de Google exige ; l'image du `Course` retombe sur le logo quand la marque n'a
   pas d'image de partage (#177).
@@ -40,6 +52,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Comptes : les adresses email ne dépendent plus de la casse.** Inscrit en `Ada@example.test`, on ne pouvait
+  pas se connecter en `ada@example.test`, le mot de passe oublié ne trouvait pas le compte, et une nouvelle
+  inscription créait un second compte. Les adresses sont désormais enregistrées et cherchées en minuscules
+  (connexion, mot de passe oublié, inscription, changement d'adresse, `app:admin`, `app:auteur`), et la base
+  refuse deux adresses qui ne diffèrent que par la casse. La migration met les adresses existantes en
+  minuscules ; si des comptes ne diffèrent que par la casse de leur adresse, elle s'arrête et les liste
+  **sans rien fusionner** : gardez-en un par adresse, changez l'adresse des autres (ou supprimez-les) dans
+  `/admin`, puis relancez le déploiement. Les liens de confirmation d'adresse envoyés avant la mise à jour à
+  une adresse qui contenait des majuscules ne sont plus valables : demandez-en un nouveau depuis le compte.
 - **Pratique : le code écrit sans compte n'est plus perdu à la connexion.** Il était envoyé à l'import, ignoré
   par le serveur, puis effacé du navigateur. Il est désormais repris dans le compte (#167).
 

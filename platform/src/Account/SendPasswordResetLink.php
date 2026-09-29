@@ -30,7 +30,7 @@ final readonly class SendPasswordResetLink
 
     public function __invoke(PasswordResetRequested $request): void
     {
-        $user = $this->users->findOneBy(['email' => $request->email]);
+        $user = $this->users->findOneByEmail($request->email);
         if (!$user instanceof User) {
             return;
         }
