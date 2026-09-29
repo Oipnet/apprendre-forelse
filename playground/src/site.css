@@ -12,6 +12,10 @@
 	--text: #e6e6ea;
 	--muted: #9a9aa6;
 	--accent: #7c6cf2;
+	/* Contraste AA (4,5:1) : fond plein sous du texte blanc (--accent-fill), texte sur fond sombre (--accent-text).
+	   --accent seul reste pour les bordures et les barres, où 3:1 suffit. */
+	--accent-fill: #6655e0;
+	--accent-text: #9186f5;
 	--gold: #e0b04a;
 	--ok: #3fbf7f;
 	--ko: #ef5a5a;
@@ -39,7 +43,7 @@ body {
 }
 
 a {
-	color: var(--accent);
+	color: var(--accent-text);
 }
 
 button,
@@ -57,12 +61,40 @@ button,
 }
 button:disabled {
 	opacity: 0.5;
+	cursor: not-allowed;
+}
+/* Pendant un traitement (tests, démarrage), le bouton le dit : aria-busy. */
+button[aria-busy='true'] {
 	cursor: wait;
+}
+/* Le focus clavier se voit partout ; les champs qui le remplacent par leur propre halo gardent le leur. */
+:focus-visible {
+	outline: 2px solid var(--accent-text);
+	outline-offset: 2px;
+}
+/* « Aller au contenu » : invisible jusqu'à ce que le clavier l'atteigne. body > a : l'emporte sur les liens du site. */
+body > a.skip-link {
+	position: absolute;
+	left: 0.5rem;
+	top: -3rem;
+	z-index: 1000;
+	padding: 0.5rem 0.9rem;
+	border-radius: var(--radius);
+	background: var(--accent-fill);
+	color: #fff;
+	font-weight: 600;
+	text-decoration: none;
+}
+body > a.skip-link:focus {
+	top: 0.5rem;
+}
+#contenu:focus {
+	outline: none;
 }
 button.primary,
 .button.primary {
-	background: var(--accent);
-	border-color: var(--accent);
+	background: var(--accent-fill);
+	border-color: var(--accent-fill);
 	color: white;
 	font-weight: 600;
 }
@@ -295,7 +327,7 @@ a.card:hover {
 	text-decoration: none;
 }
 .next-track h2 a:hover {
-	color: var(--accent);
+	color: var(--accent-text);
 }
 .next-track p:last-child {
 	margin: 0;
@@ -640,6 +672,8 @@ body.site-page {
 	--text: var(--lp-ink);
 	--muted: var(--lp-ink-3);
 	--accent: var(--lp-rust);
+	--accent-fill: var(--lp-rust);
+	--accent-text: var(--lp-rust);
 	--gold: var(--lp-rust);
 	--ok: #2e8b4a;
 	--ko: #c0392b;

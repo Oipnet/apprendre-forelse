@@ -66,6 +66,7 @@
     {# Le lien « Connexion » ramène à la page courante (voir SecurityController::login), sauf depuis l'accueil, les pages de compte et d'erreur. #}
     {% set current_route = app.request.attributes.get('_route') %}
     {% set login_suite = current_route is null or current_route in ['app_home', 'app_login', 'app_register'] ? null : app.request.pathInfo %}
+        <a class="skip-link" href="#contenu">Aller au contenu</a>
         {% block header %}
             <header class="lp-header">
                 <div class="lp-wrap">
@@ -113,6 +114,7 @@
                 {% endfor %}
             {% endfor %}
         {% endblock %}
+        <div id="contenu" tabindex="-1"></div>
         {% block body %}{% endblock %}
         {% block footer %}{{ include('_footer.html.twig') }}{% endblock %}
     </body>

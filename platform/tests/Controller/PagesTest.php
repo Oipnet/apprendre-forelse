@@ -32,6 +32,8 @@ final class PagesTest extends WebTestCase
         $this->assertSelectorExists('.lp-hero a.primary[href="/pratique/exemple-map-request-header"]', 'Le bouton principal mène un visiteur à la Pratique, qui se joue sans compte (voir PracticeTest).');
         $this->assertSelectorExists('#liste-attente a[href="/inscription"]', 'Inscription libre : pas de liste d\'attente.');
         $this->assertSelectorNotExists('form.lp-form');
+        $this->assertSelectorExists('body > a.skip-link[href="#contenu"]:first-child', 'Le premier arrêt du clavier : aller au contenu, par-dessus l\'en-tête.');
+        $this->assertSelectorExists('#contenu[tabindex="-1"]');
     }
 
     public function testLeMenuDuCompteRegroupeLesEspacesReserves(): void

@@ -138,18 +138,35 @@ body.playground-page {
 	align-items: baseline;
 }
 .objectives .dot {
-	width: 0.7rem;
-	height: 0.7rem;
+	width: 0.9rem;
+	height: 0.9rem;
 	border-radius: 50%;
 	border: 2px solid var(--muted);
-	display: inline-block;
+	display: inline-grid;
+	place-items: center;
+	font-size: 0.6rem;
+	font-weight: 700;
+	line-height: 1;
 }
+/* Une forme en plus de la couleur : ✓ atteint, ✕ pas encore. */
 .objectives li[data-state='passed'] .dot {
 	background: var(--ok);
 	border-color: var(--ok);
+	color: #0d1f15;
+}
+.objectives li[data-state='passed'] .dot::after {
+	content: '✓';
 }
 .objectives li[data-state='failed'] .dot {
 	border-color: var(--ko);
+	color: var(--ko);
+}
+.objectives li[data-state='failed'] .dot::after {
+	content: '✕';
+}
+/* Monaco dessine son propre curseur : pas de cadre autour de sa zone de saisie cachée. */
+.monaco-editor textarea:focus-visible {
+	outline: none;
 }
 .objectives li[data-state='passed'] > span:last-of-type {
 	color: var(--ok);
@@ -163,7 +180,7 @@ body.playground-page {
 	font-size: 13.5px;
 }
 .docs a {
-	color: var(--accent);
+	color: var(--accent-text);
 	text-decoration: none;
 }
 .docs a:hover {
@@ -445,7 +462,7 @@ body.playground-page {
 	background: var(--panel-2);
 }
 .filetree button.active {
-	color: var(--accent);
+	color: var(--accent-text);
 	background: var(--panel-2);
 }
 .filetree button.editable::after {
@@ -502,7 +519,7 @@ body.playground-page {
 	min-height: 1.9rem;
 }
 .requestlog .method {
-	color: var(--accent);
+	color: var(--accent-text);
 }
 .requestlog .code.c2 {
 	color: var(--ok);
@@ -532,7 +549,7 @@ body.playground-page {
 }
 .req-examples .method,
 .req-line select {
-	color: var(--accent);
+	color: var(--accent-text);
 	font: 600 11px ui-monospace, Menlo, monospace;
 }
 .req-line {
@@ -760,12 +777,15 @@ body.playground-page {
 .console-input[hidden] {
 	display: none;
 }
+.console-input:focus-within {
+	box-shadow: inset 0 0 0 2px var(--accent-text);
+}
 .console-input input {
 	flex: 1;
 	min-width: 0;
 	background: transparent;
 	border: none;
-	outline: none;
+	outline: none; /* le cadre de la ligne (:focus-within) le remplace */
 	color: var(--text);
 	font: inherit;
 }
@@ -877,7 +897,7 @@ dialog.shortcuts h2 {
 	font-size: 13.5px;
 }
 .mentor strong {
-	color: var(--accent);
+	color: var(--accent-text);
 	font-size: 12px;
 }
 .mentor .what code {
@@ -1031,7 +1051,7 @@ dialog.shortcuts h2 {
 		padding: 0.3rem 0.7rem;
 	}
 	.pane-switch button.active {
-		background: var(--accent);
+		background: var(--accent-fill);
 		color: #fff;
 	}
 	.crumbs {

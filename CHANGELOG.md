@@ -27,6 +27,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Playground : lecteurs d'écran.** Barre de statut et étape de démarrage en `role="status"`, résultat des tests
   dit en toutes lettres, état de chaque objectif en texte masqué, focus sur la réussite, écran de démarrage `inert`
   une fois estompé (#168).
+- **Playground : se repérer et aller plus vite.** Le fil d'Ariane donne le chapitre, la place de l'exercice
+  (« 3/5 ») et des flèches vers les exercices voisins ; le titre reste sur petit écran. `ExercisePayload` gagne
+  `chapter` et `previous` (#170). Ctrl+Entrée (⌘ sur Mac) lance les tests, Ctrl+S enregistre le brouillon tout de
+  suite, et le bouton ⌨ liste les raccourcis (#169).
+- **Playground : démarrage.** Le premier téléchargement d'un environnement est annoncé comme tel ; un démarrage en
+  échec propose « Réessayer » et « Lire la consigne » ; un exercice qui ne se charge pas dit pourquoi (session
+  expirée, accès terminé, introuvable, serveur absent) au lieu d'un code HTTP (#172).
+- **Accessibilité.** Focus clavier visible partout (`:focus-visible`), lien « Aller au contenu », objectifs marqués
+  ✓ / ✕ en plus de leur couleur, `--accent-fill` et `--accent-text` pour un contraste AA (texte blanc sur les
+  boutons principaux, liens sur fond sombre), `cursor: not-allowed` sur un bouton désactivé (#173).
 
 ### Corrigé
 
