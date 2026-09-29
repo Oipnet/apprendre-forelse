@@ -13,6 +13,8 @@ const ENV: EnvironmentSpec = { id: 'nuxt', framework: {} as never, archiveUrl: '
 /** Un worker de test : répond de façon asynchrone, sauf quand il est « bloqué ». */
 class FauxWorker extends EventTarget {
 	static crees: FauxWorker[] = [];
+	/** Les workers créés à partir de celui-ci ne répondent jamais à « boot » (instanciation Wasm figée). */
+	static bootFige = false;
 	readonly fichiers = new Map<string, string>();
 	bloque = false;
 	arrete = false;
@@ -30,7 +32,7 @@ class FauxWorker extends EventTarget {
 			if (data === PING) return this.repondre({ type: 'pong' });
 			const { id, method, args } = data;
 			const resultat = (result: unknown) => this.repondre({ type: 'result', id, result });
-			if (method === 'boot') return (this.demarre = true), resultat(undefined);
+			if (method === 'boot') return FauxWorker.bootFige ? undefined : ((this.demarre = true), resultat(undefined));
 			if (method === 'writeFile') return this.fichiers.set(args[0] as string, args[1] as string), resultat(undefined);
 			if (method === 'writeFiles') {
 				for (const [path, content] of Object.entries(args[0] as Record<string, string>)) this.fichiers.set(path, content);
@@ -50,6 +52,11 @@ class FauxWorker extends EventTarget {
 		this.arrete = true;
 	}
 
+	/** Une exception non rattrapée dans le worker (un setTimeout qui lève, dans une route) : l'événement « error ». */
+	lever(message: string) {
+		this.dispatchEvent(Object.assign(new Event('error'), { message }));
+	}
+
 	private repondre(message: WorkerMessage) {
 		this.dispatchEvent(new MessageEvent('message', { data: message }));
 	}
@@ -57,8 +64,9 @@ class FauxWorker extends EventTarget {
 
 function runtime() {
 	FauxWorker.crees = [];
+	FauxWorker.bootFige = false;
 	const events: RuntimeRestart[] = [];
-	const r = new WorkerRuntime('inutile', 'test', { label: 'Le simulateur', silenceMs: 150, pingMs: 20, spawn: () => new FauxWorker() as unknown as Worker });
+	const r = new WorkerRuntime('inutile', 'test', { label: 'Le simulateur', silenceMs: 150, pingMs: 20, bootSilenceMs: 200, spawn: () => new FauxWorker() as unknown as Worker });
 	r.onRestart((e) => events.push(e));
 	return { r, events };
 }
@@ -103,6 +111,45 @@ describe('WorkerRuntime face à une boucle infinie', () => {
 		expect((await r.request(requete('/apercu/lent'))).status).toBe(200);
 		expect(events).toEqual([]);
 		expect(FauxWorker.crees).toHaveLength(1);
+	});
+});
+
+describe('WorkerRuntime face aux erreurs du worker', () => {
+	it('une exception asynchrone dans une route ne fait pas échouer les autres appels', async () => {
+		const { r, events } = runtime();
+		await r.boot(ENV);
+		const lent = r.request(requete('/apercu/lent'));
+		await new Promise((resolve) => setTimeout(resolve, 30)); // la requête est en vol dans le worker
+		FauxWorker.crees[0].lever('Uncaught Error: levée dans un setTimeout');
+
+		expect((await lent).status, 'L\'appel en cours aboutit : le worker vit toujours.').toBe(200);
+		expect((await r.request(requete('/apercu/'))).status).toBe(200);
+		expect(events).toEqual([]);
+		expect(FauxWorker.crees).toHaveLength(1);
+	});
+
+	it('une exception avant la fin du démarrage (import cassé) le fait échouer', async () => {
+		const { r } = runtime();
+		FauxWorker.bootFige = true;
+		const demarrage = r.boot(ENV);
+		FauxWorker.crees[0].lever('import introuvable');
+		await expect(demarrage).rejects.toThrow(/import introuvable/);
+	});
+
+	it('un démarrage figé échoue avec un message au lieu d\'attendre sans fin', async () => {
+		const { r } = runtime();
+		FauxWorker.bootFige = true;
+		await expect(r.boot(ENV)).rejects.toThrow(/Le simulateur ne démarre pas/);
+	});
+
+	it('une reprise figée après un redémarrage émet « failed », et les appels suivants échouent', async () => {
+		const { r, events } = runtime();
+		await r.boot(ENV);
+		FauxWorker.bootFige = true; // le worker neuf ne démarrera pas
+
+		await r.request(requete('/apercu/boucle')).catch(() => {});
+		await expect(r.readFile('server/api/menu.ts')).rejects.toThrow(/n'a pas pu redémarrer.*ne démarre pas/);
+		expect(events.map((e) => e.phase)).toEqual(['restarting', 'failed']);
 	});
 });
 

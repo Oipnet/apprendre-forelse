@@ -90,6 +90,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Runtimes : une exception du worker ne fait plus échouer tous les appels, et un démarrage ne bloque plus sans
+  fin (#161).**
+  - Une exception non rattrapée dans le worker après son démarrage (un `setTimeout` qui lève dans une route Nuxt)
+    est journalisée ; les appels en cours aboutissent. Seul un échec avant la fin du démarrage (import cassé) les
+    fait échouer, y compris ceux envoyés ensuite.
+  - Le démarrage et la reprise après un redémarrage sont surveillés : sans signe de vie (progression, réponse)
+    pendant 90 s, ils échouent avec un message (« … ne démarre pas : rechargez la page ») et la reprise émet
+    `failed`. Une instanciation Wasm refusée (mémoire indisponible sur mobile) fait échouer le démarrage de PHP au
+    lieu de le laisser en suspens.
+  - L'URL `blob:` du worker de développement est libérée après sa création.
 - **Playground : les tests voient toujours le dernier code, et un brouillon non enregistré se dit (#160).**
   - Les frappes partent vers le runtime en un seul lot (`writeFiles`) ; un « Lancer les tests » ou une requête
     pendant une écriture en cours l'attend, au lieu de tester l'ancien code. Un lot refusé reste en attente et part
