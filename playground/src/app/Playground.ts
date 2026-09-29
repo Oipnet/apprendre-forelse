@@ -10,6 +10,7 @@ import { FeedbackDialog } from './feedback';
 import { HintsAndSolution } from './HintsAndSolution';
 import { escapeHtml } from './html';
 import { layout } from './layout';
+import { bindRetry, bootFailureActionsHtml, bootKey, firstLoadNote, loadErrorHtml } from './boot';
 import { MentorClient, errorTextOf, stripAnsi } from './mentor';
 import { MentorPanel } from './MentorPanel';
 import { mesurer } from '../mesure';
@@ -33,9 +34,10 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const editeur = Promise.all([import('../editor/monaco'), import('../editor/completion'), import('./diff')]);
 	editeur.catch(() => {}); // attendu plus bas : son échec éventuel s'y affiche
 
-	const response = await fetch(config.exerciseUrl, { headers: { accept: 'application/json' }, credentials: 'same-origin' });
-	if (!response.ok) {
-		root.textContent = `Impossible de charger l'exercice (${response.status}).`;
+	const response = await fetch(config.exerciseUrl, { headers: { accept: 'application/json' }, credentials: 'same-origin' }).catch(() => null);
+	if (!response?.ok) {
+		root.innerHTML = loadErrorHtml(response?.status ?? null, config.loginUrl);
+		bindRetry(root);
 		return;
 	}
 	const exercise = (await response.json()) as ExercisePayload;
@@ -114,6 +116,17 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// besoin du runtime qu'à la première requête. Il attendait la fin du boot et l'écriture des fichiers.
 	const relais = bridge.start();
 	relais.catch(() => {}); // attendu plus bas : son échec éventuel s'y affiche
+	// Premier téléchargement de cette archive : on prévient que c'est long, et que ce ne sera plus le cas.
+	const archiveUrl = new URL(exercise.environment.archiveUrl, location.href).href;
+	const seen = (() => {
+		try {
+			return localStorage.getItem(bootKey(exercise.environment.id));
+		} catch {
+			return null; // stockage indisponible : on prévient par défaut
+		}
+	})();
+	const note = firstLoadNote(seen, archiveUrl);
+	if (note) $('#boot-first').textContent = note;
 	try {
 		await runtime.boot(
 			{
@@ -121,7 +134,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 				framework,
 				options: { phpVersion: exercise.environment.phpVersion },
 				// URL absolue : le worker peut tourner depuis une URL blob: (dev), sans base relative.
-				archiveUrl: new URL(exercise.environment.archiveUrl, location.href).href,
+				archiveUrl,
 				previewBasePath: bridge.base,
 				previewSecure: new URL(config.sandboxUrl).protocol === 'https:',
 			},
@@ -129,9 +142,23 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		);
 	} catch (error) {
 		$('#boot-label').textContent = `Impossible de démarrer ${runtimeLabel(framework.runtime)} : ${error instanceof Error ? error.message.split('\n')[0] : error}`;
+		$('#boot-first').textContent = '';
+		$('.boot').insertAdjacentHTML('beforeend', bootFailureActionsHtml());
+		bindRetry(root, () => {
+			const overlay = $('.overlay');
+			overlay.classList.add('hidden');
+			overlay.inert = true;
+			revealPane('brief');
+		});
+		root.dataset.bootFailed = '';
 		throw error;
 	}
 	mark('runtimeReady');
+	try {
+		localStorage.setItem(bootKey(exercise.environment.id), archiveUrl);
+	} catch {
+		// stockage indisponible : le prochain démarrage préviendra encore, sans conséquence
+	}
 
 	const saved = await progress.load().catch(() => null);
 	const initial: Record<string, string> = { ...exercise.files };

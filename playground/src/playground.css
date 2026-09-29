@@ -637,6 +637,32 @@ body.playground-page {
 .boot small {
 	color: var(--muted);
 }
+.boot .boot-first {
+	display: block;
+	margin-top: 0.6rem;
+}
+.boot .boot-first:empty {
+	display: none;
+}
+.boot-actions {
+	display: flex;
+	justify-content: center;
+	gap: 0.5rem;
+	margin: 1rem 0 0;
+}
+/* L'exercice ne s'est pas chargé (session expirée, accès terminé, serveur absent). */
+.load-error {
+	max-width: 32rem;
+	margin: 3rem auto;
+	padding: 1.2rem 1.4rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--panel);
+	color: var(--text);
+}
+.load-error p {
+	color: var(--muted);
+}
 .bar {
 	height: 6px;
 	border-radius: 3px;

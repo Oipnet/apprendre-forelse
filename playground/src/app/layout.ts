@@ -113,6 +113,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 			<p id="boot-label" role="status">Préparation de l'environnement…</p>
 			<div class="bar"><div id="boot-bar"></div></div>
 			<small>${escapeHtml(framework.bootNote)}</small>
+			<small id="boot-first" class="boot-first"></small>
 		</div>
 	</div>`;
 }
