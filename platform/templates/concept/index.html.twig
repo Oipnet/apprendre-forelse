@@ -4,7 +4,7 @@
   L'index des notions : la porte d'entrée de qui cherche « les filtres Twig » plutôt qu'un parcours.
   Variables : concepts (list<{name, slug, exercises}>).
 #}
-{% block title %}Les notions travaillées · Forelse{% endblock %}
+{% block title %}Les notions travaillées · {{ marque.name }}{% endblock %}
 
 {% block body %}
     <main class="page concepts-page">

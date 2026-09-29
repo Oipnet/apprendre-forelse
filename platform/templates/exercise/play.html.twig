@@ -2,6 +2,9 @@
 
 {% block title %}{{ exercise.title }} · {{ marque.name }}{% endblock %}
 
+{# L'éditeur n'a pas les polices du site : les précharger ne servirait à rien. #}
+{% block font_preloads %}{% endblock %}
+
 {% block stylesheets %}
     {{ parent() }}
     {{ vite_entry_link_tags('playground') }}

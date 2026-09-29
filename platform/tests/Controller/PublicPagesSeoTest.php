@@ -130,4 +130,19 @@ final class PublicPagesSeoTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertNull($this->client->getResponse()->getEtag());
     }
+
+    /** Les polices du titre et du texte sont annoncées avant la feuille de styles, et le build les contient bien. */
+    public function testLesPolicesDuHautDePageSontPrechargees(): void
+    {
+        $crawler = $this->client->request('GET', '/');
+
+        $urls = $crawler->filter('link[rel="preload"][as="font"]')->each(static fn ($link) => $link->attr('href'));
+        $this->assertCount(2, $urls);
+        $this->assertMatchesRegularExpression('#^/build/assets/newsreader-latin-[\w-]+\.woff2$#', $urls[0]);
+        $this->assertMatchesRegularExpression('#^/build/assets/instrument-sans-latin-[\w-]+\.woff2$#', $urls[1]);
+        foreach ($urls as $url) {
+            $this->assertFileExists(__DIR__.'/../../public'.$url);
+        }
+        $this->assertSame('', $crawler->filter('link[rel="preload"][as="font"]')->attr('crossorigin'), 'Sans crossorigin, la police préchargée serait téléchargée deux fois.');
+    }
 }
