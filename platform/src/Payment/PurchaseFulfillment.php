@@ -128,11 +128,22 @@ final readonly class PurchaseFulfillment
         $this->entityManager->flush();
     }
 
-    /** Contestation bancaire ouverte : l'accès est révoqué le temps qu'elle se règle, et le reste si elle est perdue. */
+    /**
+     * Contestation bancaire ouverte : l'accès est révoqué le temps qu'elle se règle, et le reste si elle est perdue.
+     *
+     * Stripe ne garantit pas l'ordre de ses événements : la contestation peut précéder « checkout.session.completed »
+     * (quelques secondes après le paiement, avec une carte de test qui conteste d'office). Ignorée, elle laissait
+     * ensuite le paiement ouvrir l'accès pour de bon. L'erreur la fait renvoyer par Stripe, une fois l'achat payé.
+     *
+     * @throws PaymentException aucun achat payé pour ce paiement, pas encore
+     */
     public function disputed(string $paymentIntentId): void
     {
         $purchase = $this->purchases->findOneByPaymentIntent($paymentIntentId);
-        if (null === $purchase || !$purchase->markDisputed()) {
+        if (null === $purchase) {
+            throw new PaymentException(sprintf('Contestation de %s : aucun achat payé pour ce paiement, pas encore. Stripe renverra l\'événement.', $paymentIntentId));
+        }
+        if (!$purchase->markDisputed()) {
             return;
         }
         $this->revokeAccess($purchase, $this->clock->now());
