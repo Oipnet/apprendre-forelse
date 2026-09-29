@@ -213,7 +213,9 @@ final class PackReader
             throw new ContentException(sprintf('%s : « downloads » est une liste de noms de fichiers de DOWNLOADS_DIR (lettres, chiffres, « . », « _ », « - »).', $file));
         }
 
-        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads);
+        $image = isset($meta['image']) ? $this->shareImage($meta['image'], $directory, $file) : null;
+
+        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads, $image);
         $this->tracks[$id] = $track;
         $this->exercises[$id] = [];
 
@@ -293,5 +295,36 @@ final class PackReader
             pullRequest: $pullRequest,
             visibility: $visibility,
         );
+    }
+
+    /** Plus petite image de partage acceptée : celle que LinkedIn, Slack ou X affichent en grand (1,91:1). */
+    public const int SHARE_IMAGE_MIN_WIDTH = 1200;
+    public const int SHARE_IMAGE_MIN_HEIGHT = 630;
+
+    /**
+     * L'image de partage d'un parcours (clé « image ») : un PNG, JPEG ou WebP du dossier du parcours, d'au moins
+     * 1200 × 630 et au format paysage des aperçus de liens (entre 1,8:1 et 2:1).
+     */
+    private function shareImage(mixed $value, string $directory, string $file): string
+    {
+        if (!\is_string($value) || '' === $value || str_starts_with($value, '/') || \in_array('..', explode('/', $value), true)) {
+            throw new ContentException(sprintf('%s : « image » est le chemin d\'un fichier du dossier du parcours (par exemple « partage.png »).', $file));
+        }
+        $path = $directory.'/'.$value;
+        $this->files->watch($path);
+        if (!is_file($path)) {
+            throw new ContentException(sprintf('%s : image « %s » introuvable.', $file, $value));
+        }
+        $size = @getimagesize($path);
+        if (false === $size || !\in_array($size[2], [\IMAGETYPE_PNG, \IMAGETYPE_JPEG, \IMAGETYPE_WEBP], true)) {
+            throw new ContentException(sprintf('%s : image « %s » : PNG, JPEG ou WebP attendu.', $file, $value));
+        }
+        [$width, $height] = $size;
+        $ratio = $height > 0 ? $width / $height : 0;
+        if ($width < self::SHARE_IMAGE_MIN_WIDTH || $height < self::SHARE_IMAGE_MIN_HEIGHT || $ratio < 1.8 || $ratio > 2.0) {
+            throw new ContentException(sprintf('%s : image « %s » en %d × %d : il faut au moins %d × %d, au format 1,91:1 des aperçus de liens.', $file, $value, $width, $height, self::SHARE_IMAGE_MIN_WIDTH, self::SHARE_IMAGE_MIN_HEIGHT));
+        }
+
+        return $path;
     }
 }

@@ -16,6 +16,7 @@ use App\Service\ChapterSummary;
 use App\Service\TrackOverview;
 use App\Service\TrackProgress;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,6 +41,26 @@ final class TrackController extends AbstractController
         $user = $this->getUser();
 
         return $this->render('track/index.html.twig', [...$page->catalogue($user instanceof User ? $user : null, $framework), 'inviteOnly' => $inviteOnly]);
+    }
+
+    /**
+     * L'image de partage d'un parcours (clé « image » de track.yaml). Son nom vient de track.yaml, jamais de l'URL.
+     * Le chemin ressemble à celui d'un exercice : priorité à l'image.
+     */
+    #[Route('/parcours/{trackId}/image-de-partage', name: 'app_track_image', methods: ['GET'], priority: 1)]
+    public function image(string $trackId, TrackVisibility $visibility): BinaryFileResponse
+    {
+        $track = $visibility->find($trackId);
+        if (null === $track?->image) {
+            throw $this->createNotFoundException();
+        }
+        $response = new BinaryFileResponse($track->image);
+        $response->setPublic();
+        // L'URL porte la date du fichier (voir CourseSeo::shareImage) : une image remplacée change d'URL.
+        $response->setMaxAge(86400);
+        $response->setImmutable();
+
+        return $response;
     }
 
     #[Route('/parcours/{trackId}', name: 'app_track', methods: ['GET'])]
