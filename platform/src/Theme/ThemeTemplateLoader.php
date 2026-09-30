@@ -4,6 +4,7 @@ namespace App\Theme;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Contracts\Service\ResetInterface;
+use Twig\Error\LoaderError;
 use Twig\Loader\FilesystemLoader;
 
 /**
@@ -19,6 +20,10 @@ use Twig\Loader\FilesystemLoader;
  * mélangent pas. Sans thème, ce chargeur ne connaît aucun chemin : il répond « inconnu » à tout et la chaîne passe
  * au chargeur du moteur.
  *
+ * Les gabarits verrouillés (TemplateContract::LOCKED : la page d'exercice, les éditeurs de l'atelier) ne se remplacent
+ * pas : le thème qui en dépose un est ignoré, c'est celui du moteur qui sert. La page d'erreur de Symfony
+ * (@Twig/Exception/…) se remplace comme dans le moteur, depuis <thème>/templates/bundles/TwigBundle/.
+ *
  * Un fichier ajouté à un thème après coup demande, en production, un redémarrage du conteneur (ou un cache:clear) :
  * Twig ne revérifie pas la fraîcheur des gabarits compilés.
  */
@@ -26,6 +31,9 @@ use Twig\Loader\FilesystemLoader;
 final class ThemeTemplateLoader extends FilesystemLoader implements ResetInterface
 {
     public const string SUBDIRECTORY = 'templates';
+
+    /** Où un thème remplace les gabarits de TwigBundle (la page d'erreur), comme templates/bundles/ dans le moteur. */
+    public const string TWIG_BUNDLE = 'bundles/TwigBundle';
 
     /** Les gabarits du thème de cette requête : null tant qu'ils n'ont pas été cherchés. */
     private ?string $current = null;
@@ -47,6 +55,13 @@ final class ThemeTemplateLoader extends FilesystemLoader implements ResetInterfa
     protected function findTemplate(string $name, bool $throw = true): ?string
     {
         $this->follow();
+        if (TemplateContract::isLocked($name)) {
+            if (!$throw) {
+                return null;
+            }
+
+            throw new LoaderError(sprintf('Le gabarit « %s » ne se remplace pas depuis un thème.', $name));
+        }
 
         return parent::findTemplate($name, $throw);
     }
@@ -66,6 +81,8 @@ final class ThemeTemplateLoader extends FilesystemLoader implements ResetInterfa
         }
         $this->current = $templates;
         $this->setPaths('' !== $templates && is_dir($templates) ? [$templates] : []);
+        $bundle = $templates.'/'.self::TWIG_BUNDLE;
+        $this->setPaths('' !== $templates && is_dir($bundle) ? [$bundle] : [], 'Twig');
         // setPaths() ne vide pas ce que le chargeur a déjà trouvé (ou pas) : sans cela, un gabarit de l'ancien thème
         // resterait servi après la bascule.
         $this->cache = $this->errorCache = [];

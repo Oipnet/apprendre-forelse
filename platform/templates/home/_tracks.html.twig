@@ -1,0 +1,46 @@
+{#
+  @theme Point de surcharge : les parcours publiés, en onglets quand il y en a plusieurs, puis ceux en préparation.
+  Variables : tracks (list, voir HomePage::card), upcoming (list<App\Content\Track>), inviteOnly (bool). Chaque fiche : home/_track_card.html.twig.
+#}
+<section class="lp-section" id="parcours">
+    <div class="lp-wrap">
+        <span class="lp-eyebrow">Les parcours</span>
+        <h2 class="lp-h2 spaced">{{ tracks|length > 1 ? 'Les parcours disponibles. D\'autres suivent.' : 'Un premier parcours disponible. D\'autres suivent.' }}</h2>
+        {# Plusieurs parcours : des onglets, posés par le JS. Sans JS, les fiches restent empilées. #}
+        {% set tabbed = tracks|length > 1 %}
+        <div class="lp-parcours"{% if tabbed %} data-parcours{% endif %}>
+            {% if tabbed %}
+                <div class="lp-tabs" role="tablist" aria-label="Choisir un parcours">
+                    {% for item in tracks %}
+                        <button type="button" class="lp-tab" role="tab" id="lp-tab-{{ item.track.id }}" aria-controls="lp-panel-{{ item.track.id }}" aria-selected="{{ loop.first ? 'true' : 'false' }}" tabindex="{{ loop.first ? '0' : '-1' }}">
+                            {# Le titre complet est dans la fiche : l'onglet n'en garde que le sujet (« Symfony pour les devs PHP » → « Symfony »). #}
+                            <span class="name">{{ item.track.title|split(' pour ')|first }}</span>
+                            <span class="meta">{{ item.chapters|length }} chap. · {{ item.exercises }} ex.</span>
+                        </button>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% for item in tracks %}
+                {{ include('home/_track_card.html.twig') }}
+            {% else %}
+                <p class="lp-lead">Aucun parcours installé : ajoutez un pack de contenu (variable CONTENT_PACKS_PATHS).</p>
+            {% endfor %}
+        </div>
+        {% if upcoming %}
+            <div class="lp-upcoming">
+                <h3>En préparation</h3>
+                <ul>
+                    {% for track in upcoming %}
+                        <li>
+                            <span class="name">{{ track.title }}</span> <span class="lp-badge">Bientôt</span>
+                            <p>{{ track.description }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <div class="lp-callout">
+            <p><strong>Une fiche de cours à la fin de chaque chapitre</strong>, en page web et en PDF. À la fin du parcours, le livret complet : votre mémo, écrit à mesure que vous l'avez appris.</p>
+        </div>
+    </div>
+</section>

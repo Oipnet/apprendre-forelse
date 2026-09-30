@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+{#
+  @theme Point de surcharge : la page de base de tout le site. Mieux vaut surcharger ses blocs depuis les pages, ou les
+  gabarits qu'elle inclut (_header, _footer), que la remplacer : c'est elle qui pose les balises de référencement, la
+  CSP, les fichiers du moteur et du thème.
+  Blocs : title, robots, font_preloads, stylesheets, javascripts, body_class, header (et brand_chip), body, footer.
+  Variables : theme (App\Theme\Theme), seo (App\Seo\PageSeo), blog, analytics, app.
+#}
 {# Les feuilles, scripts et polices du thème (theme.yaml). La page d'exercice et les éditeurs de l'atelier les
    refusent en posant « theme_assets = false » : ils ont leur propre habillage (voir #235). #}
 {% set theme_assets = theme_assets ?? true %}
@@ -94,47 +101,8 @@
         <a class="skip-link" href="#contenu">Aller au contenu</a>
         {% if theme.preview %}{{ include('_theme_preview.html.twig') }}{% endif %}
         {% block header %}
-            <header class="lp-header">
-                <div class="lp-wrap">
-                    <a class="lp-brand" href="{{ path('app_home') }}">
-                        {% if theme.logoUrl %}<img src="{{ theme.logoUrl }}" alt="" width="72" height="84">{% endif %}
-                        <span class="lp-serif">{{ theme.name }}</span>
-                        {%- set chip %}{% block brand_chip %}{{ theme.chip }}{% endblock %}{% endset -%}
-                        {% if chip|trim %}<span class="lp-chip">{{ chip }}</span>{% endif %}
-                    </a>
-                    <nav aria-label="Navigation principale">
-                        <a href="{{ path('app_tracks') }}">Parcours</a>
-                        <a href="{{ path('app_practice') }}">Pratique</a>
-                        {% if blog.open %}<a href="{{ path('app_blog') }}">Blog</a>{% endif %}
-                        <a href="{{ path('app_home') }}#questions">Questions</a>
-                        {% if app.user %}
-                            {# Tout ce qui concerne le compte et les espaces réservés, derrière le nom : sans JS, <details> s'ouvre et se ferme seul. #}
-                            <details class="lp-account" data-account-menu>
-                                <summary aria-label="Menu du compte de {{ app.user.displayName }}">
-                                    <span class="lp-user">{{ app.user.displayName }}</span>
-                                    <span class="lp-xp">{{ app.user.xp }} XP</span>
-                                    <span class="lp-account-caret" aria-hidden="true"></span>
-                                </summary>
-                                <div class="lp-account-menu">
-                                    <a href="{{ path('app_account') }}">Mon compte</a>
-                                    {% if is_granted('ROLE_AUTEUR') or is_granted('ROLE_CHEF_COHORTE') %}
-                                        <p class="lp-account-label">Espaces</p>
-                                        {% if is_granted('ROLE_AUTEUR') %}<a href="{{ path('app_studio') }}">Atelier</a>{% endif %}
-                                        {% if is_granted('ROLE_CHEF_COHORTE') %}<a href="{{ path('chef') }}">Mes cohortes</a>{% endif %}
-                                        {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin') }}">Administration</a>{% endif %}
-                                    {% endif %}
-                                    <a class="lp-account-logout" href="{{ logout_path() }}">Déconnexion</a>
-                                </div>
-                            </details>
-                        {% else %}
-                            <a href="{{ path('app_login', {suite: login_suite}) }}">Connexion</a>
-                            <a class="lp-btn" rel="nofollow" href="{{ path('app_register') }}">Créer un compte</a>
-                        {% endif %}
-                    </nav>
-                </div>
-                {# Avancée de lecture : le JS la pilote, elle reste à zéro sans lui. #}
-                <div class="lp-progress" data-progress aria-hidden="true"></div>
-            </header>
+            {%- set brand_chip %}{% block brand_chip %}{{ theme.chip }}{% endblock %}{% endset -%}
+            {{ include('_header.html.twig') }}
             {% for type, messages in app.flashes %}
                 {% for message in messages %}
                     <div class="flash flash-{{ type }}" role="status">{{ message }}</div>
