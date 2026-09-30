@@ -190,7 +190,7 @@ final class PhpExecutor
         try {
             if (isset($payload['fs'])) {
                 // Les chemins absolus du script sont ceux du conteneur (voir ContainerFileWrapper).
-                ContainerFileWrapper::activate($payload['fs']['root'], $payload['fs']['real'], $payload['fs']['readOnly']);
+                ContainerFileWrapper::activate($payload['fs']['root'], $payload['fs']['real'], $payload['fs']['readOnly'], $payload['fs']['mounts'] ?? []);
             }
             (static function (string $__script): void {
                 include $__script;
@@ -267,26 +267,30 @@ final class PhpExecutor
     }
 
     /**
-     * Ce que ContainerFileWrapper doit savoir : la racine du conteneur sur disque, les dossiers réels de ses montages,
-     * et ceux qui sont en lecture seule.
+     * Ce que ContainerFileWrapper doit savoir : la racine du conteneur sur disque, les dossiers réels de ses montages
+     * (et leur cible dans le conteneur), et ceux qui sont en lecture seule.
      *
-     * @return array{root: string, real: list<string>, readOnly: list<string>}
+     * @return array{root: string, real: list<string>, readOnly: list<string>, mounts: array<string, string>}
      */
     private function filesystem(Container $container): array
     {
         $root = $this->materializer->rootfs($container);
         $real = [];
         $readOnly = [];
+        $mounts = [];
         foreach ($container->mounts as $mount) {
             $source = $this->materializer->source($mount);
             $sources = array_values(array_unique([$source, realpath($source) ?: $source]));
             array_push($real, ...$sources);
+            foreach ($sources as $chemin) {
+                $mounts[$chemin] = Path::normalize($mount['target']);
+            }
             if ($mount['readOnly']) {
                 array_push($readOnly, $root.Path::normalize($mount['target']), ...$sources);
             }
         }
 
-        return ['root' => realpath($root) ?: $root, 'real' => array_values(array_unique([$root, ...$real])), 'readOnly' => $readOnly];
+        return ['root' => realpath($root) ?: $root, 'real' => array_values(array_unique([$root, ...$real])), 'readOnly' => $readOnly, 'mounts' => $mounts];
     }
 
     /**
