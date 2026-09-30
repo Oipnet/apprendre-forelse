@@ -57,6 +57,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **`league/commonmark` 2.10.3** (GHSA-3q6v-r5mr-hxv8 et un second avis publié le 30/09) : un tableau GFM mal formé
+  prenait un temps quadratique, et une balise HTML interdite en fin de bloc échappait à `DisallowedRawHtml`. Le moteur
+  rend avec lui les fiches de cours, les consignes et les articles du blog ; il supprime déjà tout HTML brut
+  (`html_input: strip`).
 - **Confirmer son identité (compte sans mot de passe) passe par un fournisseur déjà lié au compte.** Avec plusieurs
   fournisseurs, lier un nouveau compte pendant la confirmation aurait suffi, avec une session volée, à changer
   l'adresse ou à supprimer le compte.
