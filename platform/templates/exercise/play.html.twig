@@ -1,5 +1,8 @@
 {% extends 'base.html.twig' %}
 
+{# L'éditeur garde son habillage : ni les feuilles, ni les scripts, ni les polices du thème (voir base.html.twig). #}
+{% set theme_assets = false %}
+
 {% block title %}{{ exercise.title }} · {{ theme.name }}{% endblock %}
 
 {# L'éditeur n'a pas les polices du site : les précharger ne servirait à rien. #}

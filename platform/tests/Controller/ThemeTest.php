@@ -6,6 +6,7 @@ use App\Tests\DatabaseTrait;
 use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Marque blanche : une instance qui monte son thème ne doit plus rien afficher du moteur —
@@ -225,11 +226,83 @@ final class ThemeTest extends WebTestCase
         $this->assertSelectorTextContains('.lp-header .lp-serif', 'Atelier Bigorneau');
     }
 
-    private function clientAvecTheme(string $yaml, string $file = 'theme.yaml'): KernelBrowser
+    /** Un thème apporte ses feuilles, scripts et polices, posés après ceux du moteur et servis sans reconstruire l'image. */
+    public function testLesFichiersDuThemeSontChargesApresCeuxDuMoteur(): void
+    {
+        $client = $this->clientAvecTheme(
+            "name: Atelier Bigorneau\nstylesheets: [assets/theme.css]\nscripts: [assets/theme.js]\npreload: [assets/fonts/titres.woff2]\n",
+            assets: ['theme.css' => 'body{color:#123}', 'theme.js' => 'console.log(1)', 'fonts/titres.woff2' => 'wOF2'],
+        );
+        $crawler = $client->request('GET', '/');
+        $this->assertResponseIsSuccessful();
+
+        $feuilles = $crawler->filter('head link[rel="stylesheet"]');
+        $this->assertGreaterThan(0, $feuilles->count());
+        $css = (string) $feuilles->last()->attr('href');
+        $this->assertMatchesRegularExpression('#^/theme/instance/\d+/assets/theme\.css$#', $css, 'La feuille du thème vient en dernier : elle l\'emporte sur celle du moteur.');
+        $js = (string) $crawler->filter('head script[type="module"][src*="/theme/"]')->attr('src');
+        $this->assertMatchesRegularExpression('#^/theme/instance/\d+/assets/theme\.js$#', $js);
+        $police = (string) $crawler->filter('head link[rel="preload"][href*="/theme/"]')->attr('href');
+        $this->assertMatchesRegularExpression('#/assets/fonts/titres\.woff2$#', $police);
+
+        foreach ([$css => 'text/css; charset=UTF-8', $js => 'text/javascript; charset=UTF-8', $police => 'font/woff2'] as $url => $type) {
+            $client->request('GET', $url);
+            $this->assertResponseIsSuccessful($url);
+            $this->assertResponseHeaderSame('Content-Type', $type);
+            $this->assertStringContainsString('immutable', (string) $client->getResponse()->headers->get('Cache-Control'));
+        }
+    }
+
+    /** Un thème qui remplace la feuille du moteur : elle n'est plus chargée, la sienne seule habille les pages. */
+    public function testUnThemePeutRemplacerLaFeuilleDuMoteur(): void
+    {
+        $client = $this->clientAvecTheme("name: Atelier Bigorneau\nstylesheets: [assets/theme.css]\nreplaces_engine_styles: true\n", assets: ['theme.css' => 'body{}']);
+        $crawler = $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(0, $crawler->filter('head link[rel="stylesheet"][href^="/build/"]'), 'La feuille du moteur n\'est plus chargée.');
+        $this->assertCount(0, $crawler->filter('head link[rel="preload"][href^="/build/"]'), 'Ni ses polices.');
+        $this->assertCount(1, $crawler->filter('head link[rel="stylesheet"][href*="/theme/instance/"]'));
+    }
+
+    /** Le chemin vient de l'URL : rien de ce qui sort de assets/ ou n'y a pas sa place n'est servi. */
+    public function testLaRouteDesFichiersNeSertQueLeDossierAssets(): void
+    {
+        $client = $this->clientAvecTheme("name: Atelier Bigorneau\n", assets: ['theme.css' => 'body{}', 'outil.php' => '<?php echo 1;']);
+        file_put_contents($this->tmp.'/secret.css', 'body{}');
+        symlink($this->tmp.'/secret.css', $this->tmp.'/assets/lien.css');
+
+        $client->request('GET', '/theme/instance/1/assets/theme.css');
+        $this->assertResponseIsSuccessful('La version n\'est qu\'un repère de cache : tout fichier du dossier est servi.');
+
+        foreach (['/theme/instance/1/assets/../theme.yaml', '/theme/instance/1/assets/outil.php', '/theme/instance/1/assets/lien.css', '/theme/default/1/assets/theme.css', '/theme/instance/1/assets/absente.css'] as $url) {
+            $client->request('GET', $url);
+            $this->assertResponseStatusCodeSame(404, $url);
+        }
+    }
+
+    /** L'éditeur garde son habillage : la page d'exercice ne charge ni les feuilles, ni les scripts du thème. */
+    public function testLaPageDExerciceNeChargePasLesFichiersDuTheme(): void
+    {
+        $client = $this->clientAvecTheme(
+            "name: Atelier Bigorneau\nstylesheets: [assets/theme.css]\nscripts: [assets/theme.js]\nreplaces_engine_styles: true\n",
+            assets: ['theme.css' => 'body{}', 'theme.js' => ''],
+        );
+        $client->request('GET', '/parcours/decouverte/01-bonjour');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringNotContainsString('/theme/instance/', (string) $client->getResponse()->getContent());
+    }
+
+    /** @param array<string, string> $assets fichiers de assets/, chemin => contenu */
+    private function clientAvecTheme(string $yaml, string $file = 'theme.yaml', array $assets = []): KernelBrowser
     {
         $this->tmp = sys_get_temp_dir().'/theme-'.bin2hex(random_bytes(6));
         mkdir($this->tmp);
         file_put_contents($this->tmp.'/'.$file, $yaml);
+        foreach ($assets as $path => $content) {
+            (new Filesystem())->dumpFile($this->tmp.'/assets/'.$path, $content);
+        }
         if (!$this->changed) {
             $this->before = $_SERVER['BRANDING_DIR'] ?? null;
             $this->changed = true;
@@ -249,15 +322,8 @@ final class ThemeTest extends WebTestCase
             }
             $this->changed = false;
         }
-        if (null !== $this->tmp && is_dir($this->tmp)) {
-            foreach ((array) glob($this->tmp.'/templates/*') as $file) {
-                unlink((string) $file);
-            }
-            @rmdir($this->tmp.'/templates');
-            foreach ((array) glob($this->tmp.'/*') as $file) {
-                unlink((string) $file);
-            }
-            @rmdir($this->tmp);
+        if (null !== $this->tmp) {
+            (new Filesystem())->remove($this->tmp);
         }
         parent::tearDown();
     }

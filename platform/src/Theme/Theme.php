@@ -38,6 +38,8 @@ final class Theme implements ResetInterface
 
     private ?ThemeConfig $config = null;
 
+    private ?string $assetsVersion = null;
+
     public function __construct(
         #[Autowire(env: 'resolve:BRANDING_DIR')]
         private readonly string $directory,
@@ -57,6 +59,7 @@ final class Theme implements ResetInterface
     public function reset(): void
     {
         $this->config = null;
+        $this->assetsVersion = null;
     }
 
     /** Vrai tant que l'instance n'a pas posé son thème : c'est celui du moteur qui s'affiche. */
@@ -184,6 +187,82 @@ final class Theme implements ResetInterface
     public function home(): array
     {
         return $this->config()->home;
+    }
+
+    /**
+     * Les feuilles du thème, posées après celle du moteur (ou à sa place, voir replacesEngineStyles).
+     *
+     * @return list<string>
+     */
+    public function stylesheetUrls(): array
+    {
+        return array_map($this->assetUrl(...), $this->config()->stylesheets);
+    }
+
+    /**
+     * Les scripts du thème, chargés après ceux du moteur : ils ajoutent (animations, composants d'accueil), ils ne
+     * remplacent pas le JavaScript qui fait fonctionner la plateforme.
+     *
+     * @return list<string>
+     */
+    public function scriptUrls(): array
+    {
+        return array_map($this->assetUrl(...), $this->config()->scripts);
+    }
+
+    /**
+     * Les polices du thème à précharger.
+     *
+     * @return list<string>
+     */
+    public function preloadUrls(): array
+    {
+        return array_map($this->assetUrl(...), $this->config()->preload);
+    }
+
+    /** Vrai quand les feuilles du thème remplacent celle du moteur : elle n'est alors plus chargée. */
+    public function replacesEngineStyles(): bool
+    {
+        return $this->config()->replacesEngineStyles;
+    }
+
+    /** Le fichier de assets/ que le navigateur demande, ou null s'il n'a pas à être servi (voir ThemeLoader::assetPath). */
+    public function assetPath(string $path): ?string
+    {
+        return $this->isDefault() ? null : ThemeLoader::assetPath($this->directory, $path);
+    }
+
+    /**
+     * L'URL d'un fichier de assets/ (« assets/theme.css »). Tous partagent la même version, la date du fichier le
+     * plus récent du dossier : une feuille y trouve ses polices et ses images par des chemins relatifs, qui
+     * changent donc d'URL avec elle dès que l'un d'eux change. Le cache immuable ne sert jamais un fichier périmé.
+     */
+    private function assetUrl(string $path): string
+    {
+        return $this->urls->generate('app_theme_asset', [
+            'theme' => $this->id(),
+            'version' => $this->assetsVersion(),
+            'path' => substr($path, \strlen(ThemeLoader::ASSETS) + 1),
+        ]);
+    }
+
+    /** La date du fichier le plus récent de assets/, calculée une fois par requête. */
+    private function assetsVersion(): string
+    {
+        if (null !== $this->assetsVersion) {
+            return $this->assetsVersion;
+        }
+        $latest = 0;
+        $root = $this->directory.'/'.ThemeLoader::ASSETS;
+        if (is_dir($root)) {
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)) as $file) {
+                if ($file instanceof \SplFileInfo && $file->isFile()) {
+                    $latest = max($latest, (int) $file->getMTime());
+                }
+            }
+        }
+
+        return $this->assetsVersion = (string) $latest;
     }
 
     /**

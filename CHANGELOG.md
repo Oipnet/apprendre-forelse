@@ -8,6 +8,19 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Un thème apporte ses feuilles de style, ses scripts et ses polices, sans reconstruire l'image (#226).** Clés
+  `stylesheets`, `scripts` et `preload` de `theme.yaml`, qui listent des fichiers du dossier `assets/` du thème ;
+  `replaces_engine_styles: true` retire la feuille du moteur.
+  - Servis sur `/theme/<thème>/<version>/assets/…`, en cache immuable ; la version suit le fichier le plus récent
+    du dossier. Seuls les `.css`, `.js`, `.woff2`, `.svg`, `.png`, `.webp` et `.jpg` de `assets/` sont servis,
+    jamais un chemin qui en sort.
+  - Posés après ceux du moteur sur les pages du site ; la page d'exercice et les éditeurs de l'atelier ne les
+    chargent pas. Les scripts s'ajoutent à ceux du moteur, ils ne les remplacent pas.
+  - Chaque fichier déclaré est vérifié au chargement (présent, sous `assets/`, bonne extension), et
+    `app:theme:verifier` les liste.
+
 ### Modifié
 
 - **« Marque » devient « thème » (#234)**, premier pas vers les thèmes (#225). Le dossier monté ne porte plus

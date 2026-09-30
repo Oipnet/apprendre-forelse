@@ -6,6 +6,7 @@ use App\Theme\ThemeLoader;
 use App\Tests\ThemeTrait;
 use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Le thème de l'instance : ce que le moteur affiche sans rien, ce qu'un theme.yaml remplace, et ce
@@ -26,8 +27,7 @@ final class ThemeTest extends TestCase
 
     protected function tearDown(): void
     {
-        array_map('unlink', glob($this->tmp.'/*') ?: []);
-        @rmdir($this->tmp);
+        (new Filesystem())->remove($this->tmp);
     }
 
     public function testSansDossierCEstLeThemeDuMoteur(): void
@@ -291,6 +291,131 @@ final class ThemeTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage($this->tmp.'/theme.yaml');
         (new ThemeLoader())->load($this->tmp);
+    }
+
+    /** Un thème apporte ses feuilles, ses scripts et ses polices : chacun a son URL, servie par ThemeController. */
+    public function testLesFichiersDuThemeOntLeurUrl(): void
+    {
+        $this->asset('theme.css', 'body{}');
+        $this->asset('theme.js', '');
+        $this->asset('fonts/titres.woff2', '');
+        $this->write("name: A\nstylesheets: [assets/theme.css]\nscripts: [assets/theme.js]\npreload: [assets/fonts/titres.woff2]\n");
+        $theme = self::theme($this->tmp);
+        $version = max(array_map('filemtime', [$this->tmp.'/assets/theme.css', $this->tmp.'/assets/theme.js', $this->tmp.'/assets/fonts/titres.woff2']));
+
+        $this->assertSame(['/theme/instance/'.$version.'/assets/theme.css'], $theme->stylesheetUrls());
+        $this->assertSame(['/theme/instance/'.$version.'/assets/theme.js'], $theme->scriptUrls());
+        $this->assertSame(['/theme/instance/'.$version.'/assets/fonts/titres.woff2'], $theme->preloadUrls());
+        $this->assertFalse($theme->replacesEngineStyles());
+    }
+
+    /**
+     * Une feuille trouve ses polices et ses images par des chemins relatifs, sous la même version qu'elle : la version
+     * suit donc le fichier le plus récent de tout le dossier, déclaré ou non.
+     */
+    public function testLaVersionSuitLeFichierLePlusRecentDuDossier(): void
+    {
+        $this->asset('theme.css', 'body{background:url(img/fond.png)}');
+        $this->asset('img/fond.png', 'PNG');
+        touch($this->tmp.'/assets/theme.css', 1_000_000);
+        touch($this->tmp.'/assets/img/fond.png', 2_000_000);
+        $this->write("name: A\nstylesheets: [assets/theme.css]\n");
+
+        $this->assertSame(['/theme/instance/2000000/assets/theme.css'], self::theme($this->tmp)->stylesheetUrls());
+    }
+
+    public function testSansFichiersDeclaresLeThemeNAjouteRien(): void
+    {
+        $this->write("name: A\n");
+        $theme = self::theme($this->tmp);
+
+        $this->assertSame([], $theme->stylesheetUrls());
+        $this->assertSame([], $theme->scriptUrls());
+        $this->assertSame([], $theme->preloadUrls());
+        $this->assertSame([], self::theme()->stylesheetUrls(), 'Le thème du moteur n\'a pas de fichiers à part.');
+    }
+
+    public function testUnFichierDeclareAbsentEstSignale(): void
+    {
+        $this->write("name: A\nstylesheets: [assets/theme.css]\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« stylesheets » : fichier introuvable dans le dossier du thème ('.$this->tmp.'/assets/theme.css)');
+        (new ThemeLoader())->load($this->tmp);
+    }
+
+    public function testUnFichierHorsDuDossierAssetsEstRefuse(): void
+    {
+        file_put_contents($this->tmp.'/theme.css', 'body{}');
+        $this->write("name: A\nstylesheets: [theme.css]\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('doit être un fichier du dossier assets/');
+        (new ThemeLoader())->load($this->tmp);
+    }
+
+    public function testUnCheminQuiRemonteEstRefuse(): void
+    {
+        $this->asset('theme.css', '');
+        $this->write("name: A\nstylesheets: [assets/../assets/theme.css]\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('sans « .. »');
+        (new ThemeLoader())->load($this->tmp);
+    }
+
+    public function testUnScriptQuiNEstPasDuJavascriptEstRefuse(): void
+    {
+        $this->asset('theme.css', '');
+        $this->write("name: A\nscripts: [assets/theme.css]\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« scripts » : « assets/theme.css » doit être un fichier .js');
+        (new ThemeLoader())->load($this->tmp);
+    }
+
+    /** Remplacer la feuille du moteur sans en fournir une laisserait les pages sans aucun style. */
+    public function testRemplacerLaFeuilleDuMoteurDemandeUneFeuille(): void
+    {
+        $this->write("name: A\nreplaces_engine_styles: true\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('demande au moins une feuille');
+        (new ThemeLoader())->load($this->tmp);
+    }
+
+    public function testUnThemePeutRemplacerLaFeuilleDuMoteur(): void
+    {
+        $this->asset('theme.css', 'body{}');
+        $this->write("name: A\nstylesheets: [assets/theme.css]\nreplaces_engine_styles: true\n");
+
+        $this->assertTrue(self::theme($this->tmp)->replacesEngineStyles());
+    }
+
+    /** Ce que le navigateur peut demander sous /theme/…/assets/ : les fichiers servis, rien d'autre. */
+    public function testSeulsLesFichiersServisDuDossierAssetsSontAccessibles(): void
+    {
+        $this->asset('theme.css', 'body{}');
+        $this->asset('img/fond.png', 'PNG');
+        $this->asset('outil.php', '<?php echo 1;');
+        file_put_contents($this->tmp.'/secret.css', 'body{}');
+        symlink($this->tmp.'/secret.css', $this->tmp.'/assets/lien.css');
+        $this->write("name: A\n");
+        $theme = self::theme($this->tmp);
+
+        $this->assertSame(realpath($this->tmp.'/assets/theme.css'), $theme->assetPath('theme.css'));
+        $this->assertSame(realpath($this->tmp.'/assets/img/fond.png'), $theme->assetPath('img/fond.png'));
+        $this->assertNull($theme->assetPath('outil.php'), 'Une extension non servie.');
+        $this->assertNull($theme->assetPath('../theme.yaml'), 'Un chemin qui remonte.');
+        $this->assertNull($theme->assetPath('img/../theme.css'), 'Même quand il retombe dans le dossier.');
+        $this->assertNull($theme->assetPath('lien.css'), 'Un lien symbolique qui sort du dossier.');
+        $this->assertNull($theme->assetPath('absente.css'));
+        $this->assertNull(self::theme()->assetPath('theme.css'), 'Le thème du moteur ne sert rien par cette route.');
+    }
+
+    private function asset(string $path, string $content): void
+    {
+        (new Filesystem())->dumpFile($this->tmp.'/assets/'.$path, $content);
     }
 
     private function write(string $yaml, string $file = 'theme.yaml'): void

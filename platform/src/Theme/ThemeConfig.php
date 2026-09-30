@@ -13,6 +13,9 @@ final readonly class ThemeConfig
      * @param array<string, string>                                                                          $editor    variable CSS => couleur, thème sombre de l'éditeur
      * @param array<string, string>                                                                          $fonts     variable CSS => pile de polices
      * @param array{showcase: array<string, mixed>|null, author: array<string, mixed>|null, demo: array<string, mixed>|null} $home
+     * @param list<string>                                                                                   $stylesheets feuilles du thème (« assets/theme.css »), posées après celle du moteur
+     * @param list<string>                                                                                   $scripts     scripts du thème, chargés après ceux du moteur
+     * @param list<string>                                                                                   $preload     polices du thème à précharger
      * @param array{name: string, jobTitle: string}|null                                                     $person    la personne derrière les contenus (marque du moteur seulement)
      */
     public function __construct(
@@ -32,6 +35,11 @@ final readonly class ThemeConfig
         public array $fonts,
         public array $home,
         public ?array $person = null,
+        public array $stylesheets = [],
+        public array $scripts = [],
+        public array $preload = [],
+        /** Vrai quand les feuilles du thème remplacent celle du moteur, au lieu de s'y ajouter. */
+        public bool $replacesEngineStyles = false,
     ) {
     }
 }

@@ -312,6 +312,7 @@ marque/
   theme.yaml      nom, puce, accroche, site, couleurs, polices, images, textes de l'accueil
   logo.svg  favicon.svg  partage.png      les images, nommées dans theme.yaml
   templates/      (facultatif) des gabarits Twig qui remplacent ceux du moteur
+  assets/         (facultatif) feuilles de style, scripts, polices et images, servis tels quels
 ```
 
 Un exemple complet et commenté, à copier :
@@ -351,6 +352,21 @@ une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
   moteur (`home.html.twig`, `_footer.html.twig`, `legal/notice.html.twig`…). Il n'y a rien à copier
   d'autre que le fichier à changer. Le thème y est la variable `theme` (`{{ theme.name }}`). En production les gabarits sont compilés une fois : après en avoir
   déposé un, redémarrez le conteneur.
+- **Feuilles, scripts et polices** : `stylesheets`, `scripts` et `preload` listent des fichiers de `assets/`
+  (`.css`, `.js`, `.woff2`), posés après ceux du moteur sur toutes les pages du site. Une feuille y trouve ses
+  polices et ses images par des chemins relatifs (`url(fonts/titres.woff2)`). `replaces_engine_styles: true`
+  retire la feuille du moteur : celle du thème habille seule les pages. Aucun rebuild : les fichiers sont servis
+  sur `/theme/<thème>/<version>/assets/…`, en cache immuable, et la version change dès qu'un fichier du dossier
+  change. Les scripts **ajoutent** (animations, composants d'accueil, en respectant `prefers-reduced-motion`) :
+  le JavaScript du moteur reste chargé. La page d'exercice et les éditeurs de l'atelier ne chargent pas ces
+  fichiers ; ils suivent la palette `editor`.
+
+  ```yaml
+  stylesheets: [assets/theme.css]
+  scripts: [assets/theme.js]
+  preload: [assets/fonts/titres.woff2]
+  replaces_engine_styles: false
+  ```
 - Les tarifs de cohorte (`COHORT_UNIT_PRICE`, `COHORT_TIERS`) sont des variables d'environnement, comme
   les mentions légales (`LEGAL_*`) : aucune instance n'a à reconstruire l'image pour ses prix.
 
