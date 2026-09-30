@@ -40,6 +40,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   déploiement, la première requête passe d'environ 350 à 140 ms (mesuré en local). Un pack invalide n'empêche pas le
   démarrage.
 
+### Corrigé
+
+- **`robots.txt` et `sitemap.xml` gardent leur heure de cache.** Ils sont les mêmes pour tous, mais la vérification
+  « visiteur connecté ? » faite pour l'ETag des pages publiques les rendait privés, sans cache.
+- **`/favicon.ico` est mis en cache un mois**, comme les autres images du site.
+- **Les manifestes du build Vite (`/build/.vite/`) ne sont plus servis** : la plateforme les lit sur le disque, le
+  navigateur n'en a jamais besoin.
+
 ### Sécurité
 
 - **Confirmer son identité (compte sans mot de passe) passe par un fournisseur déjà lié au compte.** Avec plusieurs
