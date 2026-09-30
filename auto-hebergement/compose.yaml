@@ -43,8 +43,11 @@ services:
       DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/formation?serverVersion=17&charset=utf8
       CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}
       DOWNLOADS_DIR: ${DOWNLOADS_DIR:-/downloads}
-      # Identité de l'instance : nom, couleurs, images, gabarits (voir README, « Habiller son instance »).
-      # /marque = le volume ci-dessous. Vide : la marque du moteur.
+      # Thèmes installés (voir README, « Thèmes ») : /themes = le volume ci-dessous, un dossier par thème. Le thème
+      # actif se choisit dans l'admin (/admin → Thèmes) ; THEME le fixe tant que l'admin n'en a pas choisi.
+      THEMES_DIR: ${THEMES_DIR:-/themes}
+      THEME: ${THEME:-}
+      # Déprécié (retiré en 4.0) : l'ancien dossier unique du thème, servi comme le thème « instance ».
       BRANDING_DIR: ${BRANDING_DIR:-/marque}
       # Environnements installés depuis un dépôt Git par l'administration (/admin → Environnements).
       # Vide : la fonctionnalité est absente. Empaqueter exécute le code du dépôt sur ce serveur.
@@ -111,7 +114,9 @@ services:
       - ${PACKS_DIR:-./packs}:/packs:ro
       # Archives à télécharger (facultatif) : déposez-y vos .zip, servis par /telechargements.
       - ${DOWNLOADS_HOST_DIR:-./downloads}:/downloads:ro
-      # Votre thème (facultatif) : theme.yaml, vos images, vos gabarits. Vide : le thème du moteur.
+      # Vos thèmes (facultatif) : un dossier par thème, à choisir dans l'admin. Lecture seule : rien ne s'y téléverse.
+      - ${THEMES_HOST_DIR:-./themes}:/themes:ro
+      # Déprécié : l'ancien dossier unique du thème (theme.yaml, images, gabarits), servi comme le thème « instance ».
       - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
       # Environnements installés depuis un dépôt Git, et leurs archives.
       - environnements:/environnements

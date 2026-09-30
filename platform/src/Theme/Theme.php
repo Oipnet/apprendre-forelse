@@ -3,17 +3,17 @@
 namespace App\Theme;
 
 use Symfony\Component\Asset\Packages;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Le thème de l'instance : nom, puce, accroche, couleurs, images, textes propres à l'accueil.
  *
- * Sans rien, c'est le thème du moteur lui-même (« default »). Une instance pose le sien en montant un dossier
- * (BRANDING_DIR) qui contient « theme.yaml » et ses images ; elle peut y déposer en plus des gabarits
- * Twig (<dossier>/templates/) pour remplacer une page entière — voir ThemeTemplateLoader. Un dossier qui n'a
- * que l'ancien « marque.yaml » est encore lu, jusqu'à la 4.0 (voir ThemeLoader).
+ * Sans rien, c'est le thème du moteur lui-même (« default »). Une instance installe les siens (un dossier par thème
+ * dans THEMES_DIR, ou l'ancien BRANDING_DIR) et choisit le thème actif depuis l'admin — voir ThemeCatalog et
+ * ActiveTheme. Un thème, c'est « theme.yaml » et ses images, plus au besoin des gabarits Twig (<dossier>/templates/,
+ * voir ThemeTemplateLoader) et des fichiers servis tels quels (<dossier>/assets/). Un dossier qui n'a que l'ancien
+ * « marque.yaml » est encore lu, jusqu'à la 4.0 (voir ThemeLoader).
  *
  * Règle simple, pour qu'une instance ne se retrouve jamais à parler d'une marque qui n'est pas la
  * sienne : **dès qu'un « theme.yaml » est fourni, plus rien du moteur ne subsiste**. Ni son nom, ni
@@ -31,18 +31,17 @@ final class Theme implements ResetInterface
     public const string FILE = ThemeLoader::FILE;
 
     /** Le thème du moteur, servi quand l'instance ne monte rien. */
-    public const string DEFAULT_ID = 'default';
+    public const string DEFAULT_ID = ThemeCatalog::DEFAULT;
 
     /** Le thème monté sur BRANDING_DIR. */
-    public const string INSTANCE_ID = 'instance';
+    public const string INSTANCE_ID = ThemeCatalog::INSTANCE;
 
     private ?ThemeConfig $config = null;
 
     private ?string $assetsVersion = null;
 
     public function __construct(
-        #[Autowire(env: 'resolve:BRANDING_DIR')]
-        private readonly string $directory,
+        private readonly ThemeSelection $selection,
         private readonly UrlGeneratorInterface $urls,
         private readonly Packages $assets,
         private readonly ThemeLoader $loader = new ThemeLoader(),
@@ -52,7 +51,7 @@ final class Theme implements ResetInterface
     /** Le thème lu et vérifié, une fois. */
     public function config(): ThemeConfig
     {
-        return $this->config ??= $this->loader->load($this->directory);
+        return $this->config ??= $this->loader->load($this->selection->directory());
     }
 
     /** Relu à la requête suivante : un theme.yaml modifié se voit sans redémarrer, même en mode worker. */
@@ -68,10 +67,16 @@ final class Theme implements ResetInterface
         return $this->config()->isDefault;
     }
 
-    /** L'identifiant du thème servi : « default » (celui du moteur) ou « instance » (le dossier monté). */
+    /** L'identifiant du thème servi : « default » (celui du moteur), « instance » (BRANDING_DIR) ou un dossier de THEMES_DIR. */
     public function id(): string
     {
-        return $this->isDefault() ? self::DEFAULT_ID : self::INSTANCE_ID;
+        return $this->isDefault() ? self::DEFAULT_ID : $this->selection->id();
+    }
+
+    /** Vrai quand ce thème n'est montré qu'à l'administrateur qui le prévisualise (voir ActiveTheme). */
+    public function isPreview(): bool
+    {
+        return $this->selection->isPreview();
     }
 
     /** Vrai quand le thème n'a que l'ancien marque.yaml : il reste lu jusqu'à la 4.0, mais doit être renommé. */
@@ -229,7 +234,7 @@ final class Theme implements ResetInterface
     /** Le fichier de assets/ que le navigateur demande, ou null s'il n'a pas à être servi (voir ThemeLoader::assetPath). */
     public function assetPath(string $path): ?string
     {
-        return $this->isDefault() ? null : ThemeLoader::assetPath($this->directory, $path);
+        return $this->isDefault() ? null : ThemeLoader::assetPath($this->config()->directory, $path);
     }
 
     /**
@@ -253,7 +258,7 @@ final class Theme implements ResetInterface
             return $this->assetsVersion;
         }
         $latest = 0;
-        $root = $this->directory.'/'.ThemeLoader::ASSETS;
+        $root = $this->config()->directory.'/'.ThemeLoader::ASSETS;
         if (is_dir($root)) {
             foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)) as $file) {
                 if ($file instanceof \SplFileInfo && $file->isFile()) {
@@ -278,7 +283,7 @@ final class Theme implements ResetInterface
 
         return $this->urls->generate('app_theme_image', [
             'theme' => $this->id(),
-            'version' => (string) (filemtime($this->directory.'/'.$file) ?: 0),
+            'version' => (string) (filemtime($this->config()->directory.'/'.$file) ?: 0),
             'role' => $key,
         ]);
     }
@@ -290,7 +295,7 @@ final class Theme implements ResetInterface
         if (null === $file) {
             return null;
         }
-        $path = $this->directory.'/'.$file;
+        $path = $this->config()->directory.'/'.$file;
 
         return is_file($path) ? $path : null;
     }

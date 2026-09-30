@@ -10,6 +10,18 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Plusieurs thèmes installés, et le choix du thème actif depuis l'admin (#233).** Un thème par sous-dossier de
+  `THEMES_DIR` (`/themes` dans l'image, volume `./themes` des `compose.yaml`), nommé par son dossier.
+  - `/admin` → **Thèmes** : l'état de chaque thème (`theme.yaml` valable, gabarits qui se compilent), un **aperçu**
+    réservé à l'administrateur (sa session, un bandeau sur chaque page, aucune mise en cache), et **Activer**. Un
+    thème en erreur ne s'active pas ; chaque bascule est enregistrée (qui, quand) et journalisée.
+  - `bin/console app:theme:activer <thème>` fait de même, pour les déploiements scriptés.
+  - La bascule se voit dès la requête suivante, sans redémarrer ni vider le cache (mode worker compris).
+  - Thème actif : le choix de l'admin, sinon `THEME`, sinon `instance` (l'ancien `BRANDING_DIR`), sinon `default`.
+    Un thème choisi puis retiré laisse la place au thème du moteur : le site reste en ligne et l'admin le signale.
+  - Rien ne se téléverse depuis l'admin : un thème arrive par le dossier monté, en lecture seule.
+  - Migration : table `instance_setting`.
+
 - **Un thème apporte ses feuilles de style, ses scripts et ses polices, sans reconstruire l'image (#226).** Clés
   `stylesheets`, `scripts` et `preload` de `theme.yaml`, qui listent des fichiers du dossier `assets/` du thème ;
   `replaces_engine_styles: true` retire la feuille du moteur.
@@ -32,6 +44,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   - Rien à changer tout de suite pour une instance existante. Le dossier reste `BRANDING_DIR` (`/marque`).
 
 ### Déprécié
+
+- `BRANDING_DIR` (volume `/marque`) : encore lu, comme le thème `instance`. Déposez plutôt le dossier dans
+  `THEMES_DIR`. Retrait en 4.0.
 
 - `marque.yaml` : encore lu quand `theme.yaml` est absent, avec un avertissement (journaux, et
   `app:theme:verifier`). Renommez-le en `theme.yaml`. Retrait en 4.0.

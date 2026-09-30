@@ -1,0 +1,13 @@
+{# Le bandeau de l'aperçu d'un thème (voir ActiveTheme) : l'administrateur seul voit ce thème, et le sait sur chaque page.
+   Des styles en ligne : ce bandeau doit rester lisible quel que soit le thème prévisualisé. #}
+<div class="theme-preview" role="status" style="position:sticky;top:0;z-index:1000;display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;justify-content:center;padding:.5rem 1rem;background:#1d2733;color:#fff;font:14px/1.4 system-ui,sans-serif">
+    <span>Aperçu du thème « {{ theme.id }} » : vous seul le voyez.</span>
+    <form method="post" action="{{ path('admin_themes_preview_quit') }}" style="margin:0">
+        <input type="hidden" name="_token" value="{{ csrf_token('themes') }}">
+        <button style="font:inherit;padding:.2rem .7rem;border:1px solid #fff;border-radius:4px;background:transparent;color:#fff;cursor:pointer">Quitter l'aperçu</button>
+    </form>
+    <form method="post" action="{{ path('admin_themes_activate', {id: theme.id}) }}" style="margin:0">
+        <input type="hidden" name="_token" value="{{ csrf_token('themes') }}">
+        <button style="font:inherit;padding:.2rem .7rem;border:0;border-radius:4px;background:#fff;color:#1d2733;cursor:pointer">Activer pour tous</button>
+    </form>
+</div>

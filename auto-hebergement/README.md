@@ -120,6 +120,11 @@ packs/
 
 ## Votre marque
 
+> **Depuis la 2.6, une instance peut installer plusieurs thèmes** dans `themes/` (un dossier par thème, monté
+> sur `/themes`) et choisir le thème actif dans `/admin` → Thèmes, avec un aperçu avant de l'activer pour tous
+> (voir le README, « Habiller son instance »). Le dossier `marque/` décrit ci-dessous reste lu : il apparaît
+> comme le thème `instance`.
+
 Sans rien, l'instance s'appelle « Forelse » et son accueil raconte la Taverne du Dragon Ivre. Pour poser
 votre marque, créez un dossier `marque/` à côté de `compose.yaml` — il est déjà monté :
 

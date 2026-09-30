@@ -4,6 +4,7 @@ namespace App\Tests\Architecture;
 
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
+use App\Theme\ActiveTheme;
 use App\Theme\Theme;
 use App\Twig\ConceptExtension;
 use App\Twig\FontPreloadExtension;
@@ -23,6 +24,7 @@ final class ServicesResetTest extends KernelTestCase
             ContentRepository::class => ['content', static fn (ContentRepository $s) => $s->tracks()],
             EnvironmentRegistry::class => ['directoriesById', static fn (EnvironmentRegistry $s) => $s->all()],
             Theme::class => ['config', static fn (Theme $s) => $s->name()],
+            ActiveTheme::class => ['resolved', static fn (ActiveTheme $s) => $s->id()],
             ConceptExtension::class => ['urls', static fn (ConceptExtension $s) => $s->url('Boucle Twig')],
             FontPreloadExtension::class => ['urls', static fn (FontPreloadExtension $s) => $s->urls()],
         ];

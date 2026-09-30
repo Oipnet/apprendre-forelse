@@ -62,8 +62,11 @@ services:
       # Fichiers à télécharger (archives déposées par la CI du dépôt de contenu, ex. la boutique
       # vulnérable). /downloads = le volume ci-dessous ; servis par /telechargements aux comptes connectés.
       DOWNLOADS_DIR: ${DOWNLOADS_DIR:-/downloads}
-      # Identité de l'instance : nom, couleurs, images, gabarits (voir README, « Habiller son instance »).
-      # /marque = le volume ci-dessous. Vide : la marque du moteur.
+      # Thèmes installés (voir README, « Thèmes ») : /themes = le volume ci-dessous, un dossier par thème. Le thème
+      # actif se choisit dans l'admin (/admin → Thèmes) ; THEME le fixe tant que l'admin n'en a pas choisi.
+      THEMES_DIR: ${THEMES_DIR:-/themes}
+      THEME: ${THEME:-}
+      # Déprécié (retiré en 4.0) : l'ancien dossier unique du thème, servi comme le thème « instance ».
       BRANDING_DIR: ${BRANDING_DIR:-/marque}
       # Environnements installés depuis un dépôt Git par l'administration (/admin → Environnements).
       # Vide : la fonctionnalité est absente. Empaqueter exécute le code du dépôt sur ce serveur.
@@ -120,7 +123,9 @@ services:
       - ${PACKS_DIR:-./packs}:/packs:ro
       # Archives à télécharger (déposées par rsync depuis la CI du contenu). Vide : aucun téléchargement.
       - ${DOWNLOADS_HOST_DIR:-./downloads}:/downloads:ro
-      # Thème de l'instance (theme.yaml, images, gabarits). Vide : le thème du moteur.
+      # Thèmes installés, un dossier par thème (déposés par la CI du contenu), à choisir dans l'admin.
+      - ${THEMES_HOST_DIR:-./themes}:/themes:ro
+      # Déprécié : l'ancien dossier unique du thème, servi comme le thème « instance ».
       - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
       # Environnements installés depuis un dépôt Git, et leurs archives.
       - environnements:/environnements
