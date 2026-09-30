@@ -288,9 +288,13 @@ final class ThemeTest extends WebTestCase
             "name: Atelier Bigorneau\nstylesheets: [assets/theme.css]\nscripts: [assets/theme.js]\nreplaces_engine_styles: true\n",
             assets: ['theme.css' => 'body{}', 'theme.js' => ''],
         );
-        $client->request('GET', '/parcours/decouverte/01-bonjour');
+        // L'éditeur n'est servi qu'à un compte : un invité voit la présentation de l'exercice, une page du site.
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
+        $crawler = $client->request('GET', '/parcours/decouverte/01-bonjour');
 
         $this->assertResponseIsSuccessful();
+        $this->assertCount(1, $crawler->filter('[data-playground]'), 'C\'est bien l\'éditeur qui est servi.');
         $this->assertStringNotContainsString('/theme/instance/', (string) $client->getResponse()->getContent());
     }
 
