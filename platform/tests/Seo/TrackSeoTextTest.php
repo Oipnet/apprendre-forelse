@@ -9,13 +9,13 @@ use App\Entity\TrackSeo;
 use App\Repository\TrackPricingRepository;
 use App\Repository\TrackSeoRepository;
 use App\Seo\TrackSeoText;
-use App\Tests\BrandingTrait;
+use App\Tests\ThemeTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 
 final class TrackSeoTextTest extends TestCase
 {
-    use BrandingTrait;
+    use ThemeTrait;
 
     private const string SYMFONY = 'Vous maîtrisez PHP et la POO ? Apprenez Symfony en construisant, chapitre après chapitre, le site de la Taverne du Dragon Ivre.';
 
@@ -40,7 +40,7 @@ final class TrackSeoTextTest extends TestCase
             }
         };
 
-        return new TrackSeoText($overrides, $pricings, $logger, self::branding());
+        return new TrackSeoText($overrides, $pricings, $logger, self::theme());
     }
 
     private static function track(string $title = 'Symfony pour les devs PHP', string $description = self::SYMFONY): Track

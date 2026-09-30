@@ -4,7 +4,7 @@ namespace App\Payment;
 
 use App\Content\ContentRepository;
 use App\Entity\Purchase;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Legal\LegalInfo;
 use App\Mail\Sender;
 use Psr\Log\LoggerInterface;
@@ -20,7 +20,7 @@ final readonly class PurchaseMailer
         private ContentRepository $content,
         private LoggerInterface $logger,
         private Sender $sender,
-        private Branding $branding,
+        private Theme $theme,
         private LegalInfo $legal,
     ) {
     }
@@ -31,7 +31,7 @@ final readonly class PurchaseMailer
         $track = $this->content->findTrack($purchase->getTrackId());
         $email = $this->sender->email()
             ->to(new Address($purchase->getCustomerEmail(), (string) $purchase->getUser()?->getDisplayName()))
-            ->subject(sprintf('Votre accès au parcours « %s » sur %s', $track->title ?? $purchase->getTrackId(), $this->branding->name()))
+            ->subject(sprintf('Votre accès au parcours « %s » sur %s', $track->title ?? $purchase->getTrackId(), $this->theme->name()))
             ->htmlTemplate('emails/purchase_confirmation.html.twig')
             ->textTemplate('emails/purchase_confirmation.txt.twig')
             // L'identité du vendeur : la confirmation d'une vente à distance est le support durable du contrat.

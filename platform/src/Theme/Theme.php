@@ -1,64 +1,80 @@
 <?php
 
-namespace App\Instance;
+namespace App\Theme;
 
-use App\Instance\Branding\BrandingConfig;
-use App\Instance\Branding\BrandingLoader;
-use App\Instance\Branding\BrandingStylesheet;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * L'identité de l'instance : nom, puce, accroche, couleurs, images, textes propres à l'accueil.
+ * Le thème de l'instance : nom, puce, accroche, couleurs, images, textes propres à l'accueil.
  *
- * Sans rien, c'est la marque du moteur lui-même. Une instance pose la sienne en montant un dossier
- * (BRANDING_DIR) qui contient « marque.yaml » et ses images ; elle peut y déposer en plus des gabarits
- * Twig (<dossier>/templates/) pour remplacer une page entière — voir BrandingTemplateLoader.
+ * Sans rien, c'est le thème du moteur lui-même (« default »). Une instance pose le sien en montant un dossier
+ * (BRANDING_DIR) qui contient « theme.yaml » et ses images ; elle peut y déposer en plus des gabarits
+ * Twig (<dossier>/templates/) pour remplacer une page entière — voir ThemeTemplateLoader. Un dossier qui n'a
+ * que l'ancien « marque.yaml » est encore lu, jusqu'à la 4.0 (voir ThemeLoader).
  *
  * Règle simple, pour qu'une instance ne se retrouve jamais à parler d'une marque qui n'est pas la
- * sienne : **dès qu'un « marque.yaml » est fourni, plus rien du moteur ne subsiste**. Ni son nom, ni
+ * sienne : **dès qu'un « theme.yaml » est fourni, plus rien du moteur ne subsiste**. Ni son nom, ni
  * ses images, ni les textes de son accueil (le fil rouge, « qui est derrière ») — l'instance déclare
  * les siens sous « home: », ou ces sections n'apparaissent pas.
  *
  * Les erreurs de ce fichier sont bruyantes : une couleur mal écrite ou une clé inconnue arrête la
  * page avec un message qui dit quoi corriger, plutôt que d'habiller l'instance à moitié. Le fichier est
- * lu et vérifié en entier au premier usage (BrandingLoader), et dès le démarrage par BrandingWarmer.
+ * lu et vérifié en entier au premier usage (ThemeLoader), et dès le démarrage par ThemeWarmer.
  *
- * Cette classe n'est que la façade de lecture de BrandingConfig.
+ * Cette classe n'est que la façade de lecture de ThemeConfig.
  */
-final class Branding implements ResetInterface
+final class Theme implements ResetInterface
 {
-    public const string FILE = BrandingLoader::FILE;
+    public const string FILE = ThemeLoader::FILE;
 
-    private ?BrandingConfig $config = null;
+    /** Le thème du moteur, servi quand l'instance ne monte rien. */
+    public const string DEFAULT_ID = 'default';
+
+    /** Le thème monté sur BRANDING_DIR. */
+    public const string INSTANCE_ID = 'instance';
+
+    private ?ThemeConfig $config = null;
 
     public function __construct(
         #[Autowire(env: 'resolve:BRANDING_DIR')]
         private readonly string $directory,
         private readonly UrlGeneratorInterface $urls,
         private readonly Packages $assets,
-        private readonly BrandingLoader $loader = new BrandingLoader(),
+        private readonly ThemeLoader $loader = new ThemeLoader(),
     ) {
     }
 
-    /** La marque lue et vérifiée, une fois. */
-    public function config(): BrandingConfig
+    /** Le thème lu et vérifié, une fois. */
+    public function config(): ThemeConfig
     {
         return $this->config ??= $this->loader->load($this->directory);
     }
 
-    /** Relue à la requête suivante : un marque.yaml modifié se voit sans redémarrer, même en mode worker. */
+    /** Relu à la requête suivante : un theme.yaml modifié se voit sans redémarrer, même en mode worker. */
     public function reset(): void
     {
         $this->config = null;
     }
 
-    /** Vrai tant que l'instance n'a pas posé sa marque : c'est celle du moteur qui s'affiche. */
+    /** Vrai tant que l'instance n'a pas posé son thème : c'est celui du moteur qui s'affiche. */
     public function isDefault(): bool
     {
         return $this->config()->isDefault;
+    }
+
+    /** L'identifiant du thème servi : « default » (celui du moteur) ou « instance » (le dossier monté). */
+    public function id(): string
+    {
+        return $this->isDefault() ? self::DEFAULT_ID : self::INSTANCE_ID;
+    }
+
+    /** Vrai quand le thème n'a que l'ancien marque.yaml : il reste lu jusqu'à la 4.0, mais doit être renommé. */
+    public function usesLegacyFile(): bool
+    {
+        return ThemeLoader::LEGACY_FILE === $this->config()->file;
     }
 
     public function name(): string
@@ -147,12 +163,12 @@ final class Branding implements ResetInterface
     /** Les variables CSS de la marque, à poser après la feuille de styles. Vide quand rien n'est déclaré. */
     public function styles(): string
     {
-        return BrandingStylesheet::render($this->config());
+        return ThemeStylesheet::render($this->config());
     }
 
     /**
      * Vrai tant que la marque ne déclare pas de couleurs : le site suit alors le thème du système (clair ou sombre).
-     * Une palette imposée est claire (BrandingStylesheet::COLORS) : on ne la mélange pas aux encres du thème sombre.
+     * Une palette imposée est claire (ThemeStylesheet::COLORS) : on ne la mélange pas aux encres du thème sombre.
      */
     public function followsSystemTheme(): bool
     {
@@ -171,8 +187,8 @@ final class Branding implements ResetInterface
     }
 
     /**
-     * Une image déclarée par l'instance, servie par BrandingController et horodatée pour le cache.
-     * Sans déclaration : l'image du moteur tant que c'est sa marque, sinon rien.
+     * Une image déclarée par l'instance, servie par ThemeController et horodatée pour le cache.
+     * Sans déclaration : l'image du moteur tant que c'est son thème, sinon rien.
      */
     private function imageUrl(string $key, string $engineAsset): ?string
     {
@@ -180,9 +196,12 @@ final class Branding implements ResetInterface
         if (null === $file) {
             return $this->isDefault() ? $this->assets->getUrl($engineAsset) : null;
         }
-        $path = $this->directory.'/'.$file;
 
-        return $this->urls->generate('app_brand_image', ['role' => $key, 'v' => (string) (filemtime($path) ?: 0)]);
+        return $this->urls->generate('app_theme_image', [
+            'theme' => $this->id(),
+            'version' => (string) (filemtime($this->directory.'/'.$file) ?: 0),
+            'role' => $key,
+        ]);
     }
 
     /** Le chemin du fichier d'une image déclarée, pour le contrôleur qui la sert. */

@@ -2,7 +2,7 @@
 
 namespace App\Twig;
 
-use App\Instance\Branding;
+use App\Theme\Theme;
 use Pentatrion\ViteBundle\Service\FileAccessor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Service\ResetInterface;
@@ -35,7 +35,7 @@ final class FontPreloadExtension extends AbstractExtension implements ResetInter
         private readonly string $config,
         #[Autowire(param: 'pentatrion_vite.configs')]
         private readonly array $configs,
-        private readonly Branding $branding,
+        private readonly Theme $theme,
     ) {
     }
 
@@ -54,7 +54,7 @@ final class FontPreloadExtension extends AbstractExtension implements ResetInter
             return $this->urls = [];
         }
         $manifest = $this->files->getData($this->config, FileAccessor::MANIFEST);
-        $replaced = $this->branding->config()->fonts;
+        $replaced = $this->theme->config()->fonts;
 
         $urls = [];
         foreach (self::FONTS as $variable => $source) {
@@ -66,7 +66,7 @@ final class FontPreloadExtension extends AbstractExtension implements ResetInter
         return $this->urls = $urls;
     }
 
-    /** Recalculées à la requête suivante : elles dépendent des polices de la marque, relue elle aussi (Branding). */
+    /** Recalculées à la requête suivante : elles dépendent des polices de la marque, relue elle aussi (Theme). */
     public function reset(): void
     {
         $this->urls = null;

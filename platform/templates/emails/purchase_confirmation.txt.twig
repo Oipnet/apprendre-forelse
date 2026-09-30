@@ -28,7 +28,7 @@ Vous avez accepté les conditions générales de vente (version du {{ purchase.t
 
 Vous avez demandé l'accès immédiat au parcours et renoncé à votre droit de rétractation le {{ purchase.withdrawalWaiverAcceptedAt|date('d/m/Y à H:i') }}.
 
-{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que vous avez acheté un parcours sur ' ~ marque.name ~ '.'}) }}
+{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que vous avez acheté un parcours sur ' ~ theme.name ~ '.'}) }}
 {% if vendeur %}
 Vendeur : {{ vendeur }}.
 {% endif %}

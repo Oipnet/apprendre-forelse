@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Instance\Branding;
+namespace App\Theme;
 
 final readonly class HexColor implements BlockValue
 {

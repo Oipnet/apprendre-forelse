@@ -8,6 +8,24 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **« Marque » devient « thème » (#234)**, premier pas vers les thèmes (#225). Le dossier monté ne porte plus
+  seulement une identité : il habille l'instance.
+  - Le fichier s'appelle `theme.yaml` (même format), la variable des gabarits `theme` (`{{ theme.name }}`), la
+    commande `app:theme:verifier`. Exemple : `examples/themes/atelier-bigorneau/`.
+  - Les images du thème sont servies sur `/theme/<thème>/<date>/<rôle>` (`/theme/instance/…` pour le dossier
+    monté).
+  - Rien à changer tout de suite pour une instance existante. Le dossier reste `BRANDING_DIR` (`/marque`).
+
+### Déprécié
+
+- `marque.yaml` : encore lu quand `theme.yaml` est absent, avec un avertissement (journaux, et
+  `app:theme:verifier`). Renommez-le en `theme.yaml`. Retrait en 4.0.
+- La variable `marque` des gabarits surchargés (`BRANDING_DIR/templates/`) reste un alias de `theme`. Retrait en 4.0.
+- `app:marque:verifier` reste un alias de `app:theme:verifier`. Retrait en 4.0.
+- Les anciennes adresses d'images `/marque/<rôle>` redirigent (301) vers les nouvelles. Retrait en 4.0.
+
 ## 2.5.1 — 2026-09-30
 
 ### Modifié

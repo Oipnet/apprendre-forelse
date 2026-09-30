@@ -3,7 +3,7 @@
 namespace App\Account;
 
 use App\Entity\User;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Mail\Sender;
 use App\Repository\UserRepository;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
@@ -20,7 +20,7 @@ final readonly class SendPasswordResetLink
         private UserRepository $users,
         private ResetPasswordHelperInterface $resetPasswordHelper,
         private MailerInterface $mailer,
-        private Branding $branding,
+        private Theme $theme,
         private Sender $sender,
     ) {
     }
@@ -42,7 +42,7 @@ final readonly class SendPasswordResetLink
         // L'email ne contient pas de mot de passe : un lien pour en choisir un.
         $this->mailer->send($this->sender->email()
             ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
-            ->subject(sprintf('Choisissez un nouveau mot de passe sur %s', $this->branding->name()))
+            ->subject(sprintf('Choisissez un nouveau mot de passe sur %s', $this->theme->name()))
             ->htmlTemplate('emails/reset_password.html.twig')
             ->textTemplate('emails/reset_password.txt.twig')
             ->context(['resetToken' => $resetToken, 'user' => $user]));

@@ -2,7 +2,7 @@
 
 namespace App\Tests\Twig;
 
-use App\Tests\BrandingTrait;
+use App\Tests\ThemeTrait;
 use App\Twig\FontPreloadExtension;
 use Pentatrion\ViteBundle\Service\FileAccessor;
 use PHPUnit\Framework\TestCase;
@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 /** Les polices préchargées : celles du manifeste Vite, sauf celles que la marque remplace, et rien sans build. */
 final class FontPreloadExtensionTest extends TestCase
 {
-    use BrandingTrait;
+    use ThemeTrait;
 
     private string $tmp;
 
@@ -18,22 +18,22 @@ final class FontPreloadExtensionTest extends TestCase
     {
         $this->tmp = sys_get_temp_dir().'/polices-'.bin2hex(random_bytes(6));
         mkdir($this->tmp.'/public/build/.vite', recursive: true);
-        mkdir($this->tmp.'/marque');
+        mkdir($this->tmp.'/theme');
     }
 
     protected function tearDown(): void
     {
-        array_map('unlink', [...glob($this->tmp.'/public/build/.vite/*') ?: [], ...glob($this->tmp.'/marque/*') ?: []]);
-        foreach (['/public/build/.vite', '/public/build', '/public', '/marque', ''] as $directory) {
+        array_map('unlink', [...glob($this->tmp.'/public/build/.vite/*') ?: [], ...glob($this->tmp.'/theme/*') ?: []]);
+        foreach (['/public/build/.vite', '/public/build', '/public', '/theme', ''] as $directory) {
             @rmdir($this->tmp.$directory);
         }
     }
 
-    private function extension(string $branding = ''): FontPreloadExtension
+    private function extension(string $theme = ''): FontPreloadExtension
     {
         $configs = ['_default' => ['base' => '/build/']];
 
-        return new FontPreloadExtension(new FileAccessor($this->tmp.'/public', $configs), '_default', $configs, self::branding($branding));
+        return new FontPreloadExtension(new FileAccessor($this->tmp.'/public', $configs), '_default', $configs, self::theme($theme));
     }
 
     private function writeManifest(): void
@@ -55,9 +55,9 @@ final class FontPreloadExtensionTest extends TestCase
     public function testUnePoliceRemplaceeParLaMarqueNEstPasPrechargee(): void
     {
         $this->writeManifest();
-        file_put_contents($this->tmp.'/marque/marque.yaml', "name: A\nfonts:\n  serif: \"Georgia, serif\"\n");
+        file_put_contents($this->tmp.'/theme/theme.yaml', "name: A\nfonts:\n  serif: \"Georgia, serif\"\n");
 
-        $this->assertSame(['/build/assets/instrument-sans-latin-BBB.woff2'], $this->extension($this->tmp.'/marque')->urls());
+        $this->assertSame(['/build/assets/instrument-sans-latin-BBB.woff2'], $this->extension($this->tmp.'/theme')->urls());
     }
 
     public function testSansManifesteRienNEstPrecharge(): void

@@ -1,9 +1,10 @@
-# Identité d'une instance : montez ce dossier sur /marque (voir auto-hebergement/compose.yaml).
+# Thème d'une instance : montez ce dossier sur /marque (voir auto-hebergement/compose.yaml).
+# Vérifiez-le avec : bin/console app:theme:verifier
 #
 # Ce fichier suffit à habiller la plateforme : nom, puce, accroche, couleurs, images. Ce qu'il ne
 # règle pas se réécrit en déposant un gabarit dans templates/ (voir README, « Habiller son instance »).
 #
-# Une règle à connaître : dès que ce fichier existe, la marque du moteur disparaît entièrement.
+# Une règle à connaître : dès que ce fichier existe, le thème du moteur disparaît entièrement.
 # Le nom, les images et les textes d'accueil de Forelse ne sont plus servis — déclarez les vôtres.
 
 # Obligatoire : le nom affiché partout (en-tête, pied de page, titres, emails, balises de partage).

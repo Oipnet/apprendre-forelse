@@ -1,9 +1,9 @@
 Bonjour {{ user.displayName }},
 
-L'adresse de votre compte {{ marque.name }} vient d'être remplacée par {{ newEmail }}. Les emails du compte (mot de passe oublié, achats) partent désormais à cette adresse.
+L'adresse de votre compte {{ theme.name }} vient d'être remplacée par {{ newEmail }}. Les emails du compte (mot de passe oublié, achats) partent désormais à cette adresse.
 
 Si c'est vous, il n'y a rien à faire.
 
 Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : {% if contact %}écrivez-nous au plus vite à {{ contact }}{% else %}prévenez au plus vite l'éditeur du site, dont les coordonnées figurent dans les mentions légales ({{ url('app_legal_notice') }}){% endif %}, en indiquant cette adresse-ci.
 
-{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que cette adresse était celle de votre compte ' ~ marque.name ~ '.'}) }}
+{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que cette adresse était celle de votre compte ' ~ theme.name ~ '.'}) }}

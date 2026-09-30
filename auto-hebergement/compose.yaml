@@ -111,7 +111,7 @@ services:
       - ${PACKS_DIR:-./packs}:/packs:ro
       # Archives à télécharger (facultatif) : déposez-y vos .zip, servis par /telechargements.
       - ${DOWNLOADS_HOST_DIR:-./downloads}:/downloads:ro
-      # Votre marque (facultatif) : marque.yaml, vos images, vos gabarits. Vide : la marque du moteur.
+      # Votre thème (facultatif) : theme.yaml, vos images, vos gabarits. Vide : le thème du moteur.
       - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
       # Environnements installés depuis un dépôt Git, et leurs archives.
       - environnements:/environnements

@@ -33,15 +33,15 @@
 }) %}
 
 {% block robots %}<meta name="robots" content="noindex">{% endblock %}
-{% block title %}{{ message.title }} · {{ marque.name }}{% endblock %}
+{% block title %}{{ message.title }} · {{ theme.name }}{% endblock %}
 
 {% block header %}
     <header class="lp-header">
         <div class="lp-wrap">
             <a class="lp-brand" href="{{ path('app_home') }}">
-                {% if marque.logoUrl %}<img src="{{ marque.logoUrl }}" alt="" width="72" height="84">{% endif %}
-                <span class="lp-serif">{{ marque.name }}</span>
-                {% if marque.chip %}<span class="lp-chip">{{ marque.chip }}</span>{% endif %}
+                {% if theme.logoUrl %}<img src="{{ theme.logoUrl }}" alt="" width="72" height="84">{% endif %}
+                <span class="lp-serif">{{ theme.name }}</span>
+                {% if theme.chip %}<span class="lp-chip">{{ theme.chip }}</span>{% endif %}
             </a>
             <nav>
                 <a href="{{ path('app_tracks') }}">Parcours</a>

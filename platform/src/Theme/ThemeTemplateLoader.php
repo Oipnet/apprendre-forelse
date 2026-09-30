@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Instance;
+namespace App\Theme;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -11,7 +11,7 @@ use Twig\Loader\FilesystemLoader;
  * dans le moteur (`home.html.twig`, `_footer.html.twig`, une page légale…). Consulté avant celui du
  * moteur, il n'a besoin de contenir que les fichiers à remplacer.
  *
- * C'est l'échappatoire du niveau « habillage » : ce que marque.yaml ne règle pas, une instance le
+ * C'est l'échappatoire du niveau « habillage » : ce que theme.yaml ne règle pas, une instance le
  * réécrit sans toucher au moteur — donc sans fork, et sans rien à republier au titre de l'AGPL.
  *
  * Sans dossier, ce chargeur ne connaît aucun chemin : il répond « inconnu » à tout et la chaîne passe
@@ -19,7 +19,7 @@ use Twig\Loader\FilesystemLoader;
  * ici après coup demande un redémarrage du conteneur (ou un cache:clear).
  */
 #[AutoconfigureTag('twig.loader', ['priority' => 10])]
-final class BrandingTemplateLoader extends FilesystemLoader
+final class ThemeTemplateLoader extends FilesystemLoader
 {
     public const string SUBDIRECTORY = 'templates';
 

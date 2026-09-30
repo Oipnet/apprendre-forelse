@@ -6,9 +6,9 @@
 <p style="margin:0 0 12px;">Bonjour {{ user.displayName }},</p>
 
 {% if change %}
-<p style="margin:0 0 12px;">Vous avez demandé à utiliser cette adresse pour votre compte {{ marque.name }}. Pour la confirmer :</p>
+<p style="margin:0 0 12px;">Vous avez demandé à utiliser cette adresse pour votre compte {{ theme.name }}. Pour la confirmer :</p>
 {% else %}
-<p style="margin:0 0 12px;">Bienvenue sur {{ marque.name }}. Il reste à confirmer votre adresse email :</p>
+<p style="margin:0 0 12px;">Bienvenue sur {{ theme.name }}. Il reste à confirmer votre adresse email :</p>
 {% endif %}
 
 {{ include('emails/_button.html.twig', {href: link, label: 'Confirmer mon adresse'}) }}
@@ -22,4 +22,4 @@
 {% endif %}
 {% endblock %}
 
-{% block reason %}Vous recevez cet email parce que cette adresse a été indiquée pour un compte {{ marque.name }}.{% endblock %}
+{% block reason %}Vous recevez cet email parce que cette adresse a été indiquée pour un compte {{ theme.name }}.{% endblock %}

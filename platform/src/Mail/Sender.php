@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Legal\LegalInfo;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -18,7 +18,7 @@ use Symfony\Component\Mime\Address;
 final readonly class Sender
 {
     public function __construct(
-        private Branding $branding,
+        private Theme $theme,
         private LegalInfo $legal,
         #[Autowire(env: 'MAILER_FROM')]
         private string $mailerFrom,
@@ -31,7 +31,7 @@ final readonly class Sender
     {
         $from = Address::create($this->mailerFrom);
 
-        return '' === $from->getName() ? new Address($from->getAddress(), $this->branding->name()) : $from;
+        return '' === $from->getName() ? new Address($from->getAddress(), $this->theme->name()) : $from;
     }
 
     /** L'adresse qui lit les messages (formulaire de contact, réponses aux emails) ; vide si aucune n'est configurée. */
@@ -45,7 +45,7 @@ final readonly class Sender
     {
         $email = (new TemplatedEmail())->from($this->from());
         if ('' !== $this->contact()) {
-            $email->replyTo(new Address($this->contact(), $this->branding->name()));
+            $email->replyTo(new Address($this->contact(), $this->theme->name()));
         }
 
         return $email;

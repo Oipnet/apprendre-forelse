@@ -2,7 +2,7 @@
 
 namespace App\Seo;
 
-use App\Instance\Branding;
+use App\Theme\Theme;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
@@ -13,7 +13,7 @@ final readonly class SchemaOrg
 {
     public function __construct(
         private UrlGeneratorInterface $urls,
-        private Branding $branding,
+        private Theme $theme,
     ) {
     }
 
@@ -36,18 +36,18 @@ final readonly class SchemaOrg
     /** @return array<string, mixed> l'éditeur du site */
     public function organization(): array
     {
-        return ['@type' => 'Organization', '@id' => $this->url('app_home').'#organisation', 'name' => $this->branding->name(), 'url' => $this->url('app_home')];
+        return ['@type' => 'Organization', '@id' => $this->url('app_home').'#organisation', 'name' => $this->theme->name(), 'url' => $this->url('app_home')];
     }
 
     /**
-     * L'auteur des parcours et des exercices : la personne que déclare la marque du moteur (voir son marque.yaml).
+     * L'auteur des parcours et des exercices : la personne que déclare le thème du moteur (voir son theme.yaml).
      * Une autre instance publie son organisation.
      *
      * @return array<string, mixed>
      */
     public function author(): array
     {
-        if (null === ($person = $this->branding->person())) {
+        if (null === ($person = $this->theme->person())) {
             return ['@id' => $this->url('app_home').'#organisation'];
         }
 
@@ -57,7 +57,7 @@ final readonly class SchemaOrg
             'name' => $person['name'],
             'jobTitle' => $person['jobTitle'],
             'worksFor' => ['@id' => $this->url('app_home').'#organisation'],
-            'url' => $this->branding->url(),
+            'url' => $this->theme->url(),
         ];
     }
 

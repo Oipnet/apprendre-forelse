@@ -29,6 +29,6 @@
 <p style="margin:0;">Vous avez demandé l'accès immédiat au parcours et renoncé à votre droit de rétractation le {{ purchase.withdrawalWaiverAcceptedAt|date('d/m/Y à H:i') }}.</p>
 {% endblock %}
 
-{% block reason %}Vous recevez cet email parce que vous avez acheté un parcours sur {{ marque.name }}.{% endblock %}
+{% block reason %}Vous recevez cet email parce que vous avez acheté un parcours sur {{ theme.name }}.{% endblock %}
 
 {% block legal %}{% if vendeur %}<p style="margin:6px 0 0;">Vendeur : {{ vendeur }}.</p>{% endif %}{% endblock %}

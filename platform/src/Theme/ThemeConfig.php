@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Instance\Branding;
+namespace App\Theme;
 
 /**
- * La marque de l'instance, lue et vérifiée en une fois par BrandingLoader : tout ce qui est ici est valable.
+ * Le thème de l'instance, lu et vérifié en une fois par ThemeLoader : tout ce qui est ici est valable.
  */
-final readonly class BrandingConfig
+final readonly class ThemeConfig
 {
     /**
-     * @param array<string, string|null>                                                                     $images    fichier du dossier de marque par rôle (logo, icon, share), null si non déclaré
+     * @param array<string, string|null>                                                                     $images    fichier du dossier du thème par rôle (logo, icon, share), null si non déclaré
      * @param array<string, string>                                                                          $colors    variable CSS => couleur, thème clair
      * @param array<string, string>                                                                          $editor    variable CSS => couleur, thème sombre de l'éditeur
      * @param array<string, string>                                                                          $fonts     variable CSS => pile de polices
@@ -16,9 +16,11 @@ final readonly class BrandingConfig
      * @param array{name: string, jobTitle: string}|null                                                     $person    la personne derrière les contenus (marque du moteur seulement)
      */
     public function __construct(
-        /** Vrai quand aucun marque.yaml n'est monté : c'est la marque du moteur. */
+        /** Vrai quand aucun theme.yaml n'est monté : c'est le thème du moteur. */
         public bool $isDefault,
         public string $directory,
+        /** Le fichier lu : theme.yaml, ou l'ancien marque.yaml encore accepté jusqu'à la 4.0. */
+        public string $file,
         public string $name,
         public string $chip,
         public string $title,

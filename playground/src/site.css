@@ -1772,7 +1772,7 @@ body.site-page {
 	text-wrap: pretty;
 }
 
-/* Fil rouge : l'enseigne du parcours mis en avant (voir marque.yaml, « home.showcase.sign ») */
+/* Fil rouge : l'enseigne du parcours mis en avant (voir theme.yaml, « home.showcase.sign ») */
 .lp-sign-wrap {
 	display: flex;
 	justify-content: center;

@@ -3,7 +3,7 @@
 namespace App\Account;
 
 use App\Entity\User;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Mail\Sender;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -24,7 +24,7 @@ final readonly class RegistrationAttemptNotice
     public function __construct(
         private MailerInterface $mailer,
         private LoggerInterface $logger,
-        private Branding $branding,
+        private Theme $theme,
         #[Autowire(service: 'limiter.registration_notice')]
         private RateLimiterFactoryInterface $limiter,
         private Sender $sender,
@@ -40,7 +40,7 @@ final readonly class RegistrationAttemptNotice
         try {
             $this->mailer->send($this->sender->email()
                 ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
-                ->subject(sprintf('Vous avez déjà un compte %s', $this->branding->name()))
+                ->subject(sprintf('Vous avez déjà un compte %s', $this->theme->name()))
                 ->htmlTemplate('emails/registration_attempt.html.twig')
                 ->textTemplate('emails/registration_attempt.txt.twig')
                 ->context(['user' => $user]));

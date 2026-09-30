@@ -125,13 +125,17 @@ votre marque, créez un dossier `marque/` à côté de `compose.yaml` — il est
 
 ```bash
 mkdir -p marque
-curl -fsSL -o marque/marque.yaml \
-  https://raw.githubusercontent.com/oipnet/apprendre-forelse/main/examples/marque/marque.yaml
-# éditez marque/marque.yaml, déposez vos images à côté, puis :
+curl -fsSL -o marque/theme.yaml \
+  https://raw.githubusercontent.com/oipnet/apprendre-forelse/main/examples/themes/atelier-bigorneau/theme.yaml
+# éditez marque/theme.yaml, déposez vos images à côté, puis :
 docker compose up -d
+docker compose exec app bin/console app:theme:verifier   # dit quelle clé corriger, s'il y en a une
 ```
 
-**Dès que `marque/marque.yaml` existe, plus rien de la marque du moteur n'est servi** : ni le nom, ni le
+Avant la 2.6, ce fichier s'appelait `marque.yaml` : il reste lu jusqu'à la 4.0, mais renommez-le en
+`theme.yaml` (la commande ci-dessus vous le rappelle).
+
+**Dès que `marque/theme.yaml` existe, plus rien du thème du moteur n'est servi** : ni le nom, ni le
 logo, ni la favicon, ni l'image de partage, ni les textes d'accueil de Forelse. Vous ne risquez pas de
 laisser traîner « Forelse » dans un coin de page ou dans un email.
 

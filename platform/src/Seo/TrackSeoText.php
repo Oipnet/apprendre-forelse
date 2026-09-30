@@ -3,7 +3,7 @@
 namespace App\Seo;
 
 use App\Content\Track;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Repository\TrackPricingRepository;
 use App\Repository\TrackSeoRepository;
 use Psr\Log\LoggerInterface;
@@ -26,7 +26,7 @@ final readonly class TrackSeoText
         private TrackSeoRepository $overrides,
         private TrackPricingRepository $pricings,
         private LoggerInterface $logger,
-        private Branding $branding,
+        private Theme $theme,
     ) {
     }
 
@@ -35,11 +35,11 @@ final readonly class TrackSeoText
         $title = $this->overrides->findOneByTrack($track->id)?->getSeoTitle() ?? self::generatedTitle($track->title, $framework);
         if (mb_strlen($title) > self::TITLE_MAX) {
             $this->logger->warning('Title du parcours « {track} » trop long : {length} caractères, {max} au plus sans « | {site} ».', [
-                'track' => $track->id, 'length' => mb_strlen($title), 'max' => self::TITLE_MAX, 'site' => $this->branding->name(), 'title' => $title,
+                'track' => $track->id, 'length' => mb_strlen($title), 'max' => self::TITLE_MAX, 'site' => $this->theme->name(), 'title' => $title,
             ]);
         }
 
-        return $title.' | '.$this->branding->name();
+        return $title.' | '.$this->theme->name();
     }
 
     public function description(Track $track): string

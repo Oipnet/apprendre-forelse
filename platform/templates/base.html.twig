@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 {# data-theme="auto" : les pages du site suivent le thème du système (voir le thème sombre de site.css). #}
-<html lang="fr"{% if marque.followsSystemTheme %} data-theme="auto"{% endif %}>
+<html lang="fr"{% if theme.followsSystemTheme %} data-theme="auto"{% endif %}>
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         {# Pages publiques : balises remplies par App\Seo\Page ou l'attribut #[Seo] de l'action. Les autres gardent leur bloc title. #}
-        <title>{% if seo.title %}{{ seo.title }}{% else %}{% block title %}{{ marque.title }}{% endblock %}{% endif %}</title>
+        <title>{% if seo.title %}{{ seo.title }}{% else %}{% block title %}{{ theme.title }}{% endblock %}{% endif %}</title>
         {% if seo.description -%}
             <meta name="description" content="{{ seo.description }}">
         {% endif -%}
@@ -13,20 +13,20 @@
         {% if seo.canonical -%}
             <link rel="canonical" href="{{ seo.canonical }}">
             <meta property="og:type" content="{{ seo.type }}">
-            <meta property="og:site_name" content="{{ marque.name }}">
+            <meta property="og:site_name" content="{{ theme.name }}">
             <meta property="og:locale" content="fr_FR">
             <meta property="og:url" content="{{ seo.canonical }}">
             <meta property="og:title" content="{{ seo.title }}">
             {% if seo.description %}<meta property="og:description" content="{{ seo.description }}">{% endif %}
             {% if seo.image -%}
                 <meta property="og:image" content="{{ seo.image }}">
-            {%- elseif marque.shareUrl -%}
-                <meta property="og:image" content="{{ absolute_url(marque.shareUrl) }}">
+            {%- elseif theme.shareUrl -%}
+                <meta property="og:image" content="{{ absolute_url(theme.shareUrl) }}">
                 <meta property="og:image:width" content="1200">
                 <meta property="og:image:height" content="630">
             {%- endif %}
-            {% if seo.image or marque.shareUrl -%}
-                <meta property="og:image:alt" content="{{ seo.imageAlt ?? (marque.name ~ ' : ' ~ marque.tagline) }}">
+            {% if seo.image or theme.shareUrl -%}
+                <meta property="og:image:alt" content="{{ seo.imageAlt ?? (theme.name ~ ' : ' ~ theme.tagline) }}">
                 <meta name="twitter:card" content="summary_large_image">
             {%- else -%}
                 {# Sans image, X affiche quand même une carte : titre et description. #}
@@ -36,15 +36,15 @@
         {% for data in seo.structuredData -%}
             <script type="application/ld+json">{{ data|json_ld }}</script>
         {% endfor -%}
-        {%- if marque.iconUrl %}
-        <link rel="icon" type="image/svg+xml" href="{{ marque.iconUrl }}">
-        {%- if not marque.default %}<link rel="apple-touch-icon" href="{{ marque.iconUrl }}">{% endif %}
-        {%- elseif not marque.default %}
+        {%- if theme.iconUrl %}
+        <link rel="icon" type="image/svg+xml" href="{{ theme.iconUrl }}">
+        {%- if not theme.default %}<link rel="apple-touch-icon" href="{{ theme.iconUrl }}">{% endif %}
+        {%- elseif not theme.default %}
         {# Sans icône déclarée, le navigateur irait chercher /favicon.ico — celle du moteur. Une icône
            vide vaut mieux que la marque de quelqu'un d'autre dans l'onglet. #}
         <link rel="icon" href="data:,">
         {%- endif %}
-        {%- if marque.default %}
+        {%- if theme.default %}
         <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/favicon-32.png') }}">
         <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}">
         {%- endif %}
@@ -65,8 +65,8 @@
             {{ vite_entry_script_tags('site') }}
         {% endblock %}
         {# Les couleurs et polices de l'instance, après la feuille de styles pour l'emporter sur elle. #}
-        {%- if marque.styles %}
-        <style>{{ marque.styles|raw }}</style>
+        {%- if theme.styles %}
+        <style>{{ theme.styles|raw }}</style>
         {%- endif %}
     </head>
     {# data-import-url : la progression d'invité est remontée au compte après connexion (voir site.ts). #}
@@ -79,9 +79,9 @@
             <header class="lp-header">
                 <div class="lp-wrap">
                     <a class="lp-brand" href="{{ path('app_home') }}">
-                        {% if marque.logoUrl %}<img src="{{ marque.logoUrl }}" alt="" width="72" height="84">{% endif %}
-                        <span class="lp-serif">{{ marque.name }}</span>
-                        {%- set chip %}{% block brand_chip %}{{ marque.chip }}{% endblock %}{% endset -%}
+                        {% if theme.logoUrl %}<img src="{{ theme.logoUrl }}" alt="" width="72" height="84">{% endif %}
+                        <span class="lp-serif">{{ theme.name }}</span>
+                        {%- set chip %}{% block brand_chip %}{{ theme.chip }}{% endblock %}{% endset -%}
                         {% if chip|trim %}<span class="lp-chip">{{ chip }}</span>{% endif %}
                     </a>
                     <nav aria-label="Navigation principale">

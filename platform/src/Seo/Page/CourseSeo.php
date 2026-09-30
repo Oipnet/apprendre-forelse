@@ -9,7 +9,7 @@ use App\Content\Exercise;
 use App\Content\ExerciseStory;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\Track;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Payment\TrackOfferFactory;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
@@ -30,7 +30,7 @@ final readonly class CourseSeo
         private TrackOfferFactory $offers,
         private TrackSeoText $trackText,
         private ContentRepository $content,
-        private Branding $branding,
+        private Theme $theme,
         private ExerciseStory $stories,
     ) {
     }
@@ -47,7 +47,7 @@ final readonly class CourseSeo
         $duration = null === ($minutes = $this->content->durationOf($track)) ? null : DurationExtension::iso($minutes);
         $this->shareImage($track);
         // Google exige une image : celle du parcours, sinon celle du partage de la marque, à défaut le logo.
-        $image = $this->shareImageUrl($track) ?? $this->branding->shareUrl() ?? $this->branding->logoLargeUrl() ?? $this->branding->logoUrl();
+        $image = $this->shareImageUrl($track) ?? $this->theme->shareUrl() ?? $this->theme->logoLargeUrl() ?? $this->theme->logoUrl();
         $this->seo
             ->addStructuredData([
                 '@type' => 'Course',
@@ -160,7 +160,7 @@ final readonly class CourseSeo
     private function shareImage(Track $track): void
     {
         if (null !== ($url = $this->shareImageUrl($track))) {
-            $this->seo->setImage($url, sprintf('%s · %s', $track->title, $this->branding->name()));
+            $this->seo->setImage($url, sprintf('%s · %s', $track->title, $this->theme->name()));
         }
     }
 
@@ -184,7 +184,7 @@ final readonly class CourseSeo
             1 => $frameworks[0],
             default => implode(', ', \array_slice($frameworks, 0, -1)).' et '.end($frameworks),
         };
-        $name = $this->branding->name();
+        $name = $this->theme->name();
         $this->seo
             ->setTitle(
                 sprintf('Parcours pour apprendre %s en codant | %s', $subject, $name),

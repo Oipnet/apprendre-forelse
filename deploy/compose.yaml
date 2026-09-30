@@ -120,7 +120,7 @@ services:
       - ${PACKS_DIR:-./packs}:/packs:ro
       # Archives à télécharger (déposées par rsync depuis la CI du contenu). Vide : aucun téléchargement.
       - ${DOWNLOADS_HOST_DIR:-./downloads}:/downloads:ro
-      # Identité de l'instance (marque.yaml, images, gabarits). Vide : la marque du moteur.
+      # Thème de l'instance (theme.yaml, images, gabarits). Vide : le thème du moteur.
       - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
       # Environnements installés depuis un dépôt Git, et leurs archives.
       - environnements:/environnements

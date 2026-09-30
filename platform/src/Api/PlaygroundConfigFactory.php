@@ -6,7 +6,7 @@ use App\Ai\Mentor;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Entity\User;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Security\SandboxOrigin;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -24,7 +24,7 @@ final readonly class PlaygroundConfigFactory
         private UrlGeneratorInterface $urls,
         private SandboxOrigin $sandbox,
         private Mentor $mentor,
-        private Branding $branding,
+        private Theme $theme,
         private Security $security,
         /** Bêta fermée : l'inscription exige un code de cohorte, l'invité sans code est orienté vers la liste d'attente. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
@@ -45,10 +45,10 @@ final readonly class PlaygroundConfigFactory
             'sandboxUrl' => $this->sandbox->relayUrl(),
             // La marque, comme dans l'en-tête du site (la page n'a pas cet en-tête : le playground dessine sa barre).
             'brand' => [
-                'name' => $this->branding->name(),
-                'chip' => $this->branding->chip(),
-                'title' => $this->branding->title(),
-                'logoUrl' => $this->branding->logoLargeUrl(),
+                'name' => $this->theme->name(),
+                'chip' => $this->theme->chip(),
+                'title' => $this->theme->title(),
+                'logoUrl' => $this->theme->logoLargeUrl(),
             ],
             // Le lien de retour de la barre : le parcours, ou la liste de la Pratique.
             'back' => null === $track

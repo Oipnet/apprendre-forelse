@@ -11,7 +11,7 @@ use App\Content\Exercise;
 use App\Content\Framework\FrameworkProfile;
 use App\Content\Practice;
 use App\Content\Track;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -66,7 +66,7 @@ final class PostDrafter
         private readonly ModelClient $modele,
         private readonly ContentRepository $content,
         private readonly EnvironmentRegistry $environments,
-        private readonly Branding $branding,
+        private readonly Theme $theme,
         private readonly ClockInterface $clock,
         /**
          * Un modèle pour les posts seulement (AI_MODEL_POST). Écrire pour LinkedIn n'est pas relire du code :
@@ -192,7 +192,7 @@ final class PostDrafter
     {
         return str_replace(
             ['{framework}', '{marque}', '{tagline}', '{url}', '{max}', '{accroche}'],
-            [$framework->label, $this->branding->name(), $this->branding->tagline(), $url, number_format(self::MAX_CARACTERES, 0, ',', ' '), (string) self::MAX_ACCROCHE],
+            [$framework->label, $this->theme->name(), $this->theme->tagline(), $url, number_format(self::MAX_CARACTERES, 0, ',', ' '), (string) self::MAX_ACCROCHE],
             <<<'TEXTE'
                 Tu écris les brouillons de post LinkedIn de l'auteur de {marque}, une plateforme dont la
                 promesse est « {tagline} » : on y apprend en codant dans le navigateur, sur un vrai projet

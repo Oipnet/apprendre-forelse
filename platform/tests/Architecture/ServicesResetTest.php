@@ -4,7 +4,7 @@ namespace App\Tests\Architecture;
 
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Twig\ConceptExtension;
 use App\Twig\FontPreloadExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -22,7 +22,7 @@ final class ServicesResetTest extends KernelTestCase
         $services = [
             ContentRepository::class => ['content', static fn (ContentRepository $s) => $s->tracks()],
             EnvironmentRegistry::class => ['directoriesById', static fn (EnvironmentRegistry $s) => $s->all()],
-            Branding::class => ['config', static fn (Branding $s) => $s->name()],
+            Theme::class => ['config', static fn (Theme $s) => $s->name()],
             ConceptExtension::class => ['urls', static fn (ConceptExtension $s) => $s->url('Boucle Twig')],
             FontPreloadExtension::class => ['urls', static fn (FontPreloadExtension $s) => $s->urls()],
         ];

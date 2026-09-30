@@ -4,7 +4,7 @@
   Un article du blog, rendu depuis le Markdown de son pack (voir App\Content\Article).
   Variables : article, html, scheduled, previous, next.
 #}
-{% block title %}{{ article.title }} · {{ marque.name }}{% endblock %}
+{% block title %}{{ article.title }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
     <main class="page blog-page">
@@ -26,7 +26,7 @@
             <header>
                 <h1>{{ article.title }}</h1>
                 <p class="meta">
-                    {%- if marque.person %}{{ marque.person.name }} · {% endif -%}
+                    {%- if theme.person %}{{ theme.person.name }} · {% endif -%}
                     <time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time>
                     {%- if article.updated %} · mis à jour le <time datetime="{{ article.updated|date('Y-m-d') }}">{{ article.updated|date_longue }}</time>{% endif %}
                     · {{ article.readingMinutes }} min de lecture

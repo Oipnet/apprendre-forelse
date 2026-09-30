@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Instance\Branding;
+namespace App\Theme;
 
-/** La règle des valeurs d'un bloc de marque.yaml (couleurs, polices) : rien de ce qu'elle accepte ne peut refermer <style>. */
+/** La règle des valeurs d'un bloc de theme.yaml (couleurs, polices) : rien de ce qu'elle accepte ne peut refermer <style>. */
 interface BlockValue
 {
     public function accepts(string $value): bool;
