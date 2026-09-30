@@ -162,6 +162,7 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
     solution/         solution de référence (jamais envoyée au navigateur, sauf en dev)
 <pack>/practice/<exercice>/            exercice de Pratique, hors parcours (même contenu qu'un exercice)
 <pack>/versions/<version>.md           intro d'une page de nouveautés (Markdown, facultative)
+<pack>/articles/<slug>.md              article du blog (en-tête YAML, puis Markdown)
 ```
 
 - `duration:` (dans `exercise.yaml`, facultative) : la durée estimée de l'exercice, en minutes, pour le public du
@@ -192,6 +193,26 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
   (`concepts:`) et par nouveauté ; l'exercice se joue sur `/pratique/<exercice>`. À la réussite, le
   playground propose un « Avant / après » (le code de départ face à celui de l'apprenant). L'atelier
   crée un exercice de Pratique en préparation (`visibility: admin`) dans un pack modifiable.
+
+- **Blog** (`<pack>/articles/<slug>.md`) : des articles sur les coulisses du contenu et du moteur, publiés sur
+  `/blog/<slug>`. Le nom du fichier est l'adresse de l'article (minuscules, chiffres et tirets). Le fichier commence
+  par un en-tête YAML entre deux lignes `---`, suivi du Markdown (rendu comme une fiche de cours : HTML brut
+  supprimé, code coloré ; un `# Titre` en tête est retiré, la page affiche le sien) :
+
+  ```markdown
+  ---
+  title: Faire tourner Symfony dans le navigateur       # obligatoire : le h1 et le title de la page
+  description: Comment un vrai projet Symfony tourne…   # obligatoire, sans HTML : la meta description
+  published: 2026-10-06                                 # obligatoire ; une date à venir programme l'article
+  updated: 2026-10-20                                   # facultative : dernière révision du fond
+  visibility: admin                                     # facultative : en préparation
+  ---
+  ```
+
+  Toute autre clé est refusée (une faute de frappe ne passe pas inaperçue). Un article programmé ou en préparation
+  n'est ni dans la liste `/blog` ni dans le sitemap ; seuls les administrateurs le lisent à son adresse. Une instance
+  dont aucun pack n'a d'article paru n'a pas de blog : `/blog` répond 404 et le pied de page n'y mène pas. Chaque
+  article porte ses données structurées (`BlogPosting`) ; sa date dans le sitemap est `updated`, à défaut `published`.
 
 - `moteur:` (dans `pack.yaml`) déclare la ou les versions du moteur avec lesquelles le pack fonctionne,
   avec la syntaxe de Composer (`^0.1`, `>=1.2 <2.0`). Un moteur qui ne la satisfait pas refuse de charger le

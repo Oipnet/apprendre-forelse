@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{#
+  Un article du blog, rendu depuis le Markdown de son pack (voir App\Content\Article).
+  Variables : article, html, scheduled, previous, next.
+#}
+{% block title %}{{ article.title }} · {{ marque.name }}{% endblock %}
+
+{% block body %}
+    <main class="page blog-page">
+        <nav class="breadcrumb" aria-label="Fil d'Ariane">
+            <ol>
+                <li><a href="{{ path('app_home') }}">Accueil</a></li>
+                <li><a href="{{ path('app_blog') }}">Le blog</a></li>
+                <li aria-current="page">{{ article.title }}</li>
+            </ol>
+        </nav>
+
+        {% if article.restricted %}
+            <p class="blog-notice">En préparation : cet article n'est visible que des administrateurs.</p>
+        {% elseif scheduled %}
+            <p class="blog-notice">Programmé : cet article paraîtra le {{ article.published|date_longue }}. D'ici là, seuls les administrateurs le voient.</p>
+        {% endif %}
+
+        <article>
+            <header>
+                <h1>{{ article.title }}</h1>
+                <p class="meta">
+                    {%- if marque.person %}{{ marque.person.name }} · {% endif -%}
+                    <time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time>
+                    {%- if article.updated %} · mis à jour le <time datetime="{{ article.updated|date('Y-m-d') }}">{{ article.updated|date_longue }}</time>{% endif %}
+                    · {{ article.readingMinutes }} min de lecture
+                </p>
+            </header>
+
+            <div class="lesson">{{ html|raw }}</div>
+        </article>
+
+        {% if previous or next %}
+            <nav class="blog-nav" aria-label="Autres articles">
+                {% if previous %}<a class="button ghost" href="{{ path('app_article', {slug: previous.slug}) }}">← {{ previous.title }}</a>{% endif %}
+                {% if next %}<a class="button ghost" href="{{ path('app_article', {slug: next.slug}) }}">{{ next.title }} →</a>{% endif %}
+            </nav>
+        {% endif %}
+        <p class="blog-back"><a href="{{ path('app_blog') }}">← Tous les articles</a></p>
+    </main>
+{% endblock %}

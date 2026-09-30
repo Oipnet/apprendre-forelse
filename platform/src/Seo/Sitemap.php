@@ -2,6 +2,7 @@
 
 namespace App\Seo;
 
+use App\Content\Article;
 use App\Content\ConceptIndex;
 use App\Content\ContentDates;
 use App\Content\ContentRepository;
@@ -17,11 +18,11 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 /**
  * Les pages que les moteurs de recherche doivent trouver, telles qu'un visiteur sans compte les voit : accueil,
- * parcours publiés et leurs exercices, Pratique publiée, pages légales. Rien d'un parcours en préparation ni d'un
+ * parcours publiés et leurs exercices, Pratique publiée, articles parus, pages légales. Rien d'un parcours en préparation ni d'un
  * exercice de Pratique programmé, quel que soit le compte qui demande le sitemap.
  *
  * La date de modification d'une page de contenu est celle du fichier le plus récent de son dossier dans le pack
- * (voir ContentDates).
+ * (voir ContentDates) ; celle d'un article, la date que son auteur déclare (voir Article::modified()).
  */
 final readonly class Sitemap
 {
@@ -105,6 +106,12 @@ final readonly class Sitemap
             if ($conceptEntries) {
                 $entries[] = $this->entry('app_concepts', [], max(array_column($conceptEntries, 'lastmod')));
                 array_push($entries, ...$conceptEntries);
+            }
+
+            $articleEntries = array_map(fn (Article $article) => $this->entry('app_article', ['slug' => $article->slug], $article->modified()), $this->published->articles());
+            if ($articleEntries) {
+                $entries[] = $this->entry('app_blog', [], max(array_column($articleEntries, 'lastmod')));
+                array_push($entries, ...$articleEntries);
             }
 
             $entries[] = $this->entry('app_organizations', [], self::PAGES_UPDATED_AT);
