@@ -73,6 +73,20 @@ qui ne le montre qu'à vous, puis l'activation pour tous. `bin/console app:theme
 `bin/console app:theme:activer <thème>` en active un. Rien ne se téléverse depuis l'admin : les gabarits et les scripts
 d'un thème s'exécutent avec les droits de la plateforme.
 
+## Vérifier un thème contre le moteur
+
+Un thème maintenu hors du moteur se vérifie à chaque nouvelle version, avant d'arriver en production. Les tests du
+moteur rendent chaque page du sitemap avec lui, plus la connexion et l'inscription, et demandent chaque fichier qu'il
+apporte. Une variable qu'un gabarit du thème lit et que le moteur ne lui donne plus fait échouer la page
+(`strict_variables`) :
+
+```bash
+THEME_UNDER_TEST=/chemin/vers/themes/mon-theme CONTENT_PACKS_PATHS=/chemin/vers/packs \
+  php bin/phpunit --filter ThemeSitemapTest
+```
+
+Sans `THEME_UNDER_TEST`, ces tests vérifient l'exemple livré (`examples/themes/atelier-bigorneau`).
+
 ## Et l'AGPL ?
 
 Un thème est de la configuration montée à côté du moteur, pas une modification du moteur : il n'a pas à être publié.

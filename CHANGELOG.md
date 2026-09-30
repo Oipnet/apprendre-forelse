@@ -10,6 +10,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Vérifier un thème externe contre le moteur** : `ThemeSitemapTest` rend chaque page du sitemap avec le thème
+  désigné par `THEME_UNDER_TEST`, sur les packs de `CONTENT_PACKS_PATHS`, et demande chaque fichier qu'il apporte. Le
+  dépôt qui publie un thème s'en sert dans sa CI (voir `docs/themes.md`).
 - **`person` pour tous les thèmes** : la personne derrière les parcours et les articles (`name`, `jobTitle`), publiée
   comme auteur dans les données structurées. Réservée jusqu'ici au thème du moteur ; un thème qui n'en déclare pas
   n'en a pas.
