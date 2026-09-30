@@ -228,7 +228,7 @@ final class ExerciseStudio
         $this->writability->assert($owner);
         if ($owner instanceof Pack) {
             (new Filesystem())->remove($exercise->directory);
-            $this->content->reset();
+            $this->content->forget();
 
             return;
         }
@@ -241,7 +241,7 @@ final class ExerciseStudio
 
         (new Filesystem())->remove($exercise->directory);
         $this->trackWriter->retirerExercice($track, $exercise->id);
-        $this->content->reset();
+        $this->content->forget();
     }
 
     public function verifier(Exercise $exercise): CheckResult
@@ -259,7 +259,7 @@ final class ExerciseStudio
      */
     private function validerOuAnnuler(?string $trackId, string $exerciceId, callable $annuler): ?string
     {
-        $this->content->reset();
+        $this->content->forget();
         try {
             $trouve = null === $trackId ? $this->content->findPractice($exerciceId) : $this->content->findExercise($trackId, $exerciceId);
             if (null === $trouve) {
@@ -267,7 +267,7 @@ final class ExerciseStudio
             }
         } catch (\Throwable $e) {
             $annuler();
-            $this->content->reset();
+            $this->content->forget();
             if ($e instanceof ContentException) {
                 return $e->getMessage();
             }

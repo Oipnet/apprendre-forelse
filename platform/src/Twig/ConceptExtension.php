@@ -4,6 +4,7 @@ namespace App\Twig;
 
 use App\Content\ConceptIndex;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Service\ResetInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -11,7 +12,7 @@ use Twig\TwigFunction;
  * `notion_url('Boucle Twig')` : l'adresse de la page de cette notion, ou null si elle n'en a pas — une notion
  * vue sur un seul exercice ne relie rien et reste une simple pastille (voir ConceptIndex).
  */
-final class ConceptExtension extends AbstractExtension
+final class ConceptExtension extends AbstractExtension implements ResetInterface
 {
     /** @var array<string, string|null>|null les adresses par notion, calculées une fois par requête */
     private ?array $urls = null;
@@ -37,5 +38,11 @@ final class ConceptExtension extends AbstractExtension
         }
 
         return $this->urls[ConceptIndex::slug($concept)] ?? null;
+    }
+
+    /** Recalculées à la requête suivante, comme ConceptIndex : le contenu a pu changer. */
+    public function reset(): void
+    {
+        $this->urls = null;
     }
 }

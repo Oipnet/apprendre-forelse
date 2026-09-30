@@ -58,6 +58,19 @@ final class BrandingTest extends TestCase
         $this->assertNull($marque->iconUrl());
     }
 
+    /** Mode worker : la même instance sert plusieurs requêtes ; un marque.yaml modifié se voit après reset(). */
+    public function testUnMarqueYamlModifieSeVoitApresReset(): void
+    {
+        $this->write("name: Atelier Bigorneau\n");
+        $marque = self::branding($this->tmp);
+        $this->assertSame('Atelier Bigorneau', $marque->name());
+
+        $this->write("name: Atelier Pic Tordu\n");
+        $marque->reset();
+
+        $this->assertSame('Atelier Pic Tordu', $marque->name());
+    }
+
     /** Les textes d'accueil du moteur parlent d'une taverne : ils n'ont rien à faire chez quelqu'un d'autre. */
     public function testLesSectionsDAccueilDuMoteurDisparaissentAvecSaMarque(): void
     {

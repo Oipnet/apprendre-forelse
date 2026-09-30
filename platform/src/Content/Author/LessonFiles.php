@@ -39,7 +39,7 @@ final class LessonFiles
             $this->assertModifiable($track);
             $this->filesystem->dumpFile($chemin, $markdown);
         });
-        $this->content->reset();
+        $this->content->forget();
 
         return $chemin;
     }
@@ -56,7 +56,7 @@ final class LessonFiles
                 $this->filesystem->remove(\dirname($chemin));
             }
         });
-        $this->content->reset();
+        $this->content->forget();
     }
 
     private function assertModifiable(Track $track): void
