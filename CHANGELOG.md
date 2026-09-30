@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 2.5.1 — 2026-09-30
+
 ### Modifié
 
 - **Le blog a son lien dans le menu principal**, à côté de Parcours et Pratique, dès qu'un article est paru (le pied de
