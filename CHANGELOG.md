@@ -30,6 +30,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
     sans redémarrer ;
   - `FRANKENPHP_WORKERS` règle le nombre de workers (deux par cœur par défaut), `FRANKENPHP_LOOP_MAX` le nombre de
     requêtes après lequel un worker est relancé (500 par défaut).
+- **Le contenu des packs est lu au démarrage** (`cache:clear`), et non plus par la première page servie : après un
+  déploiement, la première requête passe d'environ 350 à 140 ms (mesuré en local). Un pack invalide n'empêche pas le
+  démarrage.
 
 ### Sécurité
 
