@@ -54,6 +54,7 @@ final class BlogTest extends WebTestCase
         $this->assertSame('/blog/symfony-dans-le-navigateur', $crawler->filter('.blog-list h2 a')->first()->attr('href'));
         $this->assertStringContainsString('20 septembre 2026', $crawler->filter('.blog-list .meta')->first()->text());
         $this->assertSelectorExists('.site-footer a[href="/blog"]', 'Le pied de page mène au blog.');
+        $this->assertSelectorExists('header nav a[href="/blog"]', 'Le menu principal aussi.');
     }
 
     public function testUnArticle(): void
@@ -143,6 +144,7 @@ final class BlogTest extends WebTestCase
         $this->usePacks(__DIR__.'/../../../examples/packs');
         $this->client->request('GET', '/');
         $this->assertSelectorNotExists('.site-footer a[href="/blog"]');
+        $this->assertSelectorNotExists('header nav a[href="/blog"]');
 
         $this->client->request('GET', '/blog');
         $this->assertResponseStatusCodeSame(404);
