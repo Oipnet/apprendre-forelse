@@ -40,7 +40,7 @@
 	@immutable path /build/assets/*
 	header @immutable Cache-Control "public, max-age=31536000, immutable"
 	# Images du site (logos, favicons) : noms stables, un mois de cache. Un visuel modifié change de nom.
-	@img path /img/*
+	@img path /img/* /favicon.ico
 	header @img Cache-Control "public, max-age=2592000"
 	@envs path /envs/*
 	header @envs Cache-Control "public, max-age=86400"
@@ -79,6 +79,11 @@
 	handle @mesure {
 		uri strip_prefix /mesure
 		reverse_proxy {$ANALYTICS_UPSTREAM:umami:3000}
+	}
+
+	# Manifestes du build Vite : lus par la plateforme sur le disque, jamais par le navigateur. Inutile de les servir.
+	handle /build/.vite/* {
+		respond 404
 	}
 
 	handle {

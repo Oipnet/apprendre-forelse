@@ -136,6 +136,21 @@ final class PublicPagesSeoTest extends WebTestCase
         $this->assertNull($this->client->getResponse()->getEtag());
     }
 
+    /** robots.txt et sitemap.xml sont les mêmes pour tous : une heure de cache partagé, et un 304 s'ils n'ont pas changé. */
+    public function testRobotsEtSitemapGardentLeurHeureDeCache(): void
+    {
+        foreach (['/robots.txt', '/sitemap.xml'] as $path) {
+            $this->client->request('GET', $path);
+            $response = $this->client->getResponse();
+            $this->assertTrue($response->headers->hasCacheControlDirective('public'), $path);
+            $this->assertSame('3600', $response->headers->getCacheControlDirective('max-age'), $path);
+            $this->assertNotNull($etag = $response->getEtag(), $path);
+
+            $this->client->request('GET', $path, server: ['HTTP_IF_NONE_MATCH' => $etag]);
+            $this->assertResponseStatusCodeSame(304);
+        }
+    }
+
     /** Les polices du titre et du texte sont annoncées avant la feuille de styles, et le build les contient bien. */
     public function testLesPolicesDuHautDePageSontPrechargees(): void
     {

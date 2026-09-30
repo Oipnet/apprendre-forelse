@@ -11,6 +11,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
 /**
  * ETag sur les pages publiques vues sans compte : un robot ou un visiteur qui revient reçoit un 304 si rien n'a
  * changé. Pas de max-age : après connexion, la même adresse doit tout de suite montrer le compte.
+ *
+ * Une réponse déjà déclarée publique (robots.txt, sitemap.xml) est la même pour tous : l'utilisateur n'est pas lu.
+ * Le lire marquerait la session comme utilisée, et Symfony rendrait la réponse privée, sans son heure de cache.
  */
 final readonly class AnonymousPageCacheListener
 {
@@ -26,7 +29,10 @@ final readonly class AnonymousPageCacheListener
         // La route avant l'utilisateur : lire l'utilisateur ouvre la session, interdite sur une route stateless (/sante).
         if (!$event->isMainRequest() || !$request->isMethodCacheable() || 200 !== $response->getStatusCode()
             || !\in_array($request->attributes->get('_route'), SearchIndexing::ROUTES, true)
-            || $response->getEtag() || null !== $this->security->getUser()) {
+            || $response->getEtag()) {
+            return;
+        }
+        if (!$response->headers->hasCacheControlDirective('public') && null !== $this->security->getUser()) {
             return;
         }
 
