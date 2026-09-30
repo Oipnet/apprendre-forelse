@@ -33,6 +33,9 @@ final class SeoController extends AbstractController
                 'Disallow: /achat/',
                 'Disallow: /paiement/',
                 'Disallow: /api/',
+                // Mesure d'audience (traceur Umami et son point de collecte, voir docker/Caddyfile) : rien à indexer, et
+                // un robot qui affiche la page n'a pas à la charger ni à se compter comme visite.
+                'Disallow: /mesure/',
                 // Liens d'invitation : un code de cohorte ne doit pas circuler par un moteur de recherche.
                 'Disallow: /*?code=',
                 'Disallow: /*&code=',
