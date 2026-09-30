@@ -24,7 +24,7 @@ final readonly class ThemeLoader
     public const string LEGACY_FILE = 'marque.yaml';
 
     /** Les clés acceptées à la racine de theme.yaml. */
-    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'colors', 'editor', 'fonts', 'logo', 'icon', 'share', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles'];
+    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'colors', 'editor', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles'];
 
     /** Le sous-dossier du thème servi tel quel sur /theme/<thème>/<version>/assets/… (voir ThemeController). */
     public const string ASSETS = 'assets';
@@ -44,7 +44,7 @@ final readonly class ThemeLoader
     ];
 
     /** Les images que l'instance peut fournir, et la route qui les sert (voir ThemeController). */
-    public const array IMAGES = ['logo', 'icon', 'share'];
+    public const array IMAGES = ['logo', 'email_logo', 'icon', 'share'];
 
     /**
      * La forme attendue de chaque section de « home: » : clé => type, un « * » marquant l'obligatoire.
@@ -69,7 +69,7 @@ final readonly class ThemeLoader
         ],
     ];
 
-    /** La personne derrière les contenus : le thème du moteur seulement (données structurées). */
+    /** La personne derrière les contenus, pour les données structurées (auteur des parcours et des articles). */
     private const array PERSON_SHAPE = ['name' => 'texte*', 'jobTitle' => 'texte*'];
 
     public function __construct(
@@ -110,7 +110,7 @@ final readonly class ThemeLoader
         }
         $error = static fn (string $message) => new \RuntimeException(sprintf('Thème (%s) : %s', $path, $message));
 
-        $keys = $engine ? [...self::KEYS, 'person'] : self::KEYS;
+        $keys = self::KEYS;
         foreach (array_keys($config) as $key) {
             if (!\in_array($key, $keys, true)) {
                 throw $error(sprintf('clé « %s » inconnue (acceptées : %s).', $key, implode(', ', $keys)));
@@ -136,7 +136,7 @@ final readonly class ThemeLoader
             editor: self::block($config, 'editor', ThemeStylesheet::EDITOR_COLORS, new HexColor(), $error),
             fonts: self::block($config, 'fonts', ThemeStylesheet::FONTS, new FontStack(), $error),
             home: self::home($config['home'] ?? [], $error),
-            person: $engine && isset($config['person']) ? self::person($config['person'], $error) : null,
+            person: isset($config['person']) ? self::person($config['person'], $error) : null,
             stylesheets: self::assets($config, 'stylesheets', 'css', $directory, $error),
             scripts: self::assets($config, 'scripts', 'js', $directory, $error),
             preload: self::assets($config, 'preload', 'woff2', $directory, $error),
@@ -264,6 +264,10 @@ final readonly class ThemeLoader
                 }
                 if (!is_file($directory.'/'.$file)) {
                     throw $error(sprintf('« %s » : fichier introuvable (%s).', $key, $directory.'/'.$file));
+                }
+                // Les clients mail lisent mal le webp et le svg : le logo des emails est un PNG, un JPEG ou un GIF.
+                if ('email_logo' === $key && !preg_match('/\.(png|jpe?g|gif)$/i', $file)) {
+                    throw $error('« email_logo » doit être un PNG, un JPEG ou un GIF : les clients mail lisent mal les autres formats.');
                 }
             }
             $images[$key] = $file;

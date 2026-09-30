@@ -19,6 +19,11 @@ title: Atelier Bigorneau · apprendre à coder en ligne
 # Une phrase : pied de page et texte alternatif des aperçus de partage.
 tagline: Apprendre à développer en codant dans le navigateur, avec les outils de l'atelier.
 
+# La personne derrière les parcours et les articles, publiée dans les données structurées (auteur). Absente : aucune.
+# person:
+#   name: Gaston Bigorneau
+#   jobTitle: Formateur
+
 # Le site de la marque, publié dans les données structurées. Absent : la plateforme parle d'elle-même.
 url: https://atelier-bigorneau.example
 
