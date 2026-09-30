@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 2.5.0 — 2026-09-30
+
 ### Ajouté
 
 - **Un blog, écrit dans les packs.** Un fichier `<pack>/articles/<slug>.md` (en-tête YAML `title`, `description`,
