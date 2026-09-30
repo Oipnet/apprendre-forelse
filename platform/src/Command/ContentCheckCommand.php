@@ -35,6 +35,13 @@ final class ContentCheckCommand
         #[Option('Ne vérifier qu\'un chapitre (son identifiant dans track.yaml)')] ?string $chapitre = null,
     ): int {
         $exercises = $this->content->select($target, $chapitre);
+        // Un pack sans exercice (des articles du blog, seulement) : le charger l'a déjà validé.
+        if (!$exercises && null === $chapitre && null !== ($pack = $this->content->packs()[$target] ?? null)) {
+            $articles = \count(array_filter($this->content->articles(), static fn ($article) => $article->packId === $pack->id));
+            $io->success(sprintf('Pack « %s » chargé, sans exercice à vérifier%s.', $pack->id, $articles ? sprintf(' (%d article(s) conforme(s))', $articles) : ''));
+
+            return Command::SUCCESS;
+        }
         if (!$exercises) {
             $io->error(match (true) {
                 null !== $chapitre => sprintf('Aucun exercice dans le chapitre « %s » (chapitres connus : %s).', $chapitre, implode(', ', $this->content->chapterIds())),

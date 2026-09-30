@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{#
+  Le blog : les articles parus, du plus récent au plus ancien (voir App\Content\Blog).
+  Variables : articles (list<App\Content\Article>).
+#}
+{% block title %}Le blog · {{ marque.name }}{% endblock %}
+
+{% block body %}
+    <main class="page blog-page">
+        <nav class="breadcrumb" aria-label="Fil d'Ariane">
+            <ol>
+                <li><a href="{{ path('app_home') }}">Accueil</a></li>
+                <li aria-current="page">Le blog</li>
+            </ol>
+        </nav>
+
+        <h1>Le blog</h1>
+        <p class="lead">Les coulisses de la plateforme : comment un framework tourne dans le navigateur, comment un exercice se construit et se corrige.</p>
+
+        <ol class="blog-list">
+            {% for article in articles %}
+                <li>
+                    <article>
+                        <h2><a href="{{ path('app_article', {slug: article.slug}) }}">{{ article.title }}</a></h2>
+                        <p class="meta"><time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time> · {{ article.readingMinutes }} min de lecture</p>
+                        <p>{{ article.description }}</p>
+                    </article>
+                </li>
+            {% endfor %}
+        </ol>
+    </main>
+{% endblock %}

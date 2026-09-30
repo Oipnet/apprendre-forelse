@@ -395,6 +395,68 @@ final class ContentRepositoryTest extends TestCase
         $this->assertFileExists($intros['symfony-8-2']['file']);
     }
 
+    public function testChargeLesArticles(): void
+    {
+        $repository = $this->repository(__DIR__.'/../Fixtures/packs/pratique');
+
+        $this->assertSame(
+            ['article-programme', 'symfony-dans-le-navigateur', 'les-tests-en-direct', 'article-en-preparation'],
+            array_keys($repository->articles()),
+            'Du plus récent au plus ancien, parus ou non.',
+        );
+        $article = $repository->findArticle('symfony-dans-le-navigateur');
+        $this->assertNotNull($article);
+        $this->assertSame('pratique-test', $article->packId);
+        $this->assertSame('Symfony dans le navigateur, sans serveur', $article->title);
+        $this->assertSame('2026-09-20', $article->published->format('Y-m-d'));
+        $this->assertSame('2026-09-25', $article->modified());
+        $this->assertStringStartsWith('# Symfony dans le navigateur', $article->markdown, 'Le Markdown commence après l\'en-tête.');
+        $this->assertSame(1, $article->readingMinutes());
+        $this->assertTrue($repository->findArticle('article-en-preparation')?->isRestricted());
+        $this->assertTrue($repository->findArticle('article-programme')?->isScheduled(new \DateTimeImmutable('2026-09-30')));
+        $this->assertSame('2026-09-05', $repository->findArticle('les-tests-en-direct')?->modified(), 'Sans révision, la date de parution.');
+    }
+
+    /** @return iterable<string, array{string, string, string}> */
+    public static function articlesRefuses(): iterable
+    {
+        $header = "title: T\ndescription: D\npublished: 2026-10-06";
+        yield 'nom de fichier' => ['Mon_Article', "---\n$header\n---\nTexte", 'le nom du fichier est son adresse'];
+        yield 'sans en-tête' => ['a', 'Texte seul', 'entre deux lignes « --- »'];
+        yield 'clé inconnue' => ['a', "---\n$header\nauteur: A\n---\nTexte", 'clé « auteur » inconnue'];
+        yield 'titre manquant' => ['a', "---\ndescription: D\npublished: 2026-10-06\n---\nTexte", 'clé « title » manquante'];
+        yield 'date invalide' => ['a', "---\ntitle: T\ndescription: D\npublished: bientôt\n---\nTexte", '« published » doit être une date'];
+        yield 'révision antérieure' => ['a', "---\n$header\nupdated: 2026-10-01\n---\nTexte", '« updated » précède « published »'];
+        yield 'sans texte' => ['a', "---\n$header\n---\n\n", 'article sans texte'];
+        yield 'description en HTML' => ['a', "---\ntitle: T\ndescription: <b>D</b>\npublished: 2026-10-06\n---\nTexte", 'sans balise HTML'];
+        yield 'visibilité' => ['a', "---\n$header\nvisibility: secret\n---\nTexte", 'visibilité « secret » inconnue'];
+    }
+
+    #[DataProvider('articlesRefuses')]
+    public function testUnArticleMalFormeEstRefuse(string $name, string $content, string $message): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P");
+        $filesystem->dumpFile($this->tmp.'/p/articles/'.$name.'.md', $content);
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage($message);
+        $this->repository($this->tmp)->articles();
+    }
+
+    public function testUnArticleNExisteQuUneFois(): void
+    {
+        $filesystem = new Filesystem();
+        foreach (['p1', 'p2'] as $pack) {
+            $filesystem->dumpFile("{$this->tmp}/{$pack}/pack.yaml", "id: {$pack}\ntitle: P");
+            $filesystem->dumpFile("{$this->tmp}/{$pack}/articles/a.md", "---\ntitle: T\ndescription: D\npublished: 2026-10-06\n---\nTexte");
+        }
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage('Article « a » présent deux fois (packs p1 et p2)');
+        $this->repository($this->tmp)->articles();
+    }
+
     public function testSelectionnerLaPratique(): void
     {
         $repository = $this->repository(self::ROOT.'/examples/packs', __DIR__.'/../Fixtures/packs/pratique');

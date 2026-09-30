@@ -13,6 +13,9 @@ use Psr\Cache\CacheItemPoolInterface;
  */
 final readonly class PackLoader
 {
+    /** À augmenter quand LoadedContent change de forme : un cache d'avant n'a pas la nouvelle clé. */
+    private const int CACHE_FORMAT = 2;
+
     /**
      * @param list<string> $packPaths dossiers de packs, ou dossiers contenant des packs
      */
@@ -50,7 +53,7 @@ final readonly class PackLoader
     /** Une entrée par version du moteur et par jeu de chemins (les tests en changent) : un vieux cache ne resert jamais. */
     private function cacheKey(): string
     {
-        return 'packs.'.hash('xxh128', serialize([$this->version->get(), $this->packPaths, $this->environments->roots()]));
+        return 'packs.'.hash('xxh128', serialize([self::CACHE_FORMAT, $this->version->get(), $this->packPaths, $this->environments->roots()]));
     }
 
     /** @param array<string, string> $watched */

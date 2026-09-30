@@ -10,8 +10,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * Chaque page publique (celles du sitemap) a ses balises : title unique, description, canonical absolu, Open Graph,
- * un seul h1. Packs : démo, Pratique (dont un exercice programmé et un en préparation), cohortes (dont un parcours
- * en préparation).
+ * un seul h1. Packs : démo, Pratique (dont un exercice programmé et un en préparation, et des articles du blog),
+ * cohortes (dont un parcours en préparation).
  */
 final class PublicPagesSeoTest extends WebTestCase
 {
@@ -71,7 +71,7 @@ final class PublicPagesSeoTest extends WebTestCase
         $this->assertSame([], array_filter($titles, static fn (array $urls) => \count($urls) > 1), 'Chaque title est unique.');
     }
 
-    public function testLeSitemapNeContientNiParcoursNiPratiqueNonPublies(): void
+    public function testLeSitemapNeContientRienDeNonPublie(): void
     {
         $urls = $this->sitemap();
 
@@ -83,6 +83,11 @@ final class PublicPagesSeoTest extends WebTestCase
         // Les pages de version : Symfony 8.1 en a deux, Laravel 13 un seul (et le programmé ne compte pas).
         $this->assertContains('http://localhost/pratique/nouveautes/symfony-8-1', $urls);
         $this->assertNotContains('http://localhost/pratique/nouveautes/laravel-13', $urls);
+        // Le blog : ses articles parus, rien de programmé ni en préparation.
+        $this->assertContains('http://localhost/blog', $urls);
+        $this->assertContains('http://localhost/blog/symfony-dans-le-navigateur', $urls);
+        $this->assertNotContains('http://localhost/blog/article-programme', $urls);
+        $this->assertNotContains('http://localhost/blog/article-en-preparation', $urls);
     }
 
     public function testUnParcoursEnPreparationEstAnnonceSansLien(): void

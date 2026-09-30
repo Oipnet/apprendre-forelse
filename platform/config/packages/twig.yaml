@@ -8,6 +8,8 @@ twig:
         google_site_verification: '%env(GOOGLE_SITE_VERIFICATION)%'
         # Page « Auto-hébergement », réservée à l'instance de Forelse (SELF_HOSTING_PAGE).
         self_hosting: '@App\Instance\SelfHostingPage'
+        # Le blog : sans article paru dans les packs, pas de lien (blog.open).
+        blog: '@App\Content\Blog'
         # Identité de l'instance : nom, puce, couleurs, images, textes de l'accueil (voir App\Instance\Branding).
         marque: '@App\Instance\Branding'
         # Balises de la page publique en cours (voir App\Seo\Page et l'attribut #[Seo]).

@@ -10,6 +10,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Un blog, écrit dans les packs.** Un fichier `<pack>/articles/<slug>.md` (en-tête YAML `title`, `description`,
+  `published`, et facultativement `updated` et `visibility`, puis du Markdown) devient la page `/blog/<slug>`,
+  listée sur `/blog` du plus récent au plus ancien. Les articles parus entrent dans le sitemap (datés de leur
+  dernière révision) et portent leurs données structurées `BlogPosting` ; un article daté d'un jour à venir paraît
+  seul ce jour-là. Sans article, rien ne change : pas de page `/blog`, pas de lien. Format : README, « Packs de
+  contenu ».
 - **Connexion avec Google et avec LinkedIn** (facultatives), sur le modèle de GitHub et avec les mêmes règles :
   « Continuer avec Google / LinkedIn » dès que `GOOGLE_CLIENT_ID` et `GOOGLE_CLIENT_SECRET`, ou `LINKEDIN_CLIENT_ID`
   et `LINKEDIN_CLIENT_SECRET`, sont renseignés. Les URL de retour sont `<APP_URL>/connexion/google/retour` et

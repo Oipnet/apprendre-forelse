@@ -4482,6 +4482,44 @@ body.site-page {
 	}
 }
 
+/* Le blog : la liste des articles, puis un article (même typographie que les fiches de cours, .lesson). */
+.blog-list {
+	display: grid;
+	gap: 1.8rem;
+	max-width: 46rem;
+	margin: 2rem 0 0;
+	padding: 0;
+	list-style: none;
+}
+.blog-list h2 {
+	margin: 0 0 0.2rem;
+	font-size: 1.3rem;
+}
+.blog-list p {
+	margin: 0.3rem 0 0;
+}
+.blog-page article header .meta {
+	margin: 0;
+}
+.blog-notice {
+	max-width: 46rem;
+	padding: 0.6rem 0.9rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--gold);
+	color: var(--muted);
+}
+.blog-nav {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0.8rem;
+	max-width: 46rem;
+	margin-top: 3rem;
+}
+.blog-back {
+	margin-top: 1.5rem;
+}
+
 /* Le playground remplace cette consigne dès l'exercice chargé : elle défile seule en attendant. */
 .playground-intro {
 	overflow: auto;

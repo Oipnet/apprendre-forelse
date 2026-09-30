@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  *   <pack>/tracks/<parcours>/exercises/<exercice>/{exercise.yaml, instructions.md, starter/, tests/, solution/}
  *   <pack>/practice/<exercice>/{exercise.yaml, …}                 exercice de Pratique, hors parcours (voir Practice)
  *   <pack>/versions/<version>.md                                  intro d'une page de nouveautés (facultative)
+ *   <pack>/articles/<slug>.md                                     article du blog (voir Article)
  *
  * Les vérifications qui demandent d'exécuter le contenu (tests rouges puis verts)
  * sont faites par la commande content:check.
@@ -126,6 +127,17 @@ final class ContentRepository
     public function versionIntros(): array
     {
         return $this->content()->versionIntros;
+    }
+
+    /** @return array<string, Article> les articles du blog, du plus récent au plus ancien, publiés ou non */
+    public function articles(): array
+    {
+        return $this->content()->articles;
+    }
+
+    public function findArticle(string $slug): ?Article
+    {
+        return $this->articles()[$slug] ?? null;
     }
 
     public function findPractice(string $id): ?Practice

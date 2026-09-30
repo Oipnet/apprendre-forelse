@@ -4,10 +4,12 @@ namespace App\Content;
 
 use App\Version;
 use Composer\Semver\Semver;
+use Symfony\Component\Yaml\Exception\ParseException;
+use Symfony\Component\Yaml\Yaml;
 
 /**
- * Un passage de lecture des packs (CONTENT_PACKS_PATHS) : packs, parcours, exercices de Pratique et intros de
- * versions, validés au fil de l'eau. Chaque lecture part d'une instance neuve (voir PackLoader).
+ * Un passage de lecture des packs (CONTENT_PACKS_PATHS) : packs, parcours, exercices de Pratique, intros de
+ * versions et articles du blog, validés au fil de l'eau. Chaque lecture part d'une instance neuve (voir PackLoader).
  */
 final class PackReader
 {
@@ -21,6 +23,8 @@ final class PackReader
     private array $practices = [];
     /** @var array<string, array{markdown: string, file: string, packId: string}> */
     private array $versionIntros = [];
+    /** @var array<string, Article> */
+    private array $articles = [];
     private readonly PackFiles $files;
     private readonly ExerciseReader $exerciseReader;
 
@@ -71,8 +75,9 @@ final class PackReader
         // (uasort est stable, comme toutes les fonctions de tri depuis PHP 8.0).
         uasort($this->tracks, static fn (Track $a, Track $b) => [null === $a->order, $a->order] <=> [null === $b->order, $b->order]);
         uasort($this->practices, static fn (Practice $a, Practice $b) => [$b->published, $a->exercise->id] <=> [$a->published, $b->exercise->id]);
+        uasort($this->articles, static fn (Article $a, Article $b) => [$b->published, $a->slug] <=> [$a->published, $b->slug]);
 
-        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->exerciseReader->deprecations(), $this->versionIntros, $this->files->watched());
+        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->exerciseReader->deprecations(), $this->versionIntros, $this->articles, $this->files->watched());
     }
 
     private function loadPack(string $directory): void
@@ -85,6 +90,7 @@ final class PackReader
 
         $this->files->watch($directory.'/practice');
         $this->files->watch($directory.'/versions');
+        $this->files->watch($directory.'/articles');
         $practiceDirectories = glob($directory.'/practice/*', \GLOB_ONLYDIR) ?: [];
         $pack = new Pack(
             id: $id,
@@ -109,6 +115,78 @@ final class PackReader
         foreach (glob($directory.'/versions/*.md') ?: [] as $file) {
             $this->loadVersionIntro($pack, $file);
         }
+        foreach (glob($directory.'/articles/*.md') ?: [] as $file) {
+            $this->loadArticle($pack, $file);
+        }
+    }
+
+    /** Les clés de l'en-tête d'un article : une autre (« date », « auteur »…) est une faute de frappe, refusée. */
+    private const array ARTICLE_KEYS = ['title', 'description', 'published', 'updated', 'visibility'];
+
+    /**
+     * Un article du blog : `<pack>/articles/<slug>.md`, un en-tête YAML entre deux lignes « --- », puis le
+     * Markdown. Le nom du fichier est l'adresse de l'article : le changer casse les liens qui y mènent.
+     */
+    private function loadArticle(Pack $pack, string $file): void
+    {
+        $slug = basename($file, '.md');
+        if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug)) {
+            throw new ContentException(sprintf('Article « %s » : le nom du fichier est son adresse, en minuscules et sans accent (« symfony-dans-le-navigateur.md »).', $file));
+        }
+        if (isset($this->articles[$slug])) {
+            throw new ContentException(sprintf('Article « %s » présent deux fois (packs %s et %s).', $slug, $this->articles[$slug]->packId, $pack->id));
+        }
+        $this->files->watch($file);
+        if (!preg_match('/\A---\r?\n(.*?)\r?\n---\r?\n(.*)\z/s', (string) file_get_contents($file), $parts)) {
+            throw new ContentException(sprintf('%s : un article commence par son en-tête YAML, entre deux lignes « --- ».', $file));
+        }
+        try {
+            $meta = Yaml::parse($parts[1]);
+        } catch (ParseException $e) {
+            throw new ContentException(sprintf('%s : en-tête YAML invalide, %s', $file, lcfirst($e->getMessage())), previous: $e);
+        }
+        if (!\is_array($meta)) {
+            throw new ContentException(sprintf('%s : en-tête YAML invalide.', $file));
+        }
+        if ([] !== ($unknown = array_diff(array_keys($meta), self::ARTICLE_KEYS))) {
+            throw new ContentException(sprintf('%s : clé « %s » inconnue (clés possibles : %s).', $file, implode(' », « ', $unknown), implode(', ', self::ARTICLE_KEYS)));
+        }
+        $markdown = trim($parts[2]);
+        if ('' === $markdown) {
+            throw new ContentException(sprintf('%s : article sans texte.', $file));
+        }
+
+        $published = self::date($meta['published'] ?? null, $file, 'published');
+        $updated = isset($meta['updated']) ? self::date($meta['updated'], $file, 'updated') : null;
+        if (null !== $updated && $updated < $published) {
+            throw new ContentException(sprintf('%s : « updated » précède « published ».', $file));
+        }
+        $visibility = (string) ($meta['visibility'] ?? Track::VISIBILITY_PUBLIC);
+        if (!\in_array($visibility, Track::VISIBILITIES, true)) {
+            throw new ContentException(sprintf('%s : visibilité « %s » inconnue (%s).', $file, $visibility, implode(', ', Track::VISIBILITIES)));
+        }
+
+        $this->articles[$slug] = new Article(
+            slug: $slug,
+            packId: $pack->id,
+            title: (string) $this->optionalText($this->files->required($meta, 'title', $file), $file.' : « title »'),
+            description: (string) $this->optionalText($this->files->required($meta, 'description', $file), $file.' : « description »'),
+            published: $published,
+            markdown: $markdown,
+            file: $file,
+            updated: $updated,
+            visibility: $visibility,
+        );
+    }
+
+    /** Une date AAAA-MM-JJ. YAML lit une date sans guillemets (2026-10-06) comme un horodatage. */
+    private static function date(mixed $value, string $file, string $key): \DateTimeImmutable
+    {
+        return match (true) {
+            \is_int($value) => new \DateTimeImmutable('@'.$value),
+            \is_string($value) && false !== ($date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value)) => $date,
+            default => throw new ContentException(sprintf('%s : « %s » doit être une date (AAAA-MM-JJ).', $file, $key)),
+        };
     }
 
     /**
