@@ -13,7 +13,7 @@ use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Construit un thème hors du conteneur, pour les tests unitaires : le dossier donné, ou celui du
- * moteur quand il est vide. Le routeur ne connaît que la route des images du thème, la seule utilisée.
+ * moteur quand il est vide. Le routeur ne connaît que les routes des images et des fichiers du thème.
  */
 trait ThemeTrait
 {
@@ -21,6 +21,7 @@ trait ThemeTrait
     {
         $routes = new RouteCollection();
         $routes->add('app_theme_image', new Route('/theme/{theme}/{version}/{role}'));
+        $routes->add('app_theme_asset', new Route('/theme/{theme}/{version}/assets/{path}', requirements: ['path' => '.+']));
 
         return new Theme(
             $directory,

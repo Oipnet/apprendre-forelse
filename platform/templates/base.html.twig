@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+{# Les feuilles, scripts et polices du thème (theme.yaml). La page d'exercice et les éditeurs de l'atelier les
+   refusent en posant « theme_assets = false » : ils ont leur propre habillage (voir #235). #}
+{% set theme_assets = theme_assets ?? true %}
 {# data-theme="auto" : les pages du site suivent le thème du système (voir le thème sombre de site.css). #}
 <html lang="fr"{% if theme.followsSystemTheme %} data-theme="auto"{% endif %}>
     <head>
@@ -58,8 +61,12 @@
         {% block font_preloads %}{% for url in font_preloads() -%}
             <link rel="preload" href="{{ url }}" as="font" type="font/woff2" crossorigin>
         {% endfor %}{% endblock %}
+        {%- if theme_assets %}{% for url in theme.preloadUrls %}
+        <link rel="preload" href="{{ url }}" as="font" type="font/woff2" crossorigin>
+        {%- endfor %}{% endif %}
         {% block stylesheets %}
-            {{ vite_entry_link_tags('site') }}
+            {# Un thème qui remplace la feuille du moteur (replaces_engine_styles) en fournit une : voir plus bas. #}
+            {% if not (theme_assets and theme.replacesEngineStyles) %}{{ vite_entry_link_tags('site') }}{% endif %}
         {% endblock %}
         {% block javascripts %}
             {{ vite_entry_script_tags('site') }}
@@ -67,6 +74,16 @@
         {# Les couleurs et polices de l'instance, après la feuille de styles pour l'emporter sur elle. #}
         {%- if theme.styles %}
         <style>{{ theme.styles|raw }}</style>
+        {%- endif %}
+        {#- Les feuilles et scripts du thème, en dernier : ils l'emportent sur ceux du moteur, et ne les remplacent pas
+            (sauf la feuille, quand le thème le déclare). Servis par ce domaine : la CSP n'a rien à ouvrir. #}
+        {%- if theme_assets %}
+        {%- for url in theme.stylesheetUrls %}
+        <link rel="stylesheet" href="{{ url }}">
+        {%- endfor %}
+        {%- for url in theme.scriptUrls %}
+        <script type="module" src="{{ url }}"></script>
+        {%- endfor %}
         {%- endif %}
     </head>
     {# data-import-url : la progression d'invité est remontée au compte après connexion (voir site.ts). #}

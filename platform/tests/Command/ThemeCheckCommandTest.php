@@ -6,6 +6,7 @@ use App\Command\ThemeCheckCommand;
 use App\Tests\ThemeTrait;
 use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -24,9 +25,7 @@ final class ThemeCheckCommandTest extends TestCase
 
     protected function tearDown(): void
     {
-        @unlink($this->tmp.'/theme.yaml');
-        @unlink($this->tmp.'/marque.yaml');
-        @rmdir($this->tmp);
+        (new Filesystem())->remove($this->tmp);
     }
 
     private function tester(string $directory): CommandTester
@@ -72,6 +71,18 @@ final class ThemeCheckCommandTest extends TestCase
         // Un avertissement de SymfonyStyle préfixe chaque ligne coupée : on cherche des mots, pas une phrase.
         $this->assertStringContainsString('renommez', $tester->getDisplay());
         $this->assertStringContainsString('Atelier Bigorneau', $tester->getDisplay());
+    }
+
+    /** Les fichiers que le thème apporte sont listés : on voit d'un coup d'œil ce qu'il charge. */
+    public function testLesFichiersDuThemeSontListes(): void
+    {
+        (new Filesystem())->dumpFile($this->tmp.'/assets/theme.css', 'body{}');
+        file_put_contents($this->tmp.'/theme.yaml', "name: A\nstylesheets: [assets/theme.css]\nreplaces_engine_styles: true\n");
+        $tester = $this->tester($this->tmp);
+
+        $this->assertSame(Command::SUCCESS, $tester->execute([]));
+        $this->assertStringContainsString('remplacent celle du moteur', $tester->getDisplay());
+        $this->assertStringContainsString('assets/theme.css', $tester->getDisplay());
     }
 
     /** L'ancien nom de la commande, encore cité par des scripts de déploiement, reste un alias jusqu'à la 4.0. */

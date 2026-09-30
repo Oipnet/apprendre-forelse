@@ -14,7 +14,8 @@ use Twig\TwigFunction;
  * découvre qu'une fois la feuille de styles analysée : le titre s'affiche tard, puis change de police.
  *
  * Leurs URL (empreinte comprise) viennent du manifeste Vite. Sans manifeste (serveur de développement), rien.
- * Une police que la marque de l'instance remplace n'est pas préchargée : elle ne servirait pas.
+ * Une police que le thème de l'instance remplace n'est pas préchargée : elle ne servirait pas. Un thème qui remplace
+ * toute la feuille du moteur (replaces_engine_styles) n'en utilise aucune : il précharge les siennes (preload).
  */
 final class FontPreloadExtension extends AbstractExtension implements ResetInterface
 {
@@ -50,7 +51,7 @@ final class FontPreloadExtension extends AbstractExtension implements ResetInter
         if (null !== $this->urls) {
             return $this->urls;
         }
-        if (!$this->files->hasFile($this->config, FileAccessor::MANIFEST)) {
+        if ($this->theme->replacesEngineStyles() || !$this->files->hasFile($this->config, FileAccessor::MANIFEST)) {
             return $this->urls = [];
         }
         $manifest = $this->files->getData($this->config, FileAccessor::MANIFEST);
@@ -66,7 +67,7 @@ final class FontPreloadExtension extends AbstractExtension implements ResetInter
         return $this->urls = $urls;
     }
 
-    /** Recalculées à la requête suivante : elles dépendent des polices de la marque, relue elle aussi (Theme). */
+    /** Recalculées à la requête suivante : elles dépendent des polices du thème, relu lui aussi (Theme). */
     public function reset(): void
     {
         $this->urls = null;

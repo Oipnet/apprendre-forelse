@@ -40,6 +40,17 @@ final class ThemeCheckCommand
         if ($this->theme->usesLegacyFile()) {
             $io->warning(sprintf('%s/%s : renommez ce fichier en %s. L\'ancien nom est encore lu, mais ne le sera plus en 4.0.', $config->directory, ThemeLoader::LEGACY_FILE, ThemeLoader::FILE));
         }
+        $files = [
+            'Feuilles'.($config->replacesEngineStyles ? ' (remplacent celle du moteur)' : '') => $config->stylesheets,
+            'Scripts' => $config->scripts,
+            'Polices préchargées' => $config->preload,
+        ];
+        foreach ($files as $label => $paths) {
+            if ([] !== $paths) {
+                $io->text($label.' :');
+                $io->listing($paths);
+            }
+        }
         $io->success(sprintf('Thème « %s » valable (%s/%s).', $config->name, $config->directory, $config->file));
 
         return Command::SUCCESS;

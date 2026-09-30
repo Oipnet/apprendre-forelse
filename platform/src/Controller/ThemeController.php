@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Theme\Theme;
+use App\Theme\ThemeLoader;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -35,6 +36,28 @@ final class ThemeController extends AbstractController
         $response = new BinaryFileResponse($path);
         $response->setPublic();
         $response->setMaxAge(86400);
+        $response->setImmutable();
+
+        return $response;
+    }
+
+    /**
+     * Les fichiers de assets/ : feuilles, scripts, polices et images d'un thème, sans reconstruire l'image du moteur.
+     * Le chemin vient de l'URL : ThemeLoader::assetPath refuse tout ce qui sortirait de assets/ ou n'y a pas sa place
+     * (« .. », lien symbolique, extension non servie). La version est celle de tout le dossier (voir Theme).
+     */
+    #[Route('/theme/{theme}/{version}/assets/{path}', name: 'app_theme_asset', methods: ['GET'], requirements: ['theme' => '[a-z0-9-]+', 'version' => '\d+', 'path' => '.+'])]
+    public function asset(string $theme, string $path): BinaryFileResponse
+    {
+        $file = $theme === $this->theme->id() ? $this->theme->assetPath($path) : null;
+        if (null === $file) {
+            throw $this->createNotFoundException();
+        }
+
+        $response = new BinaryFileResponse($file);
+        $response->headers->set('Content-Type', ThemeLoader::ASSET_TYPES[strtolower(pathinfo($file, \PATHINFO_EXTENSION))] ?? 'application/octet-stream');
+        $response->setPublic();
+        $response->setMaxAge(31536000);
         $response->setImmutable();
 
         return $response;

@@ -24,7 +24,24 @@ final readonly class ThemeLoader
     public const string LEGACY_FILE = 'marque.yaml';
 
     /** Les clés acceptées à la racine de theme.yaml. */
-    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'colors', 'editor', 'fonts', 'logo', 'icon', 'share', 'home'];
+    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'colors', 'editor', 'fonts', 'logo', 'icon', 'share', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles'];
+
+    /** Le sous-dossier du thème servi tel quel sur /theme/<thème>/<version>/assets/… (voir ThemeController). */
+    public const string ASSETS = 'assets';
+
+    /**
+     * Ce que ce sous-dossier peut servir, et sous quel type : ni PHP, ni YAML, ni rien que le navigateur
+     * exécuterait sans qu'on l'ait prévu. Une feuille de style y trouve ses polices et ses images.
+     */
+    public const array ASSET_TYPES = [
+        'css' => 'text/css; charset=UTF-8',
+        'js' => 'text/javascript; charset=UTF-8',
+        'woff2' => 'font/woff2',
+        'svg' => 'image/svg+xml',
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        'jpg' => 'image/jpeg',
+    ];
 
     /** Les images que l'instance peut fournir, et la route qui les sert (voir ThemeController). */
     public const array IMAGES = ['logo', 'icon', 'share'];
@@ -120,7 +137,95 @@ final readonly class ThemeLoader
             fonts: self::block($config, 'fonts', ThemeStylesheet::FONTS, new FontStack(), $error),
             home: self::home($config['home'] ?? [], $error),
             person: $engine && isset($config['person']) ? self::person($config['person'], $error) : null,
+            stylesheets: self::assets($config, 'stylesheets', 'css', $directory, $error),
+            scripts: self::assets($config, 'scripts', 'js', $directory, $error),
+            preload: self::assets($config, 'preload', 'woff2', $directory, $error),
+            replacesEngineStyles: self::replacesEngineStyles($config, $error),
         );
+    }
+
+    /**
+     * Le fichier d'un thème que le navigateur peut demander : sous assets/, d'un type servi, et réellement dans le
+     * dossier (un lien symbolique qui en sort est refusé). Null sinon, sans dire pourquoi : c'est une URL, pas un
+     * fichier écrit par l'instance.
+     */
+    public static function assetPath(string $directory, string $path): ?string
+    {
+        $extension = strtolower(pathinfo($path, \PATHINFO_EXTENSION));
+        if ('' === $directory || !isset(self::ASSET_TYPES[$extension]) || !self::isPlainPath($path)) {
+            return null;
+        }
+        $root = realpath($directory.'/'.self::ASSETS);
+        $file = realpath($directory.'/'.self::ASSETS.'/'.$path);
+        if (false === $root || false === $file || !str_starts_with($file, $root.\DIRECTORY_SEPARATOR) || !is_file($file)) {
+            return null;
+        }
+
+        return $file;
+    }
+
+    /** Un chemin relatif, sans « .. », sans barre oblique inverse ni segment vide. */
+    private static function isPlainPath(string $path): bool
+    {
+        if ('' === $path || str_contains($path, '\\') || str_contains($path, "\0")) {
+            return false;
+        }
+        foreach (explode('/', $path) as $segment) {
+            if ('' === $segment || '.' === $segment || '..' === $segment) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Les fichiers d'une liste (stylesheets, scripts, preload) : chacun sous assets/, de la bonne extension, et
+     * présent. Le message dit lequel et pourquoi : une feuille oubliée donnerait une page sans style, sans erreur.
+     *
+     * @param array<mixed>                         $config
+     * @param \Closure(string): \RuntimeException $error
+     *
+     * @return list<string> les chemins tels que déclarés (« assets/theme.css »)
+     */
+    private static function assets(array $config, string $key, string $extension, string $directory, \Closure $error): array
+    {
+        $files = $config[$key] ?? [];
+        if (!\is_array($files) || !array_is_list($files)) {
+            throw $error(sprintf('« %s » doit être une liste de fichiers du dossier %s/ (« - %s/… »).', $key, self::ASSETS, self::ASSETS));
+        }
+        $paths = [];
+        foreach ($files as $file) {
+            if (!\is_string($file) || !str_starts_with($file, self::ASSETS.'/') || !self::isPlainPath($file)) {
+                throw $error(sprintf('« %s » : « %s » doit être un fichier du dossier %s/ (par exemple %s/theme.%s), sans « .. ».', $key, \is_string($file) ? $file : '?', self::ASSETS, self::ASSETS, $extension));
+            }
+            if (strtolower(pathinfo($file, \PATHINFO_EXTENSION)) !== $extension) {
+                throw $error(sprintf('« %s » : « %s » doit être un fichier .%s.', $key, $file, $extension));
+            }
+            if (null === self::assetPath($directory, substr($file, \strlen(self::ASSETS) + 1))) {
+                throw $error(sprintf('« %s » : fichier introuvable dans le dossier du thème (%s).', $key, $directory.'/'.$file));
+            }
+            $paths[] = $file;
+        }
+
+        return $paths;
+    }
+
+    /**
+     * @param array<mixed>                         $config
+     * @param \Closure(string): \RuntimeException $error
+     */
+    private static function replacesEngineStyles(array $config, \Closure $error): bool
+    {
+        $value = $config['replaces_engine_styles'] ?? false;
+        if (!\is_bool($value)) {
+            throw $error('« replaces_engine_styles » vaut true ou false.');
+        }
+        if ($value && [] === ($config['stylesheets'] ?? [])) {
+            throw $error('« replaces_engine_styles: true » demande au moins une feuille dans « stylesheets » : sans elle, les pages n\'auraient plus de styles.');
+        }
+
+        return $value;
     }
 
     /**
