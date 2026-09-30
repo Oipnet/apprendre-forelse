@@ -5,6 +5,7 @@ namespace App\Content;
 use App\Version;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Charge les packs de contenu depuis le disque (CONTENT_PACKS_PATHS) et valide leur structure.
@@ -22,9 +23,12 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  *
  * Façade du contenu : la lecture et la validation sont dans PackReader et ExerciseReader, le cache dans PackLoader,
  * la navigation dans ContentIndex, les fichiers d'un exercice dans ExerciseSources. L'atelier, qui écrit dans les
- * packs, vide le cache par reset().
+ * packs, vide le cache par forget().
+ *
+ * Le contenu lu est gardé le temps d'une requête : reset() (ResetInterface) l'oublie entre deux requêtes d'un même
+ * processus (mode worker de FrankenPHP), pour que la suivante revérifie les fichiers et voie un pack redéposé.
  */
-final class ContentRepository
+final class ContentRepository implements ResetInterface
 {
     /** Nom d'un fichier de DOWNLOADS_DIR : celui qu'accepte la route /telechargements/{fichier}. */
     public const string DOWNLOAD_NAME = '[A-Za-z0-9._-]+';
@@ -56,12 +60,21 @@ final class ContentRepository
     }
 
     /** Oublie ce qui a été lu, cache compris : à appeler après avoir écrit dans un pack (voir l'atelier). */
+    public function forget(): void
+    {
+        $this->reset();
+        $this->loader->forget();
+    }
+
+    /**
+     * Oublie ce qui a été lu dans cette requête, sans toucher au cache : la suivante le relit et revérifie les fichiers.
+     * Appelé par Symfony entre deux requêtes d'un même processus.
+     */
     public function reset(): void
     {
         $this->content = null;
         $this->index = null;
         $this->sources = null;
-        $this->loader->forget();
     }
 
     /** @return array<string, Pack> */

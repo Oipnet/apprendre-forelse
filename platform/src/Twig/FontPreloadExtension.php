@@ -5,6 +5,7 @@ namespace App\Twig;
 use App\Instance\Branding;
 use Pentatrion\ViteBundle\Service\FileAccessor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Service\ResetInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -15,7 +16,7 @@ use Twig\TwigFunction;
  * Leurs URL (empreinte comprise) viennent du manifeste Vite. Sans manifeste (serveur de développement), rien.
  * Une police que la marque de l'instance remplace n'est pas préchargée : elle ne servirait pas.
  */
-final class FontPreloadExtension extends AbstractExtension
+final class FontPreloadExtension extends AbstractExtension implements ResetInterface
 {
     /** Les polices visibles au-dessus de la ligne de flottaison (titres, texte courant), et la variable CSS qui les désigne. */
     public const array FONTS = [
@@ -63,5 +64,11 @@ final class FontPreloadExtension extends AbstractExtension
         }
 
         return $this->urls = $urls;
+    }
+
+    /** Recalculées à la requête suivante : elles dépendent des polices de la marque, relue elle aussi (Branding). */
+    public function reset(): void
+    {
+        $this->urls = null;
     }
 }

@@ -118,7 +118,7 @@ final class ContentRepositoryCacheTest extends TestCase
         $this->assertSame('La fiche.', $this->request()->findTrack('decouverte')?->chapters[0]->lesson);
     }
 
-    public function testResetVideLeCachePourLAtelier(): void
+    public function testForgetVideLeCachePourLAtelier(): void
     {
         $content = $this->request();
         $content->tracks();
@@ -127,8 +127,34 @@ final class ContentRepositoryCacheTest extends TestCase
         preg_match('/^title: (.*)$/m', $yaml, $title);
         $written = substr_replace('Écrit', str_repeat('.', \strlen($title[1]) - \strlen('Écrit')), \strlen('Écrit'), 0);
         $this->rewriteUnnoticed($this->exerciseFile(), str_replace('title: '.$title[1], 'title: '.$written, $yaml));
-        $content->reset();
+        $content->forget();
 
         $this->assertStringStartsWith('Écrit', (string) $this->request()->findExercise('decouverte', '01-bonjour')?->title);
+    }
+
+    /** Mode worker : la même instance sert la requête suivante, après reset() ; un pack redéposé s'y voit. */
+    public function testApresResetLaMemeInstanceVoitUnPackRedepose(): void
+    {
+        $content = $this->request();
+        $content->tracks();
+        $yaml = (string) file_get_contents($this->exerciseFile());
+        $this->rewrite($this->exerciseFile(), (string) preg_replace('/^title: .*$/m', 'title: Titre redéposé', $yaml));
+
+        $content->reset();
+
+        $this->assertSame('Titre redéposé', $content->findExercise('decouverte', '01-bonjour')?->title);
+    }
+
+    /** reset(), appelé entre chaque requête d'un worker, ne vide pas le cache : sinon chaque requête relirait tous les YAML. */
+    public function testResetGardeLeCache(): void
+    {
+        $content = $this->request();
+        $title = $content->findExercise('decouverte', '01-bonjour')?->title;
+        $this->assertNotNull($title);
+        $this->rewriteUnnoticed($this->exerciseFile(), str_repeat(':', (int) filesize($this->exerciseFile())));
+
+        $content->reset();
+
+        $this->assertSame($title, $content->findExercise('decouverte', '01-bonjour')?->title);
     }
 }

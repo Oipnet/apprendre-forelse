@@ -8,6 +8,7 @@ use App\Instance\Branding\BrandingStylesheet;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * L'identité de l'instance : nom, puce, accroche, couleurs, images, textes propres à l'accueil.
@@ -27,7 +28,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  *
  * Cette classe n'est que la façade de lecture de BrandingConfig.
  */
-final class Branding
+final class Branding implements ResetInterface
 {
     public const string FILE = BrandingLoader::FILE;
 
@@ -46,6 +47,12 @@ final class Branding
     public function config(): BrandingConfig
     {
         return $this->config ??= $this->loader->load($this->directory);
+    }
+
+    /** Relue à la requête suivante : un marque.yaml modifié se voit sans redémarrer, même en mode worker. */
+    public function reset(): void
+    {
+        $this->config = null;
     }
 
     /** Vrai tant que l'instance n'a pas posé sa marque : c'est celle du moteur qui s'affiche. */

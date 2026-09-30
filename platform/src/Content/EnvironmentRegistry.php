@@ -5,6 +5,7 @@ namespace App\Content;
 use App\Content\Framework\FrameworkRegistry;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Les environnements d'exécution disponibles, lus dans les dossiers d'ENVIRONMENTS_DIR.
@@ -21,7 +22,7 @@ use Symfony\Component\Yaml\Yaml;
  * masquerait un autre en silence serait indébuggable — et un pack ne peut donc pas s'approprier
  * « symfony-8 » sans le dire.
  */
-final class EnvironmentRegistry
+final class EnvironmentRegistry implements ResetInterface
 {
     /** @var array<string, Environment> */
     private array $environments = [];
@@ -136,7 +137,10 @@ final class EnvironmentRegistry
         return $portes;
     }
 
-    /** Oublie ce qui a été lu : à appeler après avoir installé ou retiré un environnement. */
+    /**
+     * Oublie ce qui a été lu : à appeler après avoir installé ou retiré un environnement. Appelé aussi par Symfony entre
+     * deux requêtes d'un même processus : un environnement installé par l'empaqueteur se voit à la requête suivante.
+     */
     public function reset(): void
     {
         $this->environments = [];

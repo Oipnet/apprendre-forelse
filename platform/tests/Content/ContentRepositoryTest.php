@@ -91,9 +91,9 @@ final class ContentRepositoryTest extends TestCase
         $this->assertSame('intro-t2', $repository->chapterOf($repository->findExercise('t2', 'e0') ?? $this->fail())?->id);
         $this->assertTrue($repository->closesChapter($repository->findExercise('t1', 'e0') ?? $this->fail()));
 
-        // Après une écriture dans le pack (l'atelier appelle reset()), l'index est reconstruit.
+        // Après une écriture dans le pack (l'atelier appelle forget()), l'index est reconstruit.
         (new Filesystem())->dumpFile($this->tmp.'/p/tracks/t1/track.yaml', "id: t1\ntitle: T\nenvironment: symfony-8\nchapters:\n  - {id: tout, title: Tout, exercises: [e0, e1]}");
-        $repository->reset();
+        $repository->forget();
         $this->assertSame('tout', $repository->chapterOf($repository->findExercise('t1', 'e1') ?? $this->fail())?->id);
     }
 

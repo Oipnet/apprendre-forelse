@@ -21,6 +21,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
     ou un autre fournisseur.
   - La politique de confidentialité nomme chaque fournisseur activé, et seulement lui.
 
+### Modifié
+
+- **FrankenPHP sert la plateforme en mode worker** : Symfony démarre une fois par worker au lieu de redémarrer à
+  chaque requête. Mesuré sur les 151 pages du sitemap avec le contenu de Forelse, le temps passé par le serveur est
+  divisé par deux (médiane de 24 à 12 ms, pages de parcours de 27 à 13 ms). Rien à changer dans une instance :
+  - un pack redéposé, un environnement installé ou un `marque.yaml` modifié se voient toujours à la requête suivante,
+    sans redémarrer ;
+  - `FRANKENPHP_WORKERS` règle le nombre de workers (deux par cœur par défaut), `FRANKENPHP_LOOP_MAX` le nombre de
+    requêtes après lequel un worker est relancé (500 par défaut).
+
 ### Sécurité
 
 - **Confirmer son identité (compte sans mot de passe) passe par un fournisseur déjà lié au compte.** Avec plusieurs
