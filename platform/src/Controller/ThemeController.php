@@ -53,6 +53,8 @@ final class ThemeController extends AbstractController
             'logo' => $this->theme->logoUrl(),
             'icon' => $this->theme->iconUrl(),
             'share' => $this->theme->shareUrl(),
+            // Inaccessible (la route n'accepte que les trois rôles), mais un rôle inconnu serait une image introuvable.
+            default => null,
         };
         if (null === $url || null === $this->theme->imagePath($role)) {
             throw $this->createNotFoundException();
