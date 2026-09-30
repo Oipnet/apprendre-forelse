@@ -42,6 +42,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Simulateur Docker : le code monté par-dessus l'image retrouve le `vendor/` de l'image.** Depuis 2.4.0 (#159),
+  `require __DIR__.'/../vendor/autoload.php'` depuis un fichier d'un montage (`-v ./public:/var/www/html/public`)
+  cherchait `vendor/` à côté du dossier de l'hôte et répondait 500 : 16 exercices du parcours Docker (à partir de
+  « Travailler sur le pont ») échouaient. Un chemin qui sort d'un montage par `..`, ou qui désigne un voisin de sa
+  source, est traduit depuis la cible du montage, dans le conteneur.
 - **`robots.txt` et `sitemap.xml` gardent leur heure de cache.** Ils sont les mêmes pour tous, mais la vérification
   « visiteur connecté ? » faite pour l'ETag des pages publiques les rendait privés, sans cache.
 - **`robots.txt` écarte `/mesure/`** (traceur de mesure d'audience et son point de collecte) : un robot qui affiche
@@ -52,6 +57,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
+- **`league/commonmark` 2.10.3** (GHSA-3q6v-r5mr-hxv8 et un second avis publié le 30/09) : un tableau GFM mal formé
+  prenait un temps quadratique, et une balise HTML interdite en fin de bloc échappait à `DisallowedRawHtml`. Le moteur
+  rend avec lui les fiches de cours, les consignes et les articles du blog ; il supprime déjà tout HTML brut
+  (`html_input: strip`).
 - **Confirmer son identité (compte sans mot de passe) passe par un fournisseur déjà lié au compte.** Avec plusieurs
   fournisseurs, lier un nouveau compte pendant la confirmation aurait suffi, avec une session volée, à changer
   l'adresse ou à supprimer le compte.

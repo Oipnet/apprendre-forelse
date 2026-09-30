@@ -163,6 +163,30 @@ final class ContainerTest extends SimulatorTestCase
         $this->assertSame("abZ\n", file_get_contents($this->project.'/src/c.txt'), 'Sans :ro, sed -i écrit.');
     }
 
+    /**
+     * Le code monté par-dessus celui de l'image garde ses voisins : « __DIR__.'/../vendor' » depuis un fichier du montage
+     * ./public vise /var/www/html/vendor, celui de l'image, et non le dossier parent du montage sur l'hôte.
+     */
+    public function testUnCheminQuiSortDUnMontageParDeuxPointsResteDansLeConteneur(): void
+    {
+        $this->files([
+            'Dockerfile' => "FROM php:8.4-cli\nCOPY app/ /var/www/html/\n",
+            'app/vendor/autoload.php' => "<?php echo 'autoload de l\\'image';",
+            'app/public/index.php' => "<?php echo 'ancien';",
+            'public/index.php' => "<?php require __DIR__.'/../vendor/autoload.php'; echo ' + code monté';",
+        ]);
+        $this->cliOk('build -t pont .');
+
+        $sortie = $this->cliOk('run --rm -v ./public:/var/www/html/public:ro pont php /var/www/html/public/index.php');
+
+        $this->assertStringContainsString("autoload de l'image + code monté", $sortie);
+
+        // La même adresse, déjà normalisée : dirname(__DIR__) est le dossier du projet sur l'hôte, voisin du montage.
+        file_put_contents($this->project.'/public/index.php', "<?php require dirname(__DIR__).'/vendor/autoload.php'; echo ' + dirname';");
+        $sortie = $this->cliOk('run --rm -v ./public:/var/www/html/public:ro pont php /var/www/html/public/index.php');
+        $this->assertStringContainsString("autoload de l'image + dirname", $sortie);
+    }
+
     /** Un chemin absolu dans le PHP du conteneur est celui du conteneur : le volume garde le compteur. */
     public function testLePhpDuConteneurEcritDansLeVolumeParUnCheminAbsolu(): void
     {

@@ -12,6 +12,11 @@ namespace Forelse\DockerSim\Runtime;
  * et un volume ne gardait rien. Les chemins déjà réels (le script lui-même, __DIR__, les sources des montages)
  * passent tels quels. Une écriture sous un montage « :ro » est refusée : « Read-only file system ».
  *
+ * Un chemin qui part d'un montage et en sort par « .. » (__DIR__.'/../vendor' depuis un fichier du montage ./public)
+ * est traduit comme le noyau le ferait : depuis la cible du montage, dans le conteneur, et non depuis le dossier de
+ * l'hôte, qui n'a pas le vendor/ de l'image. PHP le redemande parfois déjà normalisé (/projet/vendor/…) : un chemin
+ * voisin d'une source de montage est traduit de même, s'il désigne un fichier du conteneur.
+ *
  * Limite : ce qui ouvre ses fichiers sans passer par les flux PHP (SQLite dans new PDO('sqlite:/…')) n'est pas
  * traduit. Un DSN passé par une variable d'environnement l'est déjà (PhpExecutor::translateValue()).
  */
@@ -25,6 +30,8 @@ final class ContainerFileWrapper
     private static array $real = [];
     /** @var list<string> préfixes réels en lecture seule */
     private static array $readOnly = [];
+    /** @var array<string, string> source réelle d'un montage => sa cible dans le conteneur */
+    private static array $mounts = [];
     /** Pourquoi la dernière ouverture a échoué, telle que PHP l'écrirait (voir failure()). */
     private static string $failure = '';
 
@@ -34,10 +41,15 @@ final class ContainerFileWrapper
     /**
      * @param list<string> $real     préfixes réels à laisser passer (racine, sources des montages)
      * @param list<string> $readOnly préfixes réels où rien ne s'écrit
+     * @param array<string, string> $mounts source réelle d'un montage => sa cible dans le conteneur
      */
-    public static function activate(string $root, array $real, array $readOnly): void
+    public static function activate(string $root, array $real, array $readOnly, array $mounts = []): void
     {
         self::$root = rtrim($root, '/');
+        self::$mounts = [];
+        foreach ($mounts as $source => $target) {
+            self::$mounts[rtrim($source, '/')] = rtrim($target, '/');
+        }
         self::$real = array_values(array_filter(array_map(static fn (string $p) => rtrim($p, '/'), [$root, ...$real])));
         self::$readOnly = array_values(array_filter(array_map(static fn (string $p) => rtrim($p, '/'), $readOnly)));
         stream_wrapper_unregister('file');
@@ -58,13 +70,70 @@ final class ContainerFileWrapper
         if (!str_starts_with($path, '/')) {
             return $path; // relatif : résolu depuis le dossier courant, déjà dans le conteneur
         }
+        foreach (self::$mounts as $source => $target) {
+            if (str_starts_with($path, $source.'/') && !self::within(self::normalize($path), $source)) {
+                // Sorti du montage par « .. » : dans le conteneur, on part de sa cible.
+                return self::map(self::normalize($target.substr($path, \strlen($source))));
+            }
+        }
+        if (($voisin = self::besideMount(self::normalize($path))) !== null) {
+            return $voisin;
+        }
         foreach (self::$real as $prefix) {
-            if ($path === $prefix || str_starts_with($path, $prefix.'/')) {
+            if (self::within($path, $prefix)) {
                 return $path;
             }
         }
 
         return self::$root.$path;
+    }
+
+    /**
+     * Un chemin de l'hôte à côté d'une source de montage (/projet/vendor/autoload.php, la source étant /projet/public) :
+     * le fichier du conteneur au même endroit à côté de la cible (/var/www/html/vendor/autoload.php), s'il existe.
+     */
+    private static function besideMount(string $path): ?string
+    {
+        foreach (self::$real as $prefix) {
+            if (self::within($path, $prefix)) {
+                return null;
+            }
+        }
+        foreach (self::$mounts as $source => $target) {
+            $parent = \dirname($source);
+            if ($parent === '/' || !self::within($path, $parent)) {
+                continue;
+            }
+            $candidate = self::$root.self::normalize(\dirname($target).substr($path, \strlen($parent)));
+            if (self::native(static fn () => file_exists($candidate))) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static function within(string $path, string $prefix): bool
+    {
+        return $path === $prefix || str_starts_with($path, $prefix.'/');
+    }
+
+    /** « /a/b/../c/./d » → « /a/c/d », sans toucher au disque (un chemin absolu ne remonte pas au-dessus de /). */
+    private static function normalize(string $path): string
+    {
+        $parts = [];
+        foreach (explode('/', $path) as $part) {
+            if ($part === '' || $part === '.') {
+                continue;
+            }
+            if ($part === '..') {
+                array_pop($parts);
+            } else {
+                $parts[] = $part;
+            }
+        }
+
+        return '/'.implode('/', $parts);
     }
 
     private static function readOnly(string $real): bool
