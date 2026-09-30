@@ -1,5 +1,14 @@
+# Mode worker : Symfony démarre une fois par worker, qui sert ensuite les requêtes les unes après les autres, au lieu
+# de redémarrer à chaque page. Les services qui gardent un état l'oublient entre deux requêtes (ResetInterface). Un
+# worker est relancé toutes les FRANKENPHP_LOOP_MAX requêtes (500 par défaut, voir symfony/runtime). Nombre de workers :
+# FRANKENPHP_WORKERS, par défaut deux par cœur ; chacun garde son noyau en mémoire (voir APP_MEM_LIMIT).
 {
-	frankenphp
+	frankenphp {
+		worker {
+			file /app/platform/public/index.php
+			num {$FRANKENPHP_WORKERS:0}
+		}
+	}
 }
 
 # Deux origines, une seule application : la plateforme (APP_URL) et le bac à sable (SANDBOX_URL),
