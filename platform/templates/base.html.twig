@@ -87,6 +87,7 @@
                     <nav aria-label="Navigation principale">
                         <a href="{{ path('app_tracks') }}">Parcours</a>
                         <a href="{{ path('app_practice') }}">Pratique</a>
+                        {% if blog.open %}<a href="{{ path('app_blog') }}">Blog</a>{% endif %}
                         <a href="{{ path('app_home') }}#questions">Questions</a>
                         {% if app.user %}
                             {# Tout ce qui concerne le compte et les espaces réservés, derrière le nom : sans JS, <details> s'ouvre et se ferme seul. #}
