@@ -72,6 +72,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - `app:marque:verifier` reste un alias de `app:theme:verifier`. Retrait en 4.0.
 - Les anciennes adresses d'images `/marque/<rôle>` redirigent (301) vers les nouvelles. Retrait en 4.0.
 
+### Corrigé
+
+- **Un gabarit de thème modifié sur le serveur se voit sans redémarrer** : en production, Twig ne revérifie pas un
+  gabarit compilé et un worker garde ses classes en mémoire. La date du fichier entre maintenant dans la clé de cache
+  des gabarits du thème : redéposer un thème suffit.
+
 ## 2.5.1 — 2026-09-30
 
 ### Modifié

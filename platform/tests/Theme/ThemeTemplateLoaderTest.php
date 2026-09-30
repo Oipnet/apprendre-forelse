@@ -63,6 +63,18 @@ final class ThemeTemplateLoaderTest extends TestCase
         $this->assertFalse($loader->exists('_footer.html.twig'));
     }
 
+    /** Un gabarit modifié sur le serveur (déploiement du thème) se recompile, sans cache:clear ni redémarrage. */
+    public function testUnGabaritModifieChangeDeCleDeCache(): void
+    {
+        $loader = new ThemeTemplateLoader(new FixedTheme($this->tmp.'/a'));
+        $avant = $loader->getCacheKey('_footer.html.twig');
+
+        touch($this->tmp.'/a/templates/_footer.html.twig', time() + 60);
+        clearstatcache();
+
+        $this->assertNotSame($avant, $loader->getCacheKey('_footer.html.twig'));
+    }
+
     /** La page d'exercice et les éditeurs de l'atelier gardent l'habillage du moteur, même si le thème en dépose un. */
     public function testUnGabaritVerrouilleNEstPasRemplace(): void
     {

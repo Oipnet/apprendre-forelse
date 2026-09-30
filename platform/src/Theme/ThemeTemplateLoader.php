@@ -24,8 +24,9 @@ use Twig\Loader\FilesystemLoader;
  * pas : le thème qui en dépose un est ignoré, c'est celui du moteur qui sert. La page d'erreur de Symfony
  * (@Twig/Exception/…) se remplace comme dans le moteur, depuis <thème>/templates/bundles/TwigBundle/.
  *
- * Un fichier ajouté à un thème après coup demande, en production, un redémarrage du conteneur (ou un cache:clear) :
- * Twig ne revérifie pas la fraîcheur des gabarits compilés.
+ * Un gabarit déposé ou modifié se voit à la requête suivante, sans redémarrage ni cache:clear : en production, Twig ne
+ * revérifie pas la fraîcheur d'un gabarit compilé, et un worker garde en mémoire les classes déjà chargées. La date du
+ * fichier entre donc dans sa clé de cache (getCacheKey) : un gabarit modifié est une nouvelle classe, compilée à part.
  */
 #[AutoconfigureTag('twig.loader', ['priority' => 10])]
 final class ThemeTemplateLoader extends FilesystemLoader implements ResetInterface
@@ -64,6 +65,15 @@ final class ThemeTemplateLoader extends FilesystemLoader implements ResetInterfa
         }
 
         return parent::findTemplate($name, $throw);
+    }
+
+    /** Le chemin du gabarit et sa date : le thème se met à jour sans redémarrer le conteneur (voir plus haut). */
+    public function getCacheKey(string $name): string
+    {
+        $key = parent::getCacheKey($name);
+        $path = $this->findTemplate($name);
+
+        return $key.'@'.(null === $path ? 0 : (int) filemtime($path));
     }
 
     /** Oublié entre deux requêtes (mode worker) : la suivante relit le thème actif. */
