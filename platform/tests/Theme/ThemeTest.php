@@ -148,12 +148,22 @@ final class ThemeTest extends TestCase
         $this->assertStringContainsString('Taverne du Dragon Ivre', (string) $config->home['demo']['code']);
     }
 
-    public function testUneInstanceNeDeclarePasDePersonne(): void
+    /** Chaque thème déclare la personne derrière ses contenus ; celle du moteur ne passe pas à un autre thème. */
+    public function testUnThemeDeclareSaProprePersonne(): void
     {
-        $this->write("name: A\nperson: {name: X, jobTitle: Y}\n");
+        $this->write("name: A\n");
+        $this->assertNull((new ThemeLoader())->load($this->tmp)->person, 'Pas de personne héritée du moteur.');
+
+        $this->write("name: A\nperson: {name: Ada Lovelace, jobTitle: Formatrice}\n");
+        $this->assertSame(['name' => 'Ada Lovelace', 'jobTitle' => 'Formatrice'], (new ThemeLoader())->load($this->tmp)->person);
+    }
+
+    public function testUnePersonneIncompleteEstSignalee(): void
+    {
+        $this->write("name: A\nperson: {name: Ada Lovelace}\n");
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('clé « person » inconnue');
+        $this->expectExceptionMessage('« person.jobTitle » est obligatoire');
         (new ThemeLoader())->load($this->tmp);
     }
 
@@ -234,6 +244,28 @@ final class ThemeTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('logo');
         self::theme($this->tmp)->logoUrl();
+    }
+
+    /** Le logo du site peut être un webp ; les emails prennent alors email_logo, un format que les clients mail lisent. */
+    public function testLesEmailsPrennentLeurPropreLogo(): void
+    {
+        file_put_contents($this->tmp.'/logo.webp', 'RIFF');
+        file_put_contents($this->tmp.'/logo-email.png', 'PNG');
+        $this->write("name: A\nlogo: logo.webp\n");
+        $this->assertNull(self::theme($this->tmp)->emailLogoUrl(), 'Sans email_logo, un logo webp laisse le nom seul.');
+
+        $this->write("name: A\nlogo: logo.webp\nemail_logo: logo-email.png\n");
+        $this->assertStringEndsWith('/email_logo', (string) self::theme($this->tmp)->emailLogoUrl());
+    }
+
+    public function testUnLogoDEmailQuiNEstPasUneImageLueParLesClientsMailEstRefuse(): void
+    {
+        file_put_contents($this->tmp.'/logo.webp', 'RIFF');
+        $this->write("name: A\nemail_logo: logo.webp\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« email_logo » doit être un PNG, un JPEG ou un GIF');
+        (new ThemeLoader())->load($this->tmp);
     }
 
     /** Un chemin plutôt qu'un nom de fichier sortirait du dossier du thème. */

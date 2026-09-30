@@ -10,6 +10,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **`person` pour tous les thèmes** : la personne derrière les parcours et les articles (`name`, `jobTitle`), publiée
+  comme auteur dans les données structurées. Réservée jusqu'ici au thème du moteur ; un thème qui n'en déclare pas
+  n'en a pas.
+- **`email_logo`** : un logo propre aux emails (PNG, JPEG ou GIF), quand celui du site est un webp ou un svg que les
+  clients mail lisent mal. Le site garde son logo léger, les emails ont le leur.
+
 - **Le contrat des gabarits (#227)**, décrit dans `docs/themes.md` : les points de surcharge qu'un thème peut
   remplacer, chacun documenté en tête (`{# @theme … #}` : variables, ce qui est obligatoire), et versionnés.
   - L'en-tête des pages (`_header.html.twig`), chaque section de l'accueil (`home/_hero`, `_promise`, `_how`,

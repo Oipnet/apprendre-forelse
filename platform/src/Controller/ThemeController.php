@@ -25,7 +25,7 @@ final class ThemeController extends AbstractController
     {
     }
 
-    #[Route('/theme/{theme}/{version}/{role}', name: 'app_theme_image', methods: ['GET'], requirements: ['theme' => '[a-z0-9-]+', 'version' => '\d+', 'role' => 'logo|icon|share'])]
+    #[Route('/theme/{theme}/{version}/{role}', name: 'app_theme_image', methods: ['GET'], requirements: ['theme' => '[a-z0-9-]+', 'version' => '\d+', 'role' => 'logo|email_logo|icon|share'])]
     public function image(string $theme, string $role): BinaryFileResponse
     {
         $path = $theme === $this->theme->id() ? $this->theme->imagePath($role) : null;

@@ -40,7 +40,7 @@ final readonly class SchemaOrg
     }
 
     /**
-     * L'auteur des parcours et des exercices : la personne que déclare le thème du moteur (voir son theme.yaml).
+     * L'auteur des parcours et des exercices : la personne que déclare le thème actif (« person » de theme.yaml).
      * Une autre instance publie son organisation.
      *
      * @return array<string, mixed>

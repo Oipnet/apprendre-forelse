@@ -121,8 +121,8 @@ final class Theme implements ResetInterface
     }
 
     /**
-     * La personne derrière les parcours et les exercices, pour les données structurées. Celle du moteur
-     * ne vaut que pour sa marque : une autre instance n'en a pas.
+     * La personne derrière les parcours et les exercices, pour les données structurées. Chaque thème déclare la
+     * sienne (« person ») ; celle du moteur ne vaut que pour son thème : un autre thème qui n'en déclare pas n'en a pas.
      *
      * @return array{name: string, jobTitle: string}|null
      */
@@ -149,6 +149,10 @@ final class Theme implements ResetInterface
      */
     public function emailLogoUrl(): ?string
     {
+        // Un logo propre aux emails (email_logo), quand le logo du site est dans un format qu'ils lisent mal.
+        if (null !== ($this->config()->images['email_logo'] ?? null)) {
+            return $this->imageUrl('email_logo', 'img/logo.png');
+        }
         $file = $this->config()->images['logo'] ?? null;
         if (null !== $file && !preg_match('/\.(png|jpe?g|gif)$/i', $file)) {
             return null;

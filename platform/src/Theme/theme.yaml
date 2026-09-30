@@ -1,6 +1,6 @@
 # Le thème du moteur (« default ») : servi tant que l'instance ne monte pas le sien (BRANDING_DIR/theme.yaml).
 # Ses textes d'accueil et sa « person » parlent de Forelse : ils disparaissent dès qu'un autre thème est posé.
-# Même format que theme.yaml (voir examples/themes/atelier-bigorneau), plus « person », réservée au moteur.
+# Même format que tout theme.yaml (voir examples/themes/atelier-bigorneau).
 
 name: Forelse
 chip: apprendre
