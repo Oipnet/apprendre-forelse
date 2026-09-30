@@ -15,10 +15,12 @@
             <p class="meta">Votre adresse ne sert qu'à votre compte : <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
             <button class="primary" type="submit">Créer mon compte</button>
         {{ form_end(form) }}
-        {% if github.enabled %}
+        {% if oauth.enabled %}
             <div class="oauth">
-                <a class="ac-btn outline" href="{{ path('app_github_start', app.request.query.get('suite') ? {suite: app.request.query.get('suite')} : {}) }}">S'inscrire avec GitHub</a>
-                <p class="meta">Sans mot de passe : votre adresse est celle que GitHub a vérifiée.</p>
+                {% for provider in oauth.enabled %}
+                    <a class="ac-btn outline" href="{{ path('app_oauth_start', {fournisseur: provider.name}|merge(app.request.query.get('suite') ? {suite: app.request.query.get('suite')} : {})) }}">S'inscrire avec {{ provider.label }}</a>
+                {% endfor %}
+                <p class="meta">Sans mot de passe : votre adresse est celle que le service a vérifiée.</p>
             </div>
         {% endif %}
         <p class="meta">Déjà inscrit ? <a href="{{ path('app_login', {suite: app.request.query.get('suite')}) }}">Connectez-vous</a>.</p>

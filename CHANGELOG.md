@@ -8,6 +8,25 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Connexion avec Google et avec LinkedIn** (facultatives), sur le modèle de GitHub et avec les mêmes règles :
+  « Continuer avec Google / LinkedIn » dès que `GOOGLE_CLIENT_ID` et `GOOGLE_CLIENT_SECRET`, ou `LINKEDIN_CLIENT_ID`
+  et `LINKEDIN_CLIENT_SECRET`, sont renseignés. Les URL de retour sont `<APP_URL>/connexion/google/retour` et
+  `<APP_URL>/connexion/linkedin/retour` (voir `auto-hebergement/README.md`). Vides, rien ne change.
+  - OpenID Connect, sans bibliothèque externe : seuls l'identité, l'adresse et le nom sont demandés, et le jeton
+    d'accès n'est pas gardé.
+  - Un compte existant n'est rattaché que si son adresse est confirmée et que le fournisseur l'a vérifiée.
+  - Un compte peut lier plusieurs fournisseurs depuis sa page, et en délier un tant qu'il lui reste un mot de passe
+    ou un autre fournisseur.
+  - La politique de confidentialité nomme chaque fournisseur activé, et seulement lui.
+
+### Sécurité
+
+- **Confirmer son identité (compte sans mot de passe) passe par un fournisseur déjà lié au compte.** Avec plusieurs
+  fournisseurs, lier un nouveau compte pendant la confirmation aurait suffi, avec une session volée, à changer
+  l'adresse ou à supprimer le compte.
+
 ## 2.4.0 — 2026-09-29
 
 ### Ajouté

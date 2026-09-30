@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Account\Github;
+namespace App\Account\Oauth;
 
+use App\Entity\ExternalIdentity;
 use App\Entity\User;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
@@ -13,7 +14,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *
  * Facultative : sans GITHUB_CLIENT_ID ni GITHUB_CLIENT_SECRET, le bouton n'apparaît nulle part.
  */
-final readonly class GithubClient
+final readonly class GithubClient implements OauthProvider
 {
     private const string AUTHORIZE_URL = 'https://github.com/login/oauth/authorize';
     private const string TOKEN_URL = 'https://github.com/login/oauth/access_token';
@@ -30,6 +31,16 @@ final readonly class GithubClient
         #[Autowire(env: 'GITHUB_CLIENT_SECRET')]
         private string $clientSecret = '',
     ) {
+    }
+
+    public function name(): string
+    {
+        return ExternalIdentity::GITHUB;
+    }
+
+    public function label(): string
+    {
+        return 'GitHub';
     }
 
     public function isEnabled(): bool
@@ -52,9 +63,9 @@ final readonly class GithubClient
      * Échange le code du retour contre un jeton, puis lit le profil et les adresses vérifiées. Le jeton n'est pas
      * gardé : il ne sert qu'à cette lecture.
      *
-     * @throws GithubException
+     * @throws OauthException
      */
-    public function fetchProfile(string $code, string $redirectUri): GithubProfile
+    public function fetchProfile(string $code, string $redirectUri): ExternalProfile
     {
         try {
             $token = $this->httpClient->request('POST', self::TOKEN_URL, [
@@ -63,21 +74,21 @@ final readonly class GithubClient
             ])->toArray();
             if (!\is_string($token['access_token'] ?? null)) {
                 // Code expiré ou déjà utilisé : GitHub répond 200 avec « error ».
-                throw new GithubException(sprintf('GitHub a refusé le code : %s.', \is_string($token['error'] ?? null) ? $token['error'] : 'réponse inattendue'));
+                throw new OauthException(sprintf('GitHub a refusé le code : %s.', \is_string($token['error'] ?? null) ? $token['error'] : 'réponse inattendue'));
             }
 
             $headers = ['Authorization' => 'Bearer '.$token['access_token'], 'Accept' => 'application/vnd.github+json', 'X-GitHub-Api-Version' => '2022-11-28'];
             $user = $this->httpClient->request('GET', self::API_URL.'/user', ['headers' => $headers])->toArray();
             $emails = $this->httpClient->request('GET', self::API_URL.'/user/emails', ['headers' => $headers])->toArray();
         } catch (ExceptionInterface $e) {
-            throw new GithubException('GitHub ne répond pas comme prévu : '.$e->getMessage(), previous: $e);
+            throw new OauthException('GitHub ne répond pas comme prévu : '.$e->getMessage(), previous: $e);
         }
 
         if (!\is_int($user['id'] ?? null) || !\is_string($user['login'] ?? null)) {
-            throw new GithubException('Profil GitHub incomplet.');
+            throw new OauthException('Profil GitHub incomplet.');
         }
 
-        return new GithubProfile((string) $user['id'], $user['login'], \is_string($user['name'] ?? null) ? $user['name'] : null, self::verifiedEmails($emails));
+        return new ExternalProfile(ExternalIdentity::GITHUB, (string) $user['id'], $user['login'], \is_string($user['name'] ?? null) ? $user['name'] : null, self::verifiedEmails($emails));
     }
 
     /**

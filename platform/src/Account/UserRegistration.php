@@ -31,7 +31,7 @@ final readonly class UserRegistration
         return new RegistrationResult($this->verifier->send($user));
     }
 
-    /** Compte venu de GitHub : pas de mot de passe, et l'adresse est déjà confirmée (par GitHub), sans email à envoyer. */
+    /** Compte venu d'un fournisseur (GitHub, Google, LinkedIn) : pas de mot de passe, adresse déjà confirmée par lui, sans email à envoyer. */
     public function registerWithoutPassword(User $user, ?string $code): void
     {
         $this->cohorts->enroll($user, $code);

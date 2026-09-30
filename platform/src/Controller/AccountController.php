@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Account\AccountManagement;
-use App\Account\Github\RecentSignIn;
+use App\Account\Oauth\RecentSignIn;
 use App\Account\AccountPage;
 use App\Account\EmailChange;
 use App\Account\EmailChangeOutcome;
@@ -61,7 +61,7 @@ final class AccountController extends AbstractController
             match ($outcome) {
                 EmailChangeOutcome::PasswordRequired => $user->hasPassword()
                     ? $form->get('currentPassword')->addError(new FormError('Votre mot de passe actuel est demandé pour changer d\'adresse.'))
-                    : $form->addError(new FormError('Confirmez d\'abord votre identité avec GitHub pour changer d\'adresse.')),
+                    : $form->addError(new FormError('Confirmez d\'abord votre identité avec un compte lié (GitHub, Google ou LinkedIn) pour changer d\'adresse.')),
                 EmailChangeOutcome::EmailTaken => $form->get('email')->addError(new FormError('Un compte existe déjà avec cet email.')),
                 EmailChangeOutcome::Saved => $this->addFlash('success', 'Profil enregistré.'),
                 EmailChangeOutcome::Sent => $this->addFlash('success', sprintf('Un lien de confirmation vient de partir à %s. Votre adresse actuelle reste valable jusqu\'à ce que vous l\'ouvriez.', $email)),
@@ -156,7 +156,7 @@ final class AccountController extends AbstractController
         $user = $this->user();
         $form = $this->deleteForm($user)->handleRequest($request);
         if ($form->isSubmitted() && !$user->hasPassword() && !$this->recent->isRecent($user)) {
-            $form->addError(new FormError('Confirmez d\'abord votre identité avec GitHub.'));
+            $form->addError(new FormError('Confirmez d\'abord votre identité avec un compte lié (GitHub, Google ou LinkedIn).'));
         }
         if (!$form->isSubmitted() || !$form->isValid()) {
             return $this->renderPage(delete: $form);
@@ -223,7 +223,7 @@ final class AccountController extends AbstractController
             'passwordForm' => $password ?? $this->createForm(PasswordFormType::class, options: ['action' => $this->generateUrl('app_account_password')]),
             'deleteForm' => $delete ?? $this->deleteForm($user),
             'deleteOpen' => null !== $delete,
-            // Compte sans mot de passe : GitHub confirme l'identité (changer d'adresse, supprimer le compte).
+            // Compte sans mot de passe : un fournisseur lié confirme l'identité (changer d'adresse, supprimer le compte).
             'recentSignIn' => $this->recent->isRecent($user),
         ], new Response(status: $failed ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }

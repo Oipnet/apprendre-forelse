@@ -23,9 +23,11 @@
             {% endif %}
             <button class="primary" type="submit">Se connecter</button>
         </form>
-        {% if github.enabled %}
+        {% if oauth.enabled %}
             <div class="oauth">
-                <a class="ac-btn outline" href="{{ path('app_github_start', suite ? {suite: suite} : {}) }}">Continuer avec GitHub</a>
+                {% for provider in oauth.enabled %}
+                    <a class="ac-btn outline" href="{{ path('app_oauth_start', {fournisseur: provider.name}|merge(suite ? {suite: suite} : {})) }}">Continuer avec {{ provider.label }}</a>
+                {% endfor %}
             </div>
         {% endif %}
         <p class="meta">Pas encore de compte ? <a rel="nofollow" href="{{ path('app_register', suite ? {suite: suite} : {}) }}">Créez-en un</a>.</p>

@@ -26,4 +26,15 @@ class ExternalIdentityRepository extends ServiceEntityRepository
     {
         return $this->findOneBy(['user' => $user, 'provider' => $provider]);
     }
+
+    /** @return array<string, ExternalIdentity> les comptes liés, par fournisseur */
+    public function findByUser(User $user): array
+    {
+        $byProvider = [];
+        foreach ($this->findBy(['user' => $user], ['linkedAt' => 'ASC']) as $identity) {
+            $byProvider[$identity->getProvider()] = $identity;
+        }
+
+        return $byProvider;
+    }
 }

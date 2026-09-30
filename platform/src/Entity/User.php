@@ -44,7 +44,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private array $roles = [];
 
-    /** Mot de passe haché ; null pour un compte créé avec GitHub, tant qu'il n'en a pas choisi (mot de passe oublié). */
+    /** Mot de passe haché ; null pour un compte créé avec GitHub, Google ou LinkedIn, tant qu'il n'en a pas choisi (mot de passe oublié). */
     #[ORM\Column(nullable: true)]
     private ?string $password = null;
 
@@ -232,7 +232,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /** Sans mot de passe, le compte se connecte avec GitHub : c'est lui qui confirme l'identité (voir RecentSignIn). */
+    /** Sans mot de passe, le compte se connecte avec un fournisseur lié : c'est lui qui confirme l'identité (voir RecentSignIn). */
     public function hasPassword(): bool
     {
         return null !== $this->password;
@@ -249,7 +249,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __serialize(): array
     {
         $data = (array) $this;
-        // Sans mot de passe (compte GitHub), rien à empreinter : null, que la session ne compare pas.
+        // Sans mot de passe (compte venu d'un fournisseur), rien à empreinter : null, que la session ne compare pas.
         $data["\0" . self::class . "\0password"] = null === $this->password ? null : hash('crc32c', $this->password);
         
         return $data;
