@@ -2,10 +2,12 @@
 
 namespace App\Tests\Theme;
 
+use App\Theme\FixedTheme;
 use App\Theme\ThemeSelection;
 use App\Theme\ThemeTemplateLoader;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
+use Twig\Error\LoaderError;
 
 /** Les gabarits suivent le thème actif : une bascule ou un aperçu se voient sans reconstruire le chargeur. */
 final class ThemeTemplateLoaderTest extends TestCase
@@ -59,5 +61,25 @@ final class ThemeTemplateLoaderTest extends TestCase
 
         $selection->directory = '';
         $this->assertFalse($loader->exists('_footer.html.twig'));
+    }
+
+    /** La page d'exercice et les éditeurs de l'atelier gardent l'habillage du moteur, même si le thème en dépose un. */
+    public function testUnGabaritVerrouilleNEstPasRemplace(): void
+    {
+        (new Filesystem())->dumpFile($this->tmp.'/a/templates/exercise/play.html.twig', 'éditeur du thème');
+        $loader = new ThemeTemplateLoader(new FixedTheme($this->tmp.'/a'));
+
+        $this->assertFalse($loader->exists('exercise/play.html.twig'));
+        $this->expectException(LoaderError::class);
+        $loader->getSourceContext('exercise/play.html.twig');
+    }
+
+    /** La page d'erreur de Symfony (@Twig/…) se remplace depuis bundles/TwigBundle/, comme dans le moteur. */
+    public function testLaPageDErreurSeRemplaceDepuisBundlesTwigBundle(): void
+    {
+        (new Filesystem())->dumpFile($this->tmp.'/a/templates/bundles/TwigBundle/Exception/error.html.twig', 'erreur du thème');
+        $loader = new ThemeTemplateLoader(new FixedTheme($this->tmp.'/a'));
+
+        $this->assertSame('erreur du thème', $loader->getSourceContext('@Twig/Exception/error.html.twig')->getCode());
     }
 }

@@ -1,6 +1,8 @@
 {% extends 'base.html.twig' %}
 
 {#
+    @theme Point de surcharge (déposé dans templates/bundles/TwigBundle/Exception/ du thème).
+    Variables : status_code, status_text, exception (en debug seulement).
     Page d'erreur de toutes les réponses HTML hors debug (404, 403, 500…).
     En-tête réduit : sur une 404 le pare-feu n'a pas tourné (l'utilisateur paraîtrait déconnecté),
     et sur une 500 la base peut être en cause : on ne touche ni à app.user ni aux rôles.

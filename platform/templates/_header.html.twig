@@ -1,0 +1,47 @@
+{#
+  @theme Point de surcharge : l'en-tête des pages du site (marque, navigation, menu du compte).
+  Variables : theme (App\Theme\Theme), brand_chip (la puce, déjà rendue : « atelier » dans l'atelier), login_suite
+  (string|null : la page où revenir après connexion), blog (App\Content\Blog), app.user (App\Entity\User|null).
+  Obligatoire : les liens de connexion et d'inscription pour un visiteur, le menu du compte et la déconnexion pour un
+  apprenant, l'attribut data-progress de la barre de lecture si le thème garde le script du moteur.
+#}
+<header class="lp-header">
+    <div class="lp-wrap">
+        <a class="lp-brand" href="{{ path('app_home') }}">
+            {% if theme.logoUrl %}<img src="{{ theme.logoUrl }}" alt="" width="72" height="84">{% endif %}
+            <span class="lp-serif">{{ theme.name }}</span>
+            {% if brand_chip|trim %}<span class="lp-chip">{{ brand_chip }}</span>{% endif %}
+        </a>
+        <nav aria-label="Navigation principale">
+            <a href="{{ path('app_tracks') }}">Parcours</a>
+            <a href="{{ path('app_practice') }}">Pratique</a>
+            {% if blog.open %}<a href="{{ path('app_blog') }}">Blog</a>{% endif %}
+            <a href="{{ path('app_home') }}#questions">Questions</a>
+            {% if app.user %}
+                {# Tout ce qui concerne le compte et les espaces réservés, derrière le nom : sans JS, <details> s'ouvre et se ferme seul. #}
+                <details class="lp-account" data-account-menu>
+                    <summary aria-label="Menu du compte de {{ app.user.displayName }}">
+                        <span class="lp-user">{{ app.user.displayName }}</span>
+                        <span class="lp-xp">{{ app.user.xp }} XP</span>
+                        <span class="lp-account-caret" aria-hidden="true"></span>
+                    </summary>
+                    <div class="lp-account-menu">
+                        <a href="{{ path('app_account') }}">Mon compte</a>
+                        {% if is_granted('ROLE_AUTEUR') or is_granted('ROLE_CHEF_COHORTE') %}
+                            <p class="lp-account-label">Espaces</p>
+                            {% if is_granted('ROLE_AUTEUR') %}<a href="{{ path('app_studio') }}">Atelier</a>{% endif %}
+                            {% if is_granted('ROLE_CHEF_COHORTE') %}<a href="{{ path('chef') }}">Mes cohortes</a>{% endif %}
+                            {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin') }}">Administration</a>{% endif %}
+                        {% endif %}
+                        <a class="lp-account-logout" href="{{ logout_path() }}">Déconnexion</a>
+                    </div>
+                </details>
+            {% else %}
+                <a href="{{ path('app_login', {suite: login_suite}) }}">Connexion</a>
+                <a class="lp-btn" rel="nofollow" href="{{ path('app_register') }}">Créer un compte</a>
+            {% endif %}
+        </nav>
+    </div>
+    {# Avancée de lecture : le JS la pilote, elle reste à zéro sans lui. #}
+    <div class="lp-progress" data-progress aria-hidden="true"></div>
+</header>

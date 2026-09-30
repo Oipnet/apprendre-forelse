@@ -1,0 +1,10 @@
+{#
+  @theme Point de surcharge : un article dans la liste du blog (/blog).
+  Variables : article (App\Content\Article : slug, title, description, published, readingMinutes).
+  Obligatoire : le lien vers l'article (app_article, {slug: article.slug}).
+#}
+<article>
+    <h2><a href="{{ path('app_article', {slug: article.slug}) }}">{{ article.title }}</a></h2>
+    <p class="meta"><time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time> · {{ article.readingMinutes }} min de lecture</p>
+    <p>{{ article.description }}</p>
+</article>

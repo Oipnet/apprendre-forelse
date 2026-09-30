@@ -1,0 +1,17 @@
+{#
+  @theme Point de surcharge : les questions fréquentes (id « questions », cible du lien de l'en-tête).
+  Variables : faq (list<array{question: string, answer: string}>), aussi publiées en données structurées : gardez les mêmes réponses.
+#}
+<section class="lp-section" id="questions">
+    <div class="lp-wrap narrow">
+        <h2 class="lp-h2 spaced">Questions fréquentes</h2>
+        <div class="lp-faq">
+            {% for item in faq %}
+                <details{% if loop.first %} open{% endif %}>
+                    <summary>{{ item.question }}</summary>
+                    <p>{{ item.answer }}</p>
+                </details>
+            {% endfor %}
+        </div>
+    </div>
+</section>

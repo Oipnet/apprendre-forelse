@@ -360,6 +360,8 @@ une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
   n'apparaît pas, et la page reste cohérente sans elle. Leur forme est vérifiée à la lecture, avec le
   piège du YAML en tête : **une phrase qui contient « : » doit être entre guillemets**, sinon elle
   devient un tableau — le message le dit plutôt que de laisser la page échouer à l'affichage.
+- **Le contrat des gabarits** — lesquels se remplacent, avec quelles variables, lesquels sont verrouillés — est
+  décrit dans [docs/themes.md](docs/themes.md).
 - **L'échappatoire** : un fichier déposé dans `marque/templates/` remplace le gabarit de même nom du
   moteur (`home.html.twig`, `_footer.html.twig`, `legal/notice.html.twig`…). Il n'y a rien à copier
   d'autre que le fichier à changer. Le thème y est la variable `theme` (`{{ theme.name }}`). En production les gabarits sont compilés une fois : après en avoir

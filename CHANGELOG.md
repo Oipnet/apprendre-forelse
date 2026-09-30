@@ -10,6 +10,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Le contrat des gabarits (#227)**, décrit dans `docs/themes.md` : les points de surcharge qu'un thème peut
+  remplacer, chacun documenté en tête (`{# @theme … #}` : variables, ce qui est obligatoire), et versionnés.
+  - L'en-tête des pages (`_header.html.twig`), chaque section de l'accueil (`home/_hero`, `_promise`, `_how`,
+    `_tracks`, `_ai`, `_audience`, `_author`, `_signup`, `_faq`) et la fiche d'un article du blog
+    (`blog/_article_card.html.twig`) deviennent des gabarits à part : un thème en remplace un sans recopier la page.
+    Le HTML servi ne change pas.
+  - La page d'exercice et les éditeurs de l'atelier sont verrouillés : un thème qui les dépose est ignoré.
+  - La page d'erreur se remplace depuis `<thème>/templates/bundles/TwigBundle/Exception/error.html.twig`.
+
 - **Plusieurs thèmes installés, et le choix du thème actif depuis l'admin (#233).** Un thème par sous-dossier de
   `THEMES_DIR` (`/themes` dans l'image, volume `./themes` des `compose.yaml`), nommé par son dossier.
   - `/admin` → **Thèmes** : l'état de chaque thème (`theme.yaml` valable, gabarits qui se compilent), un **aperçu**

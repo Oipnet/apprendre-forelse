@@ -20,13 +20,7 @@
 
         <ol class="blog-list">
             {% for article in articles %}
-                <li>
-                    <article>
-                        <h2><a href="{{ path('app_article', {slug: article.slug}) }}">{{ article.title }}</a></h2>
-                        <p class="meta"><time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time> · {{ article.readingMinutes }} min de lecture</p>
-                        <p>{{ article.description }}</p>
-                    </article>
-                </li>
+                <li>{{ include('blog/_article_card.html.twig') }}</li>
             {% endfor %}
         </ol>
     </main>
