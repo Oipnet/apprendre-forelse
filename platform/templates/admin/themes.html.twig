@@ -1,0 +1,100 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Thèmes{% endblock %}
+
+{% block main %}
+    {% if introuvable %}
+        <div class="alert alert-danger">
+            Le thème activé, « {{ introuvable }} », n'est plus installé : le site affiche le thème du moteur à la place.
+            Redéposez son dossier, ou activez un autre thème.
+        </div>
+    {% endif %}
+    {% if apercu %}
+        <div class="alert alert-info">
+            Vous prévisualisez le thème « {{ apercu }} » : vous seul le voyez, sur toutes les pages du site.
+            <form method="post" action="{{ path('admin_themes_preview_quit') }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('themes') }}">
+                <button class="btn btn-sm btn-secondary">Quitter l'aperçu</button>
+            </form>
+        </div>
+    {% endif %}
+
+    <div class="beta-panel">
+        <div class="beta-panel-header"><h2>Installés</h2></div>
+        <div class="beta-panel-body beta-scroll">
+            <p class="text-muted">
+                Un thème s'installe en déposant son dossier dans <code>{{ dossier ?: 'THEMES_DIR' }}</code>, monté en
+                lecture seule : rien ne se téléverse ici. L'aperçu vous le montre, à vous seul ; l'activation le montre à tous,
+                dès la requête suivante.
+            </p>
+            <table class="table">
+                <thead><tr><th>Thème</th><th>Nom</th><th>Remplace</th><th>État</th><th></th></tr></thead>
+                <tbody>
+                    {% for ligne in themes %}
+                        <tr>
+                            <td>
+                                <code>{{ ligne.id }}</code>
+                                {% if ligne.id == actif %}<span class="badge bg-success">actif</span>{% endif %}
+                                {% if ligne.id == apercu %}<span class="badge bg-info">aperçu</span>{% endif %}
+                                <div class="text-muted">{{ ligne.id == 'default' ? 'livré avec le moteur' : ligne.directory }}</div>
+                            </td>
+                            <td>
+                                {% if ligne.config %}
+                                    {{ ligne.config.name }}{% if ligne.config.chip %} <span class="text-muted">· {{ ligne.config.chip }}</span>{% endif %}
+                                    {% if ligne.config.file == 'marque.yaml' %}<div class="text-warning">Ancien <code>marque.yaml</code> : à renommer en <code>theme.yaml</code>.</div>{% endif %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% for gabarit in ligne.templates %}<code>{{ gabarit }}</code>{% if not loop.last %}, {% endif %}{% else %}<span class="text-muted">aucun gabarit</span>{% endfor %}
+                                {% if ligne.config and (ligne.config.stylesheets or ligne.config.scripts) %}
+                                    <div class="text-muted">
+                                        {{ ligne.config.stylesheets|length }} feuille(s){% if ligne.config.replacesEngineStyles %} à la place de celle du moteur{% endif %},
+                                        {{ ligne.config.scripts|length }} script(s)
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% for erreur in ligne.errors %}
+                                    <div class="text-danger">{{ erreur }}</div>
+                                {% else %}
+                                    <span class="text-success">valable</span>
+                                {% endfor %}
+                            </td>
+                            <td class="text-end">
+                                {% if not ligne.errors %}
+                                    {% if ligne.id != apercu %}
+                                        <form method="post" action="{{ path('admin_themes_preview', {id: ligne.id}) }}" class="d-inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('themes') }}">
+                                            <button class="btn btn-sm btn-secondary">Aperçu</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if ligne.id != actif %}
+                                        <form method="post" action="{{ path('admin_themes_activate', {id: ligne.id}) }}" class="d-inline"
+                                              onsubmit="return confirm('Activer « {{ ligne.id }} » pour tous les visiteurs ?')">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('themes') }}">
+                                            <button class="btn btn-sm btn-primary">Activer</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if ignores %}
+        <div class="beta-panel">
+            <div class="beta-panel-header"><h2>Dossiers ignorés</h2></div>
+            <div class="beta-panel-body">
+                <p class="text-muted">Ces dossiers de <code>{{ dossier }}</code> ne sont pas des thèmes :</p>
+                <ul>
+                    {% for nom, raison in ignores %}
+                        <li><code>{{ nom }}</code> : {{ raison }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

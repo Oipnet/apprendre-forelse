@@ -88,6 +88,7 @@ ENV APP_ENV=prod \
     ENVIRONMENTS_DIR=/app/environments,/environnements \
     INSTALLED_ENVIRONMENTS_DIR=/environnements \
     ENVIRONMENTS_AUTO_INSTALL=0 \
+    THEMES_DIR=/themes \
     BRANDING_DIR=/marque
 
 # Utilisateur non privilégié ; le binaire peut tout de même écouter sur 80/443.
@@ -97,7 +98,7 @@ ENV APP_ENV=prod \
 RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin git zip util-linux && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 1000 --home /app formation \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
-    && mkdir -p /data/app /config /packs /marque /environnements /app/platform/var \
+    && mkdir -p /data/app /config /packs /themes /marque /environnements /app/platform/var \
     && chown -R formation:formation /data /config /environnements /app/platform/var
 USER formation
 

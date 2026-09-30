@@ -31,7 +31,9 @@ services:
       - config:/config
       # Packs de contenu, en lecture seule (vide : pack de démonstration).
       - ${PACKS_DIR:-./examples/packs}:/packs:ro
-      # Thème de l'instance (vide : le thème du moteur). Voir examples/themes/ pour un exemple complet.
+      # Thèmes installés, à choisir dans l'admin (vide : le thème du moteur). Voir examples/themes/.
+      - ${THEMES_HOST_DIR:-./examples/themes}:/themes:ro
+      # Déprécié : l'ancien dossier unique du thème, servi comme le thème « instance ».
       - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
       # Environnements installés depuis un dépôt Git par l'administration.
       - environnements:/environnements

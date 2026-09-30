@@ -2,6 +2,7 @@
 
 namespace App\Tests;
 
+use App\Theme\FixedTheme;
 use App\Theme\Theme;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\Asset\PathPackage;
@@ -24,7 +25,7 @@ trait ThemeTrait
         $routes->add('app_theme_asset', new Route('/theme/{theme}/{version}/assets/{path}', requirements: ['path' => '.+']));
 
         return new Theme(
-            $directory,
+            new FixedTheme($directory),
             new UrlGenerator($routes, new RequestContext()),
             new Packages(new PathPackage('/', new EmptyVersionStrategy())),
         );

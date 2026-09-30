@@ -303,12 +303,24 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
 
 ## Habiller son instance
 
-Le moteur ne s'appelle « Forelse » que **tant qu'on ne lui dit rien**. Une instance pose son thème en
-montant un dossier (`BRANDING_DIR`, `/marque` dans l'image) à côté des packs — aucun fork, aucune image
+Le moteur ne s'appelle « Forelse » que **tant qu'on ne lui dit rien**. Une instance installe ses thèmes en
+montant un dossier (`THEMES_DIR`, `/themes` dans l'image) à côté des packs — aucun fork, aucune image
 à reconstruire, rien à republier au titre de l'AGPL : c'est de la configuration, pas du code.
 
+**Plusieurs thèmes, un actif.** Chaque sous-dossier de `THEMES_DIR` est un thème, nommé par son dossier
+(minuscules, chiffres, tirets). Le thème actif se choisit dans **`/admin` → Thèmes** : l'état de chaque thème
+(fichier valable, gabarits qui se compilent), un **aperçu** qui ne montre le thème qu'à vous, sur toutes les
+pages, puis **Activer**, qui le montre à tous dès la requête suivante, sans redémarrer. Un thème en erreur ne
+s'active pas. En ligne de commande : `bin/console app:theme:activer <thème>`. Tant que rien n'est choisi,
+`THEME` désigne le thème actif ; sans lui, c'est le thème du moteur (`default`). Rien ne se téléverse depuis
+l'admin : les gabarits et les scripts d'un thème s'exécutent avec les droits de la plateforme, ils arrivent
+par le dossier monté, en lecture seule.
+
+> L'ancien dossier unique (`BRANDING_DIR`, `/marque`) reste lu jusqu'à la 4.0 : il apparaît comme le thème
+> `instance`, actif tant que l'admin n'en a pas choisi un autre. Une instance 2.x n'a rien à changer.
+
 ```
-marque/
+themes/mon-theme/
   theme.yaml      nom, puce, accroche, site, couleurs, polices, images, textes de l'accueil
   logo.svg  favicon.svg  partage.png      les images, nommées dans theme.yaml
   templates/      (facultatif) des gabarits Twig qui remplacent ceux du moteur

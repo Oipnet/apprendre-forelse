@@ -92,6 +92,7 @@
     {% set current_route = app.request.attributes.get('_route') %}
     {% set login_suite = current_route is null or current_route in ['app_home', 'app_login', 'app_register'] ? null : app.request.pathInfo %}
         <a class="skip-link" href="#contenu">Aller au contenu</a>
+        {% if theme.preview %}{{ include('_theme_preview.html.twig') }}{% endif %}
         {% block header %}
             <header class="lp-header">
                 <div class="lp-wrap">

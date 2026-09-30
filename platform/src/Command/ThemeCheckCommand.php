@@ -10,7 +10,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:theme:verifier',
-    description: 'Vérifie le theme.yaml de l\'instance (BRANDING_DIR) en entier, et dit quelle clé corriger.',
+    description: 'Vérifie le theme.yaml du thème actif en entier, et dit quelle clé corriger.',
     // L'ancien nom, d'avant le renommage « marque » → « thème » : retiré en 4.0.
     aliases: ['app:marque:verifier'],
 )]
