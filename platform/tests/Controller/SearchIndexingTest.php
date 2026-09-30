@@ -20,7 +20,7 @@ final class SearchIndexingTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('Content-Type', 'text/plain; charset=UTF-8');
         $robots = (string) $client->getResponse()->getContent();
-        foreach (['Disallow: /admin', 'Disallow: /cohorte', 'Disallow: /compte', 'Disallow: /*?code=', 'Sitemap: http://localhost/sitemap.xml'] as $line) {
+        foreach (['Disallow: /admin', 'Disallow: /cohorte', 'Disallow: /compte', 'Disallow: /*?code=', 'Disallow: /mesure/', 'Sitemap: http://localhost/sitemap.xml'] as $line) {
             $this->assertStringContainsString($line, $robots);
         }
         $this->assertStringNotContainsString("Disallow: /\n", $robots);

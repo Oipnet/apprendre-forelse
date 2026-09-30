@@ -44,6 +44,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 - **`robots.txt` et `sitemap.xml` gardent leur heure de cache.** Ils sont les mêmes pour tous, mais la vérification
   « visiteur connecté ? » faite pour l'ETag des pages publiques les rendait privés, sans cache.
+- **`robots.txt` écarte `/mesure/`** (traceur de mesure d'audience et son point de collecte) : un robot qui affiche
+  une page ne les charge plus, et ne se compte plus comme visite.
 - **`/favicon.ico` est mis en cache un mois**, comme les autres images du site.
 - **Les manifestes du build Vite (`/build/.vite/`) ne sont plus servis** : la plateforme les lit sur le disque, le
   navigateur n'en a jamais besoin.
