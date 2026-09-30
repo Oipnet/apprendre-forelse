@@ -1,6 +1,6 @@
-# La marque du moteur : servie tant que l'instance ne monte pas la sienne (BRANDING_DIR/marque.yaml).
-# Ses textes d'accueil et sa « person » parlent de Forelse : ils disparaissent dès qu'une autre marque est posée.
-# Même format que marque.yaml (voir examples/marque), plus « person », réservée au moteur.
+# Le thème du moteur (« default ») : servi tant que l'instance ne monte pas le sien (BRANDING_DIR/theme.yaml).
+# Ses textes d'accueil et sa « person » parlent de Forelse : ils disparaissent dès qu'un autre thème est posé.
+# Même format que theme.yaml (voir examples/themes/atelier-bigorneau), plus « person », réservée au moteur.
 
 name: Forelse
 chip: apprendre

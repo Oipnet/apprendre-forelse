@@ -3,7 +3,7 @@
 namespace App\Seo\Page;
 
 use App\Content\Practice;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
 
@@ -15,7 +15,7 @@ final readonly class ConceptSeo
     public function __construct(
         private PageSeo $seo,
         private SchemaOrg $schema,
-        private Branding $branding,
+        private Theme $theme,
     ) {
     }
 
@@ -28,7 +28,7 @@ final readonly class ConceptSeo
     {
         $url = $this->schema->url('app_concepts');
         $this->seo
-            ->setTitle('Les notions travaillées en exercices | '.$this->branding->name(), 'Les notions travaillées en exercices')
+            ->setTitle('Les notions travaillées en exercices | '.$this->theme->name(), 'Les notions travaillées en exercices')
             ->setDescription(sprintf(
                 '%d notions de développement, et pour chacune les exercices qui la font pratiquer : on écrit le code dans le navigateur, des tests disent s\'il est juste.',
                 \count($concepts),
@@ -47,7 +47,7 @@ final readonly class ConceptSeo
         $count = \count($concept['exercises']) + \count($concept['practices']);
         $this->seo
             ->setTitle(
-                sprintf('%s : %d exercices pour la pratiquer | %s', $concept['name'], $count, $this->branding->name()),
+                sprintf('%s : %d exercices pour la pratiquer | %s', $concept['name'], $count, $this->theme->name()),
                 sprintf('%s : %d exercices pour la pratiquer', $concept['name'], $count),
                 sprintf('%s en exercices', $concept['name']),
                 $concept['name'],

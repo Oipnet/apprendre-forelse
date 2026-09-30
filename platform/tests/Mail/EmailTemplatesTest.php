@@ -9,7 +9,7 @@ use App\Entity\User;
 use App\Legal\LegalInfo;
 use App\Legal\LegalVersions;
 use App\Payment\WithdrawalWaiver;
-use App\Tests\BrandingTrait;
+use App\Tests\ThemeTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -25,14 +25,14 @@ use Twig\Environment;
  */
 final class EmailTemplatesTest extends KernelTestCase
 {
-    use BrandingTrait;
+    use ThemeTrait;
 
-    private ?string $brandingDir = null;
+    private ?string $themeDir = null;
 
     protected function tearDown(): void
     {
-        if (null !== $this->brandingDir) {
-            (new Filesystem())->remove($this->brandingDir);
+        if (null !== $this->themeDir) {
+            (new Filesystem())->remove($this->themeDir);
         }
         parent::tearDown();
     }
@@ -132,10 +132,10 @@ final class EmailTemplatesTest extends KernelTestCase
     public function testUneMarqueBlancheNeLaisseRienDuMoteur(): void
     {
         self::bootKernel();
-        $this->brandingDir = sys_get_temp_dir().'/marque-'.bin2hex(random_bytes(6));
-        (new Filesystem())->dumpFile($this->brandingDir.'/marque.yaml', "name: Atelier Bigorneau\nchip: coder\nlogo: logo.webp\n");
-        (new Filesystem())->dumpFile($this->brandingDir.'/logo.webp', 'RIFF');
-        static::getContainer()->get(Environment::class)->addGlobal('marque', self::branding($this->brandingDir));
+        $this->themeDir = sys_get_temp_dir().'/theme-'.bin2hex(random_bytes(6));
+        (new Filesystem())->dumpFile($this->themeDir.'/theme.yaml', "name: Atelier Bigorneau\nchip: coder\nlogo: logo.webp\n");
+        (new Filesystem())->dumpFile($this->themeDir.'/logo.webp', 'RIFF');
+        static::getContainer()->get(Environment::class)->addGlobal('theme', self::theme($this->themeDir));
 
         ['html' => $html, 'text' => $text] = $this->render('registration_attempt', ['user' => self::user()]);
 

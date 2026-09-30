@@ -7,7 +7,7 @@ use App\Content\Author\PostDrafter;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
-use App\Tests\BrandingTrait;
+use App\Tests\ThemeTrait;
 use App\Version;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
@@ -17,7 +17,7 @@ use Symfony\Component\HttpClient\Response\JsonMockResponse;
 /** Les brouillons de post travaillent sur le pack de démonstration, sans rien écrire : ils ne produisent que du texte. */
 final class PostDrafterTest extends TestCase
 {
-    use BrandingTrait;
+    use ThemeTrait;
 
     private const string ROOT = __DIR__.'/../../../..';
     private const string URL = 'https://exemple.test/parcours/decouverte';
@@ -39,7 +39,7 @@ final class PostDrafterTest extends TestCase
             return new JsonMockResponse(['content' => [['type' => 'tool_use', 'name' => 'ecrire_posts', 'input' => ['posts' => $posts]]]]);
         });
 
-        return new PostDrafter(new ModelClient($client, $cle, 'claude-sonnet-5'), $this->content(), new EnvironmentRegistry(self::ROOT.'/environments'), self::branding(), new MockClock('2026-09-27 12:00'), $modelePost);
+        return new PostDrafter(new ModelClient($client, $cle, 'claude-sonnet-5'), $this->content(), new EnvironmentRegistry(self::ROOT.'/environments'), self::theme(), new MockClock('2026-09-27 12:00'), $modelePost);
     }
 
     /**

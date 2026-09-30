@@ -2,7 +2,7 @@
 
 namespace App\Seo\Page;
 
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
 
@@ -14,7 +14,7 @@ final readonly class HomeSeo
     public function __construct(
         private PageSeo $seo,
         private SchemaOrg $schema,
-        private Branding $branding,
+        private Theme $theme,
     ) {
     }
 
@@ -23,20 +23,20 @@ final readonly class HomeSeo
     {
         $home = $this->schema->url('app_home');
         $this->seo
-            ->setTitle('Apprendre à développer en codant dans le navigateur | '.$this->branding->name(), 'Apprendre à développer en codant dans le navigateur')
+            ->setTitle('Apprendre à développer en codant dans le navigateur | '.$this->theme->name(), 'Apprendre à développer en codant dans le navigateur')
             ->setDescription('Apprenez à développer en codant dans votre navigateur, sans vidéo ni installation : un vrai projet, des tests automatiques, le premier chapitre gratuit.')
             ->setCanonical($home)
             ->addStructuredData(['@graph' => [
                 [
                     ...$this->schema->organization(),
-                    ...(null === ($logo = $this->branding->logoLargeUrl()) ? [] : ['logo' => $this->schema->absolute($logo)]),
-                    ...('' === $this->branding->url() ? [] : ['sameAs' => [$this->branding->url()]]),
+                    ...(null === ($logo = $this->theme->logoLargeUrl()) ? [] : ['logo' => $this->schema->absolute($logo)]),
+                    ...('' === $this->theme->url() ? [] : ['sameAs' => [$this->theme->url()]]),
                 ],
                 [
                     '@type' => 'WebSite',
                     '@id' => $home.'#site',
-                    'name' => $this->branding->name(),
-                    'alternateName' => $this->branding->signature(),
+                    'name' => $this->theme->name(),
+                    'alternateName' => $this->theme->signature(),
                     'url' => $home,
                     'inLanguage' => 'fr-FR',
                     'publisher' => ['@id' => $home.'#organisation'],

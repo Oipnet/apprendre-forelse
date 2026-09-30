@@ -10,8 +10,11 @@ twig:
         self_hosting: '@App\Instance\SelfHostingPage'
         # Le blog : sans article paru dans les packs, pas de lien (blog.open).
         blog: '@App\Content\Blog'
-        # Identité de l'instance : nom, puce, couleurs, images, textes de l'accueil (voir App\Instance\Branding).
-        marque: '@App\Instance\Branding'
+        # Thème de l'instance : nom, puce, couleurs, images, textes de l'accueil (voir App\Theme\Theme).
+        theme: '@App\Theme\Theme'
+        # L'ancien nom du même service, pour les gabarits surchargés par les instances d'avant le renommage
+        # (BRANDING_DIR/templates/) : retiré en 4.0. Les gabarits du moteur n'utilisent que « theme ».
+        marque: '@App\Theme\Theme'
         # Balises de la page publique en cours (voir App\Seo\Page et l'attribut #[Seo]).
         seo: '@App\Seo\PageSeo'
         # Mesure d'audience (Umami auto-hébergé) : sans les deux variables ANALYTICS_*, aucune balise.

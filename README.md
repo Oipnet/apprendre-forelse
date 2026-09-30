@@ -32,7 +32,7 @@ tools/            Simulateurs Docker (docker-sim) et Nuxt (nuxt-sim), publicatio
 auto-hebergement/ Guide, compose.yaml et .env.example d'une instance auto-hébergée
 deploy/           production et préproduction de l'instance de Forelse, derrière un proxy commun (deploy/README.md)
 examples/packs/   Pack de démonstration (format de contenu, tests du moteur)
-examples/marque/  Exemple d'identité d'instance (marque blanche) : marque.yaml commenté et ses images
+examples/themes/  Exemple de thème d'instance (marque blanche) : theme.yaml commenté et ses images
 ```
 
 Dans le navigateur :
@@ -303,20 +303,26 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
 
 ## Habiller son instance
 
-Le moteur ne s'appelle « Forelse » que **tant qu'on ne lui dit rien**. Une instance pose sa marque en
+Le moteur ne s'appelle « Forelse » que **tant qu'on ne lui dit rien**. Une instance pose son thème en
 montant un dossier (`BRANDING_DIR`, `/marque` dans l'image) à côté des packs — aucun fork, aucune image
 à reconstruire, rien à republier au titre de l'AGPL : c'est de la configuration, pas du code.
 
 ```
 marque/
-  marque.yaml     nom, puce, accroche, site, couleurs, polices, images, textes de l'accueil
-  logo.svg  favicon.svg  partage.png      les images, nommées dans marque.yaml
+  theme.yaml      nom, puce, accroche, site, couleurs, polices, images, textes de l'accueil
+  logo.svg  favicon.svg  partage.png      les images, nommées dans theme.yaml
   templates/      (facultatif) des gabarits Twig qui remplacent ceux du moteur
 ```
 
-Un exemple complet et commenté, à copier : [examples/marque/marque.yaml](examples/marque/marque.yaml).
+Un exemple complet et commenté, à copier :
+[examples/themes/atelier-bigorneau/theme.yaml](examples/themes/atelier-bigorneau/theme.yaml).
+`bin/console app:theme:verifier` le lit en entier et dit quelle clé corriger.
 
-**La règle à retenir** : dès que `marque.yaml` existe, **plus rien de la marque du moteur n'est servi**.
+> **Avant la 2.6, ce fichier s'appelait `marque.yaml`**, et les gabarits lisaient la variable `marque`.
+> Les deux restent acceptés jusqu'à la 4.0 (un `theme.yaml` l'emporte s'il existe aussi), avec un
+> avertissement : renommez le fichier, et écrivez `theme.name` plutôt que `marque.name` dans vos gabarits.
+
+**La règle à retenir** : dès que `theme.yaml` existe, **plus rien du thème du moteur n'est servi**.
 Ni le nom, ni le logo, ni la favicon, ni l'image de partage, ni les textes d'accueil qui parlent de la
 Taverne du Dragon Ivre et de l'auteur de Forelse. Une instance ne peut donc pas se retrouver à vendre
 une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
@@ -334,7 +340,7 @@ une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
   site suivent la préférence du système et passent en sombre quand elle l'est ; dès que `colors` est déclaré,
   elles restent claires, dans la palette de la marque.
 - `logo`, `icon` et `share` nomment des fichiers **de ce dossier** (jamais un chemin), servis sur
-  `/marque/<rôle>` avec la date du fichier dans l'URL : une image remplacée change d'URL. Sans `icon`,
+  `/theme/<thème>/<date>/<rôle>` : une image remplacée change d'URL. Sans `icon`,
   l'onglet n'affiche aucune icône plutôt que celle du moteur : mieux vaut rien que la marque d'un autre.
 - `home.showcase`, `home.author` et `home.demo` remplissent les trois sections de l'accueil qui parlent
   de la marque (le fil rouge, « qui est derrière », l'illustration du bandeau). Une section non déclarée
@@ -343,7 +349,7 @@ une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
   devient un tableau — le message le dit plutôt que de laisser la page échouer à l'affichage.
 - **L'échappatoire** : un fichier déposé dans `marque/templates/` remplace le gabarit de même nom du
   moteur (`home.html.twig`, `_footer.html.twig`, `legal/notice.html.twig`…). Il n'y a rien à copier
-  d'autre que le fichier à changer. En production les gabarits sont compilés une fois : après en avoir
+  d'autre que le fichier à changer. Le thème y est la variable `theme` (`{{ theme.name }}`). En production les gabarits sont compilés une fois : après en avoir
   déposé un, redémarrez le conteneur.
 - Les tarifs de cohorte (`COHORT_UNIT_PRICE`, `COHORT_TIERS`) sont des variables d'environnement, comme
   les mentions légales (`LEGAL_*`) : aucune instance n'a à reconstruire l'image pour ses prix.

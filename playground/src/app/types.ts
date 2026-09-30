@@ -70,7 +70,7 @@ export type { FrameworkId, FrameworkProfile } from '@forelse/runtime-contract';
 export interface PlaygroundConfig {
 	exerciseUrl: string;
 	sandboxUrl: string;
-	/** L'identité de l'instance, pour la barre du haut (voir App\Instance\Branding). */
+	/** L'identité de l'instance, pour la barre du haut (voir App\Theme\Theme). */
 	brand: { name: string; chip: string; title: string; logoUrl: string | null };
 	/** Exercice d'un parcours, ou de la Pratique (sans suite, sans XP, sans fiche de cours). */
 	context: 'track' | 'practice';

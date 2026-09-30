@@ -1,18 +1,17 @@
 <?php
 
-namespace App\Instance\Branding;
+namespace App\Theme;
 
-use App\Instance\Branding;
 use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
 
 /**
- * Lit la marque au démarrage (cache:clear, cache:warmup) : un marque.yaml invalide arrête le démarrage avec le
+ * Lit le thème au démarrage (cache:clear, cache:warmup) : un theme.yaml invalide arrête le démarrage avec le
  * chemin de la clé en cause, plutôt que de casser la première page qui s'en sert.
  */
-final readonly class BrandingWarmer implements CacheWarmerInterface
+final readonly class ThemeWarmer implements CacheWarmerInterface
 {
     public function __construct(
-        private Branding $branding,
+        private Theme $theme,
     ) {
     }
 
@@ -23,7 +22,7 @@ final readonly class BrandingWarmer implements CacheWarmerInterface
 
     public function warmUp(string $cacheDir, ?string $buildDir = null): array
     {
-        $this->branding->config();
+        $this->theme->config();
 
         return [];
     }

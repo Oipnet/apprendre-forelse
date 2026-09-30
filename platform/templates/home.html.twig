@@ -25,9 +25,9 @@
                         </div>
                     </div>
 
-                    {% if marque.home.demo %}{{ include('home/_demo.html.twig', {demo: marque.home.demo}) }}{% endif %}
+                    {% if theme.home.demo %}{{ include('home/_demo.html.twig', {demo: theme.home.demo}) }}{% endif %}
                 </div>
-                {% if marque.home.demo %}<p class="lp-hero-note">Le code à gauche, la page à droite : changez une ligne, l'aperçu se recharge, les tests vérifient.</p>{% endif %}
+                {% if theme.home.demo %}<p class="lp-hero-note">Le code à gauche, la page à droite : changez une ligne, l'aperçu se recharge, les tests vérifient.</p>{% endif %}
             </div>
         </section>
 
@@ -61,7 +61,7 @@
             </div>
         </section>
 
-        {% if marque.home.showcase %}{{ include('home/_showcase.html.twig', {showcase: marque.home.showcase}) }}{% endif %}
+        {% if theme.home.showcase %}{{ include('home/_showcase.html.twig', {showcase: theme.home.showcase}) }}{% endif %}
 
         <section class="lp-section" id="parcours">
             <div class="lp-wrap">
@@ -140,14 +140,14 @@
             </div>
         </section>
 
-        {% if marque.home.author %}
+        {% if theme.home.author %}
             <section class="lp-section lined">
                 <div class="lp-wrap lp-two top">
                     <div>
-                        {% if marque.home.author.eyebrow is defined %}<span class="lp-eyebrow">{{ marque.home.author.eyebrow }}</span>{% endif %}
-                        <h2 class="lp-h2 sm">{{ marque.home.author.title }}</h2>
+                        {% if theme.home.author.eyebrow is defined %}<span class="lp-eyebrow">{{ theme.home.author.eyebrow }}</span>{% endif %}
+                        <h2 class="lp-h2 sm">{{ theme.home.author.title }}</h2>
                     </div>
-                    <p class="lp-lead">{{ marque.home.author.lead }} Le moteur de la plateforme est sous licence open source (AGPL) : son code est publié, pour le lire ou <a href="{{ self_hosting.enabled ? path('app_self_hosting') : constant('App\\Instance\\SelfHostingPage::REPOSITORY') }}">le faire tourner chez vous</a>.</p>
+                    <p class="lp-lead">{{ theme.home.author.lead }} Le moteur de la plateforme est sous licence open source (AGPL) : son code est publié, pour le lire ou <a href="{{ self_hosting.enabled ? path('app_self_hosting') : constant('App\\Instance\\SelfHostingPage::REPOSITORY') }}">le faire tourner chez vous</a>.</p>
                 </div>
             </section>
         {% endif %}

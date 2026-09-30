@@ -3,7 +3,7 @@
 namespace App\Account;
 
 use App\Entity\User;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Mail\Sender;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,7 +30,7 @@ final readonly class EmailVerifier
         private MailerInterface $mailer,
         private LoggerInterface $logger,
         private Sender $sender,
-        private Branding $branding,
+        private Theme $theme,
     ) {
     }
 
@@ -49,7 +49,7 @@ final readonly class EmailVerifier
 
         $message = $this->sender->email()
             ->to(new Address($email, (string) $user->getDisplayName()))
-            ->subject(sprintf(null === $newEmail ? 'Confirmez votre adresse email sur %s' : 'Confirmez votre nouvelle adresse email sur %s', $this->branding->name()))
+            ->subject(sprintf(null === $newEmail ? 'Confirmez votre adresse email sur %s' : 'Confirmez votre nouvelle adresse email sur %s', $this->theme->name()))
             ->htmlTemplate('emails/confirm_email.html.twig')
             ->textTemplate('emails/confirm_email.txt.twig')
             ->context(['user' => $user, 'link' => $link, 'change' => null !== $newEmail, 'hours' => self::VALIDITY_HOURS]);

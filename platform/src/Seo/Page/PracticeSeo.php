@@ -6,7 +6,7 @@ use App\Content\ContentDates;
 use App\Content\ExerciseStory;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\Practice;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
 
@@ -19,7 +19,7 @@ final readonly class PracticeSeo
         private PageSeo $seo,
         private SchemaOrg $schema,
         private FrameworkRegistry $frameworks,
-        private Branding $branding,
+        private Theme $theme,
         private ExerciseStory $stories,
         private ContentDates $dates,
     ) {
@@ -37,7 +37,7 @@ final readonly class PracticeSeo
 
         $this->seo
             ->setTitle(
-                sprintf('Nouveautés %s en exercices courts | %s', $subject, $this->branding->name()),
+                sprintf('Nouveautés %s en exercices courts | %s', $subject, $this->theme->name()),
                 sprintf('Nouveautés %s en exercices courts', $subject),
                 'Nouveautés des frameworks en exercices courts',
             )
@@ -61,7 +61,7 @@ final readonly class PracticeSeo
         $concepts = \array_slice($version['concepts'], 0, 3);
         $this->seo
             ->setTitle(
-                sprintf('Nouveautés %s en exercices | %s', $version['label'], $this->branding->name()),
+                sprintf('Nouveautés %s en exercices | %s', $version['label'], $this->theme->name()),
                 sprintf('Nouveautés %s en exercices', $version['label']),
                 sprintf('Nouveautés %s', $version['label']),
             )
@@ -105,13 +105,13 @@ final readonly class PracticeSeo
                 'url' => $url,
                 'mainEntityOfPage' => $url,
                 'inLanguage' => 'fr',
-                ...(null === ($image = $this->branding->shareUrl()) ? [] : ['image' => $this->schema->absolute($image)]),
+                ...(null === ($image = $this->theme->shareUrl()) ? [] : ['image' => $this->schema->absolute($image)]),
                 'datePublished' => $practice->published->format('Y-m-d'),
                 'dateModified' => $this->dates->practiceModified($practice),
                 'author' => $this->schema->author(),
                 'publisher' => [
                     ...$this->schema->organization(),
-                    ...(null === ($logo = $this->branding->logoLargeUrl()) ? [] : ['logo' => ['@type' => 'ImageObject', 'url' => $this->schema->absolute($logo)]]),
+                    ...(null === ($logo = $this->theme->logoLargeUrl()) ? [] : ['logo' => ['@type' => 'ImageObject', 'url' => $this->schema->absolute($logo)]]),
                 ],
                 'keywords' => implode(', ', [$this->frameworks->labelOf($practice->framework), ...$practice->exercise->concepts]),
             ])

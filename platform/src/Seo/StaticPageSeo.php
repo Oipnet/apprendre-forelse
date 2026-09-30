@@ -2,7 +2,7 @@
 
 namespace App\Seo;
 
-use App\Instance\Branding;
+use App\Theme\Theme;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
@@ -19,7 +19,7 @@ final readonly class StaticPageSeo
     public function __construct(
         private PageSeo $seo,
         private SchemaOrg $schema,
-        private Branding $branding,
+        private Theme $theme,
     ) {
     }
 
@@ -36,8 +36,8 @@ final readonly class StaticPageSeo
         $request = $event->getRequest();
         $url = $this->schema->url((string) $request->attributes->get('_route'), $request->attributes->get('_route_params', []));
         $this->seo
-            ->setTitle($page->title.' | '.$this->branding->name(), $page->title)
-            ->setDescription(str_replace('%marque%', $this->branding->name(), $page->description))
+            ->setTitle($page->title.' | '.$this->theme->name(), $page->title)
+            ->setDescription(str_replace('%marque%', $this->theme->name(), $page->description))
             ->setCanonical($url);
         if (null !== $page->breadcrumb) {
             $this->seo->addStructuredData($this->schema->breadcrumb([[$page->breadcrumb, $url]]));

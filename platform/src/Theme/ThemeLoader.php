@@ -1,25 +1,32 @@
 <?php
 
-namespace App\Instance\Branding;
+namespace App\Theme;
 
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Lit marque.yaml et le vérifie en entier, en une fois : une erreur (une couleur mal écrite, une clé inconnue,
+ * Lit theme.yaml et le vérifie en entier, en une fois : une erreur (une couleur mal écrite, une clé inconnue,
  * une section d'accueil incomplète) est signalée avec le chemin de sa clé dès le chargement, et non au rendu
- * de la page qui s'en sert. Sans marque.yaml, c'est celui du moteur (marque.yaml, à côté de cette classe).
+ * de la page qui s'en sert. Sans theme.yaml, c'est celui du moteur (theme.yaml, à côté de cette classe).
  *
- * Appelé par Branding au premier usage, par BrandingWarmer au démarrage, et par app:marque:verifier.
+ * Un dossier qui n'a que l'ancien marque.yaml est encore lu, au même format, avec un avis de dépréciation :
+ * les instances d'avant le renommage gardent leur habillage jusqu'à la 4.0. Quand les deux existent, theme.yaml
+ * l'emporte.
+ *
+ * Appelé par Theme au premier usage, par ThemeWarmer au démarrage, et par app:theme:verifier.
  */
-final readonly class BrandingLoader
+final readonly class ThemeLoader
 {
-    public const string FILE = 'marque.yaml';
+    public const string FILE = 'theme.yaml';
 
-    /** Les clés acceptées à la racine de marque.yaml. */
+    /** @deprecated depuis 2.6, retiré en 4.0 : l'ancien nom de theme.yaml. */
+    public const string LEGACY_FILE = 'marque.yaml';
+
+    /** Les clés acceptées à la racine de theme.yaml. */
     public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'colors', 'editor', 'fonts', 'logo', 'icon', 'share', 'home'];
 
-    /** Les images que l'instance peut fournir, et la route qui les sert (voir BrandingController). */
+    /** Les images que l'instance peut fournir, et la route qui les sert (voir ThemeController). */
     public const array IMAGES = ['logo', 'icon', 'share'];
 
     /**
@@ -45,40 +52,46 @@ final readonly class BrandingLoader
         ],
     ];
 
-    /** La personne derrière les contenus : la marque du moteur seulement (données structurées). */
+    /** La personne derrière les contenus : le thème du moteur seulement (données structurées). */
     private const array PERSON_SHAPE = ['name' => 'texte*', 'jobTitle' => 'texte*'];
 
     public function __construct(
-        /** La marque du moteur : son accueil, sa Person. */
+        /** Le thème du moteur : son accueil, sa Person. */
         private string $engineDirectory = __DIR__,
     ) {
     }
 
     /**
-     * @throws \RuntimeException marque.yaml illisible ou invalide, avec le chemin de la clé en cause
+     * @throws \RuntimeException theme.yaml illisible ou invalide, avec le chemin de la clé en cause
      */
-    public function load(string $directory): BrandingConfig
+    public function load(string $directory): ThemeConfig
     {
-        $path = $directory.'/'.self::FILE;
-        if ('' === $directory || !is_file($path)) {
-            return $this->read($this->engineDirectory, true);
+        if ('' !== $directory) {
+            if (is_file($directory.'/'.self::FILE)) {
+                return $this->read($directory, self::FILE, false);
+            }
+            if (is_file($directory.'/'.self::LEGACY_FILE)) {
+                trigger_deprecation('forelse/moteur', '2.6', 'Le thème de %s est décrit par « %s » : renommez ce fichier en « %s ». L\'ancien nom ne sera plus lu en 4.0.', $directory, self::LEGACY_FILE, self::FILE);
+
+                return $this->read($directory, self::LEGACY_FILE, false);
+            }
         }
 
-        return $this->read($directory, false);
+        return $this->read($this->engineDirectory, self::FILE, true);
     }
 
-    private function read(string $directory, bool $engine): BrandingConfig
+    private function read(string $directory, string $file, bool $engine): ThemeConfig
     {
-        $path = $directory.'/'.self::FILE;
+        $path = $directory.'/'.$file;
         try {
             $config = Yaml::parseFile($path);
         } catch (ParseException $e) {
-            throw new \RuntimeException(sprintf('Marque : %s est illisible — %s', $path, $e->getMessage()), previous: $e);
+            throw new \RuntimeException(sprintf('Thème : %s est illisible — %s', $path, $e->getMessage()), previous: $e);
         }
         if (!\is_array($config)) {
-            throw new \RuntimeException(sprintf('Marque : %s doit décrire la marque (voir la documentation).', $path));
+            throw new \RuntimeException(sprintf('Thème : %s doit décrire le thème (voir la documentation).', $path));
         }
-        $error = static fn (string $message) => new \RuntimeException(sprintf('Marque (%s/%s) : %s', $directory, self::FILE, $message));
+        $error = static fn (string $message) => new \RuntimeException(sprintf('Thème (%s) : %s', $path, $message));
 
         $keys = $engine ? [...self::KEYS, 'person'] : self::KEYS;
         foreach (array_keys($config) as $key) {
@@ -91,9 +104,10 @@ final readonly class BrandingLoader
         }
         $name = self::text($config, 'name', '', $error);
 
-        return new BrandingConfig(
+        return new ThemeConfig(
             isDefault: $engine,
             directory: $directory,
+            file: $file,
             name: $name,
             chip: self::text($config, 'chip', 'apprendre', $error),
             // Le titre non déclaré retombe sur le nom, jamais sur celui du moteur.
@@ -101,9 +115,9 @@ final readonly class BrandingLoader
             tagline: self::text($config, 'tagline', 'Apprendre à développer en codant dans le navigateur, sans vidéo ni installation.', $error),
             url: self::text($config, 'url', '', $error),
             images: $engine ? array_fill_keys(self::IMAGES, null) : self::images($config, $directory, $error),
-            colors: self::block($config, 'colors', BrandingStylesheet::COLORS, new HexColor(), $error),
-            editor: self::block($config, 'editor', BrandingStylesheet::EDITOR_COLORS, new HexColor(), $error),
-            fonts: self::block($config, 'fonts', BrandingStylesheet::FONTS, new FontStack(), $error),
+            colors: self::block($config, 'colors', ThemeStylesheet::COLORS, new HexColor(), $error),
+            editor: self::block($config, 'editor', ThemeStylesheet::EDITOR_COLORS, new HexColor(), $error),
+            fonts: self::block($config, 'fonts', ThemeStylesheet::FONTS, new FontStack(), $error),
             home: self::home($config['home'] ?? [], $error),
             person: $engine && isset($config['person']) ? self::person($config['person'], $error) : null,
         );
@@ -127,7 +141,7 @@ final readonly class BrandingLoader
     }
 
     /**
-     * Chaque image déclarée est un fichier du dossier de marque, et il existe.
+     * Chaque image déclarée est un fichier du dossier du thème, et il existe.
      *
      * @param array<mixed>                         $config
      * @param \Closure(string): \RuntimeException $error
@@ -141,7 +155,7 @@ final readonly class BrandingLoader
             $file = $config[$key] ?? null;
             if (null !== $file) {
                 if (!\is_string($file) || '' === trim($file) || basename($file) !== $file) {
-                    throw $error(sprintf('« %s » doit être le nom d\'un fichier du dossier de marque (sans barre oblique).', $key));
+                    throw $error(sprintf('« %s » doit être le nom d\'un fichier du dossier du thème (sans barre oblique).', $key));
                 }
                 if (!is_file($directory.'/'.$file)) {
                     throw $error(sprintf('« %s » : fichier introuvable (%s).', $key, $directory.'/'.$file));
@@ -184,7 +198,7 @@ final readonly class BrandingLoader
     }
 
     /**
-     * Les textes de l'accueil propres à la marque. Chaque clé vaut null quand la section n'est pas
+     * Les textes de l'accueil propres au thème. Chaque clé vaut null quand la section n'est pas
      * déclarée : la page ne l'affiche pas.
      *
      * @param \Closure(string): \RuntimeException $error

@@ -3,7 +3,7 @@
 namespace App\Seo\Page;
 
 use App\Content\Article;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
 
@@ -16,7 +16,7 @@ final readonly class BlogSeo
     public function __construct(
         private PageSeo $seo,
         private SchemaOrg $schema,
-        private Branding $branding,
+        private Theme $theme,
     ) {
     }
 
@@ -24,7 +24,7 @@ final readonly class BlogSeo
     public function index(array $articles): void
     {
         $this->seo
-            ->setTitle('Le blog | '.$this->branding->name(), 'Le blog')
+            ->setTitle('Le blog | '.$this->theme->name(), 'Le blog')
             ->setDescription(
                 'Les coulisses de la plateforme : comment un framework tourne dans le navigateur, comment un exercice se construit et se corrige.',
                 \count($articles) > 1 ? sprintf('%d articles.', \count($articles)) : '',
@@ -36,7 +36,7 @@ final readonly class BlogSeo
     public function article(Article $article): void
     {
         $this->seo
-            ->setTitle(sprintf('%s | %s', $article->title, $this->branding->name()), $article->title)
+            ->setTitle(sprintf('%s | %s', $article->title, $this->theme->name()), $article->title)
             ->setDescription($article->description)
             ->setCanonical($url = $this->schema->url('app_article', ['slug' => $article->slug]))
             ->setType('article')
@@ -47,13 +47,13 @@ final readonly class BlogSeo
                 'url' => $url,
                 'mainEntityOfPage' => $url,
                 'inLanguage' => 'fr',
-                ...(null === ($image = $this->branding->shareUrl()) ? [] : ['image' => $this->schema->absolute($image)]),
+                ...(null === ($image = $this->theme->shareUrl()) ? [] : ['image' => $this->schema->absolute($image)]),
                 'datePublished' => $article->published->format('Y-m-d'),
                 'dateModified' => $article->modified(),
                 'author' => $this->schema->author(),
                 'publisher' => [
                     ...$this->schema->organization(),
-                    ...(null === ($logo = $this->branding->logoLargeUrl()) ? [] : ['logo' => ['@type' => 'ImageObject', 'url' => $this->schema->absolute($logo)]]),
+                    ...(null === ($logo = $this->theme->logoLargeUrl()) ? [] : ['logo' => ['@type' => 'ImageObject', 'url' => $this->schema->absolute($logo)]]),
                 ],
             ])
             ->addStructuredData($this->schema->breadcrumb([

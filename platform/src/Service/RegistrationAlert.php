@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use App\Entity\User;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Mail\Sender;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -23,7 +23,7 @@ final class RegistrationAlert
         private readonly UrlGeneratorInterface $router,
         private readonly LoggerInterface $logger,
         private readonly Sender $sender,
-        private readonly Branding $branding,
+        private readonly Theme $theme,
         #[Autowire(env: 'REGISTRATION_ALERT_EMAIL')]
         private readonly string $recipient,
     ) {
@@ -44,7 +44,7 @@ final class RegistrationAlert
             ->from($this->sender->from())
             ->to($recipient)
             // Plusieurs instances peuvent écrire à la même personne : l'objet dit laquelle.
-            ->subject(sprintf('[%s] Nouvelle inscription : %s', $this->branding->name(), $user->getDisplayName()))
+            ->subject(sprintf('[%s] Nouvelle inscription : %s', $this->theme->name(), $user->getDisplayName()))
             ->textTemplate('emails/registration_alert.txt.twig')
             ->context(['user' => $user, 'adminUrl' => $adminUrl]);
 

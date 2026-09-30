@@ -7,7 +7,7 @@
   un client en mode sombre les inverse lui-même, le <style> ne sert qu'à ceux qui le lisent (Apple Mail).
 -#}
 {%- set site = url('app_home') -%}
-{%- set logo = marque.emailLogoUrl -%}
+{%- set logo = theme.emailLogoUrl -%}
 {%- if logo and logo starts with '/' %}{% set logo = site|trim('/', 'right') ~ logo %}{% endif -%}
 <!doctype html>
 <html lang="fr">
@@ -40,7 +40,7 @@
                     <td class="texte" style="padding:24px 32px 4px;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#16120e;">
                         <a class="nom" href="{{ site }}" style="color:#16120e;text-decoration:none;font-size:20px;font-weight:bold;">
                             {%- if logo %}<img src="{{ logo }}" alt="" width="34" height="40" style="vertical-align:middle;border:0;margin-right:10px;">{% endif -%}
-                            <span style="vertical-align:middle;">{{ marque.name }}</span>
+                            <span style="vertical-align:middle;">{{ theme.name }}</span>
                         </a>
                     </td>
                 </tr>
@@ -51,7 +51,7 @@
                 </tr>
                 <tr>
                     <td class="discret pied" style="padding:16px 32px 24px;border-top:1px solid #e2d9c9;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#6a6252;">
-                        <p style="margin:0 0 6px;">{{ marque.signature }} · <a class="lien" href="{{ site }}" style="color:#9a5b18;">{{ site|trim('/', 'right')|replace({'https://': '', 'http://': ''}) }}</a></p>
+                        <p style="margin:0 0 6px;">{{ theme.signature }} · <a class="lien" href="{{ site }}" style="color:#9a5b18;">{{ site|trim('/', 'right')|replace({'https://': '', 'http://': ''}) }}</a></p>
                         <p style="margin:0;">{% block reason %}{% endblock %}</p>
                         {% block legal %}{% endblock %}
                     </td>

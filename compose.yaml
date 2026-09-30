@@ -31,7 +31,7 @@ services:
       - config:/config
       # Packs de contenu, en lecture seule (vide : pack de démonstration).
       - ${PACKS_DIR:-./examples/packs}:/packs:ro
-      # Identité de l'instance (vide : la marque du moteur). Voir examples/marque/ pour un exemple complet.
+      # Thème de l'instance (vide : le thème du moteur). Voir examples/themes/ pour un exemple complet.
       - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
       # Environnements installés depuis un dépôt Git par l'administration.
       - environnements:/environnements

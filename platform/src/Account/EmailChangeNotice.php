@@ -3,7 +3,7 @@
 namespace App\Account;
 
 use App\Entity\User;
-use App\Instance\Branding;
+use App\Theme\Theme;
 use App\Mail\Sender;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -16,7 +16,7 @@ final readonly class EmailChangeNotice
     public function __construct(
         private MailerInterface $mailer,
         private LoggerInterface $logger,
-        private Branding $branding,
+        private Theme $theme,
         private Sender $sender,
     ) {
     }
@@ -26,7 +26,7 @@ final readonly class EmailChangeNotice
         try {
             $this->mailer->send($this->sender->email()
                 ->to(new Address($previousEmail, (string) $user->getDisplayName()))
-                ->subject(sprintf('Votre adresse sur %s a changé', $this->branding->name()))
+                ->subject(sprintf('Votre adresse sur %s a changé', $this->theme->name()))
                 ->htmlTemplate('emails/email_changed.html.twig')
                 ->textTemplate('emails/email_changed.txt.twig')
                 ->context(['user' => $user, 'newEmail' => (string) $user->getEmail(), 'contact' => $this->sender->contact()]));

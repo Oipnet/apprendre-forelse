@@ -1,11 +1,11 @@
 {% extends 'emails/_layout.html.twig' %}
 
-{% block preheader %}L'adresse de votre compte {{ marque.name }} a été remplacée par {{ newEmail }}.{% endblock %}
+{% block preheader %}L'adresse de votre compte {{ theme.name }} a été remplacée par {{ newEmail }}.{% endblock %}
 
 {% block content %}
 <p style="margin:0 0 12px;">Bonjour {{ user.displayName }},</p>
 
-<p style="margin:0 0 12px;">L'adresse de votre compte {{ marque.name }} vient d'être remplacée par <strong>{{ newEmail }}</strong>. Les emails du compte (mot de passe oublié, achats) partent désormais à cette adresse.</p>
+<p style="margin:0 0 12px;">L'adresse de votre compte {{ theme.name }} vient d'être remplacée par <strong>{{ newEmail }}</strong>. Les emails du compte (mot de passe oublié, achats) partent désormais à cette adresse.</p>
 
 <p style="margin:0 0 12px;">Si c'est vous, il n'y a rien à faire.</p>
 
@@ -13,4 +13,4 @@
 <p style="margin:0;">Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : {% if contact %}écrivez-nous au plus vite à <a class="lien" href="mailto:{{ contact }}" style="color:#9a5b18;">{{ contact }}</a>{% else %}prévenez au plus vite l'éditeur du site, dont les coordonnées figurent dans les <a class="lien" href="{{ url('app_legal_notice') }}" style="color:#9a5b18;">mentions légales</a>{% endif %}, en indiquant cette adresse-ci.</p>
 {% endblock %}
 
-{% block reason %}Vous recevez cet email parce que cette adresse était celle de votre compte {{ marque.name }}.{% endblock %}
+{% block reason %}Vous recevez cet email parce que cette adresse était celle de votre compte {{ theme.name }}.{% endblock %}

@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Instance\Branding;
+namespace App\Theme;
 
 /**
- * Les variables CSS de la marque, à poser après la feuille de styles. Vide quand rien n'est déclaré.
+ * Les variables CSS du thème, à poser après la feuille de styles. Vide quand rien n'est déclaré.
  *
  * Les valeurs ont été vérifiées au chargement (HexColor, FontStack) : rien de ce qui sort d'ici ne peut
  * refermer la balise <style>.
  */
-final class BrandingStylesheet
+final class ThemeStylesheet
 {
     /**
      * Les couleurs réglables et la variable CSS qu'elles écrivent (voir playground/src/site.css).
@@ -48,7 +48,7 @@ final class BrandingStylesheet
 
     public const array FONTS = ['serif' => '--lp-serif', 'sans' => '--lp-sans', 'mono' => '--lp-mono'];
 
-    public static function render(BrandingConfig $config): string
+    public static function render(ThemeConfig $config): string
     {
         $css = self::rule('body.site-page', [...$config->colors, ...$config->fonts]);
         // Le fond de la page est aussi posé sur <html> (pas d'éclair blanc au chargement) : il suit.
