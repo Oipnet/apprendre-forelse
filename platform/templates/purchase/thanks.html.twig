@@ -9,25 +9,25 @@
 {% endblock %}
 
 {% block body %}
-    <main class="form-card">
+    <main class="form-card mx-auto my-10 w-full max-w-md space-y-4 rounded-lg border border-line bg-surface p-6 sm:p-8">
         {% if purchase.status.value == 'paid' %}
-            <h1>Merci !</h1>
+            <h1 class="text-2xl font-semibold">Merci !</h1>
             <p>Votre accès {{ track ? 'au parcours « ' ~ track.title ~ ' »' : 'au parcours' }} est ouvert, à vie. Un email de confirmation vient de partir.</p>
-            {% if track %}<a class="button primary" href="{{ path('app_track', {trackId: track.id}) }}">Aller au parcours →</a>{% endif %}
-            {% if purchase.receiptUrl %}<p class="meta"><a href="{{ purchase.receiptUrl }}" target="_blank" rel="noopener">Voir le reçu</a></p>{% endif %}
+            {% if track %}<a class="btn btn-primary" href="{{ path('app_track', {trackId: track.id}) }}">Aller au parcours →</a>{% endif %}
+            {% if purchase.receiptUrl %}<p class="text-sm text-ink-muted"><a href="{{ purchase.receiptUrl }}" target="_blank" rel="noopener">Voir le reçu</a></p>{% endif %}
         {% elseif purchase.status.value == 'pending' %}
-            <h1>Paiement en cours de confirmation</h1>
+            <h1 class="text-2xl font-semibold">Paiement en cours de confirmation</h1>
             <p role="status">Stripe nous confirme le paiement dans un instant : cette page se met à jour toute seule.</p>
-            <p class="meta">Rien ne bouge au bout d'une minute ? Si vous avez abandonné le paiement, rien n'a été débité. Sinon, <a href="{{ path('app_purchase_thanks', {id: purchase.id}) }}">rechargez la page</a> un peu plus tard : l'accès apparaîtra aussi dans <a href="{{ path('app_account') }}">votre compte</a>.</p>
+            <p class="text-sm text-ink-muted">Rien ne bouge au bout d'une minute ? Si vous avez abandonné le paiement, rien n'a été débité. Sinon, <a href="{{ path('app_purchase_thanks', {id: purchase.id}) }}">rechargez la page</a> un peu plus tard : l'accès apparaîtra aussi dans <a href="{{ path('app_account') }}">votre compte</a>.</p>
         {% elseif purchase.status.value == 'abandoned' %}
-            <h1>Paiement non abouti</h1>
+            <h1 class="text-2xl font-semibold">Paiement non abouti</h1>
             <p>Le paiement n'a pas abouti : rien n'a été débité et l'accès n'est pas ouvert.</p>
-            {% if track %}<a class="button primary" href="{{ path('app_purchase', {trackId: track.id}) }}">Réessayer le paiement</a>{% endif %}
+            {% if track %}<a class="btn btn-primary" href="{{ path('app_purchase', {trackId: track.id}) }}">Réessayer le paiement</a>{% endif %}
         {% elseif purchase.status.value == 'disputed' %}
-            <h1>Paiement contesté</h1>
+            <h1 class="text-2xl font-semibold">Paiement contesté</h1>
             <p>Le paiement est contesté auprès de votre banque : l'accès au parcours est suspendu le temps de la procédure, votre progression est conservée. Il se rouvre si la contestation est close en faveur de l'achat.</p>
         {% else %}
-            <h1>Achat remboursé</h1>
+            <h1 class="text-2xl font-semibold">Achat remboursé</h1>
             <p>Cet achat a été remboursé ; l'accès au parcours est fermé, votre progression est conservée.</p>
         {% endif %}
     </main>

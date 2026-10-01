@@ -2,92 +2,90 @@
 
 {% block title %}Atelier des auteurs · {{ theme.name }}{% endblock %}
 
-{% block body_class %}site-page studio-page{% endblock %}
-
 {% block body %}
     {% set hasFilters = filtres.etat or filtres.recherche %}
-    <main class="st">
-        <div class="lp-wrap">
-            <div class="st-hero">
-                <div class="st-intro">
-                    <p class="st-eyebrow">Atelier</p>
-                    <h1>Atelier des auteurs</h1>
-                    <p class="lead">Choisissez un parcours pour éditer ses chapitres et ses exercices.</p>
+    <main>
+        <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+            <div class="border-b border-line pb-6">
+                <div>
+                    <p class="text-sm font-medium text-ink-muted">Atelier</p>
+                    <h1 class="mt-1 text-3xl font-semibold">Atelier des auteurs</h1>
+                    <p class="lead mt-2 text-lg text-ink-muted">Choisissez un parcours pour éditer ses chapitres et ses exercices.</p>
                 </div>
             </div>
 
-            <ul class="st-kpis">
-                <li><span class="st-kpi-value">{{ total }}</span><span class="st-kpi-label">parcours</span></li>
-                <li><span class="st-kpi-value">{{ chapitres }}</span><span class="st-kpi-label">chapitre{{ chapitres > 1 ? 's' }}</span></li>
-                <li><span class="st-kpi-value">{{ exercices }}</span><span class="st-kpi-label">exercice{{ exercices > 1 ? 's' }}</span></li>
-                <li><span class="st-kpi-value">{{ enPreparation }}</span><span class="st-kpi-label">en préparation</span></li>
+            <ul class="mt-6 flex flex-wrap gap-6">
+                <li><span class="block text-2xl font-semibold">{{ total }}</span><span class="text-sm text-ink-muted">parcours</span></li>
+                <li><span class="block text-2xl font-semibold">{{ chapitres }}</span><span class="text-sm text-ink-muted">chapitre{{ chapitres > 1 ? 's' }}</span></li>
+                <li><span class="block text-2xl font-semibold">{{ exercices }}</span><span class="text-sm text-ink-muted">exercice{{ exercices > 1 ? 's' }}</span></li>
+                <li><span class="block text-2xl font-semibold">{{ enPreparation }}</span><span class="text-sm text-ink-muted">en préparation</span></li>
             </ul>
 
             {# Filtres : un formulaire GET, comme sur la Pratique, pour que l'URL porte la sélection. #}
-            <form class="st-bar" method="get" action="{{ path('app_studio') }}" data-studio-filters>
-                <div class="st-chips">
+            <form class="mt-6 flex flex-wrap items-center gap-2" method="get" action="{{ path('app_studio') }}" data-studio-filters>
+                <div class="flex flex-wrap gap-1.5">
                     {% for choix in [{id: '', label: 'Tous', count: total}, {id: 'publies', label: 'Publiés', count: total - enPreparation}, {id: 'preparation', label: 'En préparation', count: enPreparation}] %}
-                        <label class="st-pill">
-                            <input type="radio" name="etat" value="{{ choix.id }}"{{ filtres.etat == (choix.id ?: null) ? ' checked' }}>
-                            <span>{{ choix.label }}<span class="st-pill-count">{{ choix.count }}</span></span>
+                        <label class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-line px-3 py-1 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent">
+                            <input class="sr-only" type="radio" name="etat" value="{{ choix.id }}"{{ filtres.etat == (choix.id ?: null) ? ' checked' }}>
+                            <span>{{ choix.label }}<span class="ml-1 opacity-70">{{ choix.count }}</span></span>
                         </label>
                     {% endfor %}
                 </div>
-                <input type="search" name="recherche" value="{{ filtres.recherche }}" placeholder="Chercher un parcours…" aria-label="Chercher un parcours" autocomplete="off">
-                <button type="submit" class="st-apply">Filtrer</button>
+                <input class="field max-w-xs" type="search" name="recherche" value="{{ filtres.recherche }}" placeholder="Chercher un parcours…" aria-label="Chercher un parcours" autocomplete="off">
+                <button type="submit" class="btn">Filtrer</button>
             </form>
 
-            <div class="st-list">
+            <div class="mt-6 space-y-4">
                 {% for entree in parcours %}
                     {% set track = entree.track %}
                     {% set prepa = track.isRestricted %}
-                    <article class="st-card{{ prepa ? ' draft' }}">
-                        <div class="st-card-main">
-                            <p class="st-card-head">
-                                <a class="st-card-title" href="{{ path('app_studio_track', {trackId: track.id}) }}">{{ track.title }}</a>
+                    <article class="st-card grid gap-4 rounded-lg border border-line bg-surface p-4 md:grid-cols-[1fr_auto_auto] md:items-center{{ prepa ? ' draft' }}">
+                        <div>
+                            <p class="flex flex-wrap items-center gap-2">
+                                <a class="st-card-title text-lg font-semibold" href="{{ path('app_studio_track', {trackId: track.id}) }}">{{ track.title }}</a>
                                 <span class="tag {{ prepa ? 'draft' : 'live' }}">{{ prepa ? 'En préparation' : 'Publié' }}</span>
                                 {% if not entree.modifiable %}<span class="tag">Lecture seule</span>{% endif %}
                             </p>
-                            <p class="st-card-desc">{{ track.description }}</p>
-                            <p class="st-card-meta">
+                            <p class="mt-1 text-sm text-ink-muted">{{ track.description }}</p>
+                            <p class="mt-1 flex flex-wrap gap-x-3 text-xs text-ink-muted">
                                 <span>{{ entree.pack.title }}</span>
                                 {% if entree.modifie %}<span>modifié le <time datetime="{{ entree.modifie|date('Y-m-d') }}">{{ entree.modifie|date('d/m/Y') }}</time></span>{% endif %}
                             </p>
                         </div>
 
-                        <div class="st-card-figures">
-                            <p class="st-figures">
+                        <div class="text-sm">
+                            <p class="st-figures flex gap-3 text-ink-muted">
                                 <span>{{ entree.chapitres }} chap.</span>
                                 <span>{{ entree.exercices }} ex.</span>
                                 <span class="xp">{{ entree.xp|number_format(0, ',', ' ') }} XP</span>
                             </p>
                             {# La barre suit ce que le moteur sait vraiment mesurer : les fiches de cours écrites. #}
-                            <span class="st-bar-track" aria-hidden="true"><span style="width: {{ entree.chapitres ? (entree.fiches / entree.chapitres * 100)|round : 0 }}%"></span></span>
-                            <p class="st-ready">
+                            <span class="my-1 block h-1.5 w-40 overflow-hidden rounded-full bg-bg-2 [&>span]:block [&>span]:h-full [&>span]:bg-accent" aria-hidden="true"><span style="width: {{ entree.chapitres ? (entree.fiches / entree.chapitres * 100)|round : 0 }}%"></span></span>
+                            <p class="text-xs text-ink-muted">
                                 {%- if entree.chapitres and entree.fiches == entree.chapitres %}Toutes les fiches de cours sont écrites
                                 {%- else %}{{ entree.fiches }} / {{ entree.chapitres }} fiche{{ entree.chapitres > 1 ? 's' }} de cours écrite{{ entree.fiches > 1 ? 's' }}{% endif %}
                             </p>
                         </div>
 
-                        <div class="st-card-actions">
-                            <a class="st-btn primary" href="{{ path('app_studio_track', {trackId: track.id}) }}">Éditer <span aria-hidden="true">→</span></a>
-                            <a class="st-btn" href="{{ path('app_track', {trackId: track.id}) }}">Voir</a>
+                        <div class="flex gap-2">
+                            <a class="btn btn-primary" href="{{ path('app_studio_track', {trackId: track.id}) }}">Éditer <span aria-hidden="true">→</span></a>
+                            <a class="btn" href="{{ path('app_track', {trackId: track.id}) }}">Voir</a>
                         </div>
                     </article>
                 {% else %}
-                    <div class="st-empty">
+                    <div class="st-empty rounded-lg border border-dashed border-line p-8 text-center">
                         <p>{{ total ? 'Aucun parcours ne correspond.' : 'Aucun parcours dans les packs installés.' }}</p>
-                        {% if hasFilters %}<a class="st-btn primary" href="{{ path('app_studio') }}">Tout afficher</a>{% endif %}
+                        {% if hasFilters %}<a class="btn btn-primary" href="{{ path('app_studio') }}">Tout afficher</a>{% endif %}
                     </div>
                 {% endfor %}
             </div>
 
-            <div class="st-aside-block">
+            <div class="st-aside-block mt-8 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-line bg-bg-2 p-5">
                 <div>
-                    <h2>Exercices de pratique</h2>
+                    <h2 class="text-xl font-semibold">Exercices de pratique</h2>
                     <p>Les courts exercices hors parcours se gèrent à part : ils n'appartiennent à aucun chapitre.</p>
                 </div>
-                <a class="st-btn outline" href="{{ path('app_studio_practice') }}">
+                <a class="btn" href="{{ path('app_studio_practice') }}">
                     {{- pratique ? 'Gérer les ' ~ pratique ~ ' exercices' : 'Écrire le premier exercice' }} <span aria-hidden="true">→</span>
                 </a>
             </div>

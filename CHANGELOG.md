@@ -32,6 +32,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
     `.track-offer`, `.track-price`, `.track-chapters`, `.home-upcoming`, `.home-faq`, `.home-showcase`, `.showcase-sign`,
     `.home-author`, `.home-demo`, `form.waitlist-form` et `.waitlist-notice` remplacent leurs équivalents `lp-*`.
   - Nouveaux composants du thème : `tag`, `breadcrumb`, et la coloration du code (`--color-hl-*`).
+- **Thème default, comptes et atelier (#230)** : connexion, inscription, mot de passe oublié, compte, achat, contact,
+  écoles et entreprises, et les pages de l'atelier côté site (liste des parcours, parcours, Pratique, post LinkedIn)
+  passent en utilitaires Tailwind. L'administration et l'espace des chefs de cohorte gardent EasyAdmin.
+  - **Emails** : plus aucune couleur Forelse écrite en dur. Liens et bouton prennent l'accent du thème actif
+    (`Theme::emailColors`), le texte du bouton reste lisible (blanc sur un accent sombre, encre sur un accent clair) ;
+    sans `colors`, ce sont les jetons du thème default.
 
 ### Ajouté
 

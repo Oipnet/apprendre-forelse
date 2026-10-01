@@ -2,53 +2,51 @@
 
 {% block title %}Post LinkedIn · {{ cible.titre }} · Atelier · {{ theme.name }}{% endblock %}
 
-{% block body_class %}site-page studio-page{% endblock %}
-
 {% block body %}
-    <main class="st st-track">
-        <div class="st-track-head">
-            <div class="lp-wrap">
-                <a class="st-back" href="{{ cible.retour }}"><span aria-hidden="true">←</span> {{ cible.retourTitre }}</a>
-                <div class="st-track-row">
-                    <div class="st-track-intro">
-                        <div class="st-title-line">
-                            <h1>Post LinkedIn</h1>
+    <main>
+        <div class="flex flex-wrap items-center gap-2">
+            <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+                <a class="text-sm" href="{{ cible.retour }}"><span aria-hidden="true">←</span> {{ cible.retourTitre }}</a>
+                <div class="flex flex-col gap-4 border-b border-line pb-6 md:flex-row md:justify-between">
+                    <div class="md:max-w-2xl">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h1 class="mt-1 text-3xl font-semibold">Post LinkedIn</h1>
                         </div>
-                        <p class="lead">{{ cible.titre }}{% if cible.resume %} — {{ cible.resume }}{% endif %}</p>
-                        <p class="st-figures">
+                        <p class="lead mt-2 text-lg text-ink-muted">{{ cible.titre }}{% if cible.resume %} — {{ cible.resume }}{% endif %}</p>
+                        <p class="st-figures flex gap-3 text-ink-muted">
                             <span>Trois angles proposés, rien n'est publié ni enregistré</span>
                             <span>{{ config.maximum|number_format(0, ',', ' ') }} caractères au plus</span>
                         </p>
                     </div>
-                    <div class="st-track-actions">
-                        <a class="st-btn" href="{{ config.urls.publique }}" target="_blank" rel="noopener">Voir la page publique</a>
+                    <div class="st-track-actions flex flex-wrap gap-2">
+                        <a class="btn" href="{{ config.urls.publique }}" target="_blank" rel="noopener">Voir la page publique</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="lp-wrap st-post" data-post="{{ config|json_encode }}">
+        <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6" data-post="{{ config|json_encode }}">
             {% if config.ia %}
-                <form class="st-post-form">
+                <form class="st-post-form mt-6 flex flex-wrap items-end gap-3">
                     <label for="precision">Ce que le post doit dire, si vous avez une idée (facultatif)</label>
-                    <textarea id="precision" name="precision" rows="2" maxlength="500"
+                    <textarea class="field" id="precision" name="precision" rows="2" maxlength="500"
                               placeholder="« Insister sur les tests automatiques », « pour des devs qui sortent d'un bootcamp », « raccrocher à la sortie de Symfony 8.1 »"></textarea>
-                    <div class="st-post-go">
-                        <button type="submit" class="st-btn primary">Écrire trois brouillons</button>
-                        <span class="st-post-etat" role="status"></span>
+                    <div class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary">Écrire trois brouillons</button>
+                        <span role="status"></span>
                     </div>
-                    <p class="erreur" role="alert"></p>
+                    <p class="erreur text-sm text-danger" role="alert"></p>
                 </form>
 
-                <div class="st-post-results"></div>
+                <div class="mt-6 space-y-2"></div>
 
-                <p class="st-hint">
+                <p class="st-hint text-sm text-ink-muted">
                     Le lien <code>{{ config.urls.publique }}</code> est ajouté au post. LinkedIn n'affiche que les
                     {{ config.accroche }} premiers caractères avant « …voir plus » : c'est la première ligne qui décide
                     de la lecture. Relisez toujours avant de coller — un modèle écrit vite, il ne signe pas.
                 </p>
             {% else %}
-                <p class="st-hint">
+                <p class="st-hint text-sm text-ink-muted">
                     Génération assistée désactivée : renseignez <code>ANTHROPIC_API_KEY</code> pour l'activer.
                 </p>
             {% endif %}

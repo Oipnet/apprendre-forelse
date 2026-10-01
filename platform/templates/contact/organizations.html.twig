@@ -3,24 +3,24 @@
 {% block body_class %}site-page organizations{% endblock %}
 
 {% block body %}
-    <main class="lp">
-        <section class="lp-hero">
-            <div class="lp-wrap narrow-hero">
-                <span class="lp-eyebrow">Écoles, organismes de formation, entreprises</span>
-                <h1 class="lp-h1">Faites coder votre groupe, <em>pas regarder</em> des vidéos.</h1>
-                <p class="lp-lead">Vos apprenants suivent les parcours dans leur navigateur, sans rien installer : pas de poste à préparer, pas d'environnement à dépanner en début de séance. Vous suivez leur progression, exercice par exercice.</p>
-                <div class="lp-cta">
-                    <a class="lp-btn lg primary" href="#demande">Parler de votre projet <span class="lp-mono">→</span></a>
-                    <a class="lp-btn lg light" href="{{ path('app_tracks') }}">Voir les parcours</a>
+    <main>
+        <section class="border-b border-line bg-bg-2">
+            <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+                <span class="text-sm font-medium text-ink-muted">Écoles, organismes de formation, entreprises</span>
+                <h1 class="mt-1 text-3xl font-semibold">Faites coder votre groupe, <em>pas regarder</em> des vidéos.</h1>
+                <p class="mt-3 text-lg text-ink-muted">Vos apprenants suivent les parcours dans leur navigateur, sans rien installer : pas de poste à préparer, pas d'environnement à dépanner en début de séance. Vous suivez leur progression, exercice par exercice.</p>
+                <div class="mt-6 flex flex-wrap items-center gap-3">
+                    <a class="btn btn-primary" href="#demande">Parler de votre projet <span>→</span></a>
+                    <a class="btn" href="{{ path('app_tracks') }}">Voir les parcours</a>
                 </div>
             </div>
         </section>
 
-        <section class="lp-section tinted">
-            <div class="lp-wrap">
-                <span class="lp-eyebrow">Ce que vous obtenez</span>
-                <h2 class="lp-h2 spaced">Un groupe, des parcours, un suivi.</h2>
-                <div class="lp-cards">
+        <section class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 bg-bg-2">
+            <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+                <span class="text-sm font-medium text-ink-muted">Ce que vous obtenez</span>
+                <h2 class="text-2xl font-semibold mb-6">Un groupe, des parcours, un suivi.</h2>
+                <div class="mt-6 grid gap-4 sm:grid-cols-3">
                     <div><p><strong>Un lien d'invitation.</strong>Chaque groupe a son code : vos apprenants créent leur compte avec, et rejoignent directement la cohorte.</p></div>
                     <div><p><strong>Les parcours de votre choix.</strong>Vous choisissez les parcours ouverts au groupe, et vous pouvez en ajouter en cours de route.</p></div>
                     <div><p><strong>Le suivi de la progression.</strong>Un tableau par apprenant et par exercice : qui a commencé, qui a réussi, où le groupe bloque.</p></div>
@@ -31,11 +31,11 @@
             </div>
         </section>
 
-        <section class="lp-section">
-            <div class="lp-wrap">
-                <span class="lp-eyebrow">Comment ça se passe</span>
-                <h2 class="lp-h2 spaced">De la première question au premier exercice.</h2>
-                <ol class="lp-steps">
+        <section class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
+            <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+                <span class="text-sm font-medium text-ink-muted">Comment ça se passe</span>
+                <h2 class="text-2xl font-semibold mb-6">De la première question au premier exercice.</h2>
+                <ol class="mt-6 grid gap-4 sm:grid-cols-2">
                     <li><h3>Vous nous écrivez</h3><p>Le public, l'effectif, la période, les parcours qui vous intéressent. Le formulaire ci-dessous suffit.</p></li>
                     <li><h3>Vous essayez</h3><p>Le premier chapitre de chaque parcours est gratuit : créez un compte et testez-le, seul ou avec quelques apprenants.</p></li>
                     <li><h3>On chiffre</h3><p>Un devis selon le nombre d'apprenants, de parcours et la durée d'accès, avec un tarif dégressif pour les grands groupes.</p></li>
@@ -44,13 +44,13 @@
             </div>
         </section>
 
-        <section class="lp-section lined" id="demande">
-            <div class="lp-wrap lp-two top">
+        <section class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 border-t border-line" id="demande">
+            <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 grid gap-8 md:grid-cols-2">
                 <div>
-                    <span class="lp-eyebrow">Sur devis</span>
-                    <h2 class="lp-h2 sm">Parlons de votre groupe.</h2>
-                    <p class="lp-lead">Une classe de BUT, une promotion de bootcamp, une équipe de développeurs à faire monter sur un framework : décrivez votre projet, nous revenons vers vous par email avec une proposition.</p>
-                    <p class="lp-muted">Pour une question qui ne concerne pas un groupe, passez plutôt par la <a href="{{ path('app_contact') }}">page de contact</a>.</p>
+                    <span class="text-sm font-medium text-ink-muted">Sur devis</span>
+                    <h2 class="text-2xl font-semibold text-sm">Parlons de votre groupe.</h2>
+                    <p class="mt-3 text-lg text-ink-muted">Une classe de BUT, une promotion de bootcamp, une équipe de développeurs à faire monter sur un framework : décrivez votre projet, nous revenons vers vous par email avec une proposition.</p>
+                    <p class="text-sm text-ink-muted">Pour une question qui ne concerne pas un groupe, passez plutôt par la <a href="{{ path('app_contact') }}">page de contact</a>.</p>
                 </div>
                 {{ include('contact/_form.html.twig', {submitLabel: 'Envoyer la demande'}) }}
             </div>

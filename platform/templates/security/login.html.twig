@@ -3,33 +3,33 @@
 {% block title %}Connexion · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="form-card">
-        <h1>Connexion</h1>
+    <main class="form-card mx-auto my-10 w-full max-w-md space-y-4 rounded-lg border border-line bg-surface p-6 sm:p-8">
+        <h1 class="text-2xl font-semibold">Connexion</h1>
         {% if error %}
-            <div class="alert" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+            <div class="alert rounded-md border border-danger bg-danger-bg px-4 py-3 text-danger" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
         {% endif %}
-        <form method="post">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" value="{{ last_username }}" autocomplete="email" required autofocus>
-            <label for="password">Mot de passe</label>
-            <input type="password" id="password" name="password" autocomplete="current-password" required>
-            <label class="checkbox"><input type="checkbox" name="_remember_me" value="1"> Rester connecté·e sur cet appareil</label>
-            <p class="meta"><a href="{{ path('app_forgot_password_request') }}">Mot de passe oublié ?</a></p>
+        <form class="space-y-4" method="post">
+            <div><label class="mb-1 block font-medium" for="email">Email</label>
+            <input class="field" type="email" id="email" name="email" value="{{ last_username }}" autocomplete="email" required autofocus></div>
+            <div><label class="mb-1 block font-medium" for="password">Mot de passe</label>
+            <input class="field" type="password" id="password" name="password" autocomplete="current-password" required></div>
+            <label class="checkbox flex items-center gap-2"><input class="accent-accent" type="checkbox" name="_remember_me" value="1"> Rester connecté·e sur cet appareil</label>
+            <p class="text-sm text-ink-muted"><a href="{{ path('app_forgot_password_request') }}">Mot de passe oublié ?</a></p>
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
             {% if suite %}
                 {# Après la connexion, la page d'où l'on vient ; après un échec, ce même formulaire, qui s'en souvient. #}
                 <input type="hidden" name="_target_path" value="{{ suite }}">
                 <input type="hidden" name="_failure_path" value="{{ path('app_login', {suite: suite}) }}">
             {% endif %}
-            <button class="primary" type="submit">Se connecter</button>
+            <button class="btn btn-primary w-full" type="submit">Se connecter</button>
         </form>
         {% if oauth.enabled %}
-            <div class="oauth">
+            <div class="oauth space-y-2 border-t border-line pt-4">
                 {% for provider in oauth.enabled %}
-                    <a class="ac-btn outline" href="{{ path('app_oauth_start', {fournisseur: provider.name}|merge(suite ? {suite: suite} : {})) }}">Continuer avec {{ provider.label }}</a>
+                    <a class="btn w-full" href="{{ path('app_oauth_start', {fournisseur: provider.name}|merge(suite ? {suite: suite} : {})) }}">Continuer avec {{ provider.label }}</a>
                 {% endfor %}
             </div>
         {% endif %}
-        <p class="meta">Pas encore de compte ? <a rel="nofollow" href="{{ path('app_register', suite ? {suite: suite} : {}) }}">Créez-en un</a>.</p>
+        <p class="text-sm text-ink-muted">Pas encore de compte ? <a rel="nofollow" href="{{ path('app_register', suite ? {suite: suite} : {}) }}">Créez-en un</a>.</p>
     </main>
 {% endblock %}

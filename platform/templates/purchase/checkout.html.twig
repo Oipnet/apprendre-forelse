@@ -3,33 +3,33 @@
 {% block title %}Acheter « {{ track.title }} » · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="form-card">
-        <h1>{{ track.title }}</h1>
-        <p class="price">
-            {% if offer.quote.discounted %}<s class="meta" aria-label="Prix normal">{{ offer.quote.normalPrice|euros }}</s>{% endif %}
-            <strong>{{ offer.quote.price|euros }}</strong> <span class="meta">TTC</span>
+    <main class="form-card mx-auto my-10 w-full max-w-md space-y-4 rounded-lg border border-line bg-surface p-6 sm:p-8">
+        <h1 class="text-2xl font-semibold">{{ track.title }}</h1>
+        <p class="price text-xl">
+            {% if offer.quote.discounted %}<s class="text-sm text-ink-muted" aria-label="Prix normal">{{ offer.quote.normalPrice|euros }}</s>{% endif %}
+            <strong>{{ offer.quote.price|euros }}</strong> <span class="text-sm text-ink-muted">TTC</span>
         </p>
         <p><strong>Accès à vie au parcours et à ses mises à jour.</strong></p>
         {% if offer.quote.founder %}
-            <p class="meta">Prix fondateur{% if offer.quote.founderSeatsLeft is not null %}, encore {{ offer.quote.founderSeatsLeft }} place{{ offer.quote.founderSeatsLeft > 1 ? 's' }}{% endif %}{% if offer.quote.founderEndsAt %}, jusqu'au {{ offer.quote.founderEndsAt|date('d/m/Y') }}{% endif %}.</p>
+            <p class="text-sm text-ink-muted">Prix fondateur{% if offer.quote.founderSeatsLeft is not null %}, encore {{ offer.quote.founderSeatsLeft }} place{{ offer.quote.founderSeatsLeft > 1 ? 's' }}{% endif %}{% if offer.quote.founderEndsAt %}, jusqu'au {{ offer.quote.founderEndsAt|date('d/m/Y') }}{% endif %}.</p>
         {% elseif offer.quote.cohort %}
-            <p class="meta">Tarif de votre cohorte « {{ offer.quote.cohort.name }} ».</p>
+            <p class="text-sm text-ink-muted">Tarif de votre cohorte « {{ offer.quote.cohort.name }} ».</p>
         {% endif %}
-        <p class="meta">La TVA de votre pays est calculée à l'étape suivante, sur la page de paiement sécurisée de Stripe ; le prix affiché la comprend.</p>
+        <p class="text-sm text-ink-muted">La TVA de votre pays est calculée à l'étape suivante, sur la page de paiement sécurisée de Stripe ; le prix affiché la comprend.</p>
 
         {{ form_start(form) }}
-            <div class="waiver">
+            <div class="waiver flex items-start gap-2 [&_input]:mt-1 [&_input]:accent-accent">
                 {{ form_widget(form.termsOfSale) }}
                 {{ form_label(form.termsOfSale) }}
             </div>
             {{ form_errors(form.termsOfSale) }}
-            <div class="waiver">
+            <div class="waiver flex items-start gap-2 [&_input]:mt-1 [&_input]:accent-accent">
                 {{ form_widget(form.withdrawalWaiver) }}
                 {{ form_label(form.withdrawalWaiver) }}
             </div>
             {{ form_errors(form.withdrawalWaiver) }}
-            <button class="primary" type="submit">Payer {{ offer.quote.price|euros }}</button>
+            <button class="btn btn-primary w-full" type="submit">Payer {{ offer.quote.price|euros }}</button>
         {{ form_end(form) }}
-        <p class="meta"><a href="{{ path('app_track', {trackId: track.id}) }}">Retour au parcours</a></p>
+        <p class="text-sm text-ink-muted"><a href="{{ path('app_track', {trackId: track.id}) }}">Retour au parcours</a></p>
     </main>
 {% endblock %}
