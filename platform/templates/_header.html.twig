@@ -3,7 +3,7 @@
   Variables : theme (App\Theme\Theme), brand_chip (la puce, déjà rendue : « atelier » dans l'atelier), login_suite
   (string|null : la page où revenir après connexion), blog (App\Content\Blog), app.user (App\Entity\User|null).
   Obligatoire : les liens de connexion et d'inscription pour un visiteur, le menu du compte et la déconnexion pour un
-  apprenant. Facultatif : une barre d'avancée de lecture, [data-progress], que le script du moteur fait avancer.
+  apprenant. Le menu du compte garde [data-account-menu] : le script du moteur le referme d'un clic ailleurs.
   Les classes site-*, account-* ne portent aucun style : ce sont des repères pour les tests et les thèmes.
 #}
 <header class="site-header border-b border-line bg-surface">

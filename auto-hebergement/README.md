@@ -10,7 +10,7 @@ un petit serveur suffit, même pour beaucoup d'apprenants.
 - [Installation](#installation)
 - [Premier administrateur](#premier-administrateur)
 - [Contenu : les packs](#contenu--les-packs)
-- [Votre marque](#votre-marque)
+- [Vos thèmes](#vos-thèmes)
 - [Réglages](#réglages)
 - [Derrière un reverse proxy](#derrière-un-reverse-proxy)
 - [Essai sur votre poste](#essai-sur-votre-poste)
@@ -118,42 +118,46 @@ packs/
   ⚠️ `content:check` **exécute le PHP des packs** sur votre serveur : ne le lancez que sur des packs de
   confiance. Les apprenants, eux, n'exécutent rien sur le serveur.
 
-## Votre marque
+## Vos thèmes
 
-> **Depuis la 2.6, une instance peut installer plusieurs thèmes** dans `themes/` (un dossier par thème, monté
-> sur `/themes`) et choisir le thème actif dans `/admin` → Thèmes, avec un aperçu avant de l'activer pour tous
-> (voir le README, « Habiller son instance »). Le dossier `marque/` décrit ci-dessous reste lu : il apparaît
-> comme le thème `instance`.
-
-Sans rien, l'instance s'appelle « Forelse » et son accueil raconte la Taverne du Dragon Ivre. Pour poser
-votre marque, créez un dossier `marque/` à côté de `compose.yaml` — il est déjà monté :
+Sans rien, l'instance prend le thème `default` du moteur : sobre, et qui s'appelle « default ». Pour poser votre
+marque, installez un thème dans le dossier `themes/` à côté de `compose.yaml` — il est déjà monté sur `/themes`, en
+lecture seule. Un sous-dossier par thème ; son nom est l'identifiant du thème.
 
 ```bash
-mkdir -p marque
-curl -fsSL -o marque/theme.yaml \
+mkdir -p themes/mon-theme
+curl -fsSL -o themes/mon-theme/theme.yaml \
   https://raw.githubusercontent.com/oipnet/apprendre-forelse/main/examples/themes/atelier-bigorneau/theme.yaml
-# éditez marque/theme.yaml, déposez vos images à côté, puis :
-docker compose up -d
+# éditez themes/mon-theme/theme.yaml, déposez vos images à côté, puis :
+chmod -R a+rX themes
+```
+
+Puis **`/admin` → Thèmes** : l'état de chaque thème, un **aperçu** qui ne le montre qu'à vous, et **Activer**, qui
+le montre à tous dès la requête suivante, sans redémarrer. Un thème en erreur ne s'active pas. En ligne de commande :
+
+```bash
+docker compose exec app bin/console app:theme:activer mon-theme
 docker compose exec app bin/console app:theme:verifier   # dit quelle clé corriger, s'il y en a une
 ```
 
-Avant la 2.6, ce fichier s'appelait `marque.yaml` : il reste lu jusqu'à la 4.0, mais renommez-le en
-`theme.yaml` (la commande ci-dessus vous le rappelle).
+Rien ne se téléverse depuis l'admin : les gabarits et les scripts d'un thème s'exécutent avec les droits de la
+plateforme, ils arrivent par ce dossier. `THEME` (dans `.env`) donne le thème de départ, tant que l'admin n'en a pas
+choisi un.
 
-**Dès que `marque/theme.yaml` existe, plus rien du thème du moteur n'est servi** : ni le nom, ni le
-logo, ni la favicon, ni l'image de partage, ni les textes d'accueil de Forelse. Vous ne risquez pas de
-laisser traîner « Forelse » dans un coin de page ou dans un email.
+**Dès qu'un `theme.yaml` existe, rien du thème default ne subsiste** : ni son nom, ni son accroche, ni sa favicon.
+Ce que votre thème ne déclare pas n'apparaît pas.
 
 Le fichier d'exemple est commenté ligne à ligne. En résumé :
 
 | Clé | Ce qu'elle habille |
 | --- | --- |
 | `name` (obligatoire) | En-tête, pied de page, titres des pages, **emails**, balises de partage |
-| `chip`, `tagline`, `title`, `url` | La puce à côté du nom, la phrase du pied de page, le titre de l'accueil, votre site |
-| `logo`, `icon`, `share` | Vos images, déposées dans ce dossier (jamais un chemin) |
-| `colors`, `fonts` | Les couleurs et polices du thème clair (les pages du site). Sans `colors`, le site suit le thème clair ou sombre du système ; avec, il reste clair |
-| `editor` | Les couleurs du thème sombre (l'éditeur d'exercice et l'atelier) |
-| `home.showcase`, `home.author`, `home.demo` | Les trois sections de l'accueil qui parlent de vous ; non déclarées, elles n'apparaissent pas |
+| `chip`, `tagline`, `title`, `url`, `person` | La puce à côté du nom, l'accroche, le titre de l'accueil, votre site, l'auteur des parcours |
+| `logo`, `icon`, `share`, `email_logo` | Vos images, déposées dans ce dossier (jamais un chemin) |
+| `colors`, `fonts` | Les couleurs et polices des pages du site et des emails. Sans `colors`, le site suit le thème clair ou sombre du système ; avec, il reste clair |
+| `editor` | Les couleurs de l'éditeur d'exercice et de l'atelier (sombres). Sans elles, la palette neutre du moteur |
+| `home.showcase`, `home.author`, `home.demo` | Les sections de l'accueil qui parlent de vous ; non déclarées, elles n'apparaissent pas |
+| `stylesheets`, `scripts`, `preload` | Vos feuilles, scripts et polices, dans `assets/` |
 
 Une couleur mal écrite ou une clé inconnue **arrête la page** avec un message qui dit quoi corriger :
 mieux vaut une erreur franche qu'une instance à moitié habillée. Vérifiez après coup :
@@ -162,13 +166,25 @@ mieux vaut une erreur franche qu'une instance à moitié habillée. Vérifiez ap
 docker compose logs --tail 50 app
 ```
 
-**Aller plus loin : vos propres pages.** Un gabarit Twig déposé dans `marque/templates/` remplace celui
-du moteur qui porte le même nom — `home.html.twig` pour refaire l'accueil, `_footer.html.twig` pour le
-pied de page, `legal/notice.html.twig` pour vos mentions. Vous ne copiez que le fichier à changer. Les
-gabarits sont compilés une fois : après en avoir déposé un, `docker compose restart app`.
+**Aller plus loin : vos propres pages.** Un gabarit Twig déposé dans `themes/mon-theme/templates/` remplace celui
+du moteur qui porte le même nom — `home/_hero.html.twig` pour le bandeau d'accueil, `_footer.html.twig` pour le pied
+de page, `legal/notice.html.twig` pour vos mentions. Vous ne copiez que le fichier à changer, et il se voit dès la
+requête suivante. Les gabarits qu'un thème peut remplacer, leurs variables et la façon de construire une feuille
+sont décrits dans [docs/themes.md](../docs/themes.md). La page d'exercice et les éditeurs de l'atelier ne se
+remplacent pas : votre thème les habille par `editor`, `fonts.mono`, son nom et son logo.
 
-Ce qui reste du moteur dans tous les cas : le pied de page indique sa version et sa licence AGPL, comme
-la licence l'exige.
+Ce qui reste du moteur dans tous les cas : le pied de page indique sa version et sa licence AGPL, avec le lien vers
+son code, comme la licence l'exige.
+
+### L'ancien dossier `marque/` (déprécié)
+
+Avant la 2.6, une instance n'avait qu'un thème, dans `marque/` (`BRANDING_HOST_DIR`, monté sur `/marque`), et son
+fichier s'appelait `marque.yaml`. Ce dossier **reste lu jusqu'à la 4.0** : il apparaît dans l'admin comme le thème
+`instance`, actif tant que vous n'en avez pas choisi un autre. Pour passer au nouveau format :
+
+1. renommez `marque/marque.yaml` en `theme.yaml` (`app:theme:verifier` vous le rappelle) ;
+2. déplacez le dossier dans `themes/<nom>/` ;
+3. activez-le depuis `/admin` → Thèmes.
 
 ## Ajouter un environnement d'exécution
 
@@ -259,7 +275,8 @@ docker compose up -d
 | Mentor et IA | `ANTHROPIC_API_KEY`, `AI_MODEL`, `AI_MODEL_POST`, `MENTOR_DAILY_LIMIT` | Revue de code et erreurs expliquées pour les apprenants connectés, brouillons dans l'atelier. Chaque appel est facturé sur votre clé ; sans clé, les boutons n'apparaissent pas. `AI_MODEL_POST` ne concerne que les brouillons de post LinkedIn ; vide, ils suivent `AI_MODEL`. Le mentor demande une adresse confirmée, et se limite à 40 appels par heure et par compte, 100 par adresse IP, et `MENTOR_DAILY_LIMIT` (500) par jour pour toute l'instance. |
 | Vente | `STRIPE_*`, `LEGAL_MEDIATOR_*`, `LEGAL_REFUND_DAYS` | Facultatif : **une instance sans tarif reste entièrement gratuite** pour les comptes. Détails dans le [README](../README.md#parcours-payants). |
 | Environnements | `INSTALLED_ENVIRONMENTS_DIR`, `ENVIRONMENT_SOURCES_ALLOWLIST`, `ENVIRONMENTS_AUTO_INSTALL` | Installer un environnement d'exécution depuis un dépôt Git. **Exécute le code du dépôt sur ce serveur** : voir [Ajouter un environnement d'exécution](#ajouter-un-environnement-dexécution). |
-| Marque | `BRANDING_HOST_DIR`, `COHORT_*` | Votre nom, vos couleurs, vos images, vos tarifs de cohorte : voir [Votre marque](#votre-marque). |
+| Thèmes | `THEMES_HOST_DIR`, `THEME`, `BRANDING_HOST_DIR` (déprécié) | Votre nom, vos couleurs, vos images, vos pages : voir [Vos thèmes](#vos-thèmes). |
+| Cohortes | `COHORT_*` | Vos tarifs de cohorte. |
 | Image | `APP_IMAGE` | Voir [Mettre à jour](#mettre-à-jour). |
 
 ## Savoir qui visite le site

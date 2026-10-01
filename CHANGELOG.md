@@ -8,6 +8,71 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+Cette version sera la **3.0.0** : une instance auto-hébergée sans thème change d'apparence, et les gabarits ou
+feuilles qui s'appuyaient sur `site.css` perdent leur rendu. La section « Migration » ci-dessous dit quoi faire,
+selon ce que votre instance avait.
+
+### Migration depuis 2.x
+
+- **Vous n'aviez pas de `marque.yaml`** : rien à faire. Votre instance passe au thème `default` du moteur (sobre,
+  nommé « default »). Le design de Forelse n'est plus livré avec le moteur ; pour donner un nom et des couleurs à
+  votre instance, installez un thème (README, « Thèmes »).
+- **Vous aviez un dossier `marque/`** : il reste actif, comme le thème `instance`, jusqu'à la 4.0. Pour passer au
+  nouveau format :
+  1. renommez `marque.yaml` en `theme.yaml` ;
+  2. déplacez le dossier dans `themes/<nom>/` (volume `./themes`, monté sur `/themes`) ;
+  3. activez-le depuis `/admin` → Thèmes (ou `bin/console app:theme:activer <nom>`).
+- **Vous aviez `colors`, `editor` ou `fonts`** : ils s'appliquent désormais au thème default et à l'éditeur ;
+  vérifiez le rendu avec l'aperçu de `/admin` → Thèmes. `colors.gold` devient `--color-highlight`. Sans `editor`,
+  l'éditeur prend la nouvelle palette neutre (gris et bleu) ; pour garder l'ancienne, violette, déclarez-la :
+
+  ```yaml
+  editor:
+    accent: '#7c6cf2'
+    accent-fill: '#6655e0'
+    accent-text: '#9186f5'
+    gold: '#e0b04a'
+    background: '#16171d'
+    surface: '#1e1f26'
+    surface-2: '#25262e'
+    line: '#33343d'
+    ink: '#e6e6ea'
+    muted: '#9a9aa6'
+    success: '#3fbf7f'
+    error: '#ef5a5a'
+  ```
+- **Vous surchargiez des gabarits ou visiez des classes de `site.css`** : `site.css` n'existe plus, ni ses variables
+  `--lp-*`. Les pages sont écrites en utilitaires Tailwind sur des jetons (`--color-*`, `--font-*`, voir
+  `docs/themes.md`).
+
+  | Avant (2.x) | Maintenant |
+  | --- | --- |
+  | `--lp-*` sur `body.site-page` | les jetons `--color-*` et `--font-*` sur `<html>` |
+  | `.lp-header`, `.lp-brand`, `.lp-serif`, `.lp-chip` | `_header.html.twig` ; repères `.site-header`, `.site-brand`, `.site-name`, `.site-chip` |
+  | `.lp-account`, `.lp-account-menu` | `.account`, `.account-menu` |
+  | `.ft-brand` | `_footer.html.twig` ; repère `.footer-brand` |
+  | `.lp-hero`, `.lp-cta` | `home/_hero.html.twig` ; `.home-hero`, `.home-cta` |
+  | les sections `lp-*` de l'accueil | un point de surcharge par section (`home/_tracks`, `_showcase`, `_author`, `_signup`, `_faq`…) ; repères `.home-*`, `.track-*`, `.waitlist-*` |
+  | `home/_promise`, `_how`, `_ai`, `_audience` | vides dans le thème default : un thème les remplit |
+  | les animations de `site.ts` (barre de lecture, cartes, démonstration, onglets) | `assets/theme.js` du thème, via `scripts` |
+  | Newsreader, Instrument Sans | une police du thème, déclarée dans sa feuille et `preload` |
+
+  Plus généralement, **aucune classe de `site.css` n'a plus de style** : les familles `lp-*`, `ft-*`, `ac-*`
+  (compte), `pr-*` et `practice-*` (Pratique), `tr-*` et `track-*` (parcours), `st-*` et `studio-*` (atelier),
+  `exercise-*`, `chapter-outline-*`, `lesson-*`, `blog-*`, `concept*`, `legal-*`, `error-*`, `contact-*`, `flash-*`,
+  `form-card`, `price-box`, `xp-badge`. Quelques-unes restent dans le HTML comme repères, sans style (`st-*`,
+  `ac-featured`, `ac-kpis`, `ac-tag`, `tr-chapter-meta`) ; seules `hl-*` (coloration du code) gardent le leur. Les
+  variables `--lp-*` (`--lp-bg`, `--lp-ink`, `--lp-gold`, `--lp-serif`…) sont toutes retirées : une feuille de thème
+  qui les lisait passe aux jetons `--color-*` et `--font-*`.
+
+  Les surcharges de `exercise/play.html.twig`, `studio/edit.html.twig` et `studio/lesson.html.twig` ne sont plus
+  prises en compte : ces pages étendent `editor_base.html.twig`, verrouillée. Elles s'habillent par `editor`,
+  `fonts.mono`, le nom et le logo du thème.
+- **`SELF_HOSTING_PAGE`** est supprimée : `/auto-hebergement` n'existe que si le thème actif fournit
+  `self_hosting/index.html.twig`. Retirez la variable de votre `.env`.
+- **Le logo, la favicon et l'image de partage** ne sont plus fournis par le moteur (sauf une favicon neutre) :
+  déclarez les vôtres (`logo`, `icon`, `share`).
+
 ### Modifié (incompatible : 3.0)
 
 - **Le thème default passe à Tailwind (#228)** : `base.html.twig`, l'en-tête, le pied de page, la page d'erreur, les
@@ -19,7 +84,7 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
     ces variables doit passer aux nouveaux noms (voir `docs/themes.md`, « Construire un thème Tailwind »).
   - Les repères de l'en-tête changent : `.site-header`, `.site-brand`, `.site-name`, `.site-chip`, `.account`,
     `.account-menu`, `.footer-brand` remplacent `.lp-header`, `.lp-brand`, `.lp-serif`, `.lp-chip`, `.lp-account`,
-    `.lp-account-menu`, `.ft-brand`. Le lien « Questions » quitte la navigation (la FAQ part dans le thème Forelse).
+    `.lp-account-menu`, `.ft-brand`. Le lien « Questions » quitte la navigation.
   - Newsreader et Instrument Sans ne sont plus préchargées (`FontPreloadExtension` retirée) : un thème précharge ses
     polices avec `preload`.
 - **Thème default, pages de contenu (#229)** : accueil, catalogue, parcours, sommaire et fiche de chapitre, page
@@ -60,6 +125,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Un thème d'exemple complet (#232)** : `examples/themes/atelier-bigorneau/` a maintenant une feuille écrite à la
+  main (`assets/theme.css`), un court script qui respecte `prefers-reduced-motion` (`assets/theme.js`), une surcharge
+  du bandeau d'accueil (`templates/home/_hero.html.twig`) et une palette `editor`. `make dev` pointe `THEMES_DIR` sur
+  `examples/themes` : le thème apparaît dans l'admin, prêt à être prévisualisé.
+- **Documentation des thèmes (#232)** : README, « Thèmes » (installer, choisir, format, ce qu'un thème ne touche
+  pas) ; `docs/themes.md` (animations, AGPL) ; `auto-hebergement/README.md`, « Vos thèmes », avec le volume
+  `./themes` et `THEMES_HOST_DIR`, `THEME` dans `.env.example`.
 - **Vérifier un thème externe contre le moteur** : `ThemeSitemapTest` rend chaque page du sitemap avec le thème
   désigné par `THEME_UNDER_TEST`, sur les packs de `CONTENT_PACKS_PATHS`, et demande chaque fichier qu'il apporte. Le
   dépôt qui publie un thème s'en sert dans sa CI (voir `docs/themes.md`).
@@ -756,8 +828,8 @@ tel quel.
   alerte d'inscription), les balises Open Graph et les données structurées. Clés : `name` (obligatoire),
   `chip`, `title`, `tagline`, `url`, `logo`, `icon`, `share`, `colors`, `fonts` et `home`. Exemple
   commenté à copier dans [examples/marque/](examples/marque/marque.yaml), guide dans le
-  [README](README.md#habiller-son-instance) et dans
-  [auto-hebergement/README.md](auto-hebergement/README.md#votre-marque).
+  [README](README.md#thèmes) et dans
+  [auto-hebergement/README.md](auto-hebergement/README.md#vos-thèmes).
 - **Règle « tout ou rien »** : dès qu'un `marque.yaml` existe, plus rien de la marque du moteur n'est
   servi — ni le nom, ni le logo, ni la favicon, ni l'image de partage, ni les trois sections d'accueil
   qui parlent de la Taverne du Dragon Ivre et de l'auteur de Forelse. Une instance ne peut pas se
