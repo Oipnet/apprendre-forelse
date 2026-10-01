@@ -32,6 +32,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
     `.track-offer`, `.track-price`, `.track-chapters`, `.home-upcoming`, `.home-faq`, `.home-showcase`, `.showcase-sign`,
     `.home-author`, `.home-demo`, `form.waitlist-form` et `.waitlist-notice` remplacent leurs équivalents `lp-*`.
   - Nouveaux composants du thème : `tag`, `breadcrumb`, et la coloration du code (`--color-hl-*`).
+- **La page d'exercice et les éditeurs de l'atelier sortent du thème (#235)** : ils étendent `editor_base.html.twig`
+  (verrouillée, comme `_head.html.twig` et `_theme_preview.html.twig`) et ne chargent ni la feuille, ni les scripts,
+  ni les gabarits du thème actif, ni la feuille du thème default.
+  - Leur feuille, `editor.css`, est autonome : plus de `site.css` sous l'éditeur. Le titre des consignes passe en
+    police système ; JetBrains Mono reste, remplaçable par `fonts.mono` (`--font-mono`).
+  - **Palette neutre** de l'éditeur (gris et bleu, contrastes AA vérifiés). L'ancienne, violette, est celle de
+    Forelse : une instance qui la veut la déclare sous `editor:`. Nouvelles clés `editor.accent-fill` et
+    `editor.accent-text`.
+  - `base.html.twig` n'a plus de variable `theme_assets` : les éditeurs ne l'étendent plus.
 - **Thème default, comptes et atelier (#230)** : connexion, inscription, mot de passe oublié, compte, achat, contact,
   écoles et entreprises, et les pages de l'atelier côté site (liste des parcours, parcours, Pratique, post LinkedIn)
   passent en utilitaires Tailwind. L'administration et l'espace des chefs de cohorte gardent EasyAdmin.

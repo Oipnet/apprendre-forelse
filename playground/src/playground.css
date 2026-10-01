@@ -1,4 +1,4 @@
-/* Espace d'exercice (chargé avec site.css, qui porte les variables et les boutons). */
+/* Espace d'exercice (chargé après editor.css, qui porte les variables et les boutons). */
 /* L'éditeur occupe exactement la fenêtre et ne défile pas (le site, lui, s'étire). */
 html:has(> body.playground-page),
 body.playground-page {
@@ -279,14 +279,13 @@ body.playground-page {
 	display: block;
 }
 .topbar .lp-brand .lp-serif {
-	font-family: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-	font-weight: 500;
+	font-weight: 600;
 	font-size: 19px;
 	letter-spacing: -0.01em;
 	line-height: 1;
 }
 .topbar .lp-chip {
-	font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+	font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, Menlo, monospace);
 	font-size: 10px;
 	text-transform: uppercase;
 	letter-spacing: 0.14em;
@@ -853,7 +852,7 @@ dialog.shortcuts h2 {
 	margin: 0;
 }
 .shortcuts-list kbd {
-	font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+	font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, Menlo, monospace);
 	font-size: 12px;
 	padding: 0.1rem 0.4rem;
 	border: 1px solid var(--border);

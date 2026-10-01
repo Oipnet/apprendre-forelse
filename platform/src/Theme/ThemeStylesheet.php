@@ -35,6 +35,8 @@ final class ThemeStylesheet
      */
     public const array EDITOR_COLORS = [
         'accent' => '--accent',
+        'accent-fill' => '--accent-fill',
+        'accent-text' => '--accent-text',
         'gold' => '--gold',
         'background' => '--bg',
         'surface' => '--panel',

@@ -38,6 +38,10 @@ final class TemplateContract
 
     /** @var list<string> */
     public const array LOCKED = [
+        // La page de base des éditeurs, et ce qu'elle partage avec celle du site : ni le thème, ni ses gabarits.
+        'editor_base.html.twig',
+        '_head.html.twig',
+        '_theme_preview.html.twig',
         'exercise/play.html.twig',
         'studio/edit.html.twig',
         'studio/lesson.html.twig',

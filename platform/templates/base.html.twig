@@ -6,9 +6,7 @@
   Blocs : title, robots, font_preloads, stylesheets, javascripts, body_class, header (et brand_chip), body, footer.
   Variables : theme (App\Theme\Theme), seo (App\Seo\PageSeo), blog, analytics, app.
 #}
-{# Les feuilles, scripts et polices du thème (theme.yaml). La page d'exercice et les éditeurs de l'atelier les
-   refusent en posant « theme_assets = false » : ils ont leur propre habillage (voir #235). #}
-{% set theme_assets = theme_assets ?? true %}
+{# La page d'exercice et les éditeurs de l'atelier n'étendent pas cette page : voir editor_base.html.twig (#235). #}
 {# data-theme="auto" : les pages du site suivent le thème du système (voir le thème sombre de theme-default.css). #}
 <html lang="fr"{% if theme.followsSystemTheme %} data-theme="auto"{% endif %}>
     <head>
@@ -16,62 +14,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         {# Pages publiques : balises remplies par App\Seo\Page ou l'attribut #[Seo] de l'action. Les autres gardent leur bloc title. #}
         <title>{% if seo.title %}{{ seo.title }}{% else %}{% block title %}{{ theme.title }}{% endblock %}{% endif %}</title>
-        {% if seo.description -%}
-            <meta name="description" content="{{ seo.description }}">
-        {% endif -%}
+        {{ include('_head.html.twig') }}
         {% block robots %}{% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">{% endif %}{% endblock %}
-        {% if seo.canonical -%}
-            <link rel="canonical" href="{{ seo.canonical }}">
-            <meta property="og:type" content="{{ seo.type }}">
-            <meta property="og:site_name" content="{{ theme.name }}">
-            <meta property="og:locale" content="fr_FR">
-            <meta property="og:url" content="{{ seo.canonical }}">
-            <meta property="og:title" content="{{ seo.title }}">
-            {% if seo.description %}<meta property="og:description" content="{{ seo.description }}">{% endif %}
-            {% if seo.image -%}
-                <meta property="og:image" content="{{ seo.image }}">
-            {%- elseif theme.shareUrl -%}
-                <meta property="og:image" content="{{ absolute_url(theme.shareUrl) }}">
-                <meta property="og:image:width" content="1200">
-                <meta property="og:image:height" content="630">
-            {%- endif %}
-            {% if seo.image or theme.shareUrl -%}
-                <meta property="og:image:alt" content="{{ seo.imageAlt ?? (theme.name ~ ' : ' ~ theme.tagline) }}">
-                <meta name="twitter:card" content="summary_large_image">
-            {%- else -%}
-                {# Sans image, X affiche quand même une carte : titre et description. #}
-                <meta name="twitter:card" content="summary">
-            {% endif -%}
-        {% endif -%}
-        {% for data in seo.structuredData -%}
-            <script type="application/ld+json">{{ data|json_ld }}</script>
-        {% endfor -%}
-        {%- if theme.iconUrl %}
-        <link rel="icon" type="image/svg+xml" href="{{ theme.iconUrl }}">
-        {%- if not theme.default %}<link rel="apple-touch-icon" href="{{ theme.iconUrl }}">{% endif %}
-        {%- elseif not theme.default %}
-        {# Sans icône déclarée, le navigateur irait chercher /favicon.ico — celle du moteur. Une icône
-           vide vaut mieux que la marque de quelqu'un d'autre dans l'onglet. #}
-        <link rel="icon" href="data:,">
-        {%- endif %}
-        {%- if theme.default %}
-        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/favicon-32.png') }}">
-        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}">
-        {%- endif %}
-        {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}
-        {%- if analytics.enabled %}
-        {# Mesure d'audience : pages vues et référents, sans cookie ni visiteur identifié (voir /confidentialite).
-           Le script vient du domaine du site, pas d'un tiers. Absent du bac à sable, qui n'hérite pas de ce gabarit. #}
-        <script defer src="{{ analytics.scriptUrl }}" data-website-id="{{ analytics.websiteId }}"></script>
-        {%- endif %}
         {# Le thème default n'a que les polices du système : rien à précharger. Les polices d'un thème : preload. #}
         {% block font_preloads %}{% endblock %}
-        {%- if theme_assets %}{% for url in theme.preloadUrls %}
+        {%- for url in theme.preloadUrls %}
         <link rel="preload" href="{{ url }}" as="font" type="font/woff2" crossorigin>
-        {%- endfor %}{% endif %}
+        {%- endfor %}
         {% block stylesheets %}
             {# Un thème qui remplace la feuille du moteur (replaces_engine_styles) en fournit une : voir plus bas. #}
-            {% if not (theme_assets and theme.replacesEngineStyles) %}{{ vite_entry_link_tags('theme') }}{% endif %}
+            {% if not theme.replacesEngineStyles %}{{ vite_entry_link_tags('theme') }}{% endif %}
         {% endblock %}
         {% block javascripts %}
             {{ vite_entry_script_tags('site') }}
@@ -82,14 +34,12 @@
         {%- endif %}
         {#- Les feuilles et scripts du thème, en dernier : ils l'emportent sur ceux du moteur, et ne les remplacent pas
             (sauf la feuille, quand le thème le déclare). Servis par ce domaine : la CSP n'a rien à ouvrir. #}
-        {%- if theme_assets %}
         {%- for url in theme.stylesheetUrls %}
         <link rel="stylesheet" href="{{ url }}">
         {%- endfor %}
         {%- for url in theme.scriptUrls %}
         <script type="module" src="{{ url }}"></script>
         {%- endfor %}
-        {%- endif %}
     </head>
     {# data-import-url : la progression d'invité est remontée au compte après connexion (voir site.ts). #}
     <body class="{% block body_class %}site-page{% endblock %}"{% if app.user %} data-import-url="{{ path('api_progress_import') }}"{% endif %}>

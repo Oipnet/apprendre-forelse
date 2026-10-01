@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+{#
+  La page de base des éditeurs : la page d'exercice (exercise/play) et les éditeurs de l'atelier (studio/edit,
+  studio/lesson). Verrouillée, comme eux (TemplateContract::LOCKED) : ni la feuille, ni les scripts, ni les gabarits du
+  thème actif. Un thème ne les habille que par sa palette « editor: », sa police « fonts.mono », son nom, sa puce et
+  son logo. Chaque page pose son entrée Vite (playground ou atelier), qui apporte toute sa feuille (editor.css).
+  Blocs : title, robots, stylesheets, javascripts, body_class, body.
+#}
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% if seo.title %}{{ seo.title }}{% else %}{% block title %}{{ theme.title }}{% endblock %}{% endif %}</title>
+        {{ include('_head.html.twig') }}
+        {% block robots %}{% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">{% endif %}{% endblock %}
+        {% block stylesheets %}{% endblock %}
+        {% block javascripts %}
+            {# Le fonctionnel du site : la progression d'invité remontée au compte après connexion. #}
+            {{ vite_entry_script_tags('site') }}
+        {% endblock %}
+        {# La palette « editor: » et la police à chasse fixe du thème, après la feuille pour l'emporter sur elle. #}
+        {%- if theme.styles %}
+        <style>{{ theme.styles|raw }}</style>
+        {%- endif %}
+    </head>
+    <body class="{% block body_class %}playground-page{% endblock %}"{% if app.user %} data-import-url="{{ path('api_progress_import') }}"{% endif %}>
+        <a class="skip-link sr-only" href="#contenu">Aller au contenu</a>
+        {% if theme.preview %}{{ include('_theme_preview.html.twig') }}{% endif %}
+        <div id="contenu" tabindex="-1"></div>
+        {% block body %}{% endblock %}
+    </body>
+</html>
