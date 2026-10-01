@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.0.0 — 2026-10-01
+
 Cette version sera la **3.0.0** : une instance auto-hébergée sans thème change d'apparence, et les gabarits ou
 feuilles qui s'appuyaient sur `site.css` perdent leur rendu. La section « Migration » ci-dessous dit quoi faire,
 selon ce que votre instance avait.
