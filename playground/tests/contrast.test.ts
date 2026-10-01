@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-/** Les couleurs de :root (thème sombre des éditeurs), lues dans site.css. */
+/** Les couleurs de :root (thème sombre des éditeurs, la palette neutre du moteur), lues dans editor.css. */
+const editorCss = readFileSync(new URL('../src/editor.css', import.meta.url), 'utf8');
+const root = editorCss.slice(editorCss.indexOf(':root {'), editorCss.indexOf('}', editorCss.indexOf(':root {')));
 const css = readFileSync(new URL('../src/site.css', import.meta.url), 'utf8');
-const root = css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {')));
 const token = (name: string) => root.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, 'i'))![1];
 
 function luminance(hex: string): number {
@@ -22,6 +23,11 @@ describe('contraste des couleurs d\'accent (WCAG AA, 4,5:1 pour le texte)', () =
 
 	it('--accent-text sur chacun des fonds sombres', () => {
 		for (const fond of ['bg', 'panel', 'panel-2']) expect(contrast(token('accent-text'), token(fond)), fond).toBeGreaterThanOrEqual(4.5);
+	});
+
+	it('le texte, le texte discret et les états sur chacun des fonds sombres', () => {
+		for (const texte of ['text', 'muted', 'ok', 'ko', 'gold'])
+			for (const fond of ['bg', 'panel', 'panel-2']) expect(contrast(token(texte), token(fond)), `--${texte} sur --${fond}`).toBeGreaterThanOrEqual(4.5);
 	});
 });
 

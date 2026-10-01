@@ -45,7 +45,17 @@ Les autres gabarits se remplacent aussi, mais sans garantie : une variable peut 
 La **page d'exercice** et les **éditeurs de l'atelier** (`exercise/play.html.twig`, `studio/edit.html.twig`,
 `studio/lesson.html.twig`) gardent l'habillage du moteur : un thème qui en dépose un est ignoré. Le thème les habille
 par sa palette `editor:` de `theme.yaml`, sa police `fonts.mono`, son nom et son logo. Ils ne chargent ni les feuilles,
-ni les scripts du thème.
+ni les scripts du thème, ni la feuille du thème default.
+
+Ils étendent leur propre page de base, `editor_base.html.twig`, verrouillée elle aussi, comme `_head.html.twig` (le haut
+de `<head>` qu'elle partage avec `base.html.twig`) et `_theme_preview.html.twig` (le bandeau de l'aperçu). Leur feuille,
+`editor.css`, est autonome ; sa palette neutre (sombre, contrastes AA) se remplace par `editor:` :
+
+| Clé de `editor` | Variable | | Clé de `editor` | Variable |
+|---|---|---|---|---|
+| `accent` | `--accent` (bordures, barres) | | `background`, `surface`, `surface-2` | `--bg`, `--panel`, `--panel-2` |
+| `accent-fill` | `--accent-fill` (fond sous un texte blanc) | | `line`, `ink`, `muted` | `--border`, `--text`, `--muted` |
+| `accent-text` | `--accent-text` (texte sur fond sombre) | | `success`, `error`, `gold` | `--ok`, `--ko`, `--gold` |
 
 ## Feuilles, scripts et polices
 

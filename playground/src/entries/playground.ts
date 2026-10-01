@@ -1,5 +1,5 @@
-// La page d'exercice garde l'habillage d'avant le thème default (voir #235) : site.css, puis le sien.
-import '../site.css';
+// La base de l'éditeur, autonome : ni site.css, ni la feuille du thème (voir #235).
+import '../editor.css';
 import '../playground.css';
 import { mountPlayground } from '../app/Playground';
 import type { PlaygroundConfig } from '../app/types';

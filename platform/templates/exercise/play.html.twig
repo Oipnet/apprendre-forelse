@@ -1,14 +1,7 @@
-{% extends 'base.html.twig' %}
-
-{# L'éditeur garde son habillage : ni les feuilles, ni les scripts, ni les polices du thème (voir base.html.twig). #}
-{% set theme_assets = false %}
+{% extends 'editor_base.html.twig' %}
 
 {% block title %}{{ exercise.title }} · {{ theme.name }}{% endblock %}
 
-{# L'éditeur n'a pas les polices du site : les précharger ne servirait à rien. #}
-{% block font_preloads %}{% endblock %}
-
-{# Pas la feuille du thème default : l'entrée de l'éditeur apporte tout son habillage (voir #235). #}
 {% block stylesheets %}
     {{ vite_entry_link_tags('playground') }}
 {% endblock %}
@@ -20,11 +13,7 @@
     {{ vite_entry_script_tags('playground') }}
 {% endblock %}
 
-{% block body_class %}playground-page{% endblock %}
-
 {# Plein écran : le playground dessine sa propre barre (voir playground/src/app/Playground.ts). #}
-{% block header %}{% endblock %}
-{% block footer %}{% endblock %}
 
 {% block body %}
     <div class="playground" data-playground data-config="{{ config|json_encode }}">

@@ -1,4 +1,5 @@
-import '../site.css';
+// La base de l'éditeur, autonome : ni site.css, ni la feuille du thème (voir #235).
+import '../editor.css';
 import '../playground.css';
 import '../studio.css';
 import { mountStudio } from '../app/Studio';

@@ -98,6 +98,48 @@ final class ThemeContractTest extends WebTestCase
         $this->assertCount(0, $crawler->filter('[data-surcharge="exercice"]'));
     }
 
+    /**
+     * La page d'exercice ne passe pas par le thème (#235) : ni sa page de base, ni sa feuille, ni son script, ni ceux du
+     * thème default. Seules sa palette « editor » et sa police à chasse fixe s'y appliquent.
+     */
+    public function testLaPageDExerciceNePrendDuThemeQueSaPaletteDEditeur(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/theme.yaml', <<<'YAML'
+            name: Atelier Contrat
+            stylesheets: [assets/theme.css]
+            scripts: [assets/theme.js]
+            fonts: {mono: "Menlo, monospace"}
+            editor: {accent: '#5ab0cc'}
+            YAML);
+        $filesystem->dumpFile($this->tmp.'/assets/theme.css', 'body{}');
+        $filesystem->dumpFile($this->tmp.'/assets/theme.js', '');
+        foreach (['base.html.twig', 'editor_base.html.twig', '_head.html.twig'] as $gabarit) {
+            $filesystem->dumpFile($this->tmp.'/templates/'.$gabarit, '<p data-surcharge="'.$gabarit.'">Gabarit du thème</p>');
+        }
+        $_SERVER['BRANDING_DIR'] = $_ENV['BRANDING_DIR'] = $this->tmp;
+        $client = static::createClient();
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
+
+        $crawler = $client->request('GET', '/parcours/decouverte/01-bonjour');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(1, $crawler->filter('[data-playground]'));
+        $this->assertCount(0, $crawler->filter('[data-surcharge]'), 'Aucun gabarit du thème sur la page d\'exercice.');
+        $html = (string) $client->getResponse()->getContent();
+        $this->assertStringNotContainsString('/assets/theme.css', $html);
+        $this->assertStringNotContainsString('/assets/theme.js', $html);
+        $this->assertDoesNotMatchRegularExpression('#/build/assets/theme-[\w-]+\.css#', $html, 'Ni la feuille du thème default.');
+        $this->assertStringContainsString(':root{--accent:#5ab0cc}', $html, 'La palette « editor » du thème s\'applique.');
+        $this->assertStringContainsString('--font-mono:Menlo, monospace', $html);
+
+        // Le site, lui, passe bien par le thème : sa page de base remplace celle du moteur.
+        $crawler = $client->request('GET', '/parcours');
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(1, $crawler->filter('[data-surcharge="base.html.twig"]'));
+    }
+
     private function clientAvecThemeQuiSurchargeTout(): KernelBrowser
     {
         $moteur = \dirname(__DIR__, 2).'/templates/';
