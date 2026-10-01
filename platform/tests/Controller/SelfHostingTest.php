@@ -37,7 +37,7 @@ final class SelfHostingTest extends WebTestCase
         $this->assertSelectorExists('.site-footer a[href="/auto-hebergement"]');
 
         $client->request('GET', '/');
-        $this->assertSelectorExists('.lp a[href="/auto-hebergement"]');
+        $this->assertSelectorExists('.home a[href="/auto-hebergement"]');
         $client->request('GET', '/sitemap.xml');
         $this->assertStringContainsString('<loc>http://localhost/auto-hebergement</loc>', (string) $client->getResponse()->getContent());
     }
