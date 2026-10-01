@@ -62,9 +62,11 @@ services:
       # vulnérable). /downloads = le volume ci-dessous ; servis par /telechargements aux comptes connectés.
       DOWNLOADS_DIR: ${DOWNLOADS_DIR:-/downloads}
       # Thèmes installés (voir README, « Thèmes ») : /themes = le volume ci-dessous, un dossier par thème. Le thème
-      # actif se choisit dans l'admin (/admin → Thèmes) ; THEME le fixe tant que l'admin n'en a pas choisi.
+      # actif se choisit dans l'admin (/admin → Thèmes) ; THEME le fixe tant que l'admin n'en a pas choisi. Ici
+      # « forelse », déposé par la CI du dépôt de contenu : sans lui, une base où l'admin n'a encore rien choisi
+      # servirait le thème default du moteur, neutre, dès le premier démarrage en 3.0.
       THEMES_DIR: ${THEMES_DIR:-/themes}
-      THEME: ${THEME:-}
+      THEME: ${THEME:-forelse}
       # Déprécié (retiré en 4.0) : l'ancien dossier unique du thème, servi comme le thème « instance ».
       BRANDING_DIR: ${BRANDING_DIR:-/marque}
       # Environnements installés depuis un dépôt Git par l'administration (/admin → Environnements).
