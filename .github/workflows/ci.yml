@@ -29,9 +29,9 @@ env:
   PHP_VERSION: '8.4'
 
 jobs:
-  # Une étiquette de version vise un commit que la poussée de main vient de tester et de construire
-  # (tools/release.sh commite sur main, puis étiquette) : plutôt que tout refaire, on attend la CI de main
-  # sur ce commit et, si elle est verte, on reprend son image (voir « Publier la version »). Si elle a
+  # Une étiquette de version vise un contenu que la poussée de main vient de tester et de construire
+  # (tools/release.sh commite sur main, ou dans une PR fusionnée ensuite) : plutôt que tout refaire, on attend la
+  # CI de main sur ce contenu et, si elle est verte, on reprend son image (voir « Publier la version »). Si elle a
   # échoué, a été annulée ou n'existe pas, l'étiquette refait tests et construction, comme avant.
   # Tourne à chaque passage (sans rien faire hors étiquette) : un job ignoré ferait ignorer ses dépendants.
   reprise:
@@ -59,27 +59,46 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          image="ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}"
-          # Poussées ensemble (git push --follow-tags), la CI de main est encore en cours : jusqu'à 25 minutes.
+          # Le commit testé par main peut être l'étiqueté lui-même (tools/release.sh commite sur main) ou la fusion
+          # qui l'y a amené (version préparée dans une PR) : on le reconnaît à son arbre, identique à celui de
+          # l'étiquette. L'image de main est publiée sous le SHA de ce commit-là.
+          arbre() { gh api "repos/$GITHUB_REPOSITORY/commits/$1" --jq .commit.tree.sha; }
+          cible=$(arbre "$GITHUB_SHA")
+          trouve=""
+          # Poussées ensemble (git push --follow-tags), le run de main peut n'apparaître qu'après celui-ci : 2 minutes.
+          for _ in $(seq 1 8); do
+            for sha in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push \
+              --limit 10 --json headSha --jq '.[].headSha' | awk '!vu[$0]++'); do
+              if [ "$(arbre "$sha")" = "$cible" ]; then trouve="$sha"; break 2; fi
+            done
+            sleep 15
+          done
+          if [ -z "$trouve" ]; then
+            echo "::warning::Aucune CI de main sur le contenu de $GITHUB_SHA : tests et construction complets."
+            exit 0
+          fi
+          [ "$trouve" = "$GITHUB_SHA" ] || echo "Contenu testé par main sous le commit $trouve (même arbre que l'étiquette)."
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:${trouve}"
+          # La CI de main peut être encore en cours : jusqu'à 25 minutes.
           for _ in $(seq 1 50); do
-            etat=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push --commit "$GITHUB_SHA" \
+            etat=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push --commit "$trouve" \
               --limit 1 --json status,conclusion --jq '.[0] | "\(.status) \(.conclusion)"')
             case "$etat" in
               "completed success")
                 if docker buildx imagetools inspect "$image" > /dev/null 2>&1; then
-                  echo "CI de main verte pour $GITHUB_SHA : reprise de $image."
+                  echo "CI de main verte pour $trouve : reprise de $image."
                   echo "image=$image" >> "$GITHUB_OUTPUT"
                 else
                   echo "::warning::CI de main verte mais $image introuvable : tests et construction complets."
                 fi
                 exit 0 ;;
               completed*)
-                echo "::warning::CI de main terminée en « ${etat#completed } » pour ce commit : tests et construction complets."
+                echo "::warning::CI de main terminée en « ${etat#completed } » pour $trouve : tests et construction complets."
                 exit 0 ;;
             esac
             sleep 30
           done
-          echo "::warning::Pas de CI de main terminée pour $GITHUB_SHA : tests et construction complets."
+          echo "::warning::CI de main toujours en cours pour $trouve : tests et construction complets."
 
   moteur:
     name: Tests, types et packs
