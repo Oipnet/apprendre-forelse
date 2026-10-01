@@ -172,10 +172,8 @@ final class ThemeTest extends TestCase
         $this->write("name: A\ncolors:\n  accent: '#1f6f8b'\n  background: '#f6f7f9'\nfonts:\n  mono: \"Menlo, monospace\"\n");
         $styles = self::theme($this->tmp)->styles();
 
-        $this->assertStringContainsString('--lp-rust:#1f6f8b', $styles);
-        $this->assertStringContainsString('--lp-mono:Menlo, monospace', $styles);
-        // Le fond est aussi posé sur <html>, qui le porte avant que la page ne s'affiche.
-        $this->assertStringContainsString('html:has(> body.site-page){background:#f6f7f9}', $styles);
+        // Les jetons du thème default (theme-default.css), redéfinis sur <html> : bg-accent, font-mono… les suivent.
+        $this->assertSame('html{--color-accent:#1f6f8b;--color-bg:#f6f7f9;--font-mono:Menlo, monospace}', $styles);
     }
 
     /** L'éditeur a son propre thème sombre : le moteur garde le sien tant que l'instance n'en déclare pas. */
@@ -284,7 +282,7 @@ final class ThemeTest extends TestCase
         $theme = self::theme(\dirname(__DIR__, 3).'/examples/themes/atelier-bigorneau');
 
         $this->assertSame('Atelier Bigorneau', $theme->name());
-        $this->assertStringContainsString('--lp-rust:#1f6f8b', $theme->styles());
+        $this->assertStringContainsString('--color-accent:#1f6f8b', $theme->styles());
         $this->assertStringContainsString(':root{--accent:#5ab0cc', $theme->styles());
         $this->assertNotNull($theme->logoUrl());
         $this->assertNotNull($theme->home()['demo']);

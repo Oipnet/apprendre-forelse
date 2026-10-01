@@ -26,7 +26,7 @@ final class ThemeTest extends WebTestCase
         $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.lp-header .lp-serif', 'Forelse');
+        $this->assertSelectorTextContains('.site-header .site-name', 'Forelse');
         $this->assertSelectorExists('.lp-sign', 'Le fil rouge de Forelse est celui du moteur.');
     }
 
@@ -46,14 +46,14 @@ final class ThemeTest extends WebTestCase
         $contenu = (string) $client->getResponse()->getContent();
 
         $this->assertStringNotContainsString('Forelse', $contenu, 'Plus rien de la marque du moteur ne doit subsister.');
-        $this->assertSelectorTextContains('.lp-header .lp-serif', 'Atelier Bigorneau');
-        $this->assertSelectorTextContains('.lp-header .lp-chip', 'coder');
-        $this->assertSelectorTextContains('.site-footer .ft-brand p', 'Coder en ligne, sans rien installer.');
+        $this->assertSelectorTextContains('.site-header .site-name', 'Atelier Bigorneau');
+        $this->assertSelectorTextContains('.site-header .site-chip', 'coder');
+        $this->assertSelectorTextContains('.site-footer .footer-brand p', 'Coder en ligne, sans rien installer.');
         $this->assertSame('Atelier Bigorneau', $crawler->filter('meta[property="og:site_name"]')->attr('content'));
         // Les couleurs sont posées après la feuille de styles, sinon elles ne l'emporteraient pas.
-        $this->assertStringContainsString('--lp-rust:#1f6f8b', $contenu);
+        $this->assertStringContainsString('--color-accent:#1f6f8b', $contenu);
         // Le logo du moteur n'habille pas une autre marque.
-        $this->assertSelectorNotExists('.lp-header img');
+        $this->assertSelectorNotExists('.site-header img');
     }
 
     /** Le texte alternatif de l'aperçu de partage reste celui de la page quand elle en a un. */
@@ -106,7 +106,7 @@ final class ThemeTest extends WebTestCase
 
         $crawler = $client->request('GET', '/');
         $this->assertResponseIsSuccessful();
-        $logo = $crawler->filter('.lp-header img')->attr('src');
+        $logo = $crawler->filter('.site-header img')->attr('src');
         $this->assertNotNull($logo);
 
         $this->assertStringStartsWith('/theme/instance/', $logo, 'L\'URL nomme le thème : une bascule de thème change d\'URL.');
@@ -223,7 +223,7 @@ final class ThemeTest extends WebTestCase
         $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.lp-header .lp-serif', 'Atelier Bigorneau');
+        $this->assertSelectorTextContains('.site-header .site-name', 'Atelier Bigorneau');
     }
 
     /** Un thème apporte ses feuilles, scripts et polices, posés après ceux du moteur et servis sans reconstruire l'image. */

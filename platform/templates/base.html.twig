@@ -9,7 +9,7 @@
 {# Les feuilles, scripts et polices du thème (theme.yaml). La page d'exercice et les éditeurs de l'atelier les
    refusent en posant « theme_assets = false » : ils ont leur propre habillage (voir #235). #}
 {% set theme_assets = theme_assets ?? true %}
-{# data-theme="auto" : les pages du site suivent le thème du système (voir le thème sombre de site.css). #}
+{# data-theme="auto" : les pages du site suivent le thème du système (voir le thème sombre de theme-default.css). #}
 <html lang="fr"{% if theme.followsSystemTheme %} data-theme="auto"{% endif %}>
     <head>
         <meta charset="UTF-8">
@@ -64,16 +64,14 @@
            Le script vient du domaine du site, pas d'un tiers. Absent du bac à sable, qui n'hérite pas de ce gabarit. #}
         <script defer src="{{ analytics.scriptUrl }}" data-website-id="{{ analytics.websiteId }}"></script>
         {%- endif %}
-        {# Les polices du haut de page, annoncées avant la feuille de styles qui les nomme (voir FontPreloadExtension). #}
-        {% block font_preloads %}{% for url in font_preloads() -%}
-            <link rel="preload" href="{{ url }}" as="font" type="font/woff2" crossorigin>
-        {% endfor %}{% endblock %}
+        {# Le thème default n'a que les polices du système : rien à précharger. Les polices d'un thème : preload. #}
+        {% block font_preloads %}{% endblock %}
         {%- if theme_assets %}{% for url in theme.preloadUrls %}
         <link rel="preload" href="{{ url }}" as="font" type="font/woff2" crossorigin>
         {%- endfor %}{% endif %}
         {% block stylesheets %}
             {# Un thème qui remplace la feuille du moteur (replaces_engine_styles) en fournit une : voir plus bas. #}
-            {% if not (theme_assets and theme.replacesEngineStyles) %}{{ vite_entry_link_tags('site') }}{% endif %}
+            {% if not (theme_assets and theme.replacesEngineStyles) %}{{ vite_entry_link_tags('theme') }}{% endif %}
         {% endblock %}
         {% block javascripts %}
             {{ vite_entry_script_tags('site') }}
@@ -98,14 +96,16 @@
     {# Le lien « Connexion » ramène à la page courante (voir SecurityController::login), sauf depuis l'accueil, les pages de compte et d'erreur. #}
     {% set current_route = app.request.attributes.get('_route') %}
     {% set login_suite = current_route is null or current_route in ['app_home', 'app_login', 'app_register'] ? null : app.request.pathInfo %}
-        <a class="skip-link" href="#contenu">Aller au contenu</a>
+        <a class="skip-link sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-surface focus:px-4 focus:py-2 focus:shadow" href="#contenu">Aller au contenu</a>
         {% if theme.preview %}{{ include('_theme_preview.html.twig') }}{% endif %}
         {% block header %}
             {%- set brand_chip %}{% block brand_chip %}{{ theme.chip }}{% endblock %}{% endset -%}
             {{ include('_header.html.twig') }}
             {% for type, messages in app.flashes %}
                 {% for message in messages %}
-                    <div class="flash flash-{{ type }}" role="status">{{ message }}</div>
+                    <div class="flash flash-{{ type }} mx-auto mt-4 w-full max-w-5xl px-4 sm:px-6" role="status">
+                        <p class="rounded-md border px-4 py-3 {{ type in ['error', 'danger'] ? 'border-danger bg-danger-bg text-danger' : (type == 'success' ? 'border-success bg-success-bg text-success' : 'border-line bg-bg-2 text-ink') }}">{{ message }}</p>
+                    </div>
                 {% endfor %}
             {% endfor %}
         {% endblock %}

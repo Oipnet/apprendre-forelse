@@ -1,0 +1,77 @@
+{#
+  @theme Point de surcharge : le thème des formulaires Symfony du site (twig.yaml, form_themes), en classes du thème
+  default (field, btn : voir playground/src/theme-default.css). Il ne change que l'habillage de form_div_layout.
+#}
+{% use 'form_div_layout.html.twig' %}
+
+{%- block form_row -%}
+    {%- set row_attr = row_attr|merge({class: ('mb-4 ' ~ (row_attr.class ?? ''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock form_row -%}
+
+{%- block form_label -%}
+    {%- set label_attr = label_attr|merge({class: ('mb-1 block font-medium ' ~ (label_attr.class ?? ''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock form_label -%}
+
+{%- block form_help -%}
+    {%- set help_attr = help_attr|merge({class: ('mt-1 text-sm text-ink-muted ' ~ (help_attr.class ?? ''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock form_help -%}
+
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        <ul class="mt-1 space-y-1 text-sm text-danger">
+            {%- for error in errors -%}
+                <li>{{ error.message }}</li>
+            {%- endfor -%}
+        </ul>
+    {%- endif -%}
+{%- endblock form_errors -%}
+
+{# Les champs de saisie (texte, zone de texte, liste) : la classe field, et aria-invalid quand le champ a une erreur. #}
+{%- block widget_attributes -%}
+    {%- if not ('checkbox' in block_prefixes or 'radio' in block_prefixes or 'hidden' in block_prefixes or 'file' in block_prefixes) -%}
+        {%- set attr = attr|merge({class: ('field ' ~ (attr.class ?? ''))|trim}) -%}
+    {%- endif -%}
+    {%- if not valid -%}{%- set attr = attr|merge({'aria-invalid': 'true'}) -%}{%- endif -%}
+    {{- parent() -}}
+{%- endblock widget_attributes -%}
+
+{# Cases et boutons radio : la case, puis son libellé, sur une ligne. #}
+{%- block checkbox_row -%}
+    <div class="mb-4 flex items-start gap-2">
+        {{- form_widget(form, {attr: attr|merge({class: ('mt-1 accent-accent ' ~ (attr.class ?? ''))|trim})}) -}}
+        <div>
+            {{- form_label(form, null, {label_attr: {class: 'font-normal'}}) -}}
+            {{- form_help(form) -}}
+            {{- form_errors(form) -}}
+        </div>
+    </div>
+{%- endblock checkbox_row -%}
+
+{%- block radio_row -%}
+    {{- block('checkbox_row') -}}
+{%- endblock radio_row -%}
+
+{%- block choice_widget_expanded -%}
+    {%- set attr = attr|merge({class: ('space-y-1 ' ~ (attr.class ?? ''))|trim}) -%}
+    <div {{ block('widget_container_attributes') }}>
+        {%- for child in form %}
+            <div class="flex items-center gap-2">
+                {{- form_widget(child, {attr: {class: 'accent-accent'}}) -}}
+                {{- form_label(child, null, {translation_domain: choice_translation_domain, label_attr: {class: 'font-normal'}}) -}}
+            </div>
+        {% endfor -%}
+    </div>
+{%- endblock choice_widget_expanded -%}
+
+{%- block button_widget -%}
+    {%- set attr = attr|merge({class: ('btn ' ~ (attr.class ?? ''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock button_widget -%}
+
+{%- block submit_widget -%}
+    {%- set attr = attr|merge({class: ('btn btn-primary ' ~ (attr.class ?? ''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock submit_widget -%}

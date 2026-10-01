@@ -8,8 +8,8 @@
 {% block body %}
     {% set seller = legal.publisherName ?: 'l\'éditeur du site' %}
     {% set refundDays = legal.refundGuaranteeDays %}
-    <main class="page legal-page">
-        <p class="meta">Le site</p>
+    <main class="legal-page prose prose-theme mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <p class="text-sm text-ink-muted">Le site</p>
         <h1>Conditions générales de vente</h1>
         <p class="lead">Ce que vous achetez sur {{ siteHost }}, comment, et ce que cela vous garantit.</p>
 
@@ -118,6 +118,6 @@
             <p>Les présentes CGV sont soumises au droit français. Elles ne privent pas le consommateur résidant dans un autre pays de l'Union européenne de la protection que lui assurent les dispositions impératives de la loi de son pays. En cas de litige, les tribunaux compétents sont ceux désignés par la loi.</p>
         </section>
 
-        <p class="meta">Version du {{ termsVersion|date('d/m/Y') }}.</p>
+        <p class="text-sm text-ink-muted">Version du {{ termsVersion|date('d/m/Y') }}.</p>
     </main>
 {% endblock %}

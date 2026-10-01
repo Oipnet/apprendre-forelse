@@ -66,6 +66,55 @@ replaces_engine_styles: false   # true : la feuille du moteur n'est plus chargé
 
 On peut compiler sa feuille avec l'outil de son choix (Tailwind ou non) : le moteur ne sert que le résultat.
 
+## Construire un thème Tailwind
+
+Les pages du site sont écrites en utilitaires Tailwind, sur les jetons du thème default
+(`playground/src/theme-default.css`). Trois niveaux, du plus léger au plus complet :
+
+1. **Les jetons seuls**, dans `theme.yaml` : `colors` et `fonts` redéfinissent `--color-*` et `--font-*` sur la feuille
+   du moteur, sans rien construire.
+
+   | Clé de `colors` | Jeton |   | Clé de `fonts` | Jeton |
+   |---|---|---|---|---|
+   | `accent` | `--color-accent` | | `serif` | `--font-serif` |
+   | `accent-line` | `--color-accent-line` | | `sans` | `--font-sans` |
+   | `gold` | `--color-highlight` | | `mono` | `--font-mono` |
+   | `background`, `background-2` | `--color-bg`, `--color-bg-2` | | | |
+   | `surface`, `line`, `ink` | `--color-surface`, `--color-line`, `--color-ink` | | | |
+   | `dark`, `dark-ink`, `success` | `--color-dark`, `--color-dark-ink`, `--color-success` | | | |
+
+2. **Une feuille construite avec Tailwind**, quand le thème remplace des gabarits et y emploie des classes que la
+   feuille du moteur ne contient pas, ou redéfinit d'autres jetons (rayons, ombres, `--color-ink-muted`…). Le thème
+   importe la feuille du thème default depuis le moteur, ajoute ses gabarits aux sources, et déclare ses jetons :
+
+   ```css
+   /* themes/mon-theme/assets/src/theme.css */
+   @import "../../../../moteur/playground/src/theme-default.css";
+   @source "../../templates";
+   @theme {
+     --color-accent: #9a3412;
+     --font-serif: "Titres", ui-serif, serif;
+   }
+   @font-face { font-family: "Titres"; src: url("fonts/titres.woff2") format("woff2"); font-display: swap; }
+   ```
+
+   ```bash
+   npm ci --prefix moteur/playground   # Tailwind, sa ligne de commande et le greffon typography, aux versions du moteur
+   moteur/playground/node_modules/.bin/tailwindcss \
+     -i themes/mon-theme/assets/src/theme.css -o themes/mon-theme/assets/theme.css --minify
+   ```
+
+   Puis dans `theme.yaml` : `stylesheets: [assets/theme.css]` et `replaces_engine_styles: true`. La feuille
+   construite contient les pages du moteur **et** celles du thème : reconstruisez-la à chaque version du moteur
+   (`ThemeSitemapTest`, plus bas, vérifie les gabarits, pas la feuille).
+
+3. **Les gabarits**, pour changer la structure d'une page : voir les points de surcharge plus haut.
+
+Les classes s'écrivent en entier dans les gabarits (`bg-accent`, jamais `bg-{{ couleur }}`) : Tailwind ne lit que le
+texte. Quelques composants sont définis une fois pour toutes (`btn`, `btn-primary`, `btn-danger`, `field`,
+`prose-theme`) : un thème les redessine par les jetons. Les classes `site-*`, `account-*`, `footer-*` des gabarits ne
+portent aucun style : ce sont des repères, pour les tests et pour les thèmes.
+
 ## Aperçu, activation
 
 Dans `/admin` → Thèmes : l'état de chaque thème (son `theme.yaml` valable, ses gabarits qui se compilent), un aperçu

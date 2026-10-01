@@ -48,6 +48,6 @@ final class ErrorPagesTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(403);
         $this->assertSelectorTextContains('h1', 'Accès refusé');
-        $this->assertSelectorNotExists('.lp-user', 'En-tête réduit : pas de compte ni d\'XP sur une page d\'erreur.');
+        $this->assertSelectorNotExists('.account-name', 'En-tête réduit : pas de compte ni d\'XP sur une page d\'erreur.');
     }
 }

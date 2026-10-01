@@ -1,8 +1,8 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    <main class="page legal-page">
-        <p class="meta">Le site</p>
+    <main class="legal-page prose prose-theme mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <p class="text-sm text-ink-muted">Le site</p>
         <h1>Mentions légales</h1>
         <p class="lead">Qui édite {{ siteHost }}, qui l'héberge, et ce que vous pouvez faire de ce qui s'y trouve.</p>
 
@@ -10,7 +10,7 @@
 
         <section id="editeur">
             <h2>Éditeur du site</h2>
-            {% if not legal.publisherName %}<p class="meta">Non renseigné.</p>{% endif %}
+            {% if not legal.publisherName %}<p class="text-sm text-ink-muted">Non renseigné.</p>{% endif %}
             <dl class="legal-facts">
                 {% if legal.publisherName %}
                     <div><dt>Dénomination</dt><dd>{{ legal.publisherName }}</dd></div>
@@ -41,7 +41,7 @@
 
         <section id="hebergeur">
             <h2>Hébergement</h2>
-            {% if not legal.hostName %}<p class="meta">Non renseigné.</p>{% endif %}
+            {% if not legal.hostName %}<p class="text-sm text-ink-muted">Non renseigné.</p>{% endif %}
             <dl class="legal-facts">
                 {% if legal.hostName %}
                     <div><dt>Hébergeur</dt><dd>{{ legal.hostName }}</dd></div>
@@ -53,7 +53,7 @@
                     <div><dt>Téléphone</dt><dd>{{ legal.hostPhone }}</dd></div>
                 {% endif %}
             </dl>
-            <p>Le bac à sable dans lequel s'affiche l'aperçu de votre code est servi depuis un domaine distinct, <span class="lp-mono">{{ sandboxHost }}</span>, par le même hébergeur. Cette séparation isole le code exécuté dans votre navigateur du site lui-même.</p>
+            <p>Le bac à sable dans lequel s'affiche l'aperçu de votre code est servi depuis un domaine distinct, <span class="font-mono">{{ sandboxHost }}</span>, par le même hébergeur. Cette séparation isole le code exécuté dans votre navigateur du site lui-même.</p>
         </section>
 
         <section id="propriete">
@@ -76,6 +76,6 @@
             <p>Les liens vers d'autres sites sont donnés à titre d'information ; l'éditeur ne répond pas de leur contenu.</p>
         </section>
 
-        <p class="meta">Dernière mise à jour : {{ updatedAt|date('d/m/Y') }}.</p>
+        <p class="text-sm text-ink-muted">Dernière mise à jour : {{ updatedAt|date('d/m/Y') }}.</p>
     </main>
 {% endblock %}

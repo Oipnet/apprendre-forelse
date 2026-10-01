@@ -1,5 +1,3 @@
-import '../site.css';
-
 /**
  * Progression jouée en invité (localStorage) : une fois connecté, on la remonte au compte,
  * puis on l'efface du navigateur. La Pratique n'a pas de parcours : sa clé est `formation:null/<id>`.

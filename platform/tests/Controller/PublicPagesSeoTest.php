@@ -151,18 +151,18 @@ final class PublicPagesSeoTest extends WebTestCase
         }
     }
 
-    /** Les polices du titre et du texte sont annoncées avant la feuille de styles, et le build les contient bien. */
-    public function testLesPolicesDuHautDePageSontPrechargees(): void
+    /**
+     * Le thème default n'a que les polices du système : rien à précharger, aucune requête de police avant l'affichage.
+     * Sa feuille, elle, est bien posée, et le build la contient.
+     */
+    public function testLeThemeDefaultNePrechargeAucunePolice(): void
     {
         $crawler = $this->client->request('GET', '/');
 
-        $urls = $crawler->filter('link[rel="preload"][as="font"]')->each(static fn ($link) => $link->attr('href'));
-        $this->assertCount(2, $urls);
-        $this->assertMatchesRegularExpression('#^/build/assets/newsreader-latin-[\w-]+\.woff2$#', $urls[0]);
-        $this->assertMatchesRegularExpression('#^/build/assets/instrument-sans-latin-[\w-]+\.woff2$#', $urls[1]);
-        foreach ($urls as $url) {
-            $this->assertFileExists(__DIR__.'/../../public'.$url);
-        }
-        $this->assertSame('', $crawler->filter('link[rel="preload"][as="font"]')->attr('crossorigin'), 'Sans crossorigin, la police préchargée serait téléchargée deux fois.');
+        $this->assertCount(0, $crawler->filter('link[rel="preload"][as="font"]'));
+        $feuilles = $crawler->filter('link[rel="stylesheet"]')->each(static fn ($link) => (string) $link->attr('href'));
+        $theme = array_values(array_filter($feuilles, static fn (string $url) => 1 === preg_match('#^/build/assets/theme-[\w-]+\.css$#', $url)));
+        $this->assertCount(1, $theme, 'La feuille du thème default : '.implode(', ', $feuilles));
+        $this->assertFileExists(__DIR__.'/../../public'.$theme[0]);
     }
 }

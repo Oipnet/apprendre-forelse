@@ -1,5 +1,7 @@
 twig:
     file_name_pattern: '*.twig'
+    # Les formulaires du site, en classes du thème default (un thème le remplace comme tout gabarit).
+    form_themes: ['form/theme.html.twig']
     globals:
         # Version du moteur (fichier VERSION), affichée en pied de page : indispensable pour
         # qu'une instance auto-hébergée sache ce qu'elle fait tourner.

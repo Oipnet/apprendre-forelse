@@ -61,3 +61,32 @@ describe.each(Object.entries(themes))('contraste des pages du site, thème %s (W
 		for (const fond of ['lp-ko', 'lp-ko-hover']) expect(contrast('#fdf4f2', couleurs[fond]), fond).toBeGreaterThanOrEqual(4.5);
 	});
 });
+
+/** Le thème default (theme-default.css) : jetons de @theme, et ceux que le thème sombre redéfinit. */
+const defaultCss = readFileSync(new URL('../src/theme-default.css', import.meta.url), 'utf8');
+const between = (text: string, start: number) => text.slice(start, text.indexOf('}', start));
+const tokens = (text: string) => Object.fromEntries([...text.matchAll(/--color-([\w-]+):\s*(#[0-9a-f]{6})/gi)].map((m) => [m[1], m[2]]));
+const defaultLight = tokens(between(defaultCss, defaultCss.indexOf('\n@theme {')));
+const darkMedia = defaultCss.indexOf('@media (prefers-color-scheme: dark)');
+const defaultThemes = { clair: defaultLight, sombre: { ...defaultLight, ...tokens(between(defaultCss, defaultCss.indexOf("html[data-theme='auto'] {", darkMedia))) } };
+
+/** Paires texte / fond, telles que les gabarits du thème default les emploient. */
+const defaultPairs: [string, string[]][] = [
+	['ink', ['bg', 'bg-2', 'surface']],
+	['ink-muted', ['bg', 'bg-2', 'surface']],
+	['accent', ['bg', 'bg-2', 'surface']],
+	['accent-hover', ['bg', 'bg-2', 'surface']],
+	['on-accent', ['accent', 'accent-hover']],
+	['danger', ['bg', 'surface', 'danger-bg']],
+	['success', ['bg', 'surface', 'success-bg']],
+	['highlight', ['bg', 'surface']],
+	['dark-ink', ['dark']],
+	// Le texte des boutons de suppression (btn-danger) : la couleur du fond de page.
+	['bg', ['danger']],
+];
+
+describe.each(Object.entries(defaultThemes))('contraste du thème default, thème %s (WCAG AA)', (_nom, couleurs) => {
+	it.each(defaultPairs)('--color-%s sur ses fonds', (texte, fonds) => {
+		for (const fond of fonds) expect(contrast(couleurs[texte], couleurs[fond]), `--color-${texte} sur --color-${fond}`).toBeGreaterThanOrEqual(4.5);
+	});
+});

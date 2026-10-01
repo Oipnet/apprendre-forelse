@@ -7,7 +7,6 @@ use App\Content\EnvironmentRegistry;
 use App\Theme\ActiveTheme;
 use App\Theme\Theme;
 use App\Twig\ConceptExtension;
-use App\Twig\FontPreloadExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -26,7 +25,6 @@ final class ServicesResetTest extends KernelTestCase
             Theme::class => ['config', static fn (Theme $s) => $s->name()],
             ActiveTheme::class => ['resolved', static fn (ActiveTheme $s) => $s->id()],
             ConceptExtension::class => ['urls', static fn (ConceptExtension $s) => $s->url('Boucle Twig')],
-            FontPreloadExtension::class => ['urls', static fn (FontPreloadExtension $s) => $s->urls()],
         ];
 
         foreach ($services as $id => [$property, $warm]) {

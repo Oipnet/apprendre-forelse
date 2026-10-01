@@ -1,3 +1,5 @@
+// La page d'exercice garde l'habillage d'avant le thème default (voir #235) : site.css, puis le sien.
+import '../site.css';
 import '../playground.css';
 import { mountPlayground } from '../app/Playground';
 import type { PlaygroundConfig } from '../app/types';

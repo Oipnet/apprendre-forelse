@@ -129,7 +129,7 @@ final class RegistrationTest extends WebTestCase
         $client->submitForm('Se connecter', ['email' => 'gorm@example.test', 'password' => 'une-longue-phrase'], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
         $this->assertResponseRedirects('/');
         $client->followRedirect();
-        $this->assertSelectorTextContains('.lp-user', 'Gorm');
+        $this->assertSelectorTextContains('.account-name', 'Gorm');
     }
 
     public function testLeTitulaireNEstPrevenuQuUneFoisParJour(): void

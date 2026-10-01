@@ -5,8 +5,8 @@
 
 {% block title %}{{ chapter.title }} · Fiche de cours · Atelier{% endblock %}
 
+{# Pas la feuille du thème default : l'entrée de l'éditeur apporte tout son habillage (voir #235). #}
 {% block stylesheets %}
-    {{ parent() }}
     {{ vite_entry_link_tags('atelier') }}
 {% endblock %}
 

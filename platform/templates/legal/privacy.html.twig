@@ -1,8 +1,8 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    <main class="page legal-page">
-        <p class="meta">Vos données</p>
+    <main class="legal-page prose prose-theme mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <p class="text-sm text-ink-muted">Vos données</p>
         <h1>Politique de confidentialité</h1>
         <p class="lead">Ce que {{ siteHost }} enregistre sur vous, pourquoi, combien de temps, et comment reprendre la main. Version courte : une adresse e‑mail, votre progression, aucun traceur.</p>
 
@@ -112,8 +112,8 @@
             <p>Le site n'utilise que des éléments strictement nécessaires à son fonctionnement, dispensés de consentement. Il n'y a donc pas de bandeau à accepter.</p>
             <ul>
                 <li><strong>Cookie de session</strong> : vous garde connecté d'une page à l'autre, et protège les formulaires contre les envois forgés. Il disparaît quand vous fermez le navigateur ou vous déconnectez.</li>
-                <li><strong>Stockage local (<span class="lp-mono">localStorage</span>)</strong> : du code écrit avant la création d'un compte, du temps où le premier chapitre se jouait en visiteur, peut subsister dans votre navigateur. À votre première connexion, il est transféré sur votre compte puis effacé du navigateur.</li>
-                <li><strong>Bac à sable</strong> : l'aperçu de votre code s'affiche depuis <span class="lp-mono">{{ sandboxHost }}</span>, dans une page isolée. Ce domaine ne dépose aucun cookie ; il ne conserve que les fichiers techniques nécessaires à l'exécution de PHP dans votre navigateur.</li>
+                <li><strong>Stockage local (<span class="font-mono">localStorage</span>)</strong> : du code écrit avant la création d'un compte, du temps où le premier chapitre se jouait en visiteur, peut subsister dans votre navigateur. À votre première connexion, il est transféré sur votre compte puis effacé du navigateur.</li>
+                <li><strong>Bac à sable</strong> : l'aperçu de votre code s'affiche depuis <span class="font-mono">{{ sandboxHost }}</span>, dans une page isolée. Ce domaine ne dépose aucun cookie ; il ne conserve que les fichiers techniques nécessaires à l'exécution de PHP dans votre navigateur.</li>
                 {%- if analytics.enabled %}
                 <li><strong>Mesure d'audience</strong> : pour savoir combien de personnes visitent le site et par où elles
                     arrivent, chaque page vue est comptée par un logiciel que nous hébergeons nous-mêmes
@@ -194,6 +194,6 @@
             <p>Cette politique change quand le site change. La date ci‑dessous fait foi ; une modification substantielle vous sera signalée à la connexion.</p>
         </section>
 
-        <p class="meta">Dernière mise à jour : {{ updatedAt|date('d/m/Y') }}.</p>
+        <p class="text-sm text-ink-muted">Dernière mise à jour : {{ updatedAt|date('d/m/Y') }}.</p>
     </main>
 {% endblock %}

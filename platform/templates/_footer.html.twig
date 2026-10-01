@@ -1,49 +1,47 @@
 {#
   @theme Point de surcharge. Variables : theme (App\Theme\Theme), blog (App\Content\Blog), login_suite (string|null), moteur_version.
   Obligatoire : la version et la licence du moteur (AGPL), les liens vers les mentions légales et la confidentialité.
-  Pied de page commun à toutes les pages du site (l'éditeur d'exercice et l'atelier, en plein écran, n'en ont pas). #}
-<footer class="site-footer">
-    <div class="lp-wrap">
-        <div class="ft-top">
-            <div class="ft-brand">
-                <a class="ft-logo" href="{{ path('app_home') }}">
-                    {% if theme.logoUrl %}<img src="{{ theme.logoUrl }}" alt="" width="36" height="42" loading="lazy" decoding="async">{% endif %}
-                    <span class="lp-serif">{{ theme.name }}</span>
-                    {% if theme.chip %}<span class="lp-chip">{{ theme.chip }}</span>{% endif %}
-                </a>
-                <p>{{ theme.tagline }}</p>
-            </div>
-            <nav class="ft-cols" aria-label="Pied de page">
-                <div>
-                    <h2>Apprendre</h2>
-                    <ul>
-                        <li><a href="{{ path('app_tracks') }}">Les parcours</a></li>
-                        <li><a href="{{ path('app_practice') }}">Pratique</a></li>
-                        <li><a href="{{ path('app_concepts') }}">Les notions</a></li>
-                        {% if blog.open %}<li><a href="{{ path('app_blog') }}">Le blog</a></li>{% endif %}
-                        <li><a href="{{ path('app_home') }}#questions">Questions fréquentes</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h2>{{ theme.name }}</h2>
-                    <ul>
-                        <li><a href="{{ path('app_organizations') }}">Écoles et entreprises</a></li>
-                        {% if self_hosting.enabled %}<li><a href="{{ path('app_self_hosting') }}">Auto-hébergement</a></li>{% endif %}
-                        <li><a href="{{ path('app_contact') }}">Contact</a></li>
-                        <li>{% if app.user %}<a href="{{ path('app_account') }}">Mon compte</a>{% else %}<a href="{{ path('app_login', {suite: login_suite ?? null}) }}">Connexion</a>{% endif %}</li>
-                    </ul>
-                </div>
-                <div>
-                    <h2>Informations</h2>
-                    <ul>
-                        <li><a href="{{ path('app_legal_notice') }}">Mentions légales</a></li>
-                        <li><a href="{{ path('app_privacy') }}">Confidentialité</a></li>
-                        <li><a href="{{ path('app_terms') }}">Conditions de vente</a></li>
-                    </ul>
-                </div>
-            </nav>
+  Pied de page commun à toutes les pages du site (l'éditeur d'exercice et l'atelier, en plein écran, n'en ont pas).
+  Les classes site-*, footer-* ne portent aucun style : ce sont des repères pour les tests et les thèmes. #}
+<footer class="site-footer mt-auto border-t border-line bg-bg-2 text-sm">
+    <div class="mx-auto grid w-full max-w-5xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1fr_2fr]">
+        <div class="footer-brand">
+            <a class="flex items-center gap-2 font-semibold text-ink no-underline hover:text-ink" href="{{ path('app_home') }}">
+                {% if theme.logoUrl %}<img class="h-6 w-auto" src="{{ theme.logoUrl }}" alt="" width="36" height="42" loading="lazy" decoding="async">{% endif %}
+                <span>{{ theme.name }}</span>
+                {% if theme.chip %}<span class="rounded border border-line px-1.5 text-xs font-normal text-ink-muted">{{ theme.chip }}</span>{% endif %}
+            </a>
+            <p class="mt-2 text-ink-muted">{{ theme.tagline }}</p>
         </div>
-        <div class="ft-bottom">
+        <nav class="grid gap-6 sm:grid-cols-3" aria-label="Pied de page">
+            <div>
+                <h2 class="font-semibold">Apprendre</h2>
+                <ul class="mt-2 space-y-1">
+                    <li><a href="{{ path('app_tracks') }}">Les parcours</a></li>
+                    <li><a href="{{ path('app_practice') }}">Pratique</a></li>
+                    <li><a href="{{ path('app_concepts') }}">Les notions</a></li>
+                    {% if blog.open %}<li><a href="{{ path('app_blog') }}">Le blog</a></li>{% endif %}
+                </ul>
+            </div>
+            <div>
+                <h2 class="font-semibold">{{ theme.name }}</h2>
+                <ul class="mt-2 space-y-1">
+                    <li><a href="{{ path('app_organizations') }}">Écoles et entreprises</a></li>
+                    {% if self_hosting.enabled %}<li><a href="{{ path('app_self_hosting') }}">Auto-hébergement</a></li>{% endif %}
+                    <li><a href="{{ path('app_contact') }}">Contact</a></li>
+                    <li>{% if app.user %}<a href="{{ path('app_account') }}">Mon compte</a>{% else %}<a href="{{ path('app_login', {suite: login_suite ?? null}) }}">Connexion</a>{% endif %}</li>
+                </ul>
+            </div>
+            <div>
+                <h2 class="font-semibold">Informations</h2>
+                <ul class="mt-2 space-y-1">
+                    <li><a href="{{ path('app_legal_notice') }}">Mentions légales</a></li>
+                    <li><a href="{{ path('app_privacy') }}">Confidentialité</a></li>
+                    <li><a href="{{ path('app_terms') }}">Conditions de vente</a></li>
+                </ul>
+            </div>
+        </nav>
+        <div class="space-y-1 border-t border-line pt-4 text-xs text-ink-muted md:col-span-2">
             <p>Les langages et frameworks cités sont des marques de leurs titulaires respectifs ; ce site n'est affilié à aucun d'eux.</p>
             <p class="site-moteur">Moteur {{ moteur_version }} · <abbr title="GNU Affero General Public License v3.0 ou ultérieure">AGPL-3.0</abbr></p>
         </div>
