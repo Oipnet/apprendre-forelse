@@ -135,7 +135,8 @@ final class ThemeContractTest extends WebTestCase
         $this->assertStringContainsString('--font-mono:Menlo, monospace', $html);
 
         // Le site, lui, passe bien par le thème : sa page de base remplace celle du moteur.
-        $crawler = $client->request('GET', '/connexion');
+        $crawler = $client->request('GET', '/parcours');
+        $this->assertResponseIsSuccessful();
         $this->assertCount(1, $crawler->filter('[data-surcharge="base.html.twig"]'));
     }
 
