@@ -7,17 +7,17 @@
 {% block title %}{{ practice.exercise.title }} · Pratique · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="page practice exercise-public">
+    <main class="practice exercise-public mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         {{ include('practice/_intro.html.twig') }}
 
-        <aside class="exercise-access" aria-labelledby="exercise-access-title">
-            <h2 id="exercise-access-title">À vous d'écrire le code</h2>
+        <aside class="exercise-access mt-10 space-y-3 rounded-lg border border-line bg-bg-2 p-5" aria-labelledby="exercise-access-title">
+            <h2 class="text-xl font-semibold" id="exercise-access-title">À vous d'écrire le code</h2>
             <p>Cette plateforme est réservée à ses membres : créez votre compte avec votre code d'invitation,
                 ou laissez votre adresse sur la liste d'attente.</p>
-            <p class="exercise-access-actions">
-                <a class="button primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Créer un compte</a>
-                <a class="button" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>
-                <a class="button ghost" href="{{ path('app_login', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Se connecter</a>
+            <p class="exercise-access-actions flex flex-wrap gap-2 pt-2">
+                <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Créer un compte</a>
+                <a class="btn" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>
+                <a class="btn" href="{{ path('app_login', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Se connecter</a>
             </p>
         </aside>
     </main>

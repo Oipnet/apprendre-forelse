@@ -9,7 +9,7 @@
 {% block title %}{{ chapter.title }} · Chapitre {{ number }} · {{ track.title }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="page chapter-outline">
+    <main class="chapter-outline mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         <nav class="breadcrumb" aria-label="Fil d'Ariane">
             <ol>
                 <li><a href="{{ path('app_home') }}">Accueil</a></li>
@@ -18,10 +18,10 @@
             </ol>
         </nav>
 
-        <p class="meta">Chapitre {{ number }} du parcours <a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></p>
-        <h1>{{ chapter.title }}</h1>
-        {% if chapter.description %}<p class="lead">{{ chapter.description }}</p>{% endif %}
-        <p class="meta chapter-outline-facts">
+        <p class="mt-4 text-sm text-ink-muted">Chapitre {{ number }} du parcours <a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></p>
+        <h1 class="mt-1 text-3xl font-semibold">{{ chapter.title }}</h1>
+        {% if chapter.description %}<p class="lead mt-3 text-lg text-ink-muted">{{ chapter.description }}</p>{% endif %}
+        <p class="chapter-outline-facts mt-3 text-sm text-ink-muted">
             {{ exercises|length }} exercice{{ exercises|length > 1 ? 's' }}
             · {{ xp|number_format(0, ',', ' ') }} XP
             {%- if duration %} · environ {{ duration|duree }}{% endif %}
@@ -30,30 +30,30 @@
 
         {{ include('_concepts.html.twig', {concepts: concepts, label: 'Ce chapitre fait travailler :'}) }}
 
-        <h2 class="chapter-outline-title">Les exercices du chapitre</h2>
-        <ol class="chapter-outline-list">
+        <h2 class="mt-10 text-xl font-semibold">Les exercices du chapitre</h2>
+        <ol class="chapter-outline-list mt-4 space-y-6">
             {% for row in exercises %}
                 <li>
-                    <h3><a href="{{ path('app_exercise', {trackId: track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a></h3>
-                    <p class="meta">
+                    <h3 class="font-semibold"><a href="{{ path('app_exercise', {trackId: track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a></h3>
+                    <p class="text-sm text-ink-muted">
                         Exercice {{ row.position }}
                         · {{ row.exercise.xp }} XP
                         · {{ row.exercise.objectives|length }} objectif{{ row.exercise.objectives|length > 1 ? 's' }} vérifié{{ row.exercise.objectives|length > 1 ? 's' }} par des tests
                     </p>
-                    {% if row.story %}<p class="chapter-outline-story">{{ row.story }}</p>{% endif %}
+                    {% if row.story %}<p class="chapter-outline-story mt-2">{{ row.story }}</p>{% endif %}
                     {{ include('_concepts.html.twig', {concepts: row.exercise.concepts, label: null}) }}
                 </li>
             {% endfor %}
         </ol>
 
-        <nav class="lesson-nav" aria-label="Chapitres voisins">
+        <nav class="lesson-nav mt-12 flex flex-wrap justify-between gap-4 border-t border-line pt-6" aria-label="Chapitres voisins">
             {% if previous %}
-                <a class="button ghost" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: previous.chapter.id}) }}">← Chapitre {{ previous.number }} : {{ previous.chapter.title }}</a>
+                <a class="btn" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: previous.chapter.id}) }}">← Chapitre {{ previous.number }} : {{ previous.chapter.title }}</a>
             {% else %}
-                <a class="button ghost" href="{{ path('app_track', {trackId: track.id}) }}">← Retour au parcours</a>
+                <a class="btn" href="{{ path('app_track', {trackId: track.id}) }}">← Retour au parcours</a>
             {% endif %}
             {% if next %}
-                <a class="button ghost" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: next.chapter.id}) }}">Chapitre {{ next.number }} : {{ next.chapter.title }} →</a>
+                <a class="btn" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: next.chapter.id}) }}">Chapitre {{ next.number }} : {{ next.chapter.title }} →</a>
             {% endif %}
         </nav>
     </main>

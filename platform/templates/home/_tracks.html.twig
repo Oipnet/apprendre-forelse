@@ -1,46 +1,27 @@
 {#
-  @theme Point de surcharge : les parcours publiés, en onglets quand il y en a plusieurs, puis ceux en préparation.
+  @theme Point de surcharge : les parcours publiés, puis ceux en préparation.
   Variables : tracks (list, voir HomePage::card), upcoming (list<App\Content\Track>), inviteOnly (bool). Chaque fiche : home/_track_card.html.twig.
 #}
-<section class="lp-section" id="parcours">
-    <div class="lp-wrap">
-        <span class="lp-eyebrow">Les parcours</span>
-        <h2 class="lp-h2 spaced">{{ tracks|length > 1 ? 'Les parcours disponibles. D\'autres suivent.' : 'Un premier parcours disponible. D\'autres suivent.' }}</h2>
-        {# Plusieurs parcours : des onglets, posés par le JS. Sans JS, les fiches restent empilées. #}
-        {% set tabbed = tracks|length > 1 %}
-        <div class="lp-parcours"{% if tabbed %} data-parcours{% endif %}>
-            {% if tabbed %}
-                <div class="lp-tabs" role="tablist" aria-label="Choisir un parcours">
-                    {% for item in tracks %}
-                        <button type="button" class="lp-tab" role="tab" id="lp-tab-{{ item.track.id }}" aria-controls="lp-panel-{{ item.track.id }}" aria-selected="{{ loop.first ? 'true' : 'false' }}" tabindex="{{ loop.first ? '0' : '-1' }}">
-                            {# Le titre complet est dans la fiche : l'onglet n'en garde que le sujet (« Symfony pour les devs PHP » → « Symfony »). #}
-                            <span class="name">{{ item.track.title|split(' pour ')|first }}</span>
-                            <span class="meta">{{ item.chapters|length }} chap. · {{ item.exercises }} ex.</span>
-                        </button>
-                    {% endfor %}
-                </div>
-            {% endif %}
-            {% for item in tracks %}
-                {{ include('home/_track_card.html.twig') }}
-            {% else %}
-                <p class="lp-lead">Aucun parcours installé : ajoutez un pack de contenu (variable CONTENT_PACKS_PATHS).</p>
-            {% endfor %}
-        </div>
-        {% if upcoming %}
-            <div class="lp-upcoming">
-                <h3>En préparation</h3>
-                <ul>
-                    {% for track in upcoming %}
-                        <li>
-                            <span class="name">{{ track.title }}</span> <span class="lp-badge">Bientôt</span>
-                            <p>{{ track.description }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-        <div class="lp-callout">
-            <p><strong>Une fiche de cours à la fin de chaque chapitre</strong>, en page web et en PDF. À la fin du parcours, le livret complet : votre mémo, écrit à mesure que vous l'avez appris.</p>
-        </div>
+<section class="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6" id="parcours">
+    <h2 class="text-2xl font-semibold">{{ tracks|length > 1 ? 'Les parcours' : 'Le parcours' }}</h2>
+    <div class="home-tracks mt-6 space-y-6">
+        {% for item in tracks %}
+            {{ include('home/_track_card.html.twig', {tabbed: false}) }}
+        {% else %}
+            <p class="text-ink-muted">Aucun parcours installé : ajoutez un pack de contenu (variable CONTENT_PACKS_PATHS).</p>
+        {% endfor %}
     </div>
+    {% if upcoming %}
+        <div class="home-upcoming mt-10">
+            <h3 class="text-lg font-semibold">En préparation</h3>
+            <ul class="mt-3 space-y-3">
+                {% for track in upcoming %}
+                    <li>
+                        <span class="font-medium">{{ track.title }}</span> <span class="rounded bg-bg-2 px-1.5 text-xs text-ink-muted">Bientôt</span>
+                        <p class="text-sm text-ink-muted">{{ track.description }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 </section>

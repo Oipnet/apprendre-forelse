@@ -7,7 +7,7 @@
 {% block title %}Les notions travaillées · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="page concepts-page">
+    <main class="concepts-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         <nav class="breadcrumb" aria-label="Fil d'Ariane">
             <ol>
                 <li><a href="{{ path('app_home') }}">Accueil</a></li>
@@ -15,20 +15,20 @@
             </ol>
         </nav>
 
-        <h1>Les notions travaillées</h1>
-        <p class="lead">Chaque exercice annonce ce qu'il fait travailler. Voici toutes ces notions, et par où les pratiquer.</p>
+        <h1 class="mt-3 text-3xl font-semibold">Les notions travaillées</h1>
+        <p class="lead mt-3 text-lg text-ink-muted">Chaque exercice annonce ce qu'il fait travailler. Voici toutes ces notions, et par où les pratiquer.</p>
 
         {% if concepts %}
-            <ul class="concepts-list">
+            <ul class="concepts-list mt-8 grid gap-x-6 gap-y-2 sm:grid-cols-2">
                 {% for concept in concepts %}
                     <li>
                         <a href="{{ path('app_concept', {slug: concept.slug}) }}">{{ concept.name }}</a>
-                        <span class="meta">{{ concept.exercises }} exercice{{ concept.exercises > 1 ? 's' }}</span>
+                        <span class="text-sm text-ink-muted">{{ concept.exercises }} exercice{{ concept.exercises > 1 ? 's' }}</span>
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p>Aucune notion n'est encore travaillée par plus d'un exercice.</p>
+            <p class="mt-8">Aucune notion n'est encore travaillée par plus d'un exercice.</p>
         {% endif %}
     </main>
 {% endblock %}

@@ -28,7 +28,7 @@ foi dans `App\Theme\TemplateContract::POINTS`.
 | `_footer.html.twig` | le pied de page (la version et la licence du moteur y restent obligatoires) |
 | `home.html.twig` | l'accueil, fait des sections ci-dessous ; le remplacer change leur ordre ou en retire |
 | `home/_hero.html.twig`, `home/_demo.html.twig` | le bandeau et son illustration (`home.demo`) |
-| `home/_promise.html.twig`, `home/_how.html.twig`, `home/_ai.html.twig`, `home/_audience.html.twig` | les sections de présentation |
+| `home/_promise.html.twig`, `home/_how.html.twig`, `home/_ai.html.twig`, `home/_audience.html.twig` | les sections de présentation : **vides dans le thème default**, elles n'existent que si un thème les remplit |
 | `home/_showcase.html.twig`, `home/_author.html.twig` | le fil rouge et « qui est derrière » (`home.showcase`, `home.author`) |
 | `home/_tracks.html.twig`, `home/_track_card.html.twig` | les parcours ; la fiche sert aussi au catalogue `/parcours` |
 | `home/_signup.html.twig`, `home/_faq.html.twig` | l'inscription ou la liste d'attente, les questions fréquentes |

@@ -3,18 +3,18 @@
 {% block title %}Créer un compte avec {{ provider.label }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="form-card">
-        <h1>Créer un compte</h1>
-        <p class="meta">Avec votre compte {{ provider.label }} <strong>{{ profile.username }}</strong>, à l'adresse <strong>{{ profile.primaryEmail }}</strong>. Pas de mot de passe : vous vous connecterez avec {{ provider.label }}.</p>
+    <main class="form-card mx-auto my-10 w-full max-w-md space-y-4 rounded-lg border border-line bg-surface p-6 sm:p-8">
+        <h1 class="text-2xl font-semibold">Créer un compte</h1>
+        <p class="text-sm text-ink-muted">Avec votre compte {{ provider.label }} <strong>{{ profile.username }}</strong>, à l'adresse <strong>{{ profile.primaryEmail }}</strong>. Pas de mot de passe : vous vous connecterez avec {{ provider.label }}.</p>
         {{ form_start(form) }}
             {{ form_errors(form) }}
             {{ form_row(form.displayName) }}
             {{ form_row(form.invitationCode) }}
-            <p class="meta">Votre adresse ne sert qu'à votre compte : <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
-            <button class="primary" type="submit">Créer mon compte</button>
+            <p class="text-sm text-ink-muted">Votre adresse ne sert qu'à votre compte : <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
+            <button class="btn btn-primary w-full" type="submit">Créer mon compte</button>
         {{ form_end(form) }}
         {% if inviteOnly %}
-            <p class="meta">Pas de code d'invitation ? <a href="{{ path('app_home') }}#liste-attente">Laissez votre adresse sur la liste d'attente</a> : vous serez prévenu à l'ouverture.</p>
+            <p class="text-sm text-ink-muted">Pas de code d'invitation ? <a href="{{ path('app_home') }}#liste-attente">Laissez votre adresse sur la liste d'attente</a> : vous serez prévenu à l'ouverture.</p>
         {% endif %}
     </main>
 {% endblock %}

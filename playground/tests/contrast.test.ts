@@ -83,6 +83,8 @@ const defaultPairs: [string, string[]][] = [
 	['dark-ink', ['dark']],
 	// Le texte des boutons de suppression (btn-danger) : la couleur du fond de page.
 	['bg', ['danger']],
+	// La coloration du code, sur le fond des blocs.
+	...['keyword', 'type', 'property', 'attribute', 'value', 'variable', 'number', 'generic', 'comment'].map((t): [string, string[]] => [`hl-${t}`, ['dark']]),
 ];
 
 describe.each(Object.entries(defaultThemes))('contraste du thème default, thème %s (WCAG AA)', (_nom, couleurs) => {

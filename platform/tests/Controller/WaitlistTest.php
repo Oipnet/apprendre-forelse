@@ -45,8 +45,8 @@ final class WaitlistTest extends WebTestCase
 
         $crawler = $this->submit($client, '  Ada@Example.test ');
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('#liste-attente .lp-notice.ok', 'C\'est noté');
-        $this->assertSelectorNotExists('form.lp-form', 'Une fois inscrit, le formulaire laisse place à la confirmation.');
+        $this->assertSelectorTextContains('#liste-attente .waitlist-notice.ok', 'C\'est noté');
+        $this->assertSelectorNotExists('form.waitlist-form', 'Une fois inscrit, le formulaire laisse place à la confirmation.');
 
         $this->submit($client, 'ada@example.test');
 
@@ -64,8 +64,8 @@ final class WaitlistTest extends WebTestCase
         $this->submit($client, 'pas-une-adresse');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('#liste-attente .lp-notice.ko', 'ne semble pas valide');
-        $this->assertSelectorExists('form.lp-form', 'Le formulaire reste affiché pour corriger.');
+        $this->assertSelectorTextContains('#liste-attente .waitlist-notice.ko', 'ne semble pas valide');
+        $this->assertSelectorExists('form.waitlist-form', 'Le formulaire reste affiché pour corriger.');
         $this->assertCount(0, static::getContainer()->get(EntityManagerInterface::class)->getRepository(WaitlistEntry::class)->findAll());
     }
 
@@ -76,7 +76,7 @@ final class WaitlistTest extends WebTestCase
 
         $this->submit($client, 'robot@example.test', 'https://spam.example');
 
-        $this->assertSelectorTextContains('#liste-attente .lp-notice.ok', 'C\'est noté', 'Le robot croit avoir réussi…');
+        $this->assertSelectorTextContains('#liste-attente .waitlist-notice.ok', 'C\'est noté', 'Le robot croit avoir réussi…');
         $this->assertCount(0, static::getContainer()->get(EntityManagerInterface::class)->getRepository(WaitlistEntry::class)->findAll(), '… mais rien n\'est enregistré.');
     }
 
@@ -92,8 +92,8 @@ final class WaitlistTest extends WebTestCase
     private function submit(KernelBrowser $client, string $email, string $trap = ''): Crawler
     {
         $crawler = $client->request('GET', '/');
-        $this->assertSelectorExists('form.lp-form', 'Bêta fermée : la page propose la liste d\'attente.');
-        $form = $crawler->filter('form.lp-form')->form();
+        $this->assertSelectorExists('form.waitlist-form', 'Bêta fermée : la page propose la liste d\'attente.');
+        $form = $crawler->filter('form.waitlist-form')->form();
         $form['email'] = $email;
         $form['site'] = $trap;
         $client->submit($form);

@@ -3,11 +3,11 @@
 {% block title %}Nouveau mot de passe · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="form-card">
-        <h1>Nouveau mot de passe</h1>
+    <main class="form-card mx-auto my-10 w-full max-w-md space-y-4 rounded-lg border border-line bg-surface p-6 sm:p-8">
+        <h1 class="text-2xl font-semibold">Nouveau mot de passe</h1>
         {{ form_start(form) }}
             {{ form_row(form.plainPassword) }}
-            <button class="primary" type="submit">Enregistrer et me connecter</button>
+            <button class="btn btn-primary w-full" type="submit">Enregistrer et me connecter</button>
         {{ form_end(form) }}
     </main>
 {% endblock %}

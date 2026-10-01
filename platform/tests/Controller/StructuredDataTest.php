@@ -56,7 +56,7 @@ final class StructuredDataTest extends WebTestCase
         $this->assertSame('Arnaud Pointet', $data['Person']['name']);
         // La FAQ reprend exactement les questions affichées.
         $this->assertSame(
-            $client->getCrawler()->filter('.lp-faq summary')->each(static fn ($summary) => $summary->text()),
+            $client->getCrawler()->filter('.home-faq summary')->each(static fn ($summary) => $summary->text()),
             array_column($data['FAQPage']['mainEntity'], 'name'),
         );
         $this->assertStringContainsString('Découverte', $data['FAQPage']['mainEntity'][1]['acceptedAnswer']['text']);
@@ -105,7 +105,7 @@ final class StructuredDataTest extends WebTestCase
         $this->assertSelectorTextContains('.exercises li:first-child .meta', '20 min');
 
         $client->request('GET', '/');
-        $this->assertSelectorTextContains('.lp-track .count', 'environ 1 h 45');
+        $this->assertSelectorTextContains('.track-card .count', 'environ 1 h 45');
 
         $this->restorePacks();
         $client->request('GET', '/parcours/decouverte');

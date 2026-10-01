@@ -171,7 +171,6 @@ final class ContactTest extends WebTestCase
 
         $client->request('GET', '/');
         $this->assertSelectorExists('.site-footer a[href="/contact"]');
-        $this->assertSelectorExists('.lp-audience a[href="/ecoles-et-entreprises"]');
         $client->request('GET', '/mentions-legales');
         $this->assertSelectorExists('.site-footer a[href="/ecoles-et-entreprises"]');
 

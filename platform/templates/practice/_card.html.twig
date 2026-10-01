@@ -5,25 +5,25 @@
 #}
 {% macro card(item, frameworks, badges = true) %}
     {% set practice = item.practice %}
-    <li data-state="{{ item.state }}">
-        <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
-            <span class="practice-head">
+    <li class="rounded-lg border border-line bg-surface hover:border-ink-muted" data-state="{{ item.state }}">
+        <a class="block p-4 text-ink no-underline hover:text-ink" href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}">
+            <span class="practice-head flex flex-wrap items-center gap-1.5">
                 {% if badges %}
                     <span class="tag framework">{{ frameworks[practice.framework] ?? practice.framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
-                    {% if practice.version %}<span class="tag new">Nouveauté</span>{% endif %}
+                    {% if practice.version %}<span class="tag new border-accent text-accent">Nouveauté</span>{% endif %}
                 {% endif %}
                 {% if practice.isRestricted %}<span class="tag">En préparation</span>{% endif %}
                 {% if practice_scheduled(practice) %}<span class="tag">Programmé le {{ practice.published|date('d/m/Y') }}</span>{% endif %}
-                <time class="meta" datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time>
-                {% if item.state == 'completed' %}<span class="state">✓ Réussi</span>{% elseif item.state == 'in_progress' %}<span class="state">En cours</span>{% endif %}
+                <time class="meta text-xs text-ink-muted" datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time>
+                {% if item.state == 'completed' %}<span class="state ml-auto text-xs text-success">✓ Réussi</span>{% elseif item.state == 'in_progress' %}<span class="state ml-auto text-xs text-ink-muted">En cours</span>{% endif %}
             </span>
-            <span class="title">{{ practice.exercise.title }}</span>
-            <span class="summary">{{ practice.summary }}</span>
-            <span class="practice-foot">
+            <span class="title mt-2 block font-semibold">{{ practice.exercise.title }}</span>
+            <span class="summary mt-1 block text-sm text-ink-muted">{{ practice.summary }}</span>
+            <span class="practice-foot mt-3 flex flex-wrap items-center gap-2">
                 {% if practice.exercise.concepts %}
-                    <span class="practice-notions">{% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</span>
+                    <span class="practice-notions flex flex-wrap gap-1">{% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</span>
                 {% endif %}
-                <span class="practice-cta">{% if item.state == 'completed' %}Refaire l'exercice{% elseif item.state == 'in_progress' %}Reprendre{% else %}Faire l'exercice{% endif %} <span aria-hidden="true">→</span></span>
+                <span class="practice-cta ml-auto text-sm text-accent">{% if item.state == 'completed' %}Refaire l'exercice{% elseif item.state == 'in_progress' %}Reprendre{% else %}Faire l'exercice{% endif %} <span aria-hidden="true">→</span></span>
             </span>
         </a>
     </li>

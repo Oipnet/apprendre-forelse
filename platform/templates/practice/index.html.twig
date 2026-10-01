@@ -1,77 +1,75 @@
 {% extends 'base.html.twig' %}
 
-{% block body_class %}site-page practice-page{% endblock %}
-
 {% block body %}
     {% import 'practice/_card.html.twig' as ui %}
     {% set hasFilters = filters.framework or filters.notions or filters.nouveautes or filters.recherche %}
     {% set filterCount = (filters.framework ? 1 : 0) + filters.notions|length + (filters.nouveautes ? 1 : 0) + (filters.recherche ? 1 : 0) %}
     <main class="pr">
-        <div class="lp-wrap">
-            <div class="pr-hero">
-                <div class="pr-intro">
-                    <p class="pr-eyebrow">Pratique</p>
-                    <h1>Se servir d'une fonctionnalité, tout de suite</h1>
-                    <p class="lead">De courts exercices, à part des parcours : un code écrit à l'ancienne, à réécrire avec la fonctionnalité. Souvent une nouveauté du framework, parfois un point précis qui mérite qu'on s'y arrête.</p>
+        <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+            <div class="pr-hero flex flex-col gap-6 border-b border-line pb-8 md:flex-row md:justify-between">
+                <div class="pr-intro md:max-w-2xl">
+                    <p class="text-sm font-medium text-ink-muted">Pratique</p>
+                    <h1 class="mt-1 text-3xl font-semibold">Se servir d'une fonctionnalité, tout de suite</h1>
+                    <p class="lead mt-3 text-lg text-ink-muted">De courts exercices, à part des parcours : un code écrit à l'ancienne, à réécrire avec la fonctionnalité. Souvent une nouveauté du framework, parfois un point précis qui mérite qu'on s'y arrête.</p>
                     {% if versions %}
-                        <p class="pr-versions">
-                            <span class="meta">Par version :</span>
+                        <p class="pr-versions mt-4 flex flex-wrap items-center gap-2 text-sm">
+                            <span class="text-ink-muted">Par version :</span>
                             {% for version in versions %}
-                                <a class="pr-tab" href="{{ path('app_practice_version', {slug: version.slug}) }}">{{ version.label }} <span class="pr-tab-count">{{ version.exercises }}</span></a>
+                                <a class="pr-tab tag" href="{{ path('app_practice_version', {slug: version.slug}) }}">{{ version.label }} <span class="pr-tab-count font-medium text-ink">{{ version.exercises }}</span></a>
                             {% endfor %}
                         </p>
                     {% endif %}
                 </div>
-                <ul class="pr-kpis">
-                    <li><span class="pr-kpi-value">{{ total }}</span><span class="pr-kpi-label">exercice{{ total > 1 ? 's' }}</span></li>
-                    <li><span class="pr-kpi-value">{{ newCount }}</span><span class="pr-kpi-label">nouveauté{{ newCount > 1 ? 's' }}</span></li>
+                <ul class="pr-kpis flex gap-6 md:flex-col md:gap-2 md:text-right">
+                    <li><span class="pr-kpi-value text-2xl font-semibold">{{ total }}</span> <span class="pr-kpi-label text-sm text-ink-muted">exercice{{ total > 1 ? 's' }}</span></li>
+                    <li><span class="pr-kpi-value text-2xl font-semibold">{{ newCount }}</span> <span class="pr-kpi-label text-sm text-ink-muted">nouveauté{{ newCount > 1 ? 's' }}</span></li>
                     {% if app.user %}
-                        <li><span class="pr-kpi-value">{{ completedCount }}</span><span class="pr-kpi-label">réussi{{ completedCount > 1 ? 's' }}</span></li>
+                        <li><span class="pr-kpi-value text-2xl font-semibold">{{ completedCount }}</span> <span class="pr-kpi-label text-sm text-ink-muted">réussi{{ completedCount > 1 ? 's' }}</span></li>
                     {% endif %}
                 </ul>
             </div>
 
             {% if total %}
-                <div class="pr-layout">
+                <div class="pr-layout mt-8 grid gap-8 md:grid-cols-[16rem_1fr]">
                     {# Les filtres sont un formulaire GET : sans JavaScript, le bouton « Appliquer » les envoie ;
                        avec, site.ts le masque et chaque case soumet le formulaire toute seule. Le panneau se
                        replie sous 900 px, où il passerait sinon avant les exercices. #}
                     <aside class="pr-aside">
-                        <form class="pr-card" method="get" action="{{ path('app_practice') }}" data-practice-filters>
+                        <form class="pr-card rounded-lg border border-line bg-surface p-4 text-sm" method="get" action="{{ path('app_practice') }}" data-practice-filters>
                             <input type="hidden" name="tri" value="{{ filters.tri }}">
                             <details class="fold" data-fold open>
-                                <summary>
+                                <summary class="flex cursor-pointer list-none items-center gap-2 font-semibold">
                                     <span>Filtres</span>
-                                    {% if filterCount %}<span class="fold-count">{{ filterCount }} actif{{ filterCount > 1 ? 's' }}</span>{% endif %}
-                                    <span class="fold-sign" aria-hidden="true"></span>
+                                    {% if filterCount %}<span class="fold-count tag">{{ filterCount }} actif{{ filterCount > 1 ? 's' }}</span>{% endif %}
+                                    <span class="ml-auto text-ink-muted" aria-hidden="true">▾</span>
                                 </summary>
-                                <div class="fold-body">
-                                    <label class="pr-field">
-                                        <span class="pr-legend">Rechercher</span>
-                                        <input type="search" name="recherche" value="{{ filters.recherche }}" placeholder="chunkBy, mail, validation…" autocomplete="off">
+                                <div class="fold-body mt-4 space-y-5">
+                                    <label class="pr-field block">
+                                        <span class="pr-legend mb-1 block font-medium">Rechercher</span>
+                                        <input class="field" type="search" name="recherche" value="{{ filters.recherche }}" placeholder="chunkBy, mail, validation…" autocomplete="off">
                                     </label>
 
                                     <div class="pr-group" role="group" aria-labelledby="pr-lbl-framework">
-                                        <span class="pr-legend" id="pr-lbl-framework">Framework</span>
-                                        <div class="pr-chips">
-                                            <label class="pr-pill">
-                                                <input type="radio" name="framework" value=""{{ filters.framework is null ? ' checked' }}>
+                                        <span class="pr-legend mb-2 block font-medium" id="pr-lbl-framework">Framework</span>
+                                        <div class="pr-chips flex flex-wrap gap-1.5">
+                                            <label class="pr-pill inline-flex cursor-pointer items-center gap-1 rounded-full border border-line px-3 py-1 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent has-focus-visible:outline-2 has-focus-visible:outline-accent">
+                                                <input class="sr-only" type="radio" name="framework" value=""{{ filters.framework is null ? ' checked' }}>
                                                 <span>Tous</span>
                                             </label>
                                             {% for id, label in frameworks %}
-                                                <label class="pr-pill">
-                                                    <input type="radio" name="framework" value="{{ id }}"{{ filters.framework == id ? ' checked' }}>
+                                                <label class="pr-pill inline-flex cursor-pointer items-center gap-1 rounded-full border border-line px-3 py-1 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent has-focus-visible:outline-2 has-focus-visible:outline-accent">
+                                                    <input class="sr-only" type="radio" name="framework" value="{{ id }}"{{ filters.framework == id ? ' checked' }}>
                                                     <span>{{ label }}</span>
                                                 </label>
                                             {% endfor %}
                                         </div>
                                     </div>
 
-                                    <label class="pr-check">
-                                        <input type="checkbox" name="nouveautes" value="1"{{ filters.nouveautes ? ' checked' }}>
+                                    <label class="pr-check flex cursor-pointer items-start gap-2">
+                                        <input class="mt-1 accent-accent" type="checkbox" name="nouveautes" value="1"{{ filters.nouveautes ? ' checked' }}>
                                         <span>
-                                            <span class="pr-check-title">Nouveautés seulement</span>
-                                            <span class="pr-check-hint">Sorties dans les dernières versions</span>
+                                            <span class="pr-check-title block font-medium">Nouveautés seulement</span>
+                                            <span class="pr-check-hint block text-ink-muted">Sorties dans les dernières versions</span>
                                         </span>
                                     </label>
 
@@ -79,26 +77,26 @@
                                         {% set head = notionCounts|slice(0, 8) %}
                                         {% set rest = notionCounts|slice(8) %}
                                         <div class="pr-group" role="group" aria-labelledby="pr-lbl-notions">
-                                            <p class="pr-group-head">
-                                                <span class="pr-legend" id="pr-lbl-notions">Notions</span>
-                                                {% if filters.notions %}<span class="pr-note">{{ filters.notions|length }} retenue{{ filters.notions|length > 1 ? 's' }}</span>{% endif %}
+                                            <p class="pr-group-head mb-2 flex items-baseline justify-between">
+                                                <span class="pr-legend font-medium" id="pr-lbl-notions">Notions</span>
+                                                {% if filters.notions %}<span class="pr-note text-ink-muted">{{ filters.notions|length }} retenue{{ filters.notions|length > 1 ? 's' }}</span>{% endif %}
                                             </p>
-                                            <div class="pr-chips">
+                                            <div class="pr-chips flex flex-wrap gap-1.5">
                                                 {% for notion, count in head %}
-                                                    <label class="pr-chip">
-                                                        <input type="checkbox" name="notions[]" value="{{ notion }}"{{ notion in filters.notions ? ' checked' }}>
-                                                        <span>{{ notion }}<span class="pr-chip-count">{{ count }}</span></span>
+                                                    <label class="pr-chip inline-flex cursor-pointer items-center gap-1 rounded-full border border-line px-3 py-1 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent has-focus-visible:outline-2 has-focus-visible:outline-accent">
+                                                        <input class="sr-only" type="checkbox" name="notions[]" value="{{ notion }}"{{ notion in filters.notions ? ' checked' }}>
+                                                        <span>{{ notion }}<span class="pr-chip-count ml-1 opacity-70">{{ count }}</span></span>
                                                     </label>
                                                 {% endfor %}
                                             </div>
                                             {% if rest %}
-                                                <details class="pr-more"{{ filters.notions|filter(n => n in rest|keys)|length ? ' open' }}>
-                                                    <summary><span class="pr-more-open">Voir les {{ rest|length }} autres</span><span class="pr-more-close">Voir moins</span></summary>
-                                                    <div class="pr-chips">
+                                                <details class="pr-more group/more mt-2"{{ filters.notions|filter(n => n in rest|keys)|length ? ' open' }}>
+                                                    <summary class="cursor-pointer text-accent"><span class="pr-more-open group-open/more:hidden">Voir les {{ rest|length }} autres</span><span class="pr-more-close hidden group-open/more:inline">Voir moins</span></summary>
+                                                    <div class="pr-chips flex flex-wrap gap-1.5">
                                                         {% for notion, count in rest %}
-                                                            <label class="pr-chip">
-                                                                <input type="checkbox" name="notions[]" value="{{ notion }}"{{ notion in filters.notions ? ' checked' }}>
-                                                                <span>{{ notion }}<span class="pr-chip-count">{{ count }}</span></span>
+                                                            <label class="pr-chip inline-flex cursor-pointer items-center gap-1 rounded-full border border-line px-3 py-1 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent has-focus-visible:outline-2 has-focus-visible:outline-accent">
+                                                                <input class="sr-only" type="checkbox" name="notions[]" value="{{ notion }}"{{ notion in filters.notions ? ' checked' }}>
+                                                                <span>{{ notion }}<span class="pr-chip-count ml-1 opacity-70">{{ count }}</span></span>
                                                             </label>
                                                         {% endfor %}
                                                     </div>
@@ -107,9 +105,9 @@
                                         </div>
                                     {% endif %}
 
-                                    <button type="submit" class="pr-apply">Appliquer les filtres</button>
+                                    <button type="submit" class="pr-apply btn btn-primary w-full">Appliquer les filtres</button>
                                     {% if hasFilters %}
-                                        <a class="pr-reset" href="{{ path('app_practice') }}">Réinitialiser les filtres</a>
+                                        <a class="pr-reset block text-center" href="{{ path('app_practice') }}">Réinitialiser les filtres</a>
                                     {% endif %}
                                 </div>
                             </details>
@@ -117,31 +115,31 @@
                     </aside>
 
                     <div class="pr-results">
-                        <div class="pr-bar">
-                            <p class="pr-found">{{ shown ? shown ~ ' exercice' ~ (shown > 1 ? 's') : 'Aucun exercice' }}{% if filters.framework %} · {{ frameworks[filters.framework] ?? filters.framework }}{% endif %}</p>
-                            <p class="pr-sorts">
-                                <span class="meta">Trier :</span>
+                        <div class="pr-bar flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
+                            <p class="pr-found font-medium">{{ shown ? shown ~ ' exercice' ~ (shown > 1 ? 's') : 'Aucun exercice' }}{% if filters.framework %} · {{ frameworks[filters.framework] ?? filters.framework }}{% endif %}</p>
+                            <p class="pr-sorts flex items-center gap-2 text-sm">
+                                <span class="text-ink-muted">Trier :</span>
                                 {% for id, label in {recent: 'Récents', titre: 'Titre'} %}
-                                    <a class="pr-tab{{ filters.tri == id ? ' active' }}" href="{{ path('app_practice', filters|merge({tri: id})|filter(v => v is not empty)) }}"{% if filters.tri == id %} aria-current="true"{% endif %}>{{ label }}</a>
+                                    <a class="pr-tab tag{{ filters.tri == id ? ' active border-accent text-ink' }}" href="{{ path('app_practice', filters|merge({tri: id})|filter(v => v is not empty)) }}"{% if filters.tri == id %} aria-current="true"{% endif %}>{{ label }}</a>
                                 {% endfor %}
                             </p>
                         </div>
 
                         {% for group in groups %}
-                            <section class="pr-set">
-                                <div class="pr-set-head">
-                                    <h2 class="pr-set-label">{{ group.label }}</h2>
-                                    <span class="pr-rule" aria-hidden="true"></span>
-                                    <span class="pr-set-count">{{ group.items|length }}</span>
+                            <section class="pr-set mt-6">
+                                <div class="pr-set-head flex items-center gap-3">
+                                    <h2 class="pr-set-label text-sm font-semibold uppercase tracking-wide text-ink-muted">{{ group.label }}</h2>
+                                    <span class="pr-rule h-px flex-1 bg-line" aria-hidden="true"></span>
+                                    <span class="pr-set-count text-sm text-ink-muted">{{ group.items|length }}</span>
                                 </div>
-                                <ol class="practice-list">
+                                <ol class="practice-list mt-3 space-y-3">
                                     {% for item in group.items %}{{ ui.card(item, frameworks) }}{% endfor %}
                                 </ol>
                             </section>
                         {% else %}
-                            <div class="pr-empty">
+                            <div class="pr-empty mt-6 space-y-3 text-center">
                                 <p>Aucun exercice avec ces filtres.</p>
-                                <a class="lp-btn" href="{{ path('app_practice') }}">Tout afficher</a>
+                                <a class="btn" href="{{ path('app_practice') }}">Tout afficher</a>
                             </div>
                         {% endfor %}
 
@@ -149,15 +147,15 @@
                             {# Sur une instance sur invitation, l'éditeur reste fermé aux visiteurs (TrackAccessChecker) :
                                la même phrase y mentirait. #}
                             {% if inviteOnly %}
-                                <p class="meta pr-signup">Cette plateforme est réservée à ses membres : <a rel="nofollow" href="{{ path('app_register') }}">créez votre compte</a> avec votre code d'invitation, ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
+                                <p class="pr-signup mt-6 text-sm text-ink-muted">Cette plateforme est réservée à ses membres : <a rel="nofollow" href="{{ path('app_register') }}">créez votre compte</a> avec votre code d'invitation, ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
                             {% else %}
-                                <p class="meta pr-signup">Ces exercices s'écrivent sans compte : l'éditeur s'ouvre tout de suite. Le compte garde votre progression, ouvre le mentor et les retours — <a rel="nofollow" href="{{ path('app_register') }}">créez le vôtre</a> ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
+                                <p class="pr-signup mt-6 text-sm text-ink-muted">Ces exercices s'écrivent sans compte : l'éditeur s'ouvre tout de suite. Le compte garde votre progression, ouvre le mentor et les retours — <a rel="nofollow" href="{{ path('app_register') }}">créez le vôtre</a> ou <a href="{{ path('app_login') }}">connectez-vous</a>.</p>
                             {% endif %}
                         {% endif %}
                     </div>
                 </div>
             {% else %}
-                <p class="meta">Pas encore d'exercice ici : revenez bientôt.</p>
+                <p class="mt-8 text-ink-muted">Pas encore d'exercice ici : revenez bientôt.</p>
             {% endif %}
         </div>
     </main>

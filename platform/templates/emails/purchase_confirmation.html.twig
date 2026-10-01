@@ -17,14 +17,14 @@
 
 {# Reçu et facture : un lien chacun quand ils mènent à deux endroits, une seule ligne quand c'est le compte. #}
 {% if purchase.receiptUrl %}
-<p style="margin:0 0 12px;"><a class="lien" href="{{ purchase.receiptUrl }}" style="color:#9a5b18;">Voir le reçu</a>{% if purchase.stripeInvoiceId %} · <a class="lien" href="{{ compte }}" style="color:#9a5b18;">Télécharger la facture</a> (depuis votre compte){% endif %}</p>
+<p style="margin:0 0 12px;"><a class="lien" href="{{ purchase.receiptUrl }}" style="color:{{ theme.emailColors.accent }};">Voir le reçu</a>{% if purchase.stripeInvoiceId %} · <a class="lien" href="{{ compte }}" style="color:{{ theme.emailColors.accent }};">Télécharger la facture</a> (depuis votre compte){% endif %}</p>
 {% elseif purchase.stripeInvoiceId %}
-<p style="margin:0 0 12px;">Votre reçu et votre facture sont dans <a class="lien" href="{{ compte }}" style="color:#9a5b18;">votre compte, rubrique Achats</a>.</p>
+<p style="margin:0 0 12px;">Votre reçu et votre facture sont dans <a class="lien" href="{{ compte }}" style="color:{{ theme.emailColors.accent }};">votre compte, rubrique Achats</a>.</p>
 {% else %}
-<p style="margin:0 0 12px;">Votre reçu sera disponible dans <a class="lien" href="{{ compte }}" style="color:#9a5b18;">votre compte, rubrique Achats</a>.</p>
+<p style="margin:0 0 12px;">Votre reçu sera disponible dans <a class="lien" href="{{ compte }}" style="color:{{ theme.emailColors.accent }};">votre compte, rubrique Achats</a>.</p>
 {% endif %}
 
-{% if purchase.termsVersion %}<p style="margin:0 0 12px;">Vous avez accepté les <a class="lien" href="{{ url('app_terms') }}" style="color:#9a5b18;">conditions générales de vente</a> (version du {{ purchase.termsVersion|date('d/m/Y') }}).</p>{% endif %}
+{% if purchase.termsVersion %}<p style="margin:0 0 12px;">Vous avez accepté les <a class="lien" href="{{ url('app_terms') }}" style="color:{{ theme.emailColors.accent }};">conditions générales de vente</a> (version du {{ purchase.termsVersion|date('d/m/Y') }}).</p>{% endif %}
 
 <p style="margin:0;">Vous avez demandé l'accès immédiat au parcours et renoncé à votre droit de rétractation le {{ purchase.withdrawalWaiverAcceptedAt|date('d/m/Y à H:i') }}.</p>
 {% endblock %}

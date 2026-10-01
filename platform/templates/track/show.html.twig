@@ -1,135 +1,130 @@
 {% extends 'base.html.twig' %}
 
-{% block body_class %}site-page track-page{% endblock %}
-
 {% block body %}
     {% set trackDuration = track_duration(track) %}
     {% set done = total and completed == total %}
     {% set openChapter = app.user and current ? current.chapter : 1 %}
     {% set bossEveryChapter = chapters|length > 0 and chapters|filter(c => c.items is not empty and (c.items|last).boss)|length == chapters|length %}
     {% set hasLessons = chapters|filter(c => c.lesson)|length > 0 %}
-    <main class="tr">
-        <section class="tr-hero">
-            <div class="tr-wrap">
-                <div class="tr-eyebrow">{{ pack.title }}</div>
-                <div class="tr-hero-row">
-                    <div class="tr-intro">
-                        <h1>{{ track.title }}</h1>
-                        <p class="lead">{{ track.description }}</p>
-                    </div>
+    {# Repères sans style, lus par les tests et le script du moteur : tr-chapter (« Tout ouvrir »), tr-chapter-meta, track-done,
+       track-duration, next-track, exercises, lesson-link. #}
+    <main class="track mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
+        <section class="flex flex-col gap-6 border-b border-line pb-8 md:flex-row md:justify-between">
+            <div class="md:max-w-2xl">
+                <p class="text-sm text-ink-muted">{{ pack.title }}</p>
+                <h1 class="mt-1 text-3xl font-semibold">{{ track.title }}</h1>
+                <p class="lead mt-3 text-lg text-ink-muted">{{ track.description }}</p>
+                <p class="track-duration mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
+                    <span>{{ app.user ? completed ~ ' / ' : '' }}{{ total }} exercice{{ total > 1 ? 's' }}{{ app.user ? ' réussis' : '' }}</span>
+                    <span>{{ chapters|length }} chapitre{{ chapters|length > 1 ? 's' }}</span>
+                    <span>{{ app.user ? xpEarned|number_format(0, ',', ' ') ~ ' / ' : '' }}{{ xpTotal|number_format(0, ',', ' ') }} XP</span>
+                    {% if trackDuration %}<span>Environ {{ trackDuration|duree }} de pratique</span>{% endif %}
+                </p>
+                {% if app.user %}
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-bg-2" aria-hidden="true"><div class="h-full bg-accent" style="width: {{ total ? (completed / total * 100)|round(1) : 0 }}%"></div></div>
+                {% endif %}
+            </div>
 
-                    <div class="tr-now">
-                        {% if done %}
-                            <div class="track-done">
-                                <div class="tr-eyebrow">Parcours terminé</div>
-                                <p class="tr-now-title"><strong>🎓 Bravo, tout est réussi.</strong></p>
-                                {% if booklet %}
-                                    <a class="tr-btn outline" href="{{ path('app_track_booklet', {trackId: track.id}) }}">Télécharger le livret (PDF)</a>
-                                {% endif %}
-                                {% if nextTrack %}
-                                    <a class="tr-btn primary" href="{{ path('app_track', {trackId: nextTrack.id}) }}">Continuer avec « {{ nextTrack.title }} » <span class="lp-mono">→</span></a>
-                                {% endif %}
-                            </div>
-                        {% elseif current %}
-                            <div class="tr-eyebrow">{{ app.user and started ? 'Vous en êtes là' : 'Pour commencer' }}</div>
-                            <p class="tr-now-where">Chapitre {{ current.chapter }} · exercice {{ current.position }}</p>
-                            <p class="tr-now-title">{{ current.exercise.title }}</p>
-                            <a class="tr-btn primary block" href="{{ path('app_exercise', {trackId: track.id, exerciseId: current.exercise.id}) }}">{{ app.user and started ? 'Reprendre' : 'Commencer le parcours' }} <span class="lp-mono">→</span></a>
+            <div class="md:w-72">
+                {% if done %}
+                    <div class="track-done space-y-2 rounded-lg border border-success bg-success-bg p-4">
+                        <p class="text-sm text-success">Parcours terminé</p>
+                        <p><strong>🎓 Bravo, tout est réussi.</strong></p>
+                        {% if booklet %}
+                            <a class="btn w-full" href="{{ path('app_track_booklet', {trackId: track.id}) }}">Télécharger le livret (PDF)</a>
                         {% endif %}
-                        {{ include('track/_price.html.twig', {continueUrl: null}) }}
+                        {% if nextTrack %}
+                            <a class="btn btn-primary w-full" href="{{ path('app_track', {trackId: nextTrack.id}) }}">Continuer avec « {{ nextTrack.title }} » <span aria-hidden="true">→</span></a>
+                        {% endif %}
                     </div>
-                </div>
-
-                <div class="tr-stats">
-                    {% if app.user %}
-                        <div class="tr-bar" aria-hidden="true"><div style="width: {{ total ? (completed / total * 100)|round(1) : 0 }}%"></div></div>
-                    {% endif %}
-                    <p class="tr-figures track-duration">
-                        <span>{{ app.user ? completed ~ ' / ' : '' }}{{ total }} exercice{{ total > 1 ? 's' }}{{ app.user ? ' réussis' : '' }}</span>
-                        <span>{{ chapters|length }} chapitre{{ chapters|length > 1 ? 's' }}</span>
-                        <span class="xp">{{ app.user ? xpEarned|number_format(0, ',', ' ') ~ ' / ' : '' }}{{ xpTotal|number_format(0, ',', ' ') }} XP</span>
-                        {% if trackDuration %}<span>Environ {{ trackDuration|duree }} de pratique</span>{% endif %}
-                    </p>
-                </div>
+                {% elseif current %}
+                    <div class="space-y-1 rounded-lg border border-line bg-surface p-4">
+                        <p class="text-sm text-ink-muted">{{ app.user and started ? 'Vous en êtes là' : 'Pour commencer' }}</p>
+                        <p class="text-sm">Chapitre {{ current.chapter }} · exercice {{ current.position }}</p>
+                        <p class="font-medium">{{ current.exercise.title }}</p>
+                        <a class="btn btn-primary mt-2 w-full" href="{{ path('app_exercise', {trackId: track.id, exerciseId: current.exercise.id}) }}">{{ app.user and started ? 'Reprendre' : 'Commencer le parcours' }} <span aria-hidden="true">→</span></a>
+                    </div>
+                {% endif %}
+                {{ include('track/_price.html.twig', {continueUrl: null}) }}
             </div>
         </section>
 
-        <div class="tr-wrap tr-layout">
-            <aside class="tr-aside">
-                <nav class="tr-card" aria-label="Chapitres du parcours">
-                    <div class="tr-aside-head">
-                        <span class="tr-eyebrow">Chapitres</span>
-                        <button type="button" class="tr-link" data-chapters-toggle hidden>Tout ouvrir</button>
+        <div class="mt-8 grid gap-8 md:grid-cols-[14rem_1fr]">
+            <aside class="text-sm">
+                <nav class="md:sticky md:top-4" aria-label="Chapitres du parcours">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold">Chapitres</span>
+                        <button type="button" class="cursor-pointer text-accent" data-chapters-toggle hidden>Tout ouvrir</button>
                     </div>
-                    <ol class="tr-nav">
+                    <ol class="mt-2 space-y-1">
                         {% for item in chapters %}
-                            <li><a href="#chapitre-{{ item.number }}" data-open-chapter="chapitre-{{ item.number }}">
-                                <span class="num">{{ '%02d'|format(item.number) }}</span>
-                                <span class="title">{{ item.chapter.title }}</span>
-                                <span class="count">{{ item.items|length }}</span>
+                            <li><a class="flex gap-2" href="#chapitre-{{ item.number }}" data-open-chapter="chapitre-{{ item.number }}">
+                                <span class="font-mono text-ink-muted">{{ '%02d'|format(item.number) }}</span>
+                                <span class="flex-1">{{ item.chapter.title }}</span>
+                                <span class="text-ink-muted">{{ item.items|length }}</span>
                             </a></li>
                         {% endfor %}
                     </ol>
+                    {% if bossEveryChapter or hasLessons %}
+                        <p class="mt-4 text-ink-muted">
+                            {%- if bossEveryChapter %}Chaque chapitre finit par un boss{{ hasLessons ? ', puis une fiche de cours en page web et en PDF' : '' }}.{% else %}Chaque chapitre réussi débloque sa fiche de cours, en page web et en PDF.{% endif %}
+                            {%- if hasLessons %} Le livret complet arrive à la fin du parcours.{% endif -%}
+                        </p>
+                    {% endif %}
                 </nav>
-                {% if bossEveryChapter or hasLessons %}
-                    <p class="tr-note">
-                        {%- if bossEveryChapter %}Chaque chapitre finit par un boss{{ hasLessons ? ', puis une fiche de cours en page web et en PDF' : '' }}.{% else %}Chaque chapitre réussi débloque sa fiche de cours, en page web et en PDF.{% endif %}
-                        {%- if hasLessons %} Le livret complet arrive à la fin du parcours.{% endif -%}
-                    </p>
-                {% endif %}
             </aside>
 
-            <div class="tr-chapters">
+            <div class="space-y-4">
                 {% for item in chapters %}
                     {% set chapterDuration = track_duration(track, item.chapter) %}
                     {% set chapterDone = item.items|filter(e => e.state == 'completed')|length %}
-                    <section class="chapter{{ item.locked ? ' locked' }}" id="chapitre-{{ item.number }}">
-                        <details class="tr-chapter"{% if item.number == openChapter %} open{% endif %}>
-                            <summary>
-                                <span class="tr-num">{{ '%02d'|format(item.number) }}</span>
-                                <span class="tr-chapter-text">
-                                    <h2>
+                    <section class="chapter{{ item.locked ? ' locked' }} scroll-mt-4" id="chapitre-{{ item.number }}">
+                        <details class="tr-chapter group rounded-lg border border-line bg-surface"{% if item.number == openChapter %} open{% endif %}>
+                            <summary class="flex cursor-pointer list-none items-start gap-3 p-4">
+                                <span class="font-mono text-ink-muted">{{ '%02d'|format(item.number) }}</span>
+                                <span class="flex-1">
+                                    <h2 class="text-lg font-semibold">
                                         {{ item.chapter.title }}
-                                        {% if item.free and not offer.fullAccess %}<span class="tag free">Gratuit</span>{% elseif item.locked %}<span class="tag">🔒 Parcours complet</span>{% endif %}
+                                        {% if item.free and not offer.fullAccess %}<span class="tag free ml-1 rounded bg-success-bg px-1.5 text-xs font-normal text-success">Gratuit</span>{% elseif item.locked %}<span class="tag ml-1 rounded bg-bg-2 px-1.5 text-xs font-normal text-ink-muted">🔒 Parcours complet</span>{% endif %}
                                     </h2>
-                                    <span class="tr-chapter-meta">
+                                    <span class="tr-chapter-meta text-sm text-ink-muted">
                                         {{- app.user ? chapterDone ~ ' / ' : '' }}{{ item.items|length }} exercice{{ item.items|length > 1 ? 's' }} · {{ item.xp|number_format(0, ',', ' ') }} XP
                                         {%- if chapterDuration %} · ≈ {{ chapterDuration|duree }}{% endif %}
                                         {%- if item.lesson %} · fiche de cours{% endif -%}
                                     </span>
                                 </span>
-                                <span class="tr-sign" aria-hidden="true"></span>
+                                <span class="text-ink-muted transition group-open:rotate-180" aria-hidden="true">▾</span>
                             </summary>
-                            <ol class="exercises">
+                            <ol class="exercises divide-y divide-line border-t border-line">
                                 {% for entry in item.items %}
                                     <li data-state="{{ entry.state }}"{% if entry.boss %} class="boss"{% endif %}>
-                                        <a href="{{ path('app_exercise', {trackId: track.id, exerciseId: entry.exercise.id}) }}"{% if entry.exercise.concepts %} aria-describedby="notions-{{ entry.exercise.id }}"{% endif %}>
-                                            <span class="state"><span aria-hidden="true">{{ entry.state == 'completed' ? '✓' : (entry.boss ? '★' : loop.index) }}</span><span class="sr-only">{{ entry.state == 'completed' ? 'Réussi : ' : (entry.boss ? 'Exercice final : ' : 'Exercice ' ~ loop.index ~ ' : ') }}</span></span>
-                                            <span class="title">{{ entry.exercise.title }}</span>
-                                            <span class="meta">{% if entry.exercise.duration and entry.state != 'completed' %}{{ entry.exercise.duration|duree }} · {% endif %}{{ entry.state == 'completed' ? '+' ~ entry.xpEarned : entry.exercise.xp }} XP</span>
+                                        <a class="group/ex relative flex items-baseline gap-3 px-4 py-2 text-ink hover:bg-bg-2 hover:text-ink" href="{{ path('app_exercise', {trackId: track.id, exerciseId: entry.exercise.id}) }}"{% if entry.exercise.concepts %} aria-describedby="notions-{{ entry.exercise.id }}"{% endif %}>
+                                            <span class="state w-6 text-center font-mono text-sm {{ entry.state == 'completed' ? 'text-success' : 'text-ink-muted' }}"><span aria-hidden="true">{{ entry.state == 'completed' ? '✓' : (entry.boss ? '★' : loop.index) }}</span><span class="sr-only">{{ entry.state == 'completed' ? 'Réussi : ' : (entry.boss ? 'Exercice final : ' : 'Exercice ' ~ loop.index ~ ' : ') }}</span></span>
+                                            <span class="title flex-1{{ entry.boss ? ' font-semibold' }}">{{ entry.exercise.title }}</span>
+                                            <span class="meta text-sm text-ink-muted">{% if entry.exercise.duration and entry.state != 'completed' %}{{ entry.exercise.duration|duree }} · {% endif %}{{ entry.state == 'completed' ? '+' ~ entry.xpEarned : entry.exercise.xp }} XP</span>
                                             {% if entry.exercise.concepts %}
                                                 {# Infobulle des notions abordées : au survol ou au focus clavier du lien #}
-                                                <span class="hint" role="tooltip" id="notions-{{ entry.exercise.id }}">
-                                                    <span class="hint-label">Notions abordées</span>
-                                                    {% for concept in entry.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}
+                                                <span class="hint invisible absolute left-12 top-full z-10 mt-1 flex max-w-sm flex-wrap gap-1 rounded-md border border-line bg-surface p-2 text-xs shadow group-hover/ex:visible group-focus/ex:visible" role="tooltip" id="notions-{{ entry.exercise.id }}">
+                                                    <span class="hint-label w-full text-ink-muted">Notions abordées</span>
+                                                    {% for concept in entry.exercise.concepts %}<span class="tag rounded border border-line px-1.5">{{ concept }}</span>{% endfor %}
                                                 </span>
                                             {% endif %}
                                         </a>
                                     </li>
                                 {% endfor %}
                                 {% if item.lesson %}
-                                    <li class="tr-lesson">
+                                    <li>
                                         {% if item.lesson.unlocked %}
-                                            <a class="lesson-link" href="{{ path('app_chapter', {trackId: track.id, chapterId: item.chapter.id}) }}">
-                                                <span class="state">▤</span>
-                                                <span class="title">Fiche de cours du chapitre</span>
-                                                <span class="meta">Lire →</span>
+                                            <a class="lesson-link flex items-baseline gap-3 px-4 py-2" href="{{ path('app_chapter', {trackId: track.id, chapterId: item.chapter.id}) }}">
+                                                <span class="state w-6 text-center" aria-hidden="true">▤</span>
+                                                <span class="title flex-1">Fiche de cours du chapitre</span>
+                                                <span class="meta text-sm">Lire →</span>
                                             </a>
                                         {% else %}
-                                            <p class="lesson-link locked">
-                                                <span class="state">🔒</span>
-                                                <span class="title">Fiche de cours du chapitre</span>
-                                                <span class="meta">{{ app.user ? 'encore ' ~ item.lesson.remaining ~ ' exercice' ~ (item.lesson.remaining > 1 ? 's' : '') ~ ' à réussir' : 'réussissez le chapitre pour la lire' }}</span>
+                                            <p class="lesson-link locked flex items-baseline gap-3 px-4 py-2 text-ink-muted">
+                                                <span class="state w-6 text-center" aria-hidden="true">🔒</span>
+                                                <span class="title flex-1">Fiche de cours du chapitre</span>
+                                                <span class="meta text-sm">{{ app.user ? 'encore ' ~ item.lesson.remaining ~ ' exercice' ~ (item.lesson.remaining > 1 ? 's' : '') ~ ' à réussir' : 'réussissez le chapitre pour la lire' }}</span>
                                             </p>
                                         {% endif %}
                                     </li>
@@ -137,15 +132,15 @@
                             </ol>
                         </details>
                         {# Hors du <details> : le sommaire reste atteignable chapitre replié, pour un visiteur comme pour un robot. #}
-                        <p class="tr-outline-link"><a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: item.chapter.id}) }}">Ce que le chapitre {{ item.number }} fait apprendre →</a></p>
+                        <p class="mt-1 text-right text-sm"><a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: item.chapter.id}) }}">Ce que le chapitre {{ item.number }} fait apprendre →</a></p>
                     </section>
                 {% endfor %}
 
                 {% if nextTrack and not done %}
-                    <section class="next-track">
-                        <p class="meta">Et ensuite ?</p>
-                        <h2><a href="{{ path('app_track', {trackId: nextTrack.id}) }}">{{ nextTrack.title }} →</a></h2>
-                        <p>{{ nextTrack.description }}</p>
+                    <section class="next-track mt-8 rounded-lg border border-line bg-bg-2 p-5">
+                        <p class="text-sm text-ink-muted">Et ensuite ?</p>
+                        <h2 class="mt-1 text-xl font-semibold"><a href="{{ path('app_track', {trackId: nextTrack.id}) }}">{{ nextTrack.title }} →</a></h2>
+                        <p class="mt-2 text-ink-muted">{{ nextTrack.description }}</p>
                     </section>
                 {% endif %}
             </div>

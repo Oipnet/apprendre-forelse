@@ -2,33 +2,32 @@
   @theme Point de surcharge : la liste d'attente (bêta fermée) ou l'invitation à commencer.
   Variables : inviteOnly (bool), tryUrl (string), tryPractice (bool). Obligatoire en bêta fermée : le formulaire vers app_waitlist, son jeton CSRF (« submit ») et le champ piège « site ».
 #}
-<section class="lp-section dark" id="liste-attente">
-    <div class="lp-wrap lp-signup">
+<section class="home-signup border-t border-line bg-bg-2" id="liste-attente">
+    <div class="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
         {% if inviteOnly %}
             {% set state = app.request.query.get('liste') %}
-            <span class="lp-eyebrow">Bêta fermée cet automne</span>
-            <h2 class="lp-h2">Soyez prévenu à l'ouverture, avec le prix fondateur.</h2>
-            <p class="lp-lead">Le premier parcours est en bêta fermée. Laissez votre adresse : vous saurez quand il ouvre, quand les suivants arrivent, et les 100 premiers inscrits auront le prix fondateur. Achat unique par parcours, sans abonnement, remboursé sous 14 jours si ce n'est pas pour vous.</p>
+            <h2 class="text-2xl font-semibold">Soyez prévenu à l'ouverture.</h2>
+            <p class="mt-3 text-ink-muted">Les parcours sont en bêta fermée. Laissez votre adresse : vous saurez quand ils ouvrent.</p>
             {% if state == 'ok' %}
-                <p class="lp-notice ok" role="status">C'est noté : vous serez prévenu à l'ouverture.</p>
+                <p class="waitlist-notice ok mt-4 rounded-md border border-success bg-success-bg px-4 py-3 text-success" role="status">C'est noté : vous serez prévenu à l'ouverture.</p>
             {% else %}
-                {% if state == 'invalide' %}<p class="lp-notice ko" role="alert">Cette adresse ne semble pas valide, vérifiez-la.</p>{% endif %}
-                <form class="lp-form" method="post" action="{{ path('app_waitlist') }}">
+                {% if state == 'invalide' %}<p class="waitlist-notice ko mt-4 rounded-md border border-danger bg-danger-bg px-4 py-3 text-danger" role="alert">Cette adresse ne semble pas valide, vérifiez-la.</p>{% endif %}
+                <form class="waitlist-form mt-4 flex flex-wrap gap-2" method="post" action="{{ path('app_waitlist') }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
                     {# Piège à robots : un humain ne voit pas ce champ. #}
-                    <input class="lp-trap" type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
-                    <input type="email" name="email" required maxlength="180" placeholder="vous@exemple.fr" aria-label="Adresse email">
-                    <button type="submit">Me prévenir</button>
+                    <input class="absolute -left-[9999px] h-px w-px opacity-0" type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
+                    <input class="field max-w-sm flex-1" type="email" name="email" required maxlength="180" placeholder="vous@exemple.fr" aria-label="Adresse email">
+                    <button class="btn btn-primary" type="submit">Me prévenir</button>
                 </form>
-                <p class="note">Deux emails au plus : l'ouverture, et une invitation à la bêta si des places se libèrent. Rien d'autre. <a href="{{ path('app_privacy') }}">Comment vos données sont traitées</a>.</p>
+                <p class="mt-3 text-sm text-ink-muted">Deux emails au plus : l'ouverture, et une invitation à la bêta si des places se libèrent. Rien d'autre. <a href="{{ path('app_privacy') }}">Comment vos données sont traitées</a>.</p>
             {% endif %}
         {% else %}
-            <span class="lp-eyebrow">Prêt à commencer ?</span>
-            <h2 class="lp-h2">Le premier chapitre de chaque parcours est gratuit. Créez votre compte : votre progression vous suit.</h2>
-            <div class="lp-cta">
-                <a class="lp-btn lg gold" href="{{ tryUrl }}">{{ tryPractice ? 'Essayer un exercice, sans compte' : 'Essayer le premier exercice' }} <span class="lp-mono">→</span></a>
-                <a class="lp-btn lg outline" rel="nofollow" href="{{ path('app_register') }}">Créer un compte</a>
-            </div>
+            <h2 class="text-2xl font-semibold">Le premier chapitre de chaque parcours est gratuit.</h2>
+            <p class="mt-3 text-ink-muted">Créez votre compte : votre progression vous suit.</p>
+            <p class="mt-6 flex flex-wrap gap-3">
+                <a class="btn btn-primary" href="{{ tryUrl }}">{{ tryPractice ? 'Essayer un exercice, sans compte' : 'Essayer le premier exercice' }} <span aria-hidden="true">→</span></a>
+                <a class="btn" rel="nofollow" href="{{ path('app_register') }}">Créer un compte</a>
+            </p>
         {% endif %}
     </div>
 </section>

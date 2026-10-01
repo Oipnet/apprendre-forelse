@@ -1,6 +1,7 @@
 {#
   Ce qui décrit un exercice de Pratique, lisible sans compte : le problème, le code d'avant, la fonctionnalité
   expliquée, la version et la date. Jamais les tests ni la solution. Variables : practice, instructions, framework.
+  Inclus aussi par la page d'exercice, qui garde site.css (#235) : ses classes d'avant restent, à côté des utilitaires.
 #}
 <nav class="breadcrumb" aria-label="Fil d'Ariane">
     <ol>
@@ -9,22 +10,22 @@
         <li aria-current="page">{{ practice.exercise.title }}</li>
     </ol>
 </nav>
-<p class="practice-head">
+<p class="practice-head mt-3 flex flex-wrap items-center gap-1.5">
     {% set versionSlug = versionSlug|default(null) %}
     {% if versionSlug %}
         <a class="tag framework" href="{{ path('app_practice_version', {slug: versionSlug}) }}">{{ framework }}{% if practice.version %} {{ practice.version }}{% endif %}</a>
     {% else %}
         <span class="tag framework">{{ framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
     {% endif %}
-    {% if practice.version %}<span class="tag new">Nouveauté</span>{% endif %}
-    <span class="meta">Publié le <time datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time></span>
+    {% if practice.version %}<span class="tag new border-accent text-accent">Nouveauté</span>{% endif %}
+    <span class="meta text-sm text-ink-muted">Publié le <time datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time></span>
 </p>
-<h1>{{ practice.exercise.title }}</h1>
-<p class="lead">{{ practice.summary }}</p>
+<h1 class="mt-3 text-3xl font-semibold">{{ practice.exercise.title }}</h1>
+<p class="lead mt-3 text-lg text-ink-muted">{{ practice.summary }}</p>
 {% if practice.exercise.concepts %}
-    <p class="exercise-concepts"><span class="meta">Notions abordées :</span> {% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</p>
+    <p class="exercise-concepts mt-3 flex flex-wrap items-center gap-1.5"><span class="meta text-sm text-ink-muted">Notions abordées :</span> {% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</p>
 {% endif %}
-<article class="lesson exercise-instructions">{{ instructions|raw }}</article>
+<article class="lesson exercise-instructions prose prose-theme mt-6 max-w-none">{{ instructions|raw }}</article>
 {% if practice.pullRequest %}
-    <p class="meta">D'où vient la fonctionnalité : <a href="{{ practice.pullRequest }}" rel="noopener">la pull request d'origine</a>.</p>
+    <p class="meta mt-6 text-sm text-ink-muted">D'où vient la fonctionnalité : <a href="{{ practice.pullRequest }}" rel="noopener">la pull request d'origine</a>.</p>
 {% endif %}

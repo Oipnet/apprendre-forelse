@@ -4,7 +4,7 @@
   Obligatoire : le lien vers l'article (app_article, {slug: article.slug}).
 #}
 <article>
-    <h2><a href="{{ path('app_article', {slug: article.slug}) }}">{{ article.title }}</a></h2>
-    <p class="meta"><time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time> · {{ article.readingMinutes }} min de lecture</p>
-    <p>{{ article.description }}</p>
+    <h2 class="text-xl font-semibold"><a href="{{ path('app_article', {slug: article.slug}) }}">{{ article.title }}</a></h2>
+    <p class="meta mt-1 text-sm text-ink-muted"><time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time> · {{ article.readingMinutes }} min de lecture</p>
+    <p class="mt-2">{{ article.description }}</p>
 </article>

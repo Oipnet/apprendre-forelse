@@ -146,6 +146,33 @@ final class EmailTemplatesTest extends KernelTestCase
         $this->assertStringNotContainsString('<img', $html, 'Un logo webp passe mal dans les clients mail : le nom seul.');
     }
 
+    /**
+     * Le bouton et les liens d'un email prennent l'accent du thème ; le texte du bouton reste lisible, blanc sur un
+     * accent sombre, à l'encre sur un accent clair. Sans couleur déclarée, ce sont celles du thème default.
+     */
+    #[DataProvider('accents')]
+    public function testLeBoutonPrendLAccentDuTheme(?string $accent, string $fond, string $texte): void
+    {
+        self::bootKernel();
+        $this->themeDir = sys_get_temp_dir().'/theme-'.bin2hex(random_bytes(6));
+        (new Filesystem())->dumpFile($this->themeDir.'/theme.yaml', "name: Atelier Bigorneau\n".($accent ? "colors:\n  accent: '{$accent}'\n  ink: '#101010'\n" : ''));
+        static::getContainer()->get(Environment::class)->addGlobal('theme', self::theme($this->themeDir));
+
+        ['html' => $html] = $this->render('reset_password', ['user' => self::user(), 'resetToken' => new ResetPasswordToken('jeton', new \DateTimeImmutable('+1 hour'), time())]);
+
+        $this->assertStringContainsString('class="bouton" style="border-radius:8px;background:'.$fond.';"', $html);
+        $this->assertMatchesRegularExpression('#<td class="bouton"[^>]*>\s*<a [^>]*color:'.preg_quote($texte, '#').';#', $html);
+        $this->assertStringContainsString('class="lien" href="http://localhost/" style="color:'.$fond.';"', $html);
+    }
+
+    /** @return iterable<string, array{string|null, string, string}> */
+    public static function accents(): iterable
+    {
+        yield 'sans couleur : le thème default' => [null, '#1d4ed8', '#ffffff'];
+        yield 'accent sombre : texte blanc' => ['#9a3412', '#9a3412', '#ffffff'];
+        yield 'accent clair : texte à l\'encre du thème' => ['#fde68a', '#fde68a', '#101010'];
+    }
+
     /** @return list<string> */
     private function liensHtml(string $html): array
     {

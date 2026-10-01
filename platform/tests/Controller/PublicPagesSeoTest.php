@@ -94,10 +94,10 @@ final class PublicPagesSeoTest extends WebTestCase
     {
         $this->client->request('GET', '/');
 
-        $this->assertSelectorTextContains('.lp-upcoming', 'Atelier en préparation');
-        $this->assertSelectorNotExists('.lp-upcoming a');
+        $this->assertSelectorTextContains('.home-upcoming', 'Atelier en préparation');
+        $this->assertSelectorNotExists('.home-upcoming a');
         $this->assertSelectorNotExists('a[href="/parcours/atelier-secret"]');
-        $this->assertSelectorTextContains('.lp-faq', 'En préparation : Atelier en préparation.');
+        $this->assertSelectorTextContains('.home-faq', 'En préparation : Atelier en préparation.');
     }
 
     public function testLaPratiqueFiltreeAPourCanonicalLaListe(): void

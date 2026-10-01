@@ -172,6 +172,53 @@ final class Theme implements ResetInterface
         return $this->imageUrl('share', 'img/og-forelse.png');
     }
 
+    /** Les couleurs des emails (styles en ligne) quand le thème n'en déclare pas : les jetons clairs du thème default. */
+    public const array EMAIL_COLORS = [
+        'accent' => '#1d4ed8',
+        'ink' => '#1c1917',
+        'muted' => '#57534e',
+        'line' => '#d6d3d1',
+        'background' => '#f5f5f4',
+        'surface' => '#ffffff',
+    ];
+
+    /**
+     * Les couleurs des emails, qui ne lisent pas de feuille de styles : celles que le thème déclare (`colors`), sinon
+     * celles du thème default. Le texte du bouton suit le fond de l'accent : blanc sur une couleur sombre, encre sur
+     * une couleur claire.
+     *
+     * @return array{accent: string, onAccent: string, ink: string, muted: string, line: string, background: string, surface: string}
+     */
+    public function emailColors(): array
+    {
+        $declared = $this->config()->colors;
+        $colors = [
+            'accent' => $declared[ThemeStylesheet::COLORS['accent']] ?? self::EMAIL_COLORS['accent'],
+            'ink' => $declared[ThemeStylesheet::COLORS['ink']] ?? self::EMAIL_COLORS['ink'],
+            'muted' => self::EMAIL_COLORS['muted'],
+            'line' => $declared[ThemeStylesheet::COLORS['line']] ?? self::EMAIL_COLORS['line'],
+            'background' => $declared[ThemeStylesheet::COLORS['background-2']] ?? $declared[ThemeStylesheet::COLORS['background']] ?? self::EMAIL_COLORS['background'],
+            'surface' => $declared[ThemeStylesheet::COLORS['surface']] ?? self::EMAIL_COLORS['surface'],
+        ];
+
+        return ['onAccent' => self::luminance($colors['accent']) > 0.4 ? $colors['ink'] : '#ffffff'] + $colors;
+    }
+
+    /** La luminance relative (WCAG) d'une couleur #rgb, #rrggbb ou #rrggbbaa (l'opacité est ignorée). */
+    private static function luminance(string $hex): float
+    {
+        if (4 === \strlen($hex)) {
+            $hex = '#'.$hex[1].$hex[1].$hex[2].$hex[2].$hex[3].$hex[3];
+        }
+        $channels = array_map(static function (string $pair): float {
+            $c = hexdec($pair) / 255;
+
+            return $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+        }, str_split(substr($hex, 1, 6), 2));
+
+        return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+    }
+
     /** Les variables CSS de la marque, à poser après la feuille de styles. Vide quand rien n'est déclaré. */
     public function styles(): string
     {

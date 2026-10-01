@@ -11,7 +11,7 @@
 
 {{ include('emails/_button.html.twig', {href: url('app_login'), label: 'Me connecter'}) }}
 
-<p style="margin:0 0 12px;">Mot de passe oublié ? <a class="lien" href="{{ url('app_forgot_password_request') }}" style="color:#9a5b18;">Choisissez-en un nouveau</a>.</p>
+<p style="margin:0 0 12px;">Mot de passe oublié ? <a class="lien" href="{{ url('app_forgot_password_request') }}" style="color:{{ theme.emailColors.accent }};">Choisissez-en un nouveau</a>.</p>
 
 <p style="margin:0;">Si ce n'était pas vous, ignorez cet email : aucun compte n'a été créé et le vôtre n'a pas changé.</p>
 {% endblock %}

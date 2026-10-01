@@ -10,7 +10,7 @@
 <p style="margin:0 0 12px;">Si c'est vous, il n'y a rien à faire.</p>
 
 {# Sans adresse de contact, l'email n'a pas de Reply-To : y répondre n'irait nulle part (voir App\Mail\Sender). #}
-<p style="margin:0;">Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : {% if contact %}écrivez-nous au plus vite à <a class="lien" href="mailto:{{ contact }}" style="color:#9a5b18;">{{ contact }}</a>{% else %}prévenez au plus vite l'éditeur du site, dont les coordonnées figurent dans les <a class="lien" href="{{ url('app_legal_notice') }}" style="color:#9a5b18;">mentions légales</a>{% endif %}, en indiquant cette adresse-ci.</p>
+<p style="margin:0;">Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : {% if contact %}écrivez-nous au plus vite à <a class="lien" href="mailto:{{ contact }}" style="color:{{ theme.emailColors.accent }};">{{ contact }}</a>{% else %}prévenez au plus vite l'éditeur du site, dont les coordonnées figurent dans les <a class="lien" href="{{ url('app_legal_notice') }}" style="color:{{ theme.emailColors.accent }};">mentions légales</a>{% endif %}, en indiquant cette adresse-ci.</p>
 {% endblock %}
 
 {% block reason %}Vous recevez cet email parce que cette adresse était celle de votre compte {{ theme.name }}.{% endblock %}

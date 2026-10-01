@@ -17,8 +17,8 @@ final class TrackCatalogueTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorCount(1, 'h1');
-        $this->assertSelectorTextContains('.lp-track h2 a[href="/parcours/decouverte"]', 'Découverte', 'Les fiches de l\'accueil, titres sous le h1.');
-        $this->assertSelectorExists('.lp-track .lp-chapters li', 'Chapitres et notions, comme à l\'accueil.');
+        $this->assertSelectorTextContains('.track-card h2 a[href="/parcours/decouverte"]', 'Découverte', 'Les fiches de l\'accueil, titres sous le h1.');
+        $this->assertSelectorExists('.track-card .track-chapters li', 'Chapitres et notions, comme à l\'accueil.');
         $this->assertFalse($client->getResponse()->headers->has('X-Robots-Tag'), 'Le catalogue s\'indexe.');
         $this->assertSame('http://localhost/parcours', $crawler->filter('link[rel="canonical"]')->attr('href'));
         $this->assertStringContainsString('Symfony', (string) $crawler->filter('title')->text(), 'Le titre nomme le framework des parcours publiés.');
@@ -46,7 +46,7 @@ final class TrackCatalogueTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('X-Robots-Tag', 'noindex, follow');
-        $this->assertSelectorExists('.lp-track h2 a[href="/parcours/decouverte"]');
+        $this->assertSelectorExists('.track-card h2 a[href="/parcours/decouverte"]');
     }
 
     public function testUnFrameworkInconnuMontreToutPlutotQuUnePageVide(): void
@@ -55,6 +55,6 @@ final class TrackCatalogueTest extends WebTestCase
         $client->request('GET', '/parcours?framework=cobol');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('.lp-track h2 a[href="/parcours/decouverte"]');
+        $this->assertSelectorExists('.track-card h2 a[href="/parcours/decouverte"]');
     }
 }
