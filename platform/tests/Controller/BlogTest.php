@@ -74,7 +74,7 @@ final class BlogTest extends WebTestCase
         $this->assertSame('2026-09-20', $crawler->filter('article header time')->first()->attr('datetime'));
 
         $this->assertSame('article', $crawler->filter('meta[property="og:type"]')->attr('content'));
-        $this->assertSame('Symfony dans le navigateur, sans serveur | Forelse', $crawler->filter('title')->text());
+        $this->assertSame('Symfony dans le navigateur, sans serveur | default', $crawler->filter('title')->text());
         $this->assertStringStartsWith('Comment un vrai projet Symfony tourne', (string) $crawler->filter('meta[name="description"]')->attr('content'));
         $this->assertSame('/blog/les-tests-en-direct', $crawler->filter('.blog-nav a')->attr('href'), 'Le plus récent mène au précédent.');
     }

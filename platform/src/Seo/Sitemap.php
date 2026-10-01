@@ -115,7 +115,7 @@ final readonly class Sitemap
             }
 
             $entries[] = $this->entry('app_organizations', [], self::PAGES_UPDATED_AT);
-            if ($this->selfHosting->enabled) {
+            if ($this->selfHosting->enabled()) {
                 $entries[] = $this->entry('app_self_hosting', [], self::PAGES_UPDATED_AT);
             }
             $entries[] = $this->entry('app_contact', [], self::PAGES_UPDATED_AT);

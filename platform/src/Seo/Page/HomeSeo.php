@@ -41,7 +41,9 @@ final readonly class HomeSeo
                     'inLanguage' => 'fr-FR',
                     'publisher' => ['@id' => $home.'#organisation'],
                 ],
-                $this->schema->author(),
+                // La personne derrière la plateforme, si le thème en déclare une : sinon, author() ne renvoie qu'une
+                // référence à l'organisation, déjà décrite plus haut.
+                ...(null === $this->theme->person() ? [] : [$this->schema->author()]),
                 [
                     '@type' => 'FAQPage',
                     'mainEntity' => array_map(static fn (array $item) => [

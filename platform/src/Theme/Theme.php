@@ -134,31 +134,31 @@ final class Theme implements ResetInterface
     /** L'image du logo, ou null : l'en-tête n'affiche alors que le nom. */
     public function logoUrl(): ?string
     {
-        return $this->imageUrl('logo', 'img/logo-84.webp');
+        return $this->imageUrl('logo');
     }
 
     /** Le même logo, en grand (le fil rouge de l'accueil, les données structurées). */
     public function logoLargeUrl(): ?string
     {
-        return $this->imageUrl('logo', 'img/logo-168.webp');
+        return $this->imageUrl('logo');
     }
 
     /**
-     * Le logo des emails, ou null (le nom seul). Le webp du site passe mal dans Outlook et bien des clients : le moteur
-     * fournit un PNG, et le logo d'une marque n'est repris que s'il est en PNG, JPEG ou GIF.
+     * Le logo des emails, ou null (le nom seul). Le webp du site passe mal dans Outlook et bien des clients : le logo
+     * d'un thème n'est repris que s'il est en PNG, JPEG ou GIF, ou s'il en déclare un pour les emails (email_logo).
      */
     public function emailLogoUrl(): ?string
     {
         // Un logo propre aux emails (email_logo), quand le logo du site est dans un format qu'ils lisent mal.
         if (null !== ($this->config()->images['email_logo'] ?? null)) {
-            return $this->imageUrl('email_logo', 'img/logo.png');
+            return $this->imageUrl('email_logo');
         }
         $file = $this->config()->images['logo'] ?? null;
         if (null !== $file && !preg_match('/\.(png|jpe?g|gif)$/i', $file)) {
             return null;
         }
 
-        return $this->imageUrl('logo', 'img/logo.png');
+        return $this->imageUrl('logo');
     }
 
     public function iconUrl(): ?string
@@ -169,7 +169,7 @@ final class Theme implements ResetInterface
     /** L'image des aperçus de partage (Open Graph), ou null : pas de balise og:image. */
     public function shareUrl(): ?string
     {
-        return $this->imageUrl('share', 'img/og-forelse.png');
+        return $this->imageUrl('share');
     }
 
     /** Les couleurs des emails (styles en ligne) quand le thème n'en déclare pas : les jetons clairs du thème default. */
@@ -323,13 +323,14 @@ final class Theme implements ResetInterface
 
     /**
      * Une image déclarée par l'instance, servie par ThemeController et horodatée pour le cache.
-     * Sans déclaration : l'image du moteur tant que c'est son thème, sinon rien.
+     * Sans déclaration : rien, sauf la favicon neutre du moteur tant que c'est son thème (il n'a ni logo, ni image de
+     * partage, ni marque).
      */
-    private function imageUrl(string $key, string $engineAsset): ?string
+    private function imageUrl(string $key, ?string $engineAsset = null): ?string
     {
         $file = $this->config()->images[$key] ?? null;
         if (null === $file) {
-            return $this->isDefault() ? $this->assets->getUrl($engineAsset) : null;
+            return $this->isDefault() && null !== $engineAsset ? $this->assets->getUrl($engineAsset) : null;
         }
 
         return $this->urls->generate('app_theme_image', [

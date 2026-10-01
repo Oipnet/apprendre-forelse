@@ -126,7 +126,7 @@ final readonly class ThemeLoader
             directory: $directory,
             file: $file,
             name: $name,
-            chip: self::text($config, 'chip', 'apprendre', $error),
+            chip: self::text($config, 'chip', '', $error),
             // Le titre non déclaré retombe sur le nom, jamais sur celui du moteur.
             title: self::text($config, 'title', $name, $error),
             tagline: self::text($config, 'tagline', 'Apprendre à développer en codant dans le navigateur, sans vidéo ni installation.', $error),

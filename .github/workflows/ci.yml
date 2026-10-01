@@ -201,6 +201,23 @@ jobs:
         run: npm run build
         working-directory: playground
 
+      # Le moteur ne livre aucune marque (#231) : ni le nom, ni le fil rouge, ni l'auteur de Forelse, ni ses polices,
+      # dans ce que l'image sert (gabarits, feuilles, images, polices, theme.yaml du moteur). Les scripts sont exclus :
+      # ils ne portent que des identifiants techniques (forelse:ping, Forelse\DockerSim), jamais affichés. L'adresse
+      # du dépôt, que l'AGPL impose de donner, est permise.
+      - name: Aucune marque livrée par le moteur
+        run: |
+          trouve=$(grep -rIilE 'forelse|dragon ivre|taverne|arnaud|newsreader|instrument sans' \
+            platform/templates platform/src/Theme/theme.yaml platform/public \
+            --exclude='*.js' --exclude-dir=envs \
+            | xargs -r grep -IilE '(forelse|dragon ivre|taverne|arnaud|newsreader|instrument sans)' \
+            | while read -r f; do sed 's#github.com/oipnet/apprendre-forelse##gI' "$f" | grep -qiE 'forelse|dragon ivre|taverne|arnaud|newsreader|instrument sans' && echo "$f"; done)
+          polices=$(find platform/public -iname '*newsreader*' -o -iname '*instrument-sans*' -o -iname '*forelse*')
+          if [ -n "$trouve$polices" ]; then
+            echo "::error::La marque Forelse est livrée par le moteur :"; echo "$trouve"; echo "$polices"
+            exit 1
+          fi
+
       - name: Lint Symfony
         run: |
           php bin/console lint:container

@@ -55,7 +55,7 @@ final class TrackSeoTextTest extends TestCase
     {
         $this->assertSame('Formation Symfony en ligne pour les devs PHP', TrackSeoText::generatedTitle('Symfony pour les devs PHP', 'Symfony'));
         $this->assertSame('Formation Nuxt en ligne pour les devs Vue', TrackSeoText::generatedTitle('Nuxt pour les devs Vue', 'Nuxt'));
-        $this->assertSame('Formation Symfony en ligne pour les devs PHP | Forelse', $this->text()->title(self::track(), 'Symfony'));
+        $this->assertSame('Formation Symfony en ligne pour les devs PHP | default', $this->text()->title(self::track(), 'Symfony'));
     }
 
     public function testSansLeFrameworkDansLeTitreLeTitleSeReplie(): void
@@ -71,14 +71,14 @@ final class TrackSeoTextTest extends TestCase
     {
         $override = (new TrackSeo('symfony-pour-dev-php'))->setSeoTitle('Apprendre Symfony en codant');
 
-        $this->assertSame('Apprendre Symfony en codant | Forelse', $this->text($override)->title(self::track(), 'Symfony'));
+        $this->assertSame('Apprendre Symfony en codant | default', $this->text($override)->title(self::track(), 'Symfony'));
     }
 
     public function testUnTitleTropLongEstSignale(): void
     {
         $title = $this->text()->title(self::track('Symfony pour les développeurs PHP qui veulent passer au framework'), 'Symfony');
 
-        $this->assertStringEndsWith('| Forelse', $title, 'Le title reste entier…');
+        $this->assertStringEndsWith('| default', $title, 'Le title reste entier…');
         $this->assertSame(['warning symfony-pour-dev-php'], $this->warnings, '… mais un avertissement est loggué.');
     }
 
@@ -121,6 +121,6 @@ final class TrackSeoTextTest extends TestCase
         $override = (new TrackSeo('symfony-pour-dev-php'))->setSeoDescription('  Une description   écrite à la main.  ');
 
         $this->assertSame('Une description écrite à la main.', $this->text($override)->description(self::track()));
-        $this->assertSame('Formation Symfony en ligne pour les devs PHP | Forelse', $this->text($override)->title(self::track(), 'Symfony'), 'Un title vide garde la génération.');
+        $this->assertSame('Formation Symfony en ligne pour les devs PHP | default', $this->text($override)->title(self::track(), 'Symfony'), 'Un title vide garde la génération.');
     }
 }

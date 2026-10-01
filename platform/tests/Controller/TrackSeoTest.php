@@ -49,7 +49,7 @@ final class TrackSeoTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', '/parcours/decouverte');
 
-        $title = 'Formation Symfony en ligne pour les devs PHP | Forelse';
+        $title = 'Formation Symfony en ligne pour les devs PHP | default';
         $description = 'Vous maîtrisez PHP et la POO ? Apprenez Symfony en construisant, chapitre après chapitre, le site… 1 chapitre, 2 exercices, premier chapitre gratuit.';
         $this->assertSame($title, $crawler->filter('title')->text());
         $this->assertSame($title, $crawler->filter('meta[property="og:title"]')->attr('content'));
@@ -69,7 +69,7 @@ final class TrackSeoTest extends WebTestCase
         $entityManager->flush();
 
         $crawler = $this->client->request('GET', '/parcours/decouverte');
-        $this->assertSame('Apprendre Symfony en codant | Forelse', $crawler->filter('title')->text());
+        $this->assertSame('Apprendre Symfony en codant | default', $crawler->filter('title')->text());
         $this->assertSame('Une description écrite à la main pour la page du parcours Symfony.', $crawler->filter('meta[property="og:description"]')->attr('content'));
 
         $this->client->loginUser($admin);

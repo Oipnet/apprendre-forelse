@@ -32,6 +32,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
     `.track-offer`, `.track-price`, `.track-chapters`, `.home-upcoming`, `.home-faq`, `.home-showcase`, `.showcase-sign`,
     `.home-author`, `.home-demo`, `form.waitlist-form` et `.waitlist-notice` remplacent leurs équivalents `lp-*`.
   - Nouveaux composants du thème : `tag`, `breadcrumb`, et la coloration du code (`--color-hl-*`).
+- **Le moteur ne livre plus la marque Forelse (#231)**. Sans thème installé, l'instance s'appelle « default ».
+  - Le `theme.yaml` du moteur n'a plus que `name: default`, `title` et `tagline` : ni puce, ni logo, ni image de
+    partage, ni `person`, ni textes d'accueil. Une favicon neutre reste.
+  - Supprimés : `site.css`, les polices Newsreader et Instrument Sans, les logos, `og-forelse.png`, `favicon-32.png`,
+    `apple-touch-icon.png` et `favicon.ico` ; les animations d'accueil de `site.ts` (barre de lecture, apparition des
+    cartes, démonstration, onglets), qui reviennent aux thèmes.
+  - **`/auto-hebergement`** n'existe plus que si le thème actif fournit `self_hosting/index.html.twig` (sinon 404, ni
+    lien ni entrée de sitemap). **`SELF_HOSTING_PAGE` est supprimée.** Le pied de page lie le code du moteur (AGPL).
+  - `NoEngineBrandTest` et une étape de la CI vérifient qu'aucune page, aucun email, aucun gabarit, aucune feuille ni
+    aucune image servie ne parle de Forelse.
 - **La page d'exercice et les éditeurs de l'atelier sortent du thème (#235)** : ils étendent `editor_base.html.twig`
   (verrouillée, comme `_head.html.twig` et `_theme_preview.html.twig`) et ne chargent ni la feuille, ni les scripts,
   ni les gabarits du thème actif, ni la feuille du thème default.

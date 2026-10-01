@@ -37,12 +37,16 @@ final class ThemeTest extends TestCase
         $this->assertTrue($theme->isDefault());
         $this->assertSame('default', $theme->id());
         $this->assertFalse($theme->usesLegacyFile());
-        $this->assertSame('Forelse', $theme->name());
-        $this->assertSame('apprendre', $theme->chip());
-        $this->assertSame('Forelse · apprendre', $theme->signature());
-        $this->assertSame('/img/logo-84.webp', $theme->logoUrl());
+        $this->assertSame('default', $theme->name());
+        $this->assertSame('', $theme->chip());
+        $this->assertSame('default', $theme->signature());
+        $this->assertNull($theme->logoUrl(), 'Le moteur n\'a pas de logo : le nom seul.');
+        $this->assertNull($theme->emailLogoUrl());
+        $this->assertNull($theme->shareUrl(), 'Ni d\'image de partage.');
+        $this->assertSame('/img/favicon.svg', $theme->iconUrl(), 'Une favicon neutre.');
+        $this->assertNull($theme->person());
         $this->assertSame('', $theme->styles(), 'Sans couleurs déclarées, aucune feuille de styles en ligne.');
-        $this->assertNotNull($theme->home()['showcase'], 'Le fil rouge de Forelse s\'affiche sur l\'instance de Forelse.');
+        $this->assertSame(['showcase' => null, 'author' => null, 'demo' => null], $theme->home(), 'Aucun texte d\'accueil propre à une instance.');
     }
 
     public function testUnThemeYamlRemplaceToutCeQueLeMoteurAffichait(): void
@@ -142,10 +146,10 @@ final class ThemeTest extends TestCase
         $config = (new ThemeLoader())->load('');
 
         $this->assertTrue($config->isDefault);
-        $this->assertSame('Forelse · apprendre à développer', $config->title);
-        $this->assertSame('https://forelse.fr', $config->url);
-        $this->assertSame(['name' => 'Arnaud Pointet', 'jobTitle' => 'Développeur indépendant'], $config->person);
-        $this->assertStringContainsString('Taverne du Dragon Ivre', (string) $config->home['demo']['code']);
+        $this->assertSame('default', $config->name);
+        $this->assertSame('default', $config->title);
+        $this->assertSame('', $config->url);
+        $this->assertNull($config->person);
     }
 
     /** Chaque thème déclare la personne derrière ses contenus ; celle du moteur ne passe pas à un autre thème. */

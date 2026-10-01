@@ -63,8 +63,9 @@ final class PublicPagesSeoTest extends WebTestCase
             $this->assertSame($url, $crawler->filter('link[rel="canonical"]')->attr('href'), 'Canonical absolu, sans paramètre : '.$url);
             $this->assertSame($url, $crawler->filter('meta[property="og:url"]')->attr('content'), $url);
             $this->assertSame($title, $crawler->filter('meta[property="og:title"]')->attr('content'), $url);
-            $this->assertStringStartsWith('http://localhost/', (string) $crawler->filter('meta[property="og:image"]')->attr('content'), $url);
-            $this->assertSame('summary_large_image', $crawler->filter('meta[name="twitter:card"]')->attr('content'), $url);
+            // Le thème du moteur n'a pas d'image de partage : pas d'og:image, une carte simple (titre et description).
+            $this->assertCount(0, $crawler->filter('meta[property="og:image"]'), $url);
+            $this->assertSame('summary', $crawler->filter('meta[name="twitter:card"]')->attr('content'), $url);
             $this->assertCount(1, $crawler->filter('h1'), 'Un seul h1 : '.$url);
         }
 

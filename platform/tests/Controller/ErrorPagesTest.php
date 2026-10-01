@@ -16,7 +16,7 @@ final class ErrorPagesTest extends WebTestCase
         $client->request('GET', '/nulle-part/ici');
 
         $this->assertResponseStatusCodeSame(404);
-        $this->assertPageTitleSame('Page introuvable · Forelse');
+        $this->assertPageTitleSame('Page introuvable · default');
         $this->assertSelectorTextContains('.error-code', '404');
         $this->assertSelectorNotExists('.error-request', 'La méthode et le chemin ne s\'affichent qu\'en debug.');
         $this->assertSelectorExists('.error-actions a[href="/"]');
@@ -34,7 +34,7 @@ final class ErrorPagesTest extends WebTestCase
         $client->request('GET', '/auto-hebergement');
 
         $this->assertResponseStatusCodeSame(404);
-        $this->assertPageTitleSame('Page introuvable · Forelse');
+        $this->assertPageTitleSame('Page introuvable · default');
         $this->assertSelectorNotExists('link[rel="canonical"]');
         $this->assertSelectorNotExists('meta[name="description"]');
     }

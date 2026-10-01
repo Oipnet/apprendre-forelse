@@ -12,7 +12,7 @@ use Psr\Log\LoggerInterface;
  * Title et description d'une page de parcours. Ce qui est saisi dans l'admin (TrackSeo) passe avant la génération :
  *  - title : « Formation Symfony en ligne pour les devs PHP », tiré du titre du parcours quand il commence par le
  *    framework suivi de « pour … » ; sinon « Formation Symfony en ligne : Découverte ». Toujours suivi du nom
- *    de l'instance (« | Forelse ») ;
+ *    de l'instance (« | <nom du thème> ») ;
  *  - description : le résumé du parcours, puis les chiffres (« 12 chapitres, 74 exercices, premier chapitre gratuit. »).
  */
 final readonly class TrackSeoText

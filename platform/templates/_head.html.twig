@@ -42,10 +42,6 @@
    vide vaut mieux que la marque de quelqu'un d'autre dans l'onglet. #}
 <link rel="icon" href="data:,">
 {%- endif %}
-{%- if theme.default %}
-<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/favicon-32.png') }}">
-<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}">
-{%- endif %}
 {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}
 {%- if analytics.enabled %}
 {# Mesure d'audience : pages vues et référents, sans cookie ni visiteur identifié (voir /confidentialite).
