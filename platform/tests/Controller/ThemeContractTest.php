@@ -103,7 +103,7 @@ final class ThemeContractTest extends WebTestCase
         $moteur = \dirname(__DIR__, 2).'/templates/';
         // base et home se remplacent entiers : on part de ceux du moteur, marqués.
         $base = str_replace('<head>', '<head><meta name="surcharge" data-surcharge="base">', (string) file_get_contents($moteur.'base.html.twig'));
-        $home = str_replace('<main class="lp">', '<main class="lp"><p data-surcharge="home"></p>', (string) file_get_contents($moteur.'home.html.twig'));
+        $home = str_replace('<main class="home">', '<main class="home"><p data-surcharge="home"></p>', (string) file_get_contents($moteur.'home.html.twig'));
 
         $this->theme([
             'base.html.twig' => $base,

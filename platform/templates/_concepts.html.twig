@@ -4,8 +4,8 @@
   Variables : concepts (list<string>), label (facultatif, le texte qui les introduit).
 #}
 {% if concepts %}
-    <p class="exercise-concepts">
-        {%- if label is defined and label %}<span class="meta">{{ label }}</span> {% endif -%}
+    <p class="exercise-concepts mt-3 flex flex-wrap items-center gap-1.5">
+        {%- if label is defined and label %}<span class="meta text-sm text-ink-muted">{{ label }}</span> {% endif -%}
         {%- for concept in concepts -%}
             {%- set url = notion_url(concept) -%}
             {%- if url %}<a class="tag" href="{{ url }}">{{ concept }}</a>{% else %}<span class="tag">{{ concept }}</span>{% endif -%}

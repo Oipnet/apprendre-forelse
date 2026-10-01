@@ -115,8 +115,8 @@ final class PurchaseTest extends WebTestCase
         $this->client->loginUser($ada);
 
         $this->client->request('GET', '/');
-        $this->assertSelectorTextContains('.lp-track-offer', 'Premier chapitre gratuit');
-        $this->assertSelectorTextContains('.lp-track-offer', 'encore 100 places');
+        $this->assertSelectorTextContains('.track-offer', 'Premier chapitre gratuit');
+        $this->assertSelectorTextContains('.track-offer', 'encore 100 places');
 
         $this->checkout();
         $purchase = $this->onlyPurchase();
@@ -179,17 +179,17 @@ final class PurchaseTest extends WebTestCase
         $this->assertResponseRedirects('/parcours/payant');
         // Une fois acheté : plus de prix ni de places restantes, seulement « Continuer ».
         $this->client->request('GET', '/');
-        $this->assertSelectorTextContains('.lp-track-offer', 'Continuer');
-        $this->assertSelectorNotExists('.lp-track-offer .lp-price');
-        $this->assertStringNotContainsString('places', $this->client->getCrawler()->filter('.lp-track-offer')->text());
-        $this->assertStringNotContainsString('Premier chapitre gratuit', $this->client->getCrawler()->filter('.lp-track-offer')->text());
+        $this->assertSelectorTextContains('.track-offer', 'Continuer');
+        $this->assertSelectorNotExists('.track-offer .track-price');
+        $this->assertStringNotContainsString('places', $this->client->getCrawler()->filter('.track-offer')->text());
+        $this->assertStringNotContainsString('Premier chapitre gratuit', $this->client->getCrawler()->filter('.track-offer')->text());
         $this->client->request('GET', '/parcours/payant');
         $this->assertSelectorNotExists('.chapter h2 .tag.free', 'Plus de mention « gratuit » pour qui a tout le parcours.');
 
         // Un visiteur voit toujours le prix, et le quota compte les achats au prix fondateur.
         $this->client->restart();
         $this->client->request('GET', '/');
-        $this->assertSelectorTextContains('.lp-track-offer', 'encore 99 places');
+        $this->assertSelectorTextContains('.track-offer', 'encore 99 places');
     }
 
     public function testDeuxDemandesDePaiementRenvoientALaMemeSessionStripe(): void
@@ -499,8 +499,8 @@ final class PurchaseTest extends WebTestCase
         $this->client->loginUser($this->createUser());
 
         $this->client->request('GET', '/');
-        $this->assertSelectorTextContains('.lp-track-offer', '49,00');
-        $this->assertSelectorTextContains('.lp-track-offer', 'Achat bientôt disponible');
+        $this->assertSelectorTextContains('.track-offer', '49,00');
+        $this->assertSelectorTextContains('.track-offer', 'Achat bientôt disponible');
         $this->assertSelectorNotExists('a[href="/parcours/payant/acheter"]');
 
         $this->client->request('GET', '/parcours/payant/e2');

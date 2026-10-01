@@ -55,6 +55,17 @@
 	--color-success-bg: #f0fdf4;
 	--color-danger: #b91c1c;
 	--color-danger-bg: #fef2f2;
+
+	/* La coloration du code (classes hl-* de tempest/highlight), sur le fond sombre des blocs (--color-dark). */
+	--color-hl-keyword: #c792ea;
+	--color-hl-type: #82aaff;
+	--color-hl-property: #f0a35e;
+	--color-hl-attribute: #e0b04a;
+	--color-hl-value: #c3e88d;
+	--color-hl-variable: #e7e5e4;
+	--color-hl-number: #f78c6c;
+	--color-hl-generic: #89ddff;
+	--color-hl-comment: #a8a29e;
 }
 
 /* Le thème sombre suit le système, tant que le thème de l'instance n'impose pas sa palette (data-theme="auto" n'est
@@ -186,6 +197,38 @@
 	}
 }
 
+/* Une pastille : notion, version, statut. */
+@utility tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.0625rem 0.5rem;
+	border: 1px solid var(--color-line);
+	border-radius: 9999px;
+	color: var(--color-ink-muted);
+	font-size: 0.75rem;
+	line-height: 1.5rem;
+	text-decoration: none;
+}
+
+/* Le fil d'Ariane : une liste ordonnée, séparée par des chevrons. */
+@utility breadcrumb {
+	font-size: 0.875rem;
+	color: var(--color-ink-muted);
+	& ol {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.5rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	& li + li::before {
+		content: '›';
+		margin-right: 0.5rem;
+	}
+}
+
 /* Le Markdown rendu (fiches, blog, pages légales) : les couleurs de « prose » suivent les jetons. */
 @utility prose-theme {
 	--tw-prose-body: var(--color-ink);
@@ -204,4 +247,42 @@
 	--tw-prose-pre-bg: var(--color-dark);
 	--tw-prose-th-borders: var(--color-line);
 	--tw-prose-td-borders: var(--color-line);
+}
+
+/* La coloration des blocs de code : fiches de cours, articles, consignes. */
+@layer components {
+	pre .hl-keyword {
+		color: var(--color-hl-keyword);
+	}
+	pre .hl-type {
+		color: var(--color-hl-type);
+	}
+	pre .hl-property {
+		color: var(--color-hl-property);
+	}
+	pre .hl-attribute {
+		color: var(--color-hl-attribute);
+	}
+	pre .hl-value {
+		color: var(--color-hl-value);
+	}
+	pre .hl-variable {
+		color: var(--color-hl-variable);
+	}
+	pre :is(.hl-number, .hl-literal) {
+		color: var(--color-hl-number);
+	}
+	pre .hl-generic {
+		color: var(--color-hl-generic);
+	}
+	pre :is(.hl-comment, .hl-comment span) {
+		color: var(--color-hl-comment);
+		font-style: italic;
+	}
+	pre .hl-strong {
+		font-weight: 600;
+	}
+	pre .hl-em {
+		font-style: italic;
+	}
 }

@@ -7,7 +7,7 @@
 {% block title %}{{ name }} · Notion · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="page concept-page">
+    <main class="concept-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         <nav class="breadcrumb" aria-label="Fil d'Ariane">
             <ol>
                 <li><a href="{{ path('app_home') }}">Accueil</a></li>
@@ -16,19 +16,19 @@
             </ol>
         </nav>
 
-        <h1>{{ name }}</h1>
-        <p class="lead">
+        <h1 class="mt-3 text-3xl font-semibold">{{ name }}</h1>
+        <p class="lead mt-3 text-lg text-ink-muted">
             {{ exercises|length + practices|length }} exercice{{ exercises|length + practices|length > 1 ? 's' }}
             {{- exercises|length + practices|length > 1 ? ' font' : ' fait' }} travailler cette notion, en écrivant du code dans le navigateur.
         </p>
 
         {% if exercises %}
-            <h2>Dans les parcours</h2>
-            <ul class="concept-exercises">
+            <h2 class="mt-10 text-xl font-semibold">Dans les parcours</h2>
+            <ul class="concept-exercises mt-3 space-y-3">
                 {% for row in exercises %}
                     <li>
                         <a href="{{ path('app_exercise', {trackId: row.track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a>
-                        <span class="meta">
+                        <span class="block text-sm text-ink-muted">
                             <a href="{{ path('app_track', {trackId: row.track.id}) }}">{{ row.track.title }}</a>
                             · <a href="{{ path('app_chapter_summary', {trackId: row.track.id, chapterId: row.chapter.id}) }}">chapitre {{ row.number }} : {{ row.chapter.title }}</a>
                         </span>
@@ -38,26 +38,26 @@
         {% endif %}
 
         {% if practices %}
-            <h2>Dans la Pratique</h2>
-            <ul class="concept-exercises">
+            <h2 class="mt-10 text-xl font-semibold">Dans la Pratique</h2>
+            <ul class="concept-exercises mt-3 space-y-3">
                 {% for practice in practices %}
                     <li>
                         <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}">{{ practice.exercise.title }}</a>
-                        <span class="meta">{{ practice.summary }}</span>
+                        <span class="block text-sm text-ink-muted">{{ practice.summary }}</span>
                     </li>
                 {% endfor %}
             </ul>
         {% endif %}
 
         {% if related %}
-            <h2>Notions voisines</h2>
-            <p class="exercise-concepts">
+            <h2 class="mt-10 text-xl font-semibold">Notions voisines</h2>
+            <p class="exercise-concepts mt-3 flex flex-wrap gap-1.5">
                 {%- for other in related %}<a class="tag" href="{{ path('app_concept', {slug: other.slug}) }}">{{ other.name }}</a>{% endfor -%}
             </p>
         {% endif %}
 
-        <nav class="lesson-nav">
-            <a class="button ghost" href="{{ path('app_concepts') }}">← Toutes les notions</a>
+        <nav class="lesson-nav mt-12 border-t border-line pt-6">
+            <a class="btn" href="{{ path('app_concepts') }}">← Toutes les notions</a>
         </nav>
     </main>
 {% endblock %}

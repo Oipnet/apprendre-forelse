@@ -8,12 +8,12 @@
 {% block title %}{{ exercise.title }} · {{ track.title }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="page exercise-public">
+    <main class="exercise-public mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         {{ include('exercise/_intro.html.twig') }}
 
-        <aside class="exercise-access" aria-labelledby="exercise-access-title">
+        <aside class="exercise-access mt-10 space-y-3 rounded-lg border border-line bg-bg-2 p-5" aria-labelledby="exercise-access-title">
             {% if app.user %}
-                <h2 id="exercise-access-title">Cet exercice fait partie du parcours complet</h2>
+                <h2 class="text-xl font-semibold" id="exercise-access-title">Cet exercice fait partie du parcours complet</h2>
                 {% if not offer.locked %}
                     <p>Ce chapitre ne vous est pas ouvert pour l'instant.</p>
                 {% else %}
@@ -23,7 +23,7 @@
                 {% endif %}
             {% else %}
                 {% if freeChapter %}
-                    <h2 id="exercise-access-title">Cet exercice est gratuit : créez votre compte pour l'écrire</h2>
+                    <h2 class="text-xl font-semibold" id="exercise-access-title">Cet exercice est gratuit : créez votre compte pour l'écrire</h2>
                     {% if inviteOnly %}
                         <p>Le premier chapitre du parcours ne coûte rien. La plateforme est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
                     {% else %}
@@ -31,7 +31,7 @@
                         <p>Votre progression et votre code sont gardés sur votre compte : vous reprenez où vous en étiez, d'un appareil à l'autre.</p>
                     {% endif %}
                 {% else %}
-                    <h2 id="exercise-access-title">Cet exercice fait partie du parcours complet</h2>
+                    <h2 class="text-xl font-semibold" id="exercise-access-title">Cet exercice fait partie du parcours complet</h2>
                     {% if inviteOnly %}
                         <p>La suite du parcours est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
                     {% else %}
@@ -39,11 +39,11 @@
                     {% endif %}
                     {% if not offer.quote.free %}{{ include('track/_price.html.twig', {continueUrl: null}) }}{% endif %}
                 {% endif %}
-                <p class="exercise-access-actions">
-                    <a class="button primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">Créer un compte</a>
-                    {% if inviteOnly %}<a class="button" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>{% endif %}
-                    <a class="button ghost" href="{{ path('app_login', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">Se connecter</a>
-                    {% if firstExercise and not freeChapter %}<a class="button ghost" href="{{ path('app_exercise', {trackId: track.id, exerciseId: firstExercise.id}) }}">Commencer le premier chapitre →</a>{% endif %}
+                <p class="exercise-access-actions flex flex-wrap gap-2 pt-2">
+                    <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">Créer un compte</a>
+                    {% if inviteOnly %}<a class="btn" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>{% endif %}
+                    <a class="btn" href="{{ path('app_login', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">Se connecter</a>
+                    {% if firstExercise and not freeChapter %}<a class="btn" href="{{ path('app_exercise', {trackId: track.id, exerciseId: firstExercise.id}) }}">Commencer le premier chapitre →</a>{% endif %}
                 </p>
             {% endif %}
         </aside>
@@ -52,19 +52,19 @@
           Le reste du chapitre : sans ces liens, une page d'exercice ne mène qu'au parcours, et les exercices
           d'un même chapitre ne se connaissent pas.
         #}
-        <nav class="exercise-siblings" aria-labelledby="exercise-siblings-title">
-            <h2 id="exercise-siblings-title">La suite du chapitre {{ chapterNumber }} : {{ chapter.title }}</h2>
+        <nav class="exercise-siblings mt-10" aria-labelledby="exercise-siblings-title">
+            <h2 class="text-lg font-semibold" id="exercise-siblings-title">La suite du chapitre {{ chapterNumber }} : {{ chapter.title }}</h2>
             {% if siblings %}
-                <ol class="exercise-siblings-list">
+                <ol class="exercise-siblings-list mt-3 space-y-2">
                     {% for row in siblings %}
                         <li>
                             <a href="{{ path('app_exercise', {trackId: track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a>
-                            <span class="meta">Exercice {{ row.position }}{% if row.exercise.concepts %} · {{ row.exercise.concepts|join(', ') }}{% endif %}</span>
+                            <span class="block text-sm text-ink-muted">Exercice {{ row.position }}{% if row.exercise.concepts %} · {{ row.exercise.concepts|join(', ') }}{% endif %}</span>
                         </li>
                     {% endfor %}
                 </ol>
             {% endif %}
-            <p class="exercise-siblings-more">
+            <p class="exercise-siblings-more mt-4 text-sm">
                 <a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: chapter.id}) }}">Le sommaire du chapitre</a>
                 · <a href="{{ path('app_track', {trackId: track.id}) }}">Tout le parcours {{ track.title }}</a>
             </p>

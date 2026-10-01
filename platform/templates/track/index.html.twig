@@ -1,47 +1,43 @@
 {% extends 'base.html.twig' %}
 
-{# Le catalogue : tous les parcours publiés, avec les mêmes fiches que l'accueil (home/_track_card.html.twig). #}
-{% block body_class %}site-page landing{% endblock %}
-
+{# Le catalogue : tous les parcours publiés, avec les mêmes fiches que l'accueil (home/_track_card.html.twig).
+   Le filtre par framework est une suite de liens : il marche sans JavaScript. #}
 {% block body %}
-    <main class="lp-section tracks-catalogue">
-        <div class="lp-wrap">
-            <span class="lp-eyebrow">Les parcours</span>
-            <h1 class="lp-h2 spaced">Apprendre en codant, un parcours à la fois</h1>
-            <p class="lp-lead">Chaque parcours est un vrai projet, écrit exercice après exercice dans votre navigateur : un aperçu en direct, des tests qui valident chaque objectif, une fiche de cours à la fin de chaque chapitre. Le premier chapitre est gratuit avec un compte.</p>
+    <main class="tracks-catalogue mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
+        <h1 class="text-3xl font-semibold">Les parcours</h1>
+        <p class="mt-3 max-w-2xl text-ink-muted">Chaque parcours est un projet, écrit exercice après exercice dans votre navigateur : un aperçu en direct, des tests qui valident chaque objectif, une fiche de cours à la fin de chaque chapitre. Le premier chapitre est gratuit avec un compte.</p>
 
-            {% if frameworks|length > 1 %}
-                <nav class="lp-pills catalogue-filters" aria-label="Filtrer par framework">
-                    <a href="{{ path('app_tracks') }}"{% if framework is null %} aria-current="page"{% endif %}>Tous</a>
-                    {% for id, label in frameworks %}
-                        <a href="{{ path('app_tracks', {framework: id}) }}"{% if framework == id %} aria-current="page"{% endif %}>{{ label }}</a>
-                    {% endfor %}
-                </nav>
-            {% endif %}
-
-            <div class="lp-parcours">
-                {% for item in tracks %}
-                    {{ include('home/_track_card.html.twig', {tabbed: false, heading: 'h2'}) }}
-                {% else %}
-                    <p class="lp-lead">Aucun parcours publié pour l'instant.</p>
+        {% if frameworks|length > 1 %}
+            <nav class="catalogue-filters mt-6 flex flex-wrap gap-2 text-sm" aria-label="Filtrer par framework">
+                <a class="rounded-full border px-3 py-1 {{ framework is null ? 'border-accent bg-accent text-on-accent hover:text-on-accent' : 'border-line' }}" href="{{ path('app_tracks') }}"{% if framework is null %} aria-current="page"{% endif %}>Tous</a>
+                {% for id, label in frameworks %}
+                    <a class="rounded-full border px-3 py-1 {{ framework == id ? 'border-accent bg-accent text-on-accent hover:text-on-accent' : 'border-line' }}" href="{{ path('app_tracks', {framework: id}) }}"{% if framework == id %} aria-current="page"{% endif %}>{{ label }}</a>
                 {% endfor %}
-            </div>
+            </nav>
+        {% endif %}
 
-            {% if upcoming %}
-                <div class="lp-upcoming">
-                    <h2>En préparation</h2>
-                    <ul>
-                        {% for track in upcoming %}
-                            <li>
-                                <span class="name">{{ track.title }}</span> <span class="lp-badge">Bientôt</span>
-                                <p>{{ track.description }}</p>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-
-            <p class="lp-callout-link">Envie d'un exercice court, sans parcours ? <a href="{{ path('app_practice') }}">La Pratique</a> se joue sans compte.</p>
+        <div class="home-tracks mt-8 space-y-6">
+            {% for item in tracks %}
+                {{ include('home/_track_card.html.twig', {tabbed: false, heading: 'h2'}) }}
+            {% else %}
+                <p class="text-ink-muted">Aucun parcours publié pour l'instant.</p>
+            {% endfor %}
         </div>
+
+        {% if upcoming %}
+            <div class="home-upcoming mt-10">
+                <h2 class="text-lg font-semibold">En préparation</h2>
+                <ul class="mt-3 space-y-3">
+                    {% for track in upcoming %}
+                        <li>
+                            <span class="font-medium">{{ track.title }}</span> <span class="rounded bg-bg-2 px-1.5 text-xs text-ink-muted">Bientôt</span>
+                            <p class="text-sm text-ink-muted">{{ track.description }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <p class="mt-10 text-ink-muted">Envie d'un exercice court, sans parcours ? <a href="{{ path('app_practice') }}">La Pratique</a> se joue sans compte.</p>
     </main>
 {% endblock %}

@@ -1,6 +1,7 @@
 {#
   Ce qui décrit un exercice de parcours, lisible sans compte : fil d'Ariane, titre, position, notions, consigne.
   Jamais ce qui le résout (indices, tests, solution). Variables : track, chapter, chapterNumber, exercise, position, instructions.
+  Inclus aussi par la page d'exercice, qui garde site.css (#235) : ses classes d'avant restent, à côté des utilitaires.
 #}
 <nav class="breadcrumb" aria-label="Fil d'Ariane">
     <ol>
@@ -10,11 +11,11 @@
         <li aria-current="page">{{ exercise.title }}</li>
     </ol>
 </nav>
-<h1>{{ exercise.title }}</h1>
-<p class="meta exercise-facts">
+<h1 class="mt-3 text-3xl font-semibold">{{ exercise.title }}</h1>
+<p class="meta exercise-facts mt-2 text-sm text-ink-muted">
     Exercice {{ position }} sur {{ chapter.exerciseIds|length }} du chapitre {{ chapterNumber }}
     · {{ exercise.xp }} XP
     · {{ exercise.objectives|length }} objectif{{ exercise.objectives|length > 1 ? 's' }} vérifié{{ exercise.objectives|length > 1 ? 's' }} par des tests
 </p>
 {{ include('_concepts.html.twig', {concepts: exercise.concepts, label: 'Notions abordées :'}) }}
-<article class="lesson exercise-instructions">{{ instructions|raw }}</article>
+<article class="lesson exercise-instructions prose prose-theme mt-6 max-w-none">{{ instructions|raw }}</article>

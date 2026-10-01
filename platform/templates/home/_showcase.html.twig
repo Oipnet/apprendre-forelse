@@ -2,23 +2,20 @@
   @theme Point de surcharge. Variables : showcase (home.showcase de theme.yaml : eyebrow?, title, lead?, sign?).
   Le fil rouge mis en avant sur l'accueil (theme.yaml, « home.showcase »). L'enseigne de droite est
    facultative : sans « sign », le texte occupe toute la largeur. #}
-<section class="lp-section dark">
-    <div class="lp-wrap lp-two">
+<section class="home-showcase border-y border-line bg-bg-2">
+    <div class="mx-auto grid w-full max-w-5xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[2fr_1fr] md:items-center">
         <div>
-            {% if showcase.eyebrow is defined %}<span class="lp-eyebrow">{{ showcase.eyebrow }}</span>{% endif %}
-            <h2 class="lp-h2">{{ showcase.title }}</h2>
+            {% if showcase.eyebrow is defined %}<p class="text-sm font-medium text-ink-muted">{{ showcase.eyebrow }}</p>{% endif %}
+            <h2 class="mt-1 text-2xl font-semibold">{{ showcase.title }}</h2>
             {% for paragraph in showcase.lead|default([]) %}
-                <p class="lp-lead">{{ paragraph }}</p>
+                <p class="mt-3 text-ink-muted">{{ paragraph }}</p>
             {% endfor %}
         </div>
         {% if showcase.sign is defined %}
-            <div class="lp-sign-wrap">
-                <span class="lp-sign-glow" aria-hidden="true"></span>
-                <div class="lp-sign" role="img" aria-label="{{ showcase.sign.alt|default(showcase.sign.name|replace({"\n": ' '})) }}">
-                    {% if theme.logoLargeUrl %}<img src="{{ theme.logoLargeUrl }}" alt="" width="144" height="168" loading="lazy" decoding="async">{% endif %}
-                    <div class="name">{{ showcase.sign.name|nl2br }}</div>
-                    {% if showcase.sign.note is defined %}<div class="since">{{ showcase.sign.note }}</div>{% endif %}
-                </div>
+            <div class="showcase-sign flex flex-col items-center gap-2 rounded-lg border border-line bg-surface p-6 text-center" role="img" aria-label="{{ showcase.sign.alt|default(showcase.sign.name|replace({"\n": ' '})) }}">
+                {% if theme.logoLargeUrl %}<img class="h-20 w-auto" src="{{ theme.logoLargeUrl }}" alt="" width="144" height="168" loading="lazy" decoding="async">{% endif %}
+                <div class="name font-serif text-xl">{{ showcase.sign.name|nl2br }}</div>
+                {% if showcase.sign.note is defined %}<div class="text-sm text-ink-muted">{{ showcase.sign.note }}</div>{% endif %}
             </div>
         {% endif %}
     </div>

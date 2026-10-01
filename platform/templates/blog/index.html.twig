@@ -7,7 +7,7 @@
 {% block title %}Le blog · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="page blog-page">
+    <main class="blog-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         <nav class="breadcrumb" aria-label="Fil d'Ariane">
             <ol>
                 <li><a href="{{ path('app_home') }}">Accueil</a></li>
@@ -15,10 +15,10 @@
             </ol>
         </nav>
 
-        <h1>Le blog</h1>
-        <p class="lead">Les coulisses de la plateforme : comment un framework tourne dans le navigateur, comment un exercice se construit et se corrige.</p>
+        <h1 class="mt-3 text-3xl font-semibold">Le blog</h1>
+        <p class="lead mt-3 text-lg text-ink-muted">Les coulisses de la plateforme : comment un framework tourne dans le navigateur, comment un exercice se construit et se corrige.</p>
 
-        <ol class="blog-list">
+        <ol class="blog-list mt-8 space-y-8">
             {% for article in articles %}
                 <li>{{ include('blog/_article_card.html.twig') }}</li>
             {% endfor %}

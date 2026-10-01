@@ -22,6 +22,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
     `.lp-account-menu`, `.ft-brand`. Le lien « Questions » quitte la navigation (la FAQ part dans le thème Forelse).
   - Newsreader et Instrument Sans ne sont plus préchargées (`FontPreloadExtension` retirée) : un thème précharge ses
     polices avec `preload`.
+- **Thème default, pages de contenu (#229)** : accueil, catalogue, parcours, sommaire et fiche de chapitre, page
+  publique d'un exercice, blog, notions et Pratique passent en utilitaires Tailwind. Le minimum par page : données,
+  liens, formulaires et données structurées restent ; le décor part dans les thèmes.
+  - L'accueil garde le bandeau (nom et accroche du thème), les parcours, l'inscription ou la liste d'attente et la
+    FAQ (publiée aussi en données structurées). `home/_promise`, `_how`, `_ai` et `_audience` sont vides : un thème
+    les remplit. Plus d'onglets de parcours ni d'animations dans le thème default.
+  - Les repères des tests et des thèmes changent : `.home-hero`, `.home-cta`, `.home-tracks`, `.track-card`,
+    `.track-offer`, `.track-price`, `.track-chapters`, `.home-upcoming`, `.home-faq`, `.home-showcase`, `.showcase-sign`,
+    `.home-author`, `.home-demo`, `form.waitlist-form` et `.waitlist-notice` remplacent leurs équivalents `lp-*`.
+  - Nouveaux composants du thème : `tag`, `breadcrumb`, et la coloration du code (`--color-hl-*`).
 
 ### Ajouté
 

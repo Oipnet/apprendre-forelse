@@ -11,7 +11,8 @@
 {% block body_class %}site-page landing{% endblock %}
 
 {% block body %}
-    <main class="lp">
+    {# Les sections décoratives (home/_promise, _how, _ai, _audience) sont vides dans le thème default : un thème les remplit. #}
+    <main class="home">
         {{ include('home/_hero.html.twig') }}
 
         {{ include('home/_promise.html.twig') }}

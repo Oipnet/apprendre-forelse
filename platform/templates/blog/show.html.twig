@@ -7,7 +7,7 @@
 {% block title %}{{ article.title }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="page blog-page">
+    <main class="blog-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         <nav class="breadcrumb" aria-label="Fil d'Ariane">
             <ol>
                 <li><a href="{{ path('app_home') }}">Accueil</a></li>
@@ -17,15 +17,15 @@
         </nav>
 
         {% if article.restricted %}
-            <p class="blog-notice">En préparation : cet article n'est visible que des administrateurs.</p>
+            <p class="blog-notice mt-4 rounded-md border border-line bg-bg-2 px-4 py-3 text-sm">En préparation : cet article n'est visible que des administrateurs.</p>
         {% elseif scheduled %}
-            <p class="blog-notice">Programmé : cet article paraîtra le {{ article.published|date_longue }}. D'ici là, seuls les administrateurs le voient.</p>
+            <p class="blog-notice mt-4 rounded-md border border-line bg-bg-2 px-4 py-3 text-sm">Programmé : cet article paraîtra le {{ article.published|date_longue }}. D'ici là, seuls les administrateurs le voient.</p>
         {% endif %}
 
-        <article>
+        <article class="mt-4">
             <header>
-                <h1>{{ article.title }}</h1>
-                <p class="meta">
+                <h1 class="text-3xl font-semibold">{{ article.title }}</h1>
+                <p class="meta mt-2 text-sm text-ink-muted">
                     {%- if theme.person %}{{ theme.person.name }} · {% endif -%}
                     <time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time>
                     {%- if article.updated %} · mis à jour le <time datetime="{{ article.updated|date('Y-m-d') }}">{{ article.updated|date_longue }}</time>{% endif %}
@@ -33,15 +33,15 @@
                 </p>
             </header>
 
-            <div class="lesson">{{ html|raw }}</div>
+            <div class="lesson prose prose-theme mt-8 max-w-none">{{ html|raw }}</div>
         </article>
 
         {% if previous or next %}
-            <nav class="blog-nav" aria-label="Autres articles">
-                {% if previous %}<a class="button ghost" href="{{ path('app_article', {slug: previous.slug}) }}">← {{ previous.title }}</a>{% endif %}
-                {% if next %}<a class="button ghost" href="{{ path('app_article', {slug: next.slug}) }}">{{ next.title }} →</a>{% endif %}
+            <nav class="blog-nav mt-12 flex flex-wrap justify-between gap-4 border-t border-line pt-6" aria-label="Autres articles">
+                {% if previous %}<a class="btn" href="{{ path('app_article', {slug: previous.slug}) }}">← {{ previous.title }}</a>{% endif %}
+                {% if next %}<a class="btn" href="{{ path('app_article', {slug: next.slug}) }}">{{ next.title }} →</a>{% endif %}
             </nav>
         {% endif %}
-        <p class="blog-back"><a href="{{ path('app_blog') }}">← Tous les articles</a></p>
+        <p class="blog-back mt-6 text-sm"><a href="{{ path('app_blog') }}">← Tous les articles</a></p>
     </main>
 {% endblock %}

@@ -3,36 +3,32 @@
   Illustration du bandeau d'accueil : un exercice tel qu'il se présente (éditeur, aperçu, objectifs).
    Le contenu vient du thème de l'instance (theme.yaml, « home.demo ») : sans elle, pas d'illustration,
    et le bandeau occupe toute la largeur. #}
-<figure class="lp-demo" data-demo aria-label="Un exercice : le code, l'aperçu de la page et les objectifs validés">
-    <div class="lp-demo-tabs">
+<figure class="home-demo mt-8 overflow-hidden rounded-lg border border-line bg-surface" data-demo aria-label="Un exercice : le code, l'aperçu de la page et les objectifs validés">
+    <div class="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2 text-xs text-ink-muted">
         {% for file in demo.files|default([]) %}
-            <span class="tab{{ loop.first ? ' active' : '' }}">{{ file }}</span>
+            <span class="rounded px-2 py-0.5{{ loop.first ? ' bg-bg-2 text-ink' : '' }}">{{ file }}</span>
         {% endfor %}
-        <span class="status">Aperçu à jour</span>
     </div>
-<pre class="lp-code">{{ demo.code|default('')|raw }}</pre>
-    <div class="lp-demo-bottom">
-        <div class="lp-demo-preview">
-            <span class="lp-demo-label">{{ demo.preview.url|default('localhost/') }}</span>
-            <span class="name">{{ demo.preview.name|default('') }}</span>
-            <span class="label">{{ demo.preview.label|default('') }}</span>
-            <strong>{{ demo.preview.value|default('') }}</strong>
+<pre class="overflow-x-auto bg-dark p-4 font-mono text-sm text-dark-ink">{{ demo.code|default('')|raw }}</pre>
+    <div class="grid gap-4 p-4 text-sm sm:grid-cols-2">
+        <div>
+            <p class="text-xs text-ink-muted">{{ demo.preview.url|default('localhost/') }}</p>
+            <p class="font-medium">{{ demo.preview.name|default('') }}</p>
+            <p>{{ demo.preview.label|default('') }} <strong>{{ demo.preview.value|default('') }}</strong></p>
             {% if demo.preview.row is defined %}
-                <span class="row"><span>{{ demo.preview.row[0] }}</span><span class="price">{{ demo.preview.row[1] }}</span></span>
+                <p class="flex justify-between"><span>{{ demo.preview.row[0] }}</span><span>{{ demo.preview.row[1] }}</span></p>
             {% endif %}
         </div>
-        <div class="lp-demo-goals">
-            <span class="lp-demo-label">Objectifs</span>
-            {% for goal in demo.goals|default([]) %}
-                {# Le dernier objectif est celui qui se valide sous les yeux du visiteur (animé par site.ts). #}
-                {% if loop.last %}
-                    <span class="goal" data-demo-goal><i>○</i>{{ goal }}</span>
-                {% else %}
-                    <span class="goal done"><i>✓</i>{{ goal }}</span>
-                {% endif %}
-            {% endfor %}
+        <div>
+            <p class="text-xs text-ink-muted">Objectifs</p>
+            <ul class="mt-1 space-y-1">
+                {% for goal in demo.goals|default([]) %}
+                    {# Le dernier objectif est celui qui se valide sous les yeux du visiteur (animé par un thème qui le souhaite). #}
+                    <li{% if loop.last %} data-demo-goal{% endif %}><i class="not-italic" aria-hidden="true">{{ loop.last ? '○' : '✓' }}</i> {{ goal }}</li>
+                {% endfor %}
+            </ul>
             {% if demo.goals|default([])|length %}
-                <span class="score"><span data-demo-score>{{ demo.goals|length - 1 }} / {{ demo.goals|length }} validés</span><span class="xp" data-demo-xp>+ 100 XP</span></span>
+                <p class="mt-2 text-ink-muted"><span data-demo-score>{{ demo.goals|length - 1 }} / {{ demo.goals|length }} validés</span> <span data-demo-xp>+ 100 XP</span></p>
             {% endif %}
         </div>
     </div>

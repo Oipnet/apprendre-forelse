@@ -27,7 +27,7 @@ final class ThemeTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.site-header .site-name', 'Forelse');
-        $this->assertSelectorExists('.lp-sign', 'Le fil rouge de Forelse est celui du moteur.');
+        $this->assertSelectorExists('.showcase-sign', 'Le fil rouge de Forelse est celui du moteur.');
     }
 
     public function testUnThemeMonteRhabilleLesPagesEtLesBalises(): void
@@ -74,9 +74,9 @@ final class ThemeTest extends WebTestCase
         $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorNotExists('.lp-sign');
-        $this->assertSelectorNotExists('.lp-demo');
-        $this->assertSelectorNotExists('.lp-section.lined');
+        $this->assertSelectorNotExists('.showcase-sign');
+        $this->assertSelectorNotExists('.home-demo');
+        $this->assertSelectorNotExists('.home-author');
     }
 
     public function testUneSectionDeclareeParLInstanceEstAffichee(): void
@@ -95,8 +95,8 @@ final class ThemeTest extends WebTestCase
         $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.lp-section.dark .lp-h2', 'Un port de pêche');
-        $this->assertSelectorTextContains('.lp-sign .name', 'Port-Bigorneau');
+        $this->assertSelectorTextContains('.home-showcase h2', 'Un port de pêche');
+        $this->assertSelectorTextContains('.showcase-sign .name', 'Port-Bigorneau');
     }
 
     public function testUneImageDuThemeEstServie(): void

@@ -2,12 +2,12 @@
   @theme Point de surcharge : « Qui est derrière » (home.author du thème), et le lien vers le moteur open source.
   Variables : theme.home.author (array : eyebrow?, title, lead), self_hosting (App\Instance\SelfHostingPage). Obligatoire : le lien vers le code du moteur (AGPL).
 #}
-<section class="lp-section lined">
-    <div class="lp-wrap lp-two top">
+<section class="home-author border-t border-line">
+    <div class="mx-auto grid w-full max-w-5xl gap-4 px-4 py-12 sm:px-6 md:grid-cols-[1fr_2fr]">
         <div>
-            {% if theme.home.author.eyebrow is defined %}<span class="lp-eyebrow">{{ theme.home.author.eyebrow }}</span>{% endif %}
-            <h2 class="lp-h2 sm">{{ theme.home.author.title }}</h2>
+            {% if theme.home.author.eyebrow is defined %}<p class="text-sm font-medium text-ink-muted">{{ theme.home.author.eyebrow }}</p>{% endif %}
+            <h2 class="mt-1 text-xl font-semibold">{{ theme.home.author.title }}</h2>
         </div>
-        <p class="lp-lead">{{ theme.home.author.lead }} Le moteur de la plateforme est sous licence open source (AGPL) : son code est publié, pour le lire ou <a href="{{ self_hosting.enabled ? path('app_self_hosting') : constant('App\\Instance\\SelfHostingPage::REPOSITORY') }}">le faire tourner chez vous</a>.</p>
+        <p class="text-ink-muted">{{ theme.home.author.lead }} Le moteur de la plateforme est sous licence open source (AGPL) : son code est publié, pour le lire ou <a href="{{ self_hosting.enabled ? path('app_self_hosting') : constant('App\\Instance\\SelfHostingPage::REPOSITORY') }}">le faire tourner chez vous</a>.</p>
     </div>
 </section>
