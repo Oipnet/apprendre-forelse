@@ -14,11 +14,23 @@ services:
       SENTRY_ENVIRONMENT: preproduction
       # Les emails vont dans Mailpit, jamais à une vraie adresse (quel que soit MAILER_DSN dans .env).
       MAILER_DSN: smtp://mailpit:1025
+      # Le thème que la production prendra à la prochaine version, tant que l'admin de la préproduction n'en a pas
+      # choisi un autre (/admin → Thèmes).
+      THEME: forelse
+    volumes:
+      # Les thèmes de la production, déposés par la CI du dépôt de contenu (/srv/forelse/themes), en lecture seule :
+      # la préproduction montre ce que les apprenants verront à la prochaine version. Remplace le ./themes de
+      # compose.yaml (même cible), qui resterait vide dans /srv/forelse-staging.
+      - /srv/forelse/themes:/themes:ro
 
-  # C'est le worker qui envoie les emails (file d'attente) : même destination.
+  # C'est le worker qui envoie les emails (file d'attente) : même destination, et le même thème (nom et couleurs des
+  # emails).
   worker:
     environment:
       MAILER_DSN: smtp://mailpit:1025
+      THEME: forelse
+    volumes:
+      - /srv/forelse/themes:/themes:ro
 
   # Capteur d'emails : garde tout ce que la préproduction envoie, pour tester l'inscription, le changement d'adresse
   # ou le mot de passe oublié. Son interface est servie par le proxy sous /mails de la plateforme, derrière le même
