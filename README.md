@@ -301,82 +301,82 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
 
 **Écarts entre PHP natif et navigateur.** `content:check` s'exécute avec le PHP de la machine, alors que l'apprenant utilise php-wasm, qui n'a **pas l'extension `intl`** : la locale y reste `en`. Évitez donc ce qui dépend d'`intl` (`NumberType` sans `'html5' => true`, `MoneyType`, dates localisées…), sous peine de voir des exercices validés par `content:check` se comporter autrement dans le navigateur. La traduction (messages de validation en français) n'est pas concernée.
 
-## Habiller son instance
+## Thèmes
 
-Le moteur ne s'appelle « Forelse » que **tant qu'on ne lui dit rien**. Une instance installe ses thèmes en
-montant un dossier (`THEMES_DIR`, `/themes` dans l'image) à côté des packs — aucun fork, aucune image
-à reconstruire, rien à republier au titre de l'AGPL : c'est de la configuration, pas du code.
+Un **thème** habille une instance : son nom, ses couleurs, ses polices, ses images, ses textes d'accueil, et au
+besoin ses propres gabarits, feuilles de style et scripts. C'est un dossier monté à côté des packs : aucun fork,
+aucune image à reconstruire, rien à republier au titre de l'AGPL — c'est de la configuration, pas du code du moteur.
 
-**Plusieurs thèmes, un actif.** Chaque sous-dossier de `THEMES_DIR` est un thème, nommé par son dossier
-(minuscules, chiffres, tirets). Le thème actif se choisit dans **`/admin` → Thèmes** : l'état de chaque thème
-(fichier valable, gabarits qui se compilent), un **aperçu** qui ne montre le thème qu'à vous, sur toutes les
-pages, puis **Activer**, qui le montre à tous dès la requête suivante, sans redémarrer. Un thème en erreur ne
-s'active pas. En ligne de commande : `bin/console app:theme:activer <thème>`. Tant que rien n'est choisi,
-`THEME` désigne le thème actif ; sans lui, c'est le thème du moteur (`default`). Rien ne se téléverse depuis
-l'admin : les gabarits et les scripts d'un thème s'exécutent avec les droits de la plateforme, ils arrivent
-par le dossier monté, en lecture seule.
+Sans thème, l'instance prend le thème **`default`** du moteur : sobre, en Tailwind, polices du système, clair ou
+sombre selon le système, et qui s'appelle « default ». Il est toujours disponible, même quand d'autres thèmes sont
+installés.
 
-> L'ancien dossier unique (`BRANDING_DIR`, `/marque`) reste lu jusqu'à la 4.0 : il apparaît comme le thème
-> `instance`, actif tant que l'admin n'en a pas choisi un autre. Une instance 2.x n'a rien à changer.
+### Installer des thèmes
+
+`THEMES_DIR` (`/themes` dans l'image, le volume `./themes` des `compose.yaml`) contient **un sous-dossier par
+thème**, nommé par son dossier (minuscules, chiffres, tirets) : ce nom est l'identifiant du thème. Le volume est en
+lecture seule.
 
 ```
 themes/mon-theme/
-  theme.yaml      nom, puce, accroche, site, couleurs, polices, images, textes de l'accueil
+  theme.yaml      nom, puce, accroche, site, couleurs, polices, images, textes de l'accueil, fichiers à charger
   logo.svg  favicon.svg  partage.png      les images, nommées dans theme.yaml
   templates/      (facultatif) des gabarits Twig qui remplacent ceux du moteur
   assets/         (facultatif) feuilles de style, scripts, polices et images, servis tels quels
 ```
 
-Un exemple complet et commenté, à copier :
-[examples/themes/atelier-bigorneau/theme.yaml](examples/themes/atelier-bigorneau/theme.yaml).
-`bin/console app:theme:verifier` le lit en entier et dit quelle clé corriger.
+Un exemple complet et commenté, à copier : [examples/themes/atelier-bigorneau/](examples/themes/atelier-bigorneau/)
+— un `theme.yaml`, une petite feuille, un court script et une surcharge du bandeau d'accueil. `make dev` le
+présente dans l'admin, prêt à être prévisualisé. `bin/console app:theme:verifier` lit le thème actif en entier et
+dit quelle clé corriger.
 
-> **Avant la 2.6, ce fichier s'appelait `marque.yaml`**, et les gabarits lisaient la variable `marque`.
-> Les deux restent acceptés jusqu'à la 4.0 (un `theme.yaml` l'emporte s'il existe aussi), avec un
-> avertissement : renommez le fichier, et écrivez `theme.name` plutôt que `marque.name` dans vos gabarits.
+### Choisir le thème actif
 
-**La règle à retenir** : dès que `theme.yaml` existe, **plus rien du thème du moteur n'est servi**.
-Ni le nom, ni le logo, ni la favicon, ni l'image de partage, ni les textes d'accueil qui parlent de la
-Taverne du Dragon Ivre et de l'auteur de Forelse. Une instance ne peut donc pas se retrouver à vendre
-une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
+- **`/admin` → Thèmes** : l'état de chaque thème (`theme.yaml` valable, gabarits qui se compilent), un **aperçu**
+  qui ne montre le thème qu'à vous, sur toutes les pages, puis **Activer**, qui le montre à tous dès la requête
+  suivante, sans redémarrer. Un thème en erreur ne s'active pas.
+- En ligne de commande, pour un déploiement scripté : `bin/console app:theme:activer <thème>`.
+- La variable `THEME` donne le thème de départ, tant que l'admin n'en a pas choisi un. Sans elle, c'est `default`.
+
+**Pas de téléversement depuis l'admin**, et c'est voulu : les gabarits et les scripts d'un thème s'exécutent avec
+les droits de la plateforme. Un thème arrive par le dossier monté, par qui administre le serveur.
+
+> L'ancien dossier unique (`BRANDING_DIR`, `/marque`) reste lu jusqu'à la 4.0 : il apparaît comme le thème
+> `instance`, actif tant que l'admin n'en a pas choisi un autre. Avant la 2.6, `theme.yaml` s'appelait
+> `marque.yaml` et les gabarits lisaient la variable `marque` : les deux restent acceptés jusqu'à la 4.0, avec un
+> avertissement (voir le [journal](CHANGELOG.md), « Migration »).
+
+### Le format d'un thème
+
+**La règle à retenir** : dès que `theme.yaml` existe, **rien du thème default ne subsiste** — ni son nom, ni son
+accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas n'apparaît pas.
 
 - `name` (obligatoire) s'affiche dans l'en-tête, le pied de page, les `<title>` (« Mon compte · … »),
   les emails (confirmation d'adresse, mot de passe oublié, achat), les balises Open Graph et les données
-  structurées. `chip` est la petite puce à côté, `tagline` la phrase du pied de page, `title` le `<title>`
-  de l'accueil, `url` le site de la marque, `person` (`name`, `jobTitle`) l'auteur des parcours et des articles
-  dans les données structurées.
-- `colors` et `fonts` redéfinissent les jetons du **thème default** (les pages du site : `--color-accent`,
-  `--color-bg`, `--font-serif`…, voir [docs/themes.md](docs/themes.md)), `editor` les variables du **thème
-  sombre** (l'éditeur d'exercice et l'atelier : `--accent`, `--bg`…). Toutes sont posées après la feuille de styles. Hexadécimal seulement ; une valeur mal écrite
-  **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire qu'une
-  erreur. Les deux palettes se déclarent séparément et l'une n'est jamais déduite de l'autre : une
-  couleur claire assombrie automatiquement, c'est un contraste perdu au hasard. Sans `colors`, les pages du
-  site suivent la préférence du système et passent en sombre quand elle l'est ; dès que `colors` est déclaré,
-  elles restent claires, dans la palette de la marque.
+  structurées. `chip` est la petite puce à côté, `tagline` l'accroche, `title` le `<title>` de l'accueil, `url` le
+  site de la marque, `person` (`name`, `jobTitle`) l'auteur des parcours et des articles dans les données
+  structurées.
+- `colors` et `fonts` redéfinissent les jetons du thème default (`--color-accent`, `--color-bg`, `--font-serif`…,
+  voir [docs/themes.md](docs/themes.md)) : les pages du site et les emails les suivent. Hexadécimal seulement ; une
+  valeur mal écrite **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire
+  qu'une erreur. Sans `colors`, les pages suivent la préférence claire ou sombre du système ; dès que `colors` est
+  déclaré, elles restent claires, dans la palette du thème.
+- `editor` habille l'éditeur d'exercice et l'atelier, toujours sombres. Les deux palettes se déclarent séparément
+  et l'une n'est jamais déduite de l'autre : une couleur claire assombrie automatiquement, c'est un contraste perdu
+  au hasard. Sans `editor`, l'éditeur garde la palette neutre du moteur.
 - `logo`, `icon` et `share` nomment des fichiers **de ce dossier** (jamais un chemin), servis sur
-  `/theme/<thème>/<date>/<rôle>` : une image remplacée change d'URL. Sans `icon`,
-  l'onglet n'affiche aucune icône plutôt que celle du moteur : mieux vaut rien que la marque d'un autre.
-- `email_logo` (facultatif) : le logo des emails, en PNG, JPEG ou GIF, quand celui du site est dans un format
-  que les clients mail lisent mal (webp, svg). Sans lui, un logo webp laisse le nom seul en tête des emails.
-- `home.showcase`, `home.author` et `home.demo` remplissent les trois sections de l'accueil qui parlent
-  de la marque (le fil rouge, « qui est derrière », l'illustration du bandeau). Une section non déclarée
-  n'apparaît pas, et la page reste cohérente sans elle. Leur forme est vérifiée à la lecture, avec le
-  piège du YAML en tête : **une phrase qui contient « : » doit être entre guillemets**, sinon elle
-  devient un tableau — le message le dit plutôt que de laisser la page échouer à l'affichage.
-- **Le contrat des gabarits** — lesquels se remplacent, avec quelles variables, lesquels sont verrouillés — est
-  décrit dans [docs/themes.md](docs/themes.md).
-- **L'échappatoire** : un fichier déposé dans `marque/templates/` remplace le gabarit de même nom du
-  moteur (`home.html.twig`, `_footer.html.twig`, `legal/notice.html.twig`…). Il n'y a rien à copier
-  d'autre que le fichier à changer. Le thème y est la variable `theme` (`{{ theme.name }}`). En production les gabarits sont compilés une fois : après en avoir
-  déposé un, redémarrez le conteneur.
-- **Feuilles, scripts et polices** : `stylesheets`, `scripts` et `preload` listent des fichiers de `assets/`
-  (`.css`, `.js`, `.woff2`), posés après ceux du moteur sur toutes les pages du site. Une feuille y trouve ses
-  polices et ses images par des chemins relatifs (`url(fonts/titres.woff2)`). `replaces_engine_styles: true`
-  retire la feuille du moteur : celle du thème habille seule les pages. Aucun rebuild : les fichiers sont servis
-  sur `/theme/<thème>/<version>/assets/…`, en cache immuable, et la version change dès qu'un fichier du dossier
-  change. Les scripts **ajoutent** (animations, composants d'accueil, en respectant `prefers-reduced-motion`) :
-  le JavaScript du moteur reste chargé. La page d'exercice et les éditeurs de l'atelier ne chargent pas ces
-  fichiers ; ils suivent la palette `editor`.
+  `/theme/<thème>/<date>/<rôle>` : une image remplacée change d'URL. Sans `icon`, l'onglet n'affiche aucune icône.
+  `email_logo` (facultatif) est le logo des emails, en PNG, JPEG ou GIF, quand celui du site est dans un format que
+  les clients mail lisent mal (webp, svg).
+- `home.showcase`, `home.author` et `home.demo` remplissent les sections de l'accueil qui parlent de la marque (le
+  fil rouge, « qui est derrière », l'illustration du bandeau). Une section non déclarée n'apparaît pas. Piège du
+  YAML : **une phrase qui contient « : » doit être entre guillemets**, sinon elle devient un tableau — le message
+  le dit plutôt que de laisser la page échouer à l'affichage.
+- `stylesheets`, `scripts` et `preload` listent des fichiers de `assets/` (`.css`, `.js`, `.woff2`), posés après
+  ceux du moteur sur les pages du site et servis sur `/theme/<thème>/<version>/assets/…`, en cache immuable. Les
+  scripts **ajoutent** au JavaScript du moteur (animations, composants d'accueil, en respectant
+  `prefers-reduced-motion`). `replaces_engine_styles: true` retire la feuille du moteur : celle du thème habille
+  seule les pages.
 
   ```yaml
   stylesheets: [assets/theme.css]
@@ -384,11 +384,19 @@ une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
   preload: [assets/fonts/titres.woff2]
   replaces_engine_styles: false
   ```
-- Les tarifs de cohorte (`COHORT_UNIT_PRICE`, `COHORT_TIERS`) sont des variables d'environnement, comme
-  les mentions légales (`LEGAL_*`) : aucune instance n'a à reconstruire l'image pour ses prix.
+- `templates/` : un fichier y remplace le gabarit de même nom du moteur. **Les points de surcharge** — lesquels se
+  remplacent, avec quelles variables, ce qui y est obligatoire — sont décrits dans [docs/themes.md](docs/themes.md),
+  avec la façon de construire sa feuille (Tailwind ou non). Un gabarit redéposé se voit dès la requête suivante.
 
-Ce qui reste du moteur dans tous les cas : le pied de page dit la version et la licence AGPL du moteur,
-comme l'exige la licence.
+**Ce qu'un thème ne touche pas** : la page d'exercice et les éditeurs de l'atelier. Ils gardent l'habillage du
+moteur et ne chargent ni les gabarits, ni les feuilles, ni les scripts du thème ; le thème les habille seulement par
+sa palette `editor`, sa police `fonts.mono`, son nom et son logo.
+
+Ce qui reste du moteur dans tous les cas : le pied de page dit la version et la licence AGPL du moteur, avec le
+lien vers son code, comme l'exige la licence.
+
+Les tarifs de cohorte (`COHORT_UNIT_PRICE`, `COHORT_TIERS`) et les mentions légales (`LEGAL_*`) ne sont pas dans le
+thème : ce sont des variables d'environnement.
 
 ## Ajouter un environnement depuis un dépôt Git
 

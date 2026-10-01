@@ -197,7 +197,10 @@ Deux décisions à prendre **avant** de créer les dépôts, parce qu'elles ne s
 ## 8. L'ordre que je propose
 
 1. ~~**Niveau 2, l'habillage**~~ — **fait** : `marque.yaml`, les deux thèmes, les images, les gabarits
-   de l'instance. Voir le journal des modifications.
+   de l'instance. Voir le journal des modifications. Depuis la 3.0, le niveau 2 couvre des **thèmes** complets
+   (`theme.yaml`, gabarits, feuilles, scripts), plusieurs par instance, choisis depuis l'admin, et le moteur
+   n'embarque plus la marque Forelse : il livre un thème `default` neutre, et Forelse est un thème comme un autre,
+   publié avec son contenu (voir `docs/themes.md`).
 2. **Les environnements dans les packs** (doc 1, étapes 1 à 5) — c'est littéralement « créer ses
    parcours sans toucher au moteur ».
 3. ~~**`FrameworkProfile`**~~ (doc 1, chantier E) — **fait** : un profil par runtime

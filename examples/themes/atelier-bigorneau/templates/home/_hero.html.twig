@@ -1,0 +1,21 @@
+{#
+  Surcharge d'exemple d'un point de surcharge (voir docs/themes.md) : le bandeau d'accueil, redessiné.
+  Mêmes variables que le gabarit du moteur (tryUrl, tryPractice, theme.home.demo) : on n'en invente pas.
+  Les classes bigorneau-* sont stylées par assets/theme.css ; btn et btn-primary viennent de la feuille du moteur.
+  Les repères home-hero et home-cta restent : les tests et les scripts s'y fient.
+#}
+<section class="home-hero bigorneau-hero">
+    <div class="bigorneau-hero__inner">
+        <p class="bigorneau-hero__eyebrow">{{ theme.chip ?: 'Atelier' }} · à marée haute comme à marée basse</p>
+        <h1 class="bigorneau-hero__title">{{ theme.name }}</h1>
+        {% if theme.tagline %}<p class="bigorneau-hero__lead">{{ theme.tagline }}</p>{% endif %}
+        <p class="home-cta bigorneau-hero__cta">
+            <a class="btn btn-primary" href="{{ tryUrl }}">{{ tryPractice ? 'Essayer un exercice, sans compte' : 'Essayer le premier exercice' }} <span aria-hidden="true">→</span></a>
+            <a href="{{ path('app_tracks') }}">Voir les parcours</a>
+        </p>
+        {% if theme.home.demo %}{{ include('home/_demo.html.twig', {demo: theme.home.demo}) }}{% endif %}
+    </div>
+    <svg class="bigorneau-hero__wave" viewBox="0 0 1200 40" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path d="M0 20 Q150 0 300 20 T600 20 T900 20 T1200 20 V40 H0 Z"/>
+    </svg>
+</section>

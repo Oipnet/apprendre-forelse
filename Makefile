@@ -13,12 +13,16 @@ install: ## Dépendances, environnements d'exécution et bases de données (Post
 dev: ## Plateforme (localhost:8000), bac à sable (127.0.0.1:8001), Vite (5173) et Mailpit (8025)
 	$(MAKE) -j4 dev-platform dev-sandbox dev-vite dev-mail
 
+# Les thèmes d'exemple (examples/themes) apparaissent dans /admin → Thèmes, prêts à être prévisualisés et activés.
+# Un THEMES_DIR de platform/.env.local ne l'emporte pas sur celui-ci : passez-le à make (make dev THEMES_DIR=…).
+THEMES_DIR ?= $(CURDIR)/examples/themes
+
 # Xdebug désactivé : il fait planter le serveur de développement (segfault) et ralentit tout.
 dev-platform:
-	php -d xdebug.mode=off -S localhost:8000 -t platform/public
+	THEMES_DIR=$(THEMES_DIR) php -d xdebug.mode=off -S localhost:8000 -t platform/public
 
 dev-sandbox:
-	php -d xdebug.mode=off -S 127.0.0.1:8001 -t platform/public
+	THEMES_DIR=$(THEMES_DIR) php -d xdebug.mode=off -S 127.0.0.1:8001 -t platform/public
 
 dev-vite:
 	cd playground && npm run dev

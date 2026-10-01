@@ -1,0 +1,72 @@
+/*
+ * Feuille d'exemple, écrite à la main : pas de Tailwind, pas de compilation. Elle s'ajoute à la feuille du moteur
+ * (replaces_engine_styles absent) et lit ses jetons (--color-*, --font-*), que theme.yaml redéfinit par « colors ».
+ * Pour une feuille construite avec Tailwind, voir docs/themes.md, « Construire un thème Tailwind ».
+ */
+
+/* Le bandeau d'accueil (templates/home/_hero.html.twig). */
+.bigorneau-hero {
+	position: relative;
+	background: linear-gradient(180deg, var(--color-bg-2), var(--color-bg));
+	border-bottom: 1px solid var(--color-line);
+}
+.bigorneau-hero__inner {
+	max-width: 64rem;
+	margin: 0 auto;
+	padding: 3.5rem 1rem 4rem;
+}
+.bigorneau-hero__eyebrow {
+	color: var(--color-accent);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+.bigorneau-hero__title {
+	margin-top: 0.5rem;
+	font-family: var(--font-serif);
+	font-size: clamp(2.25rem, 5vw, 3.5rem);
+	line-height: 1.1;
+}
+.bigorneau-hero__lead {
+	max-width: 40rem;
+	margin-top: 1rem;
+	color: var(--color-ink-muted);
+	font-size: 1.125rem;
+}
+.bigorneau-hero__cta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem 1.5rem;
+	margin-top: 1.75rem;
+}
+.bigorneau-hero__wave {
+	position: absolute;
+	inset: auto 0 0;
+	width: 100%;
+	height: 1.5rem;
+	fill: var(--color-accent-line);
+	opacity: 0.6;
+}
+
+/* La coloration de l'illustration (home.demo de theme.yaml) : le moteur n'en fournit pas. */
+.home-demo pre .cm { color: var(--color-hl-comment); font-style: italic; }
+.home-demo pre .at { color: var(--color-hl-attribute); }
+.home-demo pre .kw { color: var(--color-hl-keyword); }
+.home-demo pre .st { color: var(--color-hl-value); }
+
+/* Animé par assets/theme.js, qui ne pose html.bigorneau-motion que si le visiteur accepte le mouvement. */
+.bigorneau-motion .bigorneau-hero__wave {
+	animation: bigorneau-tide 6s ease-in-out infinite alternate;
+}
+.bigorneau-motion [data-demo-goal].is-done i {
+	color: var(--color-success);
+}
+@keyframes bigorneau-tide {
+	to { transform: translateY(-0.375rem); }
+}
+/* Ceinture et bretelles : même si le script se trompe, rien ne bouge pour qui l'a demandé. */
+@media (prefers-reduced-motion: reduce) {
+	.bigorneau-motion .bigorneau-hero__wave { animation: none; }
+}

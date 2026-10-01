@@ -2,7 +2,8 @@
 
 Un thème habille une instance sans toucher au moteur : pas de fork, pas d'image à reconstruire, rien à republier au
 titre de l'AGPL. C'est un dossier, déposé dans `THEMES_DIR` et choisi dans `/admin` → Thèmes (voir le README,
-« Habiller son instance »).
+« Thèmes »). Un exemple complet, pour une marque fictive : [examples/themes/atelier-bigorneau/](../examples/themes/atelier-bigorneau/)
+(un `theme.yaml`, une feuille écrite à la main, un script et la surcharge du bandeau d'accueil).
 
 ```
 themes/mon-theme/
@@ -74,7 +75,30 @@ replaces_engine_styles: false   # true : la feuille du moteur n'est plus chargé
   `prefers-reduced-motion`.
 - Tout est servi par le domaine de l'instance : la CSP n'a rien à ouvrir.
 
-On peut compiler sa feuille avec l'outil de son choix (Tailwind ou non) : le moteur ne sert que le résultat.
+On peut compiler sa feuille avec l'outil de son choix (Tailwind ou non) : le moteur ne sert que le résultat. Une
+feuille écrite à la main, posée après celle du moteur, lit ses jetons (`var(--color-accent)`, `var(--font-serif)`…) :
+c'est ce que fait l'exemple. Ses classes sont les siennes ; celles des gabarits du moteur viennent de sa feuille.
+
+### Animations
+
+Un thème anime ce qu'il veut, à deux conditions :
+
+- **La page est complète sans le script** : il n'apporte que du mouvement, jamais du contenu. Un visiteur sans
+  JavaScript, un robot ou un lecteur d'écran lisent la même page.
+- **`prefers-reduced-motion` est respecté**, deux fois : le script ne lance rien quand le visiteur a demandé moins de
+  mouvement, et la feuille coupe les animations sous `@media (prefers-reduced-motion: reduce)`, au cas où.
+
+```js
+// assets/theme.js
+if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.documentElement.classList.add('mon-theme-motion'); // la feuille n'anime que sous cette classe
+}
+```
+
+Les repères posés par le moteur pour cela (`data-demo`, `data-demo-goal` dans l'illustration de l'accueil,
+`data-account-menu` dans l'en-tête) font partie du contrat des points de surcharge. Le script est chargé comme un module
+(`type="module"`) : différé, il s'exécute quand le DOM est prêt, dans sa propre portée. Il est servi par le domaine de l'instance : la CSP n'a rien à
+ouvrir, mais un script inline, lui, serait bloqué.
 
 ## Construire un thème Tailwind
 
@@ -148,5 +172,12 @@ Sans `THEME_UNDER_TEST`, ces tests vérifient l'exemple livré (`examples/themes
 
 ## Et l'AGPL ?
 
-Un thème est de la configuration montée à côté du moteur, pas une modification du moteur : il n'a pas à être publié.
-Seul le pied de page doit garder la version et la licence du moteur, comme l'exige la licence.
+Le moteur est sous AGPL-3.0 : qui le modifie et le sert à des utilisateurs doit leur en donner le code. Un thème
+n'est pas une modification du moteur :
+
+- **N'en relève pas** : un thème monté dans `THEMES_DIR` — `theme.yaml`, images, gabarits, feuilles, scripts. C'est
+  de la configuration lue par le moteur, comme les packs de contenu : il n'a pas à être publié, et peut être privé.
+- **En relève** : une modification des fichiers du moteur lui-même (`platform/`, `playground/`…), y compris de ses
+  gabarits dans l'image. Une instance qui sert un moteur modifié en publie le code.
+- **Dans tous les cas**, le pied de page garde la version et la licence du moteur, avec le lien vers son code : un
+  thème qui remplace `_footer.html.twig` les reprend (`moteur_version`, `SelfHostingPage::REPOSITORY`).

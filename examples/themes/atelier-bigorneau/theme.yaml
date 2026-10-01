@@ -1,11 +1,14 @@
-# Thème d'une instance : montez ce dossier sur /marque (voir auto-hebergement/compose.yaml).
-# Vérifiez-le avec : bin/console app:theme:verifier
+# Un thème d'exemple, pour une marque fictive. Copiez ce dossier dans themes/<votre-thème>/ (le volume /themes,
+# voir auto-hebergement/compose.yaml), choisissez-le dans /admin → Thèmes, puis vérifiez-le avec :
+#   bin/console app:theme:verifier
 #
-# Ce fichier suffit à habiller la plateforme : nom, puce, accroche, couleurs, images. Ce qu'il ne
-# règle pas se réécrit en déposant un gabarit dans templates/ (voir README, « Habiller son instance »).
+# Ce dossier montre les trois façons d'habiller une instance (voir docs/themes.md) :
+#   - ce fichier : nom, puce, accroche, couleurs, polices, images, textes de l'accueil ;
+#   - assets/ : une feuille et un script, posés après ceux du moteur (clés stylesheets et scripts, plus bas) ;
+#   - templates/ : un gabarit qui remplace celui du moteur (ici home/_hero.html.twig, le bandeau d'accueil).
 #
-# Une règle à connaître : dès que ce fichier existe, le thème du moteur disparaît entièrement.
-# Le nom, les images et les textes d'accueil de Forelse ne sont plus servis — déclarez les vôtres.
+# Une règle à connaître : dès que ce fichier existe, rien du thème default ne subsiste. Son nom, son accroche et
+# sa favicon ne sont plus servis — déclarez les vôtres.
 
 # Obligatoire : le nom affiché partout (en-tête, pied de page, titres, emails, balises de partage).
 name: Atelier Bigorneau
@@ -32,7 +35,7 @@ logo: logo.svg
 icon: favicon.svg
 # share: partage.png        # 1200 × 630, déposée dans ce dossier
 
-# Couleurs du thème clair (le thème sombre de l'éditeur reste celui du moteur).
+# Couleurs des pages du site : elles redéfinissent les jetons du thème default (--color-accent…, voir docs/themes.md).
 # Hexadécimal uniquement ; une valeur mal écrite arrête la page avec un message qui dit laquelle.
 colors:
   accent: '#1f6f8b'        # liens, boutons, accents
@@ -47,10 +50,12 @@ colors:
   dark-ink: '#eef2f6'      # texte des sections sombres
   success: '#2e9b4e'       # exercice réussi
 
-# Couleurs du thème sombre : l'éditeur d'exercice et l'atelier. Absentes, celles du moteur restent.
+# Couleurs de l'éditeur d'exercice et de l'atelier, toujours sombres. Absentes, la palette neutre du moteur reste.
 # Elles ne sont jamais déduites du thème clair : une couleur assombrie au jugé, c'est un contraste perdu.
 editor:
-  accent: '#5ab0cc'        # boutons, liens, onglet actif
+  accent: '#5ab0cc'        # bordures et barres de la couleur d'accent
+  accent-fill: '#1f6f8b'   # fond des boutons, sous un texte blanc
+  accent-text: '#7cc3da'   # liens et onglet actif, en texte sur le fond sombre
   gold: '#e0b04a'          # seconde couleur (XP, badges)
   background: '#12171b'    # fond de l'éditeur
   surface: '#1a2026'       # panneaux
@@ -61,7 +66,8 @@ editor:
   success: '#3fbf7f'       # test vert
   error: '#ef5a5a'         # test rouge
 
-# Polices : une pile CSS, sans @import. Chargez-les depuis un gabarit si elles ne sont pas locales.
+# Polices : une pile CSS, sans @import. Une police à télécharger se déclare dans une feuille du thème (@font-face),
+# son fichier sous assets/, et se précharge avec « preload ». « mono » vaut aussi pour l'éditeur.
 fonts:
   serif: "'Iowan Old Style', Georgia, serif"
   sans: "system-ui, -apple-system, 'Segoe UI', sans-serif"
@@ -113,3 +119,11 @@ home:
     eyebrow: Qui est derrière
     title: Une équipe de formateurs, pas une plateforme de cours en masse.
     lead: Écrit par les formateurs de l'Atelier Bigorneau, qui enseignent ces sujets en salle depuis dix ans.
+
+# Les fichiers à charger sur les pages du site, après ceux du moteur, pris dans assets/. La page d'exercice et les
+# éditeurs de l'atelier ne les chargent pas.
+stylesheets: [assets/theme.css]
+scripts: [assets/theme.js]
+# preload: [assets/fonts/titres.woff2]
+# true : la feuille du moteur n'est plus chargée, celle du thème habille seule les pages (voir docs/themes.md).
+replaces_engine_styles: false
