@@ -42,17 +42,17 @@ final class PagesTest extends WebTestCase
         $this->resetDatabase();
         $client->loginUser($this->createUser('ada@example.test', 'Ada'));
         $client->request('GET', '/pratique');
-        $this->assertSelectorTextContains('.lp-header details.lp-account summary', 'Ada');
-        $this->assertSelectorExists('.lp-account-menu a[href="/compte"]');
-        $this->assertSelectorExists('.lp-account-menu a[href^="/deconnexion?_csrf_token="]', 'La déconnexion porte son jeton.');
-        $this->assertSelectorNotExists('.lp-account-label', 'Un apprenant n\'a pas d\'espace réservé.');
+        $this->assertSelectorTextContains('.site-header details.account summary', 'Ada');
+        $this->assertSelectorExists('.account-menu a[href="/compte"]');
+        $this->assertSelectorExists('.account-menu a[href^="/deconnexion?_csrf_token="]', 'La déconnexion porte son jeton.');
+        $this->assertSelectorNotExists('.account-label', 'Un apprenant n\'a pas d\'espace réservé.');
 
         $admin = $this->createUser('admin@example.test', 'Admin')->setRoles([\App\Entity\User::ROLE_ADMIN]);
         static::getContainer()->get('doctrine')->getManager()->flush();
         $client->loginUser($admin);
         $crawler = $client->request('GET', '/pratique');
-        $this->assertSame(['Parcours', 'Pratique', 'Questions'], $crawler->filter('.lp-header nav > a')->each(fn ($a) => $a->text()), 'Au premier niveau, la navigation du site seulement.');
-        $this->assertSame(['Mon compte', 'Atelier', 'Mes cohortes', 'Administration', 'Déconnexion'], $crawler->filter('.lp-account-menu a')->each(fn ($a) => $a->text()));
+        $this->assertSame(['Parcours', 'Pratique'], $crawler->filter('.site-header nav > a')->each(fn ($a) => $a->text()), 'Au premier niveau, la navigation du site seulement.');
+        $this->assertSame(['Mon compte', 'Atelier', 'Mes cohortes', 'Administration', 'Déconnexion'], $crawler->filter('.account-menu a')->each(fn ($a) => $a->text()));
     }
 
     /** Un lien vers une route absente casse la page en 500 : on la rend, tout simplement. */

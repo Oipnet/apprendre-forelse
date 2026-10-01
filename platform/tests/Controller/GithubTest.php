@@ -136,7 +136,7 @@ final class GithubTest extends WebTestCase
         $this->client->submitForm('Créer mon compte', ['external_registration_form[displayName]' => 'Ada L.'], serverParameters: self::ORIGIN);
         $this->assertResponseRedirects('/');
         $this->client->followRedirect();
-        $this->assertSelectorTextContains('.lp-user', 'Ada L.', 'Connectée dans la foulée.');
+        $this->assertSelectorTextContains('.account-name', 'Ada L.', 'Connectée dans la foulée.');
 
         $user = static::getContainer()->get(UserRepository::class)->findOneByEmail('ada@example.test');
         $this->assertNotNull($user);
@@ -156,7 +156,7 @@ final class GithubTest extends WebTestCase
 
         $this->assertResponseRedirects('/');
         $this->client->followRedirect();
-        $this->assertSelectorTextContains('.lp-user', 'Ada');
+        $this->assertSelectorTextContains('.account-name', 'Ada');
         $this->assertSame('ada-renommee', $this->identity()?->getUsername(), 'Le nom d\'utilisateur suit GitHub.');
         $this->assertSame('ada@example.test', static::getContainer()->get(UserRepository::class)->find($user->getId())?->getEmail(), 'L\'adresse du compte ne change pas.');
     }
@@ -202,7 +202,7 @@ final class GithubTest extends WebTestCase
         $this->client->followRedirect();
         $this->assertSelectorTextContains('.flash-error', 'n\'a jamais été confirmée');
         $this->assertNull($this->identity());
-        $this->assertSelectorNotExists('.lp-user');
+        $this->assertSelectorNotExists('.account-name');
     }
 
     public function testUnEtatFalsifieEstRefuseSansAppelerGithub(): void

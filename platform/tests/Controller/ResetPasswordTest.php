@@ -46,7 +46,7 @@ final class ResetPasswordTest extends WebTestCase
         $this->assertResponseRedirects('/');
         $client->followRedirect();
         $this->assertSelectorTextContains('.flash-success', 'Mot de passe modifié');
-        $this->assertSelectorTextContains('.lp-user', 'Ada', 'Connectée dans la foulée.');
+        $this->assertSelectorTextContains('.account-name', 'Ada', 'Connectée dans la foulée.');
         $this->assertCount(0, static::getContainer()->get(ResetPasswordRequestRepository::class)->findAll(), 'La demande est consommée.');
 
         // Le nouveau mot de passe fonctionne, le lien ne sert qu'une fois.

@@ -38,14 +38,14 @@
 {% block title %}{{ message.title }} · {{ theme.name }}{% endblock %}
 
 {% block header %}
-    <header class="lp-header">
-        <div class="lp-wrap">
-            <a class="lp-brand" href="{{ path('app_home') }}">
-                {% if theme.logoUrl %}<img src="{{ theme.logoUrl }}" alt="" width="72" height="84">{% endif %}
-                <span class="lp-serif">{{ theme.name }}</span>
-                {% if theme.chip %}<span class="lp-chip">{{ theme.chip }}</span>{% endif %}
+    <header class="site-header border-b border-line bg-surface">
+        <div class="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6">
+            <a class="site-brand flex items-center gap-2 font-semibold text-ink no-underline hover:text-ink" href="{{ path('app_home') }}">
+                {% if theme.logoUrl %}<img class="h-8 w-auto" src="{{ theme.logoUrl }}" alt="" width="72" height="84">{% endif %}
+                <span class="site-name text-lg">{{ theme.name }}</span>
+                {% if theme.chip %}<span class="site-chip rounded border border-line px-1.5 text-xs font-normal text-ink-muted">{{ theme.chip }}</span>{% endif %}
             </a>
-            <nav>
+            <nav class="flex flex-1 flex-wrap items-center justify-end gap-x-4 text-sm">
                 <a href="{{ path('app_tracks') }}">Parcours</a>
                 <a href="{{ path('app_practice') }}">Pratique</a>
             </nav>
@@ -54,22 +54,22 @@
 {% endblock %}
 
 {% block body %}
-    <main class="page error-page">
-        <p class="error-code lp-mono" aria-hidden="true">{{ status_code }}</p>
-        <h1 class="lp-serif">{{ message.title }}</h1>
-        <p class="lead">{{ message.lead }}</p>
+    <main class="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6">
+        <p class="error-code font-mono text-5xl font-semibold text-ink-muted" aria-hidden="true">{{ status_code }}</p>
+        <h1 class="mt-4 text-3xl font-semibold">{{ message.title }}</h1>
+        <p class="mt-3 text-lg text-ink-muted">{{ message.lead }}</p>
         {# La requête en clair : utile à qui développe, du bruit pour un apprenant. #}
         {% if app.debug %}
-            <p class="error-request lp-mono">
+            <p class="error-request mt-6 flex flex-wrap gap-x-4 rounded-md bg-bg-2 px-4 py-2 font-mono text-sm">
                 <span>{{ app.request.method }} {{ app.request.pathInfo }}</span>
                 <span>→ {{ status_code }} {{ status_text }}</span>
             </p>
         {% endif %}
-        <p class="error-actions">
-            <a class="lp-btn" href="{{ path('app_home') }}">Retour à l'accueil</a>
+        <p class="error-actions mt-8 flex flex-wrap items-center gap-4">
+            <a class="btn btn-primary" href="{{ path('app_home') }}">Retour à l'accueil</a>
             {# Sans lire app.user (voir plus haut) : le compte montre « Reprendre où j'en suis », ou demande de se connecter. #}
-            <a class="secondary" href="{{ path('app_account') }}">Reprendre où j'en étais</a>
-            <a class="secondary" href="{{ path('app_tracks') }}">Voir les parcours</a>
+            <a href="{{ path('app_account') }}">Reprendre où j'en étais</a>
+            <a href="{{ path('app_tracks') }}">Voir les parcours</a>
         </p>
     </main>
 {% endblock %}

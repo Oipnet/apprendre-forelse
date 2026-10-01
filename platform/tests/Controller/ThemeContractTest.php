@@ -44,7 +44,7 @@ final class ThemeContractTest extends WebTestCase
             $client->request('GET', $url);
             $this->assertResponseIsSuccessful($url);
         }
-        $this->assertSelectorExists('.lp-header .lp-brand');
+        $this->assertSelectorExists('.site-header .site-brand');
         $this->assertSelectorExists('.site-footer');
     }
 

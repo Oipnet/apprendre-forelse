@@ -8,6 +8,21 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié (incompatible : 3.0)
+
+- **Le thème default passe à Tailwind (#228)** : `base.html.twig`, l'en-tête, le pied de page, la page d'erreur, les
+  pages légales et les formulaires (`form/theme.html.twig`) sont réécrits en utilitaires, polices du système, thème
+  sombre suivant le système. La feuille du site (`theme`, 6 ko gzip) remplace `site.css` sur ces pages ; la page
+  d'exercice et les éditeurs de l'atelier gardent la leur. Les autres pages suivent (#229, #230).
+  - Les clés `colors` et `fonts` de `theme.yaml` redéfinissent désormais les jetons Tailwind (`--color-accent`,
+    `--font-serif`…) sur `<html>`, et plus les variables `--lp-*` sur `body.site-page`. Un thème dont la feuille lisait
+    ces variables doit passer aux nouveaux noms (voir `docs/themes.md`, « Construire un thème Tailwind »).
+  - Les repères de l'en-tête changent : `.site-header`, `.site-brand`, `.site-name`, `.site-chip`, `.account`,
+    `.account-menu`, `.footer-brand` remplacent `.lp-header`, `.lp-brand`, `.lp-serif`, `.lp-chip`, `.lp-account`,
+    `.lp-account-menu`, `.ft-brand`. Le lien « Questions » quitte la navigation (la FAQ part dans le thème Forelse).
+  - Newsreader et Instrument Sans ne sont plus préchargées (`FontPreloadExtension` retirée) : un thème précharge ses
+    polices avec `preload`.
+
 ### Ajouté
 
 - **Vérifier un thème externe contre le moteur** : `ThemeSitemapTest` rend chaque page du sitemap avec le thème

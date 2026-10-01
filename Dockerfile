@@ -23,6 +23,8 @@ COPY playground/package.json playground/package-lock.json ./
 COPY playground/stubs ./stubs
 RUN npm ci --no-audit --no-fund
 COPY playground/ ./
+# Les gabarits : la feuille du thème default n'en garde que les classes qu'ils emploient (@source, theme-default.css).
+COPY platform/templates /src/platform/templates
 # Sortie : /src/platform/public/build (voir playground/vite.config.ts)
 RUN npm run build
 

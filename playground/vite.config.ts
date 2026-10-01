@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, type Plugin } from 'vite';
 import symfonyPlugin from 'vite-plugin-symfony';
 import { discoverRuntimes, runtimesVirtualModule } from './discover-runtimes.ts';
@@ -61,7 +62,14 @@ export default defineConfig({
 	publicDir: false,
 	// Les greffons des runtimes ici aussi : en dev, Vite transforme les modules des workers avec les
 	// plugins principaux.
-	plugins: [phpWasmAssets(), runtimesVirtualModule(runtimes), ...runtimePlugins(), symfonyPlugin({ servePublic: false })],
+	plugins: [
+		phpWasmAssets(),
+		runtimesVirtualModule(runtimes),
+		...runtimePlugins(),
+		// La feuille du thème default (src/theme-default.css) : seule à importer Tailwind, les autres entrées n'en voient rien.
+		tailwindcss(),
+		symfonyPlugin({ servePublic: false }),
+	],
 	resolve: { alias: [unusedPhpVersions, ...nodeShims, ...runtimeAlias] },
 	define: runtimeDefine,
 	server: {
@@ -86,6 +94,8 @@ export default defineConfig({
 		emptyOutDir: true,
 		rollupOptions: {
 			input: {
+				// La feuille du thème default, seule : base.html.twig la pose, la page d'exercice et l'atelier non.
+				theme: './src/theme-default.css',
 				site: './src/entries/site.ts',
 				playground: './src/entries/playground.ts',
 				sandbox: './src/entries/sandbox.ts',

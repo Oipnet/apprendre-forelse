@@ -8,8 +8,8 @@
 {# L'éditeur n'a pas les polices du site : les précharger ne servirait à rien. #}
 {% block font_preloads %}{% endblock %}
 
+{# Pas la feuille du thème default : l'entrée de l'éditeur apporte tout son habillage (voir #235). #}
 {% block stylesheets %}
-    {{ parent() }}
     {{ vite_entry_link_tags('playground') }}
 {% endblock %}
 

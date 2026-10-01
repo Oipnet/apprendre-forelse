@@ -345,9 +345,9 @@ une marque qui n'est pas la sienne parce qu'elle a oublié une clé.
   structurées. `chip` est la petite puce à côté, `tagline` la phrase du pied de page, `title` le `<title>`
   de l'accueil, `url` le site de la marque, `person` (`name`, `jobTitle`) l'auteur des parcours et des articles
   dans les données structurées.
-- `colors` et `fonts` écrivent les variables CSS du **thème clair** (les pages du site : `--lp-rust`,
-  `--lp-bg`…), `editor` celles du **thème sombre** (l'éditeur d'exercice et l'atelier : `--accent`,
-  `--bg`…). Toutes sont posées après la feuille de styles. Hexadécimal seulement ; une valeur mal écrite
+- `colors` et `fonts` redéfinissent les jetons du **thème default** (les pages du site : `--color-accent`,
+  `--color-bg`, `--font-serif`…, voir [docs/themes.md](docs/themes.md)), `editor` les variables du **thème
+  sombre** (l'éditeur d'exercice et l'atelier : `--accent`, `--bg`…). Toutes sont posées après la feuille de styles. Hexadécimal seulement ; une valeur mal écrite
   **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire qu'une
   erreur. Les deux palettes se déclarent séparément et l'une n'est jamais déduite de l'autre : une
   couleur claire assombrie automatiquement, c'est un contraste perdu au hasard. Sans `colors`, les pages du

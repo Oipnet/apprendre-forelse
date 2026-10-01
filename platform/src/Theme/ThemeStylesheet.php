@@ -11,21 +11,21 @@ namespace App\Theme;
 final class ThemeStylesheet
 {
     /**
-     * Les couleurs réglables et la variable CSS qu'elles écrivent (voir playground/src/site.css).
+     * Les couleurs réglables et le jeton du thème default qu'elles redéfinissent (voir playground/src/theme-default.css).
      * Le thème sombre des éditeurs n'en dépend pas : il reste celui du moteur.
      */
     public const array COLORS = [
-        'accent' => '--lp-rust',
-        'accent-line' => '--lp-rust-line',
-        'gold' => '--lp-gold',
-        'background' => '--lp-bg',
-        'background-2' => '--lp-bg-2',
-        'surface' => '--lp-card',
-        'line' => '--lp-line',
-        'ink' => '--lp-ink',
-        'dark' => '--lp-dark',
-        'dark-ink' => '--lp-dark-ink',
-        'success' => '--lp-green',
+        'accent' => '--color-accent',
+        'accent-line' => '--color-accent-line',
+        'gold' => '--color-highlight',
+        'background' => '--color-bg',
+        'background-2' => '--color-bg-2',
+        'surface' => '--color-surface',
+        'line' => '--color-line',
+        'ink' => '--color-ink',
+        'dark' => '--color-dark',
+        'dark-ink' => '--color-dark-ink',
+        'success' => '--color-success',
     ];
 
     /**
@@ -46,17 +46,14 @@ final class ThemeStylesheet
         'error' => '--ko',
     ];
 
-    public const array FONTS = ['serif' => '--lp-serif', 'sans' => '--lp-sans', 'mono' => '--lp-mono'];
+    public const array FONTS = ['serif' => '--font-serif', 'sans' => '--font-sans', 'mono' => '--font-mono'];
 
     public static function render(ThemeConfig $config): string
     {
-        $css = self::rule('body.site-page', [...$config->colors, ...$config->fonts]);
-        // Le fond de la page est aussi posé sur <html> (pas d'éclair blanc au chargement) : il suit.
-        if (null !== ($background = $config->colors['--lp-bg'] ?? null)) {
-            $css .= 'html:has(> body.site-page){background:'.$background.'}';
-        }
+        // Hors de toute couche : ces jetons l'emportent sur ceux de la feuille du thème (@layer theme), thème sombre compris.
+        $css = self::rule('html', [...$config->colors, ...$config->fonts]);
 
-        // Le thème sombre, que les pages du site redéfinissent pour elles : seuls l'éditeur et l'atelier le portent.
+        // Le thème sombre de l'éditeur d'exercice et de l'atelier : ses variables ne servent qu'à eux.
         return $css.self::rule(':root', $config->editor);
     }
 
