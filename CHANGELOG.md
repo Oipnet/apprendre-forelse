@@ -8,12 +8,18 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.0.0 — 2026-10-01
+
 Cette version sera la **3.0.0** : une instance auto-hébergée sans thème change d'apparence, et les gabarits ou
 feuilles qui s'appuyaient sur `site.css` perdent leur rendu. La section « Migration » ci-dessous dit quoi faire,
 selon ce que votre instance avait.
 
 ### Migration depuis 2.x
 
+- **Image Docker** : l'étiquette par défaut de `auto-hebergement/compose.yaml` passe à `:3`. Une instance qui suit
+  `:2` reste en 2.x : changez `APP_IMAGE` pour passer en 3.0.
+- **Vos packs** : un pack qui borne le moteur (`moteur: '>=1.0 <3'` dans `pack.yaml`) est refusé par la 3.0, et la
+  plateforme répond en 500. Le format des packs ne change pas : élargissez la borne (`<4`) avant de mettre à jour.
 - **Vous n'aviez pas de `marque.yaml`** : rien à faire. Votre instance passe au thème `default` du moteur (sobre,
   nommé « default »). Le design de Forelse n'est plus livré avec le moteur ; pour donner un nom et des couleurs à
   votre instance, installez un thème (README, « Thèmes »).

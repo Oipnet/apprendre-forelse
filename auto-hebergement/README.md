@@ -447,13 +447,13 @@ de voir changer à un `docker compose pull` :
 
 | Étiquette | Contenu | Pour qui |
 | --- | --- | --- |
-| `:2.2.0` | une version précise, figée | production prudente |
-| `:2.2` | les correctifs de la 2.2 | production, mises à jour minimales |
-| `:2` | toute la 2.x : correctifs et nouveautés, sans changement cassant (par défaut) | la plupart des instances |
+| `:3.0.0` | une version précise, figée | production prudente |
+| `:3.0` | les correctifs de la 3.0 | production, mises à jour minimales |
+| `:3` | toute la 3.x : correctifs et nouveautés, sans changement cassant (par défaut) | la plupart des instances |
 | `:latest` | la dernière version publiée, même majeure | suivre le projet de près |
 | `:edge` | le dernier commit de `main` | essais, sans garantie |
 
-Une version **majeure** (2.x → 3.0) peut demander d'agir : lisez le journal avant de changer d'étiquette, faites
+Une version **majeure** (2.x → 3.0, par exemple) peut demander d'agir : lisez le journal avant de changer d'étiquette, faites
 une sauvegarde, et vérifiez que vos packs acceptent la nouvelle version (clé `moteur:` de leur `pack.yaml`, voir
 [Contenu : les packs](#contenu--les-packs)).
 
