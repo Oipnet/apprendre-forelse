@@ -51,9 +51,9 @@ final class StructuredDataTest extends WebTestCase
         $client = static::createClient();
         $data = $this->structuredData($client, '/');
 
-        $this->assertSame(['Organization', 'WebSite', 'Person', 'FAQPage'], array_keys($data));
+        // Le thème du moteur ne déclare personne : pas de Person, l'organisation signe.
+        $this->assertSame(['Organization', 'WebSite', 'FAQPage'], array_keys($data));
         $this->assertSame('http://localhost/', $data['WebSite']['url']);
-        $this->assertSame('Arnaud Pointet', $data['Person']['name']);
         // La FAQ reprend exactement les questions affichées.
         $this->assertSame(
             $client->getCrawler()->filter('.home-faq summary')->each(static fn ($summary) => $summary->text()),
@@ -146,7 +146,7 @@ final class StructuredDataTest extends WebTestCase
         $article = $data['Article'];
         $this->assertSame('2026-09-16', $article['datePublished']);
         $this->assertGreaterThanOrEqual($article['datePublished'], $article['dateModified']);
-        $this->assertSame('Arnaud Pointet', $article['author']['name']);
+        $this->assertSame(['@id' => 'http://localhost/#organisation'], $article['author'], 'Sans personne déclarée, l\'organisation est l\'auteur.');
         $this->assertCount(3, $data['BreadcrumbList']['itemListElement']);
     }
 

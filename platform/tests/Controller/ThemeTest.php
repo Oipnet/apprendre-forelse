@@ -26,8 +26,9 @@ final class ThemeTest extends WebTestCase
         $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.site-header .site-name', 'Forelse');
-        $this->assertSelectorExists('.showcase-sign', 'Le fil rouge de Forelse est celui du moteur.');
+        $this->assertSelectorTextContains('.site-header .site-name', 'default');
+        $this->assertSelectorNotExists('.showcase-sign', 'Le thème du moteur n\'a pas de fil rouge.');
+        $this->assertSelectorNotExists('.site-header img', 'Ni de logo.');
     }
 
     public function testUnThemeMonteRhabilleLesPagesEtLesBalises(): void

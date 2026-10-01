@@ -106,8 +106,8 @@ final class EmailTemplatesTest extends KernelTestCase
         $this->assertStringContainsString('<html lang="fr">', $html);
         $this->assertStringContainsString('Vous recevez cet email parce qu', $html, 'Le pied dit pourquoi.');
         $this->assertStringContainsString('Vous recevez cet email parce qu', $text);
-        $this->assertStringContainsString('Forelse · apprendre', $html, 'La signature de la marque.');
-        $this->assertStringContainsString('http://localhost/img/logo.png', $html, 'Le logo PNG, en adresse absolue.');
+        $this->assertStringContainsString('default · <a', $html, 'La signature du thème.');
+        $this->assertStringNotContainsString('<img', $html, 'Le thème du moteur n\'a pas de logo.');
         $this->assertMatchesRegularExpression('/display:none[^>]*>[^<]+</', $html, 'Un texte d\'aperçu.');
     }
 

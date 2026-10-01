@@ -1,6 +1,7 @@
 {#
   @theme Point de surcharge. Variables : theme (App\Theme\Theme), blog (App\Content\Blog), login_suite (string|null), moteur_version.
-  Obligatoire : la version et la licence du moteur (AGPL), les liens vers les mentions légales et la confidentialité.
+  Obligatoire : la version et la licence du moteur (AGPL) avec le lien vers son code, les liens vers les mentions
+  légales et la confidentialité.
   Pied de page commun à toutes les pages du site (l'éditeur d'exercice et l'atelier, en plein écran, n'en ont pas).
   Les classes site-*, footer-* ne portent aucun style : ce sont des repères pour les tests et les thèmes. #}
 <footer class="site-footer mt-auto border-t border-line bg-bg-2 text-sm">
@@ -43,7 +44,7 @@
         </nav>
         <div class="space-y-1 border-t border-line pt-4 text-xs text-ink-muted md:col-span-2">
             <p>Les langages et frameworks cités sont des marques de leurs titulaires respectifs ; ce site n'est affilié à aucun d'eux.</p>
-            <p class="site-moteur">Moteur {{ moteur_version }} · <abbr title="GNU Affero General Public License v3.0 ou ultérieure">AGPL-3.0</abbr></p>
+            <p class="site-moteur">Moteur {{ moteur_version }} · <abbr title="GNU Affero General Public License v3.0 ou ultérieure">AGPL-3.0</abbr> · <a href="{{ constant('App\\Instance\\SelfHostingPage::REPOSITORY') }}">code source</a></p>
         </div>
     </div>
 </footer>

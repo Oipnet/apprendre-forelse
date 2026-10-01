@@ -156,7 +156,7 @@ final class ThemeAdminTest extends WebTestCase
         $this->client->getCookieJar()->clear();
         $this->client->request('GET', '/');
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.site-header .site-name', 'Forelse');
+        $this->assertSelectorTextContains('.site-header .site-name', 'default');
     }
 
     /** Pour les déploiements scriptés : la même activation, en ligne de commande. */
