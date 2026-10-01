@@ -10,11 +10,22 @@ use Symfony\Component\Filesystem\Filesystem;
 final class SelfHostingTest extends WebTestCase
 {
     private ?string $tmp = null;
+    private ?string $before = null;
+
+    protected function setUp(): void
+    {
+        $this->before = $_SERVER['BRANDING_DIR'] ?? null;
+    }
 
     protected function tearDown(): void
     {
-        if (null !== $this->tmp) {
+        // BRANDING_DIR vient de .env (vide) : on le remet tel quel, sans quoi les tests suivants ne le trouvent plus.
+        if (null === $this->before) {
             unset($_SERVER['BRANDING_DIR'], $_ENV['BRANDING_DIR']);
+        } else {
+            $_SERVER['BRANDING_DIR'] = $_ENV['BRANDING_DIR'] = $this->before;
+        }
+        if (null !== $this->tmp) {
             (new Filesystem())->remove($this->tmp);
         }
         parent::tearDown();
