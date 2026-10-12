@@ -17,7 +17,7 @@ export interface Cas {
 	 * « page » : page rendue, comparée sans les scripts ni les liens du <head>.
 	 */
 	comparer?: 'tout' | 'statut' | 'page';
-	/** Millisecondes à attendre avant d'interroger les deux serveurs (expiration d'un cache). */
+	/** Millisecondes à attendre avant d'interroger les deux serveurs (expiration ou écriture d'un cache). */
 	attendre?: number;
 }
 
@@ -140,7 +140,10 @@ export const CAS: Cas[] = [
 	{ nom: 'defineCachedEventHandler : réponse gardée', chemin: '/api/cache/gestionnaire' },
 	{ nom: 'defineCachedEventHandler : 304 avec If-Modified-Since', chemin: '/api/cache/gestionnaire', entetes: { 'if-modified-since': 'Wed, 01 Jan 2031 00:00:00 GMT' } },
 	{ nom: 'defineCachedEventHandler expiré : ancienne réponse, rafraîchie en arrière-plan (swr)', chemin: '/api/cache/gestionnaire', attendre: 3500 },
-	{ nom: 'defineCachedEventHandler : réponse rafraîchie', chemin: '/api/cache/gestionnaire' },
+	// Nitro rend l'ancienne réponse sans attendre l'écriture de la nouvelle dans .nuxt/cache (event.waitUntil) : une
+	// requête qui arrive avant la fin de cette écriture relit l'entrée expirée et relance un rafraîchissement. On laisse
+	// donc le disque suivre avant d'interroger les deux serveurs (le cache de 3 s n'expire pas entre-temps).
+	{ nom: 'defineCachedEventHandler : réponse rafraîchie', chemin: '/api/cache/gestionnaire', attendre: 500 },
 	{ nom: 'defineCachedEventHandler sans swr : premier appel', chemin: '/api/cache/sans-swr' },
 	{ nom: 'defineCachedEventHandler sans swr expiré : nouvelle réponse tout de suite', chemin: '/api/cache/sans-swr', attendre: 1500 },
 	{ nom: 'defineCachedFunction partagée par deux routes : première', chemin: '/api/cache/fonction-a' },
