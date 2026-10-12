@@ -42,6 +42,14 @@ class Certificate implements \Stringable
     private array $history = [];
 
     /**
+     * Ce qui s'ajoute au certificat après sa délivrance, affiché sur la page et le PDF : « Soutenance validée le … ».
+     *
+     * @var list<array{at: string, label: string}>
+     */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    private array $mentions = [];
+
+    /**
      * Les messages de contestation envoyés depuis la page du certificat.
      *
      * @var Collection<int, ContactMessage>
@@ -190,6 +198,17 @@ class Certificate implements \Stringable
     public function getHistory(): array
     {
         return $this->history;
+    }
+
+    /** @return list<array{at: string, label: string}> */
+    public function getMentions(): array
+    {
+        return $this->mentions;
+    }
+
+    public function addMention(string $label, \DateTimeImmutable $at): void
+    {
+        $this->mentions[] = ['at' => $at->format(\DATE_ATOM), 'label' => $label];
     }
 
     public function revoke(string $reason, \DateTimeImmutable $now): void

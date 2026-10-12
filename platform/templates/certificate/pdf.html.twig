@@ -28,6 +28,7 @@
         <p class="track">{{ certificate.trackTitle }}</p>
         <p class="summary">{{ certificate.exerciseCount }} exercices réussis, dont {{ certificate.withoutSolutionCount }} sans consulter la solution · {{ certificate.xp|number_format(0, ',', ' ') }} XP</p>
         <p class="summary">Le {{ certificate.issuedAt|date('d/m/Y') }}</p>
+        {% for mention in certificate.mentions %}<p class="summary"><strong>{{ mention.label }}</strong></p>{% endfor %}
         <p class="footer">
             Code <strong>{{ certificate.code }}</strong> · détail exercice par exercice et vérification :
             {{ url('app_certificate', {code: certificate.code}) }}

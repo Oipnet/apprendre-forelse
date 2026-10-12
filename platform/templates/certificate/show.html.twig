@@ -3,7 +3,7 @@
 {#
   La page de vérification d'un certificat : publique (un recruteur, une école), hors de l'index. Le détail de chaque
   exercice y est, tel qu'au jour de la délivrance. Variables : certificate, holder (le titulaire regarde), linkedinUrl.
-  Repères lus par les tests : certificate-status, certificate-summary, certificate-exercises, certificate-contest.
+  Repères lus par les tests : certificate-status, certificate-summary, certificate-mentions, certificate-exercises, certificate-contest.
 #}
 {% block title %}Certificat · {{ certificate.trackTitle }} · {{ certificate.holderName }} · {{ theme.name }}{% endblock %}
 
@@ -32,6 +32,12 @@
             et {{ certificate.unaidedCount }} sans aucune aide (ni indice, ni solution).
             {{ certificate.xp|number_format(0, ',', ' ') }} XP.
         </p>
+
+        {% if certificate.mentions %}
+            <ul class="certificate-mentions mt-4 space-y-1">
+                {% for mention in certificate.mentions %}<li>★ {{ mention.label }}</li>{% endfor %}
+            </ul>
+        {% endif %}
 
         {% if holder and not certificate.revoked %}
             <div class="mt-6 flex flex-wrap gap-2">
