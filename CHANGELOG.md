@@ -10,8 +10,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
-- Pratique : chaque exercice se partage. Sa page propose LinkedIn, X, Bluesky, la copie du lien et, sur un téléphone,
-  son propre partage ; le playground l'offre dans sa barre (« Partager ») et dans le panneau de réussite, avec un texte
+- Pratique : chaque exercice se partage. Sa page propose LinkedIn, X, Bluesky, la copie du lien et, quand le navigateur
+  en a un, le partage du système ; le playground l'offre dans sa barre (« Partager », une boîte avec les mêmes boutons) et dans le panneau de réussite, avec un texte
   qui annonce l'exercice réussi. Les liens portent `utm_source` (`linkedin`, `x`, `bluesky`, `lien`, `natif`),
   `utm_medium=partage` et `utm_campaign=exercice`, qu'Umami lit sans réglage ; chaque clic est aussi mesuré
   (événement `partage`). Aucun script de ces réseaux n'est chargé : ce sont de simples liens.

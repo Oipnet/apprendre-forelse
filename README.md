@@ -374,8 +374,8 @@ accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas
   titre de l'exercice, son framework et le site, en 1200 × 630, sur `/pratique/<exercice>/image-de-partage`).
   Tout y est facultatif : `image` (un fond PNG ou JPEG de ce dossier, mis à l'échelle et rogné ; laissez de la place
   à gauche, où s'écrit le texte), `font` et `text_font` (TrueType ou OpenType, pas de woff2 : le titre, puis le
-  reste), `background`, `ink`, `accent`, `muted` (couleurs hexadécimales). Sans eux : les couleurs des emails et une
-  police du moteur (DejaVu Sans). L'image `share` reste celle des pages qui n'ont pas la leur.
+  reste), `background`, `ink`, `accent`, `muted` (couleurs hexadécimales). Sans eux : les couleurs du site (`colors`), sinon
+  celles des emails, et une police du moteur (DejaVu Sans). L'image `share` reste celle des pages qui n'ont pas la leur.
 
   ```yaml
   share_card:

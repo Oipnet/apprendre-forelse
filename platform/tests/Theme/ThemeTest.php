@@ -29,7 +29,7 @@ final class ThemeTest extends TestCase
 
     protected function tearDown(): void
     {
-        (new Filesystem())->remove($this->tmp);
+        (new Filesystem())->remove([$this->tmp, $this->tmp.'-dehors.ttf']);
     }
 
     public function testSansDossierCEstLeThemeDuMoteur(): void
@@ -488,11 +488,15 @@ final class ThemeTest extends TestCase
         yield 'woff2' => ["share_card:\n  font: titres.woff2\n", 'doit être un fichier .ttf, .otf'];
         yield 'absent' => ["share_card:\n  image: fond.png\n", '« share_card.image » : fichier introuvable'];
         yield 'hors du dossier' => ["share_card:\n  font: ../titres.ttf\n", 'sans « .. »'];
+        yield 'lien qui sort du dossier' => ["share_card:\n  font: lien.ttf\n", 'fichier introuvable dans le dossier du thème'];
     }
 
     #[DataProvider('shareCardsInvalides')]
     public function testUnShareCardInvalideEstSignale(string $yaml, string $message): void
     {
+        // Un fichier à côté du dossier du thème (retiré par tearDown), et un lien vers lui dans le thème.
+        touch($this->tmp.'-dehors.ttf');
+        symlink($this->tmp.'-dehors.ttf', $this->tmp.'/lien.ttf');
         $this->write("name: A\n".$yaml);
 
         $this->expectException(\RuntimeException::class);

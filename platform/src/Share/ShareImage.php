@@ -5,6 +5,8 @@ namespace App\Share;
 use App\Theme\Theme;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Les images de partage dessinées par le moteur, gardées sur disque une fois faites.
@@ -37,7 +39,8 @@ final readonly class ShareImage
             self::DRAWING,
             $card,
             $style,
-            array_map(static fn (string $file) => @filemtime($file), $files),
+            // Le contenu, pas la date : un redéploiement qui recopie les mêmes fichiers garde les mêmes adresses.
+            array_map(static fn (string $file) => @hash_file('xxh128', $file), $files),
         ])), 0, 16);
     }
 
@@ -51,5 +54,23 @@ final readonly class ShareImage
         }
 
         return $path;
+    }
+
+    /**
+     * La réponse qui sert l'image : figée sous l'adresse qui porte sa version (« ?v= »), gardée une heure sinon
+     * (un ancien aperçu, ou pas de version).
+     */
+    public function response(ShareCard $card, Request $request): BinaryFileResponse
+    {
+        $response = new BinaryFileResponse($this->path($card), headers: ['Content-Type' => 'image/png']);
+        $response->setPublic();
+        if ($request->query->get('v') === $this->version($card)) {
+            $response->setMaxAge(31536000);
+            $response->setImmutable();
+        } else {
+            $response->setMaxAge(3600);
+        }
+
+        return $response;
     }
 }

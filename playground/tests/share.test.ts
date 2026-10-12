@@ -76,9 +76,10 @@ describe('mountShare', () => {
 
 describe('shareDialog', () => {
 	it('ouvre les liens dans une boîte, retirée à la fermeture', () => {
-		shareDialog(document.body, links);
+		shareDialog(document.body, links, 'Partager ce <parcours>');
 		const dialog = document.querySelector('dialog')!;
 		expect(dialog.open).toBe(true);
+		expect(dialog.querySelector('h2')!.textContent).toBe('Partager ce <parcours>');
 		expect(dialog.querySelectorAll('a[data-share-network]')).toHaveLength(3);
 		dialog.querySelector<HTMLButtonElement>('[data-close]')!.click();
 		expect(document.querySelector('dialog')).toBeNull();

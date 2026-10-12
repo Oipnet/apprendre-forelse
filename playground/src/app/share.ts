@@ -73,13 +73,13 @@ export function mountShare(root: HTMLElement, links: Pick<ShareLinks, 'text' | '
 	}
 }
 
-/** La boîte « Partager cet exercice » de la barre du haut, quand le navigateur n'a pas de partage à lui. */
-export function shareDialog(host: HTMLElement, links: ShareLinks, mesure: Record<string, string> = {}): void {
+/** Une boîte de partage (« Partager cet exercice »), avec les mêmes boutons que la page. */
+export function shareDialog(host: HTMLElement, links: ShareLinks, title: string, mesure: Record<string, string> = {}): void {
 	const dialog = document.createElement('dialog');
 	dialog.className = 'feedback share-dialog';
 	dialog.setAttribute('aria-labelledby', 'share-dialog-title');
-	dialog.innerHTML = `<h2 id="share-dialog-title">Partager cet exercice</h2>
-		${shareHtml(links, 'Sur')}
+	dialog.innerHTML = `<h2 id="share-dialog-title">${escapeHtml(title)}</h2>
+		${shareHtml(links, 'Partager sur')}
 		<p class="confirm-actions"><button type="button" class="ghost" data-close>Fermer</button></p>`;
 	host.append(dialog);
 	mountShare(dialog.querySelector<HTMLElement>('[data-share]')!, links, mesure);

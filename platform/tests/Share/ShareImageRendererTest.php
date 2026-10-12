@@ -20,6 +20,14 @@ final class ShareImageRendererTest extends TestCase
         $this->assertSame([1200, 630, 'image/png'], [$size[0], $size[1], $size['mime']]);
     }
 
+    public function testUnTitreAvecDesEntitesOuDesAccentsEnFinDeLigneSeDessine(): void
+    {
+        // « À » finit par l'octet 0x80, comme « … » : une coupe par octets laisserait de l'UTF-8 invalide.
+        $png = (new ShareImageRenderer())->render(new ShareCard('Pratique · Twig', str_repeat('Échapper &amp; et &lt;script&gt; À ', 12), 'exemple.test'), self::STYLE);
+
+        $this->assertSame([1200, 630], \array_slice((array) getimagesizefromstring($png), 0, 2));
+    }
+
     public function testUnTitreTropLongEtUnFondFourniNeCassentRien(): void
     {
         $background = sys_get_temp_dir().'/fond-'.bin2hex(random_bytes(4)).'.png';

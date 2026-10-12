@@ -351,8 +351,11 @@ final readonly class ThemeLoader
             if (!\in_array(strtolower(pathinfo($value, \PATHINFO_EXTENSION)), $extensions, true)) {
                 throw $error(sprintf('« %s » : « %s » doit être un fichier %s.', $path, $value, implode(', ', array_map(static fn (string $e) => '.'.$e, $extensions))));
             }
-            if (!is_file($directory.'/'.$value)) {
-                throw $error(sprintf('« %s » : fichier introuvable (%s).', $path, $directory.'/'.$value));
+            // Comme pour assets/ : un lien symbolique qui sort du dossier du thème est refusé.
+            $root = realpath($directory);
+            $file = realpath($directory.'/'.$value);
+            if (false === $root || false === $file || !str_starts_with($file, $root.\DIRECTORY_SEPARATOR) || !is_file($file)) {
+                throw $error(sprintf('« %s » : fichier introuvable dans le dossier du thème (%s).', $path, $directory.'/'.$value));
             }
             $resolved[$key] = $value;
         }

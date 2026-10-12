@@ -107,18 +107,8 @@ final class PracticeController extends AbstractController
     public function image(string $exerciseId, Request $request, PracticeShare $share, ShareImage $images): BinaryFileResponse
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
-        $card = $share->card($practice);
-        $response = new BinaryFileResponse($images->path($card), headers: ['Content-Type' => 'image/png']);
-        $response->setPublic();
-        if ($request->query->get('v') === $images->version($card)) {
-            $response->setMaxAge(31536000);
-            $response->setImmutable();
-        } else {
-            // Une ancienne version, ou pas de version : l'image courante, gardée moins longtemps.
-            $response->setMaxAge(3600);
-        }
 
-        return $response;
+        return $images->response($share->card($practice), $request);
     }
 
     /**

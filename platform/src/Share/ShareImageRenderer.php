@@ -7,7 +7,7 @@ namespace App\Share;
  * un surtitre de la couleur d'accent, le titre en grand, le site en pied.
  *
  * Le titre prend la plus grande taille qui le fait tenir en quatre lignes ; au-delà, il est coupé sur un mot.
- * Rien d'autre ne s'adapte : un thème qui fournit son fond lui laisse la place à gauche (voir docs/themes.md).
+ * Rien d'autre ne s'adapte : un thème qui fournit son fond lui laisse la place à gauche (voir « share_card » dans le README).
  */
 final class ShareImageRenderer
 {
@@ -119,7 +119,7 @@ final class ShareImageRenderer
         if (!$ellipsis && self::width($text, $size, $font) <= $width) {
             return $text;
         }
-        $text = rtrim($text, ' …');
+        $text = (string) preg_replace('/[\s…]+$/u', '', $text);
         while ('' !== $text && self::width($text.'…', $size, $font) > $width) {
             $text = rtrim(mb_substr($text, 0, -1));
         }
@@ -129,14 +129,20 @@ final class ShareImageRenderer
 
     private static function width(string $text, int $size, string $font): int
     {
-        $box = imagettfbbox(self::points($size), 0, $font, $text);
+        $box = imagettfbbox(self::points($size), 0, $font, self::literal($text));
 
         return false === $box ? 0 : $box[2] - $box[0];
     }
 
     private static function text(\GdImage $image, int $size, string $font, int $x, int $y, string $hex, string $text): void
     {
-        imagettftext($image, self::points($size), 0, $x, $y, self::color($image, $hex), $font, $text);
+        imagettftext($image, self::points($size), 0, $x, $y, self::color($image, $hex), $font, self::literal($text));
+    }
+
+    /** GD lit les entités HTML (« &amp; » dessiné « & ») : un titre qui en parle doit s'écrire tel quel. */
+    private static function literal(string $text): string
+    {
+        return str_replace('&', '&#38;', $text);
     }
 
     /** GD compte en points, à 96 points par pouce : une taille en pixels en vaut les trois quarts. */
