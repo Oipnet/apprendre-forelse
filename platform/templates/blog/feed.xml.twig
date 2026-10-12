@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+{# Le flux du blog (voir BlogController::feed) : le texte complet, échappé plutôt qu'en CDATA, pour qu'aucun article ne le casse. #}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+    <channel>
+        <title>Le blog de {{ theme.name }}</title>
+        <link>{{ blog_url }}</link>
+        <description>Les articles de {{ theme.name }}.</description>
+        <language>fr</language>
+        <atom:link href="{{ self }}" rel="self" type="application/rss+xml"/>
+{% if items is not empty %}
+        <lastBuildDate>{{ (items|first).article.published|date('r') }}</lastBuildDate>
+{% endif %}
+{% for item in items %}
+        <item>
+            <title>{{ item.article.title }}</title>
+            <link>{{ item.url }}</link>
+            <guid isPermaLink="true">{{ item.url }}</guid>
+            <pubDate>{{ item.article.published|date('r') }}</pubDate>
+            <description>{{ item.article.description }}</description>
+            <content:encoded>{{ item.html }}</content:encoded>
+        </item>
+{% endfor %}
+    </channel>
+</rss>

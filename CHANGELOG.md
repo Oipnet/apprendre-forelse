@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Blog : un flux RSS des articles parus, texte complet compris, à `/blog/rss.xml`, annoncé par chaque page
+  (`<link rel="alternate">`). Les liens relatifs des articles y deviennent absolus. De quoi suivre le blog dans un
+  lecteur de flux, ou reprendre ses articles sur dev.to ou Hashnode, qui importent un flux et pointent vers l'article
+  d'origine.
+
 ### Modifié
 
 - Environnement `laravel-13` : Laravel 13.35 (13.31 jusqu'ici), pour les exercices de Pratique sur les nouveautés

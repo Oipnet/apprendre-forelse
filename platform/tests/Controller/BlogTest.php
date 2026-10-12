@@ -139,6 +139,31 @@ final class BlogTest extends WebTestCase
         $this->assertArrayNotHasKey('http://localhost/blog/article-en-preparation', $lastmods);
     }
 
+    public function testLeFluxRssDonneLesArticlesParusEnEntier(): void
+    {
+        $crawler = $this->client->request('GET', '/blog');
+        $this->assertSame('http://localhost/blog/rss.xml', $crawler->filter('link[rel="alternate"][type="application/rss+xml"]')->attr('href'), 'Les pages annoncent le flux.');
+
+        $this->client->request('GET', '/blog/rss.xml');
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('Content-Type', 'application/rss+xml; charset=UTF-8');
+        $xml = new \SimpleXMLElement((string) $this->client->getResponse()->getContent());
+        $items = $xml->channel->item;
+
+        $this->assertCount(2, $items, 'Ni l\'article programmé, ni celui en préparation.');
+        $this->assertSame('Symfony dans le navigateur, sans serveur', (string) $items[0]->title);
+        $this->assertSame('http://localhost/blog/symfony-dans-le-navigateur', (string) $items[0]->link);
+        $this->assertSame('http://localhost/blog/symfony-dans-le-navigateur', (string) $items[0]->guid);
+        $this->assertSame('2026-09-20', (new \DateTimeImmutable((string) $items[0]->pubDate))->format('Y-m-d'));
+        $this->assertStringStartsWith('Comment un vrai projet Symfony tourne', (string) $items[0]->description);
+
+        $html = (string) $items[0]->children('http://purl.org/rss/1.0/modules/content/')->encoded;
+        $this->assertStringContainsString('<h2', $html, 'Le texte complet, pas seulement le chapeau.');
+        $this->assertStringContainsString('href="http://localhost/pratique"', $html, 'Les liens du site deviennent absolus.');
+        $this->assertStringNotContainsString('<h1', $html);
+        $this->assertStringNotContainsString('<script>alert', $html);
+    }
+
     public function testSansArticleIlNyAPasDeBlog(): void
     {
         $this->usePacks(__DIR__.'/../../../examples/packs');
@@ -149,6 +174,9 @@ final class BlogTest extends WebTestCase
         $this->client->request('GET', '/blog');
         $this->assertResponseStatusCodeSame(404);
         $this->assertResponseHeaderSame('X-Robots-Tag', 'noindex');
+
+        $this->client->request('GET', '/blog/rss.xml');
+        $this->assertResponseStatusCodeSame(404);
 
         $this->client->request('GET', '/sitemap.xml');
         $this->assertStringNotContainsString('/blog', (string) $this->client->getResponse()->getContent());
