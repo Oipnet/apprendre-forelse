@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.1.0 — 2026-10-12
+
 ### Ajouté
 
 - Blog : un flux RSS des articles parus, texte complet compris, à `/blog/rss.xml`, annoncé par chaque page
