@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Pratique : un exercice propose le parcours du même framework, quand un parcours de ce framework est visible. Le
+  lien apparaît après la réussite dans le playground, et sur la page publique de l'exercice (instance sur
+  invitation). Les visiteurs arrivent surtout par un exercice de Pratique, et repartaient sans voir les parcours.
+
 ### Modifié
 
 - Blog : dans le flux RSS, les liens du texte qui mènent au site portent `utm_source=rss`, `utm_medium=feed` et

@@ -38,6 +38,12 @@ export function nextStepHtml(exercise: Pick<ExercisePayload, 'next' | 'nextTrack
 		const source = exercise.practice?.pullRequest
 			? `<p>Envie de voir comment la fonctionnalité est faite ? <a href="${escapeHtml(exercise.practice.pullRequest)}" target="_blank" rel="noopener noreferrer">La pull request d'origine</a>.</p>`
 			: '';
+		const track = exercise.practice?.track;
+		if (track) {
+			return `<p>Cet exercice porte sur une seule fonctionnalité. Pour aller plus loin, le parcours <strong>${escapeHtml(track.title)}</strong> reprend le framework de bout en bout${track.description ? ` : ${escapeHtml(track.description)}` : '.'}</p>${source}
+					<a class="button primary" href="${escapeHtml(track.url)}">Découvrir « ${escapeHtml(track.title)} » →</a>
+					<a class="button ghost small" href="${escapeHtml(config.back.url)}">Retour à la Pratique</a>`;
+		}
 		return `${source}<a class="button" href="${escapeHtml(config.back.url)}">Retour à la Pratique</a>`;
 	}
 	if (exercise.next && config.progress.mode === 'local' && config.registerUrl) {
