@@ -17,7 +17,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
-/** Une réussite infirmée par le verificateur fait révoquer le certificat du parcours qui la comptait. */
+/** Une réussite confirmée puis infirmée par le verificateur (nouvelle vérification) fait révoquer le certificat du parcours qui la comptait. */
 final class CertificateVerificationTest extends WebTestCase
 {
     use DatabaseTrait;
@@ -34,7 +34,10 @@ final class CertificateVerificationTest extends WebTestCase
             $exercise = $content->findExercise('decouverte', $exerciseId);
             $progress->saveDraft($user, $exercise, [$exercise->editablePaths()[0] => '<?php // code'], 0);
             $progress->complete($user, $exercise, 0);
+            // Confirmée une première fois : le certificat attend ce verdict pour être délivré.
+            $container->get(ExerciseProgressRepository::class)->findOne($user, 'decouverte', $exerciseId)?->recordVerification(VerificationStatus::Passed, null, new \DateTimeImmutable());
         }
+        $container->get(EntityManagerInterface::class)->flush();
         $client->loginUser($user);
         $client->request('GET', '/parcours/decouverte/certificat');
         $client->submitForm('Obtenir mon certificat', ['certificate_claim[holderName]' => 'Ada Lovelace'], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
