@@ -51,6 +51,8 @@ final class ConceptIndex implements ResetInterface
      *     exercises: list<array{exercise: Exercise, track: Track, chapter: Chapter, number: int}>,
      *     practices: list<Practice>,
      *     related: list<array{name: string, slug: string}>,
+     *     intro: string|null,
+     *     title: string|null,
      * }|null
      */
     public function find(string $slug): ?array
@@ -79,7 +81,28 @@ final class ConceptIndex implements ResetInterface
                 static fn (string $other) => ['name' => $index[$other]['name'], 'slug' => $other],
                 \array_slice(array_keys($neighbours), 0, 8),
             ),
+            // Écrite dans le pack, ou rien : sans texte, la page n'est qu'une liste de liens et reste hors des moteurs.
+            'intro' => $this->content->conceptIntros()[$slug]['markdown'] ?? null,
+            // Le nom de la page tel qu'on le cherche, s'il est écrit dans l'en-tête de l'intro.
+            'title' => $this->content->conceptIntros()[$slug]['title'] ?? null,
         ];
+    }
+
+    /** Le fichier de l'intro écrite d'une notion, ou null : sans intro, sa page ne s'indexe pas et n'entre pas dans le sitemap. */
+    public function introFile(string $slug): ?string
+    {
+        return $this->content->conceptIntros()[$slug]['file'] ?? null;
+    }
+
+    /**
+     * Les intros écrites qui ne s'affichent nulle part : faute de frappe dans le nom du fichier, ou notion vue sur
+     * un seul exercice. Signalées par content:check, jamais bloquantes.
+     *
+     * @return array<string, string> notion => fichier
+     */
+    public function orphanIntros(): array
+    {
+        return array_map(static fn (array $intro) => $intro['file'], array_diff_key($this->content->conceptIntros(), $this->index()));
     }
 
     /** L'index est refait à la demande suivante, et après une écriture dans un pack (voir l'atelier). */

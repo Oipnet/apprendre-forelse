@@ -3,6 +3,7 @@
 namespace App\Api;
 
 use App\Content\ChapterOutline;
+use App\Content\ConceptIndex;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\LessonRenderer;
@@ -35,6 +36,7 @@ final readonly class ExercisePayloadFactory
         private TrackAccessChecker $access,
         private EnvironmentArtifacts $artifacts,
         private LessonRenderer $markdown,
+        private ConceptIndex $concepts,
         #[Autowire('%kernel.environment%')] private string $kernelEnvironment,
         #[Autowire('%kernel.project_dir%/public')] private string $publicDir = __DIR__.'/../../public',
     ) {
@@ -72,6 +74,8 @@ final readonly class ExercisePayloadFactory
             'trackId' => $exercise->trackId,
             'title' => $exercise->title,
             'concepts' => $exercise->concepts,
+            // Les notions qui ont leur page : les pastilles du volet Consignes y mènent (voir ConceptIndex).
+            'conceptUrls' => (object) $this->conceptUrls($exercise->concepts),
             'xp' => $exercise->xp,
             // « free » : le premier chapitre d'un parcours, gratuit pour tout compte ; « account » : le reste, qui demande un accès.
             'access' => $this->access->isFreeExercise($exercise) ? 'free' : 'account',
@@ -139,6 +143,8 @@ final readonly class ExercisePayloadFactory
             'practice' => $practice ? [
                 'framework' => $practice->framework,
                 'version' => $practice->version,
+                // Le résumé de la page publique : sous le titre, il dit ce que la fonctionnalité apporte.
+                'summary' => $practice->summary,
                 // Les autres exercices de cette version, quand ils sont assez nombreux pour avoir une page.
                 'versionUrl' => null === ($slug = $this->versions->slugOf($practice)) ? null : $this->urls->generate('app_practice_version', ['slug' => $slug]),
                 'pullRequest' => $practice->pullRequest,
@@ -156,5 +162,23 @@ final readonly class ExercisePayloadFactory
         }
 
         return $payload;
+    }
+
+    /**
+     * @param list<string> $concepts
+     *
+     * @return array<string, string> notion => adresse de sa page, pour celles qui en ont une
+     */
+    private function conceptUrls(array $concepts): array
+    {
+        $pages = array_column($this->concepts->all(), 'slug', 'slug');
+        $urls = [];
+        foreach ($concepts as $concept) {
+            if (isset($pages[$slug = ConceptIndex::slug($concept)])) {
+                $urls[$concept] = $this->urls->generate('app_concept', ['slug' => $slug]);
+            }
+        }
+
+        return $urls;
     }
 }

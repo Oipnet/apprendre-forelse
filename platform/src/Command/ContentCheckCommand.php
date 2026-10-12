@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Content\Check\ExerciseChecker;
+use App\Content\ConceptIndex;
 use App\Content\ContentRepository;
 use App\Content\PracticeVersionIndex;
 use App\Instance\PackEnvironments;
@@ -22,6 +23,7 @@ final class ContentCheckCommand
     public function __construct(
         private readonly ContentRepository $content,
         private readonly PracticeVersionIndex $versions,
+        private readonly ConceptIndex $concepts,
         private readonly ExerciseChecker $checker,
         private readonly PackEnvironments $packEnvironments,
         private readonly Version $version,
@@ -96,6 +98,11 @@ final class ContentCheckCommand
         // qu'un seul exercice pratique. Pas bloquant : l'intro peut précéder le deuxième exercice.
         foreach ($this->versions->orphanIntros() as $slug => $file) {
             $io->writeln(sprintf(' <fg=yellow>!</> %s — intro de version sans page publiée (%s)', $slug, $file));
+        }
+
+        // Une intro de notion que rien n'affiche : même règle.
+        foreach ($this->concepts->orphanIntros() as $slug => $file) {
+            $io->writeln(sprintf(' <fg=yellow>!</> %s — intro de notion sans page publiée (%s)', $slug, $file));
         }
 
         // Clés dépréciées : acceptées, mais à retirer avant qu'une version majeure ne les refuse.

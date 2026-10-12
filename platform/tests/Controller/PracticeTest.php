@@ -303,7 +303,7 @@ final class PracticeTest extends WebTestCase
         $this->assertNull($exercise['chapter'], 'Une Pratique n\'a pas de chapitre.');
         $this->assertNull($exercise['nextTrack']);
         $this->assertNull($exercise['lesson']);
-        $this->assertSame(['framework' => 'symfony', 'version' => '8.1', 'versionUrl' => '/pratique/nouveautes/symfony-8-1', 'pullRequest' => 'https://github.com/symfony/symfony/pull/1', 'published' => '2026-09-10', 'track' => [
+        $this->assertSame(['framework' => 'symfony', 'version' => '8.1', 'summary' => 'La fonctionnalité de la dernière version.', 'versionUrl' => '/pratique/nouveautes/symfony-8-1', 'pullRequest' => 'https://github.com/symfony/symfony/pull/1', 'published' => '2026-09-10', 'track' => [
             'id' => 'decouverte',
             'title' => 'Découverte',
             'description' => 'Un avant-goût de Symfony en deux exercices.',

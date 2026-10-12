@@ -7,6 +7,8 @@ export interface ExercisePayload {
 	trackId: string | null;
 	title: string;
 	concepts: string[];
+	/** L'adresse de la page des notions qui en ont une (vue sur plus d'un exercice), par notion. */
+	conceptUrls: Record<string, string>;
 	xp: number;
 	access: 'free' | 'account';
 	open: string;
@@ -52,6 +54,8 @@ export interface ExercisePayload {
 	practice: {
 		framework: string;
 		version: string | null;
+		/** Ce que la fonctionnalité apporte, en une phrase : le chapeau de la page publique. */
+		summary: string;
 		versionUrl: string | null;
 		pullRequest: string | null;
 		published: string;
