@@ -1,4 +1,5 @@
 import type { FrameworkProfile, Grading } from '@forelse/runtime-contract';
+import type { ShareLinks } from './share';
 
 /** Exercice tel que servi par GET /api/exercises/{track}/{exercise} (ou /api/exercises/pratique/{exercise}). */
 export interface ExercisePayload {
@@ -100,4 +101,6 @@ export interface PlaygroundConfig {
 	feedbackUrl?: string | null;
 	/** Le mentor (revue de code, erreurs expliquées) ; null pour un invité ou sans clé d'API côté serveur. */
 	mentor?: { reviewUrl: string; explainUrl: string } | null;
+	/** Pratique : les liens de partage, pour inviter à faire l'exercice ou annoncer sa réussite (App\Share\PracticeShare). */
+	share?: { invite: ShareLinks; success: ShareLinks } | null;
 }

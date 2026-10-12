@@ -24,6 +24,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 				: `<div class="who guest" title="Progression enregistrée dans ce navigateur"><span>Invité</span>${config.loginUrl ? `<a href="${escapeHtml(config.loginUrl)}">Connexion</a>` : ''}</div>`
 		}
 		<div class="actions">
+			${config.share ? `<button id="share" class="ghost" title="Partager cet exercice"><span class="icon" aria-hidden="true">🔗</span><span class="label"> Partager</span></button>` : ''}
 			${config.feedbackUrl ? `<button id="feedback" class="ghost" title="Signaler un problème ou donner votre avis sur cet exercice"><span class="icon" aria-hidden="true">💬</span><span class="label"> Un avis ?</span></button>` : ''}
 			<button id="solution" class="ghost" hidden><span class="icon" aria-hidden="true">📖</span><span class="label">Solution</span></button>
 			<button id="reset" class="ghost" title="Revenir au code de départ"><span class="icon" aria-hidden="true">⟲</span><span class="label">Réinitialiser</span></button>

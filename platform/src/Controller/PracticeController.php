@@ -17,6 +17,10 @@ use App\Repository\ExerciseProgressRepository;
 use App\Security\TrackAccessChecker;
 use App\Seo\Page\PracticeSeo;
 use App\Service\TrackProgress;
+use App\Share\PracticeShare;
+use App\Share\ShareImage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
@@ -96,12 +100,34 @@ final class PracticeController extends AbstractController
     }
 
     /**
+     * L'image de partage d'un exercice, dessinée par le moteur au premier appel (voir ShareImage). L'adresse que
+     * donnent les pages porte sa version : sous cette adresse, l'image ne change plus.
+     */
+    #[Route('/pratique/{exerciseId}/image-de-partage', name: 'app_practice_image', methods: ['GET'], priority: 1)]
+    public function image(string $exerciseId, Request $request, PracticeShare $share, ShareImage $images): BinaryFileResponse
+    {
+        $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
+        $card = $share->card($practice);
+        $response = new BinaryFileResponse($images->path($card), headers: ['Content-Type' => 'image/png']);
+        $response->setPublic();
+        if ($request->query->get('v') === $images->version($card)) {
+            $response->setMaxAge(31536000);
+            $response->setImmutable();
+        } else {
+            // Une ancienne version, ou pas de version : l'image courante, gardée moins longtemps.
+            $response->setMaxAge(3600);
+        }
+
+        return $response;
+    }
+
+    /**
      * Le playground, avec ou sans compte : un visiteur écrit le code, ses essais sont gardés dans son navigateur
      * et remontent sur son compte s'il en crée un. Seule une instance sur invitation le renvoie vers la page
      * publique de l'exercice — le problème et la fonctionnalité expliquée, sans éditeur (TrackAccessChecker).
      */
     #[Route('/pratique/{exerciseId}', name: 'app_exercise_pratique', methods: ['GET'])]
-    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access, PracticeTrack $tracks): Response
+    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access, PracticeTrack $tracks, PracticeShare $share): Response
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
         $seo->practice($practice);
@@ -113,6 +139,8 @@ final class PracticeController extends AbstractController
             'versionSlug' => $versions->slugOf($practice),
             // Pour aller plus loin : le parcours du même framework, s'il y en a un de visible.
             'track' => $tracks->of($practice),
+            // Les liens de partage : inviter à faire l'exercice, ou annoncer l'avoir réussi (panneau de réussite).
+            'share' => ['invite' => $share->links($practice), 'success' => $share->links($practice, true)],
         ];
 
         $user = $this->getUser();
@@ -120,6 +148,6 @@ final class PracticeController extends AbstractController
             return $this->render('practice/show.html.twig', $context);
         }
 
-        return $this->render('exercise/play.html.twig', [...$context, 'exercise' => $practice->exercise, 'config' => $configs->create($practice->exercise)]);
+        return $this->render('exercise/play.html.twig', [...$context, 'exercise' => $practice->exercise, 'config' => [...$configs->create($practice->exercise), 'share' => $context['share']]]);
     }
 }

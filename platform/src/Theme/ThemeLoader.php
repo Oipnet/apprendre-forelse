@@ -24,7 +24,7 @@ final readonly class ThemeLoader
     public const string LEGACY_FILE = 'marque.yaml';
 
     /** Les clés acceptées à la racine de theme.yaml. */
-    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'colors', 'editor', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles'];
+    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'colors', 'editor', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'share_card', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles'];
 
     /** Le sous-dossier du thème servi tel quel sur /theme/<thème>/<version>/assets/… (voir ThemeController). */
     public const string ASSETS = 'assets';
@@ -69,7 +69,15 @@ final readonly class ThemeLoader
         ],
     ];
 
+    /**
+     * L'habillage des images de partage que le moteur dessine (voir App\Share\ShareImageRenderer) : clé => couleur.
+     * Les polices et le fond sont des fichiers du dossier du thème, à part (« font », « text_font », « image »).
+     */
+    public const array SHARE_CARD_COLORS = ['background', 'ink', 'accent', 'muted'];
+
     /** La personne derrière les contenus, pour les données structurées (auteur des parcours et des articles). */
+    private const array NO_SHARE_CARD = ['image' => null, 'font' => null, 'text_font' => null, 'colors' => []];
+
     private const array PERSON_SHAPE = ['name' => 'texte*', 'jobTitle' => 'texte*'];
 
     public function __construct(
@@ -136,6 +144,7 @@ final readonly class ThemeLoader
             editor: self::block($config, 'editor', ThemeStylesheet::EDITOR_COLORS, new HexColor(), $error),
             fonts: self::block($config, 'fonts', ThemeStylesheet::FONTS, new FontStack(), $error),
             home: self::home($config['home'] ?? [], $error),
+            shareCard: $engine ? self::NO_SHARE_CARD : self::shareCard($config['share_card'] ?? [], $directory, $error),
             person: isset($config['person']) ? self::person($config['person'], $error) : null,
             stylesheets: self::assets($config, 'stylesheets', 'css', $directory, $error),
             scripts: self::assets($config, 'scripts', 'js', $directory, $error),
@@ -301,6 +310,51 @@ final readonly class ThemeLoader
                 throw $error($rule->expected($block.'.'.$key));
             }
             $resolved[$allowed[$key]] = $value;
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * « share_card » : le fond (PNG ou JPEG, 1200 × 630), les polices (TrueType ou OpenType : la bibliothèque d'images
+     * ne lit pas le woff2) et les couleurs des images de partage. Tout est facultatif : ce qui manque vient du moteur.
+     *
+     * @param \Closure(string): \RuntimeException $error
+     *
+     * @return array{image: string|null, font: string|null, text_font: string|null, colors: array<string, string>}
+     */
+    private static function shareCard(mixed $card, string $directory, \Closure $error): array
+    {
+        if (!\is_array($card)) {
+            throw $error('« share_card » doit décrire les images de partage (image, font, text_font, '.implode(', ', self::SHARE_CARD_COLORS).').');
+        }
+        $resolved = self::NO_SHARE_CARD;
+        $color = new HexColor();
+        foreach ($card as $key => $value) {
+            $path = 'share_card.'.(\is_string($key) ? $key : '?');
+            if (\in_array($key, self::SHARE_CARD_COLORS, true)) {
+                $value = \is_string($value) ? trim($value) : '';
+                if (!$color->accepts($value)) {
+                    throw $error($color->expected($path));
+                }
+                $resolved['colors'][$key] = $value;
+                continue;
+            }
+            $extensions = match ($key) {
+                'image' => ['png', 'jpg', 'jpeg'],
+                'font', 'text_font' => ['ttf', 'otf'],
+                default => throw $error(sprintf('« %s » inconnue (acceptées : image, font, text_font, %s).', $path, implode(', ', self::SHARE_CARD_COLORS))),
+            };
+            if (!\is_string($value) || !self::isPlainPath($value)) {
+                throw $error(sprintf('« %s » doit être un fichier du dossier du thème, sans « .. ».', $path));
+            }
+            if (!\in_array(strtolower(pathinfo($value, \PATHINFO_EXTENSION)), $extensions, true)) {
+                throw $error(sprintf('« %s » : « %s » doit être un fichier %s.', $path, $value, implode(', ', array_map(static fn (string $e) => '.'.$e, $extensions))));
+            }
+            if (!is_file($directory.'/'.$value)) {
+                throw $error(sprintf('« %s » : fichier introuvable (%s).', $path, $directory.'/'.$value));
+            }
+            $resolved[$key] = $value;
         }
 
         return $resolved;

@@ -370,6 +370,19 @@ accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas
   `/theme/<thème>/<date>/<rôle>` : une image remplacée change d'URL. Sans `icon`, l'onglet n'affiche aucune icône.
   `email_logo` (facultatif) est le logo des emails, en PNG, JPEG ou GIF, quand celui du site est dans un format que
   les clients mail lisent mal (webp, svg).
+- `share_card` habille les **images de partage que le moteur dessine** pour chaque exercice de la Pratique (le
+  titre de l'exercice, son framework et le site, en 1200 × 630, sur `/pratique/<exercice>/image-de-partage`).
+  Tout y est facultatif : `image` (un fond PNG ou JPEG de ce dossier, mis à l'échelle et rogné ; laissez de la place
+  à gauche, où s'écrit le texte), `font` et `text_font` (TrueType ou OpenType, pas de woff2 : le titre, puis le
+  reste), `background`, `ink`, `accent`, `muted` (couleurs hexadécimales). Sans eux : les couleurs des emails et une
+  police du moteur (DejaVu Sans). L'image `share` reste celle des pages qui n'ont pas la leur.
+
+  ```yaml
+  share_card:
+    image: fond-partage.png
+    font: polices/titres-bold.ttf
+    accent: '#9a3412'
+  ```
 - `home.showcase`, `home.author` et `home.demo` remplissent les sections de l'accueil qui parlent de la marque (le
   fil rouge, « qui est derrière », l'illustration du bandeau). Une section non déclarée n'apparaît pas. Piège du
   YAML : **une phrase qui contient « : » doit être entre guillemets**, sinon elle devient un tableau — le message

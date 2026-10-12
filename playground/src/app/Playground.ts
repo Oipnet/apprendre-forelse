@@ -7,6 +7,7 @@ import { ConsolePanel } from './console';
 import { cheminsExplicites, estModifiable } from './editable';
 import { Emitter, Mailbox } from './emitter';
 import { FeedbackDialog } from './feedback';
+import { canShareNatively, shareDialog, shareNatively } from './share';
 import { HintsAndSolution } from './HintsAndSolution';
 import { escapeHtml } from './html';
 import { layout } from './layout';
@@ -64,6 +65,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	root.append(help);
 	help.querySelector('[data-close]')!.addEventListener('click', () => help.close());
 	$('#shortcuts').addEventListener('click', () => help.showModal());
+	// Partager l'exercice : comme l'aide, utilisable même si le démarrage échoue. Sur un téléphone, son propre partage ;
+	// ailleurs, les liens dans une boîte de dialogue.
+	if (config.share) {
+		const share = config.share.invite;
+		$<HTMLButtonElement>('#share').addEventListener('click', () => void (canShareNatively() ? shareNatively(share, mesure) : shareDialog(root, share, mesure)));
+	}
 	/** La barre de statut est annoncée (role="status") : `spoken` remplace, pour un lecteur d'écran, un texte trop abrégé. */
 	const status = (text: string, kind: 'idle' | 'busy' | 'ok' | 'ko' = 'idle', spoken?: string) => {
 		const el = $('.status');

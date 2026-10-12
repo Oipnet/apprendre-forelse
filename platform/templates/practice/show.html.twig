@@ -9,6 +9,7 @@
 {% block body %}
     <main class="practice exercise-public mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         {{ include('practice/_intro.html.twig') }}
+        {{ include('share/_buttons.html.twig', {links: share.invite, title: 'Partager cet exercice', mesure: {exercice: practice.exercise.id, parcours: 'pratique'}}) }}
 
         <aside class="exercise-access mt-10 space-y-3 rounded-lg border border-line bg-bg-2 p-5" aria-labelledby="exercise-access-title">
             <h2 class="text-xl font-semibold" id="exercise-access-title">À vous d'écrire le code</h2>

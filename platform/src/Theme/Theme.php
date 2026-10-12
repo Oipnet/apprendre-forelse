@@ -204,6 +204,31 @@ final class Theme implements ResetInterface
         return ['onAccent' => self::luminance($colors['accent']) > 0.4 ? $colors['ink'] : '#ffffff'] + $colors;
     }
 
+    /**
+     * L'habillage des images de partage dessinées par le moteur (App\Share\ShareImageRenderer) : ce que le thème
+     * déclare sous « share_card », sinon les couleurs des emails et les polices du moteur. Les chemins sont absolus.
+     *
+     * @return array{image: string|null, font: string|null, text_font: string|null, background: string, ink: string, accent: string, muted: string}
+     */
+    public function shareCard(): array
+    {
+        $config = $this->config();
+        $card = $config->shareCard;
+        $email = $this->emailColors();
+        $path = static fn (?string $file) => null === $file ? null : $config->directory.'/'.$file;
+
+        return [
+            'image' => $path($card['image']),
+            'font' => $path($card['font']),
+            // Le texte courant prend la police du titre quand le thème n'en déclare qu'une.
+            'text_font' => $path($card['text_font'] ?? $card['font']),
+            'background' => $card['colors']['background'] ?? $config->colors[ThemeStylesheet::COLORS['background']] ?? $email['background'],
+            'ink' => $card['colors']['ink'] ?? $email['ink'],
+            'accent' => $card['colors']['accent'] ?? $email['accent'],
+            'muted' => $card['colors']['muted'] ?? $email['muted'],
+        ];
+    }
+
     /** La luminance relative (WCAG) d'une couleur #rgb, #rrggbb ou #rrggbbaa (l'opacité est ignorée). */
     private static function luminance(string $hex): float
     {

@@ -1,6 +1,7 @@
 import { mesurer } from '../mesure';
 import { xpBadge } from './layout';
 import { escapeHtml } from './html';
+import { mountShare, shareHtml } from './share';
 import type { Review } from './mentor';
 import type { MentorPanel } from './MentorPanel';
 import type { CompletionResult } from './progress';
@@ -126,6 +127,11 @@ export class SuccessPanel {
 			}
 			panel.innerHTML = `<strong>🎉 Exercice réussi ! ${gainText(result, this.config, session.solutionRevealed)}</strong>${lessonLinkHtml(this.exercise, this.config, '<p>Vous avez terminé le chapitre.</p>')}${nextStepHtml(this.exercise, this.config)}`;
 			if (practice) panel.querySelector('.button')?.before(this.beforeAfterButton(), ' ');
+			// Annoncer la réussite : le texte proposé le dit (« J'ai réussi l'exercice… »).
+			if (this.config.share) {
+				panel.insertAdjacentHTML('beforeend', shareHtml(this.config.share.success, 'Partager votre réussite'));
+				mountShare(panel.querySelector<HTMLElement>('[data-share]')!, this.config.share.success, this.deps.mesure);
+			}
 			const ask = this.deps.savedReview ? null : this.deps.mentor.reviewButton();
 			if (ask) panel.append(ask);
 		} catch (error) {
