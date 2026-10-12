@@ -50,10 +50,14 @@ final class CertificateController extends AbstractController
         if ($existing = $this->certificates->findValid($user, $track->id)) {
             return $this->redirectToRoute('app_certificate', ['code' => $existing->getCode()]);
         }
-        if (!$issuer->isEligible($user, $track)) {
+        if (!$issuer->isComplete($user, $track)) {
             $this->addFlash('info', 'Le certificat se délivre une fois tous les exercices du parcours réussis.');
 
             return $this->redirectToRoute('app_track', ['trackId' => $track->id]);
+        }
+        $unconfirmed = $issuer->unconfirmed($user, $track);
+        if ($unconfirmed['pending'] || $unconfirmed['failed']) {
+            return $this->render('certificate/claim.html.twig', ['track' => $track, 'form' => null, 'unconfirmed' => $unconfirmed, 'previous' => null]);
         }
 
         $form = $this->createForm(CertificateClaimType::class, ['holderName' => $user->getDisplayName()]);
@@ -68,6 +72,7 @@ final class CertificateController extends AbstractController
         return $this->render('certificate/claim.html.twig', [
             'track' => $track,
             'form' => $form,
+            'unconfirmed' => null,
             'previous' => $this->certificates->findLatest($user, $track->id),
         ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
