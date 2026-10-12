@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.3.0 — 2026-10-12
+
 ### Ajouté
 
 - Notions : une intro écrite dans le pack (`<pack>/notions/<notion>.md`, du Markdown sans titre, nommé comme
