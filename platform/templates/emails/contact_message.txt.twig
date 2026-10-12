@@ -4,6 +4,7 @@ De : {{ contact.name }} <{{ contact.email }}>
 {% if contact.organization %}Établissement ou entreprise : {{ contact.organization }}
 {% endif %}{% if contact.headcount %}Personnes à former : {{ contact.headcount }}
 {% endif %}{% if contact.user %}Compte : {{ contact.user.displayName }} ({{ contact.user.email }})
+{% endif %}{% if contact.certificate %}Certificat : {{ contact.certificate.code }} ({{ contact.certificate.trackTitle }}, {{ contact.certificate.revoked ? 'révoqué : ' ~ contact.certificate.revocationReason : 'valide' }}) {{ url('app_certificate', {code: contact.certificate.code}) }}
 {% endif %}Reçu le {{ contact.createdAt|date('d/m/Y à H:i') }}
 
 {{ contact.message }}

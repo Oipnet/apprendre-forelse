@@ -8,6 +8,17 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Certificat de réussite d'un parcours : une fois tous les exercices réussis, l'apprenant confirme le nom à imprimer
+  et reçoit un certificat figé, avec un code. Sa page publique `/certificat/{code}` (non indexée) le rend vérifiable
+  et détaille chaque exercice : sans indice, indices utilisés, ou solution consultée. PDF paysage à télécharger, et
+  lien « Ajouter à mon profil LinkedIn » prérempli.
+- Révocation d'un certificat, depuis l'administration (Certificats) ou par la vérification des réussites
+  (`CertificateRevocation::revokeForExercise()`) : l'apprenant reçoit le motif par email et peut contester depuis la
+  page du certificat (nouvel objet de contact « Un litige sur un certificat », rattaché au certificat). L'admin le
+  rétablit ou maintient la révocation ; chaque décision reste dans l'historique du certificat.
+
 ## 3.4.2 — 2026-10-12
 
 ### Corrigé
