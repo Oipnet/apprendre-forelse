@@ -8,6 +8,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Corrigé
+
+- Éditeur : les classes natives de PHP (`DateInterval`, `DateTimeImmutable`, `DateTimeZone`, les exceptions SPL,
+  `Stringable`, `#[Override]`…) sont proposées par la complétion, avec l'ajout du `use` dans un fichier à namespace.
+  L'index de complétion n'indexait jusqu'ici que les classes du classmap de Composer.
+- Éditeur : la signature d'une méthode Symfony montre aussi les paramètres que Symfony ajoute en commentaire en
+  attendant la version majeure suivante (`UriSigner::sign(…, ?string $version = null)` en 8.2). Reflection ne les
+  voyait pas.
+
 ## 3.4.1 — 2026-10-12
 
 ### Retiré
