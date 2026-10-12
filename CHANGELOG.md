@@ -8,6 +8,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Retiré
+
+- Notions : le champ de recherche de l'index `/notions`. Avec une quarantaine de notions rangées par thème, les
+  onglets et le filtre par thème suffisent ; la recherche du navigateur fait le reste.
+
 ## 3.4.0 — 2026-10-12
 
 ### Ajouté

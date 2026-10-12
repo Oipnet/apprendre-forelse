@@ -46,7 +46,7 @@ final class ConceptTest extends WebTestCase
         $symfony = $crawler->filter('#concepts-symfony');
         $this->assertSame('Les bases', $symfony->filter('.concepts-theme h3')->text());
         $this->assertSame(['/notions/controleur'], $symfony->filter('.concepts-list a')->each(static fn ($node) => $node->attr('href')));
-        $this->assertStringContainsString('Bientôt', $symfony->filter('[data-concepts-name="Route"]')->text(), 'Une notion rangée sans page s\'annonce, sans lien.');
+        $this->assertSame(['Route Bientôt'], $symfony->filterXPath('descendant::li[not(a)]')->each(static fn ($node) => $node->text()), 'Une notion rangée sans page s\'annonce, sans lien.');
 
         $laravel = $crawler->filter('#concepts-laravel');
         $this->assertCount(0, $laravel->filter('.concepts-theme h3'), 'Sans thèmes, une seule liste sans titre.');
