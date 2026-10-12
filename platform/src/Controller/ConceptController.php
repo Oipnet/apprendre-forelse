@@ -20,10 +20,9 @@ final class ConceptController extends AbstractController
     #[Route('/notions', name: 'app_concepts', methods: ['GET'])]
     public function index(ConceptIndex $concepts, ConceptSeo $seo): Response
     {
-        $all = $concepts->all();
-        $seo->index($all);
+        $seo->index($concepts->all());
 
-        return $this->render('concept/index.html.twig', ['concepts' => $all]);
+        return $this->render('concept/index.html.twig', ['catalog' => $concepts->catalog()]);
     }
 
     #[Route('/notions/{slug}', name: 'app_concept', methods: ['GET'])]

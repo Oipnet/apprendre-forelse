@@ -25,6 +25,10 @@ final class PackReader
     private array $versionIntros = [];
     /** @var array<string, array{markdown: string, file: string, packId: string, title: string|null}> */
     private array $conceptIntros = [];
+    /** @var array<string, list<ConceptTheme>> par framework */
+    private array $conceptThemes = [];
+    /** @var array<string, string> framework => pack qui en range les notions */
+    private array $conceptThemesPacks = [];
     /** @var array<string, Article> */
     private array $articles = [];
     private readonly PackFiles $files;
@@ -79,7 +83,7 @@ final class PackReader
         uasort($this->practices, static fn (Practice $a, Practice $b) => [$b->published, $a->exercise->id] <=> [$a->published, $b->exercise->id]);
         uasort($this->articles, static fn (Article $a, Article $b) => [$b->published, $a->slug] <=> [$a->published, $b->slug]);
 
-        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->articles, $this->files->watched());
+        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->conceptThemes, $this->articles, $this->files->watched());
     }
 
     private function loadPack(string $directory): void
@@ -119,6 +123,10 @@ final class PackReader
         }
         foreach (glob($directory.'/notions/*.md') ?: [] as $file) {
             $this->loadConceptIntro($pack, $file);
+        }
+        $this->files->watch($directory.'/notions/themes.yaml');
+        if (is_file($directory.'/notions/themes.yaml')) {
+            $this->loadConceptThemes($pack, $directory.'/notions/themes.yaml');
         }
         foreach (glob($directory.'/articles/*.md') ?: [] as $file) {
             $this->loadArticle($pack, $file);
@@ -256,6 +264,65 @@ final class PackReader
         }
 
         $this->conceptIntros[$slug] = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id, 'title' => '' === $title ? null : $title];
+    }
+
+    /** Les clés d'un thème de notions : une autre est une faute de frappe, refusée. */
+    private const array CONCEPT_THEME_KEYS = ['title', 'description', 'notions'];
+
+    /**
+     * Le rangement de l'index des notions : `<pack>/notions/themes.yaml`, une liste de thèmes par framework. Chaque
+     * thème a un titre, une phrase qui dit ce qu'il couvre et ses notions, par le libellé que leur donnent les
+     * exercices (`concepts:`). Une notion qu'aucun exercice publié ne pratique encore s'annonce « bientôt » ; une
+     * notion qu'aucun thème ne range tombe dans « Autres notions ». Un seul pack range les notions d'un framework.
+     */
+    private function loadConceptThemes(Pack $pack, string $file): void
+    {
+        $frameworks = $this->environments->frameworks();
+        foreach ($this->files->parse($file) as $framework => $themes) {
+            $framework = (string) $framework;
+            if (!$frameworks->has($framework)) {
+                throw new ContentException(sprintf('%s : framework « %s » inconnu (%s).', $file, $framework, implode(', ', $frameworks->ids())));
+            }
+            if (isset($this->conceptThemesPacks[$framework])) {
+                throw new ContentException(sprintf('%s : les notions %s sont déjà rangées par le pack « %s ».', $file, $frameworks->labelOf($framework), $this->conceptThemesPacks[$framework]));
+            }
+            if (!\is_array($themes) || !array_is_list($themes) || [] === $themes) {
+                throw new ContentException(sprintf('%s : « %s » est une liste de thèmes (title, description, notions).', $file, $framework));
+            }
+            $list = [];
+            $placed = [];
+            foreach ($themes as $i => $theme) {
+                $where = sprintf('%s : %s, thème n° %d', $file, $framework, $i + 1);
+                if (!\is_array($theme)) {
+                    throw new ContentException(sprintf('%s : un thème a un titre, une description et des notions (title, description, notions).', $where));
+                }
+                if ([] !== $unknown = array_diff(array_keys($theme), self::CONCEPT_THEME_KEYS)) {
+                    throw new ContentException(sprintf('%s : clé « %s » inconnue (un thème ne connaît que title, description et notions).', $where, implode(' », « ', $unknown)));
+                }
+                $title = trim($this->files->required($theme, 'title', $where));
+                $id = ConceptIndex::slug($title);
+                if (isset($list[$id])) {
+                    throw new ContentException(sprintf('%s : thème « %s » déclaré deux fois.', $where, $title));
+                }
+                $concepts = $theme['notions'] ?? null;
+                if (!\is_array($concepts) || !array_is_list($concepts) || [] === $concepts) {
+                    throw new ContentException(sprintf('%s : « notions » est la liste des notions du thème, par leur libellé.', $where));
+                }
+                foreach ($concepts as $concept) {
+                    if (!\is_string($concept) || '' === trim($concept)) {
+                        throw new ContentException(sprintf('%s : une notion est un libellé, comme dans les « concepts » des exercices.', $where));
+                    }
+                    $slug = ConceptIndex::slug($concept);
+                    if (isset($placed[$slug])) {
+                        throw new ContentException(sprintf('%s : la notion « %s » est déjà rangée dans « %s ».', $where, $concept, $placed[$slug]));
+                    }
+                    $placed[$slug] = $title;
+                }
+                $list[$id] = new ConceptTheme($id, $title, trim((string) ($theme['description'] ?? '')), array_map('trim', $concepts));
+            }
+            $this->conceptThemes[$framework] = array_values($list);
+            $this->conceptThemesPacks[$framework] = $pack->id;
+        }
     }
 
     /**

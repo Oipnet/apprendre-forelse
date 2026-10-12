@@ -149,6 +149,12 @@ final class ContentRepository implements ResetInterface
         return $this->content()->conceptIntros;
     }
 
+    /** @return array<string, list<ConceptTheme>> les thèmes de l'index des notions, par framework */
+    public function conceptThemes(): array
+    {
+        return $this->content()->conceptThemes;
+    }
+
     /** @return array<string, Article> les articles du blog, du plus récent au plus ancien, publiés ou non */
     public function articles(): array
     {

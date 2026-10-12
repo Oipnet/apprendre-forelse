@@ -158,6 +158,12 @@ final class EnvironmentRegistry implements ResetInterface
         return $all;
     }
 
+    /** Les frameworks que ce moteur sait faire tourner : ceux que les environnements et les packs peuvent nommer. */
+    public function frameworks(): FrameworkRegistry
+    {
+        return $this->frameworks;
+    }
+
     public function get(string $id): Environment
     {
         return $this->environments[$id] ??= $this->load($id);
