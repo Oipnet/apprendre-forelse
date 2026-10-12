@@ -35,6 +35,11 @@ services:
       LOCK_DSN: ${LOCK_DSN:-flock}
       # Installations d'environnements confiées au service « empaqueteur » ci-dessous, loin des secrets.
       ENVIRONMENTS_BUILDER: ${ENVIRONMENTS_BUILDER:-empaqueteur}
+      # Vérification des réussites : le worker y dépose le code des réussites, le service « verificateur » les rejoue.
+      VERIFICATIONS_DIR: ${VERIFICATIONS_DIR:-/verifications}
+      # Lus par le service « verificateur » seulement (voir plus bas) ; ici pour mémoire.
+      VERIFICATION_TIMEOUT: ${VERIFICATION_TIMEOUT:-600}
+      VERIFICATION_WORK_DIR: ${VERIFICATION_WORK_DIR:-}
       # Politique de sécurité du contenu : 1 = signaler seulement (« CSP : … » dans les journaux), 0 = bloquer.
       CSP_REPORT_ONLY: ${CSP_REPORT_ONLY:-1}
       APP_URL: ${APP_URL:?APP_URL manquant dans .env}
@@ -130,6 +135,8 @@ services:
       - ${BRANDING_HOST_DIR:-./marque}:/marque:ro
       # Environnements installés depuis un dépôt Git, et leurs archives.
       - environnements:/environnements
+      # Réussites à vérifier et verdicts, partagés par le worker et le service « verificateur ».
+      - verifications:/verifications
     ports:
       - "80:80"
       - "443:443"
@@ -142,6 +149,7 @@ services:
   # envoie. Un serveur SMTP lent ou en panne ne bloque plus l'inscription, et l'email part à son retour
   # (nouvelles tentatives pendant deux heures, puis `bin/console messenger:failed:retry` dans ce conteneur).
   # Même image, mêmes réglages que « app » ; il redémarre de lui-même toutes les heures pour rester léger.
+  # Il fait aussi tourner le planificateur de la vérification des réussites (scheduler_verification, voir « verificateur »).
   worker:
     image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:${IMAGE_TAG:-edge}}
     logging: *logging
@@ -157,7 +165,7 @@ services:
     # pcntl (chargée pour cette commande seulement) lui fait entendre le SIGTERM d'un arrêt : il finit le message en
     # cours et s'arrête, au lieu d'être tué au bout de 10 s. init : un vrai processus n°1, qui relaie les signaux.
     init: true
-    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=128M"]
+    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "scheduler_verification", "--time-limit=3600", "--memory-limit=128M"]
     # Le contrôle de santé de l'image interroge Caddy, qui ne tourne pas ici.
     healthcheck:
       disable: true
@@ -197,6 +205,57 @@ services:
       disable: true
     # Un `composer install` gourmand ne fait pas tomber le reste du serveur.
     mem_limit: ${EMPAQUETEUR_MEM_LIMIT:-1g}
+    pids_limit: 256
+    cpus: 1
+
+  # Vérifie les réussites : rejoue le code qu'un apprenant a soumis contre les tests de l'exercice (voir
+  # platform/src/Verification). C'est du code d'inconnus : il tourne ici, sans réseau (network_mode: none), sans base
+  # ni secrets, avec le système de fichiers en lecture seule. Le service démarre en root, privé de toutes les capacités
+  # sauf celles qu'il faut pour changer d'utilisateur, lire le dossier partagé et tuer ce qui traîne : chaque
+  # vérification tourne sous l'utilisateur VERIFICATION_SANDBOX_UID (nobody), qui ne peut ni lire les autres
+  # demandes ni écrire un verdict. Il n'a jamais le socket Docker.
+  verificateur:
+    image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:${IMAGE_TAG:-edge}}
+    logging: *logging
+    restart: unless-stopped
+    user: root
+    network_mode: none
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    cap_drop: [ALL]
+    cap_add: [SETUID, SETGID, DAC_OVERRIDE, KILL]
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      APP_URL: ${APP_URL:?APP_URL manquant dans .env}
+      SANDBOX_URL: ${SANDBOX_URL:?SANDBOX_URL manquant dans .env}
+      # Rien de secret : de quoi démarrer Symfony, sans rien atteindre.
+      APP_SECRET: verificateur-sans-secret
+      DATABASE_URL: postgresql://aucun:aucun@aucune-base:5432/aucune?serverVersion=17
+      MAILER_DSN: null://null
+      MESSENGER_TRANSPORT_DSN: sync://
+      CONTENT_PACKS_PATHS: ${CONTENT_PACKS_PATHS:-/packs}
+      INSTALLED_ENVIRONMENTS_DIR: ${INSTALLED_ENVIRONMENTS_DIR:-/environnements}
+      VERIFICATIONS_DIR: /verifications
+      VERIFICATION_SANDBOX_UID: "65534"
+      VERIFICATION_TIMEOUT: ${VERIFICATION_TIMEOUT:-600}
+      # Système de fichiers en lecture seule : le cache de Symfony va dans /tmp, les projets reconstitués sur disque.
+      APP_CACHE_DIR: /tmp/symfony-cache
+      APP_SHARE_DIR: /tmp/symfony-share
+      VERIFICATION_WORK_DIR: /travail
+    volumes:
+      - verifications-travail:/travail
+      - ${PACKS_DIR:-./packs}:/packs:ro
+      - environnements:/environnements:ro
+      - verifications:/verifications
+    # Même raison que « worker » : pcntl et init, pour s'arrêter dès le SIGTERM.
+    init: true
+    command: ["php", "-d", "extension=pcntl", "bin/console", "app:verification:verificateur"]
+    healthcheck:
+      disable: true
+    # Une vérification à la fois ; un test qui s'emballe ne fait pas tomber le reste du serveur.
+    mem_limit: ${VERIFICATEUR_MEM_LIMIT:-1g}
     pids_limit: 256
     cpus: 1
 
@@ -271,6 +330,8 @@ services:
 volumes:
   data:
   environnements:
+  verifications:
+  verifications-travail:
   config:
   db:
 

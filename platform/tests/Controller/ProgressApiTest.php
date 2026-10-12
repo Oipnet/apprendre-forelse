@@ -3,6 +3,8 @@
 namespace App\Tests\Controller;
 
 use App\Entity\User;
+use App\Entity\VerificationStatus;
+use App\Repository\ExerciseProgressRepository;
 use App\Repository\UserRepository;
 use App\Tests\DatabaseTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -67,6 +69,27 @@ final class ProgressApiTest extends WebTestCase
         $second = $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 0]);
         $this->assertSame(['xpEarned' => 0, 'totalXp' => 38, 'alreadyCompleted' => true], $second);
         $this->assertSame(38, $this->xpOf($user));
+    }
+
+    public function testLaReussiteFigeLeCodeEtAttendSaVerification(): void
+    {
+        $user = $this->login();
+        $this->json($this->client, 'PUT', '/api/progress/decouverte/01-bonjour', ['files' => ['src/Controller/BonjourController.php' => '<?php // réussi'], 'hintsUsed' => 0]);
+        $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 0]);
+        $this->json($this->client, 'PUT', '/api/progress/decouverte/01-bonjour', ['files' => ['src/Controller/BonjourController.php' => '<?php // retouché ensuite'], 'hintsUsed' => 0]);
+
+        $progress = static::getContainer()->get(ExerciseProgressRepository::class)->findOne($user, 'decouverte', '01-bonjour');
+        $this->assertSame(['src/Controller/BonjourController.php' => '<?php // réussi'], $progress->getSubmittedFiles(), 'Le code de la réussite, pas le brouillon d\'après.');
+        $this->assertSame(VerificationStatus::Pending, $progress->getVerification());
+    }
+
+    public function testUneReussiteSansCodeNeSeVerifiePas(): void
+    {
+        $user = $this->login();
+        $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 0]);
+
+        $progress = static::getContainer()->get(ExerciseProgressRepository::class)->findOne($user, 'decouverte', '01-bonjour');
+        $this->assertSame(VerificationStatus::Unverifiable, $progress->getVerification());
     }
 
     public function testLaSolutionSeConsulteContreLXp(): void
