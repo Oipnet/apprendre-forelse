@@ -7,7 +7,9 @@ use App\Content\ContentRepository;
 use App\Entity\Certificate;
 use App\Entity\ContactMessage;
 use App\Entity\ContactSubject;
+use App\Entity\ExerciseProgress;
 use App\Entity\User;
+use App\Entity\VerificationStatus;
 use App\Repository\CertificateRepository;
 use App\Service\ProgressService;
 use App\Tests\DatabaseTrait;
@@ -45,6 +47,13 @@ final class CertificateTest extends WebTestCase
         $second = $content->findExercise('decouverte', '02-bonjour-prenom');
         $progress->revealSolution($user, $second);
         $progress->complete($user, $second, 0);
+    }
+
+    private function verify(User $user, string $exerciseId, VerificationStatus $status): void
+    {
+        $progress = $this->entityManager()->getRepository(ExerciseProgress::class)->findOneBy(['user' => $user->getId(), 'trackId' => 'decouverte', 'exerciseId' => $exerciseId]) ?? self::fail('Exercice non commencé.');
+        $progress->recordVerification($status, null, new \DateTimeImmutable());
+        $this->entityManager()->flush();
     }
 
     private function claim(User $user, string $name = 'Ada Lovelace'): Certificate
@@ -216,5 +225,40 @@ final class CertificateTest extends WebTestCase
         $certificate = static::getContainer()->get(CertificateRepository::class)->find($certificate->getId());
         $this->assertFalse($certificate?->isRevoked());
         $this->assertSame(['delivre', 'revoque', 'retabli'], array_column($certificate->getHistory(), 'action'));
+    }
+
+    public function testLeCertificatAttendLaConfirmationDesReussites(): void
+    {
+        $user = $this->createUser();
+        $this->completeTrack($user);
+        $this->verify($user, '01-bonjour', VerificationStatus::Pending);
+        $this->verify($user, '02-bonjour-prenom', VerificationStatus::Unverifiable);
+        $this->client->loginUser($user);
+
+        $this->client->request('GET', '/parcours/decouverte/certificat');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.certificate-unconfirmed', 'Vérification en cours');
+        $this->assertSelectorTextContains('.certificate-unconfirmed', '1 exercice en attente');
+        $this->assertSelectorNotExists('#certificate_claim_holderName');
+
+        $this->verify($user, '01-bonjour', VerificationStatus::Passed);
+        $this->client->request('GET', '/parcours/decouverte/certificat');
+        $this->assertSelectorNotExists('.certificate-unconfirmed', 'Une réussite impossible à rejouer est acceptée.');
+        $this->assertSelectorExists('#certificate_claim_holderName');
+    }
+
+    public function testUneReussiteInfirmeeBloqueLeCertificat(): void
+    {
+        $user = $this->createUser();
+        $this->completeTrack($user);
+        $this->verify($user, '02-bonjour-prenom', VerificationStatus::Failed);
+        $this->client->loginUser($user);
+
+        $crawler = $this->client->request('GET', '/parcours/decouverte/certificat');
+        $this->assertResponseIsSuccessful();
+        $title = static::getContainer()->get(ContentRepository::class)->findExercise('decouverte', '02-bonjour-prenom')?->title;
+        $this->assertSelectorTextContains('.certificate-unconfirmed', (string) $title);
+        $this->assertSelectorExists('.certificate-unconfirmed a[href*="/contact"]');
+        $this->assertSelectorNotExists('#certificate_claim_holderName');
     }
 }

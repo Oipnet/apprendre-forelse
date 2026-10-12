@@ -18,6 +18,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   (`CertificateRevocation::revokeForExercise()`) : l'apprenant reçoit le motif par email et peut contester depuis la
   page du certificat (nouvel objet de contact « Un litige sur un certificat », rattaché au certificat). L'admin le
   rétablit ou maintient la révocation ; chaque décision reste dans l'historique du certificat.
+- Le certificat attend que la vérification ait confirmé chaque réussite du parcours : « Vérification en cours »
+  tant qu'une réussite est en file, et la liste des exercices infirmés (avec un lien de contact) si l'un ne passe pas.
+  Une réussite impossible à rejouer (exercice Nuxt, par exemple) est acceptée.
 - **Classement** (`/classement`) : les apprenants qui le choisissent dans « Mon compte » y paraissent sous leur
   pseudo, classés à l'XP, ce mois-ci ou depuis toujours.
 - **Vérification des réussites** : le code qui a réussi est conservé, et le nouveau service `verificateur` le
