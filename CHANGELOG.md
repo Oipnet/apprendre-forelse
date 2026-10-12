@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.4.2 — 2026-10-12
+
 ### Corrigé
 
 - Éditeur : les classes natives de PHP (`DateInterval`, `DateTimeImmutable`, `DateTimeZone`, les exceptions SPL,
