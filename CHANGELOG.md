@@ -17,6 +17,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   attendant la version majeure suivante (`UriSigner::sign(…, ?string $version = null)` en 8.2). Reflection ne les
   voyait pas.
 
+## 3.4.1 — 2026-10-12
+
 ### Retiré
 
 - Notions : le champ de recherche de l'index `/notions`. Avec une quarantaine de notions rangées par thème, les
