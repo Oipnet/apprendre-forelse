@@ -1,0 +1,1 @@
+Un contrôleur reçoit la `Request` et rend une `Response` : c'est la fonction que le routeur appelle pour une adresse donnée. Les arguments qu'il déclare (un paramètre de route, un en-tête, le corps JSON) lui arrivent déjà convertis.

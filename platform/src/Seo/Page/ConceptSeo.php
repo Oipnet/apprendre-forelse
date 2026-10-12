@@ -2,6 +2,7 @@
 
 namespace App\Seo\Page;
 
+use App\Content\ExerciseStory;
 use App\Content\Practice;
 use App\Theme\Theme;
 use App\Seo\PageSeo;
@@ -16,6 +17,7 @@ final readonly class ConceptSeo
         private PageSeo $seo,
         private SchemaOrg $schema,
         private Theme $theme,
+        private ExerciseStory $stories,
     ) {
     }
 
@@ -38,9 +40,10 @@ final readonly class ConceptSeo
     }
 
     /**
-     * Une notion : c'est le mot que l'on cherche dans un moteur, et la page qui rassemble ce qui le pratique.
+     * Une notion : c'est le mot que l'on cherche dans un moteur, et la page qui rassemble ce qui le pratique. La
+     * description reprend l'intro écrite quand il y en a une.
      *
-     * @param array{name: string, slug: string, exercises: list<array<string, mixed>>, practices: list<Practice>} $concept
+     * @param array{name: string, slug: string, exercises: list<array<string, mixed>>, practices: list<Practice>, intro?: string|null} $concept
      */
     public function concept(array $concept): void
     {
@@ -52,11 +55,14 @@ final readonly class ConceptSeo
                 sprintf('%s en exercices', $concept['name']),
                 $concept['name'],
             )
-            ->setDescription(sprintf(
-                'Les %d exercices qui font travailler %s : chacun pose un problème à résoudre en écrivant du code dans le navigateur, corrigé par des tests.',
-                $count,
-                $concept['name'],
-            ))
+            ->setDescription(
+                null !== ($concept['intro'] ?? null) ? $this->stories->firstParagraph($concept['intro']) : sprintf(
+                    'Les %d exercices qui font travailler %s : chacun pose un problème à résoudre en écrivant du code dans le navigateur, corrigé par des tests.',
+                    $count,
+                    $concept['name'],
+                ),
+                sprintf('%d exercices pour la pratiquer, dans le navigateur.', $count),
+            )
             ->setCanonical($url = $this->schema->url('app_concept', ['slug' => $concept['slug']]))
             ->addStructuredData($this->schema->breadcrumb([
                 ['Les notions', $this->schema->url('app_concepts')],

@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use App\Tests\DatabaseTrait;
+use App\Tests\PacksTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -12,6 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 final class ConceptTest extends WebTestCase
 {
     use DatabaseTrait;
+    use PacksTrait;
 
     public function testLIndexListeLesNotionsAvecLeurNombreDExercices(): void
     {
@@ -97,5 +99,55 @@ final class ConceptTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSame(['/notions/controleur'], $crawler->filter('.exercise-concepts a')->each(static fn ($node) => $node->attr('href')));
         $this->assertSame(['Route'], $crawler->filter('.exercise-concepts span.tag')->each(static fn ($node) => $node->text()));
+    }
+
+    public function testLaPageDUnExerciceDePratiqueLieSesNotions(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/pratique/exemple-map-request-header');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(['/notions/controleur'], $crawler->filter('.exercise-concepts a')->each(static fn ($node) => $node->attr('href')));
+        $this->assertSame(['HttpKernel'], $crawler->filter('.exercise-concepts span.tag')->each(static fn ($node) => $node->text()));
+    }
+
+    /** Sans intro écrite, une notion n'est qu'une liste de liens : sa page se suit, mais ne s'indexe pas. */
+    public function testUneNotionSansIntroNeSIndexePas(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/notions/controleur');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('X-Robots-Tag', 'noindex, follow');
+        $this->assertSame('noindex, follow', $crawler->filter('meta[name="robots"]')->attr('content'));
+        $this->assertCount(0, $crawler->filter('.concept-intro'));
+    }
+
+    /** Une intro écrite dans le pack (notions/controleur.md) ouvre la page, fait sa description et la rend indexable. */
+    public function testUneNotionAvecIntroSAfficheEtSIndexe(): void
+    {
+        $this->usePacks(__DIR__.'/../../../examples/packs', __DIR__.'/../Fixtures/packs/pratique');
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/notions/controleur');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertFalse($client->getResponse()->headers->has('X-Robots-Tag'));
+        $this->assertStringContainsString('<code>Request</code>', $crawler->filter('.concept-intro')->html(), 'L\'intro est du Markdown, rendu comme tel.');
+        $this->assertStringStartsWith('Un contrôleur reçoit la Request', (string) $crawler->filter('meta[name="description"]')->attr('content'));
+
+        $client->request('GET', '/sitemap.xml');
+        $this->assertStringContainsString('<loc>http://localhost/notions/controleur</loc>', (string) $client->getResponse()->getContent());
+    }
+
+    protected function tearDown(): void
+    {
+        $this->restorePacks();
+        parent::tearDown();
     }
 }

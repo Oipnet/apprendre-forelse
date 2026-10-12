@@ -17,6 +17,7 @@ use Symfony\Contracts\Service\ResetInterface;
  *   <pack>/tracks/<parcours>/exercises/<exercice>/{exercise.yaml, instructions.md, starter/, tests/, solution/}
  *   <pack>/practice/<exercice>/{exercise.yaml, …}                 exercice de Pratique, hors parcours (voir Practice)
  *   <pack>/versions/<version>.md                                  intro d'une page de nouveautés (facultative)
+ *   <pack>/notions/<notion>.md                                    intro d'une page de notion (facultative)
  *   <pack>/articles/<slug>.md                                     article du blog (voir Article)
  *
  * Les vérifications qui demandent d'exécuter le contenu (tests rouges puis verts)
@@ -140,6 +141,12 @@ final class ContentRepository implements ResetInterface
     public function versionIntros(): array
     {
         return $this->content()->versionIntros;
+    }
+
+    /** @return array<string, array{markdown: string, file: string, packId: string}> les intros des pages de notions, par notion */
+    public function conceptIntros(): array
+    {
+        return $this->content()->conceptIntros;
     }
 
     /** @return array<string, Article> les articles du blog, du plus récent au plus ancien, publiés ou non */

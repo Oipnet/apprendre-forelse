@@ -23,6 +23,8 @@ final class PackReader
     private array $practices = [];
     /** @var array<string, array{markdown: string, file: string, packId: string}> */
     private array $versionIntros = [];
+    /** @var array<string, array{markdown: string, file: string, packId: string}> */
+    private array $conceptIntros = [];
     /** @var array<string, Article> */
     private array $articles = [];
     private readonly PackFiles $files;
@@ -77,7 +79,7 @@ final class PackReader
         uasort($this->practices, static fn (Practice $a, Practice $b) => [$b->published, $a->exercise->id] <=> [$a->published, $b->exercise->id]);
         uasort($this->articles, static fn (Article $a, Article $b) => [$b->published, $a->slug] <=> [$a->published, $b->slug]);
 
-        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->exerciseReader->deprecations(), $this->versionIntros, $this->articles, $this->files->watched());
+        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->articles, $this->files->watched());
     }
 
     private function loadPack(string $directory): void
@@ -114,6 +116,9 @@ final class PackReader
         }
         foreach (glob($directory.'/versions/*.md') ?: [] as $file) {
             $this->loadVersionIntro($pack, $file);
+        }
+        foreach (glob($directory.'/notions/*.md') ?: [] as $file) {
+            $this->loadConceptIntro($pack, $file);
         }
         foreach (glob($directory.'/articles/*.md') ?: [] as $file) {
             $this->loadArticle($pack, $file);
@@ -211,6 +216,29 @@ final class PackReader
         }
 
         $this->versionIntros[$slug] = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id];
+    }
+
+    /**
+     * L'intro d'une page de notion : `<pack>/notions/controleur.md`, du Markdown sans titre. Le nom du fichier est
+     * l'identifiant de la notion dans l'adresse (voir ConceptIndex::slug). Même règles que l'intro d'une version :
+     * une faute de frappe dans le nom est refusée, et content:check signale une intro que rien n'affiche.
+     */
+    private function loadConceptIntro(Pack $pack, string $file): void
+    {
+        $slug = basename($file, '.md');
+        if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug)) {
+            throw new ContentException(sprintf('Intro de notion « %s » : le nom du fichier doit être l\'identifiant de la notion dans l\'adresse, en minuscules (« controleur.md »).', $file));
+        }
+        if (isset($this->conceptIntros[$slug])) {
+            throw new ContentException(sprintf('Intro de notion « %s » présente deux fois (packs %s et %s).', $slug, $this->conceptIntros[$slug]['packId'], $pack->id));
+        }
+        $this->files->watch($file);
+        $markdown = trim((string) file_get_contents($file));
+        if ('' === $markdown) {
+            throw new ContentException(sprintf('Intro de notion « %s » vide : retirez le fichier, la page reste alors hors des moteurs de recherche.', $file));
+        }
+
+        $this->conceptIntros[$slug] = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id];
     }
 
     /**

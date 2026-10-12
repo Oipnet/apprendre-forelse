@@ -8,6 +8,25 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Notions : une intro écrite dans le pack (`<pack>/notions/<notion>.md`, du Markdown sans titre, nommé comme
+  l'adresse de la notion) ouvre la page de la notion et fait sa description. `content:check` signale une intro que
+  rien n'affiche.
+
+### Modifié
+
+- Notions : une page de notion sans intro écrite ne s'indexe plus (`noindex, follow`) et sort du sitemap. Ce n'est
+  qu'une liste de liens, que les moteurs jugent mince : Search Console les laissait en « Détectée, actuellement non
+  indexée », et elles diluaient les pages qui ont du texte. L'index `/notions` les liste toujours.
+
+- Pratique : une fois le playground monté, la page garde ce que lit un moteur de recherche. Le titre de l'exercice
+  est le `<h1>` de la barre du haut, le résumé ouvre le volet Consignes, les notions qui ont une page y mènent, et
+  une rubrique « Pour aller plus loin » propose les autres nouveautés de la version, le parcours du framework et toute
+  la Pratique. Jusqu'ici, le playground remplaçait l'intro de la page : il ne restait ni titre, ni résumé, ni lien
+  vers le reste du site. La page publique d'un exercice de Pratique relie aussi ses notions, comme celle d'un
+  exercice de parcours.
+
 ## 3.2.0 — 2026-10-12
 
 ### Ajouté
