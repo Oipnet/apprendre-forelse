@@ -1,0 +1,21 @@
+{% set grades = defense.grades -%}
+Bonjour {{ learner.displayName }},
+
+Votre soutenance du parcours « {{ track.title }} », le {{ defense.startsAt|date('d/m/Y') }} : {{ defense.outcome.label|lower }}.
+
+{% for chapter in track.chapters %}
+- {{ chapter.title }} : {{ grades[chapter.id].label ?? '' }}
+{% endfor %}
+{% if defense.comment %}
+
+Le mot de {{ defense.evaluatorName }} :
+{{ defense.comment }}
+{% endif %}
+{% if defense.outcome.value == 'retake' %}
+
+Vous pouvez réserver un nouveau créneau depuis la page du parcours.
+{% endif %}
+
+{{ url('app_track', {trackId: track.id}) }}
+
+{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que vous avez passé cette soutenance sur ' ~ theme.name ~ '.'}) }}
