@@ -20,5 +20,13 @@
                 <a class="btn" href="{{ path('app_login', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Se connecter</a>
             </p>
         </aside>
+
+        {% if track %}
+            <aside class="practice-track mt-6 space-y-3 rounded-lg border border-line p-5" aria-labelledby="practice-track-title">
+                <h2 class="text-xl font-semibold" id="practice-track-title">Pour aller plus loin</h2>
+                <p>Cet exercice porte sur une seule fonctionnalité. Le parcours <strong>{{ track.title }}</strong> reprend {{ framework }} de bout en bout, chapitre par chapitre{% if track.description %} : {{ track.description }}{% else %}.{% endif %}</p>
+                <p class="pt-2"><a class="btn" href="{{ path('app_track', {trackId: track.id}) }}">Découvrir le parcours</a></p>
+            </aside>
+        {% endif %}
     </main>
 {% endblock %}

@@ -49,7 +49,15 @@ export interface ExercisePayload {
 	/** Fiche de cours que la réussite de cet exercice débloque (dernier exercice de son chapitre). */
 	lesson: { title: string; url: string } | null;
 	/** Exercice de Pratique : d'où vient la fonctionnalité (version du framework, page de cette version, pull request). */
-	practice: { framework: string; version: string | null; versionUrl: string | null; pullRequest: string | null; published: string } | null;
+	practice: {
+		framework: string;
+		version: string | null;
+		versionUrl: string | null;
+		pullRequest: string | null;
+		published: string;
+		/** Le parcours du même framework, proposé après la réussite (null : aucun de visible). */
+		track: { id: string; title: string; description: string; url: string } | null;
+	} | null;
 	/** Présent uniquement en environnement de développement de la plateforme. */
 	solution?: Record<string, string>;
 }

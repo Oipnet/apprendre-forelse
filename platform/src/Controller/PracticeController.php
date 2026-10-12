@@ -8,6 +8,7 @@ use App\Content\LessonRenderer;
 use App\Content\Practice;
 use App\Content\PracticeCatalog;
 use App\Content\PracticeFilter;
+use App\Content\PracticeTrack;
 use App\Content\PracticeVersionIndex;
 use App\Content\PracticeVisibility;
 use App\Entity\ExerciseProgress;
@@ -100,7 +101,7 @@ final class PracticeController extends AbstractController
      * publique de l'exercice — le problème et la fonctionnalité expliquée, sans éditeur (TrackAccessChecker).
      */
     #[Route('/pratique/{exerciseId}', name: 'app_exercise_pratique', methods: ['GET'])]
-    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access): Response
+    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access, PracticeTrack $tracks): Response
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
         $seo->practice($practice);
@@ -110,6 +111,8 @@ final class PracticeController extends AbstractController
             'instructions' => $markdown->toHtmlUnderTitle($practice->exercise->instructions),
             // La pastille de version mène aux autres exercices de cette version, quand cette page existe.
             'versionSlug' => $versions->slugOf($practice),
+            // Pour aller plus loin : le parcours du même framework, s'il y en a un de visible.
+            'track' => $tracks->of($practice),
         ];
 
         $user = $this->getUser();

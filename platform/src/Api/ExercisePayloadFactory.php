@@ -7,6 +7,7 @@ use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\LessonRenderer;
 use App\Content\Exercise;
+use App\Content\PracticeTrack;
 use App\Content\PracticeVersionIndex;
 use App\Content\TrackVisibility;
 use App\Instance\EnvironmentArtifacts;
@@ -30,6 +31,7 @@ final readonly class ExercisePayloadFactory
         private UrlGeneratorInterface $urls,
         private ExerciseUrls $exerciseUrls,
         private PracticeVersionIndex $versions,
+        private PracticeTrack $practiceTracks,
         private TrackAccessChecker $access,
         private EnvironmentArtifacts $artifacts,
         private LessonRenderer $markdown,
@@ -59,6 +61,8 @@ final readonly class ExercisePayloadFactory
         $nextTrack = null === $next && null !== $track ? $this->visibility->nextTrack($track) : null;
         // Un exercice de Pratique n'a ni suite ni fiche : il dit d'où vient la fonctionnalité.
         $practice = null === $exercise->trackId ? $this->content->findPractice($exercise->id) : null;
+        // Après la réussite, la Pratique propose le parcours du même framework, s'il y en a un de visible.
+        $practiceTrack = null === $practice ? null : $this->practiceTracks->of($practice);
         // Dernier exercice d'un chapitre doté d'une fiche de cours : la réussite la débloque.
         $inChapter = null === $track ? null : $this->content->chapterOf($exercise);
         $lesson = $inChapter?->hasLesson() && $this->content->closesChapter($exercise) ? $inChapter : null;
@@ -139,6 +143,12 @@ final readonly class ExercisePayloadFactory
                 'versionUrl' => null === ($slug = $this->versions->slugOf($practice)) ? null : $this->urls->generate('app_practice_version', ['slug' => $slug]),
                 'pullRequest' => $practice->pullRequest,
                 'published' => $practice->published->format('Y-m-d'),
+                'track' => $practiceTrack ? [
+                    'id' => $practiceTrack->id,
+                    'title' => $practiceTrack->title,
+                    'description' => $practiceTrack->description,
+                    'url' => $this->urls->generate('app_track', ['trackId' => $practiceTrack->id]),
+                ] : null,
             ] : null,
         ];
         if ('dev' === $this->kernelEnvironment) {

@@ -303,7 +303,39 @@ final class PracticeTest extends WebTestCase
         $this->assertNull($exercise['chapter'], 'Une Pratique n\'a pas de chapitre.');
         $this->assertNull($exercise['nextTrack']);
         $this->assertNull($exercise['lesson']);
-        $this->assertSame(['framework' => 'symfony', 'version' => '8.1', 'versionUrl' => '/pratique/nouveautes/symfony-8-1', 'pullRequest' => 'https://github.com/symfony/symfony/pull/1', 'published' => '2026-09-10'], $exercise['practice']);
+        $this->assertSame(['framework' => 'symfony', 'version' => '8.1', 'versionUrl' => '/pratique/nouveautes/symfony-8-1', 'pullRequest' => 'https://github.com/symfony/symfony/pull/1', 'published' => '2026-09-10', 'track' => [
+            'id' => 'decouverte',
+            'title' => 'Découverte',
+            'description' => 'Un avant-goût de Symfony en deux exercices.',
+            'url' => '/parcours/decouverte',
+        ]], $exercise['practice'], 'Après la réussite, le parcours du même framework est proposé.');
+    }
+
+    /** Pas de parcours visible pour ce framework : rien n'est proposé, ni après la réussite ni sur la page publique. */
+    public function testSansParcoursDuMemeFrameworkRienNEstPropose(): void
+    {
+        $this->assertNull($this->json($this->client, 'GET', '/api/exercises/pratique/cote-laravel')['practice']['track']);
+    }
+
+    /** Sur invitation, la page publique de l'exercice mène au parcours du même framework, et seulement à lui. */
+    public function testLaPagePubliqueProposeLeParcoursDuMemeFramework(): void
+    {
+        $initial = $_SERVER['REGISTRATION_INVITE_ONLY'] ?? '0';
+        $_SERVER['REGISTRATION_INVITE_ONLY'] = $_ENV['REGISTRATION_INVITE_ONLY'] = '1';
+        try {
+            self::ensureKernelShutdown();
+            $client = static::createClient();
+
+            $client->request('GET', '/pratique/point-precis');
+            $this->assertSelectorExists('.practice-track a[href="/parcours/decouverte"]');
+            $this->assertSelectorTextContains('.practice-track', 'Un avant-goût de Symfony en deux exercices.');
+
+            $client->request('GET', '/pratique/cote-laravel');
+            $this->assertResponseIsSuccessful();
+            $this->assertSelectorNotExists('.practice-track');
+        } finally {
+            $_SERVER['REGISTRATION_INVITE_ONLY'] = $_ENV['REGISTRATION_INVITE_ONLY'] = $initial;
+        }
     }
 
     public function testLeParcoursGardeSaConfiguration(): void
