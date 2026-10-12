@@ -8,6 +8,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- Environnement `laravel-13` : Laravel 13.35 (13.31 jusqu'ici), pour les exercices de Pratique sur les nouveautés
+  de septembre et d'octobre : `copyToDisk()` / `moveToDisk()`, l'attribut `#[Refreshes]`, `assertDatabaseCount()`
+  sur plusieurs tables, les routes `QUERY`, les assertions des faux par propriétés et `response()->markdown()`. Seul
+  le verrou change. À refaire suivre aux instances auto-hébergées : l'archive de l'environnement est reconstruite
+  (`environments/bin/build-env.sh laravel-13`).
+
 ### Sécurité
 
 - Simulateur Nuxt : `devalue` 5.9.4 (5.9.2 jusqu'ici) et `source-map-js` 1.2.2, que `npm audit` signalait à haut
