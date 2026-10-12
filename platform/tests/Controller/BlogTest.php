@@ -160,7 +160,7 @@ final class BlogTest extends WebTestCase
 
         $html = (string) $items[0]->children('http://purl.org/rss/1.0/modules/content/')->encoded;
         $this->assertStringContainsString('<h2', $html, 'Le texte complet, pas seulement le chapeau.');
-        $this->assertStringContainsString('href="http://localhost/pratique"', $html, 'Les liens du site deviennent absolus.');
+        $this->assertStringContainsString('href="http://localhost/pratique?utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=symfony-dans-le-navigateur"', $html, 'Les liens du site deviennent absolus, et marqués pour la mesure d\'audience.');
         $this->assertStringNotContainsString('<h1', $html);
         $this->assertStringNotContainsString('<script>alert', $html);
     }
