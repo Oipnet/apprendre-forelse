@@ -282,6 +282,30 @@ function param(ReflectionParameter $p): string
     return $s;
 }
 
+/**
+ * Paramètres ajoutés en commentaire, à la manière de Symfony pour ne pas casser les classes filles :
+ * `sign(string $uri, … $expiration = null/* , ?string $version = null *\/)`, lus par
+ * func_get_arg(). Reflection ne les voit pas ; l'apprenant, lui, doit pouvoir les passer.
+ *
+ * @return list<string>
+ */
+function commentedParams(ReflectionMethod $m): array
+{
+    $file = $m->getFileName();
+    if (!$file) {
+        return [];
+    }
+    $source = implode('', array_slice(file($file), $m->getStartLine() - 1, $m->getEndLine() - $m->getStartLine() + 1));
+    $declaration = strstr($source, '{', true) ?: $source;
+    if (!preg_match('#/\*\s*,\s*(.+?)\s*\*/#s', $declaration, $found)) {
+        return [];
+    }
+    $params = preg_replace('/#\[[^\]]*\]\s*/', '', $found[1]);
+
+    // `\DateInterval|int` → `DateInterval|int`, comme les types que rend Reflection.
+    return array_map(static fn (string $p) => preg_replace('/(^|[|?(\s])\\\\/', '$1', trim($p)), explode(',', $params));
+}
+
 function describe(ReflectionClass $rc): array
 {
     $methods = [];
@@ -294,7 +318,7 @@ function describe(ReflectionClass $rc): array
         }
         $methods[$m->getName()] = [
             'name' => $m->getName(),
-            'params' => array_map(param(...), $m->getParameters()),
+            'params' => [...array_map(param(...), $m->getParameters()), ...commentedParams($m)],
             // Méthodes natives : leur type de retour n'est souvent que « provisoire » (DateTime::add() : DateTime).
             'returns' => typeName($m->getReturnType() ?? ($m->hasTentativeReturnType() ? $m->getTentativeReturnType() : null)),
             'static' => $m->isStatic(),
