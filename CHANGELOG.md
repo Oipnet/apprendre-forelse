@@ -8,6 +8,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Soutenances de fin de parcours : dans l'espace des chefs (`/cohorte/{id}` → Soutenances), le chef ouvre des
+  créneaux en ligne ou en présentiel. Un apprenant de la cohorte qui a réussi tous les exercices du parcours en
+  réserve un depuis la page du parcours (annulable jusqu'au début) et reçoit sa convocation avec une invitation
+  d'agenda. L'évaluateur lit le dossier (code rendu, indices, solutions consultées, revue du mentor), remplit la
+  grille, un niveau par chapitre, et donne le résultat (validée ou à repasser), envoyé par email ; une soutenance à
+  repasser se repasse sur un autre créneau. Export CSV des soutenances de la cohorte. Nouvelle table `defense`
+  (migration). Le gabarit `track/show.html.twig` reçoit `defense`, et inclut `track/_defense.html.twig`.
+
 ## 3.4.2 — 2026-10-12
 
 ### Corrigé

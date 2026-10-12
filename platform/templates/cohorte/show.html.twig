@@ -76,6 +76,62 @@
         </div>
     </section>
 
+    <section class="beta-panel" id="soutenances">
+        <div class="beta-panel-header">
+            <h2>Soutenances</h2>
+            {% set booked = defenses|filter(d => d.booked)|length %}
+            <span class="badge badge-info">{{ defenses|length }} créneau{{ defenses|length > 1 ? 'x' }} · {{ booked }} réservé{{ booked > 1 ? 's' }}</span>
+        </div>
+        <div class="beta-panel-body">
+            <p class="text-muted">
+                Ouvrez des créneaux en ligne ou en présentiel : un apprenant qui a réussi tous les exercices du parcours en
+                réserve un et reçoit sa convocation. Le jour venu, il explique ses exercices ; vous lisez son dossier et
+                remplissez la grille, un niveau par chapitre.
+            </p>
+            {% if defenses is not empty %}
+                <table class="beta-table defense-slots">
+                    <thead>
+                        <tr><th>Date</th><th>Parcours</th><th>Modalité</th><th>Apprenant</th><th>Résultat</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for defense in defenses %}
+                            <tr>
+                                <td>{{ defense.startsAt|date('d/m/Y à H:i') }}<br><span class="text-muted">{{ defense.durationMinutes }} min</span></td>
+                                <td>{{ (tracks[defense.trackId] ?? null) ? tracks[defense.trackId].title : defense.trackId }}</td>
+                                <td>{{ defense.mode.label }}<br><span class="text-muted">{{ defense.place }}</span></td>
+                                <td>{{ defense.learner ? defense.learner.displayName : (defense.booked ? 'Compte supprimé' : '') }}{% if not defense.booked %}<span class="badge badge-secondary">libre</span>{% endif %}</td>
+                                <td>{% if defense.outcome %}<span class="badge badge-{{ defense.outcome.badge }}">{{ defense.outcome.label }}</span>{% endif %}</td>
+                                <td>
+                                    {% if defense.booked %}
+                                        <a class="btn btn-sm btn-secondary" href="{{ path('chef_cohort_defense', {id: cohort.cohort.id, defenseId: defense.id}) }}">{{ defense.outcome or not canManage ? 'Dossier' : 'Dossier et évaluation' }}</a>
+                                    {% elseif canManage %}
+                                        <form method="post" action="{{ path('chef_cohort_defense_remove', {id: cohort.cohort.id, defenseId: defense.id}) }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                                            <button class="btn btn-sm btn-link text-danger" type="submit">Supprimer</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p><a class="btn btn-secondary" href="{{ path('chef_cohort_defense_export', {id: cohort.cohort.id}) }}">Exporter les soutenances (CSV)</a></p>
+            {% endif %}
+            {% if canManage %}
+                {% form_theme defenseForm 'bootstrap_5_layout.html.twig' %}
+                <h3>Ouvrir un créneau</h3>
+                {{ form_start(defenseForm, {attr: {class: 'defense-slot-form'}}) }}
+                    {{ form_row(defenseForm.trackId) }}
+                    {{ form_row(defenseForm.startsAt) }}
+                    {{ form_row(defenseForm.durationMinutes) }}
+                    {{ form_row(defenseForm.mode) }}
+                    {{ form_row(defenseForm.place) }}
+                    <p><button class="btn btn-primary" type="submit">Ouvrir le créneau</button></p>
+                {{ form_end(defenseForm) }}
+            {% endif %}
+        </div>
+    </section>
+
     <section class="beta-panel">
         <div class="beta-panel-header">
             <h2>Avancement</h2>

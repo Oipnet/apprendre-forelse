@@ -1,0 +1,13 @@
+Bonjour {{ learner.displayName }},
+
+Votre soutenance de fin de parcours « {{ track.title }} » est réservée :
+
+Le {{ defense.startsAt|date('d/m/Y à H:i') }}, pendant {{ defense.durationMinutes }} minutes
+{{ defense.mode.label }} : {{ defense.place }}
+
+Vous expliquerez les exercices du parcours, avec le code que vous avez écrit : relisez-le avant. L'invitation jointe ajoute le rendez-vous à votre agenda.
+
+Votre soutenance, et de quoi l'annuler avant son début en cas d'empêchement :
+{{ url('app_track', {trackId: track.id}) }}
+
+{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que vous avez réservé ce créneau sur ' ~ theme.name ~ '.'}) }}

@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Content\ContentRepository;
 use App\Content\Track;
 use App\Content\TrackVisibility;
+use App\Defense\DefenseManagement;
 use App\Entity\User;
 use App\Payment\TrackOfferFactory;
 use App\Repository\ExerciseProgressRepository;
@@ -12,7 +13,7 @@ use App\Security\TrackAccessChecker;
 
 /**
  * La page d'un parcours : ses chapitres et leurs exercices avec l'état de chacun, l'XP, l'exercice où reprendre,
- * les fiches de cours et l'offre d'achat.
+ * les fiches de cours, l'offre d'achat et la soutenance de fin de parcours.
  */
 final readonly class TrackOverview
 {
@@ -22,6 +23,7 @@ final readonly class TrackOverview
         private ExerciseProgressRepository $progressRepository,
         private TrackAccessChecker $access,
         private TrackOfferFactory $offers,
+        private DefenseManagement $defenses,
     ) {
     }
 
@@ -85,6 +87,8 @@ final readonly class TrackOverview
             'offer' => $this->offers->create($track, $user),
             // Le livret regroupe les fiches : proposé quand tout le parcours est réussi (ou à un auteur).
             'booklet' => $track->lessonChapters() && ($reviewer || $progress->isComplete()),
+            // La soutenance, si la cohorte de l'apprenant en organise sur ce parcours (voir DefenseManagement).
+            'defense' => null !== $user ? $this->defenses->offerFor($user, $track) : null,
         ];
     }
 }

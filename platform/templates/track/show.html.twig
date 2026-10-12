@@ -46,6 +46,7 @@
                     </div>
                 {% endif %}
                 {{ include('track/_price.html.twig', {continueUrl: null}) }}
+                {% if defense %}{{ include('track/_defense.html.twig') }}{% endif %}
             </div>
         </section>
 

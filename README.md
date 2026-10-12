@@ -144,6 +144,13 @@ Une **cohorte** est financée par l'établissement (ses apprenants reçoivent l'
 de la cohorte ; l'estimation du devis se règle dans `config/services.yaml`, `app.cohort_quote.*`) ou par ses
 apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
 
+Un chef de cohorte peut organiser des **soutenances de fin de parcours** (`/cohorte/{id}` → Soutenances) : il ouvre
+des créneaux en ligne (lien de visio) ou en présentiel (adresse, salle), un apprenant qui a réussi tous les exercices
+du parcours en réserve un depuis la page du parcours et reçoit sa convocation avec une invitation d'agenda (.ics).
+L'évaluateur (chef de la cohorte ou administrateur) lit le dossier de l'apprenant (code rendu, indices, solutions
+consultées, revue du mentor), remplit la grille (un niveau par chapitre) et donne le résultat, envoyé par email.
+Les résultats s'exportent en CSV.
+
 **Mise à jour d'une instance vers la 0.8** : après la migration, lancer une fois `bin/console app:acces:initialiser`
 (les cohortes et les apprenants existants gardent ce qu'ils avaient), puis seulement fixer des prix.
 
