@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.2.0 — 2026-10-12
+
 ### Ajouté
 
 - Pratique : un exercice propose le parcours du même framework, quand un parcours de ce framework est visible. Le
