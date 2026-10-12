@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.4.0 — 2026-10-12
+
 ### Ajouté
 
 - Notions : l'index `/notions` a un onglet par framework (seulement ceux qui ont une notion à ouvrir), un encart
