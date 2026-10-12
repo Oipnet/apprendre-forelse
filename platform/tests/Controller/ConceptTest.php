@@ -27,6 +27,33 @@ final class ConceptTest extends WebTestCase
         $this->assertSame(['/notions/controleur'], $crawler->filter('.concepts-list a')->each(static fn ($node) => $node->attr('href')));
     }
 
+    /**
+     * Les thèmes que déclare un pack (notions/themes.yaml) rangent l'index ; un framework par onglet, et seulement
+     * ceux qui ont une notion à ouvrir : Docker a un thème, mais aucune notion pratiquée.
+     */
+    public function testLIndexRangeLesNotionsParFrameworkEtParTheme(): void
+    {
+        $this->usePacks(__DIR__.'/../../../examples/packs', __DIR__.'/../Fixtures/packs/versions', __DIR__.'/../Fixtures/packs/notions');
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/notions');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(['concepts-symfony', 'concepts-laravel'], $crawler->filter('[role="tab"]')->each(static fn ($node) => $node->attr('aria-controls')));
+        $this->assertCount(0, $crawler->filter('#concepts-docker'), 'Pas d\'onglet sans notion à ouvrir.');
+
+        $symfony = $crawler->filter('#concepts-symfony');
+        $this->assertSame('Les bases', $symfony->filter('.concepts-theme h3')->text());
+        $this->assertSame(['/notions/controleur'], $symfony->filter('.concepts-list a')->each(static fn ($node) => $node->attr('href')));
+        $this->assertStringContainsString('Bientôt', $symfony->filter('[data-concepts-name="Route"]')->text(), 'Une notion rangée sans page s\'annonce, sans lien.');
+
+        $laravel = $crawler->filter('#concepts-laravel');
+        $this->assertCount(0, $laravel->filter('.concepts-theme h3'), 'Sans thèmes, une seule liste sans titre.');
+        $this->assertSame(['/notions/files-d-attente'], $laravel->filter('.concepts-list a')->each(static fn ($node) => $node->attr('href')));
+        $this->assertStringContainsString('2 exercices', $laravel->filter('.concepts-list a')->text());
+    }
+
     public function testUneNotionRassembleParcoursEtPratique(): void
     {
         $client = static::createClient();

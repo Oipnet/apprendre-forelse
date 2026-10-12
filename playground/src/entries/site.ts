@@ -39,6 +39,10 @@ async function importGuestProgress(url: string) {
 const importUrl = document.body.dataset.importUrl;
 if (importUrl) void importGuestProgress(importUrl);
 
+/** L'index des notions : onglets par framework, recherche et filtre par thème. */
+const concepts = document.querySelector<HTMLElement>('[data-concepts]');
+if (concepts) void import('../app/concepts').then(({ mountConcepts }) => mountConcepts(concepts));
+
 /** Atelier des auteurs : les brouillons de post LinkedIn d'un parcours ou d'un exercice de Pratique. */
 const post = document.querySelector<HTMLElement>('[data-post]');
 // Chargé à la demande : ce code ne sert qu'aux auteurs, sur une seule page de l'atelier.

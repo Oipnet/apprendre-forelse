@@ -8,6 +8,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Notions : l'index `/notions` a un onglet par framework (seulement ceux qui ont une notion à ouvrir), un encart
+  « Le fil rouge » pour la notion la plus pratiquée, une recherche et un filtre par thème. Un pack range les notions
+  par thème dans `<pack>/notions/themes.yaml` (par framework : `title`, `description`, `notions`) ; une notion rangée
+  sans page encore s'annonce « bientôt », une notion non rangée tombe dans « Autres notions ». Un moteur antérieur
+  ignore ce fichier. Le gabarit `concept/index.html.twig` reçoit désormais `catalog` au lieu de `concepts`.
+
 ## 3.3.0 — 2026-10-12
 
 ### Ajouté
