@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{#
+  La page de vérification d'un certificat : publique (un recruteur, une école), hors de l'index. Le détail de chaque
+  exercice y est, tel qu'au jour de la délivrance. Variables : certificate, holder (le titulaire regarde), linkedinUrl.
+  Repères lus par les tests : certificate-status, certificate-summary, certificate-exercises, certificate-contest.
+#}
+{% block title %}Certificat · {{ certificate.trackTitle }} · {{ certificate.holderName }} · {{ theme.name }}{% endblock %}
+
+{% block body %}
+    {% set count = certificate.exerciseCount %}
+    <main class="certificate mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <p class="text-sm text-ink-muted">Certificat de réussite · {{ theme.name }}</p>
+        <h1 class="mt-1 text-3xl font-semibold">{{ certificate.trackTitle }}</h1>
+        <p class="lead mt-3 text-lg">Délivré à <strong>{{ certificate.holderName }}</strong> le {{ certificate.issuedAt|date('d/m/Y') }}.</p>
+
+        {% if certificate.revoked %}
+            <div class="certificate-status mt-4 rounded-lg border border-danger bg-danger-bg p-4">
+                <p><strong>Certificat révoqué</strong> le {{ certificate.revokedAt|date('d/m/Y') }}{% if certificate.disputed %}, contestation en cours{% endif %}.</p>
+                {% if holder %}
+                    <p class="mt-1 text-sm">Motif : {{ certificate.revocationReason }}</p>
+                    <a class="certificate-contest btn mt-3" href="{{ path('app_contact', {objet: 'certificat', certificat: certificate.code}) }}">Contester la révocation</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <p class="certificate-status mt-4 rounded-lg border border-success bg-success-bg p-4 text-success">✓ Certificat valide · code {{ certificate.code }}</p>
+        {% endif %}
+
+        <p class="certificate-summary mt-6">
+            {{ count }} exercice{{ count > 1 ? 's' }} réussi{{ count > 1 ? 's' }},
+            dont {{ certificate.withoutSolutionCount }} sans consulter la solution
+            et {{ certificate.unaidedCount }} sans aucune aide (ni indice, ni solution).
+            {{ certificate.xp|number_format(0, ',', ' ') }} XP.
+        </p>
+
+        {% if holder and not certificate.revoked %}
+            <div class="mt-6 flex flex-wrap gap-2">
+                <a class="btn btn-primary" href="{{ path('app_certificate_pdf', {code: certificate.code}) }}">Télécharger le PDF</a>
+                {% if linkedinUrl %}<a class="btn" href="{{ linkedinUrl }}" target="_blank" rel="noopener">Ajouter à mon profil LinkedIn</a>{% endif %}
+            </div>
+        {% endif %}
+
+        <h2 class="mt-10 text-xl font-semibold">Les exercices</h2>
+        <div class="certificate-exercises mt-4 space-y-6">
+            {% for chapter, exercises in certificate.exercisesByChapter %}
+                <section>
+                    <h3 class="font-semibold">{{ chapter }}</h3>
+                    <ul class="mt-2 divide-y divide-line text-sm">
+                        {% for exercise in exercises %}
+                            <li class="flex justify-between gap-4 py-1.5">
+                                <span>{{ exercise.title }}</span>
+                                <span class="shrink-0 {{ exercise.solutionRevealed ? 'text-highlight' : 'text-ink-muted' }}">
+                                    {%- if exercise.solutionRevealed -%}
+                                        solution consultée
+                                    {%- elseif exercise.hintsUsed -%}
+                                        {{ exercise.hintsUsed }} indice{{ exercise.hintsUsed > 1 ? 's' }} sur {{ exercise.hintsAvailable }}
+                                    {%- else -%}
+                                        sans indice
+                                    {%- endif -%}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endfor %}
+        </div>
+
+        <p class="mt-10 text-sm text-ink-muted">
+            Ce certificat atteste que son titulaire a réussi les exercices du parcours sur {{ theme.name }}, où chaque exercice est validé par des tests automatiques.
+            Ce n'est ni un diplôme, ni une certification professionnelle.
+        </p>
+    </main>
+{% endblock %}

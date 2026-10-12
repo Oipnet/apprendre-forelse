@@ -1,0 +1,37 @@
+{# Le certificat en PDF : une page A4 paysage (dompdf : CSS 2.1, tailles en pt). Variable : certificate. #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Certificat · {{ certificate.trackTitle }}</title>
+    <style>
+        @page { margin: 30pt; }
+        body { font-family: 'DejaVu Sans', sans-serif; color: #222; text-align: center; }
+        .frame { border: 3pt solid #7c6cf2; padding: 40pt 50pt; height: 430pt; }
+        .brand { color: #777; font-size: 11pt; text-transform: uppercase; letter-spacing: 2pt; margin: 0; }
+        .kind { color: #7c6cf2; font-size: 14pt; font-weight: bold; margin: 30pt 0 0; }
+        .intro { font-size: 11pt; color: #555; margin: 24pt 0 4pt; }
+        .holder { font-size: 30pt; font-weight: bold; margin: 0; }
+        .track { font-size: 20pt; margin: 6pt 0 24pt; }
+        .summary { font-size: 11pt; color: #444; margin: 0 0 4pt; }
+        .footer { margin-top: 40pt; font-size: 9pt; color: #777; }
+        .footer strong { color: #222; }
+    </style>
+</head>
+<body>
+    <div class="frame">
+        <p class="brand">{{ theme.name }}</p>
+        <p class="kind">Certificat de réussite</p>
+        <p class="intro">délivré à</p>
+        <p class="holder">{{ certificate.holderName }}</p>
+        <p class="intro">pour avoir réussi tous les exercices du parcours</p>
+        <p class="track">{{ certificate.trackTitle }}</p>
+        <p class="summary">{{ certificate.exerciseCount }} exercices réussis, dont {{ certificate.withoutSolutionCount }} sans consulter la solution · {{ certificate.xp|number_format(0, ',', ' ') }} XP</p>
+        <p class="summary">Le {{ certificate.issuedAt|date('d/m/Y') }}</p>
+        <p class="footer">
+            Code <strong>{{ certificate.code }}</strong> · détail exercice par exercice et vérification :
+            {{ url('app_certificate', {code: certificate.code}) }}
+        </p>
+    </div>
+</body>
+</html>
