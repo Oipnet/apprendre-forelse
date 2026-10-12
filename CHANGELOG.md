@@ -16,6 +16,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   le verrou change. À refaire suivre aux instances auto-hébergées : l'archive de l'environnement est reconstruite
   (`environments/bin/build-env.sh laravel-13`).
 
+### Sécurité
+
+- Simulateur Nuxt : `devalue` 5.9.4 (5.9.2 jusqu'ici) et `source-map-js` 1.2.2, que `npm audit` signalait à haut
+  risque (GHSA-j22f-vq7h-c4qm et suivantes, GHSA-68fv-2mgg-jv7q). Les tests de conformité contre le vrai Nuxt de
+  `conformite/reference`, resté en `devalue` 5.9.2, passent toujours.
+
 ## 3.0.0 — 2026-10-01
 
 Cette version sera la **3.0.0** : une instance auto-hébergée sans thème change d'apparence, et les gabarits ou
