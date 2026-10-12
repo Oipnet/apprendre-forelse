@@ -248,6 +248,29 @@ docker compose exec app bin/console app:environnement:synchroniser
 démarrage). L'archive va dans le volume `environnements`, pas dans l'image. Après une mise à jour du pack
 qui touche son décor, la même commande le réempaquette : elle voit que les sources ont changé.
 
+## Classement et vérification des réussites
+
+`/classement` classe à l'XP les apprenants qui ont choisi d'y paraître (case de « Mon compte », désactivée par
+défaut) : seul le pseudo est affiché. Un administrateur retire un compte du classement depuis `/admin` →
+Utilisateurs (« Retiré du classement »).
+
+Les tests d'un exercice tournent dans le navigateur, qui annonce la réussite : une réussite peut donc être
+falsifiée. Le code qui a réussi est conservé, et le service **`verificateur`** le rejoue contre les tests de
+l'exercice. Une réussite que les tests n'y confirment pas sort du classement (l'XP de l'apprenant, elle, ne
+change pas) ; `/admin` → Progression montre le verdict et sa raison.
+
+> ⚠️ **Rejouer une réussite exécute le code d'un apprenant sur ce serveur.** Il tourne dans le service
+> `verificateur`, sans réseau, sans base, sans secrets, le système de fichiers en lecture seule, et sous
+> l'utilisateur `nobody`, qui ne voit pas le code des autres apprenants. Le service n'a jamais accès au
+> socket Docker.
+
+Le worker envoie les réussites en attente chaque heure et relève les verdicts toutes les cinq minutes
+(planificateur Symfony, `scheduler_verification`) ; `docker compose logs verificateur` montre chaque verdict.
+
+Sans le service (un `compose.yaml` antérieur à cette version, ou `VERIFICATIONS_DIR` vide), rien n'est
+vérifié : les réussites restent « en attente » et comptent au classement. Les exercices Nuxt ne sont pas
+rejoués (Node n'est pas dans l'image) : ils sont marqués « non vérifiables », et comptent aussi.
+
 ## Réglages
 
 Tout se règle dans `.env`, commenté ligne à ligne. Après chaque modification :

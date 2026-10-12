@@ -18,6 +18,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   (`CertificateRevocation::revokeForExercise()`) : l'apprenant reçoit le motif par email et peut contester depuis la
   page du certificat (nouvel objet de contact « Un litige sur un certificat », rattaché au certificat). L'admin le
   rétablit ou maintient la révocation ; chaque décision reste dans l'historique du certificat.
+- **Classement** (`/classement`) : les apprenants qui le choisissent dans « Mon compte » y paraissent sous leur
+  pseudo, classés à l'XP, ce mois-ci ou depuis toujours.
+- **Vérification des réussites** : le code qui a réussi est conservé, et le nouveau service `verificateur` le
+  rejoue contre les tests, sans réseau, sans base ni secrets. Une réussite infirmée sort du classement. Le worker
+  fait tourner le planificateur (`messenger:consume async scheduler_verification`).
+
+### Migration
+
+- **Auto-hébergement** : retéléchargez `compose.yaml` pour avoir le service `verificateur` et le volume
+  `verifications`. Sans eux, rien n'est vérifié et les réussites comptent au classement.
 
 ## 3.4.2 — 2026-10-12
 

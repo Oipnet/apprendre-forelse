@@ -55,9 +55,15 @@
                         {% endfor %}
                         <tr>
                             <td>Vous faites les exercices</td>
-                            <td>Le code écrit dans chaque exercice, son état (en cours, réussi), les indices consultés, l'XP gagnée{% if aiEnabled %}, la revue de code du mentor{% endif %}.</td>
-                            <td>Sauvegarder votre travail et le reprendre d'un appareil à l'autre ; produire vos fiches de cours.</td>
+                            <td>Le code écrit dans chaque exercice, et celui qui l'a réussi, son état (en cours, réussi), les indices consultés, l'XP gagnée, le résultat de la vérification de la réussite{% if aiEnabled %}, la revue de code du mentor{% endif %}.</td>
+                            <td>Sauvegarder votre travail et le reprendre d'un appareil à l'autre ; produire vos fiches de cours ; rejouer les tests sur nos serveurs pour confirmer une réussite, dans un service isolé qui ne voit ni votre compte ni la base de données.</td>
                             <td>Exécution du contrat.</td>
+                        </tr>
+                        <tr>
+                            <td>Vous choisissez d'apparaître dans le classement</td>
+                            <td>Votre pseudonyme, votre XP et le nombre d'exercices réussis deviennent publics sur la page du classement. Rien d'autre (ni adresse e‑mail, ni nom chez GitHub, Google ou LinkedIn).</td>
+                            <td>Le classement entre apprenants. Désactivé par défaut ; vous vous en retirez à tout moment depuis « Mon compte ».</td>
+                            <td>Consentement.</td>
                         </tr>
                         {% if paymentsEnabled %}
                             <tr>
