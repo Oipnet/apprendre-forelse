@@ -215,6 +215,28 @@ const NAMESPACES = [
 ];
 const EXCLUDED = ['\\Tests\\', '\\Session\\Storage\\Handler\\'];
 
+// Classes natives de PHP : absentes du classmap de Composer, on les nomme une à une.
+// Une extension absente de la machine qui construit l'index (intl…) est simplement ignorée.
+const NATIVES = [
+    // Dates
+    'DateTimeInterface', 'DateTime', 'DateTimeImmutable', 'DateInterval', 'DatePeriod', 'DateTimeZone',
+    // Exceptions et erreurs
+    'Throwable', 'Exception', 'Error', 'ErrorException', 'TypeError', 'ValueError', 'ArgumentCountError',
+    'ArithmeticError', 'DivisionByZeroError', 'JsonException', 'UnhandledMatchError',
+    'LogicException', 'BadFunctionCallException', 'BadMethodCallException', 'DomainException',
+    'InvalidArgumentException', 'LengthException', 'OutOfRangeException',
+    'RuntimeException', 'OutOfBoundsException', 'OverflowException', 'RangeException',
+    'UnderflowException', 'UnexpectedValueException',
+    // Interfaces et structures courantes
+    'Stringable', 'JsonSerializable', 'Countable', 'ArrayAccess', 'Traversable', 'Iterator',
+    'IteratorAggregate', 'Generator', 'Closure', 'stdClass', 'WeakMap', 'WeakReference',
+    'UnitEnum', 'BackedEnum', 'ArrayObject', 'ArrayIterator', 'SplObjectStorage', 'SplQueue', 'SplStack',
+    // Attributs du langage
+    'Attribute', 'Override', 'SensitiveParameter', 'AllowDynamicProperties',
+    // Divers
+    'Random\\Randomizer', 'IntlDateFormatter', 'NumberFormatter', 'Collator',
+];
+
 function summary(string|false $doc): string
 {
     if (!$doc) {
@@ -260,34 +282,8 @@ function param(ReflectionParameter $p): string
     return $s;
 }
 
-$index = ['generatedAt' => date(DATE_ATOM), 'classes' => []];
-
-foreach (array_keys($classmap) as $fqcn) {
-    $wanted = false;
-    foreach (NAMESPACES as $ns) {
-        if (str_starts_with($fqcn, $ns)) {
-            $wanted = true;
-            break;
-        }
-    }
-    foreach (EXCLUDED as $ex) {
-        if (str_contains($fqcn, $ex)) {
-            $wanted = false;
-        }
-    }
-    if (!$wanted) {
-        continue;
-    }
-
-    try {
-        $rc = new ReflectionClass($fqcn);
-    } catch (Throwable) {
-        continue;
-    }
-    if ($rc->isAnonymous() || $rc->isInternal() || str_contains((string) $rc->getDocComment(), '@internal')) {
-        continue;
-    }
-
+function describe(ReflectionClass $rc): array
+{
     $methods = [];
     foreach ($rc->getMethods(ReflectionMethod::IS_PUBLIC | ReflectionMethod::IS_PROTECTED) as $m) {
         if (str_starts_with($m->getName(), '__') && '__construct' !== $m->getName()) {
@@ -299,7 +295,8 @@ foreach (array_keys($classmap) as $fqcn) {
         $methods[$m->getName()] = [
             'name' => $m->getName(),
             'params' => array_map(param(...), $m->getParameters()),
-            'returns' => typeName($m->getReturnType()),
+            // Méthodes natives : leur type de retour n'est souvent que « provisoire » (DateTime::add() : DateTime).
+            'returns' => typeName($m->getReturnType() ?? ($m->hasTentativeReturnType() ? $m->getTentativeReturnType() : null)),
             'static' => $m->isStatic(),
             'protected' => $m->isProtected(),
             'declaringClass' => $m->getDeclaringClass()->getShortName(),
@@ -330,7 +327,7 @@ foreach (array_keys($classmap) as $fqcn) {
         default => 'class',
     };
 
-    $index['classes'][$fqcn] = [
+    return [
         'short' => $rc->getShortName(),
         'kind' => $kind,
         'abstract' => $rc->isAbstract() && !$rc->isInterface(),
@@ -343,6 +340,43 @@ foreach (array_keys($classmap) as $fqcn) {
         'methods' => array_values(array_filter($methods, static fn ($m) => '__construct' !== $m['name'])),
     ];
 }
+
+$index = ['generatedAt' => date(DATE_ATOM), 'classes' => []];
+
+foreach (array_keys($classmap) as $fqcn) {
+    $wanted = false;
+    foreach (NAMESPACES as $ns) {
+        if (str_starts_with($fqcn, $ns)) {
+            $wanted = true;
+            break;
+        }
+    }
+    foreach (EXCLUDED as $ex) {
+        if (str_contains($fqcn, $ex)) {
+            $wanted = false;
+        }
+    }
+    if (!$wanted) {
+        continue;
+    }
+
+    try {
+        $rc = new ReflectionClass($fqcn);
+    } catch (Throwable) {
+        continue;
+    }
+    if ($rc->isAnonymous() || $rc->isInternal() || str_contains((string) $rc->getDocComment(), '@internal')) {
+        continue;
+    }
+    $index['classes'][$fqcn] = describe($rc);
+}
+
+foreach (NATIVES as $fqcn) {
+    if (class_exists($fqcn) || interface_exists($fqcn)) {
+        $index['classes'][$fqcn] = describe(new ReflectionClass($fqcn));
+    }
+}
+
 
 // Les imports de namespace (use X\\Constraints; puis Constraints\\NotBlank) sont
 // des cibles de complétion valides : on indexe aussi chaque préfixe de namespace.
