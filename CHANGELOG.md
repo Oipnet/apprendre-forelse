@@ -11,9 +11,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 ### Ajouté
 
 - Blog : un flux RSS des articles parus, texte complet compris, à `/blog/rss.xml`, annoncé par chaque page
-  (`<link rel="alternate">`). Les liens relatifs des articles y deviennent absolus. De quoi suivre le blog dans un
-  lecteur de flux, ou reprendre ses articles sur dev.to ou Hashnode, qui importent un flux et pointent vers l'article
-  d'origine.
+  (`<link rel="alternate">`) et par un lien « S'abonner au flux RSS » sous le titre du blog. Les liens relatifs des
+  articles y deviennent absolus. De quoi suivre le blog dans un lecteur de flux, ou reprendre ses articles sur dev.to
+  ou Hashnode, qui importent un flux et pointent vers l'article d'origine.
 
 ### Modifié
 

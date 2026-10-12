@@ -26,7 +26,7 @@ final readonly class BlogSeo
         $this->seo
             ->setTitle('Le blog | '.$this->theme->name(), 'Le blog')
             ->setDescription(
-                'Les coulisses de la plateforme : comment un framework tourne dans le navigateur, comment un exercice se construit et se corrige.',
+                'Des articles qui partent d\'un exercice pour aller plus loin : ce que fait vraiment le framework, où il s\'arrête, et comment s\'en servir en production. Et les coulisses de la plateforme.',
                 \count($articles) > 1 ? sprintf('%d articles.', \count($articles)) : '',
             )
             ->setCanonical($url = $this->schema->url('app_blog'))

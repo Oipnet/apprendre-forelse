@@ -55,6 +55,7 @@ final class BlogTest extends WebTestCase
         $this->assertStringContainsString('20 septembre 2026', $crawler->filter('.blog-list .meta')->first()->text());
         $this->assertSelectorExists('.site-footer a[href="/blog"]', 'Le pied de page mène au blog.');
         $this->assertSelectorExists('header nav a[href="/blog"]', 'Le menu principal aussi.');
+        $this->assertSelectorExists('.blog-feed a[href="/blog/rss.xml"]', 'La liste propose de s\'abonner au flux.');
     }
 
     public function testUnArticle(): void
