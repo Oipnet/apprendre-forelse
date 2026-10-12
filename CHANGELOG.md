@@ -14,6 +14,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   lien apparaît après la réussite dans le playground, et sur la page publique de l'exercice (instance sur
   invitation). Les visiteurs arrivent surtout par un exercice de Pratique, et repartaient sans voir les parcours.
 
+### Modifié
+
+- Blog : dans le flux RSS, les liens du texte qui mènent au site portent `utm_source=rss`, `utm_medium=feed` et
+  `utm_campaign=<slug de l'article>`. Les copies (dev.to, Hashnode) masquent souvent leur referrer : sans ces
+  paramètres, leurs visites se confondaient avec le trafic direct. Le lien de l'article (`<link>`, `<guid>`), dont les
+  copies font leur URL canonique, reste sans paramètre.
+
 ## 3.1.0 — 2026-10-12
 
 ### Ajouté
