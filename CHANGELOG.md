@@ -10,6 +10,19 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- Certificat de réussite d'un parcours : une fois tous les exercices réussis, l'apprenant confirme le nom à imprimer
+  et reçoit un certificat figé, avec un code. Sa page publique `/certificat/{code}` (non indexée) le rend vérifiable
+  et détaille chaque exercice : sans indice, indices utilisés, ou solution consultée. PDF paysage à télécharger, et
+  lien « Ajouter à mon profil LinkedIn » prérempli.
+- Révocation d'un certificat, depuis l'administration (Certificats) ou par la vérification des réussites
+  (`CertificateRevocation::revokeForExercise()`) : l'apprenant reçoit le motif par email et peut contester depuis la
+  page du certificat (nouvel objet de contact « Un litige sur un certificat », rattaché au certificat). L'admin le
+  rétablit ou maintient la révocation ; chaque décision reste dans l'historique du certificat.
+- **Classement** (`/classement`) : les apprenants qui le choisissent dans « Mon compte » y paraissent sous leur
+  pseudo, classés à l'XP, ce mois-ci ou depuis toujours.
+- **Vérification des réussites** : le code qui a réussi est conservé, et le nouveau service `verificateur` le
+  rejoue contre les tests, sans réseau, sans base ni secrets. Une réussite infirmée sort du classement. Le worker
+  fait tourner le planificateur (`messenger:consume async scheduler_verification`).
 - Soutenances de fin de parcours : dans l'espace des chefs (`/cohorte/{id}` → Soutenances), le chef ouvre des
   créneaux en ligne ou en présentiel. Un apprenant de la cohorte qui a réussi tous les exercices du parcours en
   réserve un depuis la page du parcours (annulable jusqu'au début) et reçoit sa convocation avec une invitation
@@ -17,6 +30,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   grille, un niveau par chapitre, et donne le résultat (validée ou à repasser), envoyé par email ; une soutenance à
   repasser se repasse sur un autre créneau. Export CSV des soutenances de la cohorte. Nouvelle table `defense`
   (migration). Le gabarit `track/show.html.twig` reçoit `defense`, et inclut `track/_defense.html.twig`.
+
+### Migration
+
+- **Auto-hébergement** : retéléchargez `compose.yaml` pour avoir le service `verificateur` et le volume
+  `verifications`. Sans eux, rien n'est vérifié et les réussites comptent au classement.
 
 ## 3.4.2 — 2026-10-12
 

@@ -1,0 +1,6 @@
+Bonjour {{ user.displayName }},
+
+Votre certificat de réussite du parcours « {{ certificate.trackTitle }} » (code {{ certificate.code }}) est rétabli : sa page de vérification le montre de nouveau comme valide.
+{{ url('app_certificate', {code: certificate.code}) }}
+
+{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que ce certificat vous a été délivré sur ' ~ theme.name ~ '.'}) }}

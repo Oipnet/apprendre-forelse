@@ -1,0 +1,12 @@
+<?php
+
+// Faux bin/console pour VerificationSandboxTest : le comportement vient du premier fichier de la demande.
+$request = json_decode(stream_get_contents(STDIN), true);
+$mode = array_values($request['files'])[0];
+match ($mode) {
+    'reussi' => print("bruit\n".json_encode(['progressId' => $request['progressId'], 'status' => 'passed', 'detail' => null])."\n"),
+    'autre-demande' => print(json_encode(['progressId' => $request['progressId'] + 1, 'status' => 'passed', 'detail' => null])."\n"),
+    'muet' => fwrite(STDERR, 'plantage'),
+    'boucle' => sleep(30),
+    'tmpdir' => print(json_encode(['progressId' => $request['progressId'], 'status' => 'unverifiable', 'detail' => sys_get_temp_dir().'|'.getenv('APP_CACHE_DIR')])."\n"),
+};

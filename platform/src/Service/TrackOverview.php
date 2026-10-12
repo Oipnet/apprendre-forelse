@@ -8,12 +8,13 @@ use App\Content\TrackVisibility;
 use App\Defense\DefenseManagement;
 use App\Entity\User;
 use App\Payment\TrackOfferFactory;
+use App\Repository\CertificateRepository;
 use App\Repository\ExerciseProgressRepository;
 use App\Security\TrackAccessChecker;
 
 /**
  * La page d'un parcours : ses chapitres et leurs exercices avec l'état de chacun, l'XP, l'exercice où reprendre,
- * les fiches de cours, l'offre d'achat et la soutenance de fin de parcours.
+ * les fiches de cours, le certificat, l'offre d'achat et la soutenance de fin de parcours.
  */
 final readonly class TrackOverview
 {
@@ -23,6 +24,7 @@ final readonly class TrackOverview
         private ExerciseProgressRepository $progressRepository,
         private TrackAccessChecker $access,
         private TrackOfferFactory $offers,
+        private CertificateRepository $certificates,
         private DefenseManagement $defenses,
     ) {
     }
@@ -87,6 +89,8 @@ final readonly class TrackOverview
             'offer' => $this->offers->create($track, $user),
             // Le livret regroupe les fiches : proposé quand tout le parcours est réussi (ou à un auteur).
             'booklet' => $track->lessonChapters() && ($reviewer || $progress->isComplete()),
+            // Le certificat déjà délivré ; sinon, la page propose de le demander une fois le parcours terminé.
+            'certificate' => null !== $user ? $this->certificates->findValid($user, $track->id) : null,
             // La soutenance, si la cohorte de l'apprenant en organise sur ce parcours (voir DefenseManagement).
             'defense' => null !== $user ? $this->defenses->offerFor($user, $track) : null,
         ];

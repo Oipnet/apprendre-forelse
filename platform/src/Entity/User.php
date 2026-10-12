@@ -57,6 +57,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(options: ['default' => 0])]
     private int $xp = 0;
 
+    /** Apparaître dans le classement public (/classement), sous son pseudo : un choix de l'apprenant, désactivé par défaut. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $leaderboardOptIn = false;
+
+    /** Retiré du classement par un administrateur (triche manifeste), quel que soit son choix. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $leaderboardExcluded = false;
+
     /** Cohorte rejointe à l'inscription (code d'invitation) ; null pour une inscription libre. */
     #[ORM\ManyToOne(inversedBy: 'users')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
@@ -131,6 +139,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function addXp(int $xp): static
     {
         $this->xp += $xp;
+
+        return $this;
+    }
+
+    public function isLeaderboardOptIn(): bool
+    {
+        return $this->leaderboardOptIn;
+    }
+
+    public function setLeaderboardOptIn(bool $leaderboardOptIn): static
+    {
+        $this->leaderboardOptIn = $leaderboardOptIn;
+
+        return $this;
+    }
+
+    public function isLeaderboardExcluded(): bool
+    {
+        return $this->leaderboardExcluded;
+    }
+
+    public function setLeaderboardExcluded(bool $leaderboardExcluded): static
+    {
+        $this->leaderboardExcluded = $leaderboardExcluded;
 
         return $this;
     }

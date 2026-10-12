@@ -45,6 +45,30 @@ class ExerciseProgress
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $review = null;
 
+    /**
+     * Le code au moment de la réussite, figé : le brouillon, lui, continue de changer. C'est lui que le service
+     * « verificateur » rejoue (voir App\Verification).
+     *
+     * @var array<string, string>|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $submittedFiles = null;
+
+    /** Vérification serveur de la réussite ; null tant que l'exercice n'est pas réussi. */
+    #[ORM\Column(length: 20, nullable: true, enumType: VerificationStatus::class)]
+    private ?VerificationStatus $verification = null;
+
+    /** Dernier envoi au verificateur : une demande perdue (service arrêté) repart au bout d'un jour. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $verificationRequestedAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $verifiedAt = null;
+
+    /** Pourquoi la vérification a échoué ou n'a pas pu se faire (pour l'admin). */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $verificationDetail = null;
+
     /** Premier brouillon sauvegardé : avec completedAt, donne une durée approximative. */
     #[ORM\Column]
     private \DateTimeImmutable $startedAt;
@@ -172,7 +196,48 @@ class ExerciseProgress
         $this->status = ProgressStatus::Completed;
         $this->xpEarned = $xp;
         $this->completedAt = $this->updatedAt = $now;
+        // Le navigateur enregistre le brouillon juste avant d'annoncer la réussite (voir session.ts) : c'est le code qui a réussi.
+        $this->submittedFiles = $this->files;
+        $this->verification = [] === $this->files ? VerificationStatus::Unverifiable : VerificationStatus::Pending;
 
         return $xp;
+    }
+
+    /** @return array<string, string>|null */
+    public function getSubmittedFiles(): ?array
+    {
+        return $this->submittedFiles;
+    }
+
+    public function getVerification(): ?VerificationStatus
+    {
+        return $this->verification;
+    }
+
+    public function getVerificationRequestedAt(): ?\DateTimeImmutable
+    {
+        return $this->verificationRequestedAt;
+    }
+
+    public function getVerifiedAt(): ?\DateTimeImmutable
+    {
+        return $this->verifiedAt;
+    }
+
+    public function getVerificationDetail(): ?string
+    {
+        return $this->verificationDetail;
+    }
+
+    public function markVerificationRequested(\DateTimeImmutable $now): void
+    {
+        $this->verificationRequestedAt = $now;
+    }
+
+    public function recordVerification(VerificationStatus $status, ?string $detail, \DateTimeImmutable $now): void
+    {
+        $this->verification = $status;
+        $this->verificationDetail = null === $detail ? null : mb_substr($detail, 0, 255);
+        $this->verifiedAt = $now;
     }
 }

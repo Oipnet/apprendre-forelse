@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{# Demander le certificat d'un parcours terminé : le nom à imprimer, confirmé une fois pour toutes. Variables : track, form, previous. #}
+{% block title %}Votre certificat · {{ track.title }} · {{ theme.name }}{% endblock %}
+
+{% block body %}
+    <main class="certificate-claim mx-auto w-full max-w-xl px-4 py-10 sm:px-6">
+        <p class="text-sm text-ink-muted"><a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></p>
+        <h1 class="mt-1 text-3xl font-semibold">🎓 Votre certificat de réussite</h1>
+        <p class="lead mt-3 text-ink-muted">Vous avez réussi tous les exercices du parcours. Le certificat le dit, avec le détail de chaque exercice : indices utilisés, solution consultée ou non.</p>
+        {% if previous and previous.revoked %}
+            <p class="mt-3 text-sm text-ink-muted">Votre certificat précédent ({{ previous.code }}) a été révoqué : celui-ci le remplace, avec un nouveau code.</p>
+        {% endif %}
+
+        <div class="mt-6 rounded-lg border border-line bg-surface p-4">
+            {{ form_start(form) }}
+                {{ form_row(form.holderName) }}
+                <button type="submit" class="btn btn-primary mt-2 w-full">Obtenir mon certificat</button>
+            {{ form_end(form) }}
+        </div>
+    </main>
+{% endblock %}

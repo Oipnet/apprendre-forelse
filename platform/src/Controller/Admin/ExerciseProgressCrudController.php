@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\ExerciseProgress;
 use App\Entity\ProgressStatus;
+use App\Entity\VerificationStatus;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -51,6 +52,10 @@ final class ExerciseProgressCrudController extends AbstractCrudController
         yield ChoiceField::new('status', 'Statut')->renderAsBadges(ProgressStatus::badges());
         yield IntegerField::new('hintsUsed', 'Indices');
         yield IntegerField::new('xpEarned', 'XP');
+        yield ChoiceField::new('verification', 'Vérification')->renderAsBadges(VerificationStatus::badges())
+            ->setHelp('Le code de la réussite, rejoué sur le serveur par le service « verificateur ».');
+        yield TextField::new('verificationDetail', 'Détail de la vérification')->onlyOnDetail();
+        yield DateTimeField::new('verifiedAt', 'Vérifiée le')->onlyOnDetail();
         yield DateTimeField::new('startedAt', 'Commencé le');
         yield DateTimeField::new('completedAt', 'Réussi le');
         yield DateTimeField::new('updatedAt', 'Dernière activité');
@@ -61,6 +66,7 @@ final class ExerciseProgressCrudController extends AbstractCrudController
         return $filters
             ->add(EntityFilter::new('user', 'Apprenant'))
             ->add(ChoiceFilter::new('status', 'Statut')->setChoices(ProgressStatus::valueChoices()))
+            ->add(ChoiceFilter::new('verification', 'Vérification')->setChoices(VerificationStatus::valueChoices()))
             ->add(TextFilter::new('trackId', 'Parcours'))
             ->add(TextFilter::new('exerciseId', 'Exercice'));
     }

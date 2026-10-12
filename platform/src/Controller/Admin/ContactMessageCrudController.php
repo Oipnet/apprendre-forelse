@@ -60,6 +60,7 @@ final class ContactMessageCrudController extends AbstractCrudController
         yield TextField::new('organization', 'Établissement');
         yield IntegerField::new('headcount', 'Effectif')->onlyOnDetail();
         yield AssociationField::new('user', 'Compte')->onlyOnDetail();
+        yield AssociationField::new('certificate', 'Certificat')->onlyOnDetail();
         yield TextareaField::new('message', 'Message')->setMaxLength(90)->onlyOnIndex();
         yield TextareaField::new('message', 'Message')->onlyOnDetail();
         yield BooleanField::new('handled', 'Traité')->renderAsSwitch(false);

@@ -1,0 +1,17 @@
+{% extends 'emails/_layout.html.twig' %}
+
+{% block preheader %}Votre certificat « {{ certificate.trackTitle }} » a été révoqué. Vous pouvez contester cette décision.{% endblock %}
+
+{% block content %}
+<p style="margin:0 0 12px;">Bonjour {{ user.displayName }},</p>
+
+<p style="margin:0 0 12px;">Votre certificat de réussite du parcours <strong>{{ certificate.trackTitle }}</strong> (code {{ certificate.code }}) a été révoqué. Sa page de vérification l'indique désormais.</p>
+
+<p style="margin:0 0 12px;">Motif : {{ certificate.revocationReason }}</p>
+
+<p style="margin:0 0 12px;">Si vous pensez qu'il s'agit d'une erreur, contestez la décision depuis la page du certificat : nous reprenons l'échange par email.</p>
+
+{{ include('emails/_button.html.twig', {href: url('app_certificate', {code: certificate.code}), label: 'Voir le certificat'}) }}
+{% endblock %}
+
+{% block reason %}Vous recevez cet email parce que ce certificat vous a été délivré sur {{ theme.name }}.{% endblock %}

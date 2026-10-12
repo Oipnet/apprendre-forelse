@@ -1,0 +1,10 @@
+Bonjour {{ user.displayName }},
+
+Votre certificat de réussite du parcours « {{ certificate.trackTitle }} » (code {{ certificate.code }}) a été révoqué. Sa page de vérification l'indique désormais.
+
+Motif : {{ certificate.revocationReason }}
+
+Si vous pensez qu'il s'agit d'une erreur, contestez la décision depuis la page du certificat : nous reprenons l'échange par email.
+{{ url('app_certificate', {code: certificate.code}) }}
+
+{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que ce certificat vous a été délivré sur ' ~ theme.name ~ '.'}) }}
