@@ -23,7 +23,7 @@ final class PackReader
     private array $practices = [];
     /** @var array<string, array{markdown: string, file: string, packId: string}> */
     private array $versionIntros = [];
-    /** @var array<string, array{markdown: string, file: string, packId: string}> */
+    /** @var array<string, array{markdown: string, file: string, packId: string, title: string|null}> */
     private array $conceptIntros = [];
     /** @var array<string, Article> */
     private array $articles = [];
@@ -222,6 +222,9 @@ final class PackReader
      * L'intro d'une page de notion : `<pack>/notions/controleur.md`, du Markdown sans titre. Le nom du fichier est
      * l'identifiant de la notion dans l'adresse (voir ConceptIndex::slug). Même règles que l'intro d'une version :
      * une faute de frappe dans le nom est refusée, et content:check signale une intro que rien n'affiche.
+     *
+     * Un en-tête YAML facultatif (entre deux lignes « --- ») peut donner `title` : le nom de la page tel qu'on le
+     * cherche (« Voter Symfony : contrôler l'accès à un objet »), là où l'étiquette des exercices reste courte (« Voter »).
      */
     private function loadConceptIntro(Pack $pack, string $file): void
     {
@@ -233,12 +236,26 @@ final class PackReader
             throw new ContentException(sprintf('Intro de notion « %s » présente deux fois (packs %s et %s).', $slug, $this->conceptIntros[$slug]['packId'], $pack->id));
         }
         $this->files->watch($file);
-        $markdown = trim((string) file_get_contents($file));
+        $markdown = (string) file_get_contents($file);
+        $title = null;
+        if (preg_match('/\A---\r?\n(.*?)\r?\n---\r?\n(.*)\z/s', $markdown, $parts)) {
+            try {
+                $meta = Yaml::parse($parts[1]);
+            } catch (ParseException $e) {
+                throw new ContentException(sprintf('%s : en-tête YAML invalide, %s', $file, lcfirst($e->getMessage())), previous: $e);
+            }
+            if (!\is_array($meta) || [] !== array_diff(array_keys($meta), ['title']) || !\is_string($meta['title'] ?? '')) {
+                throw new ContentException(sprintf('%s : l\'en-tête d\'une intro de notion ne connaît que « title », un texte.', $file));
+            }
+            $title = isset($meta['title']) ? trim($meta['title']) : null;
+            $markdown = $parts[2];
+        }
+        $markdown = trim($markdown);
         if ('' === $markdown) {
             throw new ContentException(sprintf('Intro de notion « %s » vide : retirez le fichier, la page reste alors hors des moteurs de recherche.', $file));
         }
 
-        $this->conceptIntros[$slug] = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id];
+        $this->conceptIntros[$slug] = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id, 'title' => '' === $title ? null : $title];
     }
 
     /**

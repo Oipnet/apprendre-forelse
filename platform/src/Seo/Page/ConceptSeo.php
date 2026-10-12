@@ -43,18 +43,21 @@ final readonly class ConceptSeo
      * Une notion : c'est le mot que l'on cherche dans un moteur, et la page qui rassemble ce qui le pratique. La
      * description reprend l'intro écrite quand il y en a une.
      *
-     * @param array{name: string, slug: string, exercises: list<array<string, mixed>>, practices: list<Practice>, intro?: string|null} $concept
+     * @param array{name: string, slug: string, exercises: list<array<string, mixed>>, practices: list<Practice>, intro?: string|null, title?: string|null} $concept
      */
     public function concept(array $concept): void
     {
         $count = \count($concept['exercises']) + \count($concept['practices']);
         $this->seo
-            ->setTitle(
-                sprintf('%s : %d exercices pour la pratiquer | %s', $concept['name'], $count, $this->theme->name()),
-                sprintf('%s : %d exercices pour la pratiquer', $concept['name'], $count),
-                sprintf('%s en exercices', $concept['name']),
-                $concept['name'],
-            )
+            ->setTitle(...(null !== ($title = $concept['title'] ?? null)
+                // Écrit par l'auteur : rendu tel quel, avec la marque s'il y a la place.
+                ? [sprintf('%s | %s', $title, $this->theme->name()), $title]
+                : [
+                    sprintf('%s : %d exercices pour la pratiquer | %s', $concept['name'], $count, $this->theme->name()),
+                    sprintf('%s : %d exercices pour la pratiquer', $concept['name'], $count),
+                    sprintf('%s en exercices', $concept['name']),
+                    $concept['name'],
+                ]))
             ->setDescription(
                 null !== ($concept['intro'] ?? null) ? $this->stories->firstParagraph($concept['intro']) : sprintf(
                     'Les %d exercices qui font travailler %s : chacun pose un problème à résoudre en écrivant du code dans le navigateur, corrigé par des tests.',

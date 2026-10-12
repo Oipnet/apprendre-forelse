@@ -143,7 +143,7 @@ final class ContentRepository implements ResetInterface
         return $this->content()->versionIntros;
     }
 
-    /** @return array<string, array{markdown: string, file: string, packId: string}> les intros des pages de notions, par notion */
+    /** @return array<string, array{markdown: string, file: string, packId: string, title: string|null}> les intros des pages de notions, par notion */
     public function conceptIntros(): array
     {
         return $this->content()->conceptIntros;

@@ -52,6 +52,7 @@ final class ConceptIndex implements ResetInterface
      *     practices: list<Practice>,
      *     related: list<array{name: string, slug: string}>,
      *     intro: string|null,
+     *     title: string|null,
      * }|null
      */
     public function find(string $slug): ?array
@@ -82,6 +83,8 @@ final class ConceptIndex implements ResetInterface
             ),
             // Écrite dans le pack, ou rien : sans texte, la page n'est qu'une liste de liens et reste hors des moteurs.
             'intro' => $this->content->conceptIntros()[$slug]['markdown'] ?? null,
+            // Le nom de la page tel qu'on le cherche, s'il est écrit dans l'en-tête de l'intro.
+            'title' => $this->content->conceptIntros()[$slug]['title'] ?? null,
         ];
     }
 

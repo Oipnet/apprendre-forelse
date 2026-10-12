@@ -11,8 +11,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 ### Ajouté
 
 - Notions : une intro écrite dans le pack (`<pack>/notions/<notion>.md`, du Markdown sans titre, nommé comme
-  l'adresse de la notion) ouvre la page de la notion et fait sa description. `content:check` signale une intro que
-  rien n'affiche.
+  l'adresse de la notion) ouvre la page de la notion et fait sa description. Un en-tête YAML facultatif donne son
+  `title`, le nom de la page tel qu'on le cherche (« Voter Symfony : contrôler l'accès à un objet »), qui remplace
+  l'étiquette courte dans le titre et le `<h1>`. `content:check` signale une intro que rien n'affiche.
 
 ### Modifié
 

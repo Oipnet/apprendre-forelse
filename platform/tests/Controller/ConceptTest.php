@@ -127,7 +127,7 @@ final class ConceptTest extends WebTestCase
         $this->assertCount(0, $crawler->filter('.concept-intro'));
     }
 
-    /** Une intro écrite dans le pack (notions/controleur.md) ouvre la page, fait sa description et la rend indexable. */
+    /** Une intro écrite dans le pack (notions/controleur.md) ouvre la page, fait sa description et son titre, et la rend indexable. */
     public function testUneNotionAvecIntroSAfficheEtSIndexe(): void
     {
         $this->usePacks(__DIR__.'/../../../examples/packs', __DIR__.'/../Fixtures/packs/pratique');
@@ -140,6 +140,8 @@ final class ConceptTest extends WebTestCase
         $this->assertFalse($client->getResponse()->headers->has('X-Robots-Tag'));
         $this->assertStringContainsString('<code>Request</code>', $crawler->filter('.concept-intro')->html(), 'L\'intro est du Markdown, rendu comme tel.');
         $this->assertStringStartsWith('Un contrôleur reçoit la Request', (string) $crawler->filter('meta[name="description"]')->attr('content'));
+        $this->assertSame('Contrôleur Symfony : de la requête à la réponse', $crawler->filter('h1')->text(), 'Le titre de l\'en-tête remplace l\'étiquette.');
+        $this->assertStringStartsWith('Contrôleur Symfony : de la requête à la réponse', $crawler->filter('title')->text());
 
         $client->request('GET', '/sitemap.xml');
         $this->assertStringContainsString('<loc>http://localhost/notions/controleur</loc>', (string) $client->getResponse()->getContent());
