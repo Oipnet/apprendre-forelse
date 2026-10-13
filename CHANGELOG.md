@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.6.2 — 2026-10-13
+
 ### Ajouté
 
 - **Mesure du démarrage du playground** : `exercice-ouvert` porte maintenant la durée du démarrage en secondes
