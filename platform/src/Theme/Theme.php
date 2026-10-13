@@ -2,6 +2,7 @@
 
 namespace App\Theme;
 
+use App\Share\ShareImageRenderer;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Service\ResetInterface;
@@ -173,6 +174,9 @@ final class Theme implements ResetInterface
     }
 
     /** Les couleurs des emails (styles en ligne) quand le thème n'en déclare pas : les jetons clairs du thème default. */
+    /** Les couleurs de l'éditeur stylisé des images de partage => celles de l'éditeur du thème (« editor »). */
+    private const array SHARE_EDITOR = ['background' => 'background', 'surface' => 'surface', 'line' => 'line', 'ink' => 'ink', 'muted' => 'muted', 'accent' => 'accent-text', 'gold' => 'gold', 'success' => 'success'];
+
     public const array EMAIL_COLORS = [
         'accent' => '#1d4ed8',
         'ink' => '#1c1917',
@@ -208,7 +212,7 @@ final class Theme implements ResetInterface
      * L'habillage des images de partage dessinées par le moteur (App\Share\ShareImageRenderer) : ce que le thème
      * déclare sous « share_card », sinon les couleurs des emails et les polices du moteur. Les chemins sont absolus.
      *
-     * @return array{image: string|null, font: string|null, text_font: string|null, background: string, ink: string, accent: string, muted: string}
+     * @return array{image: string|null, font: string|null, text_font: string|null, background: string, ink: string, accent: string, muted: string, editor: array<string, string>}
      */
     public function shareCard(): array
     {
@@ -216,6 +220,11 @@ final class Theme implements ResetInterface
         $card = $config->shareCard;
         $email = $this->emailColors();
         $path = static fn (?string $file) => null === $file ? null : $config->directory.'/'.$file;
+        // L'éditeur stylisé de l'image : les couleurs de l'éditeur du thème, sinon celles du moteur.
+        $editor = ShareImageRenderer::EDITOR;
+        foreach ($editor as $name => $color) {
+            $editor[$name] = $config->editor[ThemeStylesheet::EDITOR_COLORS[self::SHARE_EDITOR[$name]]] ?? $color;
+        }
 
         return [
             'image' => $path($card['image']),
@@ -226,6 +235,7 @@ final class Theme implements ResetInterface
             'ink' => $card['colors']['ink'] ?? $email['ink'],
             'accent' => $card['colors']['accent'] ?? $email['accent'],
             'muted' => $card['colors']['muted'] ?? $email['muted'],
+            'editor' => $editor,
         ];
     }
 

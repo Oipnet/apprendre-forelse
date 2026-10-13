@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 final readonly class ShareImage
 {
     /** À changer quand le dessin change (ShareImageRenderer) : toutes les images sont alors refaites. */
-    private const int DRAWING = 1;
+    private const int DRAWING = 2;
 
     public function __construct(
         private Theme $theme,
