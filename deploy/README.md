@@ -138,8 +138,8 @@ sous `preproduction` (`preproduction.yaml`), la production sous `production`.
 2. Publier une version : `tools/release.sh X.Y.Z`, relire `git show`, puis `git push --follow-tags`. La CI reprend
    l'image déjà testée sur `main` pour ce commit, l'étiquette, puis attend la validation avant de déployer.
 
-La fusion d'une PR sur `main` ne refait pas les tests quand `main` n'a pas changé depuis la PR (même contenu, CI de
-la PR verte) : seule l'image est construite, et la préproduction part plus tôt.
+La fusion d'une PR sur `main`, par commit de fusion comme par squash, ne refait pas les tests quand `main` n'a pas
+changé depuis la PR (même contenu, CI de la PR verte) : seule l'image est construite, et la préproduction part plus tôt.
 
 Une poussée sur `main` ne touche plus la production. Un passage relancé sur un commit ancien ne remet pas non plus une
 version dépassée en préproduction : seul le commit en tête de `main` s'y déploie.

@@ -57,16 +57,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Un commit de fusion (« Merge pull request ») a deux parents : main d'avant, puis la tête de la PR. Si son
-          # arbre est celui de la tête, main n'avait rien que la PR n'ait déjà : sa CI (qui teste la PR fusionnée à
-          # main) a vu exactement ce contenu. Une fusion par squash ou rebase, une poussée directe : tout refaire.
+          # La tête de la PR fusionnée : second parent d'un commit de fusion (« Merge pull request »), ou, pour une
+          # fusion par squash (un seul parent), la tête de la PR que GitHub associe au commit. Si l'arbre de main est
+          # celui de cette tête, main n'avait rien que la PR n'ait déjà : sa CI (qui teste la PR fusionnée à main) a
+          # vu exactement ce contenu. Une poussée directe (tools/release.sh), une PR pas à jour : tout refaire.
           arbre() { gh api "repos/$GITHUB_REPOSITORY/commits/$1" --jq .commit.tree.sha; }
           parents=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" --jq '.parents[].sha')
-          if [ "$(printf '%s\n' "$parents" | wc -l)" -ne 2 ]; then
+          case "$(printf '%s\n' "$parents" | wc -l)" in
+            2) tete=$(printf '%s\n' "$parents" | tail -n 1) ;;
+            1) tete=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+                 --jq '[.[] | select(.merged_at != null and .base.ref == "main")][0].head.sha // empty') ;;
+            *) tete="" ;;
+          esac
+          if [ -z "$tete" ]; then
             echo 'Pas une fusion de PR : tests complets.'
             exit 0
           fi
-          tete=$(printf '%s\n' "$parents" | tail -n 1)
           if [ "$(arbre "$tete")" != "$(arbre "$GITHUB_SHA")" ]; then
             echo "main a changé depuis la PR ($tete) : tests complets."
             exit 0
@@ -430,8 +436,8 @@ jobs:
     timeout-minutes: 5
     steps:
       # Revérifier tous les packs coûte une vingtaine de minutes de CI au dépôt de contenu : on ne le
-      # demande que lorsque la poussée peut changer le résultat d'un content:check. Une publication de
-      # version et un lancement manuel revérifient toujours tout, quoi qu'ils aient touché.
+      # demande que lorsque la poussée peut changer le résultat d'un content:check. Un lancement manuel, et une
+      # publication de version qui a dû refaire ses tests, revérifient toujours tout, quoi qu'ils aient touché.
       - name: Le moteur d'exercices a-t-il changé ?
         id: portee
         env:
@@ -439,7 +445,15 @@ jobs:
           AVANT: ${{ github.event.before }}
           EVENEMENT: ${{ github.event_name }}
           REFERENCE: ${{ github.ref }}
+          IMAGE_REPRISE: ${{ needs.reprise.outputs.image }}
         run: |
+          # L'étiquette qui reprend l'image de main vise un moteur que la poussée de main a déjà fait revérifier
+          # (le commit de version touche VERSION) : le redemander referait la même vérification.
+          if [ -n "$IMAGE_REPRISE" ]; then
+            echo 'Image de main reprise : sa poussée a déjà demandé la revérification du contenu.'
+            echo 'verifier=non' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "$EVENEMENT" != 'push' ] || [ "$REFERENCE" != 'refs/heads/main' ]; then
             echo 'Étiquette de version ou lancement manuel : revérification complète.'
             echo 'verifier=oui' >> "$GITHUB_OUTPUT"
