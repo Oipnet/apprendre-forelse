@@ -1,6 +1,7 @@
 import { mesurer } from '../mesure';
 import { xpBadge } from './layout';
 import { escapeHtml } from './html';
+import { mountShare, shareHtml } from './share';
 import type { Review } from './mentor';
 import type { MentorPanel } from './MentorPanel';
 import type { CompletionResult } from './progress';
@@ -38,6 +39,12 @@ export function nextStepHtml(exercise: Pick<ExercisePayload, 'next' | 'nextTrack
 		const source = exercise.practice?.pullRequest
 			? `<p>Envie de voir comment la fonctionnalité est faite ? <a href="${escapeHtml(exercise.practice.pullRequest)}" target="_blank" rel="noopener noreferrer">La pull request d'origine</a>.</p>`
 			: '';
+		const track = exercise.practice?.track;
+		if (track) {
+			return `<p>Cet exercice porte sur une seule fonctionnalité. Pour aller plus loin, le parcours <strong>${escapeHtml(track.title)}</strong> reprend le framework de bout en bout${track.description ? ` : ${escapeHtml(track.description)}` : '.'}</p>${source}
+					<a class="button primary" href="${escapeHtml(track.url)}">Découvrir « ${escapeHtml(track.title)} » →</a>
+					<a class="button ghost small" href="${escapeHtml(config.back.url)}">Retour à la Pratique</a>`;
+		}
 		return `${source}<a class="button" href="${escapeHtml(config.back.url)}">Retour à la Pratique</a>`;
 	}
 	if (exercise.next && config.progress.mode === 'local' && config.registerUrl) {
@@ -120,6 +127,11 @@ export class SuccessPanel {
 			}
 			panel.innerHTML = `<strong>🎉 Exercice réussi ! ${gainText(result, this.config, session.solutionRevealed)}</strong>${lessonLinkHtml(this.exercise, this.config, '<p>Vous avez terminé le chapitre.</p>')}${nextStepHtml(this.exercise, this.config)}`;
 			if (practice) panel.querySelector('.button')?.before(this.beforeAfterButton(), ' ');
+			// Annoncer la réussite : le texte proposé le dit (« J'ai réussi l'exercice… »).
+			if (this.config.share) {
+				panel.insertAdjacentHTML('beforeend', shareHtml(this.config.share.success, 'Partager votre réussite'));
+				mountShare(panel.querySelector<HTMLElement>('[data-share]')!, this.config.share.success, this.deps.mesure);
+			}
 			const ask = this.deps.savedReview ? null : this.deps.mentor.reviewButton();
 			if (ask) panel.append(ask);
 		} catch (error) {

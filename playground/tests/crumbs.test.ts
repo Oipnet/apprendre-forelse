@@ -21,6 +21,6 @@ describe('crumbs', () => {
 	});
 
 	it('en Pratique : le titre seul, sans chapitre ni voisins', () => {
-		expect(crumbs({ title: 'Un <point>', chapter: null, previous: null, next: null })).toBe('<span class="crumb-current">Un &lt;point&gt;</span>');
+		expect(crumbs({ title: 'Un <point>', chapter: null, previous: null, next: null })).toBe('<h1 class="crumb-current">Un &lt;point&gt;</h1>');
 	});
 });

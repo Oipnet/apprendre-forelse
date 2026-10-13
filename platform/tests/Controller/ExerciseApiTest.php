@@ -54,6 +54,21 @@ final class ExerciseApiTest extends WebTestCase
     }
 
     /**
+     * Une fois monté, le playground remplace l'intro de la page : c'est lui que lit un moteur de recherche. Il
+     * reprend le résumé de la Pratique et mène aux pages des notions, quand elles en ont une.
+     */
+    public function testLaPratiqueArriveAvecSonResumeEtLesPagesDeSesNotions(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $payload = $this->json($client, 'GET', '/api/exercises/pratique/exemple-map-request-header');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringStartsWith('Un en-tête HTTP arrive directement en argument', $payload['practice']['summary']);
+        $this->assertSame(['Contrôleur' => '/notions/controleur'], $payload['conceptUrls'], 'HttpKernel, vue sur un seul exercice, n\'a pas de page.');
+    }
+
+    /**
      * Le navigateur ne redéclare plus rien du framework : tout ce qu'il en sait arrive ici. Les clés de
      * ce bloc sont le contrat avec playground/src/app/types.ts (FrameworkProfile) — les changer casse
      * l'éditeur en silence, d'où ce test.

@@ -108,7 +108,7 @@
 
                 <section id="profil">
                     <h2 class="text-xl font-semibold">Profil</h2>
-                    <p class="mt-1 text-ink-muted">Votre pseudo s'affiche en haut des pages{% if user.cohort %} et dans le suivi de votre cohorte{% endif %}.</p>
+                    <p class="mt-1 text-ink-muted">Votre pseudo s'affiche en haut des pages{% if user.cohort %}, dans le suivi de votre cohorte{% endif %}{% if user.leaderboardOptIn %} et dans le <a href="{{ path('app_leaderboard') }}">classement</a>{% endif %}.</p>
                     <div class="mt-4 space-y-4">
                         <div class="rounded-lg border border-line bg-surface p-4">
                             {{ form_start(profileForm) }}
@@ -231,6 +231,22 @@
                             {% endfor %}
                         </ul>
                     {% endif %}
+                </div>
+
+                <div class="space-y-3 rounded-lg border border-line bg-surface p-4" id="classement">
+                    <div class="font-semibold">Classement</div>
+                    <p class="text-sm">
+                        {%- if leaderboardEntry -%}
+                            {{ user.leaderboardOptIn ? 'Vous êtes' : 'Vous seriez' }} <strong>{{ leaderboardEntry.rank }}<sup>{{ leaderboardEntry.rank == 1 ? 'er' : 'e' }}</sup></strong> au classement général.
+                        {%- else -%}
+                            Réussissez un exercice pour entrer dans le classement.
+                        {%- endif %}
+                        {{ user.leaderboardOptIn ? 'Vous y apparaissez sous votre pseudo.' : 'Vous n\'y apparaissez pas : c\'est à vous de le choisir. Seul votre pseudo serait affiché, avec votre XP et vos exercices réussis.' }}
+                    </p>
+                    <div class="flex flex-wrap items-center gap-3">
+                        {{ include('leaderboard/_opt_in.html.twig', {retour: 'compte'}) }}
+                        <a class="text-sm" href="{{ path('app_leaderboard') }}">Voir le classement <span aria-hidden="true">→</span></a>
+                    </div>
                 </div>
 
                 <div class="space-y-3 rounded-lg border border-line bg-bg-2 p-4">

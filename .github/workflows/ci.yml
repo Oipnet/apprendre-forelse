@@ -28,15 +28,19 @@ env:
   # Xdebug ferait planter le serveur interne de PHP et ralentirait PHPUnit.
   PHP_VERSION: '8.4'
 
+# Image des machines d'exécution nommée plutôt que « ubuntu-latest » : comme pour les actions épinglées, la
+# bascule vers la version suivante d'Ubuntu se fait dans une PR où la CI tourne dessus, pas un matin sans prévenir.
 jobs:
   # Une étiquette de version vise un contenu que la poussée de main vient de tester et de construire
   # (tools/release.sh commite sur main, ou dans une PR fusionnée ensuite) : plutôt que tout refaire, on attend la
   # CI de main sur ce contenu et, si elle est verte, on reprend son image (voir « Publier la version »). Si elle a
   # échoué, a été annulée ou n'existe pas, l'étiquette refait tests et construction, comme avant.
-  # Tourne à chaque passage (sans rien faire hors étiquette) : un job ignoré ferait ignorer ses dépendants.
+  # De même, la fusion d'une PR sur main n'a pas à refaire des tests que la PR vient de passer sur le même contenu
+  # (voir « Tests déjà passés dans la PR ») : seule l'image, que la préproduction déploie, est construite.
+  # Tourne à chaque passage (sans rien faire hors étiquette ni fusion) : un job ignoré ferait ignorer ses dépendants.
   reprise:
     name: Image déjà testée
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
       actions: read
@@ -44,7 +48,45 @@ jobs:
       packages: read
     outputs:
       image: ${{ steps.cherche.outputs.image }}
+      # La PR fusionnée dont la CI a testé ce contenu, si les tests de main peuvent être sautés ; vide sinon.
+      pr-testee: ${{ steps.pr.outputs.commit }}
     steps:
+      - name: Tests déjà passés dans la PR
+        id: pr
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # La tête de la PR fusionnée : second parent d'un commit de fusion (« Merge pull request »), ou, pour une
+          # fusion par squash (un seul parent), la tête de la PR que GitHub associe au commit. Si l'arbre de main est
+          # celui de cette tête, main n'avait rien que la PR n'ait déjà : sa CI (qui teste la PR fusionnée à main) a
+          # vu exactement ce contenu. Une poussée directe (tools/release.sh), une PR pas à jour : tout refaire.
+          arbre() { gh api "repos/$GITHUB_REPOSITORY/commits/$1" --jq .commit.tree.sha; }
+          parents=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" --jq '.parents[].sha')
+          case "$(printf '%s\n' "$parents" | wc -l)" in
+            2) tete=$(printf '%s\n' "$parents" | tail -n 1) ;;
+            1) tete=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+                 --jq '[.[] | select(.merged_at != null and .base.ref == "main")][0].head.sha // empty') ;;
+            *) tete="" ;;
+          esac
+          if [ -z "$tete" ]; then
+            echo 'Pas une fusion de PR : tests complets.'
+            exit 0
+          fi
+          if [ "$(arbre "$tete")" != "$(arbre "$GITHUB_SHA")" ]; then
+            echo "main a changé depuis la PR ($tete) : tests complets."
+            exit 0
+          fi
+          etat=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --event pull_request --commit "$tete" \
+            --limit 1 --json status,conclusion --jq '.[0] | "\(.status) \(.conclusion)"')
+          if [ "$etat" != 'completed success' ]; then
+            echo "CI de la PR sur $tete : « ${etat:-introuvable} ». Tests complets."
+            exit 0
+          fi
+          echo "Contenu déjà testé par la CI de la PR ($tete) : tests sautés, image construite pour la préproduction."
+          echo "commit=$tete" >> "$GITHUB_OUTPUT"
+
+
       - name: Connexion au registre
         if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -103,8 +145,8 @@ jobs:
   moteur:
     name: Tests, types et packs
     needs: reprise
-    if: needs.reprise.outputs.image == ''
-    runs-on: ubuntu-latest
+    if: needs.reprise.outputs.image == '' && needs.reprise.outputs.pr-testee == ''
+    runs-on: ubuntu-26.04
     timeout-minutes: 25
     services:
       postgres:
@@ -128,7 +170,7 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: ${{ env.PHP_VERSION }}
-          extensions: ctype, iconv, intl, pdo_pgsql, zip
+          extensions: ctype, gd, iconv, intl, pdo_pgsql, zip
           coverage: none # pas de Xdebug ni de PCOV : plus rapide, et Xdebug fait planter le serveur
 
       # La version de Node est déclarée dans .nvmrc, et nulle part ailleurs (l'image la reprend : voir plus bas).
@@ -280,7 +322,7 @@ jobs:
     name: Image Docker
     needs: reprise
     if: needs.reprise.outputs.image == ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     permissions:
       contents: read
@@ -344,7 +386,7 @@ jobs:
     name: Publier la version
     needs: reprise
     if: needs.reprise.outputs.image != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -390,12 +432,12 @@ jobs:
       ${{ !cancelled() && needs.reprise.result == 'success' && needs.moteur.result != 'failure' && vars.CONTENU_DEPOT != ''
       && (((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main')
       || startsWith(github.ref, 'refs/tags/v')) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       # Revérifier tous les packs coûte une vingtaine de minutes de CI au dépôt de contenu : on ne le
-      # demande que lorsque la poussée peut changer le résultat d'un content:check. Une publication de
-      # version et un lancement manuel revérifient toujours tout, quoi qu'ils aient touché.
+      # demande que lorsque la poussée peut changer le résultat d'un content:check. Un lancement manuel, et une
+      # publication de version qui a dû refaire ses tests, revérifient toujours tout, quoi qu'ils aient touché.
       - name: Le moteur d'exercices a-t-il changé ?
         id: portee
         env:
@@ -403,7 +445,15 @@ jobs:
           AVANT: ${{ github.event.before }}
           EVENEMENT: ${{ github.event_name }}
           REFERENCE: ${{ github.ref }}
+          IMAGE_REPRISE: ${{ needs.reprise.outputs.image }}
         run: |
+          # L'étiquette qui reprend l'image de main vise un moteur que la poussée de main a déjà fait revérifier
+          # (le commit de version touche VERSION) : le redemander referait la même vérification.
+          if [ -n "$IMAGE_REPRISE" ]; then
+            echo 'Image de main reprise : sa poussée a déjà demandé la revérification du contenu.'
+            echo 'verifier=non' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "$EVENEMENT" != 'push' ] || [ "$REFERENCE" != 'refs/heads/main' ]; then
             echo 'Étiquette de version ou lancement manuel : revérification complète.'
             echo 'verifier=oui' >> "$GITHUB_OUTPUT"
@@ -436,13 +486,17 @@ jobs:
   # que les versions publiées (tools/release.sh), après validation dans GitHub (règle de l'environnement « production »).
   deployer-preproduction:
     name: Déployer la préproduction
-    needs: [moteur, docker]
+    needs: [reprise, moteur, docker]
     # Une poussée sur main, ou un lancement manuel sur main : jamais une PR. Tant que la variable de dépôt STAGING_URL
     # n'existe pas, la préproduction n'est pas installée sur le serveur : le job est ignoré, rien n'échoue.
+    # Les tests ont passé, ici ou dans la PR fusionnée (« moteur » est alors ignoré) : d'où !cancelled() plutôt
+    # qu'un simple needs, qui ferait ignorer ce job avec lui.
     if: >-
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-      && vars.STAGING_URL != ''
-    runs-on: ubuntu-latest
+      ${{ !cancelled() && needs.docker.result == 'success'
+      && (needs.moteur.result == 'success' || (needs.moteur.result == 'skipped' && needs.reprise.outputs.pr-testee != ''))
+      && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+      && vars.STAGING_URL != '' }}
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     concurrency:
       group: deploiement-preproduction
@@ -514,7 +568,7 @@ jobs:
       ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v')
       && ((needs.reprise.outputs.image != '' && needs.version.result == 'success')
       || (needs.reprise.outputs.image == '' && needs.moteur.result == 'success' && needs.docker.result == 'success')) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     # Un déploiement à la fois, jamais annulé en cours de route.
     concurrency:

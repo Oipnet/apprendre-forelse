@@ -457,6 +457,70 @@ final class ContentRepositoryTest extends TestCase
         $this->repository($this->tmp)->articles();
     }
 
+    public function testChargeLesThemesDeNotions(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P");
+        $filesystem->dumpFile($this->tmp.'/p/notions/themes.yaml', <<<'YAML'
+            symfony:
+              - title: Doctrine & base de données
+                description: Modéliser, migrer et interroger.
+                notions: [Migrations, Requêtes N+1]
+              - title: Sécurité
+                notions: [Voter]
+            laravel:
+              - title: Eloquent
+                notions: [Relations]
+            YAML);
+
+        $themes = $this->repository($this->tmp)->conceptThemes();
+
+        $this->assertSame(['symfony', 'laravel'], array_keys($themes));
+        $this->assertSame('doctrine-base-de-donnees', $themes['symfony'][0]->id);
+        $this->assertSame('Doctrine & base de données', $themes['symfony'][0]->title);
+        $this->assertSame('Modéliser, migrer et interroger.', $themes['symfony'][0]->description);
+        $this->assertSame(['Migrations', 'Requêtes N+1'], $themes['symfony'][0]->concepts);
+        $this->assertSame('', $themes['symfony'][1]->description, 'La description est facultative.');
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function themesDeNotionsRefuses(): iterable
+    {
+        yield 'framework inconnu' => ["cobol:\n  - {title: T, notions: [N]}", 'framework « cobol » inconnu'];
+        yield 'pas une liste' => ["symfony: Fondations", '« symfony » est une liste de thèmes'];
+        yield 'clé inconnue' => ["symfony:\n  - {title: T, notions: [N], couleur: rouge}", 'clé « couleur » inconnue'];
+        yield 'sans titre' => ["symfony:\n  - {notions: [N]}", 'clé « title » manquante'];
+        yield 'sans notions' => ["symfony:\n  - {title: T}", '« notions » est la liste des notions du thème'];
+        yield 'notion qui n\'est pas un libellé' => ["symfony:\n  - {title: T, notions: [{nom: N}]}", 'une notion est un libellé'];
+        yield 'notion rangée deux fois' => ["symfony:\n  - {title: A, notions: [Voter]}\n  - {title: B, notions: [voter]}", 'la notion « voter » est déjà rangée dans « A »'];
+        yield 'thème déclaré deux fois' => ["symfony:\n  - {title: A, notions: [N]}\n  - {title: A, notions: [M]}", 'thème « A » déclaré deux fois'];
+    }
+
+    #[DataProvider('themesDeNotionsRefuses')]
+    public function testDesThemesDeNotionsMalFormesSontRefuses(string $yaml, string $message): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P");
+        $filesystem->dumpFile($this->tmp.'/p/notions/themes.yaml', $yaml);
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage($message);
+        $this->repository($this->tmp)->conceptThemes();
+    }
+
+    public function testUnSeulPackRangeLesNotionsDUnFramework(): void
+    {
+        $filesystem = new Filesystem();
+        foreach (['p1', 'p2'] as $pack) {
+            $filesystem->dumpFile("{$this->tmp}/{$pack}/pack.yaml", "id: {$pack}\ntitle: P");
+            $filesystem->dumpFile("{$this->tmp}/{$pack}/notions/themes.yaml", "symfony:\n  - {title: T, notions: [N]}");
+        }
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage('les notions Symfony sont déjà rangées par le pack « p1 »');
+        $this->repository($this->tmp)->conceptThemes();
+    }
+
     public function testSelectionnerLaPratique(): void
     {
         $repository = $this->repository(self::ROOT.'/examples/packs', __DIR__.'/../Fixtures/packs/pratique');

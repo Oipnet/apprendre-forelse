@@ -1,0 +1,15 @@
+{#
+  Les boutons de partage d'une page : de simples liens vers LinkedIn, X et Bluesky (aucun script de ces réseaux sur le
+  site), et la copie du lien. Quand le navigateur sait partager (téléphone, Safari…), son bouton s'ajoute (site.ts).
+  Variables : links (App\Share\ShareLinks::of), title (facultatif, « Partager »), mesure (facultatif : ce qui est
+  partagé, pour la mesure d'audience, par exemple {exercice: …}).
+#}
+<div class="share mt-6 flex flex-wrap items-center gap-2" data-share="{{ {text: links.text, natif: links.natif, lien: links.lien, mesure: mesure|default({})}|json_encode }}">
+    <span class="share-title text-sm text-ink-muted">{{ title|default('Partager') }} :</span>
+    <button type="button" class="btn px-3 py-1 text-sm" data-share-native hidden>Partager…</button>
+    <a class="btn px-3 py-1 text-sm" href="{{ links.linkedin }}" target="_blank" rel="noopener noreferrer" data-share-network="linkedin">LinkedIn</a>
+    <a class="btn px-3 py-1 text-sm" href="{{ links.x }}" target="_blank" rel="noopener noreferrer" data-share-network="x">X</a>
+    <a class="btn px-3 py-1 text-sm" href="{{ links.bluesky }}" target="_blank" rel="noopener noreferrer" data-share-network="bluesky">Bluesky</a>
+    <button type="button" class="btn px-3 py-1 text-sm" data-share-copy>Copier le lien</button>
+    <span class="share-status text-sm text-ink-muted" role="status"></span>
+</div>

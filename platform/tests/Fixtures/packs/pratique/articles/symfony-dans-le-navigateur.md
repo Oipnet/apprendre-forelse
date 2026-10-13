@@ -7,7 +7,7 @@ updated: 2026-09-25
 
 # Symfony dans le navigateur, sans serveur
 
-PHP compilé en WebAssembly exécute le front controller de Symfony.
+PHP compilé en WebAssembly exécute le front controller de Symfony, comme dans [la Pratique](/pratique).
 
 ## Le Service Worker
 

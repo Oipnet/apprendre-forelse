@@ -248,6 +248,33 @@ docker compose exec app bin/console app:environnement:synchroniser
 démarrage). L'archive va dans le volume `environnements`, pas dans l'image. Après une mise à jour du pack
 qui touche son décor, la même commande le réempaquette : elle voit que les sources ont changé.
 
+## Classement et vérification des réussites
+
+`/classement` classe à l'XP les apprenants qui ont choisi d'y paraître (case de « Mon compte », désactivée par
+défaut) : seul le pseudo est affiché. Un administrateur retire un compte du classement depuis `/admin` →
+Utilisateurs (« Retiré du classement »).
+
+Le dernier exercice réussi d'un parcours rapporte un bonus : 10 % de l'XP du parcours, une fois. Après la mise à jour
+qui l'introduit, attribuez-le aux parcours déjà terminés :
+`docker compose exec app php bin/console app:classement:bonus-parcours` (sans effet si on la relance).
+
+Les tests d'un exercice tournent dans le navigateur, qui annonce la réussite : une réussite peut donc être
+falsifiée. Le code qui a réussi est conservé, et le service **`verificateur`** le rejoue contre les tests de
+l'exercice. Une réussite que les tests n'y confirment pas sort du classement, avec le bonus de son parcours (l'XP de
+l'exercice, elle, reste au compte) ; `/admin` → Progression montre le verdict et sa raison.
+
+> ⚠️ **Rejouer une réussite exécute le code d'un apprenant sur ce serveur.** Il tourne dans le service
+> `verificateur`, sans réseau, sans base, sans secrets, le système de fichiers en lecture seule, et sous
+> l'utilisateur `nobody`, qui ne voit pas le code des autres apprenants. Le service n'a jamais accès au
+> socket Docker.
+
+Le worker envoie les réussites en attente et relève les verdicts toutes les cinq minutes
+(planificateur Symfony, `scheduler_verification`) ; `docker compose logs verificateur` montre chaque verdict.
+
+Sans le service (un `compose.yaml` antérieur à cette version, ou `VERIFICATIONS_DIR` vide), rien n'est
+vérifié : les réussites restent « en attente » et comptent au classement. Les exercices Nuxt ne sont pas
+rejoués (Node n'est pas dans l'image) : ils sont marqués « non vérifiables », et comptent aussi.
+
 ## Réglages
 
 Tout se règle dans `.env`, commenté ligne à ligne. Après chaque modification :
@@ -260,7 +287,7 @@ docker compose up -d
 | --- | --- | --- |
 | Adresses | `APP_URL`, `SANDBOX_URL` | Deux domaines distincts, avec leur schéma (`https://`). |
 | Base | `POSTGRES_PASSWORD` | Lettres et chiffres. PostgreSQL ne le lit qu'à la création de la base : le changer ensuite ne change pas le mot de passe réel. |
-| Fuseau | `APP_TIMEZONE` | Les dates sont stockées sans fuseau : choisissez-le avant les premiers comptes. |
+| Fuseau | `APP_TIMEZONE` | Les dates sont stockées sans fuseau : choisissez-le avant les premiers comptes. Pour en changer ensuite, voir « Changer de fuseau » ci-dessous. |
 | Mots de passe | `PASSWORD_BREACH_CHECK` | Un nouveau mot de passe présent dans une fuite connue est refusé : seuls les 5 premiers caractères de son empreinte partent vers `api.pwnedpasswords.com`. Mettez `0` si le serveur n'a pas d'accès sortant ; si le service ne répond pas, le mot de passe est accepté. |
 | Emails | `MAILER_DSN`, `MAILER_FROM`, `CONTACT_EMAIL`, `REGISTRATION_ALERT_EMAIL` | Sans `MAILER_DSN`, aucun email ne part : ni confirmation d'adresse, ni mot de passe oublié. Test : `docker compose exec app bin/console mailer:test vous@example.org`. Un `MAILER_FROM` sans nom (`ne-pas-repondre@example.org`) prend celui de votre marque ; les emails aux apprenants ont pour adresse de réponse `CONTACT_EMAIL` (à défaut, l'adresse des mentions légales). Les emails passent par une file d'attente dans la base, que vide le service `worker` : un serveur SMTP en panne ne bloque pas l'inscription, l'email part à son retour. `MESSENGER_TRANSPORT_DSN=sync://` les envoie pendant la requête, sans worker. |
 | Mentions légales | `LEGAL_*` | Remplissent `/mentions-legales` et `/confidentialite` ; tant qu'un champ obligatoire manque, les pages le signalent. Les textes sont écrits pour le droit français. |
@@ -334,11 +361,13 @@ ANALYTICS_SERVER_NAME=https://suivi.example.org
 Caddy obtiendra son certificat tout seul. **À ne faire qu'une fois le mot de passe changé** : cette
 adresse expose la page de connexion d'Umami sur l'internet.
 
-Au-delà des pages vues, la plateforme envoie cinq événements, tous anonymes : `exercice-ouvert`,
+Au-delà des pages vues, la plateforme envoie des événements, tous anonymes : `exercice-ouvert`,
 `tests-lances`, `exercice-reussi`, `indice-demande` et `solution-consultee`, avec l'identifiant de
 l'exercice et du parcours. Ils se lisent dans *Events*, et ils répondent à la question que les pages
 vues laissent entière : un visiteur a-t-il écrit du code, ou seulement lu ? Le code écrit, lui, n'est
-jamais transmis.
+jamais transmis. Le démarrage du playground a aussi sa mesure : `exercice-ouvert` porte sa durée en
+secondes (`duree`) et `premier` (environnement pas encore en cache), `demarrage-echoue` part quand PHP
+ne démarre pas, et `demarrage-interrompu` quand le visiteur quitte la page avant la fin du chargement.
 
 ### Les robots des moteurs de recherche
 
@@ -462,6 +491,24 @@ la mise à jour : une migration déjà jouée ne se défait pas toute seule.
 
 Le fichier `compose.yaml` évolue parfois avec le moteur (une nouvelle variable, par exemple) : le journal le
 signale ; retéléchargez-le alors avec la commande `curl` de l'installation.
+
+### Changer de fuseau
+
+Les dates sont écrites à l'heure de `APP_TIMEZONE`, sans fuseau. Changer la variable seule décalerait toutes celles
+déjà enregistrées (d'une à deux heures entre UTC et Paris). `app:fuseau:convertir` les réécrit, une seule fois, dans
+une transaction. Faites d'abord une sauvegarde, puis :
+
+```bash
+docker compose stop app worker                 # plus rien n'écrit dans la base
+# .env : APP_TIMEZONE=Europe/Paris
+docker compose run --rm app php bin/console app:fuseau:convertir UTC Europe/Paris               # compte seulement
+docker compose run --rm app php bin/console app:fuseau:convertir UTC Europe/Paris --appliquer
+docker compose up -d
+```
+
+La commande refuse de tourner tant que `APP_TIMEZONE` ne vaut pas le nouveau fuseau, et une fois les dates
+converties, elle refuse une seconde conversion. Une heure prise dans la nuit du passage à l'heure d'hiver (entre 2 h et
+3 h, qui existe deux fois) garde la première des deux.
 
 ## Sauvegarder et restaurer
 

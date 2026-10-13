@@ -2,8 +2,11 @@
 
 namespace App\Tests\Theme;
 
+use App\Share\ShareImageRenderer;
+use App\Theme\Theme;
 use App\Theme\ThemeLoader;
 use App\Tests\ThemeTrait;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -27,7 +30,7 @@ final class ThemeTest extends TestCase
 
     protected function tearDown(): void
     {
-        (new Filesystem())->remove($this->tmp);
+        (new Filesystem())->remove([$this->tmp, $this->tmp.'-dehors.ttf']);
     }
 
     public function testSansDossierCEstLeThemeDuMoteur(): void
@@ -450,6 +453,74 @@ final class ThemeTest extends TestCase
     private function asset(string $path, string $content): void
     {
         (new Filesystem())->dumpFile($this->tmp.'/assets/'.$path, $content);
+    }
+
+    public function testLesImagesDePartageSuiventLeThemeSansRienDeclarer(): void
+    {
+        $card = self::theme()->shareCard();
+        $this->assertSame(['image' => null, 'font' => null, 'text_font' => null], array_intersect_key($card, ['image' => 1, 'font' => 1, 'text_font' => 1]), 'Le moteur : ses polices (ShareImageRenderer).');
+        $this->assertSame(Theme::EMAIL_COLORS['accent'], $card['accent']);
+
+        $this->assertSame(ShareImageRenderer::EDITOR, $card['editor'], 'L\'éditeur stylisé : celui du moteur.');
+
+        $this->write("name: A\ncolors:\n  accent: '#9a3412'\n  background: '#faf7f2'\neditor:\n  accent-text: '#9186f5'\n  background: '#16171d'\n");
+        $card = self::theme($this->tmp)->shareCard();
+        $this->assertSame('#9a3412', $card['accent'], 'Les couleurs déclarées du site.');
+        $this->assertSame('#faf7f2', $card['background']);
+        $this->assertSame(['background' => '#16171d', 'accent' => '#9186f5'], array_intersect_key($card['editor'], ['background' => 1, 'accent' => 1]), 'Les couleurs de l\'éditeur du thème.');
+        $this->assertSame(ShareImageRenderer::EDITOR['gold'], $card['editor']['gold']);
+    }
+
+    public function testShareCardDeclareSesFichiersEtSesCouleurs(): void
+    {
+        mkdir($this->tmp.'/polices');
+        touch($this->tmp.'/polices/titres.ttf');
+        touch($this->tmp.'/fond.png');
+        $this->write("name: A\nshare_card:\n  image: fond.png\n  font: polices/titres.ttf\n  ink: '#111111'\n");
+        $card = self::theme($this->tmp)->shareCard();
+
+        $this->assertSame($this->tmp.'/fond.png', $card['image']);
+        $this->assertSame($this->tmp.'/polices/titres.ttf', $card['font']);
+        $this->assertSame($this->tmp.'/polices/titres.ttf', $card['text_font'], 'Une seule police : elle sert à tout le texte.');
+        $this->assertSame('#111111', $card['ink']);
+    }
+
+    public function testLImageDePartagePrendLeLogoDesEmails(): void
+    {
+        $this->assertNull(self::theme()->shareCard()['logo'], 'Le moteur n\'a pas de logo.');
+
+        touch($this->tmp.'/logo.webp');
+        touch($this->tmp.'/logo.png');
+        $this->write("name: Forelse\nlogo: logo.webp\n");
+        $this->assertNull(self::theme($this->tmp)->shareCard()['logo'], 'Un webp seul : pas de logo (comme dans les emails).');
+
+        $this->write("name: Forelse\nlogo: logo.webp\nemail_logo: logo.png\n");
+        $card = self::theme($this->tmp)->shareCard();
+        $this->assertSame([$this->tmp.'/logo.png', 'Forelse'], [$card['logo'], $card['name']]);
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function shareCardsInvalides(): iterable
+    {
+        yield 'clé inconnue' => ["share_card:\n  titre: Bonjour\n", '« share_card.titre » inconnue'];
+        yield 'couleur' => ["share_card:\n  accent: rouge\n", '« share_card.accent » : une couleur hexadécimale est attendue'];
+        yield 'woff2' => ["share_card:\n  font: titres.woff2\n", 'doit être un fichier .ttf, .otf'];
+        yield 'absent' => ["share_card:\n  image: fond.png\n", '« share_card.image » : fichier introuvable'];
+        yield 'hors du dossier' => ["share_card:\n  font: ../titres.ttf\n", 'sans « .. »'];
+        yield 'lien qui sort du dossier' => ["share_card:\n  font: lien.ttf\n", 'fichier introuvable dans le dossier du thème'];
+    }
+
+    #[DataProvider('shareCardsInvalides')]
+    public function testUnShareCardInvalideEstSignale(string $yaml, string $message): void
+    {
+        // Un fichier à côté du dossier du thème (retiré par tearDown), et un lien vers lui dans le thème.
+        touch($this->tmp.'-dehors.ttf');
+        symlink($this->tmp.'-dehors.ttf', $this->tmp.'/lien.ttf');
+        $this->write("name: A\n".$yaml);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage($message);
+        self::theme($this->tmp)->shareCard();
     }
 
     private function write(string $yaml, string $file = 'theme.yaml'): void

@@ -1,0 +1,9 @@
+# Range les notions du pack de démo (Symfony). Laravel n'a pas de thèmes : ses notions restent une liste. Docker n'a
+# aucune notion pratiquée : son thème ne suffit pas à lui ouvrir un onglet.
+symfony:
+  - title: Les bases
+    description: La requête, la route, la réponse.
+    notions: [Contrôleur, Route]
+docker:
+  - title: Images
+    notions: [Dockerfile]

@@ -45,6 +45,9 @@ final readonly class SearchIndexing
     /** Filtre du catalogue des parcours : même règle. */
     public const array TRACK_FILTERS = ['framework'];
 
+    /** Attribut de requête posé par markThin() : une page publique trop mince pour être proposée aux moteurs. */
+    private const string THIN = '_seo_thin';
+
     public const string NOINDEX = 'noindex';
     public const string NOINDEX_FOLLOW = 'noindex, follow';
 
@@ -61,6 +64,15 @@ final readonly class SearchIndexing
         return $this->enabled && !$this->sandbox->isSandboxRequest($request);
     }
 
+    /**
+     * Une page publique sans texte à elle (une notion sans intro) : ses liens se suivent, elle ne s'indexe pas.
+     * Mieux vaut quelques pages fournies que beaucoup de listes que les moteurs jugent minces.
+     */
+    public static function markThin(Request $request): void
+    {
+        $request->attributes->set(self::THIN, true);
+    }
+
     /** La directive robots de la requête, ou null si la page s'indexe normalement. */
     public function directive(Request $request, int $status = 200): ?string
     {
@@ -72,7 +84,7 @@ final readonly class SearchIndexing
             'app_tracks' => self::TRACK_FILTERS,
             default => [],
         };
-        if (array_intersect($filters, array_keys($request->query->all()))) {
+        if ($request->attributes->getBoolean(self::THIN) || array_intersect($filters, array_keys($request->query->all()))) {
             return self::NOINDEX_FOLLOW;
         }
 

@@ -6,6 +6,8 @@ use App\Admin\ProgressSummary;
 use App\Entity\ExerciseProgress;
 use App\Entity\ProgressStatus;
 use App\Entity\User;
+use App\Entity\VerificationStatus;
+use App\Leaderboard\Leaderboard;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
@@ -125,5 +127,125 @@ class ExerciseProgressRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->getQuery()
             ->getScalarResult(), 'trackId');
+    }
+
+    /**
+     * Le classement : XP et exercices réussis par apprenant, du meilleur au moins bon. Seuls comptent les apprenants qui
+     * l'ont choisi (et que l'admin n'en a pas retirés), plus $include, pour lui dire où il se placerait. Une réussite que
+     * le verificateur a infirmée ne compte pas ; une réussite en attente compte déjà.
+     *
+     * @param \DateTimeImmutable|null $since réussites depuis cette date seulement (le classement du mois)
+     * @param \DateTimeImmutable|null $until et avant celle-ci (le classement du mois précédent)
+     * @param string|null             $track un seul parcours, ou Leaderboard::PRACTICE pour la Pratique
+     *
+     * @return list<array{userId: int, displayName: string, xp: int, exercises: int}>
+     */
+    public function leaderboardRows(?\DateTimeImmutable $since = null, ?User $include = null, ?\DateTimeImmutable $until = null, ?string $track = null): array
+    {
+        $builder = $this->createQueryBuilder('p')
+            ->select('u.id AS userId', 'u.displayName AS displayName', 'SUM(p.xpEarned) AS xp', 'COUNT(p.id) AS exercises')
+            ->join('p.user', 'u')
+            ->andWhere('p.status = :completed')
+            ->andWhere('p.verification IS NULL OR p.verification <> :failed')
+            ->andWhere('u.leaderboardExcluded = false')
+            ->groupBy('u.id', 'u.displayName')
+            ->having('SUM(p.xpEarned) > 0')
+            ->orderBy('xp', 'DESC')
+            ->addOrderBy('exercises', 'DESC')
+            ->addOrderBy('u.displayName', 'ASC')
+            ->addOrderBy('u.id', 'ASC')
+            ->setParameter('completed', ProgressStatus::Completed)
+            ->setParameter('failed', VerificationStatus::Failed);
+        if (null !== $include) {
+            $builder->andWhere('u.leaderboardOptIn = true OR u = :include')->setParameter('include', $include);
+        } else {
+            $builder->andWhere('u.leaderboardOptIn = true');
+        }
+        if (null !== $since) {
+            $builder->andWhere('p.completedAt >= :since')->setParameter('since', $since);
+        }
+        if (null !== $until) {
+            $builder->andWhere('p.completedAt < :until')->setParameter('until', $until);
+        }
+        if (Leaderboard::PRACTICE === $track) {
+            $builder->andWhere('p.trackId IS NULL');
+        } elseif (null !== $track) {
+            $builder->andWhere('p.trackId = :track')->setParameter('track', $track);
+        }
+
+        return array_map(static fn (array $row) => [
+            'userId' => (int) $row['userId'],
+            'displayName' => (string) $row['displayName'],
+            'xp' => (int) $row['xp'],
+            'exercises' => (int) $row['exercises'],
+        ], $builder->getQuery()->getArrayResult());
+    }
+
+    /**
+     * Les parcours où chacun de ces apprenants a réussi au moins un exercice (null : la Pratique), pour le classement.
+     *
+     * @param list<int> $userIds
+     *
+     * @return array<int, list<string|null>> par identifiant d'apprenant
+     */
+    public function completedTrackIdsByUsers(array $userIds): array
+    {
+        if ([] === $userIds) {
+            return [];
+        }
+        $rows = $this->createQueryBuilder('p')
+            ->select('DISTINCT IDENTITY(p.user) AS userId', 'p.trackId')
+            ->andWhere('p.user IN (:users)')
+            ->andWhere('p.status = :completed')
+            ->setParameter('users', $userIds)
+            ->setParameter('completed', ProgressStatus::Completed)
+            ->getQuery()
+            ->getArrayResult();
+        $tracks = [];
+        foreach ($rows as $row) {
+            $tracks[(int) $row['userId']][] = $row['trackId'];
+        }
+
+        return $tracks;
+    }
+
+    /**
+     * Les apprenants qui ont réussi au moins un exercice de ce parcours (l'attribution des bonus de parcours déjà
+     * terminés, app:classement:bonus-parcours).
+     *
+     * @return list<User>
+     */
+    public function usersWithCompletionsIn(string $trackId): array
+    {
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('u')
+            ->from(User::class, 'u')
+            ->where('EXISTS (SELECT p.id FROM '.ExerciseProgress::class.' p WHERE p.user = u AND p.trackId = :track AND p.status = :completed)')
+            ->setParameter('track', $trackId)
+            ->setParameter('completed', ProgressStatus::Completed)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Les réussites à envoyer au verificateur : en attente, jamais envoyées ou envoyées avant $requestedBefore (une
+     * demande perdue repart). Les plus anciennes d'abord.
+     *
+     * @return list<ExerciseProgress>
+     */
+    public function findVerificationsToRequest(\DateTimeImmutable $requestedBefore, int $limit): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.status = :completed')
+            ->andWhere('p.verification = :pending')
+            ->andWhere('p.verificationRequestedAt IS NULL OR p.verificationRequestedAt < :before')
+            ->setParameter('completed', ProgressStatus::Completed)
+            ->setParameter('pending', VerificationStatus::Pending)
+            ->setParameter('before', $requestedBefore)
+            ->orderBy('p.completedAt', 'ASC')
+            ->addOrderBy('p.id', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 }

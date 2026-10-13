@@ -1,0 +1,24 @@
+{% extends 'emails/_layout.html.twig' %}
+
+{% set link = url('app_track', {trackId: track.id}) %}
+
+{% block preheader %}Votre soutenance du parcours « {{ track.title }} » : le {{ defense.startsAt|date('d/m/Y à H:i') }}.{% endblock %}
+
+{% block content %}
+<p style="margin:0 0 12px;">Bonjour {{ learner.displayName }},</p>
+
+<p style="margin:0 0 12px;">Votre soutenance de fin de parcours « {{ track.title }} » est réservée :</p>
+
+<p style="margin:0 0 12px;">
+    <strong>Le {{ defense.startsAt|date('d/m/Y à H:i') }}</strong>, pendant {{ defense.durationMinutes }} minutes<br>
+    {{ defense.mode.label }} : {% if defense.mode.value == 'online' %}<a class="lien" href="{{ defense.place }}" style="color:{{ theme.emailColors.accent }};word-break:break-all;">{{ defense.place }}</a>{% else %}{{ defense.place }}{% endif %}
+</p>
+
+<p style="margin:0 0 4px;">Vous expliquerez les exercices du parcours, avec le code que vous avez écrit : relisez-le avant. L'invitation jointe ajoute le rendez-vous à votre agenda.</p>
+
+{{ include('emails/_button.html.twig', {href: link, label: 'Voir ma soutenance'}) }}
+
+<p style="margin:0;">Un empêchement ? Annulez le créneau depuis la page du parcours, avant son début, et choisissez-en un autre.</p>
+{% endblock %}
+
+{% block reason %}Vous recevez cet email parce que vous avez réservé ce créneau sur {{ theme.name }}.{% endblock %}
