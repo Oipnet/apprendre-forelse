@@ -5,6 +5,7 @@ namespace App\Seo\Page;
 use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * L'accueil : l'éditeur, le site, l'auteur et la foire aux questions (Organization, WebSite, Person, FAQPage).
@@ -15,6 +16,7 @@ final readonly class HomeSeo
         private PageSeo $seo,
         private SchemaOrg $schema,
         private Theme $theme,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -23,8 +25,8 @@ final readonly class HomeSeo
     {
         $home = $this->schema->url('app_home');
         $this->seo
-            ->setTitle('Apprendre à développer en codant dans le navigateur | '.$this->theme->name(), 'Apprendre à développer en codant dans le navigateur')
-            ->setDescription('Apprenez à développer en codant dans votre navigateur, sans vidéo ni installation : un vrai projet, des tests automatiques, le premier chapitre gratuit.')
+            ->setTitle($this->translator->trans('seo.titre_marque', ['marque' => $this->theme->name()], 'accueil'), $this->translator->trans('seo.titre', [], 'accueil'))
+            ->setDescription($this->translator->trans('seo.description', [], 'accueil'))
             ->setCanonical($home)
             ->addStructuredData(['@graph' => [
                 [

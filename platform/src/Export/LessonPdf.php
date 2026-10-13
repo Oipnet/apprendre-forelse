@@ -12,6 +12,7 @@ use Dompdf\Options;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\String\Slugger\AsciiSlugger;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
 /**
@@ -29,6 +30,7 @@ final class LessonPdf
         private readonly Environment $twig,
         private readonly LessonRenderer $renderer,
         #[Autowire('%kernel.cache_dir%/dompdf')] private readonly string $workDir,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -65,7 +67,7 @@ final class LessonPdf
             'chapters' => array_map(fn (array $summary) => [...$summary, 'html' => $this->renderer->toHtml((string) $summary['chapter']->lesson)], $summaries),
         ]);
 
-        return $this->toPdf($html, sprintf('%s · livret du parcours', $track->title), $user, $date);
+        return $this->toPdf($html, $this->translator->trans('chapter.booklet.titre_document', ['parcours' => $track->title], 'certificat'), $user, $date);
     }
 
     private function toPdf(string $html, string $title, User $user, \DateTimeImmutable $date): string
@@ -89,8 +91,9 @@ final class LessonPdf
         $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans');
         $grey = [0.45, 0.45, 0.45];
         $y = $canvas->get_height() - 30;
-        $canvas->page_text(40, $y, sprintf('%s — établi pour %s le %s', $title, $user->getDisplayName(), $date->format('d/m/Y')), $font, 7.5, $grey);
-        $canvas->page_text($canvas->get_width() - 100, $y, 'Page {PAGE_NUM} / {PAGE_COUNT}', $font, 7.5, $grey);
+        $day = (string) \IntlDateFormatter::create($this->translator->getLocale(), \IntlDateFormatter::SHORT, \IntlDateFormatter::NONE, $date->getTimezone())->format($date);
+        $canvas->page_text(40, $y, $this->translator->trans('chapter.pied', ['titre' => $title, 'nom' => (string) $user->getDisplayName(), 'date' => $day], 'certificat'), $font, 7.5, $grey);
+        $canvas->page_text($canvas->get_width() - 100, $y, $this->translator->trans('chapter.page', ['page' => '{PAGE_NUM}', 'pages' => '{PAGE_COUNT}'], 'certificat'), $font, 7.5, $grey);
 
         return (string) $dompdf->output();
     }

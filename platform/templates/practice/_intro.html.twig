@@ -3,10 +3,11 @@
   expliquée, la version et la date. Jamais les tests ni la solution. Variables : practice, instructions, framework.
   Inclus aussi par la page d'exercice, qui garde site.css (#235) : ses classes d'avant restent, à côté des utilitaires.
 #}
-<nav class="breadcrumb" aria-label="Fil d'Ariane">
+{% trans_default_domain 'apprentissage' %}
+<nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
     <ol>
-        <li><a href="{{ path('app_home') }}">Accueil</a></li>
-        <li><a href="{{ path('app_practice') }}">Pratique</a></li>
+        <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
+        <li><a href="{{ path('app_practice') }}">{{ 'commun.pratique'|trans }}</a></li>
         <li aria-current="page">{{ practice.exercise.title }}</li>
     </ol>
 </nav>
@@ -17,13 +18,13 @@
     {% else %}
         <span class="tag framework">{{ framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
     {% endif %}
-    {% if practice.version %}<span class="tag new border-accent text-accent">Nouveauté</span>{% endif %}
-    <span class="meta text-sm text-ink-muted">Publié le <time datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time></span>
+    {% if practice.version %}<span class="tag new border-accent text-accent">{{ 'commun.nouveaute'|trans }}</span>{% endif %}
+    <span class="meta text-sm text-ink-muted">{{ 'practice.intro.publie'|trans({datetime: practice.published|date('Y-m-d'), date: practice.published|format_date('short')})|raw }}</span>
 </p>
 <h1 class="mt-3 text-3xl font-semibold">{{ practice.exercise.title }}</h1>
 <p class="lead mt-3 text-lg text-ink-muted">{{ practice.summary }}</p>
-{{ include('_concepts.html.twig', {concepts: practice.exercise.concepts, label: 'Notions abordées :'}) }}
+{{ include('_concepts.html.twig', {concepts: practice.exercise.concepts, label: 'commun.notions_abordees'|trans}) }}
 <article class="lesson exercise-instructions prose prose-theme mt-6 max-w-none">{{ instructions|raw }}</article>
 {% if practice.pullRequest %}
-    <p class="meta mt-6 text-sm text-ink-muted">D'où vient la fonctionnalité : <a href="{{ practice.pullRequest }}" rel="noopener">la pull request d'origine</a>.</p>
+    <p class="meta mt-6 text-sm text-ink-muted">{{ 'practice.intro.origine'|trans({url: practice.pullRequest|e})|raw }}</p>
 {% endif %}

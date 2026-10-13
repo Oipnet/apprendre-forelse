@@ -1,0 +1,285 @@
+# Pages d'apprentissage : exercise/, practice/, track/, chapter/, concept/ (voir README.md).
+# ICU : une apostrophe suivie d'une accolade se double (d''{mois}) ; les autres s'écrivent telles quelles.
+
+commun:
+    fil_ariane: "Fil d'Ariane"
+    accueil: Accueil
+    pratique: Pratique
+    notions_abordees: "Notions abordées :"
+    chapitre_numero: "Chapitre {numero}"
+    chapitre_titre: "Chapitre {numero} : {titre}"
+    exercice_numero: "Exercice {numero}"
+    exercices: "{n, plural, one {# exercice} other {# exercices}}"
+    xp: "{xp} XP"
+    objectifs_verifies: "{n, plural, one {# objectif vérifié} other {# objectifs vérifiés}} par des tests"
+    chapitre_ferme: "Ce chapitre ne vous est pas ouvert pour l'instant."
+    progression_conservee: "Votre progression est conservée : si vous avez déjà travaillé ici, vous reprendrez exactement où vous en étiez."
+    creer_compte: Créer un compte
+    se_connecter: Se connecter
+    liste_attente: "Liste d'attente"
+    retour_parcours: "← Retour au parcours"
+    parcours_termine: Parcours terminé
+    nouveaute: Nouveauté
+    en_preparation: En préparation
+    gratuit: Gratuit
+    bientot: Bientôt
+    tous: Tous
+    reprendre: Reprendre
+    # Le dernier séparateur d'une liste : « A, B et C ».
+    liste_et: " et "
+
+exercise:
+    intro:
+        position: "Exercice {position} sur {total} du chapitre {chapitre}"
+    show:
+        parcours_complet: Cet exercice fait partie du parcours complet
+        acces: "Le premier chapitre est gratuit ; la suite demande un accès au parcours."
+        acces_bientot: "Le premier chapitre est gratuit ; la suite demande un accès au parcours, dont l'achat sera bientôt disponible."
+        gratuit_titre: "Cet exercice est gratuit : créez votre compte pour l'écrire"
+        gratuit_invitation: "Le premier chapitre du parcours ne coûte rien. La plateforme est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente."
+        gratuit_compte: "Tout le premier chapitre du parcours ne coûte rien : il faut seulement un compte pour ouvrir l'éditeur, exécuter le projet et lancer les tests."
+        gratuit_progression: "Votre progression et votre code sont gardés sur votre compte : vous reprenez où vous en étiez, d'un appareil à l'autre."
+        suite_invitation: "La suite du parcours est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente."
+        suite_payante: "Le premier chapitre est gratuit avec un compte ; la suite demande un accès au parcours."
+        premier_chapitre: "Commencer le premier chapitre →"
+        suite_chapitre: "La suite du chapitre {numero} : {titre}"
+        sommaire: Le sommaire du chapitre
+        tout_le_parcours: "Tout le parcours {titre}"
+
+practice:
+    card:
+        programme: "Programmé le {date}"
+        reussi: "✓ Réussi"
+        en_cours: En cours
+        refaire: "Refaire l'exercice"
+        faire: "Faire l'exercice"
+    intro:
+        publie: 'Publié le <time datetime="{datetime}">{date}</time>'
+        origine: "D'où vient la fonctionnalité : <a href=\"{url}\" rel=\"noopener\">la pull request d'origine</a>."
+    index:
+        titre: "Se servir d'une fonctionnalité, tout de suite"
+        intro: "De courts exercices, à part des parcours : un code écrit à l'ancienne, à réécrire avec la fonctionnalité. Souvent une nouveauté du framework, parfois un point précis qui mérite qu'on s'y arrête."
+        par_version: "Par version :"
+        # Sous un nombre, dans les chiffres de la Pratique.
+        kpi_exercices: "{n, plural, one {exercice} other {exercices}}"
+        kpi_nouveautes: "{n, plural, one {nouveauté} other {nouveautés}}"
+        kpi_reussis: "{n, plural, one {réussi} other {réussis}}"
+        filtres: Filtres
+        filtres_actifs: "{n, plural, one {# actif} other {# actifs}}"
+        rechercher: Rechercher
+        rechercher_exemple: "chunkBy, mail, validation…"
+        framework: Framework
+        nouveautes_seulement: Nouveautés seulement
+        nouveautes_aide: Sorties dans les dernières versions
+        notions: Notions
+        notions_retenues: "{n, plural, one {# retenue} other {# retenues}}"
+        voir_autres: "Voir les {n} autres"
+        voir_moins: Voir moins
+        appliquer: Appliquer les filtres
+        reinitialiser: Réinitialiser les filtres
+        trouves: "{n, plural, =0 {Aucun exercice} one {# exercice} other {# exercices}}"
+        trier: "Trier :"
+        tri_recents: Récents
+        tri_titre: Titre
+        groupe:
+            par_titre: Par titre
+            a_venir: À venir
+            cette_semaine: Cette semaine
+            avant: Avant
+        aucun_filtre: Aucun exercice avec ces filtres.
+        tout_afficher: Tout afficher
+        inscription_invitation: "Cette plateforme est réservée à ses membres : <a rel=\"nofollow\" href=\"{inscription}\">créez votre compte</a> avec votre code d'invitation, ou <a href=\"{connexion}\">connectez-vous</a>."
+        inscription: "Ces exercices s'écrivent sans compte : l'éditeur s'ouvre tout de suite. Le compte garde votre progression, ouvre le mentor et les retours — <a rel=\"nofollow\" href=\"{inscription}\">créez le vôtre</a> ou <a href=\"{connexion}\">connectez-vous</a>."
+        vide: "Pas encore d'exercice ici : revenez bientôt."
+    show:
+        partager: Partager cet exercice
+        a_vous: "À vous d'écrire le code"
+        invitation: "Cette plateforme est réservée à ses membres : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente."
+        plus_loin: Pour aller plus loin
+        parcours: "Cet exercice porte sur une seule fonctionnalité. Le parcours <strong>{titre}</strong> reprend {framework} de bout en bout, chapitre par chapitre."
+        parcours_description: "Cet exercice porte sur une seule fonctionnalité. Le parcours <strong>{titre}</strong> reprend {framework} de bout en bout, chapitre par chapitre : {description}"
+        decouvrir: Découvrir le parcours
+    version:
+        fil: "Nouveautés {version}"
+        titre: "Les nouveautés de {version}"
+        resume: "{n} exercices courts."
+        resume_notions: "{n} exercices courts, autour de {notions}."
+        principe: "Un code écrit à l'ancienne, à réécrire avec la nouveauté, directement dans le navigateur. Des tests disent si c'est juste."
+        portee: "Cette page ne liste pas toutes les nouveautés de {version} : seulement celles qui ont un exercice ici. Elle grandit à chaque exercice publié."
+        autres: "Autres versions de {framework} :"
+        toute_la_pratique: "← Toute la Pratique"
+
+track:
+    index:
+        titre: Les parcours
+        intro: "Chaque parcours est un projet, écrit exercice après exercice dans votre navigateur : un aperçu en direct, des tests qui valident chaque objectif, une fiche de cours à la fin de chaque chapitre. Le premier chapitre est gratuit avec un compte."
+        filtrer: Filtrer par framework
+        aucun: "Aucun parcours publié pour l'instant."
+        pratique: "Envie d'un exercice court, sans parcours ? <a href=\"{url}\">La Pratique</a> se joue sans compte."
+    locked:
+        acces: "Ce chapitre fait partie du parcours complet. Le premier chapitre est gratuit ; la suite demande un accès au parcours."
+        acces_bientot: "Ce chapitre fait partie du parcours complet. Le premier chapitre est gratuit ; la suite demande un accès au parcours, dont l'achat sera bientôt disponible."
+    price:
+        continuer: "Continuer →"
+        acces_complet: Vous avez accès à tout le parcours.
+        prix_normal: Prix normal
+        ttc: "TTC, accès à vie"
+        fondateur: Prix fondateur.
+        fondateur_date: "Prix fondateur jusqu'au {date}."
+        fondateur_places: "Prix fondateur encore {n, plural, one {# place} other {# places}}."
+        fondateur_date_places: "Prix fondateur jusqu'au {date}, encore {n, plural, one {# place} other {# places}}."
+        cohorte: "Tarif de votre cohorte « {cohorte} »."
+        acheter: Acheter le parcours
+        bientot_disponible: Bientôt disponible
+        premier_chapitre: Premier chapitre gratuit avec un compte.
+    show:
+        exercices_faits: "{fait} / {n, plural, one {# exercice} other {# exercices}}"
+        exercices_reussis: "{fait} / {n, plural, one {# exercice} other {# exercices}} réussis"
+        chapitres: "{n, plural, one {# chapitre} other {# chapitres}}"
+        xp_gagnes: "{gagne} / {xp} XP"
+        duree: "Environ {duree} de pratique"
+        bravo: "🎓 Bravo, tout est réussi."
+        voir_certificat: Voir mon certificat
+        partager: Partager ma réussite
+        obtenir_certificat: Obtenir mon certificat
+        livret: Télécharger le livret (PDF)
+        continuer_avec: "Continuer avec « {titre} »"
+        vous_en_etes_la: Vous en êtes là
+        pour_commencer: Pour commencer
+        position: "Chapitre {chapitre} · exercice {position}"
+        commencer: Commencer le parcours
+        chapitres_du_parcours: Chapitres du parcours
+        chapitres_titre: Chapitres
+        tout_ouvrir: Tout ouvrir
+        boss: Chaque chapitre finit par un boss.
+        boss_fiche: Chaque chapitre finit par un boss, puis une fiche de cours en page web et en PDF.
+        fiche_debloquee: Chaque chapitre réussi débloque sa fiche de cours, en page web et en PDF.
+        livret_final: Le livret complet arrive à la fin du parcours.
+        parcours_complet: "🔒 Parcours complet"
+        fiche_de_cours: fiche de cours
+        # Lus par les lecteurs d'écran avant le titre de l'exercice.
+        sr_reussi: "Réussi : "
+        sr_final: "Exercice final : "
+        sr_exercice: "Exercice {numero} : "
+        notions_abordees: Notions abordées
+        fiche_chapitre: Fiche de cours du chapitre
+        lire: "Lire →"
+        fiche_reste: "encore {n, plural, one {# exercice} other {# exercices}} à réussir"
+        fiche_a_reussir: réussissez le chapitre pour la lire
+        sommaire_chapitre: "Ce que le chapitre {numero} fait apprendre →"
+        et_ensuite: Et ensuite ?
+    defense:
+        titre: Soutenance de fin de parcours
+        le: "Le {date} à {heure}"
+        duree_mode: "{minutes} min · {mode}"
+        consigne: Vous expliquerez vos exercices, avec le code que vous avez écrit.
+        agenda: Ajouter à mon agenda
+        annuler: Annuler ce créneau
+        resultat_date: "le {date}"
+        aucun_creneau: "Aucun créneau libre pour l'instant : votre école en ouvrira bientôt."
+        nouveau_creneau: "Choisissez un nouveau créneau :"
+        choisir_creneau: "Parcours terminé : choisissez votre créneau."
+        # Motif ICU de la date d'un créneau, sans l'année : 02/12.
+        format_jour: dd/MM
+        creneau: "{jour} à {heure}"
+        mode_duree: "{mode}, {minutes} min"
+        reserver: Réserver
+        a_venir: "Votre école organise une soutenance sur ce parcours : réussissez tous les exercices pour réserver votre créneau."
+
+chapter:
+    show:
+        fiche: Fiche de cours
+        intro: "Fiche de cours : ce que ce chapitre vous a appris, à garder sous la main."
+        exercices: "{n} exercices"
+        xp_gagnes: "{xp} XP gagnés"
+        pdf: "📄 Télécharger la fiche en PDF"
+        suivant: "Chapitre suivant : {titre} →"
+    summary:
+        du_parcours: 'Chapitre {numero} du parcours <a href="{url}">{titre}</a>'
+        environ: "environ {duree}"
+        gratuit: premier chapitre gratuit
+        notions: "Ce chapitre fait travailler :"
+        exercices: Les exercices du chapitre
+        voisins: Chapitres voisins
+
+concept:
+    index:
+        titre: Les notions travaillées
+        fil: Les notions
+        intro_themes: "Chaque exercice annonce ce qu'il fait travailler. Voici ces notions rangées par thème : choisissez-en une pour voir les exercices qui la pratiquent."
+        intro: "Chaque exercice annonce ce qu'il fait travailler. Voici toutes ces notions, et par où les pratiquer."
+        frameworks: Frameworks
+        fil_rouge: Le fil rouge
+        fil_rouge_texte: "La notion la plus pratiquée en {framework} : elle revient dans {n} exercices, tous thèmes confondus."
+        voir_exercices: "Voir les {n} exercices"
+        filtrer: Filtrer par thème
+        notions: "{n, plural, one {# notion} other {# notions}}"
+        # Les notions qu'aucun thème du pack ne range.
+        autres_notions: Autres notions
+        aucune: "Aucune notion n'est encore travaillée par plus d'un exercice."
+    show:
+        notion: Notion
+        resume: "{n, plural, one {# exercice fait} other {# exercices font}} travailler cette notion, en écrivant du code dans le navigateur."
+        parcours: Dans les parcours
+        chapitre: "chapitre {numero} : {titre}"
+        pratique: Dans la Pratique
+        voisines: Notions voisines
+        toutes: "← Toutes les notions"
+
+# La soutenance de fin de parcours, côté apprenant (DefenseController, App\Defense, enums Defense*).
+defense:
+    mode:
+        online: En ligne
+        on_site: En présentiel
+    resultat:
+        passed: Soutenance validée
+        retake: À repasser
+    niveau:
+        acquired: Acquis
+        in_progress: "En cours d'acquisition"
+        not_acquired: Non acquis
+    # L'invitation d'agenda (DefenseCalendar), jointe à la convocation et téléchargeable depuis le parcours.
+    agenda:
+        titre: "Soutenance · {parcours}"
+        description: "Soutenance de fin de parcours « {parcours} ». {mode} : {lieu}"
+    flash:
+        reservee: "Soutenance réservée le {date} à {heure}. Votre convocation part par email, avec l'invitation d'agenda."
+        reservation_expiree: "Le créneau n'a pas été réservé : rechargez la page et recommencez."
+        annulee: "Créneau annulé : vous pouvez en choisir un autre."
+        annulation_expiree: "Le créneau n'a pas été annulé : rechargez la page et recommencez."
+    erreur:
+        parcours_disparu: "Ce parcours n'existe plus."
+        autre_cohorte: Ce créneau est réservé à une autre cohorte.
+        parcours_incomplet: "La soutenance s'ouvre une fois tous les exercices du parcours réussis."
+        deja_pris: "Ce créneau vient d'être pris : choisissez-en un autre."
+        passe: "Ce créneau est passé : choisissez-en un autre."
+        deja_reserve: "Vous avez déjà un créneau réservé : annulez-le d'abord pour en changer."
+        deja_validee: Votre soutenance est déjà validée.
+        pas_le_votre: "Ce créneau n'est pas le vôtre."
+        commencee: "La soutenance a commencé : elle ne s'annule plus. Écrivez à votre école."
+
+# Les messages flash des fiches de cours et du livret (ChapterController, TrackController).
+flash:
+    fiche_connexion: Connectez-vous pour lire la fiche de cours du chapitre.
+    fiche_verrouillee: "La fiche du chapitre « {chapitre} » se débloque une fois ses exercices réussis : encore {n} à terminer."
+    livret_connexion: Connectez-vous pour télécharger le livret du parcours.
+    livret_acces: "Le livret fait partie du parcours complet : il faut un accès au parcours pour le télécharger."
+    livret_verrouille: "Le livret se débloque une fois le parcours terminé : encore {n, plural, one {# exercice} other {# exercices}} à réussir."
+
+# Les refus des API du playground, lus par l'apprenant (champ « detail » de la réponse JSON).
+api:
+    connexion:
+        exercice: Connectez-vous pour accéder à cet exercice.
+        progression: Connectez-vous pour sauvegarder votre progression.
+        mentor: Connectez-vous pour faire appel au mentor.
+        retour: Connectez-vous pour envoyer un retour.
+    parcours_complet: "Cet exercice fait partie du parcours complet : achetez le parcours pour y accéder."
+    import_trop_grand: "Au plus {max} exercices par import."
+    mentor:
+        inactif: "Le mentor n'est pas activé sur cette plateforme."
+        revue_apres_reussite: "La revue de code vient après la réussite : faites d'abord passer les tests."
+        email_a_confirmer: "Confirmez votre adresse email pour faire appel au mentor : le lien est dans l'email reçu à l'inscription, ou à renvoyer depuis votre compte."
+        trop_d_appels: "Le mentor a beaucoup travaillé : réessayez un peu plus tard."
+        budget_epuise: "Le mentor a atteint sa limite du jour sur cette plateforme : il revient demain."
+        # {raison} : l'explication de l'incident, écrite par le client du modèle.
+        sans_reponse: "Le mentor n'a pas pu répondre : {raison}"

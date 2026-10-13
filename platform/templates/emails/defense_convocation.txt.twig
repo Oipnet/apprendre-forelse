@@ -1,13 +1,14 @@
-Bonjour {{ learner.displayName }},
+{% trans_default_domain 'emails' %}
+{{ 'commun.bonjour'|trans({nom: learner.displayName}) }}
 
-Votre soutenance de fin de parcours « {{ track.title }} » est réservée :
+{{ 'defense_convocation.reservee'|trans({parcours: track.title}) }}
 
-Le {{ defense.startsAt|date('d/m/Y à H:i') }}, pendant {{ defense.durationMinutes }} minutes
-{{ defense.mode.label }} : {{ defense.place }}
+{{ 'defense_convocation.texte.quand'|trans({date: defense.startsAt|format_date('short'), heure: defense.startsAt|format_time('short'), minutes: defense.durationMinutes}) }}
+{{ 'commun.libelle_valeur'|trans({libelle: defense.mode|trans, valeur: defense.place}) }}
 
-Vous expliquerez les exercices du parcours, avec le code que vous avez écrit : relisez-le avant. L'invitation jointe ajoute le rendez-vous à votre agenda.
+{{ 'defense_convocation.preparation'|trans }}
 
-Votre soutenance, et de quoi l'annuler avant son début en cas d'empêchement :
+{{ 'defense_convocation.texte.annuler'|trans }}
 {{ url('app_track', {trackId: track.id}) }}
 
-{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que vous avez réservé ce créneau sur ' ~ theme.name ~ '.'}) }}
+{{ include('emails/_footer.txt.twig', {reason: 'defense_convocation.raison'|trans({site: theme.name})}) }}

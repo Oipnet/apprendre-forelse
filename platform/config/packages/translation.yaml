@@ -1,5 +1,9 @@
 framework:
     default_locale: fr
+    # Les langues servies par le site. Le français seul pour l'instant : les textes sont sortis des gabarits
+    # (translations/, voir son README) pour qu'une autre langue n'ait plus qu'à fournir ses fichiers.
+    enabled_locales: [fr]
     translator:
         default_path: '%kernel.project_dir%/translations'
+        fallbacks: [fr]
         providers:

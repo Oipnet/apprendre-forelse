@@ -2,6 +2,7 @@
  * Le mentor : une revue de code quand les tests passent, une explication quand une erreur survient.
  * Contrat serveur : App\Controller\Api\MentorApiController (comptes seulement, débit limité).
  */
+import { m } from '../i18n';
 import { escapeHtml } from './html';
 
 export interface Review {
@@ -42,12 +43,12 @@ export class MentorClient {
 			credentials: 'same-origin',
 		});
 		// Session expirée (déconnexion, page restée ouverte) : le serveur de production ne détaille pas ce refus.
-		if (response.status === 401) throw new Error('Votre session a expiré : reconnectez-vous, puis rechargez la page.');
-		if (response.status === 403) throw new Error('Votre accès à ce parcours a pris fin : le mentor n\'est plus disponible pour cet exercice.');
+		if (response.status === 401) throw new Error(m.mentor.sessionExpired);
+		if (response.status === 403) throw new Error(m.mentor.accessEnded);
 		if (!response.ok) {
 			// Le serveur explique ses refus (débit dépassé, mentor absent…) dans `detail`.
 			const detail = await response.json().then((e: { detail?: string }) => e.detail).catch(() => undefined);
-			throw new Error(detail || `réponse ${response.status}`);
+			throw new Error(detail || m.mentor.httpError(response.status));
 		}
 		return (await response.json()) as T;
 	}
@@ -64,16 +65,16 @@ export function renderReview(review: Review, markdown: (source: string) => strin
 			</li>`,
 		)
 		.join('');
-	return `<strong>🔍 Revue de code</strong>
+	return `<strong>🔍 ${m.mentor.review}</strong>
 		<div class="what">${markdown(review.summary)}</div>
-		${points ? `<ol class="review-points">${points}</ol>` : '<p class="muted">Rien à redire : c\'est propre.</p>'}`;
+		${points ? `<ol class="review-points">${points}</ol>` : `<p class="muted">${m.mentor.nothingToSay}</p>`}`;
 }
 
 export function renderExplanation(explanation: Explanation, markdown: (source: string) => string): string {
-	return `<strong>🩺 Le mentor</strong>
+	return `<strong>🩺 ${m.mentor.title}</strong>
 		<div class="what">${markdown(explanation.cause)}</div>
-		<div class="what"><b>Piste :</b> ${markdown(explanation.piste)}</div>
-		${explanation.file ? `<span class="where">Regardez du côté de <a href="#" data-open="${escapeHtml(explanation.file)}">${escapeHtml(explanation.file)}</a>.</span>` : ''}`;
+		<div class="what"><b>${m.mentor.clue}</b> ${markdown(explanation.piste)}</div>
+		${explanation.file ? `<span class="where">${m.mentor.lookAt(`<a href="#" data-open="${escapeHtml(explanation.file)}">${escapeHtml(explanation.file)}</a>`)}</span>` : ''}`;
 }
 
 /**

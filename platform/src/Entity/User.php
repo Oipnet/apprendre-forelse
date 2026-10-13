@@ -18,8 +18,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['email'], message: self::EMAIL_TAKEN)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    /** Email déjà pris : on oriente vers la connexion, sans en dire plus (le titulaire du compte est prévenu). */
-    public const string EMAIL_TAKEN = 'Impossible de créer un compte avec cet email. Si c\'est le vôtre, connectez-vous, ou choisissez un nouveau mot de passe.';
+    /**
+     * Email déjà pris : on oriente vers la connexion, sans en dire plus (le titulaire du compte est prévenu). Une clé du
+     * domaine validators (translations/validators.fr.yaml).
+     */
+    public const string EMAIL_TAKEN = 'compte.email.pris';
 
     /** Droit d'écrire des exercices dans l'atelier des auteurs. */
     public const string ROLE_AUTEUR = 'ROLE_AUTEUR';
@@ -34,8 +37,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
-    #[Assert\NotBlank(message: 'Indiquez votre email.')]
-    #[Assert\Email(message: 'Cet email n\'est pas valide.')]
+    #[Assert\NotBlank(message: 'compte.email.vide')]
+    #[Assert\Email(message: 'email.invalide')]
     private ?string $email = null;
 
     /**
@@ -49,7 +52,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 40)]
-    #[Assert\NotBlank(message: 'Choisissez un pseudo.')]
+    #[Assert\NotBlank(message: 'compte.pseudo.vide')]
     #[Assert\Length(max: 40)]
     private ?string $displayName = null;
 

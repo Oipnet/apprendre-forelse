@@ -1,9 +1,11 @@
-Bonjour {{ user.displayName }},
+{% trans_default_domain 'emails' %}
+{{ 'commun.bonjour'|trans({nom: user.displayName}) }}
 
-L'adresse de votre compte {{ theme.name }} vient d'être remplacée par {{ newEmail }}. Les emails du compte (mot de passe oublié, achats) partent désormais à cette adresse.
+{{ 'email_changed.texte.remplacee'|trans({site: theme.name, adresse: newEmail}) }}
 
-Si c'est vous, il n'y a rien à faire.
+{{ 'email_changed.si_c_est_vous'|trans }}
 
-Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : {% if contact %}écrivez-nous au plus vite à {{ contact }}{% else %}prévenez au plus vite l'éditeur du site, dont les coordonnées figurent dans les mentions légales ({{ url('app_legal_notice') }}){% endif %}, en indiquant cette adresse-ci.
+{% if contact %}{{ 'email_changed.texte.ecrivez_nous'|trans({contact: contact}) }}{% else %}{{ 'email_changed.texte.prevenez'|trans({url: url('app_legal_notice')}) }}{% endif %}
 
-{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que cette adresse était celle de votre compte ' ~ theme.name ~ '.'}) }}
+
+{{ include('emails/_footer.txt.twig', {reason: 'email_changed.raison'|trans({site: theme.name})}) }}

@@ -9,6 +9,7 @@ use App\Security\TrackAccessChecker;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Le contrôle d'accès des API d'un exercice (contenu, progression, mentor) : 404 pour un parcours invisible,
@@ -19,6 +20,7 @@ final readonly class ExerciseAccessGuard
     public function __construct(
         private TrackVisibility $visibility,
         private TrackAccessChecker $access,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -32,8 +34,8 @@ final readonly class ExerciseAccessGuard
         }
 
         throw null === $user
-            ? new HttpException(Response::HTTP_UNAUTHORIZED, 'Connectez-vous pour accéder à cet exercice.')
-            : new HttpException(Response::HTTP_FORBIDDEN, 'Cet exercice fait partie du parcours complet : achetez le parcours pour y accéder.');
+            ? new HttpException(Response::HTTP_UNAUTHORIZED, $this->translator->trans('api.connexion.exercice', [], 'apprentissage'))
+            : new HttpException(Response::HTTP_FORBIDDEN, $this->translator->trans('api.parcours_complet', [], 'apprentissage'));
     }
 
     /** Le même contrôle que check(), sans exception : pour trier une liste (import de progression). */

@@ -12,6 +12,9 @@ final readonly class PracticeCatalog
     /** Au-delà, les exercices passent dans le groupe « Avant ». */
     private const int JOURS_RECENTS = 7;
 
+    /** Les intertitres de la liste, en français : la page les traduit d'après leur identifiant. */
+    private const array GROUP_LABELS = ['par_titre' => 'Par titre', 'a_venir' => 'À venir', 'cette_semaine' => 'Cette semaine', 'avant' => 'Avant'];
+
     public function __construct(
         private PracticeVisibility $practices,
         private ClockInterface $clock,
@@ -107,12 +110,13 @@ final readonly class PracticeCatalog
 
     /**
      * Des intertitres plutôt qu'une liste sans fin : par date, la semaine écoulée se détache du reste
-     * (et, pour un administrateur, ce qui est encore à venir).
+     * (et, pour un administrateur, ce qui est encore à venir). L'identifiant nomme l'intertitre dans les traductions
+     * (practice.index.groupe.* du domaine apprentissage) ; le libellé, en français, reste pour les thèmes.
      *
      * @param list<Practice>                  $practices
      * @param array<string, ExerciseProgress> $progress
      *
-     * @return list<array{label: string, items: list<array{practice: Practice, state: string}>}>
+     * @return list<array{id: string, label: string, items: list<array{practice: Practice, state: string}>}>
      */
     private function group(array $practices, string $tri, array $progress): array
     {
@@ -120,18 +124,18 @@ final readonly class PracticeCatalog
         $recent = $today->modify(sprintf('-%d days', self::JOURS_RECENTS - 1));
         $groups = [];
         foreach ($practices as $practice) {
-            $label = match (true) {
-                PracticeFilter::SORT_TITLE === $tri => 'Par titre',
-                $practice->isScheduled($today) => 'À venir',
-                $practice->published >= $recent => 'Cette semaine',
-                default => 'Avant',
+            $id = match (true) {
+                PracticeFilter::SORT_TITLE === $tri => 'par_titre',
+                $practice->isScheduled($today) => 'a_venir',
+                $practice->published >= $recent => 'cette_semaine',
+                default => 'avant',
             };
-            $groups[$label][] = [
+            $groups[$id][] = [
                 'practice' => $practice,
                 'state' => TrackProgress::stateFrom($progress[$practice->exercise->id] ?? null),
             ];
         }
 
-        return array_map(static fn (string $label, array $items) => ['label' => $label, 'items' => $items], array_keys($groups), $groups);
+        return array_map(static fn (string $id, array $items) => ['id' => $id, 'label' => self::GROUP_LABELS[$id], 'items' => $items], array_keys($groups), $groups);
     }
 }

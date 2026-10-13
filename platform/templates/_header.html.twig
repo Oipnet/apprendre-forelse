@@ -13,33 +13,33 @@
             <span class="site-name text-lg">{{ theme.name }}</span>
             {% if brand_chip|trim %}<span class="site-chip rounded border border-line px-1.5 text-xs font-normal text-ink-muted">{{ brand_chip }}</span>{% endif %}
         </a>
-        <nav class="flex flex-1 flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm" aria-label="Navigation principale">
-            <a href="{{ path('app_tracks') }}">Parcours</a>
-            <a href="{{ path('app_practice') }}">Pratique</a>
-            {% if blog.open %}<a href="{{ path('app_blog') }}">Blog</a>{% endif %}
-            <a href="{{ path('app_leaderboard') }}">Classement</a>
+        <nav class="flex flex-1 flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm" aria-label="{{ 'header.navigation'|trans }}">
+            <a href="{{ path('app_tracks') }}">{{ 'header.parcours'|trans }}</a>
+            <a href="{{ path('app_practice') }}">{{ 'header.pratique'|trans }}</a>
+            {% if blog.open %}<a href="{{ path('app_blog') }}">{{ 'header.blog'|trans }}</a>{% endif %}
+            <a href="{{ path('app_leaderboard') }}">{{ 'header.classement'|trans }}</a>
             {% if app.user %}
                 {# Tout ce qui concerne le compte et les espaces réservés, derrière le nom : sans JS, <details> s'ouvre et se ferme seul. #}
                 <details class="account relative" data-account-menu>
-                    <summary class="flex cursor-pointer list-none items-center gap-2" aria-label="Menu du compte de {{ app.user.displayName }}">
+                    <summary class="flex cursor-pointer list-none items-center gap-2" aria-label="{{ 'header.menu_compte'|trans({nom: app.user.displayName}) }}">
                         <span class="account-name font-medium">{{ app.user.displayName }}</span>
-                        <span class="account-xp rounded bg-bg-2 px-1.5 text-xs text-ink-muted">{{ app.user.xp }} XP</span>
+                        <span class="account-xp rounded bg-bg-2 px-1.5 text-xs text-ink-muted">{{ 'header.xp'|trans({xp: app.user.xp}) }}</span>
                         <span aria-hidden="true">▾</span>
                     </summary>
                     <div class="account-menu absolute right-0 z-20 mt-2 flex min-w-48 flex-col gap-1 rounded-md border border-line bg-surface p-2 shadow-lg">
-                        <a class="rounded px-2 py-1" href="{{ path('app_account') }}">Mon compte</a>
+                        <a class="rounded px-2 py-1" href="{{ path('app_account') }}">{{ 'header.mon_compte'|trans }}</a>
                         {% if is_granted('ROLE_AUTEUR') or is_granted('ROLE_CHEF_COHORTE') %}
-                            <p class="account-label mt-1 px-2 text-xs uppercase tracking-wide text-ink-muted">Espaces</p>
-                            {% if is_granted('ROLE_AUTEUR') %}<a class="rounded px-2 py-1" href="{{ path('app_studio') }}">Atelier</a>{% endif %}
-                            {% if is_granted('ROLE_CHEF_COHORTE') %}<a class="rounded px-2 py-1" href="{{ path('chef') }}">Mes cohortes</a>{% endif %}
-                            {% if is_granted('ROLE_ADMIN') %}<a class="rounded px-2 py-1" href="{{ path('admin') }}">Administration</a>{% endif %}
+                            <p class="account-label mt-1 px-2 text-xs uppercase tracking-wide text-ink-muted">{{ 'header.espaces'|trans }}</p>
+                            {% if is_granted('ROLE_AUTEUR') %}<a class="rounded px-2 py-1" href="{{ path('app_studio') }}">{{ 'header.atelier'|trans }}</a>{% endif %}
+                            {% if is_granted('ROLE_CHEF_COHORTE') %}<a class="rounded px-2 py-1" href="{{ path('chef') }}">{{ 'header.mes_cohortes'|trans }}</a>{% endif %}
+                            {% if is_granted('ROLE_ADMIN') %}<a class="rounded px-2 py-1" href="{{ path('admin') }}">{{ 'header.administration'|trans }}</a>{% endif %}
                         {% endif %}
-                        <a class="account-logout mt-1 rounded border-t border-line px-2 py-1" href="{{ logout_path() }}">Déconnexion</a>
+                        <a class="account-logout mt-1 rounded border-t border-line px-2 py-1" href="{{ logout_path() }}">{{ 'header.deconnexion'|trans }}</a>
                     </div>
                 </details>
             {% else %}
-                <a href="{{ path('app_login', {suite: login_suite}) }}">Connexion</a>
-                <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register') }}">Créer un compte</a>
+                <a href="{{ path('app_login', {suite: login_suite}) }}">{{ 'header.connexion'|trans }}</a>
+                <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register') }}">{{ 'header.creer_compte'|trans }}</a>
             {% endif %}
         </nav>
     </div>

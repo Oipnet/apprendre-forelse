@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Progression de l'apprenant connecté. Contrat : playground/src/app/progress.ts (ApiProgressStore). */
 #[Route('/api/progress', format: 'json')]
@@ -27,6 +28,7 @@ final class ProgressApiController extends AbstractController
         private readonly ExerciseLocator $exercises,
         private readonly ProgressService $progress,
         private readonly ExerciseAccessGuard $guard,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -86,7 +88,7 @@ final class ProgressApiController extends AbstractController
     {
         // Largement plus que les exercices qu'un invité peut jouer ; chaque entrée coûte des écritures en base.
         if (\count($items) > self::MAX_IMPORT) {
-            throw new HttpException(Response::HTTP_UNPROCESSABLE_ENTITY, sprintf('Au plus %d exercices par import.', self::MAX_IMPORT));
+            throw new HttpException(Response::HTTP_UNPROCESSABLE_ENTITY, $this->translator->trans('api.import_trop_grand', ['max' => self::MAX_IMPORT], 'apprentissage'));
         }
 
         return $this->json(['imported' => $this->progress->importGuestProgress($this->user(), $items)]);
@@ -108,7 +110,7 @@ final class ProgressApiController extends AbstractController
         $user = $this->getUser();
         if (!$user instanceof User) {
             // 401 (et non une redirection vers la connexion) : c'est une API.
-            throw new HttpException(Response::HTTP_UNAUTHORIZED, 'Connectez-vous pour sauvegarder votre progression.');
+            throw new HttpException(Response::HTTP_UNAUTHORIZED, $this->translator->trans('api.connexion.progression', [], 'apprentissage'));
         }
 
         return $user;

@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** La convocation (avec l'invitation d'agenda) et le résultat d'une soutenance, envoyés à l'apprenant. */
 final readonly class DefenseMailer
@@ -20,19 +21,32 @@ final readonly class DefenseMailer
         private Theme $theme,
         private DefenseCalendar $calendar,
         private LoggerInterface $logger,
+        private TranslatorInterface $translator,
     ) {
     }
 
     /** N'échoue jamais : le créneau est réservé, et reste affiché sur la page du parcours. */
     public function sendConvocation(Defense $defense, Track $track): void
     {
-        $this->send($defense, $track, sprintf('Votre soutenance « %s » le %s', $track->title, $defense->getStartsAt()->format('d/m/Y à H:i')), 'emails/defense_convocation', true);
+        $startsAt = $defense->getStartsAt();
+        $subject = $this->translator->trans('sujet.defense_convocation', [
+            'parcours' => $track->title,
+            'date' => $this->format($startsAt, \IntlDateFormatter::SHORT, \IntlDateFormatter::NONE),
+            'heure' => $this->format($startsAt, \IntlDateFormatter::NONE, \IntlDateFormatter::SHORT),
+        ], 'emails');
+        $this->send($defense, $track, $subject, 'emails/defense_convocation', true);
     }
 
     /** N'échoue jamais : le résultat est enregistré, et affiché sur la page du parcours. */
     public function sendResult(Defense $defense, Track $track): void
     {
-        $this->send($defense, $track, sprintf('Résultat de votre soutenance « %s » sur %s', $track->title, $this->theme->name()), 'emails/defense_result', false);
+        $this->send($defense, $track, $this->translator->trans('sujet.defense_result', ['parcours' => $track->title, 'site' => $this->theme->name()], 'emails'), 'emails/defense_result', false);
+    }
+
+    /** Une date ou une heure dans la langue de l'email (format_date('short') des gabarits), dans le fuseau du créneau. */
+    private function format(\DateTimeImmutable $date, int $dateType, int $timeType): string
+    {
+        return (string) \IntlDateFormatter::create($this->translator->getLocale(), $dateType, $timeType, $date->getTimezone())->format($date);
     }
 
     private function send(Defense $defense, Track $track, string $subject, string $template, bool $withCalendar): void

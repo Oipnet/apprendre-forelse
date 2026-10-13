@@ -1,3 +1,4 @@
+import { m } from '../i18n';
 import { mesurer } from '../mesure';
 import { escapeHtml } from './html';
 
@@ -26,10 +27,10 @@ const NETWORKS = [
 /** Les boutons, dans les classes du playground. Le bouton du téléphone reste caché tant que mountShare ne l'a pas vu possible. */
 export function shareHtml(links: ShareLinks, title: string): string {
 	return `<div class="share" data-share>
-		<span class="share-title">${escapeHtml(title)} :</span>
-		<button type="button" class="ghost small" data-share-native hidden>Partager…</button>
+		<span class="share-title">${m.share.heading(escapeHtml(title))}</span>
+		<button type="button" class="ghost small" data-share-native hidden>${m.share.native}</button>
 		${NETWORKS.map(([key, label]) => `<a class="button ghost small" href="${escapeHtml(links[key])}" target="_blank" rel="noopener noreferrer" data-share-network="${key}">${label}</a>`).join('')}
-		<button type="button" class="ghost small" data-share-copy>Copier le lien</button>
+		<button type="button" class="ghost small" data-share-copy>${m.share.copy}</button>
 		<span class="share-status" role="status"></span>
 	</div>`;
 }
@@ -61,7 +62,7 @@ export function mountShare(root: HTMLElement, links: Pick<ShareLinks, 'text' | '
 	root.querySelector<HTMLButtonElement>('[data-share-copy]')?.addEventListener('click', async () => {
 		try {
 			await navigator.clipboard.writeText(links.lien);
-			if (status) status.textContent = 'Lien copié.';
+			if (status) status.textContent = m.share.copied;
 			mesurer('partage', { ...mesure, reseau: 'lien' });
 		} catch {
 			// Presse-papiers refusé (page non sécurisée, permission) : le lien s'affiche, à copier à la main.
@@ -79,8 +80,8 @@ export function shareDialog(host: HTMLElement, links: ShareLinks, title: string,
 	dialog.className = 'feedback share-dialog';
 	dialog.setAttribute('aria-labelledby', 'share-dialog-title');
 	dialog.innerHTML = `<h2 id="share-dialog-title">${escapeHtml(title)}</h2>
-		${shareHtml(links, 'Partager sur')}
-		<p class="confirm-actions"><button type="button" class="ghost" data-close>Fermer</button></p>`;
+		${shareHtml(links, m.share.on)}
+		<p class="confirm-actions"><button type="button" class="ghost" data-close>${m.common.close}</button></p>`;
 	host.append(dialog);
 	mountShare(dialog.querySelector<HTMLElement>('[data-share]')!, links, mesure);
 	dialog.querySelector('[data-close]')!.addEventListener('click', () => dialog.close());

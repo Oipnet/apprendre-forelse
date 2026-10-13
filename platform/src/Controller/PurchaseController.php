@@ -16,6 +16,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
+use function Symfony\Component\Translation\t;
+
 /**
  * Achat individuel d'un parcours : confirmation (prix, accès à vie, renonciation à la rétractation), puis Stripe
  * Checkout. L'accès n'est jamais ouvert ici : seulement par le webhook, une fois le paiement confirmé.
@@ -38,18 +40,18 @@ final class PurchaseController extends AbstractController
         $user = $this->getUser();
         if (!$user instanceof User) {
             $this->saveTargetPath($request->getSession(), 'main', $request->getRequestUri());
-            $this->addFlash('info', 'Connectez-vous (ou créez votre compte) pour acheter le parcours : l\'accès est rattaché à votre compte.');
+            $this->addFlash('info', t('flash.achat.connexion', [], 'compte'));
 
             return $this->redirectToRoute('app_login');
         }
 
         $offer = $this->offers->create($track, $user);
         if (!$offer->isPurchasable()) {
-            $this->addFlash('info', match (true) {
-                $offer->quote->isFree() => 'Ce parcours est gratuit : il n\'y a rien à acheter.',
-                $offer->isComingSoon() => 'L\'achat du parcours sera bientôt disponible.',
-                default => 'Vous avez déjà accès à tout ce parcours.',
-            });
+            $this->addFlash('info', t(match (true) {
+                $offer->quote->isFree() => 'flash.achat.gratuit',
+                $offer->isComingSoon() => 'flash.achat.bientot',
+                default => 'flash.achat.deja_acces',
+            }, [], 'compte'));
 
             return $this->redirectToRoute('app_track', ['trackId' => $track->id]);
         }
@@ -60,7 +62,7 @@ final class PurchaseController extends AbstractController
             try {
                 $url = $checkout->start($user, $track, $offer->quote);
             } catch (PaymentException $e) {
-                $this->addFlash('danger', $e->getMessage().' Rien n\'a été débité ; réessayez dans un instant.');
+                $this->addFlash('danger', t('flash.achat.paiement_impossible', ['raison' => $e->userMessage()], 'compte'));
 
                 return $this->redirectToRoute('app_purchase', ['trackId' => $track->id]);
             }

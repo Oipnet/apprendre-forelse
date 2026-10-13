@@ -1,0 +1,137 @@
+# Les emails envoyés aux apprenants (templates/emails/, sujets dans src/) : voir README.md.
+# Hors de ce domaine, en français dans le gabarit : les emails internes à l'administrateur (registration_alert,
+# contact_message).
+# Les messages *_html contiennent du HTML et se rendent avec |raw, paramètres échappés (|e).
+
+sujet:
+  reset_password: 'Choisissez un nouveau mot de passe sur {site}'
+  confirm_email: 'Confirmez votre adresse email sur {site}'
+  confirm_email_changement: 'Confirmez votre nouvelle adresse email sur {site}'
+  email_changed: 'Votre adresse sur {site} a changé'
+  registration_attempt: 'Vous avez déjà un compte {site}'
+  purchase_confirmation: 'Votre accès au parcours « {parcours} » sur {site}'
+  defense_convocation: 'Votre soutenance « {parcours} » le {date} à {heure}'
+  defense_result: 'Résultat de votre soutenance « {parcours} » sur {site}'
+  certificate_revoked: 'Votre certificat « {parcours} » a été révoqué'
+  certificate_reinstated: 'Votre certificat « {parcours} » est rétabli'
+
+commun:
+  bonjour: 'Bonjour {nom},'
+  bonjour_anonyme: 'Bonjour,'
+  # Une ligne « libellé : valeur » (la ponctuation change d'une langue à l'autre).
+  libelle_valeur: '{libelle} : {valeur}'
+  voir_le_certificat: 'Voir le certificat'
+
+_button:
+  lien_en_clair: "Le bouton ne s'ouvre pas ? Copiez ce lien dans votre navigateur :"
+
+confirm_email:
+  apercu: 'Confirmez votre adresse : le lien est valable {heures, plural, one {# heure} other {# heures}}.'
+  apercu_changement: 'Confirmez votre nouvelle adresse : le lien est valable {heures, plural, one {# heure} other {# heures}}.'
+  bienvenue: 'Bienvenue sur {site}. Il reste à confirmer votre adresse email :'
+  changement: 'Vous avez demandé à utiliser cette adresse pour votre compte {site}. Pour la confirmer :'
+  bouton: 'Confirmer mon adresse'
+  validite: "Le lien est valable {heures, plural, one {# heure} other {# heures}} et ne sert qu'une fois."
+  ignorer: "Si vous n'avez pas créé de compte, ignorez cet email."
+  ignorer_changement: "Si vous n'avez rien demandé, ignorez cet email : l'adresse de votre compte reste inchangée."
+  raison: 'Vous recevez cet email parce que cette adresse a été indiquée pour un compte {site}.'
+  texte:
+    bienvenue: 'Bienvenue sur {site}. Pour confirmer votre adresse email, ouvrez ce lien :'
+    changement: 'Vous avez demandé à utiliser cette adresse pour votre compte {site}. Pour la confirmer, ouvrez ce lien :'
+    validite: "Il est valable {heures, plural, one {# heure} other {# heures}} et ne sert qu'une fois."
+
+reset_password:
+  apercu: 'Choisissez un nouveau mot de passe : le lien est valable {validite}.'
+  intro: 'Pour choisir un nouveau mot de passe sur {site} :'
+  bouton: 'Choisir un mot de passe'
+  validite: "Le lien est valable {validite} et ne sert qu'une fois."
+  ignorer: "Si vous n'avez rien demandé, ignorez cet email : votre mot de passe reste inchangé."
+  raison: "Vous recevez cet email parce qu'un nouveau mot de passe a été demandé pour votre compte {site}."
+  texte:
+    intro: 'Pour choisir un nouveau mot de passe sur {site}, ouvrez ce lien :'
+    validite: "Il est valable {validite} et ne sert qu'une fois."
+
+email_changed:
+  apercu: "L'adresse de votre compte {site} a été remplacée par {adresse}."
+  remplacee_html: "L'adresse de votre compte {site} vient d'être remplacée par <strong>{adresse}</strong>. Les emails du compte (mot de passe oublié, achats) partent désormais à cette adresse."
+  si_c_est_vous: "Si c'est vous, il n'y a rien à faire."
+  ecrivez_nous_html: "Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : écrivez-nous au plus vite à <a class=\"lien\" href=\"mailto:{contact}\" style=\"color:{couleur};\">{contact}</a>, en indiquant cette adresse-ci."
+  prevenez_html: "Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : prévenez au plus vite l'éditeur du site, dont les coordonnées figurent dans les <a class=\"lien\" href=\"{url}\" style=\"color:{couleur};\">mentions légales</a>, en indiquant cette adresse-ci."
+  raison: 'Vous recevez cet email parce que cette adresse était celle de votre compte {site}.'
+  texte:
+    remplacee: "L'adresse de votre compte {site} vient d'être remplacée par {adresse}. Les emails du compte (mot de passe oublié, achats) partent désormais à cette adresse."
+    ecrivez_nous: "Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : écrivez-nous au plus vite à {contact}, en indiquant cette adresse-ci."
+    prevenez: "Si ce n'est pas vous, quelqu'un a pris la main sur votre compte : prévenez au plus vite l'éditeur du site, dont les coordonnées figurent dans les mentions légales ({url}), en indiquant cette adresse-ci."
+
+registration_attempt:
+  apercu: "Quelqu'un a essayé de créer un compte {site} avec votre adresse."
+  tentative: "Quelqu'un vient d'essayer de créer un compte sur {site} avec votre adresse email. Or vous en avez déjà un."
+  si_c_etait_vous: "Si c'était vous, connectez-vous :"
+  bouton: 'Me connecter'
+  oubli_html: 'Mot de passe oublié ? <a class="lien" href="{url}" style="color:{couleur};">Choisissez-en un nouveau</a>.'
+  ignorer: "Si ce n'était pas vous, ignorez cet email : aucun compte n'a été créé et le vôtre n'a pas changé."
+  raison: "Vous recevez cet email parce qu'une inscription à {site} a été tentée avec votre adresse."
+  texte:
+    oubli: 'Mot de passe oublié ? Choisissez-en un nouveau :'
+
+purchase_confirmation:
+  apercu: 'Votre accès au parcours « {parcours} » est ouvert, à vie.'
+  merci: 'Merci pour votre achat : votre accès au parcours « {parcours} » est ouvert, à vie, avec ses mises à jour.'
+  bouton: 'Commencer le parcours'
+  montant: 'Montant payé : {montant} TTC.'
+  montant_date: 'Montant payé : {montant} TTC, le {date}.'
+  recu_html: '<a class="lien" href="{url}" style="color:{couleur};">Voir le reçu</a>'
+  recu_facture_html: '<a class="lien" href="{url}" style="color:{couleur};">Voir le reçu</a> · <a class="lien" href="{compte}" style="color:{couleur};">Télécharger la facture</a> (depuis votre compte)'
+  recu_et_facture_html: 'Votre reçu et votre facture sont dans <a class="lien" href="{compte}" style="color:{couleur};">votre compte, rubrique Achats</a>.'
+  recu_a_venir_html: 'Votre reçu sera disponible dans <a class="lien" href="{compte}" style="color:{couleur};">votre compte, rubrique Achats</a>.'
+  cgv_html: 'Vous avez accepté les <a class="lien" href="{url}" style="color:{couleur};">conditions générales de vente</a> (version du {date}).'
+  renonciation: "Vous avez demandé l'accès immédiat au parcours et renoncé à votre droit de rétractation le {date} à {heure}."
+  raison: 'Vous recevez cet email parce que vous avez acheté un parcours sur {site}.'
+  # {vendeur} : l'identité du vendeur, déjà échappée (emails/_seller.twig).
+  vendeur: 'Vendeur : {vendeur}.'
+  texte:
+    commencer: 'Commencer le parcours : {url}'
+    recu: 'Voir le reçu : {url}'
+    facture: 'Télécharger la facture (depuis votre compte) : {url}'
+    recu_et_facture: 'Votre reçu et votre facture sont dans votre compte, rubrique Achats : {url}'
+    recu_a_venir: 'Votre reçu sera disponible dans votre compte, rubrique Achats : {url}'
+    cgv: 'Vous avez accepté les conditions générales de vente (version du {date}) : {url}'
+
+defense_convocation:
+  apercu: 'Votre soutenance du parcours « {parcours} » : le {date} à {heure}.'
+  reservee: 'Votre soutenance de fin de parcours « {parcours} » est réservée :'
+  quand_html: '<strong>Le {date} à {heure}</strong>, pendant {minutes} minutes'
+  preparation: "Vous expliquerez les exercices du parcours, avec le code que vous avez écrit : relisez-le avant. L'invitation jointe ajoute le rendez-vous à votre agenda."
+  bouton: 'Voir ma soutenance'
+  empechement: 'Un empêchement ? Annulez le créneau depuis la page du parcours, avant son début, et choisissez-en un autre.'
+  raison: 'Vous recevez cet email parce que vous avez réservé ce créneau sur {site}.'
+  texte:
+    quand: 'Le {date} à {heure}, pendant {minutes} minutes'
+    annuler: "Votre soutenance, et de quoi l'annuler avant son début en cas d'empêchement :"
+
+defense_result:
+  # {resultat} : la valeur de l'enum DefenseOutcome (passed, retake) ; {libelle} : son libellé traduit.
+  apercu: '{libelle} : le résultat de votre soutenance « {parcours} ».'
+  verdict_html: 'Votre soutenance du parcours « {parcours} », le {date} : <strong>{resultat, select, passed {soutenance validée} other {à repasser}}</strong>.'
+  mot_de: 'Le mot de {evaluateur} :'
+  nouveau_creneau: 'Vous pouvez réserver un nouveau créneau depuis la page du parcours.'
+  bouton: 'Voir le parcours'
+  raison: 'Vous recevez cet email parce que vous avez passé cette soutenance sur {site}.'
+  texte:
+    verdict: 'Votre soutenance du parcours « {parcours} », le {date} : {resultat, select, passed {soutenance validée} other {à repasser}}.'
+
+certificate_revoked:
+  apercu: 'Votre certificat « {parcours} » a été révoqué. Vous pouvez contester cette décision.'
+  revoque_html: "Votre certificat de réussite du parcours <strong>{parcours}</strong> (code {code}) a été révoqué. Sa page de vérification l'indique désormais."
+  motif: 'Motif : {motif}'
+  contester: "Si vous pensez qu'il s'agit d'une erreur, contestez la décision depuis la page du certificat : nous reprenons l'échange par email."
+  raison: 'Vous recevez cet email parce que ce certificat vous a été délivré sur {site}.'
+  texte:
+    revoque: "Votre certificat de réussite du parcours « {parcours} » (code {code}) a été révoqué. Sa page de vérification l'indique désormais."
+
+certificate_reinstated:
+  apercu: 'Votre certificat « {parcours} » est de nouveau valide.'
+  retabli_html: 'Votre certificat de réussite du parcours <strong>{parcours}</strong> (code {code}) est rétabli : sa page de vérification le montre de nouveau comme valide.'
+  raison: 'Vous recevez cet email parce que ce certificat vous a été délivré sur {site}.'
+  texte:
+    retabli: 'Votre certificat de réussite du parcours « {parcours} » (code {code}) est rétabli : sa page de vérification le montre de nouveau comme valide.'

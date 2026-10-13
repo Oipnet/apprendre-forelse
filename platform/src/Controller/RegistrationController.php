@@ -18,6 +18,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 use Symfony\Component\Validator\ConstraintViolation;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function Symfony\Component\Translation\t;
 
 final class RegistrationController extends AbstractController
 {
@@ -29,6 +32,7 @@ final class RegistrationController extends AbstractController
         private readonly bool $inviteOnly,
         private readonly RegistrationThrottle $throttle,
         private readonly UserRegistration $registration,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -51,9 +55,9 @@ final class RegistrationController extends AbstractController
         $ip = $request->getClientIp();
         $withCode = $form->isSubmitted() && $form->has('invitationCode') && '' !== trim((string) $form->get('invitationCode')->getData());
         if ($form->isSubmitted() && $this->throttle->isBlocked($ip)) {
-            $form->addError(new FormError('Beaucoup d\'inscriptions refusées depuis votre connexion : réessayez dans une heure.'));
+            $form->addError(new FormError($this->translator->trans('erreur.inscriptions_refusees', [], 'compte')));
         } elseif ($withCode && $this->throttle->tooManyCodes($ip)) {
-            $form->get('invitationCode')->addError(new FormError('Trop de codes d\'invitation essayés depuis votre connexion : réessayez dans une heure, ou demandez le lien d\'invitation à votre formateur.'));
+            $form->get('invitationCode')->addError(new FormError($this->translator->trans('erreur.trop_de_codes', [], 'compte')));
         } elseif ($withCode && !$form->get('invitationCode')->isValid()) {
             $this->throttle->recordUnknownCode($ip);
         } elseif ($form->isSubmitted() && !$form->isValid() && self::emailTaken($form)) {
@@ -71,10 +75,10 @@ final class RegistrationController extends AbstractController
             $target = $this->getTargetPath($request->getSession(), 'main') ?? $request->query->get('suite');
 
             $security->login($user, 'form_login', 'main');
-            $this->addFlash('success', sprintf(
-                'Bienvenue, %s ! Votre compte est créé : votre progression est désormais sauvegardée.%s',
-                $user->getDisplayName(),
-                $result->confirmationSent ? sprintf(' Un email vient de partir à %s pour confirmer votre adresse.', $user->getEmail()) : '',
+            $this->addFlash('success', t(
+                $result->confirmationSent ? 'flash.bienvenue_confirmation' : 'flash.bienvenue',
+                ['pseudo' => $user->getDisplayName(), 'email' => $user->getEmail()],
+                'compte',
             ));
 
             // Chemin local uniquement : pas de redirection ouverte.

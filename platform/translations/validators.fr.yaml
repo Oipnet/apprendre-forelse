@@ -1,0 +1,56 @@
+# Les messages des contraintes (#[Assert\…(message: 'cle')]). Sans ICU : le validateur passe ses paramètres sous la
+# forme {{ limit }}. Les messages par défaut de Symfony (longueur maximale…) viennent de ses propres traductions.
+
+email:
+    invalide: "Cet email n'est pas valide."
+
+compte:
+    pseudo:
+        vide: "Choisissez un pseudo."
+    email:
+        vide: "Indiquez votre email."
+        # User::EMAIL_TAKEN : on oriente vers la connexion, sans en dire plus.
+        pris: "Impossible de créer un compte avec cet email. Si c'est le vôtre, connectez-vous, ou choisissez un nouveau mot de passe."
+    mot_de_passe:
+        incorrect: "Ce n'est pas votre mot de passe."
+        actuel_incorrect: "Ce n'est pas votre mot de passe actuel."
+
+# App\Validator\StrongPassword.
+mot_de_passe:
+    vide: "Choisissez un mot de passe."
+    trop_court: "Au moins {{ limit }} caractères."
+    trop_faible: "Ce mot de passe se devine trop facilement. Une phrase de passe de quelques mots (« quatre chats boivent du thé ») est plus sûre, et plus facile à retenir."
+    compromis: "Ce mot de passe figure dans des fuites de données connues : choisissez-en un autre, par exemple une phrase de quelques mots."
+
+invitation:
+    vide: "Indiquez votre code d'invitation."
+    inconnu: "Code d'invitation inconnu ou expiré."
+
+contact:
+    objet:
+        vide: "Choisissez un objet."
+    nom:
+        vide: "Indiquez votre nom."
+    email:
+        vide: "Indiquez votre email, pour qu'on puisse vous répondre."
+    effectif:
+        hors_limites: "Entre {{ min }} et {{ max }} personnes."
+    message:
+        vide: "Écrivez votre message."
+        trop_court: "Un peu plus de détails ? Au moins {{ limit }} caractères."
+
+achat:
+    cgv: "Acceptez les conditions générales de vente pour acheter le parcours."
+    renonciation: "Cochez la case pour accéder au parcours dès le paiement."
+
+certificate_claim:
+    holder_name:
+        not_blank: "Indiquez le nom à faire figurer sur le certificat."
+
+api:
+    retour:
+        type_inconnu: Type de retour inconnu.
+        vide: Dites-nous en un peu plus.
+        trop_long: "Au plus {{ limit }} caractères."
+    mentor:
+        trop_de_code: "Trop de code pour le mentor : {{ total }} caractères, au plus {{ max }}."

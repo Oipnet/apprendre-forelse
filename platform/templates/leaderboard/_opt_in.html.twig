@@ -1,12 +1,13 @@
 {# Le bouton qui fait entrer l'apprenant connecté dans le classement, ou l'en retire. Variables : retour ('classement' ou 'compte'). #}
+{% trans_default_domain 'classement' %}
 <form method="post" action="{{ path('app_leaderboard_opt_in') }}">
     <input type="hidden" name="_token" value="{{ csrf_token('leaderboard') }}">
     <input type="hidden" name="retour" value="{{ retour }}">
     {% if app.user.leaderboardOptIn %}
         <input type="hidden" name="participer" value="0">
-        <button class="btn text-sm" type="submit">Me retirer du classement</button>
+        <button class="btn text-sm" type="submit">{{ 'commun.me_retirer'|trans }}</button>
     {% else %}
         <input type="hidden" name="participer" value="1">
-        <button class="btn btn-primary text-sm" type="submit">Apparaître dans le classement</button>
+        <button class="btn btn-primary text-sm" type="submit">{{ 'commun.apparaitre'|trans }}</button>
     {% endif %}
 </form>

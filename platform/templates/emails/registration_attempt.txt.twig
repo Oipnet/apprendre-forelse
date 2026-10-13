@@ -1,13 +1,14 @@
-Bonjour {{ user.displayName }},
+{% trans_default_domain 'emails' %}
+{{ 'commun.bonjour'|trans({nom: user.displayName}) }}
 
-Quelqu'un vient d'essayer de créer un compte sur {{ theme.name }} avec votre adresse email. Or vous en avez déjà un.
+{{ 'registration_attempt.tentative'|trans({site: theme.name}) }}
 
-Si c'était vous, connectez-vous :
+{{ 'registration_attempt.si_c_etait_vous'|trans }}
 {{ url('app_login') }}
 
-Mot de passe oublié ? Choisissez-en un nouveau :
+{{ 'registration_attempt.texte.oubli'|trans }}
 {{ url('app_forgot_password_request') }}
 
-Si ce n'était pas vous, ignorez cet email : aucun compte n'a été créé et le vôtre n'a pas changé.
+{{ 'registration_attempt.ignorer'|trans }}
 
-{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce qu\'une inscription à ' ~ theme.name ~ ' a été tentée avec votre adresse.'}) }}
+{{ include('emails/_footer.txt.twig', {reason: 'registration_attempt.raison'|trans({site: theme.name})}) }}

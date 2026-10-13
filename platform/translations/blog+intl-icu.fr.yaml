@@ -1,0 +1,22 @@
+# Le blog : blog/, flux RSS compris (voir README.md).
+
+commun:
+    fil_ariane: "Fil d'Ariane"
+    accueil: Accueil
+    blog: Le blog
+    blog_de: "Le blog de {site}"
+    lecture: "{minutes} min de lecture"
+
+index:
+    intro: "Des articles qui partent d'un exercice pour aller plus loin : ce que fait vraiment le framework, où il s'arrête, et comment s'en servir en production. Et les coulisses de la plateforme."
+    flux: "S'abonner au flux RSS"
+
+show:
+    en_preparation: "En préparation : cet article n'est visible que des administrateurs."
+    programme: "Programmé : cet article paraîtra le {date}. D'ici là, seuls les administrateurs le voient."
+    mis_a_jour: 'mis à jour le <time datetime="{datetime}">{date}</time>'
+    autres: Autres articles
+    tous: "← Tous les articles"
+
+feed:
+    description: "Les articles de {site}."

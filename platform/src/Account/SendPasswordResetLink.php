@@ -11,6 +11,7 @@ use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Mime\Address;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Envoie le lien de nouveau mot de passe, si l'adresse demandée a un compte (voir PasswordResetRequested). */
 #[AsMessageHandler]
@@ -22,6 +23,7 @@ final readonly class SendPasswordResetLink
         private MailerInterface $mailer,
         private Theme $theme,
         private Sender $sender,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -42,7 +44,7 @@ final readonly class SendPasswordResetLink
         // L'email ne contient pas de mot de passe : un lien pour en choisir un.
         $this->mailer->send($this->sender->email()
             ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
-            ->subject(sprintf('Choisissez un nouveau mot de passe sur %s', $this->theme->name()))
+            ->subject($this->translator->trans('sujet.reset_password', ['site' => $this->theme->name()], 'emails'))
             ->htmlTemplate('emails/reset_password.html.twig')
             ->textTemplate('emails/reset_password.txt.twig')
             ->context(['resetToken' => $resetToken, 'user' => $user]));

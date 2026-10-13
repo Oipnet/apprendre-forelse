@@ -1,3 +1,5 @@
+import { m } from '../i18n';
+
 /**
  * Les raccourcis du playground : lancer les tests, enregistrer, replier les consignes ou l'aperçu. Monaco les reçoit
  * d'abord quand il a le focus (voir Playground.ts, editor.addCommand) ; ailleurs dans la page, c'est l'écouteur du document.
@@ -35,15 +37,15 @@ export function foldShortcutLabel(platform: string, key: 'B' | 'P'): string {
 export function shortcutsHelpHtml(mod: string, platform = ''): string {
 	const row = (keys: string, what: string) => `<dt><kbd>${keys}</kbd></dt><dd>${what}</dd>`;
 	return `
-		<h2 id="shortcuts-title">Raccourcis clavier</h2>
+		<h2 id="shortcuts-title">${m.shortcuts.title}</h2>
 		<dl class="shortcuts-list">
-			${row(`${mod} + Entrée`, 'Lancer les tests')}
-			${row(`${mod} + S`, 'Enregistrer le brouillon tout de suite')}
-			${row(foldShortcutLabel(platform, 'B'), 'Replier ou afficher les consignes (écran large)')}
-			${row(foldShortcutLabel(platform, 'P'), 'Replier ou afficher l\'aperçu (écran large)')}
-			${row('Ctrl + M', 'Dans l\'éditeur : Tab passe au bouton suivant au lieu d\'indenter (et inversement)')}
-			${row('F1', 'Dans l\'éditeur : toutes les commandes')}
-			${row('Échap', 'Fermer cette aide')}
+			${row(m.shortcuts.withEnter(mod), m.shortcuts.run)}
+			${row(`${mod} + S`, m.shortcuts.save)}
+			${row(foldShortcutLabel(platform, 'B'), m.shortcuts.foldBrief)}
+			${row(foldShortcutLabel(platform, 'P'), m.shortcuts.foldPreview)}
+			${row('Ctrl + M', m.shortcuts.tabTrap)}
+			${row('F1', m.shortcuts.commands)}
+			${row(m.shortcuts.escape, m.shortcuts.closeHelp)}
 		</dl>
-		<button type="button" class="ghost" data-close>Fermer</button>`;
+		<button type="button" class="ghost" data-close>${m.common.close}</button>`;
 }

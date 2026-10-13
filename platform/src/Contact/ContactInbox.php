@@ -14,6 +14,8 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
+use function Symfony\Component\Translation\t;
+
 /**
  * Reçoit un message de contact : enregistré d'abord (rien ne se perd), puis transmis par email à l'équipe, avec
  * l'adresse de l'expéditeur en Reply-To. Destinataire : CONTACT_EMAIL, à défaut l'adresse de l'éditeur.
@@ -47,7 +49,7 @@ final readonly class ContactInbox
     public function receive(ContactMessage $message, string $senderIp): void
     {
         if (!$this->limiter->create($senderIp)->consume()->isAccepted()) {
-            throw new QuotaExceeded('Beaucoup de messages en peu de temps depuis votre connexion : réessayez dans une heure, ou écrivez-nous directement par email.');
+            throw new QuotaExceeded('Beaucoup de messages en peu de temps depuis votre connexion : réessayez dans une heure, ou écrivez-nous directement par email.', t('contact.quota', [], 'compte'));
         }
         $this->entityManager->persist($message);
         $this->entityManager->flush();

@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
 
 {#
   Le sommaire public d'un chapitre : ce qu'il fait apprendre, et les exercices qui y mènent. Lisible sans compte,
@@ -6,39 +7,39 @@
   cours, elle, se lit ailleurs, une fois le chapitre réussi.
   Variables : track, chapter, number, exercises, concepts, xp, duration, previous, next, free.
 #}
-{% block title %}{{ chapter.title }} · Chapitre {{ number }} · {{ track.title }} · {{ theme.name }}{% endblock %}
+{% block title %}{{ chapter.title }} · {{ 'commun.chapitre_numero'|trans({numero: number}) }} · {{ track.title }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
     <main class="chapter-outline mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-        <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
             <ol>
-                <li><a href="{{ path('app_home') }}">Accueil</a></li>
+                <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
                 <li><a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></li>
-                <li aria-current="page">Chapitre {{ number }}</li>
+                <li aria-current="page">{{ 'commun.chapitre_numero'|trans({numero: number}) }}</li>
             </ol>
         </nav>
 
-        <p class="mt-4 text-sm text-ink-muted">Chapitre {{ number }} du parcours <a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></p>
+        <p class="mt-4 text-sm text-ink-muted">{{ 'chapter.summary.du_parcours'|trans({numero: number, url: path('app_track', {trackId: track.id})|e, titre: track.title|e})|raw }}</p>
         <h1 class="mt-1 text-3xl font-semibold">{{ chapter.title }}</h1>
         {% if chapter.description %}<p class="lead mt-3 text-lg text-ink-muted">{{ chapter.description }}</p>{% endif %}
         <p class="chapter-outline-facts mt-3 text-sm text-ink-muted">
-            {{ exercises|length }} exercice{{ exercises|length > 1 ? 's' }}
-            · {{ xp|number_format(0, ',', ' ') }} XP
-            {%- if duration %} · environ {{ duration|duree }}{% endif %}
-            {%- if free %} · <span class="tag free">premier chapitre gratuit</span>{% endif %}
+            {{ 'commun.exercices'|trans({n: exercises|length}) }}
+            · {{ 'commun.xp'|trans({xp: xp|number_format(0, ',', ' ')}) }}
+            {%- if duration %} · {{ 'chapter.summary.environ'|trans({duree: duration|duree}) }}{% endif %}
+            {%- if free %} · <span class="tag free">{{ 'chapter.summary.gratuit'|trans }}</span>{% endif %}
         </p>
 
-        {{ include('_concepts.html.twig', {concepts: concepts, label: 'Ce chapitre fait travailler :'}) }}
+        {{ include('_concepts.html.twig', {concepts: concepts, label: 'chapter.summary.notions'|trans}) }}
 
-        <h2 class="mt-10 text-xl font-semibold">Les exercices du chapitre</h2>
+        <h2 class="mt-10 text-xl font-semibold">{{ 'chapter.summary.exercices'|trans }}</h2>
         <ol class="chapter-outline-list mt-4 space-y-6">
             {% for row in exercises %}
                 <li>
                     <h3 class="font-semibold"><a href="{{ path('app_exercise', {trackId: track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a></h3>
                     <p class="text-sm text-ink-muted">
-                        Exercice {{ row.position }}
-                        · {{ row.exercise.xp }} XP
-                        · {{ row.exercise.objectives|length }} objectif{{ row.exercise.objectives|length > 1 ? 's' }} vérifié{{ row.exercise.objectives|length > 1 ? 's' }} par des tests
+                        {{ 'commun.exercice_numero'|trans({numero: row.position}) }}
+                        · {{ 'commun.xp'|trans({xp: row.exercise.xp}) }}
+                        · {{ 'commun.objectifs_verifies'|trans({n: row.exercise.objectives|length}) }}
                     </p>
                     {% if row.story %}<p class="chapter-outline-story mt-2">{{ row.story }}</p>{% endif %}
                     {{ include('_concepts.html.twig', {concepts: row.exercise.concepts, label: null}) }}
@@ -46,14 +47,14 @@
             {% endfor %}
         </ol>
 
-        <nav class="lesson-nav mt-12 flex flex-wrap justify-between gap-4 border-t border-line pt-6" aria-label="Chapitres voisins">
+        <nav class="lesson-nav mt-12 flex flex-wrap justify-between gap-4 border-t border-line pt-6" aria-label="{{ 'chapter.summary.voisins'|trans }}">
             {% if previous %}
-                <a class="btn" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: previous.chapter.id}) }}">← Chapitre {{ previous.number }} : {{ previous.chapter.title }}</a>
+                <a class="btn" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: previous.chapter.id}) }}">← {{ 'commun.chapitre_titre'|trans({numero: previous.number, titre: previous.chapter.title}) }}</a>
             {% else %}
-                <a class="btn" href="{{ path('app_track', {trackId: track.id}) }}">← Retour au parcours</a>
+                <a class="btn" href="{{ path('app_track', {trackId: track.id}) }}">{{ 'commun.retour_parcours'|trans }}</a>
             {% endif %}
             {% if next %}
-                <a class="btn" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: next.chapter.id}) }}">Chapitre {{ next.number }} : {{ next.chapter.title }} →</a>
+                <a class="btn" href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: next.chapter.id}) }}">{{ 'commun.chapitre_titre'|trans({numero: next.number, titre: next.chapter.title}) }} →</a>
             {% endif %}
         </nav>
     </main>

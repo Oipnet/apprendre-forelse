@@ -1,0 +1,87 @@
+# Textes communs à toutes les pages : page de base, en-tête, pied de page, pages d'erreur, partage (voir README.md).
+
+base:
+    aller_au_contenu: "Aller au contenu"
+    flux_blog: "Le blog de {nom}"
+
+head:
+    # Texte de remplacement de l'image de partage par défaut (Open Graph).
+    image_alt: "{nom} : {slogan}"
+
+sandbox:
+    titre: "Aperçu"
+    application: "Aperçu de l'application"
+
+header:
+    navigation: "Navigation principale"
+    parcours: "Parcours"
+    pratique: "Pratique"
+    blog: "Blog"
+    classement: "Classement"
+    menu_compte: "Menu du compte de {nom}"
+    xp: "{xp} XP"
+    mon_compte: "Mon compte"
+    espaces: "Espaces"
+    atelier: "Atelier"
+    mes_cohortes: "Mes cohortes"
+    administration: "Administration"
+    deconnexion: "Déconnexion"
+    connexion: "Connexion"
+    creer_compte: "Créer un compte"
+
+footer:
+    navigation: "Pied de page"
+    apprendre: "Apprendre"
+    parcours: "Les parcours"
+    pratique: "Pratique"
+    notions: "Les notions"
+    blog: "Le blog"
+    organisations: "Écoles et entreprises"
+    auto_hebergement: "Auto-hébergement"
+    contact: "Contact"
+    mon_compte: "Mon compte"
+    connexion: "Connexion"
+    informations: "Informations"
+    mentions_legales: "Mentions légales"
+    confidentialite: "Confidentialité"
+    conditions_vente: "Conditions de vente"
+    marques: "Les langages et frameworks cités sont des marques de leurs titulaires respectifs ; ce site n'est affilié à aucun d'eux."
+    # HTML : rendu avec |raw, paramètres échappés.
+    moteur: 'Moteur {version} · <abbr title="GNU Affero General Public License v3.0 ou ultérieure">AGPL-3.0</abbr> · <a href="{depot}">code source</a>'
+
+error:
+    titre_page: "{titre} · {site}"
+    accueil: "Retour à l'accueil"
+    reprendre: "Reprendre où j'en étais"
+    parcours: "Voir les parcours"
+    404:
+        titre: "Page introuvable"
+        texte: "Cette adresse ne mène nulle part. Le lien est peut-être ancien, ou une lettre s'est glissée de travers."
+    403:
+        titre: "Accès refusé"
+        texte: "Cette page existe, mais elle n'est pas ouverte à votre compte."
+    429:
+        titre: "Trop de requêtes"
+        texte: "Vous allez plus vite que le serveur ne l'accepte. Patientez un instant, puis réessayez."
+    503:
+        titre: "Service indisponible"
+        texte: "Le site est momentanément indisponible, sans doute le temps d'une mise à jour. Réessayez dans quelques minutes."
+    # Les autres codes 4xx, et 5xx.
+    4xx:
+        titre: "Requête impossible"
+        texte: "Le serveur n'a pas pu traiter cette requête."
+    5xx:
+        titre: "Une erreur est survenue"
+        texte: "Quelque chose a cassé de notre côté. L'erreur est enregistrée ; réessayez dans un moment."
+
+share:
+    # Le titre des boutons de partage, suivi de deux-points ; « titre » : celui que la page donne, ou share.partager.
+    titre: "{titre} :"
+    partager: "Partager"
+    natif: "Partager…"
+    copier: "Copier le lien"
+    # Les noms des réseaux, sur leurs boutons.
+    reseau:
+        linkedin: "LinkedIn"
+        x: "X"
+        bluesky: "Bluesky"

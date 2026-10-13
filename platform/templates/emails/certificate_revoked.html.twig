@@ -1,17 +1,18 @@
 {% extends 'emails/_layout.html.twig' %}
+{% trans_default_domain 'emails' %}
 
-{% block preheader %}Votre certificat « {{ certificate.trackTitle }} » a été révoqué. Vous pouvez contester cette décision.{% endblock %}
+{% block preheader %}{{ 'certificate_revoked.apercu'|trans({parcours: certificate.trackTitle}) }}{% endblock %}
 
 {% block content %}
-<p style="margin:0 0 12px;">Bonjour {{ user.displayName }},</p>
+<p style="margin:0 0 12px;">{{ 'commun.bonjour'|trans({nom: user.displayName}) }}</p>
 
-<p style="margin:0 0 12px;">Votre certificat de réussite du parcours <strong>{{ certificate.trackTitle }}</strong> (code {{ certificate.code }}) a été révoqué. Sa page de vérification l'indique désormais.</p>
+<p style="margin:0 0 12px;">{{ 'certificate_revoked.revoque_html'|trans({parcours: certificate.trackTitle|e, code: certificate.code|e})|raw }}</p>
 
-<p style="margin:0 0 12px;">Motif : {{ certificate.revocationReason }}</p>
+<p style="margin:0 0 12px;">{{ 'certificate_revoked.motif'|trans({motif: certificate.revocationReason}) }}</p>
 
-<p style="margin:0 0 12px;">Si vous pensez qu'il s'agit d'une erreur, contestez la décision depuis la page du certificat : nous reprenons l'échange par email.</p>
+<p style="margin:0 0 12px;">{{ 'certificate_revoked.contester'|trans }}</p>
 
-{{ include('emails/_button.html.twig', {href: url('app_certificate', {code: certificate.code}), label: 'Voir le certificat'}) }}
+{{ include('emails/_button.html.twig', {href: url('app_certificate', {code: certificate.code}), label: 'commun.voir_le_certificat'|trans}) }}
 {% endblock %}
 
-{% block reason %}Vous recevez cet email parce que ce certificat vous a été délivré sur {{ theme.name }}.{% endblock %}
+{% block reason %}{{ 'certificate_revoked.raison'|trans({site: theme.name}) }}{% endblock %}

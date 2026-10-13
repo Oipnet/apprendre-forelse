@@ -12,6 +12,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Confirmation d'une adresse email par un lien signé : à l'inscription, et avant de remplacer l'adresse d'un compte.
@@ -31,6 +32,7 @@ final readonly class EmailVerifier
         private LoggerInterface $logger,
         private Sender $sender,
         private Theme $theme,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -49,7 +51,7 @@ final readonly class EmailVerifier
 
         $message = $this->sender->email()
             ->to(new Address($email, (string) $user->getDisplayName()))
-            ->subject(sprintf(null === $newEmail ? 'Confirmez votre adresse email sur %s' : 'Confirmez votre nouvelle adresse email sur %s', $this->theme->name()))
+            ->subject($this->translator->trans(null === $newEmail ? 'sujet.confirm_email' : 'sujet.confirm_email_changement', ['site' => $this->theme->name()], 'emails'))
             ->htmlTemplate('emails/confirm_email.html.twig')
             ->textTemplate('emails/confirm_email.txt.twig')
             ->context(['user' => $user, 'link' => $link, 'change' => null !== $newEmail, 'hours' => self::VALIDITY_HOURS]);

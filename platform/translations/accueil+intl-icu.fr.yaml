@@ -1,0 +1,102 @@
+# La page d'accueil (home.html.twig, home/) et la fiche d'un parcours (home/_track_card, reprise par le catalogue).
+# Les textes que le thème fournit (theme.yaml, « home ») restent des données du thème.
+
+seo:
+    titre: "Apprendre à développer en codant dans le navigateur"
+    titre_marque: "Apprendre à développer en codant dans le navigateur | {marque}"
+    description: "Apprenez à développer en codant dans votre navigateur, sans vidéo ni installation : un vrai projet, des tests automatiques, le premier chapitre gratuit."
+
+commun:
+    essayer_pratique: "Essayer un exercice, sans compte"
+    essayer_parcours: "Essayer le premier exercice"
+
+hero:
+    gratuit_pratique: "Le premier chapitre de chaque parcours est gratuit avec un compte."
+    gratuit_parcours: "Gratuit : créez votre compte, vous codez en deux minutes."
+    parcours: "Les parcours"
+    pratique: "La Pratique"
+    blog: "Le blog"
+
+demo:
+    description: "Un exercice : le code, l'aperçu de la page et les objectifs validés"
+    objectifs: "Objectifs"
+    score: "{valides} / {total} validés"
+    xp: "+ {xp} XP"
+
+tracks:
+    titre: "{n, plural, one {Le parcours} other {Les parcours}}"
+    aucun: "Aucun parcours installé : ajoutez un pack de contenu (variable CONTENT_PACKS_PATHS)."
+    en_preparation: "En préparation"
+    bientot: "Bientôt"
+
+track_card:
+    beta: "En bêta"
+    taille: "{chapitres, plural, one {# chapitre} other {# chapitres}} · {exercices, plural, one {# exercice} other {# exercices}}"
+    taille_duree: "{chapitres, plural, one {# chapitre} other {# chapitres}} · {exercices, plural, one {# exercice} other {# exercices}} · environ {duree}"
+    prix_normal: "Prix normal"
+    # HTML : rendu avec |raw, le prix échappé.
+    prix: "<strong>{prix}</strong> TTC, accès à vie"
+    fondateur:
+        sans_date: "Prix fondateur"
+        date: "Prix fondateur jusqu'au {date}"
+        sans_date_places: "Prix fondateur encore {places, plural, one {# place} other {# places}}"
+        date_places: "Prix fondateur jusqu'au {date}, encore {places, plural, one {# place} other {# places}}"
+    continuer: "Continuer"
+    acheter: "Acheter"
+    bientot: "Achat bientôt disponible"
+    premier_chapitre_gratuit: "Premier chapitre gratuit"
+    # Une ligne de chapitre : le premier est gratuit pour qui n'a pas le parcours ; la durée, si on la connaît.
+    chapitre:
+        normal: "{exercices} ex."
+        normal_duree: "{exercices} ex. · ≈ {duree}"
+        gratuit: "gratuit · {exercices} ex."
+        gratuit_duree: "gratuit · {exercices} ex. · ≈ {duree}"
+
+author:
+    # HTML : rendu avec |raw, le lien échappé.
+    moteur: 'Le moteur de la plateforme est sous licence open source (AGPL) : son code est publié, pour le lire ou <a href="{lien}">le faire tourner chez vous</a>.'
+
+signup:
+    attente:
+        titre: "Soyez prévenu à l'ouverture."
+        texte: "Les parcours sont en bêta fermée. Laissez votre adresse : vous saurez quand ils ouvrent."
+        ok: "C'est noté : vous serez prévenu à l'ouverture."
+        invalide: "Cette adresse ne semble pas valide, vérifiez-la."
+        exemple: "vous@exemple.fr"
+        adresse: "Adresse email"
+        envoyer: "Me prévenir"
+        # HTML : rendu avec |raw.
+        donnees: "Deux emails au plus : l'ouverture, et une invitation à la bêta si des places se libèrent. Rien d'autre. <a href=\"{lien}\">Comment vos données sont traitées</a>."
+    ouverte:
+        titre: "Le premier chapitre de chaque parcours est gratuit."
+        texte: "Créez votre compte : votre progression vous suit."
+        creer_compte: "Créer un compte"
+
+faq:
+    titre: "Questions fréquentes"
+    # Les questions, affichées par l'accueil et reprises dans son JSON-LD (FAQPage). « liste » : des titres de parcours.
+    navigateur:
+        question: "Ça tourne vraiment dans le navigateur ?"
+        reponse: "Oui. Le langage et le framework du parcours s'exécutent en WebAssembly, dans un onglet. Rien ne part sur un serveur pour exécuter votre code."
+    parcours:
+        question: "Quels parcours ?"
+        ouverts: "Aujourd'hui : {liste}."
+        aucun: "Aucun parcours n'est encore ouvert."
+        en_preparation: "En préparation : {liste}."
+        # La fin d'une liste de parcours : « A, B et C ».
+        liste: "{debut} et {dernier}"
+    prix:
+        question: "Combien ça coûte ?"
+        reponse: "Le premier chapitre de chaque parcours est gratuit : il suffit de créer un compte. Le parcours complet s'achète une fois, prix TTC affiché, pour un accès à vie et à ses mises à jour : pas d'abonnement. Une école ou une entreprise peut aussi ouvrir l'accès à tout un groupe, sur devis."
+    blocage:
+        question: "Je bloque sur un exercice, que se passe-t-il ?"
+        reponse: "Vous demandez un indice, puis un deuxième, plus précis. Avec un compte, la solution complète est consultable, mais elle ne rapporte pas l'XP de l'exercice."
+    video:
+        question: "Quelle différence avec les tutoriels vidéo ?"
+        reponse: "Vous ne regardez rien : vous écrivez tout le code vous-même, sur un projet qui grandit exercice après exercice. Le temps passé est du temps de pratique."
+    a_jour:
+        question: "Est-ce à jour ?"
+        reponse: "Chaque parcours cible les versions actuelles (Symfony 8 et PHP 8.4 pour le premier), et les exercices sont vérifiés automatiquement à chaque mise à jour du moteur."
+    hebergement:
+        question: "Puis-je l'héberger moi-même ?"
+        reponse: "Oui, à terme : le moteur est sous licence AGPL et son code sera publié à l'ouverture. Les parcours, eux, sont le contenu payant : c'est ce que vous achetez."

@@ -7,7 +7,7 @@ final readonly class PracticeListing
 {
     /**
      * @param list<Practice>                                                                  $all      toute la Pratique visible
-     * @param list<array{label: string, items: list<array{practice: Practice, state: string}>}> $groups
+     * @param list<array{id: string, label: string, items: list<array{practice: Practice, state: string}>}> $groups
      * @param array<string, int>                                                              $notionCounts notion => nombre d'exercices du framework choisi
      */
     public function __construct(

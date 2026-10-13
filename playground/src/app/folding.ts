@@ -1,3 +1,5 @@
+import { m } from '../i18n';
+
 /**
  * Volets repliables : sur un écran assez large pour en montrer plusieurs, les consignes et l'aperçu se replient en
  * une rail étroite pour laisser la place à l'éditeur. L'état se retient dans le navigateur, pour tous les exercices,
@@ -12,7 +14,6 @@ export type FoldMode = 'large' | 'moyen';
 type Store = Pick<Storage, 'getItem' | 'setItem'>;
 
 export const FOLDABLES: readonly Foldable[] = ['brief', 'preview'];
-const NAMES: Record<Foldable, string> = { brief: 'les consignes', preview: 'l\'aperçu' };
 
 export const foldKey = (mode: FoldMode) => `forelse:volets:${mode}`;
 
@@ -37,16 +38,16 @@ export function writeFolded(store: Store | null, mode: FoldMode, folded: Folded)
 }
 
 /** Le bouton qui replie, ou la rail qui rouvre : ce qu'il annonce. */
-export const foldLabel = (pane: Foldable, folded: boolean) => `${folded ? 'Afficher' : 'Replier'} ${NAMES[pane]}`;
+export const foldLabel = (pane: Foldable, folded: boolean) => (folded ? m.folding.show : m.folding.hide)[pane];
 
 /**
  * La pastille de la rail des consignes après un run : ✓ si tout passe, sinon le nombre d'objectifs en échec. `spoken`
  * complète le nom de la rail pour un lecteur d'écran.
  */
 export function briefBadge(passed: number, total: number): { text: string; kind: 'ok' | 'ko'; spoken: string } {
-	if (passed === total) return { text: '✓', kind: 'ok', spoken: 'tous les objectifs sont atteints' };
+	if (passed === total) return { text: '✓', kind: 'ok', spoken: m.folding.allPassed };
 	const failed = total - passed;
-	return { text: String(failed), kind: 'ko', spoken: `${failed} objectif${failed > 1 ? 's' : ''} en échec` };
+	return { text: String(failed), kind: 'ko', spoken: m.folding.failing(failed) };
 }
 
 /** Le HTML d'une rail : un vrai bouton, son nom écrit verticalement, une pastille cachée tant qu'il n'y a rien à signaler. */

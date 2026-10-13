@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Révoquer un certificat, ou le rétablir après une contestation. Chaque décision est gardée dans son historique, et
@@ -29,6 +30,7 @@ final readonly class CertificateRevocation
         private Sender $sender,
         private LoggerInterface $logger,
         private ClockInterface $clock,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -75,10 +77,7 @@ final readonly class CertificateRevocation
         $user = $certificate->getUser();
         $email = $this->sender->email()
             ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
-            ->subject(match ($template) {
-                'revoked' => sprintf('Votre certificat « %s » a été révoqué', $certificate->getTrackTitle()),
-                default => sprintf('Votre certificat « %s » est rétabli', $certificate->getTrackTitle()),
-            })
+            ->subject($this->translator->trans('sujet.certificate_'.$template, ['parcours' => $certificate->getTrackTitle()], 'emails'))
             ->htmlTemplate(sprintf('emails/certificate_%s.html.twig', $template))
             ->textTemplate(sprintf('emails/certificate_%s.txt.twig', $template))
             ->context(['certificate' => $certificate, 'user' => $user]);

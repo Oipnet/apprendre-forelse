@@ -2,34 +2,34 @@
   Prix d'un parcours et bouton « Acheter » ou « Continuer ». Variables : track, offer (TrackOffer), continueUrl (facultatif).
   Montants toujours formatés en euros, TTC. price-box et price sont des repères, sans style.
 #}
+{% trans_default_domain 'apprentissage' %}
 {% set quote = offer.quote %}
 <div class="price-box mt-4 space-y-2 rounded-lg border border-line bg-surface p-4">
     {% if quote.free %}
-        <p class="price"><strong>Gratuit</strong></p>
-        {% if continueUrl is defined and continueUrl %}<a class="btn btn-primary" href="{{ continueUrl }}">Continuer →</a>{% endif %}
+        <p class="price"><strong>{{ 'commun.gratuit'|trans }}</strong></p>
+        {% if continueUrl is defined and continueUrl %}<a class="btn btn-primary" href="{{ continueUrl }}">{{ 'track.price.continuer'|trans }}</a>{% endif %}
     {% elseif offer.fullAccess %}
-        <p class="price text-ink-muted">Vous avez accès à tout le parcours.</p>
-        {% if continueUrl is defined and continueUrl %}<a class="btn btn-primary" href="{{ continueUrl }}">Continuer →</a>{% endif %}
+        <p class="price text-ink-muted">{{ 'track.price.acces_complet'|trans }}</p>
+        {% if continueUrl is defined and continueUrl %}<a class="btn btn-primary" href="{{ continueUrl }}">{{ 'track.price.continuer'|trans }}</a>{% endif %}
     {% else %}
         <p class="price text-lg">
-            {% if quote.discounted %}<s class="text-ink-muted" aria-label="Prix normal">{{ quote.normalPrice|euros }}</s>{% endif %}
-            <strong>{{ quote.price|euros }}</strong> <span class="text-sm text-ink-muted">TTC, accès à vie</span>
+            {% if quote.discounted %}<s class="text-ink-muted" aria-label="{{ 'track.price.prix_normal'|trans }}">{{ quote.normalPrice|euros }}</s>{% endif %}
+            <strong>{{ quote.price|euros }}</strong> <span class="text-sm text-ink-muted">{{ 'track.price.ttc'|trans }}</span>
         </p>
         {% if quote.founder %}
             <p class="text-sm text-ink-muted">
-                Prix fondateur
-                {%- if quote.founderEndsAt %} jusqu'au {{ quote.founderEndsAt|date('d/m/Y') }}{% endif %}
-                {%- if quote.founderSeatsLeft is not null %}{{ quote.founderEndsAt ? ',' : '' }} encore {{ quote.founderSeatsLeft }} place{{ quote.founderSeatsLeft > 1 ? 's' }}{% endif %}.
+                {% set founder = quote.founderEndsAt ? (quote.founderSeatsLeft is not null ? 'fondateur_date_places' : 'fondateur_date') : (quote.founderSeatsLeft is not null ? 'fondateur_places' : 'fondateur') -%}
+                {{ ('track.price.' ~ founder)|trans({date: quote.founderEndsAt ? quote.founderEndsAt|format_date('short'), n: quote.founderSeatsLeft}) }}
             </p>
         {% elseif quote.cohort %}
-            <p class="text-sm text-ink-muted">Tarif de votre cohorte « {{ quote.cohort.name }} ».</p>
+            <p class="text-sm text-ink-muted">{{ 'track.price.cohorte'|trans({cohorte: quote.cohort.name}) }}</p>
         {% endif %}
         {% if offer.purchasable %}
-            <a class="btn btn-primary" href="{{ path('app_purchase', {trackId: track.id}) }}">Acheter le parcours</a>
+            <a class="btn btn-primary" href="{{ path('app_purchase', {trackId: track.id}) }}">{{ 'track.price.acheter'|trans }}</a>
         {% else %}
             {# Paiement pas encore configuré sur l'instance : le prix s'affiche, l'achat viendra. #}
-            <span class="btn cursor-default opacity-60" aria-disabled="true">Bientôt disponible</span>
+            <span class="btn cursor-default opacity-60" aria-disabled="true">{{ 'track.price.bientot_disponible'|trans }}</span>
         {% endif %}
-        <p class="text-sm text-ink-muted">Premier chapitre gratuit avec un compte.</p>
+        <p class="text-sm text-ink-muted">{{ 'track.price.premier_chapitre'|trans }}</p>
     {% endif %}
 </div>

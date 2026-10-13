@@ -1,3 +1,4 @@
+import { m } from '../i18n';
 import type { HttpResponse, Runtime } from '@forelse/runtime-contract';
 import type { ExampleRequest } from './types';
 
@@ -106,7 +107,7 @@ export class RequestsPanel {
 	async run() {
 		if (this.send.disabled) return;
 		this.send.disabled = true;
-		this.status.textContent = 'Envoi…';
+		this.status.textContent = m.common.sending;
 		this.status.dataset.kind = 'busy';
 		try {
 			await this.beforeSend();
@@ -128,9 +129,9 @@ export class RequestsPanel {
 				.map(([name, values]) => values.map((v) => `${name}: ${v}`).join('\n'))
 				.join('\n')
 				.replaceAll(this.base, '');
-			this.responseBody.textContent = formatBody(text, contentType) || '(corps vide)';
+			this.responseBody.textContent = formatBody(text, contentType) || m.requests.emptyBody;
 		} catch (error) {
-			this.status.textContent = 'Erreur';
+			this.status.textContent = m.requests.error;
 			this.status.dataset.kind = 'ko';
 			this.responseBody.textContent = String(error);
 		} finally {

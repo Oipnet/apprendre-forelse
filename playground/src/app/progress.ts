@@ -3,6 +3,7 @@
  * dans le navigateur pour un invité (exercices `free` uniquement).
  */
 
+import { m } from '../i18n';
 import type { Review } from './mentor';
 
 export interface SavedProgress {
@@ -93,10 +94,10 @@ export class ApiProgressStore implements ProgressStore {
 
 	private async send(method: string, path = '', body?: unknown) {
 		const response = await this.request(method, path, body);
-		if (response.status === 401) throw new Error('votre session a expiré : reconnectez-vous, puis rechargez la page (votre code reste dans l\'éditeur)');
+		if (response.status === 401) throw new Error(m.progress.sessionExpired);
 		// Accès au parcours terminé (cohorte expirée, remboursement) : la progression reste sur le serveur.
-		if (response.status === 403) throw new Error('votre accès à ce parcours a pris fin : la progression déjà enregistrée est conservée, et vous la retrouverez avec un nouvel accès');
-		if (!response.ok) throw new Error(`Sauvegarde impossible (${response.status})`);
+		if (response.status === 403) throw new Error(m.progress.accessEnded);
+		if (!response.ok) throw new Error(m.progress.saveFailed(response.status));
 		return response.status === 204 ? null : response.json();
 	}
 

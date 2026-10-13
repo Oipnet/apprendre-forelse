@@ -12,7 +12,7 @@
 {%- set logo = theme.emailLogoUrl -%}
 {%- if logo and logo starts with '/' %}{% set logo = site|trim('/', 'right') ~ logo %}{% endif -%}
 <!doctype html>
-<html lang="fr">
+<html lang="{{ app.locale }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

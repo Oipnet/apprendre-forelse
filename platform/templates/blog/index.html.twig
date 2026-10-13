@@ -1,23 +1,24 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'blog' %}
 
 {#
   Le blog : les articles parus, du plus récent au plus ancien (voir App\Content\Blog).
   Variables : articles (list<App\Content\Article>).
 #}
-{% block title %}Le blog · {{ theme.name }}{% endblock %}
+{% block title %}{{ 'commun.blog'|trans }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
     <main class="blog-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-        <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
             <ol>
-                <li><a href="{{ path('app_home') }}">Accueil</a></li>
-                <li aria-current="page">Le blog</li>
+                <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
+                <li aria-current="page">{{ 'commun.blog'|trans }}</li>
             </ol>
         </nav>
 
-        <h1 class="mt-3 text-3xl font-semibold">Le blog</h1>
-        <p class="lead mt-3 text-lg text-ink-muted">Des articles qui partent d'un exercice pour aller plus loin : ce que fait vraiment le framework, où il s'arrête, et comment s'en servir en production. Et les coulisses de la plateforme.</p>
-        <p class="blog-feed mt-3 text-sm"><a href="{{ path('app_blog_feed') }}" type="application/rss+xml">S'abonner au flux RSS</a></p>
+        <h1 class="mt-3 text-3xl font-semibold">{{ 'commun.blog'|trans }}</h1>
+        <p class="lead mt-3 text-lg text-ink-muted">{{ 'index.intro'|trans }}</p>
+        <p class="blog-feed mt-3 text-sm"><a href="{{ path('app_blog_feed') }}" type="application/rss+xml">{{ 'index.flux'|trans }}</a></p>
 
         <ol class="blog-list mt-8 space-y-8">
             {% for article in articles %}

@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Traduisible : EasyAdmin affiche label() tel quel. */
 enum PurchaseStatus: string implements TranslatableInterface
@@ -31,6 +32,12 @@ enum PurchaseStatus: string implements TranslatableInterface
             self::Refunded => 'Remboursé',
             self::Disputed => 'Contesté',
         };
+    }
+
+    /** Le libellé montré à l'apprenant (compte : enum.purchase_status.<valeur>) ; label() garde le français de l'administration. */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
+    {
+        return $translator->trans('enum.purchase_status.'.$this->value, [], 'compte', $locale);
     }
 
     public function badge(): string

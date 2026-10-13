@@ -26,6 +26,10 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Symfony\Component\Translation\TranslatableMessage;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function Symfony\Component\Translation\t;
 
 /**
  * Connexion avec un fournisseur (GitHub, Google, LinkedIn) : départ vers lui, retour, fin d'inscription d'un nouvel
@@ -52,6 +56,7 @@ final class OauthController extends AbstractController
         private readonly ExternalSignIn $signIn,
         private readonly RecentSignIn $recent,
         private readonly LoggerInterface $logger,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -93,11 +98,11 @@ final class OauthController extends AbstractController
         $session->remove(self::FLOW);
         $state = $request->query->getString('state');
         if (!\is_array($flow) || ($flow['provider'] ?? null) !== $provider->name() || !\is_string($flow['state'] ?? null) || '' === $state || !hash_equals($flow['state'], $state)) {
-            return $this->fail(sprintf('La connexion avec %s a expiré. Recommencez.', $label));
+            return $this->fail(t('flash.oauth.expiree', ['fournisseur' => $label], 'compte'));
         }
         if ($request->query->has('error') || '' === $request->query->getString('code')) {
             // L'apprenant a refusé chez le fournisseur (error=access_denied).
-            return $this->fail(sprintf('Connexion avec %s annulée.', $label));
+            return $this->fail(t('flash.oauth.annulee', ['fournisseur' => $label], 'compte'));
         }
 
         try {
@@ -105,7 +110,7 @@ final class OauthController extends AbstractController
         } catch (OauthException $e) {
             $this->logger->warning('Connexion {provider} en échec : {message}', ['provider' => $label, 'message' => $e->getMessage()]);
 
-            return $this->fail(sprintf('%s n\'a pas répondu comme prévu. Réessayez dans quelques minutes.', $label));
+            return $this->fail(t('flash.oauth.sans_reponse', ['fournisseur' => $label], 'compte'));
         }
 
         $suite = \is_string($flow['suite'] ?? null) ? $flow['suite'] : null;
@@ -125,11 +130,11 @@ final class OauthController extends AbstractController
         $result = $this->signIn->resolve($profile);
 
         return match ($result->outcome) {
-            SignInOutcome::SignedIn => $this->logIn($security, $result->user ?? throw new \LogicException(), $suite, sprintf('Connecté avec %s.', $label)),
+            SignInOutcome::SignedIn => $this->logIn($security, $result->user ?? throw new \LogicException(), $suite, t('flash.oauth.connecte', ['fournisseur' => $label], 'compte')),
             SignInOutcome::RegistrationNeeded => $this->startRegistration($session, $profile, $suite),
-            SignInOutcome::UnverifiedAccount => $this->fail(sprintf('Un compte existe déjà avec l\'adresse de votre compte %1$s, mais elle n\'a jamais été confirmée : par sécurité, il n\'est pas rattaché d\'office. Connectez-vous avec votre mot de passe (ou « Mot de passe oublié ? »), puis liez %1$s depuis votre compte.', $label)),
-            SignInOutcome::OtherProviderAccount => $this->fail(sprintf('Le compte qui utilise l\'adresse de votre compte %1$s est déjà lié à un autre compte %1$s. Connectez-vous avec ce compte %1$s, ou avec votre mot de passe.', $label)),
-            SignInOutcome::NoVerifiedEmail => $this->fail(sprintf('Votre compte %s n\'a aucune adresse email vérifiée. Vérifiez-en une chez %1$s, ou créez un compte avec votre adresse et un mot de passe.', $label)),
+            SignInOutcome::UnverifiedAccount => $this->fail(t('flash.oauth.compte_non_confirme', ['fournisseur' => $label], 'compte')),
+            SignInOutcome::OtherProviderAccount => $this->fail(t('flash.oauth.autre_compte_lie', ['fournisseur' => $label], 'compte')),
+            SignInOutcome::NoVerifiedEmail => $this->fail(t('flash.oauth.aucune_adresse_verifiee', ['fournisseur' => $label], 'compte')),
             default => throw new \LogicException(sprintf('Issue inattendue : %s.', $result->outcome->name)),
         };
     }
@@ -160,23 +165,23 @@ final class OauthController extends AbstractController
         $ip = $request->getClientIp();
         $withCode = $form->isSubmitted() && '' !== trim((string) $form->get('invitationCode')->getData());
         if ($form->isSubmitted() && $throttle->isBlocked($ip)) {
-            $form->addError(new FormError('Beaucoup d\'inscriptions refusées depuis votre connexion : réessayez dans une heure.'));
+            $form->addError(new FormError($this->translator->trans('erreur.inscriptions_refusees', [], 'compte')));
         } elseif ($withCode && $throttle->tooManyCodes($ip)) {
-            $form->get('invitationCode')->addError(new FormError('Trop de codes d\'invitation essayés depuis votre connexion : réessayez dans une heure, ou demandez le lien d\'invitation à votre formateur.'));
+            $form->get('invitationCode')->addError(new FormError($this->translator->trans('erreur.trop_de_codes', [], 'compte')));
         } elseif ($withCode && !$form->get('invitationCode')->isValid()) {
             $throttle->recordUnknownCode($ip);
         } elseif ($form->isSubmitted() && $form->isValid()) {
             $session->remove(self::PENDING);
             if (null !== $users->findOneByEmail((string) $profile->primaryEmail())) {
                 // Inscrit entre-temps avec cette adresse (autre onglet) : on repasse par la connexion.
-                return $this->fail(sprintf('Un compte vient d\'être créé avec cette adresse. Reconnectez-vous avec %s.', $provider->label()));
+                return $this->fail(t('flash.oauth.compte_cree_entre_temps', ['fournisseur' => $provider->label()], 'compte'));
             }
             /** @var array{displayName: string, invitationCode: string|null} $data */
             $data = $form->getData();
             $user = $this->signIn->register($profile, $data['displayName'], $data['invitationCode']);
             $suite = \is_string($pending['suite'] ?? null) ? $pending['suite'] : null;
 
-            return $this->logIn($security, $user, $suite, sprintf('Bienvenue, %s ! Votre compte est créé : votre progression est désormais sauvegardée.', $user->getDisplayName()));
+            return $this->logIn($security, $user, $suite, t('flash.bienvenue', ['pseudo' => $user->getDisplayName()], 'compte'));
         }
 
         return $this->render('security/oauth_register.html.twig', [
@@ -199,9 +204,9 @@ final class OauthController extends AbstractController
         \assert($user instanceof User);
         $label = $this->providers->label($fournisseur);
         if ($this->signIn->unlink($user, $fournisseur)) {
-            $this->addFlash('success', sprintf('%s n\'est plus lié à votre compte.', $label));
+            $this->addFlash('success', t('flash.oauth.delie', ['fournisseur' => $label], 'compte'));
         } else {
-            $this->addFlash('error', sprintf('Choisissez d\'abord un mot de passe (« Mot de passe oublié ? » sur la page de connexion) : sans %s ni mot de passe, vous ne pourriez plus vous connecter.', $label));
+            $this->addFlash('error', t('flash.oauth.dernier_moyen', ['fournisseur' => $label], 'compte'));
         }
 
         return $this->redirectToRoute('app_account', ['_fragment' => 'profil'], Response::HTTP_SEE_OTHER);
@@ -213,11 +218,9 @@ final class OauthController extends AbstractController
         $result = $this->signIn->resolve($profile, $current);
         if (SignInOutcome::Linked === $result->outcome) {
             $this->recent->mark($current);
-            $this->addFlash('success', sprintf('Votre compte %s %s est lié : vous pourrez vous connecter avec.', $label, $profile->username));
+            $this->addFlash('success', t('flash.oauth.lie', ['fournisseur' => $label, 'identifiant' => $profile->username], 'compte'));
         } else {
-            $this->addFlash('error', SignInOutcome::LinkedElsewhere === $result->outcome
-                ? sprintf('Ce compte %s est lié à un autre compte de la plateforme.', $label)
-                : sprintf('Votre compte est déjà lié à un autre compte %1$s : déliez-le d\'abord.', $label));
+            $this->addFlash('error', t(SignInOutcome::LinkedElsewhere === $result->outcome ? 'flash.oauth.lie_ailleurs' : 'flash.oauth.deja_lie', ['fournisseur' => $label], 'compte'));
         }
 
         return $this->redirect($suite ?? $this->generateUrl('app_account', ['_fragment' => 'profil']));
@@ -228,15 +231,15 @@ final class OauthController extends AbstractController
     {
         if ($this->signIn->confirms($profile, $current)) {
             $this->recent->mark($current);
-            $this->addFlash('success', sprintf('Identité confirmée avec %s : vous avez cinq minutes.', $label));
+            $this->addFlash('success', t('flash.oauth.identite_confirmee', ['fournisseur' => $label], 'compte'));
         } else {
-            $this->addFlash('error', sprintf('Ce compte %s n\'est pas celui qui est lié au vôtre : identité non confirmée.', $label));
+            $this->addFlash('error', t('flash.oauth.identite_non_confirmee', ['fournisseur' => $label], 'compte'));
         }
 
         return $this->redirect($suite ?? $this->generateUrl('app_account', ['_fragment' => 'profil']));
     }
 
-    private function logIn(Security $security, User $user, ?string $suite, string $message): Response
+    private function logIn(Security $security, User $user, ?string $suite, TranslatableMessage $message): Response
     {
         $security->login($user, 'form_login', 'main');
         $this->recent->mark($user);
@@ -252,7 +255,7 @@ final class OauthController extends AbstractController
         return $this->redirectToRoute('app_oauth_register', ['fournisseur' => $profile->provider]);
     }
 
-    private function fail(string $message): Response
+    private function fail(TranslatableMessage $message): Response
     {
         $this->addFlash('error', $message);
 

@@ -12,6 +12,7 @@ import 'monaco-editor/languages/definitions/html/register';
 import 'monaco-editor/languages/definitions/javascript/register';
 import 'monaco-editor/languages/definitions/typescript/register';
 import editorWorkerUrl from 'monaco-editor/editor/editor.worker?worker&url';
+import { m } from '../i18n';
 import { createModuleWorker } from '@forelse/runtime-contract';
 
 self.MonacoEnvironment = { getWorker: () => createModuleWorker(editorWorkerUrl, 'monaco') };
@@ -71,7 +72,7 @@ export class EditorPanel {
 		const tab = document.createElement('button');
 		tab.className = 'tab';
 		tab.textContent = label ?? path.split('/').pop()!;
-		tab.title = path + (readonly ? ' (lecture seule)' : '');
+		tab.title = readonly ? m.editor.readonlyTitle(path) : path;
 		if (readonly) tab.classList.add('readonly');
 		tab.addEventListener('click', () => this.open(path));
 		this.tabs.append(tab);
@@ -106,7 +107,7 @@ export class EditorPanel {
 		this.current = file;
 		file.tab.classList.add('active');
 		this.editor.setModel(file.model);
-		this.editor.updateOptions({ readOnly: file.readonly, readOnlyMessage: { value: 'Ce fichier est fourni par l\'exercice et ne peut pas être modifié.' } });
+		this.editor.updateOptions({ readOnly: file.readonly, readOnlyMessage: { value: m.editor.readonlyMessage } });
 		const state = this.viewStates.get(path);
 		if (state) this.editor.restoreViewState(state);
 		this.editor.focus();

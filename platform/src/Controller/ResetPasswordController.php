@@ -18,6 +18,8 @@ use SymfonyCasts\Bundle\ResetPassword\Exception\ExpiredResetPasswordTokenExcepti
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
 
+use function Symfony\Component\Translation\t;
+
 /**
  * Mot de passe oublié : l'apprenant saisit son email, reçoit un lien à usage unique (valable une
  * heure, voir config/packages/reset_password.yaml) et choisit un nouveau mot de passe.
@@ -86,9 +88,7 @@ final class ResetPasswordController extends AbstractController
             \assert($user instanceof User);
         } catch (ResetPasswordExceptionInterface $e) {
             $this->cleanSessionAfterReset();
-            $this->addFlash('error', $e instanceof ExpiredResetPasswordTokenException
-                ? 'Ce lien a expiré. Refaites une demande pour en recevoir un nouveau.'
-                : 'Ce lien de réinitialisation n\'est pas valide, ou a déjà servi. Refaites une demande.');
+            $this->addFlash('error', t($e instanceof ExpiredResetPasswordTokenException ? 'flash.lien_expire' : 'flash.lien_invalide', [], 'compte'));
 
             return $this->redirectToRoute('app_forgot_password_request');
         }
@@ -105,7 +105,7 @@ final class ResetPasswordController extends AbstractController
             // L'apprenant vient de prouver qu'il contrôle l'adresse du compte : inutile de lui redemander
             // le mot de passe qu'il vient de choisir.
             $security->login($user, 'form_login', 'main');
-            $this->addFlash('success', 'Mot de passe modifié. Bon retour !');
+            $this->addFlash('success', t('flash.mot_de_passe_modifie', [], 'compte'));
 
             return $this->redirectToRoute('app_home');
         }

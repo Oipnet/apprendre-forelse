@@ -107,28 +107,28 @@ final readonly class DefenseManagement
      */
     public function book(User $learner, Defense $defense): void
     {
-        $track = $this->content->findTrack($defense->getTrackId()) ?? throw new DefenseRuleViolation('Ce parcours n\'existe plus.');
+        $track = $this->content->findTrack($defense->getTrackId()) ?? throw new DefenseRuleViolation('Ce parcours n\'existe plus.', 'defense.erreur.parcours_disparu');
         if ($learner->getCohort()?->getId() !== $defense->getCohort()->getId()) {
-            throw new DefenseRuleViolation('Ce créneau est réservé à une autre cohorte.');
+            throw new DefenseRuleViolation('Ce créneau est réservé à une autre cohorte.', 'defense.erreur.autre_cohorte');
         }
         if (!$this->isTrackComplete($learner, $track)) {
-            throw new DefenseRuleViolation('La soutenance s\'ouvre une fois tous les exercices du parcours réussis.');
+            throw new DefenseRuleViolation('La soutenance s\'ouvre une fois tous les exercices du parcours réussis.', 'defense.erreur.parcours_incomplet');
         }
 
         $this->entityManager->wrapInTransaction(function () use ($learner, $defense): void {
             $this->entityManager->refresh($defense, LockMode::PESSIMISTIC_WRITE);
             if ($defense->isBooked()) {
-                throw new DefenseRuleViolation('Ce créneau vient d\'être pris : choisissez-en un autre.');
+                throw new DefenseRuleViolation('Ce créneau vient d\'être pris : choisissez-en un autre.', 'defense.erreur.deja_pris');
             }
             if ($defense->hasStarted($this->clock->now())) {
-                throw new DefenseRuleViolation('Ce créneau est passé : choisissez-en un autre.');
+                throw new DefenseRuleViolation('Ce créneau est passé : choisissez-en un autre.', 'defense.erreur.passe');
             }
             foreach ($this->defenses->findByLearner($learner, $defense->getTrackId()) as $other) {
                 if (!$other->isEvaluated()) {
-                    throw new DefenseRuleViolation('Vous avez déjà un créneau réservé : annulez-le d\'abord pour en changer.');
+                    throw new DefenseRuleViolation('Vous avez déjà un créneau réservé : annulez-le d\'abord pour en changer.', 'defense.erreur.deja_reserve');
                 }
                 if (DefenseOutcome::Passed === $other->getOutcome()) {
-                    throw new DefenseRuleViolation('Votre soutenance est déjà validée.');
+                    throw new DefenseRuleViolation('Votre soutenance est déjà validée.', 'defense.erreur.deja_validee');
                 }
             }
             $defense->book($learner, $this->clock->now());
@@ -142,10 +142,10 @@ final readonly class DefenseManagement
     public function cancel(User $learner, Defense $defense): void
     {
         if ($defense->getLearner()?->getId() !== $learner->getId() || $defense->isEvaluated()) {
-            throw new DefenseRuleViolation('Ce créneau n\'est pas le vôtre.');
+            throw new DefenseRuleViolation('Ce créneau n\'est pas le vôtre.', 'defense.erreur.pas_le_votre');
         }
         if ($defense->hasStarted($this->clock->now())) {
-            throw new DefenseRuleViolation('La soutenance a commencé : elle ne s\'annule plus. Écrivez à votre école.');
+            throw new DefenseRuleViolation('La soutenance a commencé : elle ne s\'annule plus. Écrivez à votre école.', 'defense.erreur.commencee');
         }
         $defense->release();
         $this->entityManager->flush();

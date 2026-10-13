@@ -3,7 +3,8 @@
   Illustration du bandeau d'accueil : un exercice tel qu'il se présente (éditeur, aperçu, objectifs).
    Le contenu vient du thème de l'instance (theme.yaml, « home.demo ») : sans elle, pas d'illustration,
    et le bandeau occupe toute la largeur. #}
-<figure class="home-demo mt-8 overflow-hidden rounded-lg border border-line bg-surface" data-demo aria-label="Un exercice : le code, l'aperçu de la page et les objectifs validés">
+{% trans_default_domain 'accueil' %}
+<figure class="home-demo mt-8 overflow-hidden rounded-lg border border-line bg-surface" data-demo aria-label="{{ 'demo.description'|trans }}">
     <div class="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2 text-xs text-ink-muted">
         {% for file in demo.files|default([]) %}
             <span class="rounded px-2 py-0.5{{ loop.first ? ' bg-bg-2 text-ink' : '' }}">{{ file }}</span>
@@ -20,7 +21,7 @@
             {% endif %}
         </div>
         <div>
-            <p class="text-xs text-ink-muted">Objectifs</p>
+            <p class="text-xs text-ink-muted">{{ 'demo.objectifs'|trans }}</p>
             <ul class="mt-1 space-y-1">
                 {% for goal in demo.goals|default([]) %}
                     {# Le dernier objectif est celui qui se valide sous les yeux du visiteur (animé par un thème qui le souhaite). #}
@@ -28,7 +29,7 @@
                 {% endfor %}
             </ul>
             {% if demo.goals|default([])|length %}
-                <p class="mt-2 text-ink-muted"><span data-demo-score>{{ demo.goals|length - 1 }} / {{ demo.goals|length }} validés</span> <span data-demo-xp>+ 100 XP</span></p>
+                <p class="mt-2 text-ink-muted"><span data-demo-score>{{ 'demo.score'|trans({valides: demo.goals|length - 1, total: demo.goals|length}) }}</span> <span data-demo-xp>{{ 'demo.xp'|trans({xp: 100}) }}</span></p>
             {% endif %}
         </div>
     </div>

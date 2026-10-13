@@ -11,6 +11,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Prévient le titulaire d'un compte qu'une inscription a été tentée avec son adresse.
@@ -28,6 +29,7 @@ final readonly class RegistrationAttemptNotice
         #[Autowire(service: 'limiter.registration_notice')]
         private RateLimiterFactoryInterface $limiter,
         private Sender $sender,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -40,7 +42,7 @@ final readonly class RegistrationAttemptNotice
         try {
             $this->mailer->send($this->sender->email()
                 ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
-                ->subject(sprintf('Vous avez déjà un compte %s', $this->theme->name()))
+                ->subject($this->translator->trans('sujet.registration_attempt', ['site' => $this->theme->name()], 'emails'))
                 ->htmlTemplate('emails/registration_attempt.html.twig')
                 ->textTemplate('emails/registration_attempt.txt.twig')
                 ->context(['user' => $user]));

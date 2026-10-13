@@ -6,7 +6,7 @@
   son logo. Chaque page pose son entrée Vite (playground ou atelier), qui apporte toute sa feuille (editor.css).
   Blocs : title, robots, stylesheets, javascripts, body_class, body.
 #}
-<html lang="fr">
+<html lang="{{ app.locale }}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -24,7 +24,7 @@
         {%- endif %}
     </head>
     <body class="{% block body_class %}playground-page{% endblock %}"{% if app.user %} data-import-url="{{ path('api_progress_import') }}"{% endif %}>
-        <a class="skip-link sr-only" href="#contenu">Aller au contenu</a>
+        <a class="skip-link sr-only" href="#contenu">{{ 'base.aller_au_contenu'|trans }}</a>
         {% if theme.preview %}{{ include('_theme_preview.html.twig') }}{% endif %}
         <div id="contenu" tabindex="-1"></div>
         {% block body %}{% endblock %}

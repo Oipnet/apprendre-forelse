@@ -25,6 +25,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Translation\TranslatableMessage;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function Symfony\Component\Translation\t;
 
 /**
  * Le compte de l'apprenant : sa progression et d'où reprendre, ses accès, ses achats (reçus et factures),
@@ -37,6 +41,7 @@ final class AccountController extends AbstractController
         private readonly EmailChange $emailChange,
         private readonly AccountPage $page,
         private readonly RecentSignIn $recent,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -60,11 +65,11 @@ final class AccountController extends AbstractController
             $outcome = $this->emailChange->request($user, $data['displayName'], $email, $data['currentPassword'] ?? null, $this->recent->isRecent($user));
             match ($outcome) {
                 EmailChangeOutcome::PasswordRequired => $user->hasPassword()
-                    ? $form->get('currentPassword')->addError(new FormError('Votre mot de passe actuel est demandé pour changer d\'adresse.'))
-                    : $form->addError(new FormError('Confirmez d\'abord votre identité avec un compte lié (GitHub, Google ou LinkedIn) pour changer d\'adresse.')),
-                EmailChangeOutcome::EmailTaken => $form->get('email')->addError(new FormError('Un compte existe déjà avec cet email.')),
-                EmailChangeOutcome::Saved => $this->addFlash('success', 'Profil enregistré.'),
-                EmailChangeOutcome::Sent => $this->addFlash('success', sprintf('Un lien de confirmation vient de partir à %s. Votre adresse actuelle reste valable jusqu\'à ce que vous l\'ouvriez.', $email)),
+                    ? $form->get('currentPassword')->addError($this->error('erreur.mot_de_passe_requis'))
+                    : $form->addError($this->error('erreur.identite_pour_adresse')),
+                EmailChangeOutcome::EmailTaken => $form->get('email')->addError($this->error('erreur.email_pris')),
+                EmailChangeOutcome::Saved => $this->addFlash('success', t('flash.profil_enregistre', [], 'compte')),
+                EmailChangeOutcome::Sent => $this->addFlash('success', t('flash.confirmation_envoyee', ['email' => $email], 'compte')),
                 default => $this->confirmationNotSent($outcome),
             };
             if (!\in_array($outcome, [EmailChangeOutcome::PasswordRequired, EmailChangeOutcome::EmailTaken], true)) {
@@ -85,7 +90,7 @@ final class AccountController extends AbstractController
             $this->account->changePassword($user, $form->get('plainPassword')->getData());
             // Le mot de passe fait partie de la session : on reconnecte l'apprenant ; ses autres appareils sont déconnectés.
             $security->login($user, 'form_login', 'main');
-            $this->addFlash('success', 'Mot de passe changé. Vos autres appareils devront se reconnecter.');
+            $this->addFlash('success', t('flash.mot_de_passe_change', [], 'compte'));
 
             return $this->redirectToRoute('app_account', ['_fragment' => 'mot-de-passe'], Response::HTTP_SEE_OTHER);
         }
@@ -102,8 +107,8 @@ final class AccountController extends AbstractController
         }
         $user = $this->user();
         match ($outcome = $this->emailChange->resend($user)) {
-            EmailChangeOutcome::AlreadyConfirmed => $this->addFlash('success', 'Votre adresse est déjà confirmée.'),
-            EmailChangeOutcome::Sent => $this->addFlash('success', sprintf('Un nouveau lien de confirmation vient de partir à %s.', $user->getEmail())),
+            EmailChangeOutcome::AlreadyConfirmed => $this->addFlash('success', t('flash.adresse_deja_confirmee', [], 'compte')),
+            EmailChangeOutcome::Sent => $this->addFlash('success', t('flash.confirmation_renvoyee', ['email' => $user->getEmail()], 'compte')),
             default => $this->confirmationNotSent($outcome),
         };
 
@@ -119,11 +124,11 @@ final class AccountController extends AbstractController
         $current = $this->getUser();
 
         return match ($this->emailChange->confirm($request)) {
-            EmailConfirmationOutcome::Invalid => $this->afterConfirmation('error', 'Ce lien de confirmation n\'est pas valide ou a expiré. Vous pouvez en demander un nouveau depuis votre compte.'),
-            EmailConfirmationOutcome::AlreadyConfirmed => $this->afterConfirmation('success', 'Votre adresse est déjà confirmée.'),
-            EmailConfirmationOutcome::Outdated => $this->afterConfirmation('error', 'Ce lien de confirmation a déjà servi ou ne correspond plus à votre compte. Vous pouvez en demander un nouveau depuis votre compte.'),
-            EmailConfirmationOutcome::EmailTaken => $this->afterConfirmation('error', 'Cette adresse est déjà utilisée par un autre compte.'),
-            EmailConfirmationOutcome::Confirmed => $this->afterConfirmation('success', 'Adresse confirmée, merci.'),
+            EmailConfirmationOutcome::Invalid => $this->afterConfirmation('error', t('flash.confirmation_invalide', [], 'compte')),
+            EmailConfirmationOutcome::AlreadyConfirmed => $this->afterConfirmation('success', t('flash.adresse_deja_confirmee', [], 'compte')),
+            EmailConfirmationOutcome::Outdated => $this->afterConfirmation('error', t('flash.confirmation_perimee', [], 'compte')),
+            EmailConfirmationOutcome::EmailTaken => $this->afterConfirmation('error', t('flash.adresse_prise', [], 'compte')),
+            EmailConfirmationOutcome::Confirmed => $this->afterConfirmation('success', t('flash.adresse_confirmee', [], 'compte')),
             EmailConfirmationOutcome::Changed => $this->afterEmailChange($request, $security, $current, $email),
         };
     }
@@ -141,7 +146,7 @@ final class AccountController extends AbstractController
             $url = null;
         }
         if (null === $url) {
-            $this->addFlash('error', 'La facture n\'est pas disponible pour le moment. Réessayez plus tard, ou écrivez-nous.');
+            $this->addFlash('error', t('flash.facture_indisponible', [], 'compte'));
 
             return $this->redirectToRoute('app_account', ['_fragment' => 'achats']);
         }
@@ -156,7 +161,7 @@ final class AccountController extends AbstractController
         $user = $this->user();
         $form = $this->deleteForm($user)->handleRequest($request);
         if ($form->isSubmitted() && !$user->hasPassword() && !$this->recent->isRecent($user)) {
-            $form->addError(new FormError('Confirmez d\'abord votre identité avec un compte lié (GitHub, Google ou LinkedIn).'));
+            $form->addError($this->error('erreur.identite_pour_suppression'));
         }
         if (!$form->isSubmitted() || !$form->isValid()) {
             return $this->renderPage(delete: $form);
@@ -164,12 +169,12 @@ final class AccountController extends AbstractController
 
         $this->account->delete($user);
         $security->logout(false);
-        $this->addFlash('success', 'Votre compte a été supprimé, avec votre progression. Merci d\'être passé.');
+        $this->addFlash('success', t('flash.compte_supprime', [], 'compte'));
 
         return $this->redirectToRoute('app_home', status: Response::HTTP_SEE_OTHER);
     }
 
-    private function afterConfirmation(string $type, string $message): Response
+    private function afterConfirmation(string $type, TranslatableMessage $message): Response
     {
         $this->addFlash($type, $message);
 
@@ -183,14 +188,18 @@ final class AccountController extends AbstractController
             $security->login($current, 'form_login', 'main');
         }
 
-        return $this->afterConfirmation('success', sprintf('Adresse confirmée : votre compte utilise désormais %s.', $email));
+        return $this->afterConfirmation('success', t('flash.adresse_changee', ['email' => $email], 'compte'));
     }
 
     private function confirmationNotSent(EmailChangeOutcome $outcome): void
     {
-        $this->addFlash('error', EmailChangeOutcome::Throttled === $outcome
-            ? 'Trop de demandes de confirmation : réessayez dans une heure.'
-            : 'L\'email de confirmation n\'a pas pu partir. Réessayez dans quelques minutes.');
+        $this->addFlash('error', t(EmailChangeOutcome::Throttled === $outcome ? 'flash.confirmation_trop_de_demandes' : 'flash.confirmation_non_envoyee', [], 'compte'));
+    }
+
+    /** Une erreur de formulaire posée par le contrôleur (et non par une contrainte) : déjà traduite, comme celles du validateur. */
+    private function error(string $key): FormError
+    {
+        return new FormError($this->translator->trans($key, [], 'compte'));
     }
 
     /** @return FormInterface<array{displayName: string|null, email: string|null, currentPassword?: string|null}> */

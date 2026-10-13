@@ -23,6 +23,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
+use function Symfony\Component\Translation\t;
+
 /** La fiche de cours de fin de chapitre, en HTML et en PDF. */
 final class ChapterController extends AbstractController
 {
@@ -111,7 +113,7 @@ final class ChapterController extends AbstractController
         if (!$user instanceof User) {
             // Après connexion, l'apprenant revient sur la fiche.
             $this->saveTargetPath($request->getSession(), 'main', $request->getRequestUri());
-            $this->addFlash('info', 'Connectez-vous pour lire la fiche de cours du chapitre.');
+            $this->addFlash('info', t('flash.fiche_connexion', [], 'apprentissage'));
 
             return $this->redirectToRoute('app_login');
         }
@@ -124,11 +126,7 @@ final class ChapterController extends AbstractController
         $progress = $this->progressRepository->findByTrack($user, $track->id);
         $status = TrackProgress::of($track, $progress)->lesson($chapter, $this->isGranted(User::ROLE_AUTEUR));
         if (!$status['unlocked']) {
-            $this->addFlash('info', sprintf(
-                'La fiche du chapitre « %s » se débloque une fois ses exercices réussis : encore %d à terminer.',
-                $chapter->title,
-                $status['remaining'],
-            ));
+            $this->addFlash('info', t('flash.fiche_verrouillee', ['chapitre' => $chapter->title, 'n' => $status['remaining']], 'apprentissage'));
 
             return $this->redirectToRoute('app_track', ['trackId' => $track->id]);
         }

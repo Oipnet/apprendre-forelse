@@ -2,22 +2,23 @@
   @theme Point de surcharge : les parcours publiés, puis ceux en préparation.
   Variables : tracks (list, voir HomePage::card), upcoming (list<App\Content\Track>), inviteOnly (bool). Chaque fiche : home/_track_card.html.twig.
 #}
+{% trans_default_domain 'accueil' %}
 <section class="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6" id="parcours">
-    <h2 class="text-2xl font-semibold">{{ tracks|length > 1 ? 'Les parcours' : 'Le parcours' }}</h2>
+    <h2 class="text-2xl font-semibold">{{ 'tracks.titre'|trans({n: tracks|length}) }}</h2>
     <div class="home-tracks mt-6 space-y-6">
         {% for item in tracks %}
             {{ include('home/_track_card.html.twig', {tabbed: false}) }}
         {% else %}
-            <p class="text-ink-muted">Aucun parcours installé : ajoutez un pack de contenu (variable CONTENT_PACKS_PATHS).</p>
+            <p class="text-ink-muted">{{ 'tracks.aucun'|trans }}</p>
         {% endfor %}
     </div>
     {% if upcoming %}
         <div class="home-upcoming mt-10">
-            <h3 class="text-lg font-semibold">En préparation</h3>
+            <h3 class="text-lg font-semibold">{{ 'tracks.en_preparation'|trans }}</h3>
             <ul class="mt-3 space-y-3">
                 {% for track in upcoming %}
                     <li>
-                        <span class="font-medium">{{ track.title }}</span> <span class="rounded bg-bg-2 px-1.5 text-xs text-ink-muted">Bientôt</span>
+                        <span class="font-medium">{{ track.title }}</span> <span class="rounded bg-bg-2 px-1.5 text-xs text-ink-muted">{{ 'tracks.bientot'|trans }}</span>
                         <p class="text-sm text-ink-muted">{{ track.description }}</p>
                     </li>
                 {% endfor %}

@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
 use App\Repository\TrackBonusRepository;
 use Psr\Clock\ClockInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Le classement des apprenants à l'XP : ceux qui ont choisi d'y paraître (case de « Mon compte »), sous leur pseudo.
@@ -29,6 +30,7 @@ final readonly class Leaderboard
         private TrackBonusRepository $bonuses,
         private TrackVisibility $tracks,
         private ClockInterface $clock,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -44,7 +46,7 @@ final readonly class Leaderboard
             $filters[$track->id] = $track->title;
         }
 
-        return $filters + [self::PRACTICE => 'Pratique'];
+        return $filters + [self::PRACTICE => $this->translator->trans('commun.pratique', [], 'classement')];
     }
 
     /** @param string|null $track un parcours, self::PRACTICE, ou null pour toute l'XP */
@@ -129,7 +131,28 @@ final readonly class Leaderboard
             }
         }
 
-        return new LeaderboardView($period, $track, $since, $entries, \count($listed), $viewerEntry, $ahead, $monthXp);
+        return new LeaderboardView($period, $track, $since, $entries, \count($listed), $viewerEntry, $ahead, $monthXp, $this->periodNote($period, $since), $this->monthName(($since ?? $now)->modify('-1 month')));
+    }
+
+    /** Ce que couvre le classement, sous le tableau : « Classement d'octobre : il repart à zéro le 1er novembre… ». */
+    private function periodNote(LeaderboardPeriod $period, ?\DateTimeImmutable $since): string
+    {
+        if (LeaderboardPeriod::AllTime === $period || null === $since) {
+            return $this->translator->trans('index.note_toujours', [], 'classement');
+        }
+
+        return $this->translator->trans('index.note_mois', [
+            'numero' => (int) $since->format('n'),
+            'mois' => $this->monthName($since),
+            'suivant' => $this->monthName($since->modify('+1 month')),
+            'precedent' => $this->monthName($since->modify('-1 month')),
+        ], 'classement');
+    }
+
+    /** Le mois en toutes lettres, dans la langue de la page : « septembre ». */
+    private function monthName(\DateTimeImmutable $date): string
+    {
+        return (string) (new \IntlDateFormatter($this->translator->getLocale(), \IntlDateFormatter::NONE, \IntlDateFormatter::NONE, $date->getTimezone(), null, 'LLLL'))->format($date);
     }
 
     /**

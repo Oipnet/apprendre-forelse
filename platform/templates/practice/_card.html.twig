@@ -3,6 +3,7 @@
   item : {practice, state} ; frameworks : identifiant => libellé.
   badges : la version et « Nouveauté », que la page d'une version répète pour rien (elle passe false).
 #}
+{% trans_default_domain 'apprentissage' %}
 {% macro card(item, frameworks, badges = true) %}
     {% set practice = item.practice %}
     <li class="rounded-lg border border-line bg-surface hover:border-ink-muted" data-state="{{ item.state }}">
@@ -10,12 +11,12 @@
             <span class="practice-head flex flex-wrap items-center gap-1.5">
                 {% if badges %}
                     <span class="tag framework">{{ frameworks[practice.framework] ?? practice.framework }}{% if practice.version %} {{ practice.version }}{% endif %}</span>
-                    {% if practice.version %}<span class="tag new border-accent text-accent">Nouveauté</span>{% endif %}
+                    {% if practice.version %}<span class="tag new border-accent text-accent">{{ 'commun.nouveaute'|trans }}</span>{% endif %}
                 {% endif %}
-                {% if practice.isRestricted %}<span class="tag">En préparation</span>{% endif %}
-                {% if practice_scheduled(practice) %}<span class="tag">Programmé le {{ practice.published|date('d/m/Y') }}</span>{% endif %}
-                <time class="meta text-xs text-ink-muted" datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|date('d/m/Y') }}</time>
-                {% if item.state == 'completed' %}<span class="state ml-auto text-xs text-success">✓ Réussi</span>{% elseif item.state == 'in_progress' %}<span class="state ml-auto text-xs text-ink-muted">En cours</span>{% endif %}
+                {% if practice.isRestricted %}<span class="tag">{{ 'commun.en_preparation'|trans }}</span>{% endif %}
+                {% if practice_scheduled(practice) %}<span class="tag">{{ 'practice.card.programme'|trans({date: practice.published|format_date('short')}) }}</span>{% endif %}
+                <time class="meta text-xs text-ink-muted" datetime="{{ practice.published|date('Y-m-d') }}">{{ practice.published|format_date('short') }}</time>
+                {% if item.state == 'completed' %}<span class="state ml-auto text-xs text-success">{{ 'practice.card.reussi'|trans }}</span>{% elseif item.state == 'in_progress' %}<span class="state ml-auto text-xs text-ink-muted">{{ 'practice.card.en_cours'|trans }}</span>{% endif %}
             </span>
             <span class="title mt-2 block font-semibold">{{ practice.exercise.title }}</span>
             <span class="summary mt-1 block text-sm text-ink-muted">{{ practice.summary }}</span>
@@ -23,7 +24,7 @@
                 {% if practice.exercise.concepts %}
                     <span class="practice-notions flex flex-wrap gap-1">{% for concept in practice.exercise.concepts %}<span class="tag">{{ concept }}</span>{% endfor %}</span>
                 {% endif %}
-                <span class="practice-cta ml-auto text-sm text-accent">{% if item.state == 'completed' %}Refaire l'exercice{% elseif item.state == 'in_progress' %}Reprendre{% else %}Faire l'exercice{% endif %} <span aria-hidden="true">→</span></span>
+                <span class="practice-cta ml-auto text-sm text-accent">{% if item.state == 'completed' %}{{ 'practice.card.refaire'|trans }}{% elseif item.state == 'in_progress' %}{{ 'commun.reprendre'|trans }}{% else %}{{ 'practice.card.faire'|trans }}{% endif %} <span aria-hidden="true">→</span></span>
             </span>
         </a>
     </li>

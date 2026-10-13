@@ -1,15 +1,17 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mot de passe oublié · {{ theme.name }}{% endblock %}
+{% trans_default_domain 'compte' %}
+
+{% block title %}{{ 'security.reset_password.request.titre_page'|trans({site: theme.name}) }}{% endblock %}
 
 {% block body %}
     <main class="form-card mx-auto my-10 w-full max-w-md space-y-4 rounded-lg border border-line bg-surface p-6 sm:p-8">
-        <h1 class="text-2xl font-semibold">Mot de passe oublié</h1>
-        <p class="text-sm text-ink-muted">Indiquez l'email de votre compte : vous recevrez un lien pour choisir un nouveau mot de passe.</p>
+        <h1 class="text-2xl font-semibold">{{ 'security.reset_password.request.titre'|trans }}</h1>
+        <p class="text-sm text-ink-muted">{{ 'security.reset_password.request.texte'|trans }}</p>
         {{ form_start(form) }}
             {{ form_row(form.email) }}
-            <button class="btn btn-primary w-full" type="submit">Recevoir le lien</button>
+            <button class="btn btn-primary w-full" type="submit">{{ 'security.reset_password.request.envoyer'|trans }}</button>
         {{ form_end(form) }}
-        <p class="text-sm text-ink-muted">Il vous revient ? <a href="{{ path('app_login') }}">Connectez-vous</a>.</p>
+        <p class="text-sm text-ink-muted">{{ 'security.reset_password.request.retour'|trans({lien: path('app_login')})|raw }}</p>
     </main>
 {% endblock %}

@@ -20,16 +20,16 @@ final class DeleteAccountFormType extends AbstractType
     {
         if ($options['with_password']) {
             $builder->add('password', PasswordType::class, [
-                'label' => 'Mot de passe',
+                'label' => 'form.delete_account.mot_de_passe',
                 'attr' => ['autocomplete' => 'current-password'],
-                'constraints' => [new UserPassword(message: 'Ce n\'est pas votre mot de passe.')],
+                'constraints' => [new UserPassword(message: 'compte.mot_de_passe.incorrect')],
             ]);
         }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['with_password' => true]);
+        $resolver->setDefaults(['with_password' => true, 'translation_domain' => 'compte']);
         $resolver->setAllowedTypes('with_password', 'bool');
     }
 }

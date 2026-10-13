@@ -6,6 +6,7 @@ use App\Validator\StrongPassword;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 
 /**
@@ -19,14 +20,19 @@ final class PasswordFormType extends AbstractType
     {
         $builder
             ->add('currentPassword', PasswordType::class, [
-                'label' => 'Mot de passe actuel',
+                'label' => 'form.password.actuel',
                 'attr' => ['autocomplete' => 'current-password'],
-                'constraints' => [new UserPassword(message: 'Ce n\'est pas votre mot de passe actuel.')],
+                'constraints' => [new UserPassword(message: 'compte.mot_de_passe.actuel_incorrect')],
             ])
             ->add('plainPassword', PasswordType::class, [
-                'label' => 'Nouveau mot de passe',
+                'label' => 'form.password.nouveau',
                 'attr' => ['autocomplete' => 'new-password'],
                 'constraints' => [new StrongPassword()],
             ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults(['translation_domain' => 'compte']);
     }
 }
