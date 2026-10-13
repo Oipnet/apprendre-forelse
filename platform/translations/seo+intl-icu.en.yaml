@@ -1,0 +1,12 @@
+# SEO tags of the pages served in English (the blog): see seo+intl-icu.fr.yaml. Other keys fall back to French.
+
+commun:
+    accueil: Home
+    liste: "{debut} and {dernier}"
+
+blog:
+    titre: Blog
+    titre_marque: "Blog | {marque}"
+    description: "Articles that start from an exercise and go further: what the framework really does, where it stops, and how to use it in production. Plus behind the scenes of the platform."
+    nombre_articles: "{n} articles."
+    fil_ariane: Blog

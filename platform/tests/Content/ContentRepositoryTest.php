@@ -457,6 +457,72 @@ final class ContentRepositoryTest extends TestCase
         $this->repository($this->tmp)->articles();
     }
 
+    public function testChargeLesTraductionsDesArticles(): void
+    {
+        $repository = $this->repository(__DIR__.'/../Fixtures/packs/pratique');
+
+        $this->assertSame(['a-scheduled-article', 'symfony-in-the-browser'], array_keys($repository->articles('en')));
+        $this->assertNull($repository->findArticle('symfony-in-the-browser'), 'Une traduction n\'est pas un article français.');
+        $translation = $repository->findArticle('symfony-in-the-browser', 'en');
+        $this->assertNotNull($translation);
+        $this->assertSame('en', $translation->locale);
+        $this->assertSame('symfony-dans-le-navigateur', $translation->translationOf);
+        $this->assertSame('Symfony in the browser, without a server', $translation->title);
+
+        $original = $repository->findArticle('symfony-dans-le-navigateur');
+        $this->assertNotNull($original);
+        $this->assertSame('fr', $original->locale);
+        $this->assertSame(['en' => $translation], $repository->translationsOf($original));
+        $this->assertSame(['fr' => $original], $repository->translationsOf($translation));
+        $this->assertSame([], $repository->translationsOf($repository->findArticle('les-tests-en-direct') ?? $original), 'Un article sans traduction.');
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function traductionsRefusees(): iterable
+    {
+        $header = "title: T\ndescription: D\npublished: 2026-10-06";
+        yield 'sans translation_of' => ["---\n$header\n---\nText", 'clé « translation_of » manquante'];
+        yield 'article inconnu' => ["---\n$header\ntranslation_of: inconnu\n---\nText", '« translation_of » nomme l\'article « inconnu », introuvable'];
+    }
+
+    #[DataProvider('traductionsRefusees')]
+    public function testUneTraductionMalFormeeEstRefusee(string $content, string $message): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P");
+        $filesystem->dumpFile($this->tmp.'/p/articles/a.md', "---\ntitle: T\ndescription: D\npublished: 2026-10-06\n---\nTexte");
+        $filesystem->dumpFile($this->tmp.'/p/articles/en/b.md', $content);
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage($message);
+        $this->repository($this->tmp)->articles();
+    }
+
+    public function testUnArticleFrancaisNeNommePasDOriginal(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P");
+        $filesystem->dumpFile($this->tmp.'/p/articles/a.md', "---\ntitle: T\ndescription: D\npublished: 2026-10-06\ntranslation_of: b\n---\nTexte");
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage('clé « translation_of » inconnue');
+        $this->repository($this->tmp)->articles();
+    }
+
+    public function testUnArticleNAQuUneTraductionParLangue(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P");
+        $filesystem->dumpFile($this->tmp.'/p/articles/a.md', "---\ntitle: T\ndescription: D\npublished: 2026-10-06\n---\nTexte");
+        foreach (['b', 'c'] as $slug) {
+            $filesystem->dumpFile($this->tmp."/p/articles/en/{$slug}.md", "---\ntitle: T\ndescription: D\npublished: 2026-10-06\ntranslation_of: a\n---\nText");
+        }
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage('L\'article « a » a deux traductions');
+        $this->repository($this->tmp)->articles();
+    }
+
     public function testChargeLesThemesDeNotions(): void
     {
         $filesystem = new Filesystem();

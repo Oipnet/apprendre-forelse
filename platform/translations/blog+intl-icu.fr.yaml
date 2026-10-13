@@ -17,6 +17,9 @@ show:
     mis_a_jour: 'mis à jour le <time datetime="{datetime}">{date}</time>'
     autres: Autres articles
     tous: "← Tous les articles"
+    # Le lien vers le même article dans une autre langue, écrit dans cette langue.
+    version:
+        en: "Read this article in English"
 
 feed:
     description: "Les articles de {site}."

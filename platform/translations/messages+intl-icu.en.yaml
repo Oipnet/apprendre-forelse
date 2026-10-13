@@ -1,0 +1,97 @@
+# English: the pages served in English (the blog under /en/blog) and their common parts. A key missing here falls
+# back to French (messages+intl-icu.fr.yaml, which documents each key).
+
+base:
+    aller_au_contenu: "Skip to content"
+    flux_blog: "The {nom} blog"
+
+head:
+    image_alt: "{nom}: {slogan}"
+
+sandbox:
+    titre: "Preview"
+    application: "Application preview"
+
+header:
+    navigation: "Main navigation"
+    parcours: "Tracks"
+    pratique: "Practice"
+    blog: "Blog"
+    classement: "Leaderboard"
+    menu_compte: "{nom}'s account menu"
+    xp: "{xp} XP"
+    mon_compte: "My account"
+    espaces: "Spaces"
+    atelier: "Studio"
+    mes_cohortes: "My cohorts"
+    administration: "Administration"
+    deconnexion: "Log out"
+    connexion: "Log in"
+    creer_compte: "Sign up"
+
+footer:
+    navigation: "Footer"
+    apprendre: "Learn"
+    parcours: "Tracks"
+    pratique: "Practice"
+    notions: "Topics"
+    blog: "Blog"
+    organisations: "Schools and companies"
+    auto_hebergement: "Self-hosting"
+    contact: "Contact"
+    mon_compte: "My account"
+    connexion: "Log in"
+    informations: "Information"
+    mentions_legales: "Legal notice"
+    confidentialite: "Privacy"
+    conditions_vente: "Terms of sale"
+    marques: "The languages and frameworks mentioned are trademarks of their respective owners; this site is not affiliated with any of them."
+    moteur: 'Engine {version} · <abbr title="GNU Affero General Public License v3.0 or later">AGPL-3.0</abbr> · <a href="{depot}">source code</a>'
+
+error:
+    titre_page: "{titre} · {site}"
+    accueil: "Back to the home page"
+    reprendre: "Pick up where I left off"
+    parcours: "See the tracks"
+    404:
+        titre: "Page not found"
+        texte: "This address leads nowhere. The link may be old, or a letter slipped in the wrong place."
+    403:
+        titre: "Access denied"
+        texte: "This page exists, but it isn't open to your account."
+    429:
+        titre: "Too many requests"
+        texte: "You're going faster than the server allows. Wait a moment, then try again."
+    503:
+        titre: "Service unavailable"
+        texte: "The site is temporarily unavailable, probably for an update. Try again in a few minutes."
+    4xx:
+        titre: "Request failed"
+        texte: "The server couldn't process this request."
+    5xx:
+        titre: "Something went wrong"
+        texte: "Something broke on our side. The error has been logged; try again in a moment."
+
+share:
+    titre: "{titre}:"
+    partager: "Share"
+    natif: "Share…"
+    copier: "Copy link"
+    reseau:
+        linkedin: "LinkedIn"
+        x: "X"
+        bluesky: "Bluesky"
+    carte:
+        pratique: "Practice · {framework}"
+        certificat: "Certificate of completion · {nom}"
+        alt: "{surtitre}: {titre}"
+    texte:
+        pratique: "{framework}: “{titre}”, a short exercise to do in the browser."
+        pratique_reussie: "I passed the “{titre}” exercise ({framework}), right in the browser."
+        certificat: "I finished the “{parcours}” track on {site}: {n, plural, one {# exercise passed} other {# exercises passed}}, each one checked by tests."
+
+format:
+    duree:
+        minutes: "{minutes} min"
+        heures: "{heures} h"
+        heures_minutes: "{heures} h {minutes} min"

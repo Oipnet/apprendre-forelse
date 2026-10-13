@@ -3,6 +3,7 @@
 namespace App\Seo\Page;
 
 use App\Content\Article;
+use App\Content\Blog;
 use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
@@ -19,6 +20,7 @@ final readonly class BlogSeo
         private SchemaOrg $schema,
         private Theme $theme,
         private TranslatorInterface $translator,
+        private Blog $blog,
     ) {
     }
 
@@ -33,10 +35,17 @@ final readonly class BlogSeo
             )
             ->setCanonical($url = $this->schema->url('app_blog'))
             ->addStructuredData($this->schema->breadcrumb([[$this->trans('blog.fil_ariane'), $url]]));
+        foreach ($this->otherLanguages() as $locale) {
+            $this->seo->addAlternate($locale, $this->schema->url('app_blog', ['_locale' => $locale]));
+        }
     }
 
-    public function article(Article $article): void
+    /** @param array<string, Article> $translations le même article dans les autres langues (voir Blog::translations()) */
+    public function article(Article $article, array $translations = []): void
     {
+        foreach ($translations as $locale => $translation) {
+            $this->seo->addAlternate($locale, $this->schema->url('app_article', ['_locale' => $locale, 'slug' => $translation->slug]));
+        }
         $this->seo
             ->setTitle(sprintf('%s | %s', $article->title, $this->theme->name()), $article->title)
             ->setDescription($article->description)
@@ -62,6 +71,14 @@ final readonly class BlogSeo
                 [$this->trans('blog.fil_ariane'), $this->schema->url('app_blog')],
                 [$article->title, $url],
             ]));
+    }
+
+    /** @return list<string> les autres langues où le blog a des articles parus */
+    private function otherLanguages(): array
+    {
+        $current = $this->seo->getLanguage();
+
+        return array_values(array_filter([Article::LOCALE, ...Article::TRANSLATIONS], fn (string $locale) => $locale !== $current && $this->blog->isOpen($locale)));
     }
 
     /** @param array<string, mixed> $parameters */

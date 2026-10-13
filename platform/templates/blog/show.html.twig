@@ -3,7 +3,7 @@
 
 {#
   Un article du blog, rendu depuis le Markdown de son pack (voir App\Content\Article).
-  Variables : article, html, scheduled, previous, next.
+  Variables : article, html, scheduled, translations (le même article dans les autres langues), previous, next.
 #}
 {% block title %}{{ article.title }} · {{ theme.name }}{% endblock %}
 
@@ -32,6 +32,9 @@
                     {%- if article.updated %} · {{ 'show.mis_a_jour'|trans({datetime: article.updated|date('Y-m-d'), date: article.updated|date_longue|e})|raw }}{% endif %}
                     · {{ 'commun.lecture'|trans({minutes: article.readingMinutes}) }}
                 </p>
+                {%- for locale, translation in translations %}
+                <p class="blog-translation mt-2 text-sm"><a href="{{ path('app_article', {_locale: locale, slug: translation.slug}) }}" hreflang="{{ locale }}" lang="{{ locale }}">{{ ('show.version.' ~ locale)|trans }}</a></p>
+                {%- endfor %}
             </header>
 
             <div class="lesson prose prose-theme mt-8 max-w-none">{{ html|raw }}</div>

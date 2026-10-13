@@ -10,6 +10,9 @@
 {% endif -%}
 {% if seo.canonical -%}
     <link rel="canonical" href="{{ seo.canonical }}">
+    {% for language, url in seo.alternates -%}
+    <link rel="alternate" hreflang="{{ language }}" href="{{ url }}">
+    {% endfor -%}
     <meta property="og:type" content="{{ seo.type }}">
     <meta property="og:site_name" content="{{ theme.name }}">
     <meta property="og:locale" content="{{ seo.ogLocale }}">

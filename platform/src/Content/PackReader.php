@@ -29,7 +29,7 @@ final class PackReader
     private array $conceptThemes = [];
     /** @var array<string, string> framework => pack qui en range les notions */
     private array $conceptThemesPacks = [];
-    /** @var array<string, Article> */
+    /** @var array<string, array<string, Article>> par langue, puis par slug */
     private array $articles = [];
     private readonly PackFiles $files;
     private readonly ExerciseReader $exerciseReader;
@@ -81,7 +81,11 @@ final class PackReader
         // (uasort est stable, comme toutes les fonctions de tri depuis PHP 8.0).
         uasort($this->tracks, static fn (Track $a, Track $b) => [null === $a->order, $a->order] <=> [null === $b->order, $b->order]);
         uasort($this->practices, static fn (Practice $a, Practice $b) => [$b->published, $a->exercise->id] <=> [$a->published, $b->exercise->id]);
-        uasort($this->articles, static fn (Article $a, Article $b) => [$b->published, $a->slug] <=> [$a->published, $b->slug]);
+        $this->checkTranslations();
+        foreach ($this->articles as &$articles) {
+            uasort($articles, static fn (Article $a, Article $b) => [$b->published, $a->slug] <=> [$a->published, $b->slug]);
+        }
+        unset($articles);
 
         return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->conceptThemes, $this->articles, $this->files->watched());
     }
@@ -129,25 +133,33 @@ final class PackReader
             $this->loadConceptThemes($pack, $directory.'/notions/themes.yaml');
         }
         foreach (glob($directory.'/articles/*.md') ?: [] as $file) {
-            $this->loadArticle($pack, $file);
+            $this->loadArticle($pack, $file, Article::LOCALE);
+        }
+        foreach (Article::TRANSLATIONS as $locale) {
+            $this->files->watch($directory.'/articles/'.$locale);
+            foreach (glob($directory.'/articles/'.$locale.'/*.md') ?: [] as $file) {
+                $this->loadArticle($pack, $file, $locale);
+            }
         }
     }
 
     /** Les clés de l'en-tête d'un article : une autre (« date », « auteur »…) est une faute de frappe, refusée. */
     private const array ARTICLE_KEYS = ['title', 'description', 'published', 'updated', 'visibility'];
+    /** Une traduction nomme en plus l'article français qu'elle traduit. */
+    private const array TRANSLATION_KEYS = [...self::ARTICLE_KEYS, 'translation_of'];
 
     /**
      * Un article du blog : `<pack>/articles/<slug>.md`, un en-tête YAML entre deux lignes « --- », puis le
      * Markdown. Le nom du fichier est l'adresse de l'article : le changer casse les liens qui y mènent.
      */
-    private function loadArticle(Pack $pack, string $file): void
+    private function loadArticle(Pack $pack, string $file, string $locale): void
     {
         $slug = basename($file, '.md');
         if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug)) {
             throw new ContentException(sprintf('Article « %s » : le nom du fichier est son adresse, en minuscules et sans accent (« symfony-dans-le-navigateur.md »).', $file));
         }
-        if (isset($this->articles[$slug])) {
-            throw new ContentException(sprintf('Article « %s » présent deux fois (packs %s et %s).', $slug, $this->articles[$slug]->packId, $pack->id));
+        if (null !== ($twin = $this->articles[$locale][$slug] ?? null)) {
+            throw new ContentException(sprintf('Article « %s » présent deux fois (packs %s et %s).', $slug, $twin->packId, $pack->id));
         }
         $this->files->watch($file);
         if (!preg_match('/\A---\r?\n(.*?)\r?\n---\r?\n(.*)\z/s', (string) file_get_contents($file), $parts)) {
@@ -161,8 +173,9 @@ final class PackReader
         if (!\is_array($meta)) {
             throw new ContentException(sprintf('%s : en-tête YAML invalide.', $file));
         }
-        if ([] !== ($unknown = array_diff(array_keys($meta), self::ARTICLE_KEYS))) {
-            throw new ContentException(sprintf('%s : clé « %s » inconnue (clés possibles : %s).', $file, implode(' », « ', $unknown), implode(', ', self::ARTICLE_KEYS)));
+        $keys = Article::LOCALE === $locale ? self::ARTICLE_KEYS : self::TRANSLATION_KEYS;
+        if ([] !== ($unknown = array_diff(array_keys($meta), $keys))) {
+            throw new ContentException(sprintf('%s : clé « %s » inconnue (clés possibles : %s).', $file, implode(' », « ', $unknown), implode(', ', $keys)));
         }
         $markdown = trim($parts[2]);
         if ('' === $markdown) {
@@ -179,7 +192,7 @@ final class PackReader
             throw new ContentException(sprintf('%s : visibilité « %s » inconnue (%s).', $file, $visibility, implode(', ', Track::VISIBILITIES)));
         }
 
-        $this->articles[$slug] = new Article(
+        $this->articles[$locale][$slug] = new Article(
             slug: $slug,
             packId: $pack->id,
             title: (string) $this->optionalText($this->files->required($meta, 'title', $file), $file.' : « title »'),
@@ -189,7 +202,29 @@ final class PackReader
             file: $file,
             updated: $updated,
             visibility: $visibility,
+            locale: $locale,
+            translationOf: Article::LOCALE === $locale ? null : $this->files->required($meta, 'translation_of', $file),
         );
+    }
+
+    /**
+     * Une traduction mène à un article français qui existe, et chacun n'a qu'une traduction par langue : c'est ce qui
+     * relie les deux pages (hreflang). Vérifié une fois tous les packs lus, l'article traduit pouvant venir d'un autre.
+     */
+    private function checkTranslations(): void
+    {
+        foreach (Article::TRANSLATIONS as $locale) {
+            $translated = [];
+            foreach ($this->articles[$locale] ?? [] as $article) {
+                if (!isset($this->articles[Article::LOCALE][$article->translationOf])) {
+                    throw new ContentException(sprintf('%s : « translation_of » nomme l\'article « %s », introuvable.', $article->file, $article->translationOf));
+                }
+                if (null !== ($twin = $translated[$article->translationOf] ?? null)) {
+                    throw new ContentException(sprintf('L\'article « %s » a deux traductions (%s et %s).', $article->translationOf, $twin, $article->file));
+                }
+                $translated[$article->translationOf] = $article->file;
+            }
+        }
     }
 
     /** Une date AAAA-MM-JJ. YAML lit une date sans guillemets (2026-10-06) comme un horodatage. */

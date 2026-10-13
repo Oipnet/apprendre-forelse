@@ -31,6 +31,8 @@ final class PageSeo implements ResetInterface
     private string $type = 'website';
     /** @var list<array<string, mixed>> */
     private array $structuredData = [];
+    /** @var array<string, string> URL de la page dans chaque langue, elle comprise (hreflang) */
+    private array $alternates = [];
 
     public function __construct(
         private readonly RequestStack $requests,
@@ -103,6 +105,29 @@ final class PageSeo implements ResetInterface
         $this->type = $type;
 
         return $this;
+    }
+
+    /**
+     * La page existe aussi dans une autre langue : chaque version nomme toutes les autres, et elle-même (hreflang). La
+     * version française sert aussi de version par défaut (x-default), pour une langue que le site ne parle pas.
+     */
+    public function addAlternate(string $language, string $url): self
+    {
+        $this->alternates[$language] = $url;
+
+        return $this;
+    }
+
+    /** @return array<string, string> par langue, x-default compris ; vide pour une page en une seule langue */
+    public function getAlternates(): array
+    {
+        if ([] === $this->alternates || null === $this->canonical) {
+            return [];
+        }
+        $alternates = [$this->getLanguage() => $this->canonical, ...$this->alternates];
+        ksort($alternates);
+
+        return [...$alternates, 'x-default' => $alternates[$this->defaultLocale] ?? $this->canonical];
     }
 
     /** @param array<string, mixed> $data un objet schema.org, sans @context (ajouté au rendu) */
@@ -185,7 +210,7 @@ final class PageSeo implements ResetInterface
     {
         $this->title = $this->description = $this->canonical = $this->image = $this->imageAlt = $this->imageSize = null;
         $this->type = 'website';
-        $this->structuredData = [];
+        $this->structuredData = $this->alternates = [];
     }
 
     /** Coupe sur un mot, avec des points de suspension, sans dépasser la longueur. */

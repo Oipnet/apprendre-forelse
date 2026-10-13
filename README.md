@@ -172,6 +172,7 @@ Les résultats s'exportent en CSV.
 <pack>/notions/<notion>.md             intro d'une page de notion (Markdown, facultative ; sans elle, la page ne s'indexe pas)
 <pack>/notions/themes.yaml             rangement de l'index /notions : par framework, des thèmes et leurs notions (facultatif)
 <pack>/articles/<slug>.md              article du blog (en-tête YAML, puis Markdown)
+<pack>/articles/en/<slug>.md           sa traduction anglaise (même format, plus translation_of)
 ```
 
 - `duration:` (dans `exercise.yaml`, facultative) : la durée estimée de l'exercice, en minutes, pour le public du
@@ -222,6 +223,14 @@ Les résultats s'exportent en CSV.
   n'est ni dans la liste `/blog` ni dans le sitemap ; seuls les administrateurs le lisent à son adresse. Une instance
   dont aucun pack n'a d'article paru n'a pas de blog : `/blog` répond 404 et le pied de page n'y mène pas. Chaque
   article porte ses données structurées (`BlogPosting`) ; sa date dans le sitemap est `updated`, à défaut `published`.
+
+  Un article se traduit en anglais dans `<pack>/articles/en/<slug>.md`, publié sur `/en/blog/<slug>` avec sa propre
+  adresse (`running-symfony-in-the-browser.md`). Même en-tête, plus `translation_of:`, le nom de l'article français
+  qu'il traduit (une traduction par article). Le blog anglais a sa liste, son flux (`/en/blog/rss.xml`) et ses
+  entrées du sitemap ; l'interface autour des articles passe en anglais, mais ses liens mènent aux pages françaises.
+  Les deux versions parues se nomment l'une l'autre (`hreflang`, la française en `x-default`) et chaque article
+  propose de lire l'autre. Une traduction programmée ou en préparation suit les mêmes règles qu'un article. Un moteur
+  antérieur ignore le dossier `en/`.
 
 - `moteur:` (dans `pack.yaml`) déclare la ou les versions du moteur avec lesquelles le pack fonctionne,
   avec la syntaxe de Composer (`^0.1`, `>=1.2 <2.0`). Un moteur qui ne la satisfait pas refuse de charger le

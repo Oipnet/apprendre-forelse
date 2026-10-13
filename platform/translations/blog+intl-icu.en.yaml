@@ -1,0 +1,25 @@
+# The blog in English (/en/blog): see blog+intl-icu.fr.yaml.
+
+commun:
+    fil_ariane: "Breadcrumb"
+    accueil: Home
+    blog: Blog
+    blog_de: "The {site} blog"
+    lecture: "{minutes} min read"
+
+index:
+    intro: "Articles that start from an exercise and go further: what the framework really does, where it stops, and how to use it in production. Plus behind the scenes of the platform."
+    flux: "Subscribe to the RSS feed"
+
+show:
+    en_preparation: "Draft: only administrators can see this article."
+    programme: "Scheduled: this article will be published on {date}. Until then, only administrators can see it."
+    mis_a_jour: 'updated on <time datetime="{datetime}">{date}</time>'
+    autres: More articles
+    tous: "← All articles"
+    # Link to the same article in another language, written in that language.
+    version:
+        fr: "Lire cet article en français"
+
+feed:
+    description: "Articles from {site}."

@@ -1,8 +1,10 @@
 # Textes de l'interface
 
 Aucun texte n'est écrit en dur dans les gabarits du moteur : ils passent tous par le traducteur de Symfony, et
-vivent ici. Le site n'est servi qu'en français (`enabled_locales` dans `config/packages/translation.yaml`) ; une
-autre langue n'aura qu'à fournir ses fichiers (`accueil+intl-icu.en.yaml`…). `tests/Architecture/HardcodedTextTest.php`
+vivent ici. Le site est servi en français (`enabled_locales` dans `config/packages/translation.yaml`), et en anglais
+pour le blog seulement (`/en/blog`) : les domaines `messages`, `blog` et `seo` ont un fichier `.en.yaml`, une clé qui
+y manque retombe sur le français. Une autre zone ou une autre langue n'a qu'à fournir ses fichiers
+(`accueil+intl-icu.en.yaml`…), et la route sa variante (`#[Route(['fr' => '/blog', 'en' => '/en/blog'])]`). `tests/Architecture/HardcodedTextTest.php`
 fait échouer la CI sur un texte resté en dur.
 
 ## Fichiers

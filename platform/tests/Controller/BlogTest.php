@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * Le blog : les articles des packs. Pack de test « pratique » : deux articles parus (le plus récent révisé depuis),
- * un programmé, un en préparation.
+ * un programmé, un en préparation ; en anglais, la traduction du plus récent et celle de l'article programmé.
  */
 final class BlogTest extends WebTestCase
 {
@@ -165,6 +165,87 @@ final class BlogTest extends WebTestCase
         $this->assertStringNotContainsString('<script>alert', $html);
     }
 
+    public function testLeBlogEnAnglaisNeMontreQueLesTraductionsParues(): void
+    {
+        $crawler = $this->client->request('GET', '/en/blog');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('en', $crawler->filter('html')->attr('lang'));
+        $this->assertSame(['Symfony in the browser, without a server'], $crawler->filter('.blog-list h2')->extract(['_text']), 'Pas la traduction programmée.');
+        $this->assertSame('/en/blog/symfony-in-the-browser', $crawler->filter('.blog-list h2 a')->attr('href'));
+        $this->assertStringContainsString('September 20, 2026', $crawler->filter('.blog-list .meta')->text());
+        $this->assertSame('Blog', $crawler->filter('h1')->text());
+        $this->assertSelectorExists('header nav a[href="/en/blog"]', 'Le menu mène au blog de la langue de la page.');
+        $this->assertSame('http://localhost/en/blog/rss.xml', $crawler->filter('link[rel="alternate"][type="application/rss+xml"]')->attr('href'));
+        $this->assertSame('http://localhost/blog', $crawler->filter('link[hreflang="fr"]')->attr('href'));
+        $this->assertSame('http://localhost/en/blog', $crawler->filter('link[hreflang="en"]')->attr('href'));
+        $this->assertNull($this->client->getResponse()->headers->get('X-Robots-Tag'), 'Le blog anglais s\'indexe.');
+    }
+
+    public function testUnArticleEtSaTraductionSeNommentLUnLAutre(): void
+    {
+        $crawler = $this->client->request('GET', '/en/blog/symfony-in-the-browser');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('Symfony in the browser, without a server', $crawler->filter('h1')->text());
+        $this->assertStringContainsString('September 20, 2026', $crawler->filter('article header .meta')->text());
+        $this->assertStringContainsString('1 min read', $crawler->filter('article header .meta')->text());
+        $this->assertSame('en_US', $crawler->filter('meta[property="og:locale"]')->attr('content'));
+        $this->assertSame('http://localhost/en/blog/symfony-in-the-browser', $crawler->filter('link[rel="canonical"]')->attr('href'));
+        $alternates = $crawler->filter('link[rel="alternate"][hreflang]')->extract(['hreflang', 'href']);
+        $this->assertSame([
+            ['en', 'http://localhost/en/blog/symfony-in-the-browser'],
+            ['fr', 'http://localhost/blog/symfony-dans-le-navigateur'],
+            ['x-default', 'http://localhost/blog/symfony-dans-le-navigateur'],
+        ], $alternates);
+        $this->assertSame('/blog/symfony-dans-le-navigateur', $crawler->filter('.blog-translation a')->attr('href'));
+        $this->assertSame('Lire cet article en français', $crawler->filter('.blog-translation a')->text());
+        $this->assertSelectorTextContains('.breadcrumb', 'Home');
+
+        $crawler = $this->client->request('GET', '/blog/symfony-dans-le-navigateur');
+        $this->assertSame('fr', $crawler->filter('html')->attr('lang'));
+        $this->assertSame('http://localhost/en/blog/symfony-in-the-browser', $crawler->filter('link[hreflang="en"]')->attr('href'));
+        $this->assertSame('/en/blog/symfony-in-the-browser', $crawler->filter('.blog-translation a')->attr('href'));
+        $this->assertSame('Read this article in English', $crawler->filter('.blog-translation a')->text());
+
+        $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
+        $this->assertCount(0, $crawler->filter('link[hreflang]'), 'Un article sans traduction ne nomme aucune autre langue.');
+        $this->assertCount(0, $crawler->filter('.blog-translation'));
+    }
+
+    public function testUneTraductionProgrammeeNExistePasEncore(): void
+    {
+        $this->client->request('GET', '/en/blog/a-scheduled-article');
+        $this->assertResponseStatusCodeSame(404);
+        $this->client->request('GET', '/en/blog/symfony-dans-le-navigateur');
+        $this->assertResponseStatusCodeSame(404, 'Un article français n\'a pas d\'adresse anglaise.');
+        $this->client->request('GET', '/blog/symfony-in-the-browser');
+        $this->assertResponseStatusCodeSame(404, 'Ni une traduction d\'adresse française.');
+
+        $this->loginAdmin();
+        $crawler = $this->client->request('GET', '/en/blog/a-scheduled-article');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.blog-notice', 'will be published on January 1, 2099');
+        $this->assertCount(0, $crawler->filter('.blog-translation'), 'L\'original n\'a pas paru : pas de lien vers lui.');
+    }
+
+    public function testLeSitemapEtLeFluxAnglais(): void
+    {
+        $this->client->request('GET', '/sitemap.xml');
+        $content = (string) $this->client->getResponse()->getContent();
+        $this->assertStringContainsString('<loc>http://localhost/en/blog</loc>', $content);
+        $this->assertStringContainsString('<loc>http://localhost/en/blog/symfony-in-the-browser</loc>', $content);
+        $this->assertStringNotContainsString('a-scheduled-article', $content);
+
+        $this->client->request('GET', '/en/blog/rss.xml');
+        $this->assertResponseIsSuccessful();
+        $xml = new \SimpleXMLElement((string) $this->client->getResponse()->getContent());
+        $this->assertSame('en', (string) $xml->channel->language);
+        $this->assertSame('http://localhost/en/blog', (string) $xml->channel->link);
+        $this->assertCount(1, $xml->channel->item);
+        $this->assertSame('http://localhost/en/blog/symfony-in-the-browser', (string) $xml->channel->item[0]->link);
+    }
+
     public function testSansArticleIlNyAPasDeBlog(): void
     {
         $this->usePacks(__DIR__.'/../../../examples/packs');
@@ -181,5 +262,8 @@ final class BlogTest extends WebTestCase
 
         $this->client->request('GET', '/sitemap.xml');
         $this->assertStringNotContainsString('/blog', (string) $this->client->getResponse()->getContent());
+
+        $this->client->request('GET', '/en/blog');
+        $this->assertResponseStatusCodeSame(404);
     }
 }

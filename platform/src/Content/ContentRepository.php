@@ -19,6 +19,7 @@ use Symfony\Contracts\Service\ResetInterface;
  *   <pack>/versions/<version>.md                                  intro d'une page de nouveautés (facultative)
  *   <pack>/notions/<notion>.md                                    intro d'une page de notion (facultative)
  *   <pack>/articles/<slug>.md                                     article du blog (voir Article)
+ *   <pack>/articles/<langue>/<slug>.md                            sa traduction
  *
  * Les vérifications qui demandent d'exécuter le contenu (tests rouges puis verts)
  * sont faites par la commande content:check.
@@ -155,15 +156,39 @@ final class ContentRepository implements ResetInterface
         return $this->content()->conceptThemes;
     }
 
-    /** @return array<string, Article> les articles du blog, du plus récent au plus ancien, publiés ou non */
-    public function articles(): array
+    /** @return array<string, Article> les articles du blog dans une langue, du plus récent au plus ancien, publiés ou non */
+    public function articles(string $locale = Article::LOCALE): array
     {
-        return $this->content()->articles;
+        return $this->content()->articles[$locale] ?? [];
     }
 
-    public function findArticle(string $slug): ?Article
+    public function findArticle(string $slug, string $locale = Article::LOCALE): ?Article
     {
-        return $this->articles()[$slug] ?? null;
+        return $this->articles($locale)[$slug] ?? null;
+    }
+
+    /**
+     * Le même article dans les autres langues : l'original français d'une traduction, et ses autres traductions.
+     *
+     * @return array<string, Article> par langue
+     */
+    public function translationsOf(Article $article): array
+    {
+        $original = null === $article->translationOf ? $article : $this->findArticle($article->translationOf);
+        if (null === $original) {
+            return [];
+        }
+        $versions = [Article::LOCALE => $original];
+        foreach (Article::TRANSLATIONS as $locale) {
+            foreach ($this->articles($locale) as $translation) {
+                if ($translation->translationOf === $original->slug) {
+                    $versions[$locale] = $translation;
+                }
+            }
+        }
+        unset($versions[$article->locale]);
+
+        return $versions;
     }
 
     public function findPractice(string $id): ?Practice
