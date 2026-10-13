@@ -1,3 +1,4 @@
+import { mesurer } from '../mesure';
 import { escapeHtml } from './html';
 
 /** La clé locale qui retient qu'un environnement (à cette version d'archive) est déjà dans le cache du navigateur. */
@@ -38,4 +39,30 @@ export function bootFailureActionsHtml(withBrief = true): string {
 export function bindRetry(root: HTMLElement, readBrief?: () => void): void {
 	root.querySelectorAll<HTMLButtonElement>('[data-retry]').forEach((button) => button.addEventListener('click', () => location.reload()));
 	root.querySelector<HTMLButtonElement>('[data-read-brief]')?.addEventListener('click', () => readBrief?.());
+}
+
+/**
+ * La mesure du démarrage : combien de temps il a pris, s'il a échoué, ou si le visiteur est parti avant la fin.
+ * `exercice-ouvert` porte la durée (en secondes) et `premier` (l'environnement n'était pas dans le cache) ;
+ * `demarrage-echoue` part quand PHP ne démarre pas ; `demarrage-interrompu` quand la page passe en arrière-plan
+ * ou se ferme avant d'être prête, une fois : un onglet quitté pendant le premier téléchargement se voit enfin.
+ * Un visiteur qui revient ensuite compte quand même dans `exercice-ouvert`.
+ */
+export function suivreDemarrage(mesure: Record<string, string>, premier: boolean, debut = performance.now()) {
+	const duree = () => Math.round((performance.now() - debut) / 100) / 10;
+	let interrompu = false;
+	const quitte = () => {
+		if (interrompu || document.visibilityState !== 'hidden') return;
+		interrompu = true;
+		mesurer('demarrage-interrompu', { ...mesure, premier, duree: duree() });
+	};
+	document.addEventListener('visibilitychange', quitte);
+	const terminer = (evenement: string, donnees: Record<string, string | number | boolean> = {}) => {
+		document.removeEventListener('visibilitychange', quitte);
+		mesurer(evenement, { ...mesure, premier, duree: duree(), ...donnees });
+	};
+	return {
+		pret: (donnees?: Record<string, string | number | boolean>) => terminer('exercice-ouvert', donnees),
+		echec: () => terminer('demarrage-echoue'),
+	};
 }
