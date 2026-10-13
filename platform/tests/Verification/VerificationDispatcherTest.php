@@ -71,15 +71,21 @@ final class VerificationDispatcherTest extends KernelTestCase
     {
         $pending = $this->progress('a', ['src/A.php' => '<?php // réussi']);
         $this->progress('b', ['src/A.php' => '<?php // en cours'], completed: false);
-        $this->progress('c', []);
+        // Sans code, la réussite part quand même : le verificateur rejoue le code de départ et l'infirme.
+        $empty = $this->progress('c', []);
 
-        $this->assertSame(1, $this->dispatcher()->request(new RequestVerifications()));
-        $this->assertEquals(new VerificationRequest((int) $pending->getId(), null, 'a', ['src/A.php' => '<?php // réussi']), $this->queue->pop());
-        $this->assertNull($this->queue->pop(), 'Ni la progression en cours, ni la réussite sans code (non vérifiable).');
+        $this->assertSame(2, $this->dispatcher()->request(new RequestVerifications()));
+        $requests = [$this->queue->pop(), $this->queue->pop()];
+        usort($requests, static fn (?VerificationRequest $x, ?VerificationRequest $y) => $x?->exerciseId <=> $y?->exerciseId);
+        $this->assertEquals([
+            new VerificationRequest((int) $pending->getId(), null, 'a', ['src/A.php' => '<?php // réussi']),
+            new VerificationRequest((int) $empty->getId(), null, 'c', []),
+        ], $requests);
+        $this->assertNull($this->queue->pop(), 'Pas la progression en cours.');
 
-        $this->assertSame(0, $this->dispatcher()->request(new RequestVerifications()), 'Déjà envoyée.');
+        $this->assertSame(0, $this->dispatcher()->request(new RequestVerifications()), 'Déjà envoyées.');
         $this->clock->modify('+25 hours');
-        $this->assertSame(1, $this->dispatcher()->request(new RequestVerifications()), 'Sans verdict au bout d\'un jour, elle repart.');
+        $this->assertSame(2, $this->dispatcher()->request(new RequestVerifications()), 'Sans verdict au bout d\'un jour, elles repartent.');
     }
 
     public function testLesVerdictsSontEnregistres(): void
