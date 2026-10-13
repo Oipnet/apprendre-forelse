@@ -2,6 +2,7 @@
 
 namespace App\Theme;
 
+use App\Share\ShareImageRenderer;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Service\ResetInterface;
@@ -149,16 +150,21 @@ final class Theme implements ResetInterface
      */
     public function emailLogoUrl(): ?string
     {
+        $role = $this->rasterLogo();
+
+        return null === $role ? null : $this->imageUrl($role);
+    }
+
+    /** Le rôle du logo lisible hors du navigateur (email_logo, sinon logo s'il est en PNG, JPEG ou GIF), ou null. */
+    private function rasterLogo(): ?string
+    {
         // Un logo propre aux emails (email_logo), quand le logo du site est dans un format qu'ils lisent mal.
         if (null !== ($this->config()->images['email_logo'] ?? null)) {
-            return $this->imageUrl('email_logo');
+            return 'email_logo';
         }
         $file = $this->config()->images['logo'] ?? null;
-        if (null !== $file && !preg_match('/\.(png|jpe?g|gif)$/i', $file)) {
-            return null;
-        }
 
-        return $this->imageUrl('logo');
+        return null !== $file && preg_match('/\.(png|jpe?g|gif)$/i', $file) ? 'logo' : null;
     }
 
     public function iconUrl(): ?string
@@ -173,6 +179,9 @@ final class Theme implements ResetInterface
     }
 
     /** Les couleurs des emails (styles en ligne) quand le thème n'en déclare pas : les jetons clairs du thème default. */
+    /** Les couleurs de l'éditeur stylisé des images de partage => celles de l'éditeur du thème (« editor »). */
+    private const array SHARE_EDITOR = ['background' => 'background', 'surface' => 'surface', 'line' => 'line', 'ink' => 'ink', 'muted' => 'muted', 'accent' => 'accent-text', 'gold' => 'gold', 'success' => 'success'];
+
     public const array EMAIL_COLORS = [
         'accent' => '#1d4ed8',
         'ink' => '#1c1917',
@@ -208,7 +217,7 @@ final class Theme implements ResetInterface
      * L'habillage des images de partage dessinées par le moteur (App\Share\ShareImageRenderer) : ce que le thème
      * déclare sous « share_card », sinon les couleurs des emails et les polices du moteur. Les chemins sont absolus.
      *
-     * @return array{image: string|null, font: string|null, text_font: string|null, background: string, ink: string, accent: string, muted: string}
+     * @return array{image: string|null, logo: string|null, name: string, font: string|null, text_font: string|null, background: string, ink: string, accent: string, muted: string, editor: array<string, string>}
      */
     public function shareCard(): array
     {
@@ -216,9 +225,19 @@ final class Theme implements ResetInterface
         $card = $config->shareCard;
         $email = $this->emailColors();
         $path = static fn (?string $file) => null === $file ? null : $config->directory.'/'.$file;
+        // L'éditeur stylisé de l'image : les couleurs de l'éditeur du thème, sinon celles du moteur.
+        $editor = ShareImageRenderer::EDITOR;
+        foreach ($editor as $name => $color) {
+            $editor[$name] = $config->editor[ThemeStylesheet::EDITOR_COLORS[self::SHARE_EDITOR[$name]]] ?? $color;
+        }
+
+        $logo = $this->rasterLogo();
 
         return [
             'image' => $path($card['image']),
+            // Le logo des emails, en pied de l'image avec le nom du site.
+            'logo' => null === $logo ? null : $path($config->images[$logo]),
+            'name' => $config->name,
             'font' => $path($card['font']),
             // Le texte courant prend la police du titre quand le thème n'en déclare qu'une.
             'text_font' => $path($card['text_font'] ?? $card['font']),
@@ -226,6 +245,7 @@ final class Theme implements ResetInterface
             'ink' => $card['colors']['ink'] ?? $email['ink'],
             'accent' => $card['colors']['accent'] ?? $email['accent'],
             'muted' => $card['colors']['muted'] ?? $email['muted'],
+            'editor' => $editor,
         ];
     }
 

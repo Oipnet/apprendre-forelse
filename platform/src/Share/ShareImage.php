@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 final readonly class ShareImage
 {
     /** À changer quand le dessin change (ShareImageRenderer) : toutes les images sont alors refaites. */
-    private const int DRAWING = 1;
+    private const int DRAWING = 3;
 
     public function __construct(
         private Theme $theme,
@@ -33,7 +33,7 @@ final readonly class ShareImage
     public function version(ShareCard $card): string
     {
         $style = $this->theme->shareCard();
-        $files = array_filter([$style['image'], $style['font'], $style['text_font']]);
+        $files = array_filter([$style['image'], $style['logo'], $style['font'], $style['text_font']]);
 
         return substr(hash('xxh128', serialize([
             self::DRAWING,

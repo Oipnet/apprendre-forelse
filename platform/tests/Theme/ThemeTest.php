@@ -2,6 +2,7 @@
 
 namespace App\Tests\Theme;
 
+use App\Share\ShareImageRenderer;
 use App\Theme\Theme;
 use App\Theme\ThemeLoader;
 use App\Tests\ThemeTrait;
@@ -460,10 +461,14 @@ final class ThemeTest extends TestCase
         $this->assertSame(['image' => null, 'font' => null, 'text_font' => null], array_intersect_key($card, ['image' => 1, 'font' => 1, 'text_font' => 1]), 'Le moteur : ses polices (ShareImageRenderer).');
         $this->assertSame(Theme::EMAIL_COLORS['accent'], $card['accent']);
 
-        $this->write("name: A\ncolors:\n  accent: '#9a3412'\n  background: '#faf7f2'\n");
+        $this->assertSame(ShareImageRenderer::EDITOR, $card['editor'], 'L\'éditeur stylisé : celui du moteur.');
+
+        $this->write("name: A\ncolors:\n  accent: '#9a3412'\n  background: '#faf7f2'\neditor:\n  accent-text: '#9186f5'\n  background: '#16171d'\n");
         $card = self::theme($this->tmp)->shareCard();
         $this->assertSame('#9a3412', $card['accent'], 'Les couleurs déclarées du site.');
         $this->assertSame('#faf7f2', $card['background']);
+        $this->assertSame(['background' => '#16171d', 'accent' => '#9186f5'], array_intersect_key($card['editor'], ['background' => 1, 'accent' => 1]), 'Les couleurs de l\'éditeur du thème.');
+        $this->assertSame(ShareImageRenderer::EDITOR['gold'], $card['editor']['gold']);
     }
 
     public function testShareCardDeclareSesFichiersEtSesCouleurs(): void
@@ -478,6 +483,20 @@ final class ThemeTest extends TestCase
         $this->assertSame($this->tmp.'/polices/titres.ttf', $card['font']);
         $this->assertSame($this->tmp.'/polices/titres.ttf', $card['text_font'], 'Une seule police : elle sert à tout le texte.');
         $this->assertSame('#111111', $card['ink']);
+    }
+
+    public function testLImageDePartagePrendLeLogoDesEmails(): void
+    {
+        $this->assertNull(self::theme()->shareCard()['logo'], 'Le moteur n\'a pas de logo.');
+
+        touch($this->tmp.'/logo.webp');
+        touch($this->tmp.'/logo.png');
+        $this->write("name: Forelse\nlogo: logo.webp\n");
+        $this->assertNull(self::theme($this->tmp)->shareCard()['logo'], 'Un webp seul : pas de logo (comme dans les emails).');
+
+        $this->write("name: Forelse\nlogo: logo.webp\nemail_logo: logo.png\n");
+        $card = self::theme($this->tmp)->shareCard();
+        $this->assertSame([$this->tmp.'/logo.png', 'Forelse'], [$card['logo'], $card['name']]);
     }
 
     /** @return iterable<string, array{string, string}> */
