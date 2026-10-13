@@ -14,37 +14,37 @@
             </a>
             <p class="mt-2 text-ink-muted">{{ theme.tagline }}</p>
         </div>
-        <nav class="grid gap-6 sm:grid-cols-3" aria-label="Pied de page">
+        <nav class="grid gap-6 sm:grid-cols-3" aria-label="{{ 'footer.navigation'|trans }}">
             <div>
-                <h2 class="font-semibold">Apprendre</h2>
+                <h2 class="font-semibold">{{ 'footer.apprendre'|trans }}</h2>
                 <ul class="mt-2 space-y-1">
-                    <li><a href="{{ path('app_tracks') }}">Les parcours</a></li>
-                    <li><a href="{{ path('app_practice') }}">Pratique</a></li>
-                    <li><a href="{{ path('app_concepts') }}">Les notions</a></li>
-                    {% if blog.open %}<li><a href="{{ path('app_blog') }}">Le blog</a></li>{% endif %}
+                    <li><a href="{{ path('app_tracks') }}">{{ 'footer.parcours'|trans }}</a></li>
+                    <li><a href="{{ path('app_practice') }}">{{ 'footer.pratique'|trans }}</a></li>
+                    <li><a href="{{ path('app_concepts') }}">{{ 'footer.notions'|trans }}</a></li>
+                    {% if blog.open %}<li><a href="{{ path('app_blog') }}">{{ 'footer.blog'|trans }}</a></li>{% endif %}
                 </ul>
             </div>
             <div>
                 <h2 class="font-semibold">{{ theme.name }}</h2>
                 <ul class="mt-2 space-y-1">
-                    <li><a href="{{ path('app_organizations') }}">Écoles et entreprises</a></li>
-                    {% if self_hosting.enabled %}<li><a href="{{ path('app_self_hosting') }}">Auto-hébergement</a></li>{% endif %}
-                    <li><a href="{{ path('app_contact') }}">Contact</a></li>
-                    <li>{% if app.user %}<a href="{{ path('app_account') }}">Mon compte</a>{% else %}<a href="{{ path('app_login', {suite: login_suite ?? null}) }}">Connexion</a>{% endif %}</li>
+                    <li><a href="{{ path('app_organizations') }}">{{ 'footer.organisations'|trans }}</a></li>
+                    {% if self_hosting.enabled %}<li><a href="{{ path('app_self_hosting') }}">{{ 'footer.auto_hebergement'|trans }}</a></li>{% endif %}
+                    <li><a href="{{ path('app_contact') }}">{{ 'footer.contact'|trans }}</a></li>
+                    <li>{% if app.user %}<a href="{{ path('app_account') }}">{{ 'footer.mon_compte'|trans }}</a>{% else %}<a href="{{ path('app_login', {suite: login_suite ?? null}) }}">{{ 'footer.connexion'|trans }}</a>{% endif %}</li>
                 </ul>
             </div>
             <div>
-                <h2 class="font-semibold">Informations</h2>
+                <h2 class="font-semibold">{{ 'footer.informations'|trans }}</h2>
                 <ul class="mt-2 space-y-1">
-                    <li><a href="{{ path('app_legal_notice') }}">Mentions légales</a></li>
-                    <li><a href="{{ path('app_privacy') }}">Confidentialité</a></li>
-                    <li><a href="{{ path('app_terms') }}">Conditions de vente</a></li>
+                    <li><a href="{{ path('app_legal_notice') }}">{{ 'footer.mentions_legales'|trans }}</a></li>
+                    <li><a href="{{ path('app_privacy') }}">{{ 'footer.confidentialite'|trans }}</a></li>
+                    <li><a href="{{ path('app_terms') }}">{{ 'footer.conditions_vente'|trans }}</a></li>
                 </ul>
             </div>
         </nav>
         <div class="space-y-1 border-t border-line pt-4 text-xs text-ink-muted md:col-span-2">
-            <p>Les langages et frameworks cités sont des marques de leurs titulaires respectifs ; ce site n'est affilié à aucun d'eux.</p>
-            <p class="site-moteur">Moteur {{ moteur_version }} · <abbr title="GNU Affero General Public License v3.0 ou ultérieure">AGPL-3.0</abbr> · <a href="{{ constant('App\\Instance\\SelfHostingPage::REPOSITORY') }}">code source</a></p>
+            <p>{{ 'footer.marques'|trans }}</p>
+            <p class="site-moteur">{{ 'footer.moteur'|trans({version: moteur_version|e, depot: constant('App\\Instance\\SelfHostingPage::REPOSITORY')|e})|raw }}</p>
         </div>
     </div>
 </footer>

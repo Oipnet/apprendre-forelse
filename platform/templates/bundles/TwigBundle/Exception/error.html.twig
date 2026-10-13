@@ -8,34 +8,15 @@
     et sur une 500 la base peut être en cause : on ne touche ni à app.user ni aux rôles.
     Aperçu en dev : /_error/404, /_error/403, /_error/500.
 #}
-{% set messages = {
-    404: {
-        title: 'Page introuvable',
-        lead: 'Cette adresse ne mène nulle part. Le lien est peut-être ancien, ou une lettre s\'est glissée de travers.',
-    },
-    403: {
-        title: 'Accès refusé',
-        lead: 'Cette page existe, mais elle n\'est pas ouverte à votre compte.',
-    },
-    429: {
-        title: 'Trop de requêtes',
-        lead: 'Vous allez plus vite que le serveur ne l\'accepte. Patientez un instant, puis réessayez.',
-    },
-    503: {
-        title: 'Service indisponible',
-        lead: 'Le site est momentanément indisponible, sans doute le temps d\'une mise à jour. Réessayez dans quelques minutes.',
-    },
+{# Les textes de chaque code (messages+intl-icu : erreur.404.titre…) ; à défaut, ceux des erreurs 4xx ou 5xx. #}
+{% set code = status_code in [403, 404, 429, 503] ? status_code : (status_code < 500 ? '4xx' : '5xx') %}
+{% set message = {
+    title: ('error.' ~ code ~ '.titre')|trans,
+    lead: ('error.' ~ code ~ '.texte')|trans,
 } %}
-{% set message = messages[status_code] ?? (status_code < 500 ? {
-    title: 'Requête impossible',
-    lead: 'Le serveur n\'a pas pu traiter cette requête.',
-} : {
-    title: 'Une erreur est survenue',
-    lead: 'Quelque chose a cassé de notre côté. L\'erreur est enregistrée ; réessayez dans un moment.',
-}) %}
 
 {% block robots %}<meta name="robots" content="noindex">{% endblock %}
-{% block title %}{{ message.title }} · {{ theme.name }}{% endblock %}
+{% block title %}{{ 'error.titre_page'|trans({titre: message.title, site: theme.name}) }}{% endblock %}
 
 {% block header %}
     <header class="site-header border-b border-line bg-surface">
@@ -46,8 +27,8 @@
                 {% if theme.chip %}<span class="site-chip rounded border border-line px-1.5 text-xs font-normal text-ink-muted">{{ theme.chip }}</span>{% endif %}
             </a>
             <nav class="flex flex-1 flex-wrap items-center justify-end gap-x-4 text-sm">
-                <a href="{{ path('app_tracks') }}">Parcours</a>
-                <a href="{{ path('app_practice') }}">Pratique</a>
+                <a href="{{ path('app_tracks') }}">{{ 'header.parcours'|trans }}</a>
+                <a href="{{ path('app_practice') }}">{{ 'header.pratique'|trans }}</a>
             </nav>
         </div>
     </header>
@@ -66,10 +47,10 @@
             </p>
         {% endif %}
         <p class="error-actions mt-8 flex flex-wrap items-center gap-4">
-            <a class="btn btn-primary" href="{{ path('app_home') }}">Retour à l'accueil</a>
+            <a class="btn btn-primary" href="{{ path('app_home') }}">{{ 'error.accueil'|trans }}</a>
             {# Sans lire app.user (voir plus haut) : le compte montre « Reprendre où j'en suis », ou demande de se connecter. #}
-            <a href="{{ path('app_account') }}">Reprendre où j'en étais</a>
-            <a href="{{ path('app_tracks') }}">Voir les parcours</a>
+            <a href="{{ path('app_account') }}">{{ 'error.reprendre'|trans }}</a>
+            <a href="{{ path('app_tracks') }}">{{ 'error.parcours'|trans }}</a>
         </p>
     </main>
 {% endblock %}

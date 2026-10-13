@@ -5,11 +5,11 @@
   partagé, pour la mesure d'audience, par exemple {exercice: …}).
 #}
 <div class="share mt-6 flex flex-wrap items-center gap-2" data-share="{{ {text: links.text, natif: links.natif, lien: links.lien, mesure: mesure|default({})}|json_encode }}">
-    <span class="share-title text-sm text-ink-muted">{{ title|default('Partager') }} :</span>
-    <button type="button" class="btn px-3 py-1 text-sm" data-share-native hidden>Partager…</button>
-    <a class="btn px-3 py-1 text-sm" href="{{ links.linkedin }}" target="_blank" rel="noopener noreferrer" data-share-network="linkedin">LinkedIn</a>
-    <a class="btn px-3 py-1 text-sm" href="{{ links.x }}" target="_blank" rel="noopener noreferrer" data-share-network="x">X</a>
-    <a class="btn px-3 py-1 text-sm" href="{{ links.bluesky }}" target="_blank" rel="noopener noreferrer" data-share-network="bluesky">Bluesky</a>
-    <button type="button" class="btn px-3 py-1 text-sm" data-share-copy>Copier le lien</button>
+    <span class="share-title text-sm text-ink-muted">{{ 'share.titre'|trans({titre: title|default('share.partager'|trans)}) }}</span>
+    <button type="button" class="btn px-3 py-1 text-sm" data-share-native hidden>{{ 'share.natif'|trans }}</button>
+    <a class="btn px-3 py-1 text-sm" href="{{ links.linkedin }}" target="_blank" rel="noopener noreferrer" data-share-network="linkedin">{{ 'share.reseau.linkedin'|trans }}</a>
+    <a class="btn px-3 py-1 text-sm" href="{{ links.x }}" target="_blank" rel="noopener noreferrer" data-share-network="x">{{ 'share.reseau.x'|trans }}</a>
+    <a class="btn px-3 py-1 text-sm" href="{{ links.bluesky }}" target="_blank" rel="noopener noreferrer" data-share-network="bluesky">{{ 'share.reseau.bluesky'|trans }}</a>
+    <button type="button" class="btn px-3 py-1 text-sm" data-share-copy>{{ 'share.copier'|trans }}</button>
     <span class="share-status text-sm text-ink-muted" role="status"></span>
 </div>

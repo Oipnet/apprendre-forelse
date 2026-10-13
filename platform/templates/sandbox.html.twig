@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="fr" data-host-origin="{{ host_origin }}">
+<html lang="{{ app.locale }}" data-host-origin="{{ host_origin }}">
     <head>
         <meta charset="UTF-8">
-        <title>Aperçu</title>
+        <title>{{ 'sandbox.titre'|trans }}</title>
         <style>
             html, body { margin: 0; height: 100%; background: #fff; }
             iframe { border: 0; width: 100%; height: 100%; display: block; }
@@ -12,6 +12,6 @@
     <body>
         {# Mêmes droits que l'iframe du relais côté plateforme, qui les impose de toute façon :
            rien pour naviguer la page parente. allow-same-origin laisse le Service Worker servir l'aperçu. #}
-        <iframe id="preview" title="Aperçu de l'application" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"></iframe>
+        <iframe id="preview" title="{{ 'sandbox.application'|trans }}" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"></iframe>
     </body>
 </html>
