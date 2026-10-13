@@ -38,6 +38,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- Environnements Symfony avec Doctrine : le profilage reste actif dans les tests, qui tournent désormais sans debug.
+  Sans lui, les tests qui comptent les requêtes SQL (`doctrine.debug_data_holder`) ne voyaient plus rien : un exercice
+  sur les requêtes N+1 passait dès le départ, un autre échouait avec sa solution.
 - Les tests d'un exercice tournent sans debug (`APP_DEBUG=0`), dans le navigateur comme au vérificateur. En debug, la
   page d'erreur de Symfony cite le code source, celui du test compris : un test qui cherche un texte dans la page
   passait sur une 404 dans le navigateur, puis la vérification infirmait la réussite. Le vérificateur ne tenait le
