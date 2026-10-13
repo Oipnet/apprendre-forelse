@@ -24,7 +24,7 @@ export function bindWorkpanes(root: HTMLElement, narrow: MediaQueryList): (pane:
 /** Les onglets aperçu / console / requêtes. Afficher la console efface son badge et, si elle en a un, donne le focus au champ. */
 export function bindPaneTabs(root: HTMLElement, hasConsole: boolean): void {
 	const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
-	const tabs = root.querySelectorAll<HTMLButtonElement>('.pane-tabs button');
+	const tabs = root.querySelectorAll<HTMLButtonElement>('.pane-tabs button[data-pane]');
 	const showPane = (pane: Pane) => {
 		for (const tab of tabs) tab.classList.toggle('active', tab.dataset.pane === pane);
 		for (const name of ['preview', 'console', 'requests'] as const) $(`.pane-${name}`).hidden = pane !== name;

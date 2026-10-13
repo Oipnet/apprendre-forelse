@@ -31,16 +31,19 @@ export class ProjectFilesController {
 	) {
 		this.hiddenTests = new Set(Object.keys(exercise.tests));
 		this.bindNewFile();
+		const montrer = (visible: boolean) => {
+			this.$('#filetree').hidden = !visible;
+			this.$('#toggle-tree').classList.toggle('open', visible);
+			this.$('#toggle-tree').setAttribute('aria-expanded', String(visible));
+		};
 		this.$('#toggle-tree').addEventListener('click', () => {
-			const explorateur = this.$('#filetree');
-			explorateur.hidden = !explorateur.hidden;
-			this.$('#toggle-tree').classList.toggle('open', !explorateur.hidden);
+			const visible = this.$('#filetree').hidden !== false;
+			montrer(visible);
+			// Retenu sur grand écran seulement : sur un écran étroit, il démarre toujours replié.
+			if (!compact) stockerExplorateur(visible);
 		});
-		if (compact) {
-			// Un clic le rouvre.
-			this.$('#filetree').hidden = true;
-			this.$('#toggle-tree').classList.remove('open');
-		}
+		// Écran étroit : un clic le rouvre. Ailleurs, comme l'apprenant l'a laissé.
+		montrer(compact ? false : lireExplorateur());
 		this.$('#reset').addEventListener('click', async () => {
 			const ok = await confirmDialog(this.root, {
 				title: 'Revenir au code de départ ?',
@@ -192,5 +195,24 @@ export class ProjectFilesController {
 	openStart(): void {
 		this.editor.open(this.exercise.open);
 		this.tree?.setActive(this.exercise.open);
+	}
+}
+
+const CLE_EXPLORATEUR = 'forelse:explorateur';
+
+/** L'explorateur affiché ou replié sur grand écran, retenu pour tous les exercices ; affiché par défaut. */
+function lireExplorateur(): boolean {
+	try {
+		return localStorage.getItem(CLE_EXPLORATEUR) !== 'replie';
+	} catch {
+		return true;
+	}
+}
+
+function stockerExplorateur(visible: boolean): void {
+	try {
+		localStorage.setItem(CLE_EXPLORATEUR, visible ? 'affiche' : 'replie');
+	} catch {
+		// stockage indisponible : rien de retenu
 	}
 }
