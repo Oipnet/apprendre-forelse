@@ -1285,10 +1285,156 @@ dialog.confirm p {
 	font-size: 14px;
 }
 
+/* Volets repliables (folding.ts) : sur écran large et moyen, les consignes et l'aperçu se rangent en une rail
+   étroite pour laisser la place à l'éditeur. Le volet garde ses enfants (l'iframe de l'aperçu continue de tourner),
+   simplement masqués ; seule sa rail reste. Sur petit écran, un volet à la fois : rien ne se replie. */
+.workspace {
+	--rail: 2.6rem;
+	transition:
+		grid-template-columns 0.18s ease,
+		grid-template-rows 0.18s ease;
+}
+.workspace[data-brief-folded] {
+	grid-template-columns: var(--rail) 1fr minmax(320px, 32%);
+}
+.workspace[data-preview-folded] {
+	grid-template-columns: minmax(280px, 25%) 1fr var(--rail);
+}
+.workspace[data-brief-folded][data-preview-folded] {
+	grid-template-columns: var(--rail) 1fr var(--rail);
+}
+.playground .workspace .panel.folded {
+	padding: 0;
+	overflow: hidden;
+}
+.panel.folded > :not(.pane-rail) {
+	display: none;
+}
+.pane-fold {
+	display: inline-grid;
+	place-items: center;
+	width: 1.8rem;
+	height: 1.8rem;
+	padding: 0;
+	border: none;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--muted);
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+}
+.pane-fold:hover {
+	color: var(--text);
+	background: var(--panel-2);
+}
+/* Consignes : le bouton reste en haut à droite pendant qu'on fait défiler l'énoncé (le volet est une colonne flex). */
+.brief > .pane-fold {
+	flex: none;
+	align-self: flex-end;
+	position: sticky;
+	top: -0.6rem;
+	z-index: 1;
+	margin: -0.6rem -0.8rem -0.3rem 0;
+	background: var(--panel);
+}
+.pane-tabs .pane-fold {
+	align-self: center;
+	margin: 0 0.3rem 0 auto;
+	padding: 0;
+	box-shadow: none;
+}
+.pane-rail {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
+	width: 100%;
+	min-height: 0;
+	padding: 0.8rem 0;
+	border: none;
+	border-radius: 0;
+	background: var(--panel);
+	color: var(--muted);
+	font-size: 13px;
+	cursor: pointer;
+}
+.pane-rail[hidden] {
+	display: none;
+}
+.pane-rail:hover {
+	color: var(--text);
+	background: var(--panel-2);
+}
+.pane-rail:focus-visible {
+	outline-offset: -3px;
+}
+.rail-name {
+	writing-mode: vertical-rl;
+	letter-spacing: 0.04em;
+}
+.rail-badge {
+	display: inline-grid;
+	place-items: center;
+	min-width: 1.3rem;
+	height: 1.3rem;
+	padding: 0 0.3rem;
+	border-radius: 999px;
+	background: var(--ko);
+	color: #fff;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1;
+}
+.rail-badge[hidden] {
+	display: none;
+}
+.rail-badge[data-kind='ok'] {
+	background: var(--ok);
+	color: #0d1f15;
+}
+
+@media (max-width: 1100px) {
+	/* Écran moyen : les consignes, en bandeau au-dessus, se rangent en une barre fine. */
+	.playground:not(.studio) .workspace[data-brief-folded] {
+		grid-template-rows: auto minmax(0, 1fr);
+	}
+	.playground:not(.studio) .workspace[data-preview-folded] {
+		grid-template-columns: 1fr var(--rail);
+	}
+	.playground:not(.studio) .brief .pane-rail {
+		flex-direction: row;
+		justify-content: flex-start;
+		padding: 0.45rem 1rem;
+	}
+	.playground:not(.studio) .brief .rail-name {
+		writing-mode: horizontal-tb;
+	}
+	/* Le bandeau se range vers le haut, et se déroule vers le bas. */
+	.playground:not(.studio) .brief > .pane-fold span {
+		transform: rotate(90deg);
+	}
+	.playground:not(.studio) .brief .pane-rail::after {
+		content: '›';
+		margin-left: auto;
+		font-size: 18px;
+		transform: rotate(90deg);
+	}
+}
+
+@media (max-width: 800px) {
+	/* Un volet à la fois : le sélecteur de la barre du haut suffit. */
+	.pane-fold {
+		display: none;
+	}
+}
+
 /* Moins de mouvement demandé : ni pulsation, ni fondu, ni rebond. */
 @media (prefers-reduced-motion: reduce) {
 	.overlay,
-	#boot-bar {
+	#boot-bar,
+	.workspace {
 		transition: none;
 	}
 	#boot-bar.indeterminate,

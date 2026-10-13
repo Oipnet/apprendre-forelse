@@ -7,6 +7,7 @@ import { ConsolePanel } from './console';
 import { cheminsExplicites, estModifiable } from './editable';
 import { Emitter, Mailbox } from './emitter';
 import { FeedbackDialog } from './feedback';
+import { PaneFolding, type Foldable } from './folding';
 import { shareDialog } from './share';
 import { HintsAndSolution } from './HintsAndSolution';
 import { escapeHtml } from './html';
@@ -61,7 +62,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const help = document.createElement('dialog');
 	help.className = 'feedback shortcuts';
 	help.setAttribute('aria-labelledby', 'shortcuts-title');
-	help.innerHTML = shortcutsHelpHtml(mod);
+	help.innerHTML = shortcutsHelpHtml(mod, navigator.platform);
 	root.append(help);
 	help.querySelector('[data-close]')!.addEventListener('click', () => help.close());
 	$('#shortcuts').addEventListener('click', () => help.showModal());
@@ -91,7 +92,20 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// --- Petits écrans : un volet à la fois, explorateur replié, éditeur compact -------------
 	const narrow = window.matchMedia('(max-width: 800px)');
 	const compact = window.matchMedia('(max-width: 1100px)');
-	const revealPane = bindWorkpanes(root, narrow);
+	const showWorkpane = bindWorkpanes(root, narrow);
+	// --- Écrans plus larges : consignes et aperçu repliables, état retenu pour tous les exercices ---
+	const folding = new PaneFolding(root, narrow, compact, (() => {
+		try {
+			return localStorage;
+		} catch {
+			return null; // stockage bloqué : tout ouvert, rien de retenu
+		}
+	})(), (volet: Foldable, replie: boolean) => mesurer('volet-replie', { ...mesure, volet, replie }));
+	/** Amène l'apprenant sur un volet : celui du petit écran, et les consignes rouvertes si elles étaient repliées. */
+	const revealPane = (pane: 'brief' | 'code') => {
+		showWorkpane(pane);
+		if (pane === 'brief') folding.open('brief');
+	};
 
 	// --- Le mentor (comptes seulement, et si le serveur a une clé d'API) -------------------
 	const mentor = new MentorPanel(root, config.mentor ? new MentorClient(config.mentor) : null, () => revealPane('brief'));
@@ -207,10 +221,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	messagesDeLApercu.deliverTo(([level, message]) => {
 		consolePanel.logFromPreview(level, message);
 		// Le badge signale un message qu'on n'a pas encore vu, sauf si la console est déjà affichée.
+		// Aperçu replié : sa rail le signale aussi.
 		if ($('.pane-console').hidden) {
 			$('.pane-tabs .badge').title = 'La page de l\'aperçu a signalé un problème';
 			$('.pane-tabs .badge').hidden = false;
 		}
+		folding.showPreviewAlert('la page de l\'aperçu a signalé un problème');
 	});
 	// Un runtime sans console (le simulateur Nuxt) : l'onglet garde les messages de l'aperçu, sans champ de commande.
 	const commandes = exercise.setup.length > 0 && runtime.runCommand ? exercise.setup : [];
@@ -220,7 +236,10 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	for (const command of commandes) {
 		$('#boot-label').textContent = `Préparation : ${consoleName} ${command}`;
 		const result = await consolePanel.run(command, { quiet: true });
-		if (result?.exitCode !== 0) $('.pane-tabs .badge').hidden = false;
+		if (result?.exitCode !== 0) {
+			$('.pane-tabs .badge').hidden = false;
+			folding.showPreviewAlert('une commande de préparation a échoué');
+		}
 	}
 	bridge.navigate(exercise.preview);
 
@@ -299,9 +318,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			const passed = results.show(result);
 			const total = exercise.objectives.length;
 			status(`${passed}/${total} objectifs · tests en ${Math.round(result.durationMs)} ms`, passed === total ? 'ok' : 'ko', spokenSummary(passed, total));
-			revealPane('brief');
-			if (passed === total) void success.show();
-			else success.hide();
+			// Petit écran : les consignes, où s'affichent les objectifs. Volet replié : il ne se rouvre qu'à la
+			// réussite, pour ne pas reprendre la place pendant que l'apprenant corrige ; sa rail porte le résultat.
+			showWorkpane('brief');
+			folding.showResult(passed, total);
+			if (passed === total) {
+				folding.open('brief');
+				void success.show();
+			} else success.hide();
 		} catch (error) {
 			status('Erreur pendant les tests', 'ko');
 			results.showError(error);
@@ -327,10 +351,15 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	};
 	const act = (shortcut: Shortcut) => {
 		if (shortcut === 'save') void saveNow();
+		else if (shortcut === 'fold-brief') folding.toggle('brief');
+		else if (shortcut === 'fold-preview') folding.toggle('preview');
 		else if (!runButton.disabled) runButton.click();
 	};
 	editor.instance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => act('run'));
 	editor.instance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => act('save'));
+	// WinCtrl : la touche Ctrl sur toutes les plateformes, Mac compris (voir shortcutOf).
+	editor.instance.addCommand(monaco.KeyMod.WinCtrl | monaco.KeyMod.Alt | monaco.KeyCode.KeyB, () => act('fold-brief'));
+	editor.instance.addCommand(monaco.KeyMod.WinCtrl | monaco.KeyMod.Alt | monaco.KeyCode.KeyP, () => act('fold-preview'));
 	document.addEventListener('keydown', (event) => {
 		const shortcut = event.defaultPrevented ? null : shortcutOf(event);
 		if (!shortcut) return;

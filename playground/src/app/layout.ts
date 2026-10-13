@@ -1,11 +1,15 @@
+import { foldButtonHtml, railHtml } from './folding';
 import { escapeHtml } from './html';
+import { foldShortcutLabel } from './shortcuts';
 import { sanitize } from './markdown';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 
 /** Le squelette HTML de l'environnement d'exercice : consignes, code, aperçu, écran de démarrage. */
-export function layout(exercise: ExercisePayload, config: PlaygroundConfig): string {
+export function layout(exercise: ExercisePayload, config: PlaygroundConfig, platform = navigator.platform): string {
 	const framework = exercise.environment.framework;
 	const consoleName = framework.console;
+	const foldBrief = foldShortcutLabel(platform, 'B');
+	const foldPreview = foldShortcutLabel(platform, 'P');
 	return `
 	<header class="topbar">
 		<div class="crumbs">
@@ -34,7 +38,9 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 	</header>
 	<div class="small-screen-note" role="note"><span>Cet exercice se joue mieux sur un écran large : ici, un volet à la fois.</span><button class="ghost small" aria-label="Fermer">✕</button></div>
 	<main class="workspace" data-pane="code">
-		<aside class="panel brief">
+		<aside class="panel brief" id="pane-brief" aria-label="Consignes">
+			${railHtml('brief', '📋', 'Consignes', foldBrief)}
+			${foldButtonHtml('brief', foldBrief)}
 			<div class="already-done" id="already-done" hidden></div>
 			${exercise.practice ? `<p class="lead">${escapeHtml(exercise.practice.summary)}</p>` : ''}
 			<div class="xp">${exercise.concepts.map((c) => conceptChip(c, exercise.conceptUrls[c])).join('')}${exercise.xp > 0 ? `<span class="chip gold">${exercise.xp} XP</span>` : ''}${exercise.practice?.version ? (exercise.practice.versionUrl ? `<a class="chip gold" href="${escapeHtml(exercise.practice.versionUrl)}" title="Les autres exercices de cette version">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</a>` : `<span class="chip gold">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</span>`) : ''}</div>
@@ -60,7 +66,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 		</aside>
 		<section class="panel code">
 			<nav class="tabs">
-				<button id="toggle-tree" class="tree-toggle open" title="Afficher ou masquer les fichiers du projet" aria-label="Fichiers du projet">📁</button>
+				<button id="toggle-tree" class="tree-toggle open" title="Afficher ou masquer les fichiers du projet" aria-label="Fichiers du projet" aria-controls="filetree" aria-expanded="true">📁</button>
 				<span class="tabs-files" id="tabs"></span>
 			</nav>
 			<div class="code-body">
@@ -71,11 +77,13 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 				<div class="editor" id="editor"></div>
 			</div>
 		</section>
-		<section class="panel preview">
+		<section class="panel preview" id="pane-preview" aria-label="Aperçu">
+			${railHtml('preview', '👁', 'Aperçu', foldPreview)}
 			<nav class="pane-tabs">
 				<button class="active" data-pane="preview">Aperçu</button>
 				<button data-pane="console">Console <span class="badge" hidden title="Une commande a échoué">!</span></button>
 				<button data-pane="requests">Requêtes</button>
+				${foldButtonHtml('preview', foldPreview)}
 			</nav>
 			<div class="pane-preview">
 				<div class="urlbar">

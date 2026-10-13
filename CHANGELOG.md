@@ -8,6 +8,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Volets repliables dans le playground** : sur un écran large ou moyen, les consignes et l'aperçu se replient
+  en une rail étroite (bouton ‹ / › dans leur en-tête, ou Ctrl + Alt + B / P, Ctrl aussi sur Mac) pour laisser
+  la place à l'éditeur. L'aperçu continue de tourner replié. La rail des consignes porte le résultat du dernier
+  run, celle de l'aperçu le « ! » de la console ; les consignes se rouvrent à la réussite, pour un indice, la
+  solution ou le mentor. L'état est retenu dans le navigateur pour tous les exercices, comme celui de
+  l'explorateur de fichiers. Rien ne change sur petit écran. Nouvel événement de mesure `volet-replie`.
+
 ## 3.6.2 — 2026-10-13
 
 ### Ajouté
