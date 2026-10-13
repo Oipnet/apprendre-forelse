@@ -12,14 +12,15 @@ Un domaine par zone du site, au format [ICU](https://symfony.com/doc/current/ref
 
 | Domaine | Gabarits |
 |---|---|
-| `messages` | communs : `base`, `_head`, `_header`, `_footer`, pages d'erreur, formulaires, partage |
+| `messages` | communs : `base`, `_head`, `_header`, `_footer`, pages d'erreur, formulaires, partage ; unités du filtre `duree` (`format.`) |
 | `accueil` | `home/` |
 | `compte` | `account/`, `security/`, `contact/`, `purchase/` |
-| `apprentissage` | `exercise/`, `practice/`, `track/`, `chapter/`, `concept/` |
+| `apprentissage` | `exercise/`, `practice/`, `track/`, `chapter/`, `concept/` ; les refus des API du playground (`api.`) et les textes que le serveur lui envoie (`playground.` : lien de retour, note de démarrage et étapes des profils de framework) |
 | `blog` | `blog/` |
 | `classement` | `leaderboard/` |
 | `certificat` | `certificate/` |
 | `emails` | `emails/` |
+| `seo` | balises calculées en PHP (`src/Seo`) : title, description, noms lisibles des données structurées, fil d'Ariane, pages fixes de `#[Seo(…, domain: 'seo')]` |
 | `validators` | messages des contraintes (`#[Assert\…(message: 'cle')]`), **sans** ICU : le validateur passe ses paramètres sous la forme `{{ limit }}` |
 
 Hors du périmètre, et donc en français dans le gabarit : l'administration, l'atelier des auteurs et l'espace des
@@ -46,6 +47,11 @@ langue (`privacy.en.html.twig`), relu tel quel.
   d'une langue à l'autre.
 - Les dates passent par `format_date('short')` (`13/10/2026` en français) et `format_time('short')`, dans la langue
   de la page.
+- Les filtres de format du moteur suivent eux aussi la langue de la page (celle du traducteur) : `date_longue`
+  (« 6 octobre 2026 »), `euros` (centimes → « 49,00 € »), `duree` (minutes → « 3 h 15 », unités dans `messages`) et
+  `nombre` (« 12 500 », l'espace ordinaire séparant les milliers en français). Plutôt que `number_format`, un nombre
+  passe en paramètre déjà écrit : `{xp: user.xp|nombre}`. De même, og:locale et `inLanguage` (schema.org) viennent
+  de la langue de la requête (`PageSeo::getOgLocale()`, `getLanguage()`, `getLanguageTag()`).
 - Contrôleurs : `$this->addFlash('success', t('flash.enregistre', [], 'compte'))` (fonction
   `Symfony\Component\Translation\t`), `base.html.twig` les rend avec `|trans`.
 
