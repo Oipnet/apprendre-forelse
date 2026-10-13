@@ -1,3 +1,5 @@
+import { mountShare } from '../app/share';
+
 /**
  * Progression jouée en invité (localStorage) : une fois connecté, on la remonte au compte,
  * puis on l'efface du navigateur. La Pratique n'a pas de parcours : sa clé est `formation:null/<id>`.
@@ -39,16 +41,15 @@ async function importGuestProgress(url: string) {
 const importUrl = document.body.dataset.importUrl;
 if (importUrl) void importGuestProgress(importUrl);
 
-/** Les boutons de partage d'une page (share/_buttons.html.twig). */
-const shares = document.querySelectorAll<HTMLElement>('[data-share]');
-if (shares.length) {
-	void import('../app/share').then(({ mountShare }) => {
-		for (const share of shares) {
-			const { mesure, ...links } = JSON.parse(share.dataset.share!) as { text: string; lien: string; natif: string; mesure: Record<string, string> | [] };
-			// Twig encode une table vide en liste : [] veut dire « rien à mesurer ».
-			mountShare(share, links, Array.isArray(mesure) ? {} : mesure);
-		}
-	});
+/**
+ * Les boutons de partage d'une page (share/_buttons.html.twig). Importés d'emblée, pas à la demande : un import
+ * dynamique de ce module, partagé avec le playground, faisait charger le morceau de Monaco, et Vite posait alors sa
+ * feuille sur la page (fond sombre, liens bleus).
+ */
+for (const share of document.querySelectorAll<HTMLElement>('[data-share]')) {
+	const { mesure, ...links } = JSON.parse(share.dataset.share!) as { text: string; lien: string; natif: string; mesure: Record<string, string> | [] };
+	// Twig encode une table vide en liste : [] veut dire « rien à mesurer ».
+	mountShare(share, links, Array.isArray(mesure) ? {} : mesure);
 }
 
 /** L'index des notions : onglets par framework, recherche et filtre par thème. */
