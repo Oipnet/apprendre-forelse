@@ -36,6 +36,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - Environnement `symfony-8-2-dev` : Symfony 8.2.x-dev du 13 octobre. Un voter peut demander une nouvelle
   authentification plutôt qu'un 403 (`Vote::requestReAuthentication()`), et le point d'entrée de réauthentification
   lit l'attribut refusé (`SecurityRequestAttributes::RE_AUTHENTICATION_ATTRIBUTE`).
+- Complétion de l'éditeur : les authenticators (`Symfony\Component\Security\Http\Authenticator\`, passeports,
+  badges et credentials), les points d'entrée, `SecurityRequestAttributes`, `AuthenticationMethod` et
+  `CustomUserMessageAuthenticationException`.
 
 ### Migration
 

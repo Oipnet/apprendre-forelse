@@ -78,6 +78,12 @@ const NAMESPACES = [
     'Symfony\\Component\\Security\\Http\\Authentication\\AuthenticationUtils',
     'Symfony\\Bundle\\SecurityBundle\\Security',
     'Symfony\\Component\\Security\\Core\\Validator\\Constraints\\UserPassword',
+    // Authenticators : passeports, badges, et les méthodes d'authentification prouvées (Symfony 8.2)
+    'Symfony\\Component\\Security\\Http\\Authenticator\\',
+    'Symfony\\Component\\Security\\Http\\EntryPoint\\',
+    'Symfony\\Component\\Security\\Http\\SecurityRequestAttributes',
+    'Symfony\\Component\\Security\\Core\\Authentication\\AuthenticationMethod',
+    'Symfony\\Component\\Security\\Core\\Exception\\CustomUserMessageAuthenticationException',
     // Messages asynchrones et tâches planifiées
     'Symfony\\Component\\Messenger\\Attribute\\',
     'Symfony\\Component\\Messenger\\MessageBusInterface',
