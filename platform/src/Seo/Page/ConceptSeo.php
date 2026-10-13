@@ -7,6 +7,7 @@ use App\Content\Practice;
 use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * L'index des notions, et la page d'une notion : le mot que l'on cherche, et ce qui le fait pratiquer.
@@ -18,6 +19,7 @@ final readonly class ConceptSeo
         private SchemaOrg $schema,
         private Theme $theme,
         private ExerciseStory $stories,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -30,13 +32,10 @@ final readonly class ConceptSeo
     {
         $url = $this->schema->url('app_concepts');
         $this->seo
-            ->setTitle('Les notions travaillées en exercices | '.$this->theme->name(), 'Les notions travaillées en exercices')
-            ->setDescription(sprintf(
-                '%d notions de développement, et pour chacune les exercices qui la font pratiquer : on écrit le code dans le navigateur, des tests disent s\'il est juste.',
-                \count($concepts),
-            ))
+            ->setTitle($this->trans('notions.titre_marque', ['marque' => $this->theme->name()]), $this->trans('notions.titre'))
+            ->setDescription($this->trans('notions.description', ['n' => \count($concepts)]))
             ->setCanonical($url)
-            ->addStructuredData($this->schema->breadcrumb([['Les notions', $url]]));
+            ->addStructuredData($this->schema->breadcrumb([[$this->trans('notions.fil_ariane'), $url]]));
     }
 
     /**
@@ -48,28 +47,31 @@ final readonly class ConceptSeo
     public function concept(array $concept): void
     {
         $count = \count($concept['exercises']) + \count($concept['practices']);
+        $names = ['notion' => $concept['name'], 'n' => $count];
         $this->seo
             ->setTitle(...(null !== ($title = $concept['title'] ?? null)
                 // Écrit par l'auteur : rendu tel quel, avec la marque s'il y a la place.
                 ? [sprintf('%s | %s', $title, $this->theme->name()), $title]
                 : [
-                    sprintf('%s : %d exercices pour la pratiquer | %s', $concept['name'], $count, $this->theme->name()),
-                    sprintf('%s : %d exercices pour la pratiquer', $concept['name'], $count),
-                    sprintf('%s en exercices', $concept['name']),
+                    $this->trans('notion.titre_marque', $names + ['marque' => $this->theme->name()]),
+                    $this->trans('notion.titre', $names),
+                    $this->trans('notion.titre_court', $names),
                     $concept['name'],
                 ]))
             ->setDescription(
-                null !== ($concept['intro'] ?? null) ? $this->stories->firstParagraph($concept['intro']) : sprintf(
-                    'Les %d exercices qui font travailler %s : chacun pose un problème à résoudre en écrivant du code dans le navigateur, corrigé par des tests.',
-                    $count,
-                    $concept['name'],
-                ),
-                sprintf('%d exercices pour la pratiquer, dans le navigateur.', $count),
+                null !== ($concept['intro'] ?? null) ? $this->stories->firstParagraph($concept['intro']) : $this->trans('notion.description', $names),
+                $this->trans('notion.complement', $names),
             )
             ->setCanonical($url = $this->schema->url('app_concept', ['slug' => $concept['slug']]))
             ->addStructuredData($this->schema->breadcrumb([
-                ['Les notions', $this->schema->url('app_concepts')],
+                [$this->trans('notions.fil_ariane'), $this->schema->url('app_concepts')],
                 [$concept['name'], $url],
             ]));
+    }
+
+    /** @param array<string, mixed> $parameters */
+    private function trans(string $key, array $parameters = []): string
+    {
+        return $this->translator->trans($key, $parameters, 'seo');
     }
 }

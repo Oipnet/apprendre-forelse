@@ -11,6 +11,7 @@ use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
 use App\Share\PracticeShare;
 use App\Share\ShareImageRenderer;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * La Pratique : la liste, les nouveautés d'une version de framework et un exercice (Article).
@@ -25,6 +26,7 @@ final readonly class PracticeSeo
         private ExerciseStory $stories,
         private ContentDates $dates,
         private PracticeShare $share,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -33,20 +35,20 @@ final readonly class PracticeSeo
     {
         $frameworks = array_values(array_unique(array_map(fn (Practice $p) => $this->frameworks->labelOf($p->framework), $practices)));
         $subject = match (\count($frameworks)) {
-            0 => 'des frameworks',
+            0 => $this->trans('pratique.sujet_par_defaut'),
             1 => $frameworks[0],
-            default => implode(', ', \array_slice($frameworks, 0, -1)).' et '.end($frameworks),
+            default => $this->trans('commun.liste', ['debut' => implode(', ', \array_slice($frameworks, 0, -1)), 'dernier' => end($frameworks)]),
         };
 
         $this->seo
             ->setTitle(
-                sprintf('Nouveautés %s en exercices courts | %s', $subject, $this->theme->name()),
-                sprintf('Nouveautés %s en exercices courts', $subject),
-                'Nouveautés des frameworks en exercices courts',
+                $this->trans('pratique.titre_marque', ['sujet' => $subject, 'marque' => $this->theme->name()]),
+                $this->trans('pratique.titre', ['sujet' => $subject]),
+                $this->trans('pratique.titre_court'),
             )
-            ->setDescription('Des exercices courts, à part des parcours : un code écrit à l\'ancienne à réécrire avec la nouveauté du framework, directement dans le navigateur.')
+            ->setDescription($this->trans('pratique.description'))
             ->setCanonical($url = $this->schema->url('app_practice'))
-            ->addStructuredData($this->schema->breadcrumb([['Pratique', $url]]));
+            ->addStructuredData($this->schema->breadcrumb([[$this->trans('pratique.fil_ariane'), $url]]));
     }
 
     /**
@@ -62,29 +64,25 @@ final readonly class PracticeSeo
     {
         $count = \count($version['practices']);
         $concepts = \array_slice($version['concepts'], 0, 3);
+        $names = ['version' => $version['label'], 'n' => $count];
         $this->seo
             ->setTitle(
-                sprintf('Nouveautés %s en exercices | %s', $version['label'], $this->theme->name()),
-                sprintf('Nouveautés %s en exercices', $version['label']),
-                sprintf('Nouveautés %s', $version['label']),
+                $this->trans('pratique.version.titre_marque', $names + ['marque' => $this->theme->name()]),
+                $this->trans('pratique.version.titre', $names),
+                $this->trans('pratique.version.nouveautes', $names),
             )
             ->setDescription(
                 null !== $version['intro']
                     ? $this->stories->firstParagraph($version['intro'])
-                    : sprintf(
-                        [] === $concepts
-                            ? '%d exercices courts sur les nouveautés de %s%s : un code écrit à l\'ancienne, à réécrire avec la fonctionnalité.'
-                            : '%d exercices courts sur les nouveautés de %s, autour de %s. À écrire dans le navigateur, corrigés par des tests.',
-                        $count,
-                        $version['label'],
-                        [] === $concepts ? '' : implode(', ', $concepts),
-                    ),
-                sprintf('Les nouveautés de %s en %d exercices courts, à faire dans le navigateur.', $version['label'], $count),
+                    : ([] === $concepts
+                        ? $this->trans('pratique.version.description_sans_notions', $names)
+                        : $this->trans('pratique.version.description', $names + ['notions' => implode(', ', $concepts)])),
+                $this->trans('pratique.version.complement', $names),
             )
             ->setCanonical($url = $this->schema->url('app_practice_version', ['slug' => $version['slug']]))
             ->addStructuredData($this->schema->breadcrumb([
-                ['Pratique', $this->schema->url('app_practice')],
-                ['Nouveautés '.$version['label'], $url],
+                [$this->trans('pratique.fil_ariane'), $this->schema->url('app_practice')],
+                [$this->trans('pratique.version.nouveautes', $names), $url],
             ]));
     }
 
@@ -97,10 +95,10 @@ final readonly class PracticeSeo
 
         $this->seo
             ->setTitle(
-                sprintf('%s : %s – exercice', $framework, $feature),
-                sprintf('%s : %s', $framework, $feature),
+                $this->trans('pratique.exercice.titre', ['framework' => $framework, 'fonctionnalite' => $feature]),
+                $this->trans('pratique.exercice.titre_court', ['framework' => $framework, 'fonctionnalite' => $feature]),
             )
-            ->setDescription($practice->summary, sprintf('Un exercice court de la Pratique %s, à faire dans le navigateur.', $framework))
+            ->setDescription($practice->summary, $this->trans('pratique.exercice.complement', ['framework' => $framework]))
             ->setCanonical($url = $this->schema->url('app_exercise_pratique', ['exerciseId' => $practice->exercise->id]))
             ->setType('article')
             ->setImage($image, $this->share->card($practice)->alt(), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT)
@@ -110,7 +108,7 @@ final readonly class PracticeSeo
                 'description' => $practice->summary,
                 'url' => $url,
                 'mainEntityOfPage' => $url,
-                'inLanguage' => 'fr',
+                'inLanguage' => $this->seo->getLanguage(),
                 'image' => $image,
                 'datePublished' => $practice->published->format('Y-m-d'),
                 'dateModified' => $this->dates->practiceModified($practice),
@@ -122,9 +120,15 @@ final readonly class PracticeSeo
                 'keywords' => implode(', ', [$this->frameworks->labelOf($practice->framework), ...$practice->exercise->concepts]),
             ])
             ->addStructuredData($this->schema->breadcrumb([
-                ['Pratique', $this->schema->url('app_practice')],
+                [$this->trans('pratique.fil_ariane'), $this->schema->url('app_practice')],
                 [$practice->exercise->title, $url],
             ]));
+    }
+
+    /** @param array<string, mixed> $parameters */
+    private function trans(string $key, array $parameters = []): string
+    {
+        return $this->translator->trans($key, $parameters, 'seo');
     }
 
     /** « Lire un en-tête » → « lire un en-tête », mais « PHP 8.4 » reste tel quel. */

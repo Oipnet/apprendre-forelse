@@ -411,8 +411,8 @@ final class PackReader
         }
 
         $level = $meta['level'] ?? null;
-        if (null !== $level && !isset(Track::LEVELS[$level])) {
-            throw new ContentException(sprintf('%s : niveau « %s » inconnu (%s).', $file, \is_scalar($level) ? $level : \gettype($level), implode(', ', array_keys(Track::LEVELS))));
+        if (null !== $level && !\in_array($level, Track::LEVELS, true)) {
+            throw new ContentException(sprintf('%s : niveau « %s » inconnu (%s).', $file, \is_scalar($level) ? $level : \gettype($level), implode(', ', Track::LEVELS)));
         }
 
         $image = isset($meta['image']) ? $this->shareImage($meta['image'], $directory, $file) : null;
