@@ -35,7 +35,9 @@ jobs:
   # (tools/release.sh commite sur main, ou dans une PR fusionnée ensuite) : plutôt que tout refaire, on attend la
   # CI de main sur ce contenu et, si elle est verte, on reprend son image (voir « Publier la version »). Si elle a
   # échoué, a été annulée ou n'existe pas, l'étiquette refait tests et construction, comme avant.
-  # Tourne à chaque passage (sans rien faire hors étiquette) : un job ignoré ferait ignorer ses dépendants.
+  # De même, la fusion d'une PR sur main n'a pas à refaire des tests que la PR vient de passer sur le même contenu
+  # (voir « Tests déjà passés dans la PR ») : seule l'image, que la préproduction déploie, est construite.
+  # Tourne à chaque passage (sans rien faire hors étiquette ni fusion) : un job ignoré ferait ignorer ses dépendants.
   reprise:
     name: Image déjà testée
     runs-on: ubuntu-26.04
@@ -46,7 +48,39 @@ jobs:
       packages: read
     outputs:
       image: ${{ steps.cherche.outputs.image }}
+      # La PR fusionnée dont la CI a testé ce contenu, si les tests de main peuvent être sautés ; vide sinon.
+      pr-testee: ${{ steps.pr.outputs.commit }}
     steps:
+      - name: Tests déjà passés dans la PR
+        id: pr
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Un commit de fusion (« Merge pull request ») a deux parents : main d'avant, puis la tête de la PR. Si son
+          # arbre est celui de la tête, main n'avait rien que la PR n'ait déjà : sa CI (qui teste la PR fusionnée à
+          # main) a vu exactement ce contenu. Une fusion par squash ou rebase, une poussée directe : tout refaire.
+          arbre() { gh api "repos/$GITHUB_REPOSITORY/commits/$1" --jq .commit.tree.sha; }
+          parents=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" --jq '.parents[].sha')
+          if [ "$(printf '%s\n' "$parents" | wc -l)" -ne 2 ]; then
+            echo 'Pas une fusion de PR : tests complets.'
+            exit 0
+          fi
+          tete=$(printf '%s\n' "$parents" | tail -n 1)
+          if [ "$(arbre "$tete")" != "$(arbre "$GITHUB_SHA")" ]; then
+            echo "main a changé depuis la PR ($tete) : tests complets."
+            exit 0
+          fi
+          etat=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --event pull_request --commit "$tete" \
+            --limit 1 --json status,conclusion --jq '.[0] | "\(.status) \(.conclusion)"')
+          if [ "$etat" != 'completed success' ]; then
+            echo "CI de la PR sur $tete : « ${etat:-introuvable} ». Tests complets."
+            exit 0
+          fi
+          echo "Contenu déjà testé par la CI de la PR ($tete) : tests sautés, image construite pour la préproduction."
+          echo "commit=$tete" >> "$GITHUB_OUTPUT"
+
+
       - name: Connexion au registre
         if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -105,7 +139,7 @@ jobs:
   moteur:
     name: Tests, types et packs
     needs: reprise
-    if: needs.reprise.outputs.image == ''
+    if: needs.reprise.outputs.image == '' && needs.reprise.outputs.pr-testee == ''
     runs-on: ubuntu-26.04
     timeout-minutes: 25
     services:
@@ -438,12 +472,16 @@ jobs:
   # que les versions publiées (tools/release.sh), après validation dans GitHub (règle de l'environnement « production »).
   deployer-preproduction:
     name: Déployer la préproduction
-    needs: [moteur, docker]
+    needs: [reprise, moteur, docker]
     # Une poussée sur main, ou un lancement manuel sur main : jamais une PR. Tant que la variable de dépôt STAGING_URL
     # n'existe pas, la préproduction n'est pas installée sur le serveur : le job est ignoré, rien n'échoue.
+    # Les tests ont passé, ici ou dans la PR fusionnée (« moteur » est alors ignoré) : d'où !cancelled() plutôt
+    # qu'un simple needs, qui ferait ignorer ce job avec lui.
     if: >-
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-      && vars.STAGING_URL != ''
+      ${{ !cancelled() && needs.docker.result == 'success'
+      && (needs.moteur.result == 'success' || (needs.moteur.result == 'skipped' && needs.reprise.outputs.pr-testee != ''))
+      && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+      && vars.STAGING_URL != '' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 15
     concurrency:
