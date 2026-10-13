@@ -28,7 +28,6 @@ class Kernel extends BaseKernel
     public function boot(): void
     {
         parent::boot();
-        $locale = $this->getContainer()->getParameter('kernel.default_locale');
-        \Locale::setDefault(\is_string($locale) ? $locale : 'fr');
+        \Locale::setDefault($this->getContainer()->getParameter('kernel.default_locale'));
     }
 }
