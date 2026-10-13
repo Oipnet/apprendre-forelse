@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Partage du certificat de réussite : sa page et celle du parcours terminé proposent à son titulaire les boutons
+  LinkedIn, X, Bluesky et « Copier le lien » (`utm_campaign=parcours`), qui mènent à la page publique du certificat.
+  Cette page a son image d'aperçu, dessinée par le moteur : le nom du titulaire et le titre du parcours.
+
 ## 3.5.0 — 2026-10-13
 
 ### Ajouté

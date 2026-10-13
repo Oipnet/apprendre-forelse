@@ -13,7 +13,11 @@ use App\Export\PdfResponse;
 use App\Form\CertificateClaimType;
 use App\Repository\CertificateRepository;
 use App\Seo\PageSeo;
+use App\Share\CertificateShare;
+use App\Share\ShareImage;
+use App\Share\ShareImageRenderer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -79,7 +83,7 @@ final class CertificateController extends AbstractController
 
     /** La page de vérification : publique, pour un recruteur ou une école. Hors de l'index (SearchIndexing). */
     #[Route('/certificat/{code}', name: 'app_certificate', requirements: ['code' => CertificateCode::PATTERN], methods: ['GET'])]
-    public function show(string $code, PageSeo $seo, LinkedinCertification $linkedin): Response
+    public function show(string $code, PageSeo $seo, LinkedinCertification $linkedin, CertificateShare $share): Response
     {
         $certificate = $this->find($code);
         if ($certificate->getCode() !== $code) {
@@ -89,6 +93,9 @@ final class CertificateController extends AbstractController
         $seo->setTitle(sprintf('Certificat « %s » de %s', $certificate->getTrackTitle(), $certificate->getHolderName()))
             ->setDescription(sprintf('%s a terminé le parcours « %s » : %d exercices réussis.', $certificate->getHolderName(), $certificate->getTrackTitle(), $certificate->getExerciseCount()))
             ->setCanonical($url);
+        if (!$certificate->isRevoked()) {
+            $seo->setImage($share->imageUrl($certificate), $share->card($certificate)->alt(), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT);
+        }
         $user = $this->getUser();
         $holder = $user instanceof User && $user->getId() === $certificate->getUser()->getId();
 
@@ -96,7 +103,20 @@ final class CertificateController extends AbstractController
             'certificate' => $certificate,
             'holder' => $holder,
             'linkedinUrl' => $holder && !$certificate->isRevoked() ? $linkedin->addToProfileUrl($certificate) : null,
+            'share' => $holder && !$certificate->isRevoked() ? $share->links($certificate) : null,
         ]);
+    }
+
+    /** L'image d'aperçu du certificat sur les réseaux (voir ShareImage) ; plus d'image pour un certificat révoqué. */
+    #[Route('/certificat/{code}/image-de-partage', name: 'app_certificate_image', requirements: ['code' => CertificateCode::PATTERN], methods: ['GET'])]
+    public function image(string $code, Request $request, CertificateShare $share, ShareImage $images): BinaryFileResponse
+    {
+        $certificate = $this->find($code);
+        if ($certificate->isRevoked()) {
+            throw $this->createNotFoundException('Ce certificat est révoqué.');
+        }
+
+        return $images->response($share->card($certificate), $request);
     }
 
     #[Route('/certificat/{code}/certificat.pdf', name: 'app_certificate_pdf', requirements: ['code' => CertificateCode::PATTERN], methods: ['GET'])]
