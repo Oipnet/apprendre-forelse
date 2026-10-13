@@ -8,6 +8,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Corrigé
+
+- Les pages du site qui ont des boutons de partage (classement, parcours, exercice de Pratique, certificat) ne
+  chargent plus la feuille du playground, qui leur donnait un fond sombre et des liens bleus.
+
 ## 3.6.0 — 2026-10-13
 
 ### Ajouté
