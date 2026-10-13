@@ -197,8 +197,10 @@ class ExerciseProgress
         $this->xpEarned = $xp;
         $this->completedAt = $this->updatedAt = $now;
         // Le navigateur enregistre le brouillon juste avant d'annoncer la réussite (voir session.ts) : c'est le code qui a réussi.
+        // Sans brouillon, la réussite se vérifie quand même, sur le code de départ : une réussite annoncée sans code
+        // ne passe plus pour « non vérifiable », qui ouvrait le certificat et le classement sans rien résoudre.
         $this->submittedFiles = $this->files;
-        $this->verification = [] === $this->files ? VerificationStatus::Unverifiable : VerificationStatus::Pending;
+        $this->verification = VerificationStatus::Pending;
 
         return $xp;
     }

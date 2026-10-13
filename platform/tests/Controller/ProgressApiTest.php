@@ -83,13 +83,15 @@ final class ProgressApiTest extends WebTestCase
         $this->assertSame(VerificationStatus::Pending, $progress->getVerification());
     }
 
-    public function testUneReussiteSansCodeNeSeVerifiePas(): void
+    public function testUneReussiteSansCodeSeVerifieQuandMeme(): void
     {
         $user = $this->login();
         $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 0]);
 
         $progress = static::getContainer()->get(ExerciseProgressRepository::class)->findOne($user, 'decouverte', '01-bonjour');
-        $this->assertSame(VerificationStatus::Unverifiable, $progress->getVerification());
+        // « Non vérifiable » ouvrirait le certificat et le classement sans qu'aucun test ait tourné.
+        $this->assertSame(VerificationStatus::Pending, $progress->getVerification());
+        $this->assertSame([], $progress->getSubmittedFiles());
     }
 
     public function testLaSolutionSeConsulteContreLXp(): void

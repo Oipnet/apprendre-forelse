@@ -40,6 +40,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   et `duree` suivent la langue de la page, og:locale et `inLanguage` celle de la requête, et un nouveau filtre
   `nombre` remplace `number_format`. Rendu français inchangé.
 
+### Sécurité
+
+- **Une réussite annoncée sans code n'ouvre plus le certificat.** Appeler l'API de réussite sans avoir enregistré de
+  brouillon (ou importer une progression d'invité aux fichiers vides) la classait « non vérifiable », que le
+  certificat, le classement et le bonus de parcours acceptent : on obtenait un certificat public sans qu'aucun test
+  ait tourné. Elle part désormais au verificateur comme les autres, qui rejoue alors le code de départ et l'infirme.
+  Les réussites déjà classées « non vérifiable » sans code ne sont pas reprises : la requête
+  `SELECT id FROM exercise_progress WHERE verification = 'unverifiable' AND submitted_files::text IN ('[]', '{}')` les liste
+  (celles d'avant la vérification, du 12/10, en font partie : à regarder avant d'en infirmer une).
+
 ## 3.6.2 — 2026-10-13
 
 ### Ajouté
