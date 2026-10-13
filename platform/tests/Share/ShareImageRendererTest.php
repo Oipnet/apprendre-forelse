@@ -44,4 +44,17 @@ final class ShareImageRendererTest extends TestCase
 
         $this->assertSame([1200, 630], \array_slice((array) getimagesizefromstring($png), 0, 2));
     }
+
+    public function testUnLogoSeDessineEnPied(): void
+    {
+        $logo = sys_get_temp_dir().'/logo-'.bin2hex(random_bytes(4)).'.png';
+        imagepng(imagecreatetruecolor(240, 280), $logo);
+        try {
+            $png = (new ShareImageRenderer())->render(new ShareCard('Pratique · Symfony 8.2', 'Les sous-commandes', 'exemple.test'), ['logo' => $logo, 'name' => 'Forelse'] + self::STYLE);
+        } finally {
+            unlink($logo);
+        }
+
+        $this->assertSame([1200, 630], \array_slice((array) getimagesizefromstring($png), 0, 2));
+    }
 }

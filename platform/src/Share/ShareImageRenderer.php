@@ -35,7 +35,7 @@ final class ShareImageRenderer
     private const int FOOTER_SIZE = 24;
 
     /**
-     * @param array{image: string|null, font: string|null, text_font: string|null, background: string, ink: string, accent: string, muted: string, editor?: array<string, string>} $style voir Theme::shareCard()
+     * @param array{image: string|null, logo?: string|null, name?: string, font: string|null, text_font: string|null, background: string, ink: string, accent: string, muted: string, editor?: array<string, string>} $style voir Theme::shareCard()
      *
      * @return string le PNG
      */
@@ -73,7 +73,10 @@ final class ShareImageRenderer
             self::text($image, $size, $font, self::MARGIN, $y, $style['ink'], $line);
         }
 
-        if ('' !== $card->footer) {
+        $logo = null === ($style['logo'] ?? null) ? false : @imagecreatefromstring((string) file_get_contents($style['logo']));
+        if (false !== $logo) {
+            self::footerWithLogo($image, $logo, $style['name'] ?? '', $card->footer, $font, $textFont, $style, $width);
+        } elseif ('' !== $card->footer) {
             self::rectangle($image, self::MARGIN, self::HEIGHT - self::MARGIN - 34, self::MARGIN + 40, self::HEIGHT - self::MARGIN - 30, $style['accent']);
             self::text($image, self::FOOTER_SIZE, $textFont, self::MARGIN, self::HEIGHT - self::MARGIN + 4, $style['muted'], self::fit($card->footer, self::FOOTER_SIZE, $textFont, $width));
         }
@@ -84,6 +87,31 @@ final class ShareImageRenderer
         imagepng($final, null, 9);
 
         return (string) ob_get_clean();
+    }
+
+    /**
+     * Le pied avec le logo du thème : le logo, le nom du site dans la police du titre, puis l'adresse.
+     *
+     * @param array{ink: string, muted: string} $style
+     */
+    private static function footerWithLogo(\GdImage $image, \GdImage $logo, string $name, string $footer, string $font, string $textFont, array $style, int $width): void
+    {
+        $height = 64;
+        $logoWidth = (int) round(imagesx($logo) * $height / imagesy($logo));
+        $top = self::HEIGHT - self::MARGIN - $height + 12;
+        imagealphablending($image, true);
+        imagecopyresampled($image, $logo, self::MARGIN * self::SCALE, $top * self::SCALE, 0, 0, $logoWidth * self::SCALE, $height * self::SCALE, imagesx($logo), imagesy($logo));
+
+        $x = self::MARGIN + $logoWidth + 16;
+        $baseline = $top + intdiv($height, 2) + 11;
+        if ('' !== $name) {
+            $name = self::fit($name, 32, $font, $width - $logoWidth - 16);
+            self::text($image, 32, $font, $x, $baseline, $style['ink'], $name);
+            $x += self::width($name, 32, $font) + 20;
+        }
+        if ('' !== $footer && $x < self::MARGIN + $width) {
+            self::text($image, 22, $textFont, $x, $baseline - 1, $style['muted'], self::fit($footer, 22, $textFont, self::MARGIN + $width - $x));
+        }
     }
 
     /** Le surtitre en pastille ; rend le bas de la pastille. */

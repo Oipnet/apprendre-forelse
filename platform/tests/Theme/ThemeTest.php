@@ -485,6 +485,20 @@ final class ThemeTest extends TestCase
         $this->assertSame('#111111', $card['ink']);
     }
 
+    public function testLImageDePartagePrendLeLogoDesEmails(): void
+    {
+        $this->assertNull(self::theme()->shareCard()['logo'], 'Le moteur n\'a pas de logo.');
+
+        touch($this->tmp.'/logo.webp');
+        touch($this->tmp.'/logo.png');
+        $this->write("name: Forelse\nlogo: logo.webp\n");
+        $this->assertNull(self::theme($this->tmp)->shareCard()['logo'], 'Un webp seul : pas de logo (comme dans les emails).');
+
+        $this->write("name: Forelse\nlogo: logo.webp\nemail_logo: logo.png\n");
+        $card = self::theme($this->tmp)->shareCard();
+        $this->assertSame([$this->tmp.'/logo.png', 'Forelse'], [$card['logo'], $card['name']]);
+    }
+
     /** @return iterable<string, array{string, string}> */
     public static function shareCardsInvalides(): iterable
     {
