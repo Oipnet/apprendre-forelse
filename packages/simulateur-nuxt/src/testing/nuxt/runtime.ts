@@ -16,6 +16,7 @@ import * as vueRouter from 'vue-router';
 import { createNuxtApp, createPayload, type AppManifest } from '../../app/runtime/app.ts';
 import * as composables from '../../app/runtime/composables.ts';
 import { PageRouteSymbol, type NuxtApp } from '../../app/runtime/nuxt.ts';
+import { m } from '../../i18n/index.ts';
 
 export { composables, vue, vueRouter, vueTestUtils };
 
@@ -257,7 +258,7 @@ export function createMountSuspended(imports: Imports, vi: { mockObject?: (value
 				if (wrappedInstance?.exposed) instanceContext.expose(wrappedInstance.exposed);
 				if (result && typeof result === 'object') {
 					if (spy) {
-						if (!vi.mockObject) throw new Error('mountSuspended({ spy: true }) : vi.mockObject n\'est pas disponible dans le simulateur.');
+						if (!vi.mockObject) throw new Error(m.tests.mountSuspendedSpy);
 						result = vi.mockObject(result, { spy: true });
 					}
 					setupState = result;

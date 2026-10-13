@@ -19,6 +19,7 @@ import type { TestFile } from '../vitest.ts';
 import { populateGlobal } from './dom.ts';
 import { MOCKS_HELPER, transformTestMacros } from './macros.ts';
 import { registerEndpoint, setupWindow, testRuntimeConfig, type EnvironmentWindow } from './window.ts';
+import { m } from '../../i18n/index.ts';
 
 /** Nom de la variable du script de runtime (voir src/node/test-runtime-bundle.ts). */
 export const TEST_RUNTIME_GLOBAL = '__nuxtTestRuntime';
@@ -92,7 +93,7 @@ export async function loadNuxtTestFile(files: ProjectFiles, path: string, testFi
 					mountSuspended: runtime.createMountSuspended(imports, api.vi),
 					registerEndpoint,
 					renderSuspended: () => {
-						throw new Error('renderSuspended demande @testing-library/vue, que le simulateur ne fournit pas : utilisez mountSuspended.');
+						throw new Error(m.tests.renderSuspended);
 					},
 					...Object.fromEntries(['mockNuxtImport', 'unmockNuxtImport', 'mockComponent'].map((name) => [name, () => {
 						throw new Error(`${name}() is a macro and it did not get transpiled. This may be an internal bug of @nuxt/test-utils.`);

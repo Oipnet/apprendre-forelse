@@ -10,6 +10,7 @@ import { resolveEnvironments } from './environment.ts';
 import { loadNuxtTestFile, type NuxtTestEnvironment } from './nuxt/environment.ts';
 import type { Grading, TestCaseResult, TestRunResult } from './types.ts';
 import { TestFile } from './vitest.ts';
+import { m } from '../i18n/index.ts';
 
 const TEST_FILE_RE = /(^|\/)[^/]+\.(test|spec)\.[cm]?[jt]sx?$/;
 
@@ -59,7 +60,7 @@ async function runFiles(files: ProjectFiles, options: RunOptions, paths: string[
 		const testFile = new TestFile(path);
 		if (environments.get(path) === 'nuxt') {
 			if (!options.nuxt) {
-				fileErrors.push({ file: path, message: 'Error: l\'environnement de test « nuxt » n\'est pas disponible ici.' });
+				fileErrors.push({ file: path, message: `Error: ${m.tests.nuxtEnvironmentUnavailable}` });
 				continue;
 			}
 			let loaded;
@@ -106,8 +107,8 @@ async function gradeOwnTests(files: ProjectFiles, options: RunOptions, result: R
 		// Un fichier qui ne se charge plus : l'application est cassée, le mutant est détecté.
 		return { cases: run.cases, broken: run.fileErrors.length > 0 };
 	}, {
-		noOwnTest: 'Aucun de vos tests ne s\'est exécuté : écrivez au moins un it(…) dans votre fichier de test.',
-		skipped: '(ignoré)',
+		noOwnTest: m.tests.noOwnTest,
+		skipped: m.tests.skipped,
 	});
 	result.cases.push(...cases);
 }
@@ -127,6 +128,6 @@ function report(run: RawRun): string {
 	const count = (status: TestCaseResult['status'][]) => run.cases.filter((c) => status.includes(c.status)).length;
 	const files = new Set([...run.cases.map((c) => c.file), ...run.fileErrors.map((e) => e.file)]).size;
 	const parts = [count(['failed', 'error']) && `${count(['failed', 'error'])} failed`, count(['passed']) && `${count(['passed'])} passed`, count(['skipped']) && `${count(['skipped'])} skipped`].filter(Boolean);
-	lines.push('', ` Test Files  ${files}`, `      Tests  ${parts.join(' | ') || 'aucun test'} (${run.cases.length})`);
+	lines.push('', ` Test Files  ${files}`, `      Tests  ${parts.join(' | ') || m.tests.none} (${run.cases.length})`);
 	return lines.join('\n');
 }

@@ -1,5 +1,6 @@
 import type { RuntimeManifest } from '@forelse/runtime-contract';
 import { NuxtRuntime } from './NuxtRuntime';
+import { m } from '../i18n/index.ts';
 
 /**
  * Ce que ce paquet déclare au playground (voir `forelse.runtime` dans package.json).
@@ -9,6 +10,6 @@ import { NuxtRuntime } from './NuxtRuntime';
  */
 export default {
 	id: 'nuxt-sim',
-	label: 'le simulateur Nuxt',
+	label: m.runtime.name,
 	create: () => new NuxtRuntime(),
 } satisfies RuntimeManifest;

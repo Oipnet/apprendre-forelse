@@ -4,6 +4,7 @@
  * avec les auto-imports de Nuxt passés en variables.
  */
 import { transform } from 'sucrase';
+import { m } from './i18n/index.ts';
 
 export type ProjectFiles = Map<string, string>;
 
@@ -73,7 +74,7 @@ export class ModuleLoader {
 	private evaluator(path: string, constructor: FunctionConstructor) {
 		const source = this.files.get(path) ?? this.options.virtual?.(path);
 		if (source === undefined) {
-			throw new Error(`Fichier introuvable : ${path}`);
+			throw new Error(m.modules.fileNotFound(path));
 		}
 		const prepared = this.options.transform ? this.options.transform(path, source) : source;
 		const { code } = transform(prepared, { transforms: ['typescript', 'imports'], filePath: path, production: true });
@@ -93,7 +94,7 @@ export class ModuleLoader {
 			throw new Error(cannotFindModule(specifier, from));
 		}
 		if (resolved === undefined) {
-			throw new Error(`Le simulateur ne fournit pas le paquet « ${specifier} » (importé par ${from})`);
+			throw new Error(m.modules.unsupportedPackage(specifier, from));
 		}
 		return this.load(resolved);
 	}
