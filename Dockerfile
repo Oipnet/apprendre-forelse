@@ -101,8 +101,10 @@ ENV APP_ENV=prod \
 RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin git zip util-linux && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 1000 --home /app formation \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
-    && mkdir -p /data/app /config /packs /themes /marque /environnements /app/platform/var \
-    && chown -R formation:formation /data /config /environnements /app/platform/var
+    && mkdir -p /data/app /config /packs /themes /marque /environnements /verifications /app/platform/var \
+    && chown -R formation:formation /data /config /environnements /verifications /app/platform/var \
+    # Réussites à vérifier (voir le service « verificateur ») : fermé à l'utilisateur sous lequel le code est rejoué.
+    && chmod 700 /verifications
 USER formation
 
 VOLUME ["/data"]

@@ -55,6 +55,11 @@ class ContactMessage implements Handleable
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $user = null;
 
+    /** Le certificat contesté (objet « Un litige sur un certificat »), envoyé depuis sa page. */
+    #[ORM\ManyToOne(inversedBy: 'disputes')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Certificate $certificate = null;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -168,6 +173,18 @@ class ContactMessage implements Handleable
     public function setHandled(bool $handled): static
     {
         $this->handled = $handled;
+
+        return $this;
+    }
+
+    public function getCertificate(): ?Certificate
+    {
+        return $this->certificate;
+    }
+
+    public function setCertificate(?Certificate $certificate): static
+    {
+        $this->certificate = $certificate;
 
         return $this;
     }

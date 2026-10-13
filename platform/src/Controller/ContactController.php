@@ -7,6 +7,7 @@ use App\Entity\ContactMessage;
 use App\Entity\ContactSubject;
 use App\Entity\User;
 use App\Form\ContactFormType;
+use App\Repository\CertificateRepository;
 use App\Security\QuotaExceeded;
 use App\Seo\Seo;
 use Psr\Clock\ClockInterface;
@@ -23,6 +24,7 @@ final class ContactController extends AbstractController
     public function __construct(
         private readonly ContactInbox $inbox,
         private readonly ClockInterface $clock,
+        private readonly CertificateRepository $certificates,
     ) {
     }
 
@@ -34,6 +36,9 @@ final class ContactController extends AbstractController
         $subject = ContactSubject::tryFrom($request->query->getString('objet'));
         if (null !== $subject) {
             $message->setSubject($subject);
+        }
+        if (ContactSubject::Certificate === $subject) {
+            $this->attachCertificate($message, $request->query->getString('certificat'));
         }
         $form = $this->createForm(ContactFormType::class, $message);
         if ($sent = $this->handle($form, $request)) {
@@ -94,6 +99,23 @@ final class ContactController extends AbstractController
         }
 
         return $message;
+    }
+
+    /**
+     * Contester un certificat depuis sa page : le message y est rattaché et commence par son code. Seul le titulaire,
+     * connecté, rattache son certificat.
+     */
+    private function attachCertificate(ContactMessage $message, string $code): void
+    {
+        $certificate = '' !== $code ? $this->certificates->findByCode($code) : null;
+        $user = $this->getUser();
+        if (null === $certificate || !$user instanceof User || $certificate->getUser()->getId() !== $user->getId()) {
+            return;
+        }
+        $message->setCertificate($certificate);
+        if (null === $message->getMessage()) {
+            $message->setMessage(sprintf("Je conteste la révocation de mon certificat %s (%s).\nMotif indiqué : %s\n\n", $certificate->getCode(), $certificate->getTrackTitle(), $certificate->getRevocationReason() ?? '—'));
+        }
     }
 
     /** @param FormInterface<ContactMessage> $form */

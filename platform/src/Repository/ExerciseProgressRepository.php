@@ -6,6 +6,7 @@ use App\Admin\ProgressSummary;
 use App\Entity\ExerciseProgress;
 use App\Entity\ProgressStatus;
 use App\Entity\User;
+use App\Entity\VerificationStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
@@ -125,5 +126,69 @@ class ExerciseProgressRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->getQuery()
             ->getScalarResult(), 'trackId');
+    }
+
+    /**
+     * Le classement : XP et exercices réussis par apprenant, du meilleur au moins bon. Seuls comptent les apprenants qui
+     * l'ont choisi (et que l'admin n'en a pas retirés), plus $include, pour lui dire où il se placerait. Une réussite que
+     * le verificateur a infirmée ne compte pas ; une réussite en attente compte déjà.
+     *
+     * @param \DateTimeImmutable|null $since réussites depuis cette date seulement (le classement du mois)
+     *
+     * @return list<array{userId: int, displayName: string, xp: int, exercises: int}>
+     */
+    public function leaderboardRows(?\DateTimeImmutable $since = null, ?User $include = null): array
+    {
+        $builder = $this->createQueryBuilder('p')
+            ->select('u.id AS userId', 'u.displayName AS displayName', 'SUM(p.xpEarned) AS xp', 'COUNT(p.id) AS exercises')
+            ->join('p.user', 'u')
+            ->andWhere('p.status = :completed')
+            ->andWhere('p.verification IS NULL OR p.verification <> :failed')
+            ->andWhere('u.leaderboardExcluded = false')
+            ->groupBy('u.id', 'u.displayName')
+            ->having('SUM(p.xpEarned) > 0')
+            ->orderBy('xp', 'DESC')
+            ->addOrderBy('exercises', 'DESC')
+            ->addOrderBy('u.displayName', 'ASC')
+            ->addOrderBy('u.id', 'ASC')
+            ->setParameter('completed', ProgressStatus::Completed)
+            ->setParameter('failed', VerificationStatus::Failed);
+        if (null !== $include) {
+            $builder->andWhere('u.leaderboardOptIn = true OR u = :include')->setParameter('include', $include);
+        } else {
+            $builder->andWhere('u.leaderboardOptIn = true');
+        }
+        if (null !== $since) {
+            $builder->andWhere('p.completedAt >= :since')->setParameter('since', $since);
+        }
+
+        return array_map(static fn (array $row) => [
+            'userId' => (int) $row['userId'],
+            'displayName' => (string) $row['displayName'],
+            'xp' => (int) $row['xp'],
+            'exercises' => (int) $row['exercises'],
+        ], $builder->getQuery()->getArrayResult());
+    }
+
+    /**
+     * Les réussites à envoyer au verificateur : en attente, jamais envoyées ou envoyées avant $requestedBefore (une
+     * demande perdue repart). Les plus anciennes d'abord.
+     *
+     * @return list<ExerciseProgress>
+     */
+    public function findVerificationsToRequest(\DateTimeImmutable $requestedBefore, int $limit): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.status = :completed')
+            ->andWhere('p.verification = :pending')
+            ->andWhere('p.verificationRequestedAt IS NULL OR p.verificationRequestedAt < :before')
+            ->setParameter('completed', ProgressStatus::Completed)
+            ->setParameter('pending', VerificationStatus::Pending)
+            ->setParameter('before', $requestedBefore)
+            ->orderBy('p.completedAt', 'ASC')
+            ->addOrderBy('p.id', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 }

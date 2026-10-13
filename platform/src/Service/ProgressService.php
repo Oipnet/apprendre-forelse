@@ -45,8 +45,9 @@ final readonly class ProgressService
     }
 
     /**
-     * La réussite est constatée côté navigateur (les tests y tournent) : c'est falsifiable,
-     * ce qui est acceptable pour de l'apprentissage. L'XP n'est attribuée qu'une fois.
+     * La réussite est constatée côté navigateur (les tests y tournent) : c'est falsifiable. L'XP est attribuée
+     * tout de suite, une seule fois ; le code est figé, et le service « verificateur » le rejoue plus tard
+     * (voir App\Verification) : une réussite infirmée sort du classement.
      *
      * Atomique : deux réussites simultanées (double clic, nouvel essai, deux onglets sur deux exercices) se suivent
      * derrière un verrou sur le compte, et chacune relit l'XP et la progression une fois le verrou obtenu. Sans lui,

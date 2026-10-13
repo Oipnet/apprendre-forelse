@@ -14,6 +14,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
@@ -77,6 +78,9 @@ final class UserCrudController extends AbstractCrudController
         yield EmailField::new('email');
         yield AssociationField::new('cohort', 'Cohorte')->setHelp('Rejointe avec son code d\'invitation ; modifiable ici.');
         yield IntegerField::new('xp', 'XP')->hideOnForm();
+        yield BooleanField::new('leaderboardOptIn', 'Au classement')->renderAsSwitch(false)->hideOnForm();
+        yield BooleanField::new('leaderboardExcluded', 'Retiré du classement')->renderAsSwitch(false)
+            ->setHelp('Triche manifeste : le compte disparaît du classement, quel que soit son choix. Sa progression ne change pas.');
         yield ChoiceField::new('roles', 'Rôles')
             ->setChoices(['Apprenant' => 'ROLE_USER', 'Auteur' => User::ROLE_AUTEUR, 'Chef de cohorte' => User::ROLE_CHEF_COHORTE, 'Admin' => User::ROLE_ADMIN])
             ->allowMultipleChoices()

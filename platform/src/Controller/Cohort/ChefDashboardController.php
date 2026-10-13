@@ -6,13 +6,16 @@ use App\Admin\BetaStats;
 use App\Cohort\CohortManagement;
 use App\Cohort\CohortQuoteEstimator;
 use App\Cohort\CohortRuleViolation;
+use App\Defense\DefenseManagement;
 use App\Content\ContentRepository;
 use App\Entity\Cohort;
 use App\Entity\User;
 use App\Form\CohortHeadcountType;
 use App\Form\CohortTracksType;
+use App\Form\DefenseSlotType;
 use App\Theme\Theme;
 use App\Repository\CohortRepository;
+use App\Repository\DefenseRepository;
 use App\Security\CohortVoter;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
@@ -42,6 +45,8 @@ final class ChefDashboardController extends AbstractDashboardController
         private readonly CohortQuoteEstimator $estimator,
         private readonly CohortManagement $management,
         private readonly Theme $theme,
+        private readonly DefenseRepository $defenses,
+        private readonly DefenseManagement $defenseManagement,
     ) {
     }
 
@@ -71,6 +76,12 @@ final class ChefDashboardController extends AbstractDashboardController
             // Financement : en lecture pour le chef, sauf l'effectif ; aucune action de paiement ici.
             'quote' => $this->estimator->estimate($cohort),
             'headcountForm' => $this->headcountForm($cohort),
+            // Soutenances : les créneaux de la cohorte, et de quoi en ouvrir (ChefDefenseController).
+            'defenses' => $this->defenses->findByCohort($cohort),
+            'defenseForm' => $this->createForm(DefenseSlotType::class, ['durationMinutes' => 30], [
+                'action' => $this->generateUrl('chef_cohort_defense_open', ['id' => $cohort->getId()]),
+                'tracks' => $this->defenseManagement->tracksOf($cohort),
+            ]),
         ]);
     }
 

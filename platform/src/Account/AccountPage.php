@@ -5,12 +5,14 @@ namespace App\Account;
 use App\Content\ContentRepository;
 use App\Account\Oauth\OauthProviders;
 use App\Entity\User;
+use App\Leaderboard\Leaderboard;
+use App\Leaderboard\LeaderboardPeriod;
 use App\Repository\ExternalIdentityRepository;
 use App\Repository\PurchaseRepository;
 use App\Repository\TrackAccessRepository;
 use Psr\Clock\ClockInterface;
 
-/** Ce que la page du compte affiche, hors formulaires : progression, accès, achats, comptes liés chez les fournisseurs (GitHub, Google, LinkedIn). */
+/** Ce que la page du compte affiche, hors formulaires : progression, accès, achats, comptes liés chez les fournisseurs (GitHub, Google, LinkedIn), place au classement. */
 final readonly class AccountPage
 {
     public function __construct(
@@ -21,6 +23,7 @@ final readonly class AccountPage
         private ClockInterface $clock,
         private OauthProviders $providers,
         private ExternalIdentityRepository $identities,
+        private Leaderboard $leaderboard,
     ) {
     }
 
@@ -39,6 +42,8 @@ final readonly class AccountPage
             // Les fournisseurs activés, et ceux qu'un compte garde liés même s'ils ont été retirés de la configuration.
             'oauthProviders' => $this->providers->enabled(),
             'identities' => $this->identities->findByUser($user),
+            // Sa place au classement général, qu'il y paraisse ou non.
+            'leaderboardEntry' => $this->leaderboard->of(LeaderboardPeriod::AllTime, $user)->viewer,
         ];
     }
 }
