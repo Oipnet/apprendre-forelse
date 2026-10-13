@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.5.0 — 2026-10-13
+
 ### Ajouté
 
 - Certificat de réussite d'un parcours : une fois tous les exercices réussis, l'apprenant confirme le nom à imprimer
