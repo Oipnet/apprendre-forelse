@@ -17,6 +17,17 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   solution ou le mentor. L'état est retenu dans le navigateur pour tous les exercices, comme celui de
   l'explorateur de fichiers. Rien ne change sur petit écran. Nouvel événement de mesure `volet-replie`.
 
+### Modifié
+
+- **Textes de l'interface dans des fichiers de traduction** (premier palier de l'internationalisation) : les gabarits
+  du site, les e-mails, le certificat, les PDF de cours, les messages flash et de validation, et le playground ne
+  contiennent plus de texte en dur. Tout passe par le traducteur de Symfony (`platform/translations/`, format ICU,
+  un domaine par zone : voir son README) ou, pour le playground, par un catalogue TypeScript typé
+  (`playground/src/i18n/`). Le site reste servi en français seulement et son rendu ne change pas. Deux tests font
+  échouer la CI sur un texte réécrit en dur. Restent en français dans leurs gabarits : l'administration, l'atelier,
+  l'espace des cohortes, les pages juridiques et les e-mails envoyés à l'administrateur. Les thèmes qui surchargent
+  un gabarit n'ont rien à changer.
+
 ## 3.6.2 — 2026-10-13
 
 ### Ajouté
