@@ -28,7 +28,7 @@ final readonly class EmailChangeNotice
         try {
             $this->mailer->send($this->sender->email()
                 ->to(new Address($previousEmail, (string) $user->getDisplayName()))
-                ->subject($this->translator->trans('email.adresse_changee.sujet', ['site' => $this->theme->name()], 'compte'))
+                ->subject($this->translator->trans('sujet.email_changed', ['site' => $this->theme->name()], 'emails'))
                 ->htmlTemplate('emails/email_changed.html.twig')
                 ->textTemplate('emails/email_changed.txt.twig')
                 ->context(['user' => $user, 'newEmail' => (string) $user->getEmail(), 'contact' => $this->sender->contact()]));

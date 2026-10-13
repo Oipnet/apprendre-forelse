@@ -51,7 +51,7 @@ final readonly class EmailVerifier
 
         $message = $this->sender->email()
             ->to(new Address($email, (string) $user->getDisplayName()))
-            ->subject($this->translator->trans(null === $newEmail ? 'email.confirmation.sujet' : 'email.confirmation.sujet_nouvelle_adresse', ['site' => $this->theme->name()], 'compte'))
+            ->subject($this->translator->trans(null === $newEmail ? 'sujet.confirm_email' : 'sujet.confirm_email_changement', ['site' => $this->theme->name()], 'emails'))
             ->htmlTemplate('emails/confirm_email.html.twig')
             ->textTemplate('emails/confirm_email.txt.twig')
             ->context(['user' => $user, 'link' => $link, 'change' => null !== $newEmail, 'hours' => self::VALIDITY_HOURS]);

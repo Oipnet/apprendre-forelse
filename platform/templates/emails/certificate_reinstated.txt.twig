@@ -1,6 +1,7 @@
-Bonjour {{ user.displayName }},
+{% trans_default_domain 'emails' %}
+{{ 'commun.bonjour'|trans({nom: user.displayName}) }}
 
-Votre certificat de réussite du parcours « {{ certificate.trackTitle }} » (code {{ certificate.code }}) est rétabli : sa page de vérification le montre de nouveau comme valide.
+{{ 'certificate_reinstated.texte.retabli'|trans({parcours: certificate.trackTitle, code: certificate.code}) }}
 {{ url('app_certificate', {code: certificate.code}) }}
 
-{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que ce certificat vous a été délivré sur ' ~ theme.name ~ '.'}) }}
+{{ include('emails/_footer.txt.twig', {reason: 'certificate_reinstated.raison'|trans({site: theme.name})}) }}

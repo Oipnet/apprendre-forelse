@@ -1,9 +1,10 @@
 {# Livret d'un parcours : toutes les fiches de cours, derrière une page de garde et un sommaire. #}
+{% trans_default_domain 'certificat' %}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app.locale }}">
 <head>
     <meta charset="utf-8">
-    <title>{{ track.title }} · Livret</title>
+    <title>{{ 'chapter.booklet.titre'|trans({parcours: track.title}) }}</title>
     {{ include('chapter/_pdf_styles.html.twig') }}
     <style>
         .toc h2 { font-size: 15pt; margin: 0 0 12pt; }
@@ -20,17 +21,16 @@
 <body>
     <div class="cover">
         <p class="pack">{{ pack.title }}</p>
-        <p class="number">Livret du parcours</p>
+        <p class="number">{{ 'chapter.booklet.surtitre'|trans }}</p>
         <h1>{{ track.title }}</h1>
         {% if track.description %}<p class="track">{{ track.description }}</p>{% endif %}
         <p class="learner">
-            Livret établi pour <strong>{{ user.displayName }}</strong> le {{ date|date('d/m/Y') }},
-            après la réussite des {{ track.exerciseIds|length }} exercices du parcours{% if xp %} ({{ xp }} XP){% endif %}.
+            {{ (xp ? 'chapter.booklet.etabli_xp_html' : 'chapter.booklet.etabli_html')|trans({nom: user.displayName|e, date: date|format_date('short')|e, exercices: track.exerciseIds|length, xp: xp})|raw }}
         </p>
     </div>
 
     <div class="toc">
-        <h2>Sommaire</h2>
+        <h2>{{ 'chapter.booklet.sommaire'|trans }}</h2>
         <ol>
             {% for item in chapters %}
                 <li>
@@ -43,7 +43,7 @@
 
     {% for item in chapters %}
         <div class="chapter-head">
-            <p class="number">Chapitre {{ item.number }}</p>
+            <p class="number">{{ 'chapter.chapitre'|trans({numero: item.number}) }}</p>
             <h1>{{ item.chapter.title }}</h1>
             {% if item.concepts %}<p class="concepts">{% for concept in item.concepts %}<span>{{ concept }}</span>{% endfor %}</p>{% endif %}
         </div>

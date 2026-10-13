@@ -42,3 +42,7 @@ contact:
 achat:
     cgv: "Acceptez les conditions générales de vente pour acheter le parcours."
     renonciation: "Cochez la case pour accéder au parcours dès le paiement."
+
+certificate_claim:
+    holder_name:
+        not_blank: "Indiquez le nom à faire figurer sur le certificat."

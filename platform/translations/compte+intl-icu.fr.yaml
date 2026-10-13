@@ -332,17 +332,3 @@ enum:
         ecole: "Former une classe ou une équipe"
         certificat: "Un litige sur un certificat"
         autre: "Autre chose"
-
-# Les sujets des e-mails envoyés depuis ces pages.
-email:
-    confirmation:
-        sujet: "Confirmez votre adresse email sur {site}"
-        sujet_nouvelle_adresse: "Confirmez votre nouvelle adresse email sur {site}"
-    reinitialisation:
-        sujet: "Choisissez un nouveau mot de passe sur {site}"
-    adresse_changee:
-        sujet: "Votre adresse sur {site} a changé"
-    tentative_inscription:
-        sujet: "Vous avez déjà un compte {site}"
-    achat:
-        sujet: "Votre accès au parcours « {parcours} » sur {site}"

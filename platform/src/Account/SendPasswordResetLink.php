@@ -44,7 +44,7 @@ final readonly class SendPasswordResetLink
         // L'email ne contient pas de mot de passe : un lien pour en choisir un.
         $this->mailer->send($this->sender->email()
             ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
-            ->subject($this->translator->trans('email.reinitialisation.sujet', ['site' => $this->theme->name()], 'compte'))
+            ->subject($this->translator->trans('sujet.reset_password', ['site' => $this->theme->name()], 'emails'))
             ->htmlTemplate('emails/reset_password.html.twig')
             ->textTemplate('emails/reset_password.txt.twig')
             ->context(['resetToken' => $resetToken, 'user' => $user]));

@@ -33,7 +33,7 @@ final readonly class PurchaseMailer
         $track = $this->content->findTrack($purchase->getTrackId());
         $email = $this->sender->email()
             ->to(new Address($purchase->getCustomerEmail(), (string) $purchase->getUser()?->getDisplayName()))
-            ->subject($this->translator->trans('email.achat.sujet', ['parcours' => $track->title ?? $purchase->getTrackId(), 'site' => $this->theme->name()], 'compte'))
+            ->subject($this->translator->trans('sujet.purchase_confirmation', ['parcours' => $track->title ?? $purchase->getTrackId(), 'site' => $this->theme->name()], 'emails'))
             ->htmlTemplate('emails/purchase_confirmation.html.twig')
             ->textTemplate('emails/purchase_confirmation.txt.twig')
             // L'identité du vendeur : la confirmation d'une vente à distance est le support durable du contrat.

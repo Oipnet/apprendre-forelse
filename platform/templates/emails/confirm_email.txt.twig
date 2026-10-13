@@ -1,19 +1,20 @@
-Bonjour {{ user.displayName }},
+{% trans_default_domain 'emails' %}
+{{ 'commun.bonjour'|trans({nom: user.displayName}) }}
 
 {% if change %}
-Vous avez demandé à utiliser cette adresse pour votre compte {{ theme.name }}. Pour la confirmer, ouvrez ce lien :
+{{ 'confirm_email.texte.changement'|trans({site: theme.name}) }}
 {% else %}
-Bienvenue sur {{ theme.name }}. Pour confirmer votre adresse email, ouvrez ce lien :
+{{ 'confirm_email.texte.bienvenue'|trans({site: theme.name}) }}
 {% endif %}
 
 {{ link }}
 
-Il est valable {{ hours }} heures et ne sert qu'une fois.
+{{ 'confirm_email.texte.validite'|trans({heures: hours}) }}
 
 {% if change %}
-Si vous n'avez rien demandé, ignorez cet email : l'adresse de votre compte reste inchangée.
+{{ 'confirm_email.ignorer_changement'|trans }}
 {% else %}
-Si vous n'avez pas créé de compte, ignorez cet email.
+{{ 'confirm_email.ignorer'|trans }}
 {% endif %}
 
-{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que cette adresse a été indiquée pour un compte ' ~ theme.name ~ '.'}) }}
+{{ include('emails/_footer.txt.twig', {reason: 'confirm_email.raison'|trans({site: theme.name})}) }}

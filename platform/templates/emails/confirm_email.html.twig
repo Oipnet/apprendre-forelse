@@ -1,25 +1,26 @@
 {% extends 'emails/_layout.html.twig' %}
+{% trans_default_domain 'emails' %}
 
-{% block preheader %}{{ change ? 'Confirmez votre nouvelle adresse' : 'Confirmez votre adresse' }} : le lien est valable {{ hours }} heures.{% endblock %}
+{% block preheader %}{{ (change ? 'confirm_email.apercu_changement' : 'confirm_email.apercu')|trans({heures: hours}) }}{% endblock %}
 
 {% block content %}
-<p style="margin:0 0 12px;">Bonjour {{ user.displayName }},</p>
+<p style="margin:0 0 12px;">{{ 'commun.bonjour'|trans({nom: user.displayName}) }}</p>
 
 {% if change %}
-<p style="margin:0 0 12px;">Vous avez demandé à utiliser cette adresse pour votre compte {{ theme.name }}. Pour la confirmer :</p>
+<p style="margin:0 0 12px;">{{ 'confirm_email.changement'|trans({site: theme.name}) }}</p>
 {% else %}
-<p style="margin:0 0 12px;">Bienvenue sur {{ theme.name }}. Il reste à confirmer votre adresse email :</p>
+<p style="margin:0 0 12px;">{{ 'confirm_email.bienvenue'|trans({site: theme.name}) }}</p>
 {% endif %}
 
-{{ include('emails/_button.html.twig', {href: link, label: 'Confirmer mon adresse'}) }}
+{{ include('emails/_button.html.twig', {href: link, label: 'confirm_email.bouton'|trans}) }}
 
-<p style="margin:0 0 12px;">Le lien est valable {{ hours }} heures et ne sert qu'une fois.</p>
+<p style="margin:0 0 12px;">{{ 'confirm_email.validite'|trans({heures: hours}) }}</p>
 
 {% if change %}
-<p style="margin:0;">Si vous n'avez rien demandé, ignorez cet email : l'adresse de votre compte reste inchangée.</p>
+<p style="margin:0;">{{ 'confirm_email.ignorer_changement'|trans }}</p>
 {% else %}
-<p style="margin:0;">Si vous n'avez pas créé de compte, ignorez cet email.</p>
+<p style="margin:0;">{{ 'confirm_email.ignorer'|trans }}</p>
 {% endif %}
 {% endblock %}
 
-{% block reason %}Vous recevez cet email parce que cette adresse a été indiquée pour un compte {{ theme.name }}.{% endblock %}
+{% block reason %}{{ 'confirm_email.raison'|trans({site: theme.name}) }}{% endblock %}

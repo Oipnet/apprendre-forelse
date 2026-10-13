@@ -42,7 +42,7 @@ final readonly class RegistrationAttemptNotice
         try {
             $this->mailer->send($this->sender->email()
                 ->to(new Address((string) $user->getEmail(), (string) $user->getDisplayName()))
-                ->subject($this->translator->trans('email.tentative_inscription.sujet', ['site' => $this->theme->name()], 'compte'))
+                ->subject($this->translator->trans('sujet.registration_attempt', ['site' => $this->theme->name()], 'emails'))
                 ->htmlTemplate('emails/registration_attempt.html.twig')
                 ->textTemplate('emails/registration_attempt.txt.twig')
                 ->context(['user' => $user]));
