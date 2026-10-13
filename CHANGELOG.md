@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.6.0 — 2026-10-13
+
 ### Ajouté
 
 - `app:fuseau:convertir` : change le fuseau d'une instance qui a déjà des données. Les dates enregistrées sont
