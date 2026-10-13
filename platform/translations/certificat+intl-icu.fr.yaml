@@ -1,0 +1,75 @@
+# Le certificat de réussite (templates/certificate/, CertificateController, CertificateClaimType) et les fiches de
+# cours en PDF (templates/chapter/pdf.html.twig, booklet.html.twig, App\Export\LessonPdf) : voir README.md.
+# Les messages *_html contiennent du HTML et se rendent avec |raw, paramètres échappés (|e).
+
+flash:
+  connexion: 'Connectez-vous pour obtenir votre certificat.'
+  incomplet: 'Le certificat se délivre une fois tous les exercices du parcours réussis.'
+  pret: 'Votre certificat est prêt. Bravo !'
+
+seo:
+  titre: 'Certificat « {parcours} » de {titulaire}'
+  description: '{titulaire} a terminé le parcours « {parcours} » : {exercices} exercices réussis.'
+
+claim:
+  titre: 'Votre certificat · {parcours} · {site}'
+  h1: '🎓 Votre certificat de réussite'
+  intro: 'Vous avez réussi tous les exercices du parcours. Le certificat le dit, avec le détail de chaque exercice : indices utilisés, solution consultée ou non.'
+  precedent_revoque: 'Votre certificat précédent ({code}) a été révoqué : celui-ci le remplace, avec un nouveau code.'
+  echec: "Nous avons rejoué votre code sur nos serveurs, et ces exercices n'y ont pas réussi :"
+  echec_contact_html: "Le certificat ne peut pas être délivré en l'état. Si vous pensez qu'il s'agit d'une erreur, <a href=\"{url}\">écrivez-nous</a>."
+  verification_html: '<strong>Vérification en cours.</strong> Nous rejouons vos réussites sur nos serveurs avant de délivrer le certificat : {exercices, plural, one {# exercice} other {# exercices}} en attente.'
+  verification_duree: 'Cela prend en général une dizaine de minutes : revenez sur cette page ensuite.'
+  obtenir: 'Obtenir mon certificat'
+  form:
+    nom: 'Nom sur le certificat'
+    nom_aide: 'Prénom et nom, tels que vous voulez les voir sur le certificat et sur LinkedIn. Ils ne pourront plus être modifiés.'
+
+show:
+  titre: 'Certificat · {parcours} · {titulaire} · {site}'
+  surtitre: 'Certificat de réussite · {site}'
+  delivre_html: 'Délivré à <strong>{titulaire}</strong> le {date}.'
+  revoque_html: '<strong>Certificat révoqué</strong> le {date}.'
+  revoque_conteste_html: '<strong>Certificat révoqué</strong> le {date}, contestation en cours.'
+  motif: 'Motif : {motif}'
+  contester: 'Contester la révocation'
+  valide: '✓ Certificat valide · code {code}'
+  # {xp} : déjà mis en forme (number_format).
+  resume: '{exercices, plural, one {# exercice réussi} other {# exercices réussis}}, dont {sans_solution} sans consulter la solution et {sans_aide} sans aucune aide (ni indice, ni solution). {xp} XP.'
+  telecharger_pdf: 'Télécharger le PDF'
+  linkedin: 'Ajouter à mon profil LinkedIn'
+  partager: 'Partager ma réussite'
+  exercices: 'Les exercices'
+  solution_consultee: 'solution consultée'
+  indices: '{indices, plural, one {# indice} other {# indices}} sur {disponibles}'
+  sans_indice: 'sans indice'
+  attestation: 'Ce certificat atteste que son titulaire a réussi les exercices du parcours sur {site}, où chaque exercice est validé par des tests automatiques.'
+  pas_un_diplome: "Ce n'est ni un diplôme, ni une certification professionnelle."
+
+pdf:
+  titre: 'Certificat · {parcours}'
+  type: 'Certificat de réussite'
+  delivre_a: 'délivré à'
+  pour_avoir_reussi: 'pour avoir réussi tous les exercices du parcours'
+  # {xp} : déjà mis en forme (number_format).
+  resume: '{exercices} exercices réussis, dont {sans_solution} sans consulter la solution · {xp} XP'
+  date: 'Le {date}'
+  pied_html: 'Code <strong>{code}</strong> · détail exercice par exercice et vérification :'
+
+# Les fiches de cours en PDF : templates/chapter/pdf.html.twig (fiche), booklet.html.twig (livret), LessonPdf.
+chapter:
+  chapitre: 'Chapitre {numero}'
+  pied: '{titre} — établi pour {nom} le {date}'
+  # {page}, {pages} : les marqueurs de dompdf, remplacés à l'impression.
+  page: 'Page {page} / {pages}'
+  pdf:
+    titre: '{chapitre} · Fiche de cours'
+    etablie_html: 'Fiche de cours établie pour <strong>{nom}</strong> le {date}, après la réussite des {exercices} exercices du chapitre.'
+    etablie_xp_html: 'Fiche de cours établie pour <strong>{nom}</strong> le {date}, après la réussite des {exercices} exercices du chapitre ({xp} XP).'
+  booklet:
+    titre: '{parcours} · Livret'
+    titre_document: '{parcours} · livret du parcours'
+    surtitre: 'Livret du parcours'
+    etabli_html: 'Livret établi pour <strong>{nom}</strong> le {date}, après la réussite des {exercices} exercices du parcours.'
+    etabli_xp_html: 'Livret établi pour <strong>{nom}</strong> le {date}, après la réussite des {exercices} exercices du parcours ({xp} XP).'
+    sommaire: 'Sommaire'

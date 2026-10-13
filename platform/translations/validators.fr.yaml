@@ -1,0 +1,5 @@
+# Messages des contraintes (#[Assert\…(message: 'cle')]), sans ICU : paramètres sous la forme {{ limit }}.
+
+certificate_claim:
+  holder_name:
+    not_blank: 'Indiquez le nom à faire figurer sur le certificat.'

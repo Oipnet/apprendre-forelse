@@ -23,6 +23,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function Symfony\Component\Translation\t;
 
 /**
  * Le certificat de réussite d'un parcours : le demander une fois le parcours terminé, le montrer à qui veut le
@@ -47,7 +50,7 @@ final class CertificateController extends AbstractController
         $user = $this->getUser();
         if (!$user instanceof User) {
             $this->saveTargetPath($request->getSession(), 'main', $request->getRequestUri());
-            $this->addFlash('info', 'Connectez-vous pour obtenir votre certificat.');
+            $this->addFlash('info', t('flash.connexion', [], 'certificat'));
 
             return $this->redirectToRoute('app_login');
         }
@@ -55,7 +58,7 @@ final class CertificateController extends AbstractController
             return $this->redirectToRoute('app_certificate', ['code' => $existing->getCode()]);
         }
         if (!$issuer->isComplete($user, $track)) {
-            $this->addFlash('info', 'Le certificat se délivre une fois tous les exercices du parcours réussis.');
+            $this->addFlash('info', t('flash.incomplet', [], 'certificat'));
 
             return $this->redirectToRoute('app_track', ['trackId' => $track->id]);
         }
@@ -68,7 +71,7 @@ final class CertificateController extends AbstractController
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $certificate = $issuer->issue($user, $track, $form->get('holderName')->getData());
-            $this->addFlash('success', 'Votre certificat est prêt. Bravo !');
+            $this->addFlash('success', t('flash.pret', [], 'certificat'));
 
             return $this->redirectToRoute('app_certificate', ['code' => $certificate->getCode()], Response::HTTP_SEE_OTHER);
         }
@@ -83,15 +86,16 @@ final class CertificateController extends AbstractController
 
     /** La page de vérification : publique, pour un recruteur ou une école. Hors de l'index (SearchIndexing). */
     #[Route('/certificat/{code}', name: 'app_certificate', requirements: ['code' => CertificateCode::PATTERN], methods: ['GET'])]
-    public function show(string $code, PageSeo $seo, LinkedinCertification $linkedin, CertificateShare $share): Response
+    public function show(string $code, PageSeo $seo, LinkedinCertification $linkedin, CertificateShare $share, TranslatorInterface $translator): Response
     {
         $certificate = $this->find($code);
         if ($certificate->getCode() !== $code) {
             return $this->redirectToRoute('app_certificate', ['code' => $certificate->getCode()], Response::HTTP_MOVED_PERMANENTLY);
         }
         $url = $this->generateUrl('app_certificate', ['code' => $certificate->getCode()], UrlGeneratorInterface::ABSOLUTE_URL);
-        $seo->setTitle(sprintf('Certificat « %s » de %s', $certificate->getTrackTitle(), $certificate->getHolderName()))
-            ->setDescription(sprintf('%s a terminé le parcours « %s » : %d exercices réussis.', $certificate->getHolderName(), $certificate->getTrackTitle(), $certificate->getExerciseCount()))
+        $names = ['parcours' => $certificate->getTrackTitle(), 'titulaire' => $certificate->getHolderName()];
+        $seo->setTitle($translator->trans('seo.titre', $names, 'certificat'))
+            ->setDescription($translator->trans('seo.description', [...$names, 'exercices' => $certificate->getExerciseCount()], 'certificat'))
             ->setCanonical($url);
         if (!$certificate->isRevoked()) {
             $seo->setImage($share->imageUrl($certificate), $share->card($certificate)->alt(), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT);

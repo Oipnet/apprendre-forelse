@@ -1,9 +1,10 @@
 {# Le certificat en PDF : une page A4 paysage (dompdf : CSS 2.1, tailles en pt). Variable : certificate. #}
+{% trans_default_domain 'certificat' %}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app.locale }}">
 <head>
     <meta charset="utf-8">
-    <title>Certificat · {{ certificate.trackTitle }}</title>
+    <title>{{ 'pdf.titre'|trans({parcours: certificate.trackTitle}) }}</title>
     <style>
         @page { margin: 30pt; }
         body { font-family: 'DejaVu Sans', sans-serif; color: #222; text-align: center; }
@@ -21,16 +22,16 @@
 <body>
     <div class="frame">
         <p class="brand">{{ theme.name }}</p>
-        <p class="kind">Certificat de réussite</p>
-        <p class="intro">délivré à</p>
+        <p class="kind">{{ 'pdf.type'|trans }}</p>
+        <p class="intro">{{ 'pdf.delivre_a'|trans }}</p>
         <p class="holder">{{ certificate.holderName }}</p>
-        <p class="intro">pour avoir réussi tous les exercices du parcours</p>
+        <p class="intro">{{ 'pdf.pour_avoir_reussi'|trans }}</p>
         <p class="track">{{ certificate.trackTitle }}</p>
-        <p class="summary">{{ certificate.exerciseCount }} exercices réussis, dont {{ certificate.withoutSolutionCount }} sans consulter la solution · {{ certificate.xp|number_format(0, ',', ' ') }} XP</p>
-        <p class="summary">Le {{ certificate.issuedAt|date('d/m/Y') }}</p>
+        <p class="summary">{{ 'pdf.resume'|trans({exercices: certificate.exerciseCount, sans_solution: certificate.withoutSolutionCount, xp: certificate.xp|number_format(0, ',', ' ')}) }}</p>
+        <p class="summary">{{ 'pdf.date'|trans({date: certificate.issuedAt|format_date('short')}) }}</p>
         {% for mention in certificate.mentions %}<p class="summary"><strong>{{ mention.label }}</strong></p>{% endfor %}
         <p class="footer">
-            Code <strong>{{ certificate.code }}</strong> · détail exercice par exercice et vérification :
+            {{ 'pdf.pied_html'|trans({code: certificate.code|e})|raw }}
             {{ url('app_certificate', {code: certificate.code}) }}
         </p>
     </div>
