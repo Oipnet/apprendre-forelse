@@ -4,6 +4,7 @@ namespace App\Content\Framework\Profiles;
 
 use App\Content\Framework\FrameworkProfile;
 use App\Content\Framework\FrameworkProfileProvider;
+use Symfony\Component\Translation\TranslatableMessage;
 
 /**
  * Docker, simulé en PHP pur par packages/simulateur-docker : images, conteneurs et Compose, et le PHP servi par
@@ -19,8 +20,8 @@ final class DockerProfile implements FrameworkProfileProvider
             order: 30,
             console: 'docker',
             consoleExample: 'compose up -d',
-            bootNote: 'Docker est simulé dans votre navigateur : images, conteneurs et Compose, et le PHP de vos conteneurs s\'exécute pour de vrai en WebAssembly.',
-            unpackLabel: 'Décompression du projet',
+            bootNote: new TranslatableMessage('playground.framework.docker.demarrage', [], 'apprentissage'),
+            unpackLabel: new TranslatableMessage('playground.framework.docker.decompression', [], 'apprentissage'),
             testRunner: FrameworkProfile::PHPUNIT,
             // Un projet Docker ne suit la version d'aucun framework : « version: » n'y a pas de sens.
             versionPackage: null,

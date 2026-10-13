@@ -11,7 +11,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class SelfHostingController extends AbstractController
 {
     #[Route('/auto-hebergement', name: 'app_self_hosting', methods: ['GET'])]
-    #[Seo('Auto-héberger la plateforme, moteur open source', 'Le moteur de %marque% est libre (AGPL-3.0) : installez la plateforme sur votre serveur avec Docker et écrivez vos parcours.', breadcrumb: 'Auto-hébergement')]
+    #[Seo('auto_hebergement.titre', 'auto_hebergement.description', breadcrumb: 'auto_hebergement.fil_ariane', domain: 'seo')]
     public function __invoke(SelfHostingPage $page): Response
     {
         // Une page que seul un thème rédige : sans elle, rien à servir.

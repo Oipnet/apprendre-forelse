@@ -12,6 +12,8 @@ use App\Seo\TrackSeoText;
 use App\Tests\ThemeTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
+use Symfony\Component\Translation\Translator;
 
 final class TrackSeoTextTest extends TestCase
 {
@@ -40,7 +42,17 @@ final class TrackSeoTextTest extends TestCase
             }
         };
 
-        return new TrackSeoText($overrides, $pricings, $logger, self::theme());
+        return new TrackSeoText($overrides, $pricings, $logger, self::theme(), self::translator());
+    }
+
+    /** Les textes générés viennent du domaine seo, en français. */
+    private static function translator(): Translator
+    {
+        $translator = new Translator('fr');
+        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addResource('yaml', \dirname(__DIR__, 2).'/translations/seo+intl-icu.fr.yaml', 'fr', 'seo+intl-icu');
+
+        return $translator;
     }
 
     private static function track(string $title = 'Symfony pour les devs PHP', string $description = self::SYMFONY): Track
@@ -53,18 +65,18 @@ final class TrackSeoTextTest extends TestCase
 
     public function testLeTitleSeFaitAvecLePublicDuParcours(): void
     {
-        $this->assertSame('Formation Symfony en ligne pour les devs PHP', TrackSeoText::generatedTitle('Symfony pour les devs PHP', 'Symfony'));
-        $this->assertSame('Formation Nuxt en ligne pour les devs Vue', TrackSeoText::generatedTitle('Nuxt pour les devs Vue', 'Nuxt'));
+        $this->assertSame('Formation Symfony en ligne pour les devs PHP', $this->text()->generatedTitle('Symfony pour les devs PHP', 'Symfony'));
+        $this->assertSame('Formation Nuxt en ligne pour les devs Vue', $this->text()->generatedTitle('Nuxt pour les devs Vue', 'Nuxt'));
         $this->assertSame('Formation Symfony en ligne pour les devs PHP | default', $this->text()->title(self::track(), 'Symfony'));
     }
 
     public function testSansLeFrameworkDansLeTitreLeTitleSeReplie(): void
     {
-        $this->assertSame('Formation Symfony en ligne : Découverte', TrackSeoText::generatedTitle('Découverte', 'Symfony'));
+        $this->assertSame('Formation Symfony en ligne : Découverte', $this->text()->generatedTitle('Découverte', 'Symfony'));
         // Le framework est là, mais la dérivation serait bancale.
-        $this->assertSame('Formation Symfony en ligne : Débuter avec Symfony', TrackSeoText::generatedTitle('Débuter avec Symfony', 'Symfony'));
-        $this->assertSame('Formation Symfony en ligne : Symfony pour', TrackSeoText::generatedTitle('Symfony pour', 'Symfony'));
-        $this->assertSame('Formation Symfony en ligne : Symfony 8', TrackSeoText::generatedTitle('Symfony 8', 'Symfony'));
+        $this->assertSame('Formation Symfony en ligne : Débuter avec Symfony', $this->text()->generatedTitle('Débuter avec Symfony', 'Symfony'));
+        $this->assertSame('Formation Symfony en ligne : Symfony pour', $this->text()->generatedTitle('Symfony pour', 'Symfony'));
+        $this->assertSame('Formation Symfony en ligne : Symfony 8', $this->text()->generatedTitle('Symfony 8', 'Symfony'));
     }
 
     public function testLeTitleSaisiDansLAdminPasseAvantLaGeneration(): void
@@ -86,9 +98,9 @@ final class TrackSeoTextTest extends TestCase
     {
         $this->assertSame(
             'Un avant-goût de Symfony en deux exercices. 2 chapitres, 3 exercices, premier chapitre gratuit.',
-            TrackSeoText::generatedDescription('Un avant-goût de Symfony en deux exercices.', 2, 3, false),
+            $this->text()->generatedDescription('Un avant-goût de Symfony en deux exercices.', 2, 3, false),
         );
-        $this->assertSame('1 chapitre, 1 exercice, premier chapitre gratuit.', TrackSeoText::generatedDescription('', 1, 1, false));
+        $this->assertSame('1 chapitre, 1 exercice, premier chapitre gratuit.', $this->text()->generatedDescription('', 1, 1, false));
     }
 
     public function testUnResumeTropLongGardeSesPhrasesEntieres(): void
@@ -97,13 +109,13 @@ final class TrackSeoTextTest extends TestCase
 
         $this->assertSame(
             'Une première phrase qui présente le parcours et son fil rouge, assez longue pour compter vraiment ici. 12 chapitres, 74 exercices, gratuit.',
-            TrackSeoText::generatedDescription($summary, 12, 74, true),
+            $this->text()->generatedDescription($summary, 12, 74, true),
         );
     }
 
     public function testSiLesPhrasesEntieresNeSuffisentPasLaCoupeSeFaitSurUnMot(): void
     {
-        $description = TrackSeoText::generatedDescription(self::SYMFONY, 12, 74, false);
+        $description = $this->text()->generatedDescription(self::SYMFONY, 12, 74, false);
 
         $this->assertSame('Vous maîtrisez PHP et la POO ? Apprenez Symfony en construisant, chapitre après chapitre, le site… 12 chapitres, 74 exercices, premier chapitre gratuit.', $description);
         $this->assertLessThanOrEqual(155, mb_strlen($description));

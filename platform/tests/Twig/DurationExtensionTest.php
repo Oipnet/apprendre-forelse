@@ -4,14 +4,15 @@ namespace App\Tests\Twig;
 
 use App\Twig\DurationExtension;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-final class DurationExtensionTest extends TestCase
+/** Les unités viennent des traductions (format.duree.*) : le filtre se prend dans le conteneur. */
+final class DurationExtensionTest extends KernelTestCase
 {
     #[DataProvider('durees')]
     public function testUneDureeSArronditACeQuUneEstimationPeutPromettre(?int $minutes, string $attendu): void
     {
-        $this->assertSame($attendu, DurationExtension::format($minutes));
+        $this->assertSame($attendu, static::getContainer()->get(DurationExtension::class)->format($minutes));
     }
 
     public static function durees(): iterable

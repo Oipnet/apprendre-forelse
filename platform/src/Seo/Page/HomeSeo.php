@@ -40,7 +40,7 @@ final readonly class HomeSeo
                     'name' => $this->theme->name(),
                     'alternateName' => $this->theme->signature(),
                     'url' => $home,
-                    'inLanguage' => 'fr-FR',
+                    'inLanguage' => $this->seo->getLanguageTag(),
                     'publisher' => ['@id' => $home.'#organisation'],
                 ],
                 // La personne derrière la plateforme, si le thème en déclare une : sinon, author() ne renvoie qu'une

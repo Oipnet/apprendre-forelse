@@ -28,6 +28,7 @@ final class TrackSeoCrudController extends AbstractCrudController
         private readonly ContentRepository $content,
         private readonly CourseSeo $seo,
         private readonly Theme $theme,
+        private readonly TrackSeoText $trackText,
     ) {
     }
 
@@ -68,6 +69,6 @@ final class TrackSeoCrudController extends AbstractCrudController
     {
         $track = null === $trackId ? null : $this->content->findTrack($trackId);
 
-        return null === $track ? '—' : TrackSeoText::generatedTitle($track->title, $this->seo->framework($track->environment));
+        return null === $track ? '—' : $this->trackText->generatedTitle($track->title, $this->seo->framework($track->environment));
     }
 }
