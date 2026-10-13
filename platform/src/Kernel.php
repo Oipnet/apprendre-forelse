@@ -19,4 +19,16 @@ class Kernel extends BaseKernel
     {
         return ['prod', 'dev', 'test'];
     }
+
+    /**
+     * La langue par défaut d'Intl (dates, nombres) : celle du site, et non celle du système (en_US_POSIX en ligne de
+     * commande). Une requête la remplace ensuite par la sienne (Request::setLocale) ; une commande, un worker qui
+     * envoie un e-mail, gardent celle-ci.
+     */
+    public function boot(): void
+    {
+        parent::boot();
+        $locale = $this->getContainer()->getParameter('kernel.default_locale');
+        \Locale::setDefault(\is_string($locale) ? $locale : 'fr');
+    }
 }
