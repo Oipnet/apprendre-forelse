@@ -22,7 +22,7 @@
 	"dependencies": {
 		"@forelse/runtime-contract": "file:../runtime-contract",
 		"@unhead/vue": "3.4.1",
-		"@vitest/expect": "5.0.1",
+		"@vitest/expect": "5.0.2",
 		"@vitest/spy": "5.0.1",
 		"@vue/test-utils": "2.4.6",
 		"acorn": "8.18.0",
@@ -50,9 +50,9 @@
 	},
 	"devDependencies": {
 		"@types/node": "^24.0.0",
-		"rolldown": "^1.2.9",
+		"rolldown": "^1.2.11",
 		"typescript": "^7.0.2",
-		"vitest": "^5.0.1"
+		"vitest": "^5.0.2"
 	},
 	"forelse": {
 		"runtime": "./src/browser/forelse.ts",
