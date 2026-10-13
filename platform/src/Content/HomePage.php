@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Payment\TrackOfferFactory;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Ce que l'accueil montre des parcours : ceux qui sont ouverts, ceux en préparation, et les questions fréquentes. */
 final readonly class HomePage
@@ -23,6 +24,7 @@ final readonly class HomePage
         private FrameworkRegistry $frameworks,
         private TrackOfferFactory $offers,
         private UrlGeneratorInterface $urls,
+        private TranslatorInterface $translator,
         /** Instance sur invitation : la Pratique demande un compte, le visiteur n'a rien à essayer. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private bool $inviteOnly = false,
@@ -51,7 +53,7 @@ final readonly class HomePage
         return [
             'tracks' => $tracks,
             'upcoming' => $upcoming,
-            'faq' => self::faq($published, $upcoming),
+            'faq' => $this->faq($published, $upcoming),
             'tryUrl' => $tryUrl,
             'tryPractice' => null !== $practiceUrl,
         ];
@@ -155,25 +157,37 @@ final readonly class HomePage
      *
      * @return list<array{question: string, answer: string}>
      */
-    private static function faq(array $published, array $upcoming): array
+    private function faq(array $published, array $upcoming): array
     {
-        $list = static function (array $tracks): string {
+        $list = function (array $tracks): string {
             $names = array_map(static fn (Track $track) => $track->title, $tracks);
             $last = array_pop($names);
 
-            return $names ? implode(', ', $names).' et '.$last : (string) $last;
+            return $names ? $this->trans('faq.parcours.liste', ['debut' => implode(', ', $names), 'dernier' => (string) $last]) : (string) $last;
         };
-        $tracks = ($published ? 'Aujourd\'hui : '.$list($published).'.' : 'Aucun parcours n\'est encore ouvert.')
-            .($upcoming ? ' En préparation : '.$list($upcoming).'.' : '');
+        $tracks = ($published ? $this->trans('faq.parcours.ouverts', ['liste' => $list($published)]) : $this->trans('faq.parcours.aucun'))
+            .($upcoming ? ' '.$this->trans('faq.parcours.en_preparation', ['liste' => $list($upcoming)]) : '');
 
         return [
-            ['question' => 'Ça tourne vraiment dans le navigateur ?', 'answer' => 'Oui. Le langage et le framework du parcours s\'exécutent en WebAssembly, dans un onglet. Rien ne part sur un serveur pour exécuter votre code.'],
-            ['question' => 'Quels parcours ?', 'answer' => $tracks],
-            ['question' => 'Combien ça coûte ?', 'answer' => 'Le premier chapitre de chaque parcours est gratuit : il suffit de créer un compte. Le parcours complet s\'achète une fois, prix TTC affiché, pour un accès à vie et à ses mises à jour : pas d\'abonnement. Une école ou une entreprise peut aussi ouvrir l\'accès à tout un groupe, sur devis.'],
-            ['question' => 'Je bloque sur un exercice, que se passe-t-il ?', 'answer' => 'Vous demandez un indice, puis un deuxième, plus précis. Avec un compte, la solution complète est consultable, mais elle ne rapporte pas l\'XP de l\'exercice.'],
-            ['question' => 'Quelle différence avec les tutoriels vidéo ?', 'answer' => 'Vous ne regardez rien : vous écrivez tout le code vous-même, sur un projet qui grandit exercice après exercice. Le temps passé est du temps de pratique.'],
-            ['question' => 'Est-ce à jour ?', 'answer' => 'Chaque parcours cible les versions actuelles (Symfony 8 et PHP 8.4 pour le premier), et les exercices sont vérifiés automatiquement à chaque mise à jour du moteur.'],
-            ['question' => 'Puis-je l\'héberger moi-même ?', 'answer' => 'Oui, à terme : le moteur est sous licence AGPL et son code sera publié à l\'ouverture. Les parcours, eux, sont le contenu payant : c\'est ce que vous achetez.'],
+            $this->faqItem('navigateur'),
+            $this->faqItem('parcours', $tracks),
+            $this->faqItem('prix'),
+            $this->faqItem('blocage'),
+            $this->faqItem('video'),
+            $this->faqItem('a_jour'),
+            $this->faqItem('hebergement'),
         ];
+    }
+
+    /** @return array{question: string, answer: string} la question faq.<clé>, et sa réponse (faq.<clé>.reponse, à défaut de $answer) */
+    private function faqItem(string $key, ?string $answer = null): array
+    {
+        return ['question' => $this->trans('faq.'.$key.'.question'), 'answer' => $answer ?? $this->trans('faq.'.$key.'.reponse')];
+    }
+
+    /** @param array<string, string> $parameters */
+    private function trans(string $key, array $parameters = []): string
+    {
+        return $this->translator->trans($key, $parameters, 'accueil');
     }
 }

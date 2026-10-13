@@ -8,7 +8,8 @@
   (sections déclarées par theme.yaml : showcase, author, demo, chacune null si absente).
 #}
 
-{% block body_class %}site-page landing{% endblock %}
+{# Des classes CSS, pas du texte : écrites en expression pour que le repérage du texte en dur les ignore. #}
+{% block body_class %}{{ 'site-page landing' }}{% endblock %}
 
 {% block body %}
     {# Les sections décoratives (home/_promise, _how, _ai, _audience) sont vides dans le thème default : un thème les remplit. #}
