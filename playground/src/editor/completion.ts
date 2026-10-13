@@ -9,6 +9,7 @@
  * Twig : snippets, noms de routes dans path(), variables passées par les contrôleurs.
  */
 import { monaco, pathOf } from './monaco';
+import { m } from '../i18n';
 import { projectClasses, type ClassInfo, type MethodInfo } from './project-classes';
 
 type Languages = typeof monaco.languages;
@@ -384,7 +385,7 @@ export function registerCompletion(
 			}
 
 			const suggestions: monaco.languages.CompletionItem[] = templateVariables(pathOf(model.uri), allModels()).map((v) => ({
-				label: { label: v.name, description: `passée par ${v.controller}` },
+				label: { label: v.name, description: m.completion.passedBy(v.controller) },
 				kind: Kind.Variable,
 				insertText: v.name,
 				range,
@@ -428,19 +429,19 @@ function phpSnippets(
 	const route = 'Symfony\\Component\\Routing\\Attribute\\Route';
 	const response = 'Symfony\\Component\\HttpFoundation\\Response';
 	return [
-		snippet('route', "#[Route('/${1:chemin}', name: '${2:app_nom}')]", 'Attribut de route Symfony', range, {
+		snippet('route', "#[Route('/${1:chemin}', name: '${2:app_nom}')]", m.completion.php.route, range, {
 			additionalTextEdits: useEdit(route, model, ctx),
 		}),
 		snippet(
 			'action',
 			"#[Route('/${1:chemin}', name: '${2:app_nom}')]\npublic function ${3:index}(): Response\n{\n\treturn \\$this->render('${4:dossier/template}.html.twig', [\n\t\t$0\n\t]);\n}",
-			'Action de contrôleur complète (route + rendu Twig)',
+			m.completion.php.action,
 			range,
 			{ additionalTextEdits: [...useEdit(route, model, ctx), ...useEdit(response, model, ctx)] },
 		),
-		snippet('render', "return \\$this->render('${1:dossier/template}.html.twig', [\n\t'${2:variable}' => $0,\n]);", 'Rendu d\'un template Twig', range),
-		snippet('id', "#[ORM\\Id]\n#[ORM\\GeneratedValue]\n#[ORM\\Column]\nprivate ?int \\$id = null;", 'Identifiant auto-incrémenté d\'une entité Doctrine', range),
-		snippet('column', "#[ORM\\Column(length: ${1:255})]\nprivate ${2:?string} \\$${3:nom} = ${4:null};", 'Propriété mappée sur une colonne', range),
+		snippet('render', "return \\$this->render('${1:dossier/template}.html.twig', [\n\t'${2:variable}' => $0,\n]);", m.completion.php.render, range),
+		snippet('id', "#[ORM\\Id]\n#[ORM\\GeneratedValue]\n#[ORM\\Column]\nprivate ?int \\$id = null;", m.completion.php.id, range),
+		snippet('column', "#[ORM\\Column(length: ${1:255})]\nprivate ${2:?string} \\$${3:nom} = ${4:null};", m.completion.php.column, range),
 	];
 }
 
@@ -453,60 +454,60 @@ function laravelSnippets(
 ): monaco.languages.CompletionItem[] {
 	const view = 'Illuminate\\View\\View';
 	return [
-		snippet('route', "Route::get('/${1:chemin}', [${2:Controleur}::class, '${3:index}'])->name('${4:nom}');", 'Route vers une méthode de contrôleur', range),
-		snippet('action', "public function ${1:index}(): View\n{\n\treturn view('${2:dossier.vue}', [\n\t\t$0\n\t]);\n}", 'Méthode de contrôleur complète (rendu d\'une vue Blade)', range, {
+		snippet('route', "Route::get('/${1:chemin}', [${2:Controleur}::class, '${3:index}'])->name('${4:nom}');", m.completion.laravel.route, range),
+		snippet('action', "public function ${1:index}(): View\n{\n\treturn view('${2:dossier.vue}', [\n\t\t$0\n\t]);\n}", m.completion.laravel.action, range, {
 			additionalTextEdits: useEdit(view, model, ctx),
 		}),
-		snippet('view', "return view('${1:dossier.vue}', [\n\t'${2:variable}' => $0,\n]);", 'Rendu d\'une vue Blade', range),
-		snippet('foreach', '@foreach (${1:\\$elements} as ${2:\\$element})\n\t$0\n@endforeach', 'Boucle Blade', range),
-		snippet('if', '@if (${1:condition})\n\t$0\n@endif', 'Condition Blade', range),
-		snippet('extends', "@extends('${1:layouts.app}')\n\n@section('${2:content}')\n\t$0\n@endsection", 'Vue Blade héritant d\'un layout', range),
-		snippet('migration', "Schema::create('${1:table}', function (Blueprint \\$table) {\n\t\\$table->id();\n\t$0\n\t\\$table->timestamps();\n});", 'Création de table dans une migration', range),
+		snippet('view', "return view('${1:dossier.vue}', [\n\t'${2:variable}' => $0,\n]);", m.completion.laravel.view, range),
+		snippet('foreach', '@foreach (${1:\\$elements} as ${2:\\$element})\n\t$0\n@endforeach', m.completion.laravel.foreach, range),
+		snippet('if', '@if (${1:condition})\n\t$0\n@endif', m.completion.laravel.if, range),
+		snippet('extends', "@extends('${1:layouts.app}')\n\n@section('${2:content}')\n\t$0\n@endsection", m.completion.laravel.extends, range),
+		snippet('migration', "Schema::create('${1:table}', function (Blueprint \\$table) {\n\t\\$table->id();\n\t$0\n\t\\$table->timestamps();\n});", m.completion.laravel.migration, range),
 	];
 }
 
 /** Dockerfile : les instructions les plus fréquentes d'un projet PHP. */
 function dockerfileSnippets(range: monaco.IRange): monaco.languages.CompletionItem[] {
 	return [
-		snippet('from', 'FROM php:${1:8.3}-${2|apache,fpm,cli,fpm-alpine,cli-alpine|}', 'Image de base', range),
-		snippet('workdir', 'WORKDIR ${1:/var/www/html}', 'Dossier de travail des instructions suivantes', range),
-		snippet('copy', 'COPY ${1:.} ${2:./}', 'Copier depuis le contexte de build', range),
-		snippet('copy-from', 'COPY --from=${1:composer:2} ${2:/usr/bin/composer} ${3:/usr/bin/composer}', 'Copier depuis une autre image ou une autre étape', range),
-		snippet('run-apt', 'RUN apt-get update \\\\\n    && apt-get install -y --no-install-recommends ${1:libicu-dev} \\\\\n    && docker-php-ext-install ${2:intl} \\\\\n    && rm -rf /var/lib/apt/lists/*', 'Installer des paquets et une extension PHP, en une seule couche', range),
-		snippet('run-apk', 'RUN apk add --no-cache --virtual .build-deps ${1:icu-dev} \\\\\n    && docker-php-ext-install ${2:intl} \\\\\n    && apk add --no-cache ${3:icu-libs} \\\\\n    && apk del .build-deps', 'Installer une extension sur Alpine, puis retirer les outils de compilation', range),
-		snippet('composer', 'COPY composer.json composer.lock ./\nRUN composer install --no-dev --optimize-autoloader --no-scripts', 'Installer les dépendances avant de copier le code (cache des couches)', range),
-		snippet('env', 'ENV ${1:APP_ENV}=${2:prod}', "Variable d'environnement de l'image", range),
-		snippet('arg', 'ARG ${1:APP_ENV}=${2:prod}', 'Argument de construction', range),
-		snippet('expose', 'EXPOSE ${1:80}', 'Documenter le port du service', range),
-		snippet('user', 'USER ${1:www-data}', 'Utilisateur des instructions suivantes et du processus', range),
-		snippet('healthcheck', 'HEALTHCHECK --interval=${1:10s} --timeout=${2:3s} --retries=${3:3} \\\\\n    CMD curl -f http://localhost${4:/sante} || exit 1', 'Contrôle de santé du conteneur', range),
-		snippet('entrypoint', 'ENTRYPOINT ["${1:docker-entrypoint.sh}"]\nCMD ["${2:apache2-foreground}"]', "Script d'entrée et commande par défaut", range),
-		snippet('cmd', 'CMD ["${1:apache2-foreground}"]', 'Commande par défaut, en forme exec', range),
-		snippet('docroot', "ENV APACHE_DOCUMENT_ROOT=${1:/var/www/html/public}\nRUN sed -ri -e 's!/var/www/html!\\${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf", "Changer le DocumentRoot d'Apache", range),
+		snippet('from', 'FROM php:${1:8.3}-${2|apache,fpm,cli,fpm-alpine,cli-alpine|}', m.completion.dockerfile.from, range),
+		snippet('workdir', 'WORKDIR ${1:/var/www/html}', m.completion.dockerfile.workdir, range),
+		snippet('copy', 'COPY ${1:.} ${2:./}', m.completion.dockerfile.copy, range),
+		snippet('copy-from', 'COPY --from=${1:composer:2} ${2:/usr/bin/composer} ${3:/usr/bin/composer}', m.completion.dockerfile.copyFrom, range),
+		snippet('run-apt', 'RUN apt-get update \\\\\n    && apt-get install -y --no-install-recommends ${1:libicu-dev} \\\\\n    && docker-php-ext-install ${2:intl} \\\\\n    && rm -rf /var/lib/apt/lists/*', m.completion.dockerfile.runApt, range),
+		snippet('run-apk', 'RUN apk add --no-cache --virtual .build-deps ${1:icu-dev} \\\\\n    && docker-php-ext-install ${2:intl} \\\\\n    && apk add --no-cache ${3:icu-libs} \\\\\n    && apk del .build-deps', m.completion.dockerfile.runApk, range),
+		snippet('composer', 'COPY composer.json composer.lock ./\nRUN composer install --no-dev --optimize-autoloader --no-scripts', m.completion.dockerfile.composer, range),
+		snippet('env', 'ENV ${1:APP_ENV}=${2:prod}', m.completion.dockerfile.env, range),
+		snippet('arg', 'ARG ${1:APP_ENV}=${2:prod}', m.completion.dockerfile.arg, range),
+		snippet('expose', 'EXPOSE ${1:80}', m.completion.dockerfile.expose, range),
+		snippet('user', 'USER ${1:www-data}', m.completion.dockerfile.user, range),
+		snippet('healthcheck', 'HEALTHCHECK --interval=${1:10s} --timeout=${2:3s} --retries=${3:3} \\\\\n    CMD curl -f http://localhost${4:/sante} || exit 1', m.completion.dockerfile.healthcheck, range),
+		snippet('entrypoint', 'ENTRYPOINT ["${1:docker-entrypoint.sh}"]\nCMD ["${2:apache2-foreground}"]', m.completion.dockerfile.entrypoint, range),
+		snippet('cmd', 'CMD ["${1:apache2-foreground}"]', m.completion.dockerfile.cmd, range),
+		snippet('docroot', "ENV APACHE_DOCUMENT_ROOT=${1:/var/www/html/public}\nRUN sed -ri -e 's!/var/www/html!\\${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf", m.completion.dockerfile.docroot, range),
 	];
 }
 
 /** compose.yaml : un service, un volume, un contrôle de santé. */
 function composeSnippets(range: monaco.IRange): monaco.languages.CompletionItem[] {
 	return [
-		snippet('services', 'services:\n  ${1:app}:\n    build: .\n    ports:\n      - "${2:8080}:${3:80}"\n    environment:\n      ${4:APP_ENV}: ${5:dev}', 'Squelette de compose.yaml', range),
-		snippet('service', '${1:app}:\n  build: .\n  ports:\n    - "${2:8080}:${3:80}"', 'Service construit depuis le Dockerfile', range),
-		snippet('service-image', '${1:web}:\n  image: ${2:nginx:1.29-alpine}\n  ports:\n    - "${3:8080}:80"', "Service à partir d'une image", range),
-		snippet('db', 'db:\n  image: postgres:18-alpine\n  environment:\n    POSTGRES_USER: ${1:criee}\n    POSTGRES_PASSWORD: \\${DB_PASSWORD}\n  volumes:\n    - db-data:/var/lib/postgresql\n  healthcheck:\n    test: ["CMD-SHELL", "pg_isready -U ${1:criee}"]\n    interval: 5s', 'Service PostgreSQL avec contrôle de santé', range),
-		snippet('volumes', 'volumes:\n  - ./${1:src}:/var/www/html/${1:src}', 'Montage du code dans le conteneur', range),
-		snippet('depends', 'depends_on:\n  ${1:db}:\n    condition: service_healthy', 'Dépendance conditionnée au contrôle de santé', range),
-		snippet('healthcheck', 'healthcheck:\n  test: ["CMD", "curl", "-f", "http://localhost${1:/sante}"]\n  interval: ${2:10s}\n  retries: ${3:3}', 'Contrôle de santé du service', range),
+		snippet('services', 'services:\n  ${1:app}:\n    build: .\n    ports:\n      - "${2:8080}:${3:80}"\n    environment:\n      ${4:APP_ENV}: ${5:dev}', m.completion.compose.services, range),
+		snippet('service', '${1:app}:\n  build: .\n  ports:\n    - "${2:8080}:${3:80}"', m.completion.compose.service, range),
+		snippet('service-image', '${1:web}:\n  image: ${2:nginx:1.29-alpine}\n  ports:\n    - "${3:8080}:80"', m.completion.compose.serviceImage, range),
+		snippet('db', 'db:\n  image: postgres:18-alpine\n  environment:\n    POSTGRES_USER: ${1:criee}\n    POSTGRES_PASSWORD: \\${DB_PASSWORD}\n  volumes:\n    - db-data:/var/lib/postgresql\n  healthcheck:\n    test: ["CMD-SHELL", "pg_isready -U ${1:criee}"]\n    interval: 5s', m.completion.compose.db, range),
+		snippet('volumes', 'volumes:\n  - ./${1:src}:/var/www/html/${1:src}', m.completion.compose.volumes, range),
+		snippet('depends', 'depends_on:\n  ${1:db}:\n    condition: service_healthy', m.completion.compose.depends, range),
+		snippet('healthcheck', 'healthcheck:\n  test: ["CMD", "curl", "-f", "http://localhost${1:/sante}"]\n  interval: ${2:10s}\n  retries: ${3:3}', m.completion.compose.healthcheck, range),
 	];
 }
 
 function twigSnippets(range: monaco.IRange): monaco.languages.CompletionItem[] {
 	return [
-		snippet('for', '{% for ${1:element} in ${2:elements} %}\n\t$0\n{% endfor %}', 'Boucle Twig', range),
-		snippet('if', '{% if ${1:condition} %}\n\t$0\n{% endif %}', 'Condition Twig', range),
-		snippet('block', '{% block ${1:body} %}\n\t$0\n{% endblock %}', 'Bloc Twig', range),
-		snippet('extends', "{% extends '${1:base.html.twig}' %}", 'Héritage de template', range),
-		snippet('path', "{{ path('${1}') }}", 'URL d\'une route nommée', range, { command: { id: 'editor.action.triggerSuggest', title: '' } }),
-		snippet('asset', "{{ asset('${1}') }}", 'URL d\'un fichier de public/', range),
+		snippet('for', '{% for ${1:element} in ${2:elements} %}\n\t$0\n{% endfor %}', m.completion.twig.for, range),
+		snippet('if', '{% if ${1:condition} %}\n\t$0\n{% endif %}', m.completion.twig.if, range),
+		snippet('block', '{% block ${1:body} %}\n\t$0\n{% endblock %}', m.completion.twig.block, range),
+		snippet('extends', "{% extends '${1:base.html.twig}' %}", m.completion.twig.extends, range),
+		snippet('path', "{{ path('${1}') }}", m.completion.twig.path, range, { command: { id: 'editor.action.triggerSuggest', title: '' } }),
+		snippet('asset', "{{ asset('${1}') }}", m.completion.twig.asset, range),
 	];
 }
 

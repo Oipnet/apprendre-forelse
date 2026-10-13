@@ -15,6 +15,7 @@ import { layout } from './layout';
 import { bindRetry, bootFailureActionsHtml, bootKey, firstLoadNote, loadErrorHtml, suivreDemarrage } from './boot';
 import { MentorClient, errorTextOf, stripAnsi } from './mentor';
 import { MentorPanel } from './MentorPanel';
+import { m } from '../i18n';
 import { mesurer } from '../mesure';
 import { bindPaneTabs, bindWorkpanes, bootProgress, fitEditor } from './panes';
 import { ApiProgressStore, LocalProgressStore, type ProgressStore } from './progress';
@@ -70,7 +71,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// système quand le navigateur en a un.
 	if (config.share) {
 		const share = config.share.invite;
-		$<HTMLButtonElement>('#share').addEventListener('click', () => shareDialog(root, share, 'Partager cet exercice', mesure));
+		$<HTMLButtonElement>('#share').addEventListener('click', () => shareDialog(root, share, m.layout.shareTitle, mesure));
 	}
 	/** La barre de statut est annoncée (role="status") : `spoken` remplace, pour un lecteur d'écran, un texte trop abrégé. */
 	const status = (text: string, kind: 'idle' | 'busy' | 'ok' | 'ko' = 'idle', spoken?: string) => {
@@ -127,13 +128,13 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		// ou ⟳, la recharge.
 		onFrozen: () => {
 			$('#preview-frozen').hidden = false;
-			status('La page de l\'aperçu ne répond plus : boucle infinie dans son code ?', 'ko');
-			versLaConsole('error', 'La page de l\'aperçu ne répond plus depuis plusieurs secondes : boucle infinie dans son code (onMounted, watch, gestionnaire d\'événement…), ou boîte de dialogue (alert, confirm) restée ouverte ? L\'aperçu a été relancé sans recharger cette page. Corrigez la boucle, puis rechargez l\'aperçu (⟳).');
+			status(m.playground.previewFrozen, 'ko');
+			versLaConsole('error', m.playground.previewFrozenConsole);
 		},
-		onRecovered: () => status('Aperçu relancé. Corrigez la boucle, puis rechargez-le (⟳).', 'idle'),
+		onRecovered: () => status(m.playground.previewRecovered, 'idle'),
 		onRestartFailed: (message) => {
-			status('L\'aperçu n\'a pas pu être relancé : rechargez-le (⟳) pour réessayer.', 'ko');
-			versLaConsole('error', `Relais de l'aperçu : ${message}`);
+			status(m.playground.previewRestartFailed, 'ko');
+			versLaConsole('error', m.preview.relayError(message));
 		},
 		onResponse: (request, res) => {
 			const path = request.url.slice(bridge.base.length) || '/';
@@ -173,9 +174,9 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			bootProgress(root),
 		);
 	} catch (error) {
-		$('#boot-label').textContent = `Impossible de démarrer ${runtimeLabel(framework.runtime)} : ${error instanceof Error ? error.message.split('\n')[0] : error}`;
+		$('#boot-label').textContent = m.boot.runtimeFailed(runtimeLabel(framework.runtime), error instanceof Error ? error.message.split('\n')[0] : String(error));
 		$('#boot-first').textContent = '';
-		status('Démarrage impossible', 'ko');
+		status(m.boot.startFailed, 'ko');
 		$('.boot').insertAdjacentHTML('beforeend', bootFailureActionsHtml());
 		bindRetry(root, () => {
 			const overlay = $('.overlay');
@@ -223,10 +224,10 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		// Le badge signale un message qu'on n'a pas encore vu, sauf si la console est déjà affichée.
 		// Aperçu replié : sa rail le signale aussi.
 		if ($('.pane-console').hidden) {
-			$('.pane-tabs .badge').title = 'La page de l\'aperçu a signalé un problème';
+			$('.pane-tabs .badge').title = m.playground.previewProblem;
 			$('.pane-tabs .badge').hidden = false;
 		}
-		folding.showPreviewAlert('la page de l\'aperçu a signalé un problème');
+		folding.showPreviewAlert(m.playground.previewProblemSpoken);
 	});
 	// Un runtime sans console (le simulateur Nuxt) : l'onglet garde les messages de l'aperçu, sans champ de commande.
 	const commandes = exercise.setup.length > 0 && runtime.runCommand ? exercise.setup : [];
@@ -234,11 +235,11 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	// Commandes de préparation (ex. schéma de la base de l'aperçu, qui vit en mémoire).
 	for (const command of commandes) {
-		$('#boot-label').textContent = `Préparation : ${consoleName} ${command}`;
+		$('#boot-label').textContent = m.boot.preparing(`${consoleName} ${command}`);
 		const result = await consolePanel.run(command, { quiet: true });
 		if (result?.exitCode !== 0) {
 			$('.pane-tabs .badge').hidden = false;
-			folding.showPreviewAlert('une commande de préparation a échoué');
+			folding.showPreviewAlert(m.playground.setupFailedSpoken);
 		}
 	}
 	bridge.navigate(exercise.preview);
@@ -247,11 +248,11 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// (la base de l'aperçu) est à refaire. L'aperçu n'est pas rechargé : il retomberait dans la boucle.
 	// La prochaine modification le rechargera.
 	runtime.onRestart?.((event) => {
-		if (event.phase === 'restarting') status('Le code ne répond plus (boucle infinie ?) : redémarrage…', 'ko');
-		else if (event.phase === 'failed') status(`Impossible de redémarrer : ${event.error}. Rechargez la page.`, 'ko');
+		if (event.phase === 'restarting') status(m.playground.restarting, 'ko');
+		else if (event.phase === 'failed') status(m.playground.restartFailed(String(event.error)), 'ko');
 		else void (async () => {
 			for (const command of commandes) await consolePanel.run(command, { quiet: true });
-			status('Redémarré. Corrigez la boucle, puis relancez.', 'idle');
+			status(m.playground.restarted, 'idle');
 		})();
 	});
 
@@ -264,7 +265,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	}, {
 		onWritten: reload,
 		// L'enregistrement automatique échoue (session expirée, accès terminé) : l'apprenant doit le savoir avant de fermer.
-		onDraftError: (error) => status(`Brouillon non enregistré : ${error.message}`, 'ko'),
+		onDraftError: (error) => status(m.playground.draftNotSaved(error.message), 'ko'),
 	});
 	window.addEventListener('pagehide', () => session.saveOnExit());
 	const [{ EditorPanel, monaco }, { registerCompletion }, { BeforeAfterDialog }] = await editeur;
@@ -309,7 +310,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		runButton.disabled = true;
 		runButton.setAttribute('aria-busy', 'true');
 		mesurer('tests-lances', mesure);
-		status('Tests en cours…', 'busy');
+		status(m.playground.testsRunning, 'busy');
 		try {
 			// Les dernières frappes doivent être testées, pas perdues.
 			if (await session.flush()) reload();
@@ -317,7 +318,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			metrics[metrics.firstTestRun ? 'lastTestRun' : 'firstTestRun'] = Math.round(result.durationMs);
 			const passed = results.show(result);
 			const total = exercise.objectives.length;
-			status(`${passed}/${total} objectifs · tests en ${Math.round(result.durationMs)} ms`, passed === total ? 'ok' : 'ko', spokenSummary(passed, total));
+			status(m.playground.testsDone(passed, total, Math.round(result.durationMs)), passed === total ? 'ok' : 'ko', spokenSummary(passed, total));
 			// Petit écran : les consignes, où s'affichent les objectifs. Volet replié : il ne se rouvre qu'à la
 			// réussite, pour ne pas reprendre la place pendant que l'apprenant corrige ; sa rail porte le résultat.
 			showWorkpane('brief');
@@ -327,7 +328,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 				void success.show();
 			} else success.hide();
 		} catch (error) {
-			status('Erreur pendant les tests', 'ko');
+			status(m.playground.testsError, 'ko');
 			results.showError(error);
 		} finally {
 			runButton.disabled = false;
@@ -339,14 +340,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });
 
 	// --- Raccourcis clavier : Monaco les reçoit quand il a le focus, le document ailleurs --------
-	runButton.title = `Lancer les tests (${mod} + Entrée)`;
+	runButton.title = m.playground.runTitle(mod);
 	const saveNow = async () => {
 		try {
 			if (await session.flush()) reload();
 			await session.saveNow();
-			status('Brouillon enregistré', 'ok');
+			status(m.playground.draftSaved, 'ok');
 		} catch (error) {
-			status(`Brouillon non enregistré : ${error instanceof Error ? error.message : String(error)}`, 'ko');
+			status(m.playground.draftNotSaved(error instanceof Error ? error.message : String(error)), 'ko');
 		}
 	};
 	const act = (shortcut: Shortcut) => {
@@ -382,6 +383,6 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	overlay.setAttribute('aria-hidden', 'true');
 	mark('ready');
 	demarrage.pret({ compte: config.progress.mode === 'api' });
-	status(`Prêt en ${(metrics.ready / 1000).toFixed(1)} s`, 'ok');
+	status(m.playground.ready(metrics.ready / 1000), 'ok');
 	Object.assign(window, { playground: { metrics, runtime, editor: editor.instance, monaco } }); // debug / mesures
 }

@@ -8,11 +8,12 @@ import { createSpawnHandler } from '@php-wasm/util';
 import { getPHPLoaderModule, loadWebRuntime } from '@php-wasm/web';
 import type { BootProgress } from '@forelse/runtime-contract';
 import { serveRuntime } from '@forelse/runtime-contract';
+import { m } from '../i18n';
 import { PhpWasmProject } from './PhpWasmProject';
 
 async function download(url: string, progress: (p: BootProgress) => void): Promise<Uint8Array> {
 	const response = await fetch(url);
-	if (!response.ok || !response.body) throw new Error(`Téléchargement impossible : ${url} (${response.status})`);
+	if (!response.ok || !response.body) throw new Error(m.runtime.downloadFailed(url, response.status));
 	const total = Number(response.headers.get('content-length')) || null;
 	const chunks: Uint8Array[] = [];
 	let received = 0;
@@ -22,7 +23,7 @@ async function download(url: string, progress: (p: BootProgress) => void): Promi
 		if (done) break;
 		chunks.push(value);
 		received += value.length;
-		progress({ step: 'download', ratio: total ? received / total : null, label: `Téléchargement de l'environnement (${(received / 1e6).toFixed(1)} Mo)` });
+		progress({ step: 'download', ratio: total ? received / total : null, label: m.runtime.downloading(received / 1e6) });
 	}
 	const bytes = new Uint8Array(received);
 	let offset = 0;
@@ -46,7 +47,7 @@ function compilePhpWasm(version: '8.4'): Promise<WebAssembly.Module> {
 		} catch {
 			// Serveur qui ne renvoie pas application/wasm : compilation depuis le buffer.
 			const response = await fetch(dependencyFilename);
-			if (!response.ok) throw new Error(`Binaire PHP introuvable : ${dependencyFilename} (${response.status})`);
+			if (!response.ok) throw new Error(m.runtime.phpBinaryMissing(dependencyFilename, response.status));
 			return WebAssembly.compile(await response.arrayBuffer());
 		}
 	});

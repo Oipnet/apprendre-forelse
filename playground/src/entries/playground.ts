@@ -1,6 +1,7 @@
 // La base de l'éditeur, autonome : ni site.css, ni la feuille du thème (voir #235).
 import '../editor.css';
 import '../playground.css';
+import { m } from '../i18n';
 import { mountPlayground } from '../app/Playground';
 import type { PlaygroundConfig } from '../app/types';
 import { bindRetry, bootFailureActionsHtml } from '../app/boot';
@@ -14,7 +15,7 @@ if (root) {
 		if (root.dataset.bootFailed !== undefined) return;
 		const label = root.querySelector('#boot-label');
 		if (!label) return;
-		label.textContent = `L'exercice n'a pas pu s'ouvrir : ${error instanceof Error ? error.message : String(error)}`;
+		label.textContent = m.boot.openFailed(error instanceof Error ? error.message : String(error));
 		label.insertAdjacentHTML('afterend', bootFailureActionsHtml(false));
 		bindRetry(root);
 	});

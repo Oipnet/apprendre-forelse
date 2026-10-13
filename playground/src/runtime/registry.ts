@@ -12,6 +12,8 @@ import type { Runtime, RuntimeManifest } from '@forelse/runtime-contract';
  * (voir discover-runtimes.ts), et le moteur n'en nomme aucun. Le navigateur reste un bundle, donc
  * ajouter un runtime demandera toujours de reconstruire le playground — mais rien à y modifier.
  */
+import { m } from '../i18n';
+
 const registrations = new Map<string, RuntimeManifest>();
 
 export function registerRuntime(registration: RuntimeManifest): void {
@@ -27,7 +29,7 @@ function find(id: string): RuntimeManifest {
 	// Un environnement qui demande un runtime absent du bundle ne doit pas échouer plus loin, dans un
 	// worker, avec un message incompréhensible : on le dit ici, et on dit ce qu'on sait faire.
 	if (!registration) {
-		throw new Error(`Runtime « ${id} » inconnu de ce playground (connus : ${knownRuntimes().join(', ') || 'aucun'}).`);
+		throw new Error(m.runtime.unknown(id, knownRuntimes()));
 	}
 	return registration;
 }

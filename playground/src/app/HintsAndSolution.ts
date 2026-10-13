@@ -1,4 +1,5 @@
 import type { EditorPanel } from '../editor/monaco';
+import { m } from '../i18n';
 import { mesurer } from '../mesure';
 import { confirmDialog, noticeDialog } from './dialogs';
 import { markdown } from './markdown';
@@ -43,14 +44,14 @@ export class HintsAndSolution {
 	private showHint(index: number) {
 		const hint = document.createElement('div');
 		hint.className = 'hint';
-		hint.innerHTML = `<strong>Indice ${index + 1}/${this.exercise.hints.length}</strong> ${markdown(this.exercise.hints[index], true)}`;
+		hint.innerHTML = `<strong>${m.hints.hintNumber(index + 1, this.exercise.hints.length)}</strong> ${markdown(this.exercise.hints[index], true)}`;
 		this.$('#hints').append(hint);
 	}
 
 	private updateHintButton() {
 		const cost = this.deps.session.hintCost(this.exercise.xp);
 		this.hintButton.hidden = this.deps.session.hintsUsed >= this.exercise.hints.length;
-		this.hintButton.innerHTML = `<span aria-hidden="true">💡</span> ${cost <= 0 ? 'Un indice ?' : `Un indice ? (−${cost} XP)`}`;
+		this.hintButton.innerHTML = `<span aria-hidden="true">💡</span> ${m.hints.hint(cost)}`;
 	}
 
 	/** La solution de référence, à côté du code de l'apprenant (onglets en lecture seule), contre l'XP. */
@@ -71,13 +72,13 @@ export class HintsAndSolution {
 		};
 		const noteSolution = () => {
 			solutionNote.hidden = false;
-			solutionNote.textContent = session.completed || exercise.xp === 0 ? 'Solution consultée.' : 'Solution consultée : cet exercice ne rapportera pas d\'XP.';
-			solutionButton.querySelector('.label')!.textContent = 'Solution ✓';
+			solutionNote.textContent = session.completed || exercise.xp === 0 ? m.hints.solutionSeen : m.hints.solutionSeenNoXp;
+			solutionButton.querySelector('.label')!.textContent = m.hints.solutionDone;
 			this.updateHintButton();
 		};
 		if (this.config.progress.mode === 'api') {
 			solutionButton.hidden = false;
-			solutionButton.title = exercise.xp === 0 ? 'La solution de référence.' : 'La solution de référence. La consulter ne rapporte pas l\'XP de cet exercice.';
+			solutionButton.title = exercise.xp === 0 ? m.hints.solutionTitle : m.hints.solutionTitleXp;
 			if (session.solutionRevealed) noteSolution();
 			solutionButton.addEventListener('click', async () => {
 				if (
@@ -85,10 +86,10 @@ export class HintsAndSolution {
 					!session.solutionRevealed &&
 					exercise.xp > 0 &&
 					!(await confirmDialog(this.root, {
-						title: 'Consulter la solution ?',
-						message: 'Cet exercice ne rapportera alors pas d\'XP, même réussi ensuite avec votre code.',
-						confirm: 'Voir la solution',
-						cancel: 'Continuer à chercher',
+						title: m.hints.confirmTitle,
+						message: m.hints.confirmMessage,
+						confirm: m.hints.confirm,
+						cancel: m.hints.keepSearching,
 					}))
 				)
 					return;
@@ -100,7 +101,7 @@ export class HintsAndSolution {
 					noteSolution();
 					showSolution(files);
 				} catch (error) {
-					void noticeDialog(this.root, 'Solution indisponible', error instanceof Error ? error.message : String(error));
+					void noticeDialog(this.root, m.hints.unavailable, error instanceof Error ? error.message : String(error));
 				} finally {
 					solutionButton.disabled = false;
 				}
@@ -108,7 +109,7 @@ export class HintsAndSolution {
 		} else if (exercise.solution) {
 			// Développement de la plateforme : la solution remplace le code, pour tester vite.
 			solutionButton.hidden = false;
-			solutionButton.title = 'Visible en développement uniquement';
+			solutionButton.title = m.hints.devOnly;
 			solutionButton.addEventListener('click', () => {
 				for (const [path, content] of Object.entries(exercise.solution!)) editor.setContent(path, content);
 			});

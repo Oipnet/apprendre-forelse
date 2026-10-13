@@ -1,3 +1,4 @@
+import { m } from '../i18n';
 import { escapeHtml } from './html';
 
 /**
@@ -37,7 +38,7 @@ function open(host: HTMLElement, title: string, message: string, buttons: { labe
 /** Une question qui engage (solution, réinitialisation) : vrai seulement si l'apprenant confirme. */
 export async function confirmDialog(host: HTMLElement, options: { title: string; message: string; confirm: string; cancel?: string }): Promise<boolean> {
 	const buttons = [
-		{ label: options.cancel ?? 'Annuler', value: 'cancel' },
+		{ label: options.cancel ?? m.common.cancel, value: 'cancel' },
 		{ label: options.confirm, value: 'ok', primary: true },
 	];
 	return (await open(host, options.title, options.message, buttons, 'cancel')) === 'ok';
@@ -45,7 +46,7 @@ export async function confirmDialog(host: HTMLElement, options: { title: string;
 
 /** Une information à lire, un seul bouton. */
 export async function noticeDialog(host: HTMLElement, title: string, message: string): Promise<void> {
-	await open(host, title, message, [{ label: 'Compris', value: 'ok', primary: true }], 'ok');
+	await open(host, title, message, [{ label: m.dialogs.ok, value: 'ok', primary: true }], 'ok');
 }
 
 /** Un message éphémère avec une action (« Annuler » après une réinitialisation), retiré après `ms`. */

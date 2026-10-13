@@ -12,6 +12,7 @@ import { HttpCookieStore, inferMimeType, PHPExecutionFailureError, type PHP, typ
 import { unzipSync } from 'fflate';
 import type { BootProgress, CommandResult, EnvironmentSpec, FrameworkProfile, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
 import { gradeOwnTests } from '@forelse/runtime-contract';
+import { m } from '../i18n';
 import { defaultPhpFramework, PHP_FRAMEWORKS, type PhpFrameworkAdapter, type PhpPreviewContext } from './php-frameworks';
 import { phpunitSummary } from './phpunit';
 import runTestsScript from './run-tests.php?raw';
@@ -65,7 +66,7 @@ export class PhpWasmProject implements Runtime {
 
 	/** Le profil du projet en cours ; boot() le pose avant tout le reste. */
 	private frameworkProfile(): FrameworkProfile {
-		if (!this.profile) throw new Error('Environnement non démarré.');
+		if (!this.profile) throw new Error(m.runtime.notBooted);
 		return this.profile;
 	}
 
@@ -152,7 +153,7 @@ export class PhpWasmProject implements Runtime {
 			text = error.response.text + '\n' + error.response.errors;
 		}
 		const markerAt = text.lastIndexOf(REPORT_MARKER);
-		if (markerAt === -1) return { exitCode: 255, cases: [], output: text.trim() || 'PHPUnit s\'est arrêté sans rapport.' };
+		if (markerAt === -1) return { exitCode: 255, cases: [], output: text.trim() || m.runtime.noReport };
 		const report = JSON.parse(text.slice(markerAt + REPORT_MARKER.length)) as Omit<TestRunResult, 'durationMs'>;
 		const cases = report.cases.map((c) => (c.message ? { ...c, summary: phpunitSummary(c.message) } : c));
 		return { ...report, cases, output: (text.slice(0, markerAt) + report.output).trim() };
@@ -180,11 +181,11 @@ export class PhpWasmProject implements Runtime {
 				this.clearTestCache(php);
 			}
 		}, {
-			noOwnTest: 'Aucun de vos tests ne s\'est exécuté : écrivez au moins une méthode test…() dans votre classe de test.',
-			skipped: '(incomplet ou ignoré)',
+			noOwnTest: m.runtime.noOwnTest,
+			skipped: m.runtime.skipped,
 		});
 		result.cases.push(...cases);
-		if (report.length) result.output += `\n\nMutants (versions cassées de l'application) :\n${report.join('\n')}`;
+		if (report.length) result.output += `\n\n${m.runtime.mutants}\n${report.join('\n')}`;
 	}
 
 	/** Le contenu des fichiers du projet, par chemin relatif. */
@@ -236,7 +237,7 @@ export class PhpWasmProject implements Runtime {
 		// Le garde porte sur le runtime demandé, pas sur le nom du framework : ce runtime sert tous ceux
 		// qui s'exécutent en PHP, quel que soit leur nombre, et aucun autre.
 		if ('php-wasm' !== spec.framework.runtime) {
-			throw new Error(`Un environnement « ${spec.framework.runtime} » ne se joue pas avec PHP (voir src/runtime/registry.ts).`);
+			throw new Error(m.runtime.wrongRuntime(spec.framework.runtime));
 		}
 		this.profile = spec.framework;
 		const frameworks = this.deps.frameworks ?? PHP_FRAMEWORKS;
@@ -246,7 +247,7 @@ export class PhpWasmProject implements Runtime {
 		this.baseFiles = new Map(
 			Object.entries(unzipSync(archive)).filter(([path]) => !path.endsWith('/')),
 		);
-		progress({ step: 'boot', ratio: null, label: `Démarrage de PHP ${spec.options?.phpVersion ?? ''}` });
+		progress({ step: 'boot', ratio: null, label: m.runtime.booting(spec.options?.phpVersion ?? '') });
 		this.preview = await this.createPhp();
 		// Instance de tests préparée en arrière-plan : premier run plus rapide.
 		this.prepareTests().catch(() => {}); // réessayée au premier lancement des tests
@@ -316,7 +317,7 @@ export class PhpWasmProject implements Runtime {
 			relativePath = decodeURIComponent(url.pathname.slice(env.previewBasePath.length)) || '/';
 		} catch {
 			// « /menu% » : un vrai serveur web refuse la requête avant PHP, avec une 400.
-			return { status: 400, headers: { 'content-type': ['text/plain; charset=utf-8'] }, body: encoder.encode('400 Bad Request : URL mal encodée.'), durationMs: performance.now() - start };
+			return { status: 400, headers: { 'content-type': ['text/plain; charset=utf-8'] }, body: encoder.encode(m.runtime.badUrl), durationMs: performance.now() - start };
 		}
 
 		// Fichier statique de public/ (CSS, images…) : servi sans passer par PHP.

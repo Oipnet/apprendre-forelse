@@ -1,3 +1,4 @@
+import { m } from '../i18n';
 import { mountShare } from '../app/share';
 
 /**
@@ -127,7 +128,7 @@ const chaptersToggle = document.querySelector<HTMLButtonElement>('[data-chapters
 if (chaptersToggle) {
 	const chapters = [...document.querySelectorAll<HTMLDetailsElement>(CHAPTER_DETAILS)];
 	const label = () => {
-		chaptersToggle.textContent = chapters.every((chapter) => chapter.open) ? 'Tout fermer' : 'Tout ouvrir';
+		chaptersToggle.textContent = chapters.every((chapter) => chapter.open) ? m.site.collapseAll : m.site.expandAll;
 	};
 	chaptersToggle.hidden = false;
 	label();
