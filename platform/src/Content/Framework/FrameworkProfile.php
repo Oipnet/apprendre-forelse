@@ -2,6 +2,10 @@
 
 namespace App\Content\Framework;
 
+use Symfony\Component\Translation\IdentityTranslator;
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
 /**
  * Ce que le moteur sait d'un framework : de quoi le faire tourner, le vérifier, le décrire et l'écrire.
  *
@@ -25,29 +29,31 @@ final readonly class FrameworkProfile
     public const string NUXT_SIM = 'nuxt-sim';
 
     /**
-     * @param string                $id              identifiant écrit dans environment.yaml (« symfony »)
-     * @param string                $label           nom affiché (« Symfony »)
-     * @param int                   $order           rang dans les listes (le plus petit d'abord), comme « order: » d'un parcours
-     * @param string                $console         la console du projet, telle qu'on la tape (« bin/console »)
-     * @param string                $consoleExample  commande d'exemple, en filigrane du champ de la console
-     * @param string                $bootNote        ce qu'on explique à l'apprenant pendant le démarrage
-     * @param string                $unpackLabel     étape de démarrage : « Décompression du projet Symfony »
-     * @param string                $testRunner      PHPUNIT ou VITEST : comment content:check et le navigateur notent
-     * @param string|null           $versionPackage  paquet dont la version fait foi pour « version: » (null : pas de versions)
-     * @param list<string>          $projectDirs     dossiers du projet, visibles dans l'explorateur
-     * @param list<string>          $codeDirs        ce qui est « du code » pour la rédaction assistée (hors tests et assets)
-     * @param list<string>          $cacheDirs       caches à vider entre deux runs, côté serveur (content:check)
-     * @param list<string>          $testCaches      caches à vider entre deux runs, côté navigateur
-     * @param list<string>          $hidden          dossiers masqués dans l'explorateur
-     * @param array<string, string> $namespaceRoots  premier dossier => racine de namespace (« src » => « App »)
-     * @param string                $lessonLanguages langages des blocs de code d'une fiche de cours
-     * @param string|null           $drafting        conventions du projet, données au modèle qui rédige (null : il ne sait pas)
-     * @param string                $runtime         qui l'exécute dans le navigateur (PHP_WASM, NUXT_SIM, ou un runtime ajouté)
-     * @param list<string>          $snippets        familles d'extraits proposés par l'éditeur (« php », « laravel », « docker »)
-     * @param array<string, string> $consoleAliases  préfixes tolérés dans la console => ce qui les remplace (« » : retiré)
-     * @param int                   $versionParts    combien de composants de « version: » font une page de nouveautés
-     * @param list<string>          $rawCommands     commandes que la console affiche telles quelles, sans le nom de la console
-     *                                               (« sh », « *.sh » : tout ce qui finit par .sh)
+     * @param string                       $id              identifiant écrit dans environment.yaml (« symfony »)
+     * @param string                       $label           nom affiché (« Symfony »)
+     * @param int                          $order           rang dans les listes (le plus petit d'abord), comme « order: » d'un parcours
+     * @param string                       $console         la console du projet, telle qu'on la tape (« bin/console »)
+     * @param string                       $consoleExample  commande d'exemple, en filigrane du champ de la console
+     * @param string|TranslatableInterface $bootNote        ce qu'on explique à l'apprenant pendant le démarrage ; un
+     *                                                      message traduit (domaine apprentissage, playground.*) pour les
+     *                                                      profils du moteur, un texte tel quel pour celui d'un paquet
+     * @param string|TranslatableInterface $unpackLabel     étape de démarrage : « Décompression du projet Symfony »
+     * @param string                       $testRunner      PHPUNIT ou VITEST : comment content:check et le navigateur notent
+     * @param string|null                  $versionPackage  paquet dont la version fait foi pour « version: » (null : pas de versions)
+     * @param list<string>                 $projectDirs     dossiers du projet, visibles dans l'explorateur
+     * @param list<string>                 $codeDirs        ce qui est « du code » pour la rédaction assistée (hors tests et assets)
+     * @param list<string>                 $cacheDirs       caches à vider entre deux runs, côté serveur (content:check)
+     * @param list<string>                 $testCaches      caches à vider entre deux runs, côté navigateur
+     * @param list<string>                 $hidden          dossiers masqués dans l'explorateur
+     * @param array<string, string>        $namespaceRoots  premier dossier => racine de namespace (« src » => « App »)
+     * @param string                       $lessonLanguages langages des blocs de code d'une fiche de cours
+     * @param string|null                  $drafting        conventions du projet, données au modèle qui rédige (null : il ne sait pas)
+     * @param string                       $runtime         qui l'exécute dans le navigateur (PHP_WASM, NUXT_SIM, ou un runtime ajouté)
+     * @param list<string>                 $snippets        familles d'extraits proposés par l'éditeur (« php », « laravel », « docker »)
+     * @param array<string, string>        $consoleAliases  préfixes tolérés dans la console => ce qui les remplace (« » : retiré)
+     * @param int                          $versionParts    combien de composants de « version: » font une page de nouveautés
+     * @param list<string>                 $rawCommands     commandes que la console affiche telles quelles, sans le nom de la console
+     *                                                      (« sh », « *.sh » : tout ce qui finit par .sh)
      */
     public function __construct(
         public string $id,
@@ -55,8 +61,8 @@ final readonly class FrameworkProfile
         public int $order,
         public string $console,
         public string $consoleExample,
-        public string $bootNote,
-        public string $unpackLabel,
+        public string|TranslatableInterface $bootNote,
+        public string|TranslatableInterface $unpackLabel,
         public string $testRunner,
         public ?string $versionPackage,
         public array $projectDirs,
@@ -122,19 +128,23 @@ final readonly class FrameworkProfile
     }
 
     /**
-     * Ce que le navigateur a besoin de savoir du framework (voir playground/src/app/types.ts).
+     * Ce que le navigateur a besoin de savoir du framework (voir playground/src/app/types.ts). Les textes lus par
+     * l'apprenant sont traduits dans la langue de la page ; sans traducteur, un message traduisible donne sa clé.
      *
      * @return array<string, mixed>
      */
-    public function forBrowser(): array
+    public function forBrowser(?TranslatorInterface $translator = null): array
     {
+        $translator ??= new IdentityTranslator();
+        $text = static fn (string|TranslatableInterface $text): string => \is_string($text) ? $text : $text->trans($translator);
+
         return [
             'id' => $this->id,
             'label' => $this->label,
             'console' => $this->console,
             'consoleExample' => $this->consoleExample,
-            'bootNote' => $this->bootNote,
-            'unpackLabel' => $this->unpackLabel,
+            'bootNote' => $text($this->bootNote),
+            'unpackLabel' => $text($this->unpackLabel),
             'testRunner' => $this->testRunner,
             'testRunnerLabel' => $this->testRunnerLabel(),
             'runtime' => $this->runtime,

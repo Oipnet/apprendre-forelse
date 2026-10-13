@@ -4,6 +4,7 @@ namespace App\Content\Framework\Profiles;
 
 use App\Content\Framework\FrameworkProfile;
 use App\Content\Framework\FrameworkProfileProvider;
+use Symfony\Component\Translation\TranslatableMessage;
 
 /** Symfony : la console, les dossiers du squelette, le cache compilé dans var/. */
 final class SymfonyProfile implements FrameworkProfileProvider
@@ -16,8 +17,8 @@ final class SymfonyProfile implements FrameworkProfileProvider
             order: 10,
             console: 'bin/console',
             consoleExample: 'debug:router',
-            bootNote: 'Symfony tourne entièrement dans votre navigateur, grâce à PHP compilé en WebAssembly.',
-            unpackLabel: 'Décompression du projet Symfony',
+            bootNote: new TranslatableMessage('playground.framework.symfony.demarrage', [], 'apprentissage'),
+            unpackLabel: new TranslatableMessage('playground.framework.symfony.decompression', [], 'apprentissage'),
             testRunner: FrameworkProfile::PHPUNIT,
             versionPackage: 'symfony/framework-bundle',
             projectDirs: ['src', 'migrations', 'templates', 'config', 'tests', 'translations'],

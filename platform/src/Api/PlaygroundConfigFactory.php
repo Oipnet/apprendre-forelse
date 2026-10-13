@@ -11,6 +11,7 @@ use App\Security\SandboxOrigin;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Configuration du playground (attribut data-config de exercise/play.html.twig), pour un exercice de parcours
@@ -26,6 +27,7 @@ final readonly class PlaygroundConfigFactory
         private Mentor $mentor,
         private Theme $theme,
         private Security $security,
+        private TranslatorInterface $translator,
         /** Bêta fermée : l'inscription exige un code de cohorte, l'invité sans code est orienté vers la liste d'attente. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private bool $inviteOnly,
@@ -52,7 +54,7 @@ final readonly class PlaygroundConfigFactory
             ],
             // Le lien de retour de la barre : le parcours, ou la liste de la Pratique.
             'back' => null === $track
-                ? ['title' => 'Pratique', 'url' => $this->urls->generate('app_practice')]
+                ? ['title' => $this->translator->trans('playground.retour_pratique', [], 'apprentissage'), 'url' => $this->urls->generate('app_practice')]
                 : ['title' => $track->title, 'url' => $this->urls->generate('app_track', ['trackId' => $track->id])],
             'progress' => $user
                 ? ['mode' => 'api', 'url' => $this->exerciseUrls->generate('api_progress_show', $exercise)]

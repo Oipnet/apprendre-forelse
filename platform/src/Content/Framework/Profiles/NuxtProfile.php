@@ -4,6 +4,7 @@ namespace App\Content\Framework\Profiles;
 
 use App\Content\Framework\FrameworkProfile;
 use App\Content\Framework\FrameworkProfileProvider;
+use Symfony\Component\Translation\TranslatableMessage;
 
 /**
  * Nuxt, simulé en TypeScript par packages/simulateur-nuxt : le seul framework sans PHP. Ses tests sont des tests
@@ -19,8 +20,8 @@ final class NuxtProfile implements FrameworkProfileProvider
             order: 40,
             console: 'npx nuxi',
             consoleExample: 'info',
-            bootNote: 'Nuxt est simulé dans votre navigateur : vos pages sont rendues côté serveur puis hydratées, comme avec nuxi dev.',
-            unpackLabel: 'Décompression du projet',
+            bootNote: new TranslatableMessage('playground.framework.nuxt.demarrage', [], 'apprentissage'),
+            unpackLabel: new TranslatableMessage('playground.framework.nuxt.decompression', [], 'apprentissage'),
             testRunner: FrameworkProfile::VITEST,
             // La version de Nuxt vient de package.json, pas d'un composer.lock : « version: » n'est pas géré.
             versionPackage: null,
