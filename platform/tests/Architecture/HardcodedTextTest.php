@@ -21,7 +21,8 @@ final class HardcodedTextTest extends TestCase
      * Gabarits dont le texte reste dans le gabarit, volontairement (préfixes de chemin) :
      * - les pages juridiques, un texte que l'on fait relire tel quel : elles auront un gabarit par langue ;
      * - l'administration, l'atelier des auteurs, l'espace et l'offre des organisations (cohortes) : outils internes ou
-     *   clientèle française, servis en français seulement.
+     *   clientèle française, servis en français seulement ;
+     * - les e-mails internes, envoyés à l'administrateur de l'instance.
      */
     private const EXCEPTIONS = [
         'legal/',
@@ -30,6 +31,8 @@ final class HardcodedTextTest extends TestCase
         'cohorte/',
         'contact/organizations.html.twig',
         '_theme_preview.html.twig',
+        'emails/registration_alert.txt.twig',
+        'emails/contact_message.txt.twig',
     ];
 
     /** Attributs qu'un humain lit ou entend : leur valeur se traduit. */
