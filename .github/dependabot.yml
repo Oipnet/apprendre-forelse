@@ -47,6 +47,10 @@ updates:
     # quand la référence bouge, à la main. Restent confiés à Dependabot : l'outillage du paquet
     # (TypeScript, Vitest, rolldown, @types/node) et ce qui n'appartient qu'au simulateur (fflate, sucrase).
     ignore:
+      # La majeure de @types/node suit celle de Node (.nvmrc) : des types plus récents laisseraient passer
+      # des API absentes du Node qui exécute le code. Elle monte à la main, avec .nvmrc et le Dockerfile.
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
       - dependency-name: "@unhead/vue"
       - dependency-name: "@vitest/spy"
       - dependency-name: "@vue/test-utils"
