@@ -4,6 +4,8 @@ namespace App\Content;
 
 /**
  * Un article du blog : `<pack>/articles/<slug>.md`, un en-tête YAML (titre, description, dates) puis du Markdown.
+ * Sa traduction vit dans `<pack>/articles/<langue>/<slug>.md` (voir TRANSLATIONS), avec son propre slug et une clé
+ * `translation_of` qui nomme l'article français.
  *
  * Le blog n'est pas là pour annoncer : il raconte ce qu'aucune page d'exercice ne dit — comment le moteur fait
  * tourner un framework dans le navigateur, pourquoi un exercice est construit ainsi. Ce sont ces pages-là que
@@ -11,6 +13,10 @@ namespace App\Content;
  */
 final readonly class Article
 {
+    /** La langue des articles de `<pack>/articles/` ; celles des sous-dossiers de traduction. */
+    public const string LOCALE = 'fr';
+    public const array TRANSLATIONS = ['en'];
+
     public function __construct(
         /** Le nom du fichier, sans « .md » : l'identifiant de l'article dans son adresse. */
         public string $slug,
@@ -25,6 +31,9 @@ final readonly class Article
         public ?\DateTimeImmutable $updated = null,
         /** « public », ou « admin » : en préparation, visible des seuls administrateurs. */
         public string $visibility = Track::VISIBILITY_PUBLIC,
+        public string $locale = self::LOCALE,
+        /** Une traduction : le slug de l'article français qu'elle traduit. */
+        public ?string $translationOf = null,
     ) {
     }
 

@@ -11,11 +11,14 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-/** Le blog : la liste des articles parus, et un article (voir App\Content\Article). */
+/**
+ * Le blog : la liste des articles parus, et un article (voir App\Content\Article). En français sous /blog, en anglais
+ * sous /en/blog pour les articles traduits : la langue de la route (_locale) est celle de la page et de ses textes.
+ */
 final class BlogController extends AbstractController
 {
     /** Sans article paru, pas de blog : une page vide ne servirait personne, et ne doit pas s'indexer. */
-    #[Route('/blog', name: 'app_blog', methods: ['GET'])]
+    #[Route(['fr' => '/blog', 'en' => '/en/blog'], name: 'app_blog', methods: ['GET'])]
     public function index(Blog $blog, BlogSeo $seo): Response
     {
         if (!$blog->isOpen()) {
@@ -34,7 +37,7 @@ final class BlogController extends AbstractController
      * les copies masquent souvent leur referrer, et sans eux leurs visites se fondraient dans le trafic direct. Le lien de
      * l'article lui-même (<link>, <guid>) reste nu, puisque les copies en font leur URL canonique.
      */
-    #[Route('/blog/rss.xml', name: 'app_blog_feed', methods: ['GET'])]
+    #[Route(['fr' => '/blog/rss.xml', 'en' => '/en/blog/rss.xml'], name: 'app_blog_feed', methods: ['GET'])]
     public function feed(Blog $blog, LessonRenderer $markdown, SchemaOrg $schema): Response
     {
         if (!$blog->isOpen()) {
@@ -69,17 +72,19 @@ final class BlogController extends AbstractController
         );
     }
 
-    #[Route('/blog/{slug}', name: 'app_article', requirements: ['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'], methods: ['GET'])]
+    #[Route(['fr' => '/blog/{slug}', 'en' => '/en/blog/{slug}'], name: 'app_article', requirements: ['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'], methods: ['GET'])]
     public function show(string $slug, Blog $blog, BlogSeo $seo, LessonRenderer $markdown): Response
     {
         $article = $blog->find($slug) ?? throw $this->createNotFoundException();
-        $seo->article($article);
+        $translations = $blog->translations($article);
+        $seo->article($article, $translations);
 
         return $this->render('blog/show.html.twig', [
             'article' => $article,
             // Le titre de tête du Markdown, s'il y en a un, répète celui de la page : il disparaît.
             'html' => $markdown->toHtmlUnderTitle($article->markdown),
             'scheduled' => $blog->isScheduled($article),
+            'translations' => $translations,
             ...$blog->neighbours($article),
         ]);
     }

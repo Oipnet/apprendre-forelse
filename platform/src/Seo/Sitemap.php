@@ -115,10 +115,13 @@ final readonly class Sitemap
                 array_push($entries, ...$conceptEntries);
             }
 
-            $articleEntries = array_map(fn (Article $article) => $this->entry('app_article', ['slug' => $article->slug], $article->modified()), $this->published->articles());
-            if ($articleEntries) {
-                $entries[] = $this->entry('app_blog', [], max(array_column($articleEntries, 'lastmod')));
-                array_push($entries, ...$articleEntries);
+            // Le blog dans chaque langue où un article a paru : /blog, puis /en/blog.
+            foreach ([Article::LOCALE, ...Article::TRANSLATIONS] as $locale) {
+                $articleEntries = array_map(fn (Article $article) => $this->entry('app_article', ['_locale' => $locale, 'slug' => $article->slug], $article->modified()), $this->published->articles($locale));
+                if ($articleEntries) {
+                    $entries[] = $this->entry('app_blog', ['_locale' => $locale], max(array_column($articleEntries, 'lastmod')));
+                    array_push($entries, ...$articleEntries);
+                }
             }
 
             $entries[] = $this->entry('app_organizations', [], self::PAGES_UPDATED_AT);

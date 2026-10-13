@@ -33,8 +33,8 @@ final readonly class PublishedContent
     }
 
     /** @return list<Article> du plus récent au plus ancien */
-    public function articles(): array
+    public function articles(string $locale = Article::LOCALE): array
     {
-        return array_values(array_filter($this->content->articles(), fn (Article $a) => !$a->isRestricted() && !$a->isScheduled($this->clock->now())));
+        return array_values(array_filter($this->content->articles($locale), fn (Article $a) => !$a->isRestricted() && !$a->isScheduled($this->clock->now())));
     }
 }

@@ -17,7 +17,7 @@ final readonly class LoadedContent
      * @param array<string, array{markdown: string, file: string, packId: string}> $versionIntros intros de pages de nouveautés, par version
      * @param array<string, array{markdown: string, file: string, packId: string, title: string|null}> $conceptIntros intros de pages de notions, par notion
      * @param array<string, list<ConceptTheme>>                                  $conceptThemes thèmes de l'index des notions, par framework
-     * @param array<string, Article>                                              $articles      articles du blog, du plus récent au plus ancien
+     * @param array<string, array<string, Article>>                               $articles      articles du blog par langue, du plus récent au plus ancien
      * @param array<string, string>                                               $watched       empreinte de chaque fichier ou dossier lu
      */
     public function __construct(
@@ -35,7 +35,7 @@ final readonly class LoadedContent
     }
 
     /**
-     * @param array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, Article>, watched: array<string, string>} $data
+     * @param array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>} $data
      */
     public static function fromArray(array $data): self
     {
@@ -43,7 +43,7 @@ final readonly class LoadedContent
     }
 
     /**
-     * @return array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, Article>, watched: array<string, string>}
+     * @return array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>}
      */
     public function toArray(): array
     {

@@ -58,6 +58,18 @@ final readonly class SearchIndexing
     ) {
     }
 
+    /** Une page publique, en liste blanche (ROUTES). */
+    public static function isPublic(Request $request): bool
+    {
+        return \in_array(self::route($request), self::ROUTES, true);
+    }
+
+    /** Le nom de la route, sans le suffixe de langue d'une route traduite (app_blog.en : app_blog). */
+    public static function route(Request $request): mixed
+    {
+        return $request->attributes->get('_canonical_route') ?? $request->attributes->get('_route');
+    }
+
     /** L'instance accepte-t-elle d'être indexée, sur cette origine ? */
     public function isEnabled(Request $request): bool
     {
@@ -76,10 +88,10 @@ final readonly class SearchIndexing
     /** La directive robots de la requête, ou null si la page s'indexe normalement. */
     public function directive(Request $request, int $status = 200): ?string
     {
-        if (!$this->isEnabled($request) || $status >= 400 || !\in_array($request->attributes->get('_route'), self::ROUTES, true)) {
+        if (!$this->isEnabled($request) || $status >= 400 || !self::isPublic($request)) {
             return self::NOINDEX;
         }
-        $filters = match ($request->attributes->get('_route')) {
+        $filters = match (self::route($request)) {
             'app_practice' => self::PRACTICE_FILTERS,
             'app_tracks' => self::TRACK_FILTERS,
             default => [],

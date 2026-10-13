@@ -10,6 +10,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Blog en anglais** : un article se traduit dans `<pack>/articles/en/<slug>.md`, avec la clé `translation_of` qui
+  nomme l'article français. Les traductions parues sont servies sous `/en/blog` (liste, articles, flux RSS
+  `/en/blog/rss.xml`), entrent dans le sitemap, et chaque version nomme l'autre (`hreflang`, la française en
+  `x-default`) et propose de la lire. Sur ces pages, l'interface (en-tête, pied de page, blog) est en anglais ; ses
+  liens mènent encore aux pages françaises. Le reste du site reste en français. Un moteur antérieur ignore le dossier
+  `en/` : un pack qui l'ajoute se charge partout.
+
 - **Volets repliables dans le playground** : sur un écran large ou moyen, les consignes et l'aperçu se replient
   en une rail étroite (bouton ‹ / › dans leur en-tête, ou Ctrl + Alt + B / P, Ctrl aussi sur Mac) pour laisser
   la place à l'éditeur. L'aperçu continue de tourner replié. La rail des consignes porte le résultat du dernier

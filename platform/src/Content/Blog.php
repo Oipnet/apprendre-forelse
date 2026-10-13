@@ -5,12 +5,16 @@ namespace App\Content;
 use App\Entity\User;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Le blog : les articles des packs (voir Article). La liste ne montre que les articles parus ; un article
  * programmé ou en préparation se relit à son adresse, pour les seuls administrateurs, comme la Pratique.
  *
  * Une instance dont aucun pack n'a d'article n'a pas de blog : ni lien dans le pied de page, ni entrée dans le sitemap.
+ *
+ * Le blog est servi en français (/blog) et dans la langue de ses traductions (/en/blog) : sans langue précisée,
+ * chaque méthode répond pour celle de la page demandée. Une langue sans article paru n'a pas de blog.
  */
 final readonly class Blog
 {
@@ -19,25 +23,26 @@ final readonly class Blog
         private PublishedContent $published,
         private Security $security,
         private ClockInterface $clock,
+        private RequestStack $requests,
     ) {
     }
 
     /** @return list<Article> les articles parus, du plus récent au plus ancien */
-    public function articles(): array
+    public function articles(?string $locale = null): array
     {
-        return $this->published->articles();
+        return $this->published->articles($locale ?? $this->locale());
     }
 
     /** Au moins un article paru : le blog a une page, et un lien. */
-    public function isOpen(): bool
+    public function isOpen(?string $locale = null): bool
     {
-        return [] !== $this->articles();
+        return [] !== $this->articles($locale);
     }
 
     /** Un article lisible par l'utilisateur courant, ou null. */
-    public function find(string $slug): ?Article
+    public function find(string $slug, ?string $locale = null): ?Article
     {
-        $article = $this->content->findArticle($slug);
+        $article = $this->content->findArticle($slug, $locale ?? $this->locale());
         if (null === $article) {
             return null;
         }
@@ -58,7 +63,7 @@ final readonly class Blog
      */
     public function neighbours(Article $article): array
     {
-        $articles = $this->articles();
+        $articles = $this->articles($article->locale);
         $position = array_search($article->slug, array_map(static fn (Article $a) => $a->slug, $articles), true);
         if (false === $position) {
             return ['previous' => null, 'next' => null];
@@ -66,5 +71,26 @@ final readonly class Blog
 
         // Du plus récent au plus ancien : le précédent (plus ancien) suit dans la liste.
         return ['previous' => $articles[$position + 1] ?? null, 'next' => $articles[$position - 1] ?? null];
+    }
+
+    /**
+     * Le même article, paru, dans les autres langues : de quoi relier les pages entre elles (hreflang) et proposer
+     * l'autre version au lecteur. Une traduction programmée n'apparaît qu'à sa date.
+     *
+     * @return array<string, Article> par langue
+     */
+    public function translations(Article $article): array
+    {
+        $now = $this->clock->now();
+
+        return array_filter($this->content->translationsOf($article), static fn (Article $a) => !$a->isRestricted() && !$a->isScheduled($now));
+    }
+
+    /** La langue de la page demandée, si le blog la parle ; le français sinon. */
+    private function locale(): string
+    {
+        $locale = $this->requests->getCurrentRequest()?->getLocale();
+
+        return \in_array($locale, Article::TRANSLATIONS, true) ? $locale : Article::LOCALE;
     }
 }
