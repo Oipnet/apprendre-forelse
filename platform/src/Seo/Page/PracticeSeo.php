@@ -101,7 +101,7 @@ final readonly class PracticeSeo
             ->setDescription($practice->summary, $this->trans('pratique.exercice.complement', ['framework' => $framework]))
             ->setCanonical($url = $this->schema->url('app_exercise_pratique', ['exerciseId' => $practice->exercise->id]))
             ->setType('article')
-            ->setImage($image, $this->share->card($practice)->alt(), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT)
+            ->setImage($image, $this->share->card($practice)->alt($this->translator), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT)
             ->addStructuredData([
                 '@type' => 'Article',
                 'headline' => PageSeo::shorten($practice->exercise->title, 110),

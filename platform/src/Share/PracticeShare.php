@@ -5,6 +5,7 @@ namespace App\Share;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\Practice;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Le partage d'un exercice de la Pratique : son image (« Pratique · Symfony 8.2 », le titre, le site) et ses liens,
@@ -18,12 +19,13 @@ final readonly class PracticeShare
         private FrameworkRegistry $frameworks,
         private UrlGeneratorInterface $urls,
         private ShareImage $images,
+        private TranslatorInterface $translator,
     ) {
     }
 
     public function card(Practice $practice): ShareCard
     {
-        return new ShareCard('Pratique · '.$this->framework($practice), $practice->exercise->title, $this->host());
+        return new ShareCard($this->translator->trans('share.carte.pratique', ['framework' => $this->framework($practice)]), $practice->exercise->title, $this->host());
     }
 
     /** L'adresse absolue de l'image, versionnée : elle change avec ce qu'elle écrit. */
@@ -44,9 +46,7 @@ final readonly class PracticeShare
     {
         $title = $practice->exercise->title;
         $framework = $this->framework($practice);
-        $text = $completed
-            ? sprintf('J\'ai réussi l\'exercice « %s » (%s), directement dans le navigateur.', $title, $framework)
-            : sprintf('%s : « %s », un exercice court à faire dans le navigateur.', $framework, $title);
+        $text = $this->translator->trans($completed ? 'share.texte.pratique_reussie' : 'share.texte.pratique', ['titre' => $title, 'framework' => $framework]);
 
         return ShareLinks::of(
             $this->urls->generate('app_exercise_pratique', ['exerciseId' => $practice->exercise->id], UrlGeneratorInterface::ABSOLUTE_URL),

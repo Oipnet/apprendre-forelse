@@ -12,7 +12,7 @@ Un domaine par zone du site, au format [ICU](https://symfony.com/doc/current/ref
 
 | Domaine | Gabarits |
 |---|---|
-| `messages` | communs : `base`, `_head`, `_header`, `_footer`, pages d'erreur, formulaires, partage ; unités du filtre `duree` (`format.`) |
+| `messages` | communs : `base`, `_head`, `_header`, `_footer`, pages d'erreur, formulaires, partage (boutons, et dans `src/Share` le texte des images de partage et des liens) ; unités du filtre `duree` (`format.`) |
 | `accueil` | `home/` |
 | `compte` | `account/`, `security/`, `contact/`, `purchase/` |
 | `apprentissage` | `exercise/`, `practice/`, `track/`, `chapter/`, `concept/` ; les refus des API du playground (`api.`) et les textes que le serveur lui envoie (`playground.` : lien de retour, note de démarrage et étapes des profils de framework) |
