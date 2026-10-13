@@ -1,13 +1,12 @@
 import type { TestRunResult } from '@forelse/runtime-contract';
+import { m } from '../i18n';
 import type { MentorPanel } from './MentorPanel';
 import { summaryOf } from './results';
 
-/** Ce qu'un lecteur d'écran dit de l'état d'un objectif, avant son libellé : la pastille n'est qu'une couleur. */
-const STATE_TEXT = { passed: 'Atteint : ', failed: 'Pas encore atteint : ', unknown: 'Non vérifié : ' } as const;
 
 /** Le résultat d'un run, en toutes lettres : c'est lui qu'annonce la barre de statut (role="status"). */
 export function spokenSummary(passed: number, total: number): string {
-	return passed === total ? `Tous les objectifs sont atteints (${total} sur ${total}).` : `${passed} objectif${passed > 1 ? 's' : ''} atteint${passed > 1 ? 's' : ''} sur ${total}.`;
+	return m.results.spokenSummary(passed, total);
 }
 
 /** Ce qu'un run de tests affiche : l'état de chaque objectif, la sortie du lanceur, l'erreur à expliquer. */
@@ -30,7 +29,7 @@ export class TestResultsView {
 			const state = !test ? 'unknown' : ok ? 'passed' : 'failed';
 			li.dataset.state = state;
 			const spoken = li.querySelector('.objective-state');
-			if (spoken) spoken.textContent = STATE_TEXT[state];
+			if (spoken) spoken.textContent = m.results.state[state]; // lu avant le libellé : la pastille n'est qu'une couleur
 			li.querySelector('.why')?.remove();
 			if (test && !ok && test.message) {
 				const why = document.createElement('div');

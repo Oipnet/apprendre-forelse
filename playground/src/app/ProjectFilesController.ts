@@ -1,5 +1,6 @@
 import type { CommandResult, Runtime } from '@forelse/runtime-contract';
 import type { EditorPanel } from '../editor/monaco';
+import { m } from '../i18n';
 import { confirmDialog, noticeDialog, undoToast } from './dialogs';
 import { cheminsExplicites, contenuDeDepart, estModifiable } from './editable';
 import { FileTree } from './filetree';
@@ -46,14 +47,14 @@ export class ProjectFilesController {
 		montrer(compact ? false : lireExplorateur());
 		this.$('#reset').addEventListener('click', async () => {
 			const ok = await confirmDialog(this.root, {
-				title: 'Revenir au code de départ ?',
-				message: 'Vos modifications seront remplacées par le code de départ. Vous pourrez annuler juste après.',
-				confirm: 'Réinitialiser',
+				title: m.files.resetTitle,
+				message: m.files.resetMessage,
+				confirm: m.files.reset,
 			});
 			if (!ok) return;
 			const avant = { ...this.session.current };
 			this.reset();
-			undoToast(this.root, 'Code de départ rétabli.', 'Annuler', () => this.restore(avant));
+			undoToast(this.root, m.files.resetDone, m.common.cancel, () => this.restore(avant));
 		});
 	}
 
@@ -134,10 +135,10 @@ export class ProjectFilesController {
 		boutonNouveau.hidden = motifsModifiables.length === 0;
 		boutonNouveau.addEventListener('click', async () => {
 			const autorises = motifsModifiables.join(', ');
-			const chemin = prompt(`Chemin du nouveau fichier (autorisés : ${autorises})`, motifsModifiables[0].replace('*', 'Nouveau'))?.trim().replace(/^\/+/, '');
+			const chemin = prompt(m.files.newFilePrompt(autorises), motifsModifiables[0].replace('*', m.files.newFileName))?.trim().replace(/^\/+/, '');
 			if (!chemin) return;
 			if (chemin.split('/').includes('..') || !estModifiable(chemin, editable)) {
-				void noticeDialog(this.root, 'Fichier non modifiable', `« ${chemin} » ne fait pas partie des fichiers modifiables de cet exercice (${autorises}).`);
+				void noticeDialog(this.root, m.files.notEditableTitle, m.files.notEditable(chemin, autorises));
 				return;
 			}
 			if (this.paths.has(chemin) || this.editor.has(chemin)) {

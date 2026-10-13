@@ -1,4 +1,5 @@
 import type { CommandResult, Runtime } from '@forelse/runtime-contract';
+import { m } from '../i18n';
 import { escapeHtml } from './html';
 
 /**
@@ -118,7 +119,7 @@ export class ConsolePanel {
 	logFromPreview(level: 'warn' | 'error', message: string): void {
 		const entry = document.createElement('div');
 		entry.className = `console-entry preview-${level}${level === 'error' ? ' failed' : ''}`;
-		entry.innerHTML = `<div class="console-command"><span class="prompt">${level === 'error' ? '✖' : '⚠'} navigateur</span></div><pre class="console-result"></pre>`;
+		entry.innerHTML = `<div class="console-command"><span class="prompt">${level === 'error' ? '✖' : '⚠'} ${m.console.browser}</span></div><pre class="console-result"></pre>`;
 		entry.querySelector('pre')!.textContent = message;
 		this.output.append(entry);
 		this.output.scrollTop = this.output.scrollHeight;
@@ -143,11 +144,11 @@ export class ConsolePanel {
 		this.output.append(entry);
 		this.output.scrollTop = this.output.scrollHeight;
 		try {
-			if (!this.runtime.runCommand) throw new Error('Ce runtime n\'a pas de console.');
+			if (!this.runtime.runCommand) throw new Error(m.console.noConsole);
 			const result = await this.runtime.runCommand(args);
 			entry.classList.toggle('failed', result.exitCode !== 0);
-			entry.querySelector('pre')!.innerHTML = (ansiToHtml(result.output) || '<span class="muted">(aucune sortie)</span>')
-				+ (result.exitCode !== 0 ? `\n<span class="exit-code">code de sortie : ${result.exitCode}</span>` : '');
+			entry.querySelector('pre')!.innerHTML = (ansiToHtml(result.output) || `<span class="muted">${m.console.noOutput}</span>`)
+				+ (result.exitCode !== 0 ? `\n<span class="exit-code">${m.console.exitCode(result.exitCode)}</span>` : '');
 			this.onCommandRan(result);
 			return result;
 		} catch (error) {

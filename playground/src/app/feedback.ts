@@ -2,15 +2,10 @@
  * « Un avis ? » : retour d'un apprenant connecté sur l'exercice en cours.
  * Contrat serveur : App\Controller\Api\FeedbackApiController (POST JSON, 201).
  */
+import { m } from '../i18n';
 import { escapeHtml } from './html';
 
-export const FEEDBACK_KINDS: { value: string; label: string }[] = [
-	{ value: 'bug', label: 'Un bogue (les tests, l’aperçu, l’éditeur…)' },
-	{ value: 'unclear', label: 'L’énoncé n’est pas clair' },
-	{ value: 'too-easy', label: 'Trop facile' },
-	{ value: 'too-hard', label: 'Trop difficile' },
-	{ value: 'other', label: 'Autre chose' },
-];
+export const FEEDBACK_KINDS: { value: string; label: string }[] = (['bug', 'unclear', 'too-easy', 'too-hard', 'other'] as const).map((value) => ({ value, label: m.feedback.kinds[value] }));
 
 export interface FeedbackContext {
 	hintsUsed: number;
@@ -31,18 +26,18 @@ export class FeedbackDialog {
 		this.dialog.className = 'feedback';
 		this.dialog.innerHTML = `
 			<form method="dialog" class="feedback-form">
-				<h2>Un avis sur cet exercice ?</h2>
-				<p class="meta">Chaque retour aide à améliorer la plateforme. Merci !</p>
-				<label>Il s’agit de…
+				<h2>${m.feedback.title}</h2>
+				<p class="meta">${m.feedback.intro}</p>
+				<label>${m.feedback.kind}
 					<select name="kind">${FEEDBACK_KINDS.map((k) => `<option value="${k.value}">${escapeHtml(k.label)}</option>`).join('')}</select>
 				</label>
-				<label>Votre message
-					<textarea name="message" rows="5" maxlength="2000" required placeholder="Ce qui a bloqué, ce qui manquait, ce qui a plu…"></textarea>
+				<label>${m.feedback.message}
+					<textarea name="message" rows="5" maxlength="2000" required placeholder="${m.feedback.placeholder}"></textarea>
 				</label>
 				<div class="feedback-actions">
 					<span class="feedback-status" aria-live="polite"></span>
-					<button type="button" class="ghost" data-close>Annuler</button>
-					<button type="submit" class="primary">Envoyer</button>
+					<button type="button" class="ghost" data-close>${m.common.cancel}</button>
+					<button type="submit" class="primary">${m.common.send}</button>
 				</div>
 			</form>`;
 		host.append(this.dialog);
@@ -62,14 +57,14 @@ export class FeedbackDialog {
 			const message = String(data.get('message') ?? '').trim();
 			if (!message) return;
 			submit.disabled = true;
-			status.textContent = 'Envoi…';
+			status.textContent = m.common.sending;
 			try {
 				await this.send(String(data.get('kind')), message);
-				status.textContent = 'Merci, c’est noté !';
+				status.textContent = m.feedback.thanks;
 				form.reset();
 				window.setTimeout(() => this.dialog.close(), 900);
 			} catch (error) {
-				status.textContent = `Envoi impossible : ${String(error instanceof Error ? error.message : error)}`;
+				status.textContent = m.feedback.failed(String(error instanceof Error ? error.message : error));
 			} finally {
 				submit.disabled = false;
 			}
@@ -83,8 +78,8 @@ export class FeedbackDialog {
 			body: JSON.stringify({ kind, message, ...this.context() }),
 			credentials: 'same-origin',
 		});
-		if (response.status === 401) throw new Error('votre session a expiré, reconnectez-vous puis rechargez la page');
-		if (response.status === 429) throw new Error('beaucoup de retours en peu de temps, réessayez dans une heure');
-		if (!response.ok) throw new Error(`réponse ${response.status}`);
+		if (response.status === 401) throw new Error(m.feedback.sessionExpired);
+		if (response.status === 429) throw new Error(m.feedback.tooMany);
+		if (!response.ok) throw new Error(m.feedback.httpError(response.status));
 	}
 }

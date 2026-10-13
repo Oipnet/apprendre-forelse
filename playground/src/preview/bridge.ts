@@ -1,4 +1,5 @@
 import type { HttpRequest, HttpResponse, Runtime } from '@forelse/runtime-contract';
+import { m } from '../i18n';
 import type { HostToRelay, RelayToHost } from './protocol';
 
 /** Au-delà du délai d'activation du Service Worker dans le relais (10 s), pour que son message arrive en premier. */
@@ -68,7 +69,7 @@ export class PreviewBridge {
 			// Le relais annonce « ready » ou « error » ; s'il ne se charge pas du tout (origine du bac à sable
 			// injoignable), rien n'arrive : on le dit plutôt que d'attendre.
 			const timer = setTimeout(() => {
-				reject(new Error(`L'aperçu ne répond pas (${this.sandboxOrigin}) : rechargez la page.`));
+				reject(new Error(m.preview.notResponding(this.sandboxOrigin)));
 			}, RELAY_TIMEOUT_MS);
 			this.onReady = {
 				started: false,
@@ -107,7 +108,7 @@ export class PreviewBridge {
 				case 'error':
 					// Après le démarrage, rejeter ne ferait plus rien : l'erreur irait se perdre.
 					if (this.onReady && !this.onReady.started) this.onReady.reject(new Error(String(message.message)));
-					else this.callbacks.onConsole?.('error', `Relais de l'aperçu : ${String(message.message)}`);
+					else this.callbacks.onConsole?.('error', m.preview.relayError(String(message.message)));
 					break;
 				case 'pong':
 					if (message.seq === this.unanswered?.seq) this.unanswered = undefined;
@@ -185,7 +186,7 @@ export class PreviewBridge {
 		if (!port) return;
 		// Le chemin doit rester sous le préfixe de ce relais.
 		if (typeof request?.url !== 'string' || !request.url.startsWith(this.base)) {
-			port.postMessage({ ok: false, error: 'Requête d\'aperçu refusée.' });
+			port.postMessage({ ok: false, error: m.preview.requestRefused });
 			return;
 		}
 		try {

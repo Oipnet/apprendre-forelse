@@ -3,6 +3,7 @@
  * différences de Monaco (lecture seule). Proposé à la réussite d'un exercice de Pratique.
  */
 import { languageOf, monaco } from '../editor/monaco';
+import { m } from '../i18n';
 import { escapeHtml } from './html';
 
 export class BeforeAfterDialog {
@@ -21,11 +22,11 @@ export class BeforeAfterDialog {
 		this.dialog.className = 'before-after';
 		this.dialog.innerHTML = `
 			<header>
-				<h2>Avant / après</h2>
-				<select aria-label="Fichier"></select>
-				<button type="button" class="ghost" data-close>Fermer</button>
+				<h2>${m.diff.title}</h2>
+				<select aria-label="${m.diff.file}"></select>
+				<button type="button" class="ghost" data-close>${m.common.close}</button>
 			</header>
-			<p class="meta"><span>Code de départ</span><span>Votre code</span></p>
+			<p class="meta"><span>${m.diff.before}</span><span>${m.diff.after}</span></p>
 			<div class="before-after-editor"></div>`;
 		host.append(this.dialog);
 		this.dialog.querySelector('[data-close]')!.addEventListener('click', () => this.dialog.close());
@@ -44,7 +45,7 @@ export class BeforeAfterDialog {
 		select.hidden = changed.length < 2;
 		this.dialog.showModal();
 		if (!changed.length) {
-			this.dialog.querySelector('.before-after-editor')!.textContent = 'Aucun fichier n’a changé.';
+			this.dialog.querySelector('.before-after-editor')!.textContent = m.diff.noChange;
 			return;
 		}
 		this.diff = monaco.editor.createDiffEditor(this.dialog.querySelector<HTMLElement>('.before-after-editor')!, {

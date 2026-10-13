@@ -1,3 +1,4 @@
+import { m } from '../i18n';
 import { escapeHtml } from './html';
 import { markdown } from './markdown';
 import { renderExplanation, renderReview, type ErrorSource, type MentorClient, type Review } from './mentor';
@@ -79,18 +80,18 @@ export class MentorPanel {
 		// Une revue de code, sur demande : un regard sur ce qui pourrait être plus idiomatique.
 		const ask = document.createElement('button');
 		ask.className = 'ghost small';
-		ask.textContent = '🔍 Demander une revue de code';
+		ask.textContent = `🔍 ${m.mentor.askReview}`;
 		ask.addEventListener('click', async () => {
 			ask.disabled = true;
-			ask.textContent = 'Le mentor relit votre code…';
+			ask.textContent = m.mentor.reviewing;
 			try {
 				this.showReview(await mentor.review(deps.files()));
 				ask.remove();
 			} catch (error) {
 				ask.disabled = false;
-				ask.textContent = '🔍 Demander une revue de code';
+				ask.textContent = `🔍 ${m.mentor.askReview}`;
 				this.$('#review').hidden = false;
-				this.$('#review').innerHTML = `<strong>🔍 Revue de code</strong><p class="muted">${escapeHtml(error instanceof Error ? error.message : String(error))}</p>`;
+				this.$('#review').innerHTML = `<strong>🔍 ${m.mentor.review}</strong><p class="muted">${escapeHtml(error instanceof Error ? error.message : String(error))}</p>`;
 			}
 		});
 		return ask;
@@ -102,14 +103,14 @@ export class MentorPanel {
 		const box = this.$('#explain');
 		const label = button.textContent;
 		button.disabled = true;
-		button.textContent = 'Le mentor regarde…';
+		button.textContent = m.mentor.looking;
 		box.hidden = false;
-		box.innerHTML = '<strong><span aria-hidden="true">🩺</span> Le mentor</strong><p class="muted">Il lit l\'erreur et votre code…</p>';
+		box.innerHTML = `<strong><span aria-hidden="true">🩺</span> ${m.mentor.title}</strong><p class="muted">${m.mentor.reading}</p>`;
 		try {
 			box.innerHTML = renderExplanation(await this.mentor.explain(this.deps.files(), error, source), (s) => markdown(s, true));
 			this.bindFileLinks(box);
 		} catch (e) {
-			box.innerHTML = `<strong><span aria-hidden="true">🩺</span> Le mentor</strong><p class="muted">${escapeHtml(e instanceof Error ? e.message : String(e))}</p>`;
+			box.innerHTML = `<strong><span aria-hidden="true">🩺</span> ${m.mentor.title}</strong><p class="muted">${escapeHtml(e instanceof Error ? e.message : String(e))}</p>`;
 		} finally {
 			button.disabled = false;
 			button.textContent = label;

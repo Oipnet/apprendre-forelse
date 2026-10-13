@@ -10,6 +10,7 @@
  * (connect-src, voir docker/Caddyfile) l'empêche d'en appeler les API.
  */
 import { PREVIEW_CONSOLE, type PreviewConsoleMessage } from '@forelse/runtime-contract/preview';
+import { m } from '../i18n';
 import type { RelayToHost, HostToRelay } from '../preview/protocol';
 
 const params = new URLSearchParams(location.search);
@@ -22,13 +23,13 @@ const toHost = (message: RelayToHost, transfer: Transferable[] = []) => window.p
 
 async function start() {
 	if (!/^[a-z0-9]{8,32}$/.test(relayId) || window.parent === window) {
-		document.body.textContent = 'Page réservée à l\'aperçu des exercices.';
+		document.body.textContent = m.sandbox.reserved;
 		return;
 	}
 
 	// Firefox en navigation privée n'a pas de Service Worker : sans ce message, l'erreur serait un TypeError.
 	if (!('serviceWorker' in navigator)) {
-		throw new Error('Ce navigateur refuse les Service Workers ici (navigation privée ?) : l\'aperçu en a besoin.');
+		throw new Error(m.sandbox.serviceWorkersRefused);
 	}
 
 	// Requêtes de l'aperçu : on transmet le MessagePort du SW directement à la plateforme.
@@ -61,7 +62,7 @@ async function start() {
 
 	const registration = await navigator.serviceWorker.register('/preview-sw.js', { scope: '/preview/' });
 	// Service Workers bloqués par le navigateur (réglage, extension) : Chromium résout alors sans rien.
-	if (!registration) throw new Error('Ce navigateur bloque les Service Workers : l\'aperçu en a besoin.');
+	if (!registration) throw new Error(m.sandbox.serviceWorkersBlocked);
 	await activated(registration);
 	toHost({ type: 'ready', base });
 }
@@ -79,7 +80,7 @@ function activated(registration: ServiceWorkerRegistration): Promise<void> {
 	if (registration.active) return Promise.resolve();
 	return new Promise((resolve, reject) => {
 		const timer = setTimeout(() => {
-			reject(new Error(`Le Service Worker de l'aperçu ne s'est pas activé en ${ACTIVATION_TIMEOUT_MS / 1000} s : rechargez la page.`));
+			reject(new Error(m.sandbox.activationTimeout(ACTIVATION_TIMEOUT_MS / 1000)));
 		}, ACTIVATION_TIMEOUT_MS);
 		const follow = (worker: ServiceWorker | null) => {
 			if (!worker) return;
@@ -89,7 +90,7 @@ function activated(registration: ServiceWorkerRegistration): Promise<void> {
 					resolve();
 				} else if (worker.state === 'redundant') {
 					clearTimeout(timer);
-					reject(new Error('Service Worker de l\'aperçu rejeté.'));
+					reject(new Error(m.sandbox.rejected));
 				}
 			};
 			worker.addEventListener('statechange', check);
