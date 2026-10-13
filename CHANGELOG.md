@@ -10,6 +10,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- `app:fuseau:convertir` : change le fuseau d'une instance qui a déjà des données. Les dates enregistrées sont
+  réécrites dans le nouveau `APP_TIMEZONE` (par exemple de UTC à Europe/Paris), une seule fois, l'application arrêtée.
+  Voir « Changer de fuseau » dans `auto-hebergement/README.md`.
 - Partage du certificat de réussite : sa page et celle du parcours terminé proposent à son titulaire les boutons
   LinkedIn, X, Bluesky et « Copier le lien » (`utm_campaign=parcours`), qui mènent à la page publique du certificat.
   Cette page a son image d'aperçu, dessinée par le moteur : le nom du titulaire et le titre du parcours.
