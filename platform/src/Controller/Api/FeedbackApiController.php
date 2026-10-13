@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Retours des apprenants sur un exercice. Contrat : playground/src/app/feedback.ts. */
 #[Route('/api/feedback', format: 'json')]
@@ -21,12 +22,12 @@ final class FeedbackApiController extends AbstractController
 {
     #[Route('/{trackId}/{exerciseId}', name: 'api_feedback', methods: ['POST'])]
     #[Route('/pratique/{exerciseId}', name: 'api_feedback_pratique', defaults: ['trackId' => null], methods: ['POST'], priority: 1)]
-    public function send(?string $trackId, string $exerciseId, #[MapRequestPayload] FeedbackInput $input, ExerciseLocator $exercises, ExerciseAccessGuard $guard, FeedbackService $feedback): JsonResponse
+    public function send(?string $trackId, string $exerciseId, #[MapRequestPayload] FeedbackInput $input, ExerciseLocator $exercises, ExerciseAccessGuard $guard, FeedbackService $feedback, TranslatorInterface $translator): JsonResponse
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
             // 401 (et non une redirection vers la connexion) : c'est une API.
-            throw new HttpException(Response::HTTP_UNAUTHORIZED, 'Connectez-vous pour envoyer un retour.');
+            throw new HttpException(Response::HTTP_UNAUTHORIZED, $translator->trans('api.connexion.retour', [], 'apprentissage'));
         }
         $exercise = $exercises->find($trackId, $exerciseId) ?? throw $this->createNotFoundException();
         // Comme les autres API d'un exercice : un parcours caché n'existe pas (404), un chapitre fermé répond 403.

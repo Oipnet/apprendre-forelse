@@ -16,6 +16,8 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function Symfony\Component\Translation\t;
+
 /** La soutenance de fin de parcours, côté apprenant : réserver un créneau, l'annuler, l'ajouter à son agenda. */
 #[IsGranted('ROLE_USER')]
 final class DefenseController extends AbstractController
@@ -31,13 +33,17 @@ final class DefenseController extends AbstractController
     {
         $user = $this->learner($trackId, $defense);
         if (!$this->isCsrfTokenValid('submit', $request->request->getString('_token'))) {
-            $this->addFlash('danger', 'Le créneau n\'a pas été réservé : rechargez la page et recommencez.');
+            $this->addFlash('danger', t('defense.flash.reservation_expiree', [], 'apprentissage'));
         } else {
             try {
                 $this->management->book($user, $defense);
-                $this->addFlash('success', sprintf('Soutenance réservée le %s. Votre convocation part par email, avec l\'invitation d\'agenda.', $defense->getStartsAt()->format('d/m/Y à H:i')));
+                $startsAt = $defense->getStartsAt();
+                $this->addFlash('success', t('defense.flash.reservee', [
+                    'date' => self::format($startsAt, $request->getLocale(), \IntlDateFormatter::SHORT, \IntlDateFormatter::NONE),
+                    'heure' => self::format($startsAt, $request->getLocale(), \IntlDateFormatter::NONE, \IntlDateFormatter::SHORT),
+                ], 'apprentissage'));
             } catch (DefenseRuleViolation $e) {
-                $this->addFlash('danger', $e->getMessage());
+                $this->addFlash('danger', $e->flash());
             }
         }
 
@@ -49,13 +55,13 @@ final class DefenseController extends AbstractController
     {
         $user = $this->learner($trackId, $defense);
         if (!$this->isCsrfTokenValid('submit', $request->request->getString('_token'))) {
-            $this->addFlash('danger', 'Le créneau n\'a pas été annulé : rechargez la page et recommencez.');
+            $this->addFlash('danger', t('defense.flash.annulation_expiree', [], 'apprentissage'));
         } else {
             try {
                 $this->management->cancel($user, $defense);
-                $this->addFlash('success', 'Créneau annulé : vous pouvez en choisir un autre.');
+                $this->addFlash('success', t('defense.flash.annulee', [], 'apprentissage'));
             } catch (DefenseRuleViolation $e) {
-                $this->addFlash('danger', $e->getMessage());
+                $this->addFlash('danger', $e->flash());
             }
         }
 
@@ -75,6 +81,12 @@ final class DefenseController extends AbstractController
         $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, DefenseCalendar::filename($defense)));
 
         return $response;
+    }
+
+    /** Une date ou une heure de la soutenance, dans la langue de la page (13/10/2026, 14:30 en français). */
+    private static function format(\DateTimeImmutable $date, string $locale, int $dateType, int $timeType): string
+    {
+        return (string) (new \IntlDateFormatter($locale, $dateType, $timeType, $date->getTimezone()))->format($date);
     }
 
     /** L'apprenant connecté, sur un créneau du parcours de l'adresse (sinon 404 : rien à voir ici). */

@@ -14,6 +14,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Qui peut faire appel au mentor, et combien de fois : chaque appel coûte. Le mentor doit être activé, l'exercice
@@ -33,6 +34,7 @@ final readonly class MentorGate
         private RateLimiterFactoryInterface $budget,
         private RequestStack $requests,
         private ClockInterface $clock,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -44,19 +46,19 @@ final readonly class MentorGate
     public function admit(User $user, ?string $trackId, string $exerciseId, bool $requireCompleted = false): Exercise
     {
         if (!$this->mentor->disponible()) {
-            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, 'Le mentor n\'est pas activé sur cette plateforme.');
+            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, $this->translator->trans('api.mentor.inactif', [], 'apprentissage'));
         }
         $exercise = $this->exercises->find($trackId, $exerciseId) ?? throw new NotFoundHttpException();
         $this->guard->check($user, $exercise);
         // La revue compare au code de référence, que le modèle reçoit : avant la réussite, du code qui lui
         // demanderait de la recopier livrerait la solution sans passer par « Voir la solution » (et sa perte d'XP).
         if ($requireCompleted && !$this->progress->find($user, $exercise)?->isCompleted()) {
-            throw new HttpException(Response::HTTP_CONFLICT, 'La revue de code vient après la réussite : faites d\'abord passer les tests.');
+            throw new HttpException(Response::HTTP_CONFLICT, $this->translator->trans('api.mentor.revue_apres_reussite', [], 'apprentissage'));
         }
 
         // Une inscription ne coûte rien : sans adresse confirmée, des comptes jetables multiplieraient la facture.
         if (!$user->isEmailVerified()) {
-            throw new HttpException(Response::HTTP_PRECONDITION_REQUIRED, 'Confirmez votre adresse email pour faire appel au mentor : le lien est dans l\'email reçu à l\'inscription, ou à renvoyer depuis votre compte.');
+            throw new HttpException(Response::HTTP_PRECONDITION_REQUIRED, $this->translator->trans('api.mentor.email_a_confirmer', [], 'apprentissage'));
         }
         $this->consumeQuota($user);
 
@@ -69,11 +71,11 @@ final readonly class MentorGate
         foreach ([$this->mentorLimiter->create((string) $user->getId()), $this->ipLimiter->create($ip)] as $limiter) {
             $limit = $limiter->consume();
             if (!$limit->isAccepted()) {
-                throw new TooManyRequestsHttpException($limit->getRetryAfter()->getTimestamp() - $this->clock->now()->getTimestamp(), 'Le mentor a beaucoup travaillé : réessayez un peu plus tard.');
+                throw new TooManyRequestsHttpException($limit->getRetryAfter()->getTimestamp() - $this->clock->now()->getTimestamp(), $this->translator->trans('api.mentor.trop_d_appels', [], 'apprentissage'));
             }
         }
         if (!$this->budget->create('instance')->consume()->isAccepted()) {
-            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, 'Le mentor a atteint sa limite du jour sur cette plateforme : il revient demain.');
+            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, $this->translator->trans('api.mentor.budget_epuise', [], 'apprentissage'));
         }
     }
 }

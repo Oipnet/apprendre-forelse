@@ -1,0 +1,10 @@
+# Messages des contraintes de validation (#[Assert\…(message: 'cle')]), sans ICU : le validateur passe ses
+# paramètres sous la forme {{ limit }} (voir README.md). Clés api.* : les corps des API du playground (src/Api).
+
+api:
+    retour:
+        type_inconnu: Type de retour inconnu.
+        vide: Dites-nous en un peu plus.
+        trop_long: "Au plus {{ limit }} caractères."
+    mentor:
+        trop_de_code: "Trop de code pour le mentor : {{ total }} caractères, au plus {{ max }}."

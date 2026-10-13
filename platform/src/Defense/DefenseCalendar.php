@@ -7,6 +7,7 @@ use App\Entity\Defense;
 use App\Entity\DefenseMode;
 use App\Theme\Theme;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * L'invitation d'agenda (iCalendar, RFC 5545) d'une soutenance réservée : jointe à la convocation, et téléchargeable
@@ -17,6 +18,7 @@ final readonly class DefenseCalendar
     public function __construct(
         private UrlGeneratorInterface $urls,
         private Theme $theme,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -29,7 +31,7 @@ final readonly class DefenseCalendar
     {
         $url = $this->urls->generate('app_track', ['trackId' => $track->id], UrlGeneratorInterface::ABSOLUTE_URL);
         $utc = new \DateTimeZone('UTC');
-        $description = sprintf('Soutenance de fin de parcours « %s ». %s : %s', $track->title, $defense->getMode()->label(), $defense->getPlace());
+        $description = $this->translator->trans('defense.agenda.description', ['parcours' => $track->title, 'mode' => $defense->getMode()->trans($this->translator), 'lieu' => $defense->getPlace()], 'apprentissage');
         $lines = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
@@ -41,7 +43,7 @@ final readonly class DefenseCalendar
             'DTSTAMP:'.($defense->getBookedAt() ?? $defense->getCreatedAt())->setTimezone($utc)->format('Ymd\THis\Z'),
             'DTSTART:'.$defense->getStartsAt()->setTimezone($utc)->format('Ymd\THis\Z'),
             'DTEND:'.$defense->getEndsAt()->setTimezone($utc)->format('Ymd\THis\Z'),
-            'SUMMARY:'.self::escape(sprintf('Soutenance · %s', $track->title)),
+            'SUMMARY:'.self::escape($this->translator->trans('defense.agenda.titre', ['parcours' => $track->title], 'apprentissage')),
             'LOCATION:'.self::escape($defense->getPlace()),
             'DESCRIPTION:'.self::escape($description),
             'URL:'.(DefenseMode::Online === $defense->getMode() ? $defense->getPlace() : $url),

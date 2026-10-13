@@ -238,6 +238,25 @@ defense:
         acquired: Acquis
         in_progress: "En cours d'acquisition"
         not_acquired: Non acquis
+    # L'invitation d'agenda (DefenseCalendar), jointe à la convocation et téléchargeable depuis le parcours.
+    agenda:
+        titre: "Soutenance · {parcours}"
+        description: "Soutenance de fin de parcours « {parcours} ». {mode} : {lieu}"
+    flash:
+        reservee: "Soutenance réservée le {date} à {heure}. Votre convocation part par email, avec l'invitation d'agenda."
+        reservation_expiree: "Le créneau n'a pas été réservé : rechargez la page et recommencez."
+        annulee: "Créneau annulé : vous pouvez en choisir un autre."
+        annulation_expiree: "Le créneau n'a pas été annulé : rechargez la page et recommencez."
+    erreur:
+        parcours_disparu: "Ce parcours n'existe plus."
+        autre_cohorte: Ce créneau est réservé à une autre cohorte.
+        parcours_incomplet: "La soutenance s'ouvre une fois tous les exercices du parcours réussis."
+        deja_pris: "Ce créneau vient d'être pris : choisissez-en un autre."
+        passe: "Ce créneau est passé : choisissez-en un autre."
+        deja_reserve: "Vous avez déjà un créneau réservé : annulez-le d'abord pour en changer."
+        deja_validee: Votre soutenance est déjà validée.
+        pas_le_votre: "Ce créneau n'est pas le vôtre."
+        commencee: "La soutenance a commencé : elle ne s'annule plus. Écrivez à votre école."
 
 # Les messages flash des fiches de cours et du livret (ChapterController, TrackController).
 flash:
@@ -246,3 +265,21 @@ flash:
     livret_connexion: Connectez-vous pour télécharger le livret du parcours.
     livret_acces: "Le livret fait partie du parcours complet : il faut un accès au parcours pour le télécharger."
     livret_verrouille: "Le livret se débloque une fois le parcours terminé : encore {n, plural, one {# exercice} other {# exercices}} à réussir."
+
+# Les refus des API du playground, lus par l'apprenant (champ « detail » de la réponse JSON).
+api:
+    connexion:
+        exercice: Connectez-vous pour accéder à cet exercice.
+        progression: Connectez-vous pour sauvegarder votre progression.
+        mentor: Connectez-vous pour faire appel au mentor.
+        retour: Connectez-vous pour envoyer un retour.
+    parcours_complet: "Cet exercice fait partie du parcours complet : achetez le parcours pour y accéder."
+    import_trop_grand: "Au plus {max} exercices par import."
+    mentor:
+        inactif: "Le mentor n'est pas activé sur cette plateforme."
+        revue_apres_reussite: "La revue de code vient après la réussite : faites d'abord passer les tests."
+        email_a_confirmer: "Confirmez votre adresse email pour faire appel au mentor : le lien est dans l'email reçu à l'inscription, ou à renvoyer depuis votre compte."
+        trop_d_appels: "Le mentor a beaucoup travaillé : réessayez un peu plus tard."
+        budget_epuise: "Le mentor a atteint sa limite du jour sur cette plateforme : il revient demain."
+        # {raison} : l'explication de l'incident, écrite par le client du modèle.
+        sans_reponse: "Le mentor n'a pas pu répondre : {raison}"
