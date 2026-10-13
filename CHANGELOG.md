@@ -27,6 +27,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   échouer la CI sur un texte réécrit en dur. Restent en français dans leurs gabarits : l'administration, l'atelier,
   l'espace des cohortes, les pages juridiques et les e-mails envoyés à l'administrateur. Les thèmes qui surchargent
   un gabarit n'ont rien à changer.
+- **Suite du premier palier de l'internationalisation** : les titres et descriptions calculés en PHP (domaine
+  `seo`), les textes des images et des liens de partage, les textes que le serveur envoie au playground et les
+  messages des simulateurs Nuxt et Docker passent eux aussi par des catalogues. Les filtres `date_longue`, `euros`
+  et `duree` suivent la langue de la page, og:locale et `inLanguage` celle de la requête, et un nouveau filtre
+  `nombre` remplace `number_format`. Rendu français inchangé.
 
 ## 3.6.2 — 2026-10-13
 
