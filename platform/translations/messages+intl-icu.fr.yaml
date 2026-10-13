@@ -85,3 +85,20 @@ share:
         linkedin: "LinkedIn"
         x: "X"
         bluesky: "Bluesky"
+    # Ce qu'écrivent les images de partage (src/Share) : le surtitre, au-dessus du titre ; alt : leur texte alternatif.
+    carte:
+        pratique: "Pratique · {framework}"
+        certificat: "Certificat de réussite · {nom}"
+        alt: "{surtitre} : {titre}"
+    # Le texte proposé avec le lien (X et Bluesky le préremplissent) ; {framework} vaut « Symfony 8.2 ».
+    texte:
+        pratique: "{framework} : « {titre} », un exercice court à faire dans le navigateur."
+        pratique_reussie: "J'ai réussi l'exercice « {titre} » ({framework}), directement dans le navigateur."
+        certificat: "J'ai terminé le parcours « {parcours} » sur {site} : {n, plural, one {# exercice réussi} other {# exercices réussis}}, chacun validé par des tests."
+
+# Les filtres de format (src/Twig) : unités des durées estimées (|duree). Les nombres arrivent déjà écrits.
+format:
+    duree:
+        minutes: "{minutes} min"
+        heures: "{heures} h"
+        heures_minutes: "{heures} h {minutes}"

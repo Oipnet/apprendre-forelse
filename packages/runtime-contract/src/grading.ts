@@ -1,3 +1,4 @@
+import { m } from './i18n/index.ts';
 import type { Grading, TestCaseResult } from './runtime.ts';
 
 /** Un mutant de la notation : l'application cassée que les tests de l'apprenant doivent détecter. */
@@ -26,8 +27,8 @@ export interface GradingOutcome {
 }
 
 const DEFAULT_WORDING: GradingWording = {
-	noOwnTest: 'Aucun de vos tests ne s\'est exécuté : écrivez au moins un test.',
-	skipped: '(ignoré)',
+	noOwnTest: m.grading.noOwnTest,
+	skipped: m.grading.skipped,
 };
 
 /**
@@ -54,22 +55,20 @@ export async function gradeOwnTests(
 			ownPassing,
 			own.length === 0
 				? wording.noOwnTest
-				: `${failing.length === 1 ? 'Un de vos tests ne passe' : `${failing.length} de vos tests ne passent`} pas sur l'application correcte : ${failing
-						.map((c) => (c.status === 'skipped' ? `${c.name} ${wording.skipped}` : c.name))
-						.join(', ')}.`,
+				: m.grading.ownTestsFailing(failing.length, failing.map((c) => (c.status === 'skipped' ? `${c.name} ${wording.skipped}` : c.name)).join(', ')),
 		),
 	];
 	const report: string[] = [];
 	for (const mutant of grading.mutants) {
 		if (!ownPassing) {
-			cases.push(synthetic(`mutant:${mutant.id}`, false, 'Vos tests doivent d\'abord tous passer sur l\'application correcte.'));
+			cases.push(synthetic(`mutant:${mutant.id}`, false, m.grading.ownTestsFirst));
 			continue;
 		}
 		const run = await runMutant(mutant);
 		// Détecté si un de vos tests échoue, ou si le run n'aboutit pas : l'application est cassée.
 		const detected = Boolean(run.broken) || run.cases.length === 0 || run.cases.some((c) => c.status !== 'passed');
-		cases.push(synthetic(`mutant:${mutant.id}`, detected, `Vos tests passent encore quand ${mutant.label} : il manque un test.`));
-		report.push(`${detected ? '✔ détecté' : '✘ survivant'} — ${mutant.label}`);
+		cases.push(synthetic(`mutant:${mutant.id}`, detected, m.grading.mutantSurvived(mutant.label)));
+		report.push(detected ? m.grading.reportDetected(mutant.label) : m.grading.reportSurvived(mutant.label));
 	}
 	return { cases, report };
 }

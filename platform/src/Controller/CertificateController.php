@@ -98,7 +98,7 @@ final class CertificateController extends AbstractController
             ->setDescription($translator->trans('seo.description', [...$names, 'exercices' => $certificate->getExerciseCount()], 'certificat'))
             ->setCanonical($url);
         if (!$certificate->isRevoked()) {
-            $seo->setImage($share->imageUrl($certificate), $share->card($certificate)->alt(), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT);
+            $seo->setImage($share->imageUrl($certificate), $share->card($certificate)->alt($translator), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT);
         }
         $user = $this->getUser();
         $holder = $user instanceof User && $user->getId() === $certificate->getUser()->getId();

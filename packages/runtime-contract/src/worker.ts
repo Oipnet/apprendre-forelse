@@ -1,4 +1,5 @@
 import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, Runtime, RuntimeRestart } from './runtime.ts';
+import { m } from './i18n/index.ts';
 import { PING, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol.ts';
 
 /**
@@ -111,7 +112,7 @@ export class WorkerRuntime implements Runtime {
 		// l'affaire du battement de cœur.
 		worker.addEventListener('error', (event) => {
 			if (worker !== this.worker) return;
-			const error = new Error(`Worker ${this.workerName} : ${event.message || 'échec du chargement'}`);
+			const error = new Error(m.worker.error(this.workerName, event.message || m.worker.loadFailed));
 			console.error(error, event);
 			if (this.started) return;
 			this.loadError = error;
@@ -154,7 +155,7 @@ export class WorkerRuntime implements Runtime {
 			if (performance.now() - this.lastSign <= this.bootSilenceMs) return;
 			clearInterval(timer);
 			const seconds = Math.round(this.bootSilenceMs / 1000);
-			this.rejectAll(new Error(`${this.label} ne démarre pas (aucun signe depuis ${seconds} s) : rechargez la page.`));
+			this.rejectAll(new Error(m.worker.bootStalled(this.label, seconds)));
 		}, this.pingMs);
 
 		return () => clearInterval(timer);
@@ -177,7 +178,7 @@ export class WorkerRuntime implements Runtime {
 	private restart() {
 		clearInterval(this.heartbeat);
 		const seconds = Math.round(this.silenceMs / 1000);
-		const reason = `${this.label} ne répond plus depuis ${seconds} s : une boucle infinie dans le code ? Il a été redémarré ; corrigez le code, puis relancez.`;
+		const reason = m.worker.frozen(this.label, seconds);
 		this.worker.terminate();
 		this.rejectAll(new Error(reason));
 		this.worker = this.start();
@@ -197,7 +198,7 @@ export class WorkerRuntime implements Runtime {
 			} catch (error) {
 				const message = error instanceof Error ? error.message.split('\n')[0] : String(error);
 				this.emit({ phase: 'failed', error: message });
-				throw new Error(`${this.label} n'a pas pu redémarrer (${message}) : rechargez la page.`);
+				throw new Error(m.worker.restartFailed(this.label, message));
 			} finally {
 				stopGuard();
 			}

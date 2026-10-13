@@ -4,6 +4,7 @@ namespace App\Seo;
 
 use App\Theme\Theme;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Les briques communes aux balises de toutes les pages : les URL absolues, l'éditeur du site, l'auteur des
@@ -14,6 +15,7 @@ final readonly class SchemaOrg
     public function __construct(
         private UrlGeneratorInterface $urls,
         private Theme $theme,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -70,7 +72,7 @@ final readonly class SchemaOrg
     public function breadcrumb(array $trail): array
     {
         $items = [];
-        foreach ([['Accueil', $this->url('app_home')], ...$trail] as [$name, $url]) {
+        foreach ([[$this->translator->trans('commun.accueil', [], 'seo'), $this->url('app_home')], ...$trail] as [$name, $url]) {
             $items[] = ['@type' => 'ListItem', 'position' => \count($items) + 1, 'name' => $name, 'item' => $url];
         }
 

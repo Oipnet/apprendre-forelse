@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Shell\Command;
 
 use Forelse\DockerSim\Fs\MemoryFs;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Interpreter;
 use Forelse\DockerSim\Shell\Machine;
 use Forelse\DockerSim\Shell\Result;
@@ -64,7 +65,7 @@ final class ComposerCommand implements Command
             null, 'list' => Result::ok("   ______\n  / ____/___  __ _ ___  ___  ____ ___ _____\n / /   / __ \\/ _` / _ \\/ _ \\/ __|/ _ \\ '__/\n/ /___| (_) | (_| | |_) | (_) \\__ \\  __/ |\n\\____/ \\___/ \\__,_| .__/ \\___/|___/\\___|_|\n                 |_|\nComposer version ".self::VERSION."\n\nAvailable commands:\n  install        Installs the project dependencies from the composer.lock file if present, or falls back on the composer.json.\n  dump-autoload  Dumps the autoloader.\n  require        Adds required packages to your composer.json and installs them.\n"),
             'install', 'i', 'update', 'u' => $this->install($cwd, $options, $m, $warning, $command[0] === 'u'),
             'dump-autoload', 'dumpautoload' => $this->dumpAutoload($cwd, $options, $m, $warning),
-            'require', 'req', 'create-project' => Result::error(1, $warning."\n  [Composer\\Downloader\\TransportException]\n  The \"https://repo.packagist.org/packages.json\" file could not be downloaded: le simulateur n'a pas accès à Packagist.\n"),
+            'require', 'req', 'create-project' => Result::error(1, $warning."\n  [Composer\\Downloader\\TransportException]\n  The \"https://repo.packagist.org/packages.json\" file could not be downloaded: ".Messages::texte('shell.composer_no_packagist')."\n"),
             'check-platform-reqs' => $this->checkPlatform($cwd, $options, $m),
             'validate' => Result::ok("./composer.json is valid\n"),
             'diagnose' => Result::ok("Checking platform settings: OK\nChecking composer version: OK\n"),
@@ -105,7 +106,7 @@ final class ComposerCommand implements Command
         if ($lock === null) {
             $out .= "No composer.lock file present. Updating dependencies to latest instead of installing from lock file. See https://getcomposer.org/install for more information.\nLoading composer repositories with package information\n";
             if ($this->thirdPartyRequirements($json, $noDev) !== []) {
-                return Result::error(1, $warning."\n  [Composer\\Downloader\\TransportException]\n  The \"https://repo.packagist.org/packages.json\" file could not be downloaded: le simulateur n'a pas accès à Packagist.\n  Copiez aussi composer.lock dans l'image : c'est lui qui fige les versions.\n", $out, 2.0);
+                return Result::error(1, $warning."\n  [Composer\\Downloader\\TransportException]\n  The \"https://repo.packagist.org/packages.json\" file could not be downloaded: ".Messages::texte('shell.composer_no_packagist')."\n  ".Messages::texte('shell.composer_copy_lock')."\n", $out, 2.0);
             }
             $lock = ['packages' => [], 'packages-dev' => []];
         } else {
@@ -125,7 +126,7 @@ final class ComposerCommand implements Command
                 $first = $packages[0];
                 $message = sprintf("    Failed to download %s from dist: The zip extension and unzip/7z commands are both missing, skipping.\nThe php.ini used by your command-line PHP is: %s\n    Now trying to download from source\n  - Syncing %s (%s) into cache\n", $first['name'], $m->fs->exists('/usr/local/etc/php/php.ini') ? '/usr/local/etc/php/php.ini' : '(none)', $first['name'], $first['version'] ?? 'dev');
                 if (!$m->facts->hasBinary('git')) {
-                    $m->note('Composer a besoin de unzip (ou de l\'extension zip) pour décompresser les paquets, ou de git pour les cloner.');
+                    $m->note(Messages::texte('shell.composer_unzip'));
 
                     return Result::error(1, "\nIn SyncHelper.php line 97:\n\n  Failed to download {$first['name']} from source: git was not found in your PATH, skipping source download\n\n", $out.$message, 4.0);
                 }

@@ -283,3 +283,24 @@ api:
         budget_epuise: "Le mentor a atteint sa limite du jour sur cette plateforme : il revient demain."
         # {raison} : l'explication de l'incident, écrite par le client du modèle.
         sans_reponse: "Le mentor n'a pas pu répondre : {raison}"
+
+# Les textes que le serveur envoie au playground dans sa configuration (PlaygroundConfigFactory) et dans les données
+# de l'exercice (ExercisePayloadFactory) : le playground les affiche tels quels.
+playground:
+    # Le lien de retour de la barre, pour un exercice de la Pratique (pour un parcours : son titre).
+    retour_pratique: Pratique
+    # Les profils de framework du moteur (src/Content/Framework/Profiles) : la note affichée pendant le démarrage,
+    # et l'étape de décompression du projet.
+    framework:
+        symfony:
+            demarrage: "Symfony tourne entièrement dans votre navigateur, grâce à PHP compilé en WebAssembly."
+            decompression: Décompression du projet Symfony
+        laravel:
+            demarrage: "Laravel tourne entièrement dans votre navigateur, grâce à PHP compilé en WebAssembly."
+            decompression: Décompression du projet Laravel
+        docker:
+            demarrage: "Docker est simulé dans votre navigateur : images, conteneurs et Compose, et le PHP de vos conteneurs s'exécute pour de vrai en WebAssembly."
+            decompression: Décompression du projet
+        nuxt:
+            demarrage: "Nuxt est simulé dans votre navigateur : vos pages sont rendues côté serveur puis hydratées, comme avec nuxi dev."
+            decompression: Décompression du projet

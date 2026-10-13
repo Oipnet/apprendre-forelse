@@ -26,6 +26,7 @@ import { resolveAppHead } from './runtime/head.ts';
 import type { NuxtLog } from './runtime/nuxt.ts';
 import * as nuxtComposables from './runtime/composables.ts';
 import { compileSfc } from './sfc.ts';
+import { m } from '../i18n/index.ts';
 
 const ASSETS = '/_nuxt/';
 const APP_CONFIG = 'app/app.config.ts';
@@ -374,7 +375,7 @@ function clientImportUrl(files: ProjectFiles, specifier: string, from: string, a
 	if (resolved) {
 		return assetsUrl + encodeURI(resolved);
 	}
-	throw new Error(resolved === null ? cannotFindModule(specifier, from) : `Le simulateur ne fournit pas le paquet « ${specifier} » (importé par ${from})`);
+	throw new Error(resolved === null ? cannotFindModule(specifier, from) : m.modules.unsupportedPackage(specifier, from));
 }
 
 /** Module qui réexporte, sous leur nom, des membres des espaces de noms exposés par client.js. */

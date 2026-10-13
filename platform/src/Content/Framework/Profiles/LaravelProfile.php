@@ -4,6 +4,7 @@ namespace App\Content\Framework\Profiles;
 
 use App\Content\Framework\FrameworkProfile;
 use App\Content\Framework\FrameworkProfileProvider;
+use Symfony\Component\Translation\TranslatableMessage;
 
 /** Laravel : artisan, les dossiers du squelette, les vues Blade compilées dans storage/. */
 final class LaravelProfile implements FrameworkProfileProvider
@@ -16,8 +17,8 @@ final class LaravelProfile implements FrameworkProfileProvider
             order: 20,
             console: 'php artisan',
             consoleExample: 'route:list',
-            bootNote: 'Laravel tourne entièrement dans votre navigateur, grâce à PHP compilé en WebAssembly.',
-            unpackLabel: 'Décompression du projet Laravel',
+            bootNote: new TranslatableMessage('playground.framework.laravel.demarrage', [], 'apprentissage'),
+            unpackLabel: new TranslatableMessage('playground.framework.laravel.decompression', [], 'apprentissage'),
             testRunner: FrameworkProfile::PHPUNIT,
             versionPackage: 'laravel/framework',
             projectDirs: ['app', 'config', 'database', 'resources', 'routes', 'tests'],

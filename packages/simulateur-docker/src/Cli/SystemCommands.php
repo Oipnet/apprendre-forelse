@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Cli;
 
 use Forelse\DockerSim\Engine\Docker;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\Image;
 
@@ -36,7 +37,7 @@ final class SystemCommands implements CliCommand
 
     private function version(): int
     {
-        $this->out->line("Client:\n Version:           ".Application::VERSION."\n API version:       1.51\n Go version:        go1.24.6\n OS/Arch:           linux/amd64\n Context:           default\n\nServer: Docker Engine - Community (simulateur forelse)\n Engine:\n  Version:          ".Application::VERSION."\n  API version:      1.51 (minimum version 1.24)\n  OS/Arch:          linux/amd64\n containerd:\n  Version:          1.7.27\n runc:\n  Version:          1.2.5");
+        $this->out->line("Client:\n Version:           ".Application::VERSION."\n API version:       1.51\n Go version:        go1.24.6\n OS/Arch:           linux/amd64\n Context:           default\n\nServer: Docker Engine - Community ".Messages::texte('cli.version_server')."\n Engine:\n  Version:          ".Application::VERSION."\n  API version:      1.51 (minimum version 1.24)\n  OS/Arch:          linux/amd64\n containerd:\n  Version:          1.7.27\n runc:\n  Version:          1.2.5");
 
         return 0;
     }
@@ -45,7 +46,7 @@ final class SystemCommands implements CliCommand
     {
         $containers = $this->docker->containers();
         $running = \count(array_filter($containers, static fn (Container $c) => $c->isRunning()));
-        $this->out->line(sprintf("Client:\n Version:    %s\n Context:    default\n\nServer:\n Containers: %d\n  Running: %d\n  Paused: 0\n  Stopped: %d\n Images: %d\n Server Version: %s\n Storage Driver: overlayfs (simulé)\n Cgroup Driver: cgroupfs\n Kernel Version: 6.10.14-linuxkit\n Operating System: Simulateur Docker (forelse), dans votre navigateur\n OSType: linux\n Architecture: x86_64\n CPUs: 4\n Total Memory: 7.66GiB\n Docker Root Dir: /var/lib/docker", Application::VERSION, \count($containers), $running, \count($containers) - $running, \count($this->docker->images()), Application::VERSION));
+        $this->out->line(sprintf("Client:\n Version:    %s\n Context:    default\n\nServer:\n Containers: %d\n  Running: %d\n  Paused: 0\n  Stopped: %d\n Images: %d\n Server Version: %s\n Storage Driver: overlayfs %s\n Cgroup Driver: cgroupfs\n Kernel Version: 6.10.14-linuxkit\n Operating System: %s\n OSType: linux\n Architecture: x86_64\n CPUs: 4\n Total Memory: 7.66GiB\n Docker Root Dir: /var/lib/docker", Application::VERSION, \count($containers), $running, \count($containers) - $running, \count($this->docker->images()), Application::VERSION, Messages::texte('cli.info_storage'), Messages::texte('cli.info_os')));
 
         return 0;
     }

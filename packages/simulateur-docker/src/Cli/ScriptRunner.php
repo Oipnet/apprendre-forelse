@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Cli;
 
 use Forelse\DockerSim\Compose\ComposeFile;
+use Forelse\DockerSim\Messages;
 
 /**
  * Exécute un script de commandes docker (lancer.sh, un Makefile simplifié…) : chaque ligne qui commence
@@ -48,11 +49,11 @@ final class ScriptRunner
     {
         $output = '';
         if (array_filter(self::commands($script), static fn (string $c) => !str_starts_with($c, '#')) === []) {
-            return [0, "💡 Le script ne contient encore aucune commande docker (une par ligne, par exemple : docker run …).\n"];
+            return [0, Messages::texte('cli.script_empty')];
         }
         foreach (self::commands($script) as $command) {
             if (str_starts_with($command, '#')) {
-                $output .= sprintf("💡 « %s » n'est pas une commande docker : le simulateur l'ignore.\n", substr($command, 1));
+                $output .= Messages::texte('cli.script_comment', [substr($command, 1)]);
                 continue;
             }
             $prefix = '';

@@ -6,6 +6,7 @@ use App\Content\Article;
 use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Le blog : la liste, et un article (BlogPosting). Un article porte ses propres title et description, écrits
@@ -17,6 +18,7 @@ final readonly class BlogSeo
         private PageSeo $seo,
         private SchemaOrg $schema,
         private Theme $theme,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -24,13 +26,13 @@ final readonly class BlogSeo
     public function index(array $articles): void
     {
         $this->seo
-            ->setTitle('Le blog | '.$this->theme->name(), 'Le blog')
+            ->setTitle($this->trans('blog.titre_marque', ['marque' => $this->theme->name()]), $this->trans('blog.titre'))
             ->setDescription(
-                'Des articles qui partent d\'un exercice pour aller plus loin : ce que fait vraiment le framework, où il s\'arrête, et comment s\'en servir en production. Et les coulisses de la plateforme.',
-                \count($articles) > 1 ? sprintf('%d articles.', \count($articles)) : '',
+                $this->trans('blog.description'),
+                \count($articles) > 1 ? $this->trans('blog.nombre_articles', ['n' => \count($articles)]) : '',
             )
             ->setCanonical($url = $this->schema->url('app_blog'))
-            ->addStructuredData($this->schema->breadcrumb([['Le blog', $url]]));
+            ->addStructuredData($this->schema->breadcrumb([[$this->trans('blog.fil_ariane'), $url]]));
     }
 
     public function article(Article $article): void
@@ -46,7 +48,7 @@ final readonly class BlogSeo
                 'description' => $article->description,
                 'url' => $url,
                 'mainEntityOfPage' => $url,
-                'inLanguage' => 'fr',
+                'inLanguage' => $this->seo->getLanguage(),
                 ...(null === ($image = $this->theme->shareUrl()) ? [] : ['image' => $this->schema->absolute($image)]),
                 'datePublished' => $article->published->format('Y-m-d'),
                 'dateModified' => $article->modified(),
@@ -57,8 +59,14 @@ final readonly class BlogSeo
                 ],
             ])
             ->addStructuredData($this->schema->breadcrumb([
-                ['Le blog', $this->schema->url('app_blog')],
+                [$this->trans('blog.fil_ariane'), $this->schema->url('app_blog')],
                 [$article->title, $url],
             ]));
+    }
+
+    /** @param array<string, mixed> $parameters */
+    private function trans(string $key, array $parameters = []): string
+    {
+        return $this->translator->trans($key, $parameters, 'seo');
     }
 }

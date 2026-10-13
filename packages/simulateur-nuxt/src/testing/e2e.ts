@@ -6,6 +6,7 @@
  */
 import { createFetch } from 'ofetch';
 import type { HttpResponse } from '../http.ts';
+import { m } from '../i18n/index.ts';
 
 export interface SimulatedServer {
 	request(request: { method: string; url: string; headers: Record<string, string>; body?: Uint8Array }): Promise<HttpResponse>;
@@ -79,7 +80,7 @@ export function createE2E(server: SimulatedServer): Record<string, unknown> {
 		url,
 		isDev: () => true,
 		createPage: () => {
-			throw new Error('createPage : pas de navigateur piloté dans le simulateur (Playwright).');
+			throw new Error(m.tests.createPage);
 		},
 	};
 }

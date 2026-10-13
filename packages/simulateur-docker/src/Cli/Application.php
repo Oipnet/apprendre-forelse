@@ -6,6 +6,7 @@ namespace Forelse\DockerSim\Cli;
 
 use Forelse\DockerSim\Engine\Docker;
 use Forelse\DockerSim\Engine\DockerException;
+use Forelse\DockerSim\Messages;
 
 /**
  * La commande « docker » : les variables posées devant, l'aide, puis le domaine qui répond (images,
@@ -77,7 +78,7 @@ final class Application
         $out->line(sprintf("docker: unknown command: docker %s\n\nRun 'docker --help' for more information", $command));
         $premier = explode(' ', $command)[0];
         if (\in_array($premier, ['ls', 'cat', 'cd', 'pwd', 'mkdir', 'rm', 'cp', 'mv', 'vim', 'nano', 'php', 'composer', 'curl', 'grep', 'touch'], true)) {
-            $out->line(sprintf("💡 Cette console ne comprend que les commandes docker. Pour « %s », deux chemins : l'explorateur de fichiers à gauche pour votre projet, ou « docker exec <conteneur> %s » pour l'intérieur d'un conteneur.", $premier, $command));
+            $out->line(Messages::texte('cli.only_docker', [$premier, $command]));
         }
 
         return 1;
@@ -110,7 +111,7 @@ final class Application
     {
         $command = array_shift($argv);
         if ($command === null || \in_array($command, ['--help', '-h', 'help'], true)) {
-            $out->line(Help::MAIN);
+            $out->line(Help::main());
 
             return 0;
         }
@@ -130,11 +131,11 @@ final class Application
         }
 
         return match ($command) {
-            'login' => self::simpleLine($out, 'Login Succeeded (simulateur : aucun registre n\'est contacté)'),
+            'login' => self::simpleLine($out, 'Login Succeeded '.Messages::texte('cli.login')),
             'logout' => self::simpleLine($out, 'Removing login credentials for https://index.docker.io/v1/'),
-            'init' => self::simpleLine($out, "docker init : l'assistant interactif n'est pas disponible dans le simulateur.\nÉcrivez le Dockerfile et le compose.yaml à la main : c'est l'objet du parcours.", 1),
-            'stats' => self::simpleLine($out, '(simulateur : pas de mesure de CPU ni de mémoire)'),
-            'attach', 'wait', 'pause', 'unpause', 'rename', 'update', 'commit', 'save', 'load', 'export', 'import', 'diff', 'events', 'context', 'swarm', 'service', 'stack', 'node', 'secret', 'config', 'plugin', 'trust', 'scout', 'manifest' => self::simpleLine($out, sprintf('docker %s : commande non simulée.', $command), 1),
+            'init' => self::simpleLine($out, Messages::texte('cli.init'), 1),
+            'stats' => self::simpleLine($out, Messages::texte('cli.stats')),
+            'attach', 'wait', 'pause', 'unpause', 'rename', 'update', 'commit', 'save', 'load', 'export', 'import', 'diff', 'events', 'context', 'swarm', 'service', 'stack', 'node', 'secret', 'config', 'plugin', 'trust', 'scout', 'manifest' => self::simpleLine($out, Messages::texte('cli.not_simulated', [$command]), 1),
             default => self::unknown($out, $command),
         };
     }

@@ -14,6 +14,7 @@
  * première dont la méthode, la query et les en-têtes indiqués correspondent. Les tests d'un exercice
  * peuvent imposer une autre réponse (panne, lenteur, coupure) et compter les appels.
  */
+import { m } from '../i18n/index.ts';
 
 export interface RecordedResponse {
 	/** 200 par défaut. */
@@ -77,11 +78,11 @@ export class SimulatedNetwork {
 		const key = `${url.origin}${url.pathname}`;
 		const response = this.overrides.get(key) ?? this.match(key, request.method, url, headers);
 		if (!response) {
-			throw new TypeError('fetch failed', { cause: new Error(`Le bac à sable n'a pas accès à Internet : aucune réponse enregistrée pour ${key} dans ${NETWORK_FILE}.`) });
+			throw new TypeError('fetch failed', { cause: new Error(m.network.noInternet(key, NETWORK_FILE)) });
 		}
 		await wait(response.delai ?? 0, init.signal ?? undefined);
 		if (response.coupure) {
-			throw new TypeError('fetch failed', { cause: new Error(`Connexion interrompue : ${key} ne répond pas.`) });
+			throw new TypeError('fetch failed', { cause: new Error(m.network.connectionLost(key)) });
 		}
 		const status = response.statut ?? 200;
 		const json = response.corps !== undefined && typeof response.corps !== 'string';
@@ -127,6 +128,6 @@ export function parseNetworkFile(source: string | undefined): RecordedNetwork {
 	try {
 		return JSON.parse(source) as RecordedNetwork;
 	} catch (error) {
-		throw new SyntaxError(`${NETWORK_FILE} n'est pas du JSON valide : ${(error as Error).message}`);
+		throw new SyntaxError(m.network.invalidFile(NETWORK_FILE, (error as Error).message));
 	}
 }

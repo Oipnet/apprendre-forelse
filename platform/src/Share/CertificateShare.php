@@ -4,6 +4,7 @@ namespace App\Share;
 
 use App\Entity\Certificate;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Le partage d'un certificat de réussite : son image (« Certificat de réussite · Ada Lovelace », le parcours, le site)
@@ -16,12 +17,13 @@ final readonly class CertificateShare
     public function __construct(
         private UrlGeneratorInterface $urls,
         private ShareImage $images,
+        private TranslatorInterface $translator,
     ) {
     }
 
     public function card(Certificate $certificate): ShareCard
     {
-        return new ShareCard('Certificat de réussite · '.$certificate->getHolderName(), $certificate->getTrackTitle(), $this->host());
+        return new ShareCard($this->translator->trans('share.carte.certificat', ['nom' => $certificate->getHolderName()]), $certificate->getTrackTitle(), $this->host());
     }
 
     /** L'adresse absolue de l'image, versionnée : elle change avec ce qu'elle écrit. */
@@ -40,7 +42,7 @@ final readonly class CertificateShare
 
         return ShareLinks::of(
             $this->urls->generate('app_certificate', ['code' => $certificate->getCode()], UrlGeneratorInterface::ABSOLUTE_URL),
-            sprintf('J\'ai terminé le parcours « %s » sur %s : %s, chacun validé par des tests.', $certificate->getTrackTitle(), $this->host(), $count > 1 ? $count.' exercices réussis' : '1 exercice réussi'),
+            $this->translator->trans('share.texte.certificat', ['parcours' => $certificate->getTrackTitle(), 'site' => $this->host(), 'n' => max(1, $count)]),
             self::CAMPAIGN,
         );
     }

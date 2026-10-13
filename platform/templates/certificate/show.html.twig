@@ -28,7 +28,7 @@
         {% endif %}
 
         <p class="certificate-summary mt-6">
-            {{ 'show.resume'|trans({exercices: count, sans_solution: certificate.withoutSolutionCount, sans_aide: certificate.unaidedCount, xp: certificate.xp|number_format(0, ',', ' ')}) }}
+            {{ 'show.resume'|trans({exercices: count, sans_solution: certificate.withoutSolutionCount, sans_aide: certificate.unaidedCount, xp: certificate.xp|nombre}) }}
         </p>
 
         {% if certificate.mentions %}

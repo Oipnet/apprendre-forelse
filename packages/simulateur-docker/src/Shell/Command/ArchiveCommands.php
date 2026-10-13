@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Shell\Command;
 
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Interpreter;
 use Forelse\DockerSim\Shell\Machine;
 use Forelse\DockerSim\Shell\Result;
@@ -28,7 +29,7 @@ final class ArchiveCommands extends CoreutilsCommands
     /** @param list<string> $args */
     private function archive(string $name, array $args, Machine $m): Result
     {
-        $m->note(sprintf('« %s » : les archives ne sont pas simulées (commande considérée comme réussie).', $name));
+        $m->note(Messages::texte('shell.archives', [$name]));
 
         return Result::ok('', 0.3);
     }

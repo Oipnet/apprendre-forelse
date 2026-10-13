@@ -10,6 +10,7 @@ use Forelse\DockerSim\Engine\DockerException;
 use Forelse\DockerSim\Engine\PortSyntax;
 use Forelse\DockerSim\Engine\VolumeSyntax;
 use Forelse\DockerSim\Fs\Path;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\ProcessKind;
 use Forelse\DockerSim\State\Store;
@@ -189,13 +190,13 @@ final class ContainerCommands implements CliCommand
         }
         if ($args->has('interactive') && $args->has('tty') && $container->isRunning() && $container->process === ProcessKind::Idle) {
             $this->out->write(implode("\n", $container->logs).($container->logs !== [] ? "\n" : ''));
-            $this->out->line(sprintf('💡 La console du simulateur n\'est pas un terminal : impossible d\'entrer dans le conteneur. Il tourne en arrière-plan (%s) ; lancez vos commandes avec docker exec %s <commande>.', $container->name, $container->name));
+            $this->out->line(Messages::texte('cli.run_no_tty', [$container->name, $container->name]));
 
             return 0;
         }
         $this->out->write(implode("\n", $container->logs).($container->logs !== [] ? "\n" : ''));
         if ($container->isRunning()) {
-            $this->out->line(sprintf('💡 Le conteneur %s tourne. Un vrai terminal resterait attaché à ses journaux (Ctrl+C l\'arrêterait) ; ici la main vous est rendue et il continue en arrière-plan : docker ps, docker logs %s, docker stop %s.', $container->name, $container->name, $container->name));
+            $this->out->line(Messages::texte('cli.run_detached', [$container->name, $container->name, $container->name]));
 
             return 0;
         }
@@ -434,7 +435,7 @@ final class ContainerCommands implements CliCommand
         }
         $this->out->write($lines === [] ? '' : implode("\n", $lines)."\n");
         if ($args->has('follow')) {
-            $this->out->line('💡 (simulateur : -f ne suit pas les journaux en continu ; relancez la commande pour voir les nouvelles lignes)');
+            $this->out->line(Messages::texte('cli.logs_follow'));
         }
 
         return 0;
@@ -465,7 +466,7 @@ final class ContainerCommands implements CliCommand
         }
         $this->out->write($output);
         if ($interactiveShell && $code === 0) {
-            $this->out->line(sprintf('💡 La console du simulateur n\'est pas un terminal : pas de session interactive. Passez la commande directement, par exemple : docker exec %s %s', $name, basename($argv[0]) === 'psql' ? 'psql -U app -c "\\l"' : 'sh -c "ls -la"'));
+            $this->out->line(Messages::texte('cli.exec_no_tty', [$name, basename($argv[0]) === 'psql' ? 'psql -U app -c "\\l"' : 'sh -c "ls -la"']));
         }
 
         return $code;

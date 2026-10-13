@@ -7,6 +7,7 @@ namespace Forelse\DockerSim\Http;
 use Forelse\DockerSim\Fs\DiskFs;
 use Forelse\DockerSim\Fs\FileSystem;
 use Forelse\DockerSim\Fs\Path;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Container;
 
 /**
@@ -110,18 +111,18 @@ final class ApacheServer
                 }
             }
             if ($htaccess['front'] === null) {
-                return HttpResponse::page(403, ErrorPages::apache(403, $port), self::SIGNATURE, [...$trace, 'Options -Indexes : pas de liste de fichiers']);
+                return HttpResponse::page(403, ErrorPages::apache(403, $port), self::SIGNATURE, [...$trace, Messages::texte('trace.no_listing')]);
             }
         }
         if ($htaccess['front'] !== null) {
             $front = rtrim($root, '/').'/'.ltrim($htaccess['front'], '/');
             if ($fs->isFile($front)) {
-                return $this->file($container, $fs, $root, $front, $request, [...$trace, 'réécrit vers '.$htaccess['front'].' ('.$htaccess['via'].')']);
+                return $this->file($container, $fs, $root, $front, $request, [...$trace, Messages::texte('trace.rewritten', [$htaccess['front'], $htaccess['via']])]);
             }
         }
         $this->context->log($container, sprintf('[Mon Sep 15 10:00:00.000000 2026] [core:info] [pid 21] [client %s:52311] AH00128: File does not exist: %s', $request->clientIp, $target));
 
-        return HttpResponse::page(404, ErrorPages::apache(404, $port), self::SIGNATURE, [...$trace, 'fichier introuvable : '.$target]);
+        return HttpResponse::page(404, ErrorPages::apache(404, $port), self::SIGNATURE, [...$trace, Messages::texte('trace.file_not_found', [$target])]);
     }
 
     /** @param list<string> $trace */
@@ -130,7 +131,7 @@ final class ApacheServer
         if (str_ends_with($file, '.php')) {
             $scriptName = substr($file, \strlen(rtrim($root, '/'))) ?: '/index.php';
             $response = $this->context->php()->serve($container, $file, $root, $request, $scriptName, ['SERVER_SOFTWARE' => self::SIGNATURE]);
-            $response->trace = [...$trace, 'script PHP : '.$file, ...$response->trace];
+            $response->trace = [...$trace, Messages::texte('trace.php_script', [$file]), ...$response->trace];
             foreach ($response->trace as $line) {
                 if (str_starts_with($line, 'PHP ')) {
                     $this->context->log($container, sprintf('[Mon Sep 15 10:00:00.000000 2026] [php:warn] [pid 21] [client %s:52311] %s', $request->clientIp, $this->context->php()->translatePaths($container, $line)));
@@ -149,7 +150,7 @@ final class ApacheServer
             return $response;
         }
         $response = StaticFiles::serve($fs, $file, self::SIGNATURE);
-        $response->trace = [...$trace, 'fichier statique : '.$file];
+        $response->trace = [...$trace, Messages::texte('trace.static_file', [$file])];
 
         return $response;
     }

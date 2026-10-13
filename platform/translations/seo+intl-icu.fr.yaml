@@ -1,0 +1,99 @@
+# Balises de référencement calculées en PHP (src/Seo) : title, description, noms lisibles des données structurées
+# (schema.org) et fil d'Ariane (voir README.md). Les valeurs techniques de schema.org (@type, Online, Free…) restent
+# dans le code. Un title « … | {marque} » est le candidat le plus long : PageSeo garde le premier qui tient en 60 caractères.
+# ICU : une apostrophe suivie d'une accolade se double (d''{mois}) ; les autres s'écrivent telles quelles.
+
+commun:
+    # Le premier maillon de tout fil d'Ariane (SchemaOrg::breadcrumb).
+    accueil: Accueil
+    # Le dernier séparateur d'une liste de frameworks : « Symfony, Laravel et Nuxt ».
+    liste: "{debut} et {dernier}"
+
+# Les pages fixes déclarées par #[Seo] (voir App\Seo\Seo).
+auto_hebergement:
+    titre: "Auto-héberger la plateforme, moteur open source"
+    description: "Le moteur de {marque} est libre (AGPL-3.0) : installez la plateforme sur votre serveur avec Docker et écrivez vos parcours."
+    fil_ariane: Auto-hébergement
+
+blog:
+    titre: Le blog
+    titre_marque: "Le blog | {marque}"
+    description: "Des articles qui partent d'un exercice pour aller plus loin : ce que fait vraiment le framework, où il s'arrête, et comment s'en servir en production. Et les coulisses de la plateforme."
+    # Complément de la description, quand il y a plus d'un article.
+    nombre_articles: "{n} articles."
+    fil_ariane: Le blog
+
+notions:
+    titre: Les notions travaillées en exercices
+    titre_marque: "Les notions travaillées en exercices | {marque}"
+    description: "{n} notions de développement, et pour chacune les exercices qui la font pratiquer : on écrit le code dans le navigateur, des tests disent s'il est juste."
+    fil_ariane: Les notions
+
+# La page d'une notion ; {n} : ses exercices de parcours et de Pratique.
+notion:
+    titre_marque: "{notion} : {n} exercices pour la pratiquer | {marque}"
+    titre: "{notion} : {n} exercices pour la pratiquer"
+    titre_court: "{notion} en exercices"
+    description: "Les {n} exercices qui font travailler {notion} : chacun pose un problème à résoudre en écrivant du code dans le navigateur, corrigé par des tests."
+    complement: "{n} exercices pour la pratiquer, dans le navigateur."
+
+# Le catalogue (/parcours) ; {sujet} : les frameworks des parcours publiés, ou sujet_par_defaut.
+catalogue:
+    sujet_par_defaut: le développement web
+    titre_marque: "Parcours pour apprendre {sujet} en codant | {marque}"
+    titre: "Apprendre {sujet} en codant : les parcours"
+    titre_court: "Les parcours : apprendre en codant"
+    description: "Apprenez {sujet} en écrivant du code dans votre navigateur : un vrai projet, un aperçu en direct, des tests qui valident chaque objectif."
+    complement: Premier chapitre gratuit avec un compte.
+    # Le nom de la liste des cours (ItemList).
+    liste: Les parcours
+    fil_ariane: Parcours
+
+parcours:
+    # Le title généré d'un parcours (TrackSeoText), sans la marque. {public} : « pour les devs PHP », tiré du titre.
+    titre_public: "Formation {framework} en ligne {public}"
+    titre: "Formation {framework} en ligne : {parcours}"
+    # Les chiffres qui terminent la description générée.
+    chiffres: "{chapitres, plural, one {# chapitre} other {# chapitres}}, {exercices, plural, one {# exercice} other {# exercices}}, {gratuit, select, oui {gratuit} other {premier chapitre gratuit}}."
+    # Le niveau visé (clé « level » de track.yaml), en educationalLevel du Course.
+    niveau:
+        beginner: Débutant
+        intermediate: Intermédiaire
+        advanced: Avancé
+
+# Les titres d'une page de contenu menés par ses notions : {libelle} distingue deux pages d'une même notion.
+contenu:
+    notions_framework: "{notions} en {framework} – {libelle}"
+    notion: "{notion} – {libelle}"
+
+chapitre:
+    titre: "{chapitre} – chapitre {numero}, parcours {framework}"
+    # {notions} : les notions de ses exercices (ou son titre), en minuscules.
+    description: "Chapitre {numero} du parcours {parcours} : {notions}. {n, plural, one {# exercice à faire en écrivant du code, corrigé par des tests.} other {# exercices à faire en écrivant du code, corrigés par des tests.}}"
+
+exercice:
+    libelle: "exercice : {exercice}"
+    titre: "{exercice} – exercice {framework}"
+    complement: "Un exercice du chapitre « {chapitre} », parcours {parcours}."
+
+pratique:
+    fil_ariane: Pratique
+    # La liste ; {sujet} : les frameworks des exercices, ou sujet_par_defaut.
+    sujet_par_defaut: des frameworks
+    titre_marque: "Nouveautés {sujet} en exercices courts | {marque}"
+    titre: "Nouveautés {sujet} en exercices courts"
+    titre_court: Nouveautés des frameworks en exercices courts
+    description: "Des exercices courts, à part des parcours : un code écrit à l'ancienne à réécrire avec la nouveauté du framework, directement dans le navigateur."
+    # Les nouveautés d'une version : {version} vaut « Symfony 8.2 ».
+    version:
+        titre_marque: "Nouveautés {version} en exercices | {marque}"
+        titre: "Nouveautés {version} en exercices"
+        nouveautes: "Nouveautés {version}"
+        description: "{n} exercices courts sur les nouveautés de {version}, autour de {notions}. À écrire dans le navigateur, corrigés par des tests."
+        description_sans_notions: "{n} exercices courts sur les nouveautés de {version} : un code écrit à l'ancienne, à réécrire avec la fonctionnalité."
+        complement: "Les nouveautés de {version} en {n} exercices courts, à faire dans le navigateur."
+    # Un exercice : {framework} vaut « Symfony 8.2 », {fonctionnalite} son titre, l'initiale en minuscule.
+    exercice:
+        titre: "{framework} : {fonctionnalite} – exercice"
+        titre_court: "{framework} : {fonctionnalite}"
+        complement: "Un exercice court de la Pratique {framework}, à faire dans le navigateur."

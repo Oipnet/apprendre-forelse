@@ -8,6 +8,7 @@ use Forelse\DockerSim\Fs\DiskFs;
 use Forelse\DockerSim\Fs\Path;
 use Forelse\DockerSim\Http\Nginx\ConfigSnapshot;
 use Forelse\DockerSim\Http\Nginx\NginxConfig;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\ProcessKind;
 
@@ -34,7 +35,7 @@ final class NginxServer
         $config = NginxConfig::load(\is_array($snapshot) ? new ConfigSnapshot($fs, $snapshot) : $fs);
         $server = $config->serverFor($port, explode(':', $request->headers['host'] ?? $request->host)[0]);
         if ($server === null) {
-            return HttpResponse::failure('refused', sprintf('nginx (%s) n\'écoute pas sur le port %d', $container->name, $port));
+            return HttpResponse::failure('refused', Messages::texte('trace.nginx_not_listening', [$container->name, $port]));
         }
         $response = $this->process($container, $fs, $server, $request, 0);
         $response->headers['Server'] ??= self::SIGNATURE;
@@ -55,12 +56,12 @@ final class NginxServer
         $directives = $location['directives'] ?? [];
         $root = $directives['root'][0][0] ?? $server['root'] ?? '/etc/nginx/html';
         $index = $directives['index'][0] ?? $server['index'];
-        $trace = [sprintf('nginx (%s) : location %s', $container->name, $location !== null ? trim($location['modifier'].' '.$location['pattern']) : '(aucune)')];
+        $trace = [sprintf('nginx (%s) : location %s', $container->name, $location !== null ? trim($location['modifier'].' '.$location['pattern']) : Messages::texte('trace.no_location'))];
 
         if (!$this->allowed($location['rules'] ?? [], $server['rules'], $request->clientIp)) {
             $this->context->log($container, sprintf('%s [error] 29#29: *1 access forbidden by rule, client: %s, server: %s, request: "%s %s HTTP/1.1", host: "%s"', gmdate('Y/m/d H:i:s'), $request->clientIp, $server['serverName'][0] ?? 'localhost', $request->method, $request->requestUri(), $request->headers['host'] ?? $request->host));
 
-            return HttpResponse::page(403, ErrorPages::nginx(403), self::SIGNATURE, [...$trace, 'deny : accès refusé par une règle']);
+            return HttpResponse::page(403, ErrorPages::nginx(403), self::SIGNATURE, [...$trace, Messages::texte('trace.denied')]);
         }
 
         // Un « return » posé dans le bloc server s'exécute avant même le choix de la location.
@@ -100,7 +101,7 @@ final class NginxServer
             if (str_starts_with($fallback, '=')) {
                 $code = (int) substr($fallback, 1);
 
-                return HttpResponse::page($code, ErrorPages::nginx($code), self::SIGNATURE, [...$trace, 'try_files : aucun fichier, '.$fallback]);
+                return HttpResponse::page($code, ErrorPages::nginx($code), self::SIGNATURE, [...$trace, Messages::texte('trace.try_files', [$fallback])]);
             }
             $uri = str_replace(['$uri', '$query_string', '$args', '$is_args'], [$request->path, $request->query, $request->query, $request->query !== '' ? '?' : ''], $fallback);
             // Le repli est une redirection interne : sans « ? » dans la cible, nginx ne garde pas les arguments.
@@ -117,7 +118,7 @@ final class NginxServer
         }
         $this->context->log($container, sprintf('%s [error] 29#29: *1 open() "%s" failed (2: No such file or directory), client: %s, server: localhost, request: "%s %s HTTP/1.1"', gmdate('Y/m/d H:i:s'), $file, $request->clientIp, $request->method, $request->requestUri()));
 
-        return HttpResponse::page(404, ErrorPages::nginx(404), self::SIGNATURE, [...$trace, 'fichier introuvable : '.$file]);
+        return HttpResponse::page(404, ErrorPages::nginx(404), self::SIGNATURE, [...$trace, Messages::texte('trace.file_not_found', [$file])]);
     }
 
     /**
@@ -139,14 +140,14 @@ final class NginxServer
         }
         $this->context->log($container, sprintf('%s [error] 29#29: *1 directory index of "%s/" is forbidden, client: %s', gmdate('Y/m/d H:i:s'), rtrim($dir, '/'), $request->clientIp));
 
-        return HttpResponse::page(403, ErrorPages::nginx(403), self::SIGNATURE, [...$trace, 'pas de fichier index dans '.$dir]);
+        return HttpResponse::page(403, ErrorPages::nginx(403), self::SIGNATURE, [...$trace, Messages::texte('trace.no_index', [$dir])]);
     }
 
     /** @param list<string> $trace */
     private function static(DiskFs $fs, string $file, array $trace): HttpResponse
     {
         $response = StaticFiles::serve($fs, $file, self::SIGNATURE);
-        $response->trace = [...$trace, 'fichier statique : '.$file.(str_ends_with($file, '.php') ? ' (servi tel quel : aucune location ne le passe à PHP)' : '')];
+        $response->trace = [...$trace, Messages::texte('trace.static_file', [$file]).(str_ends_with($file, '.php') ? Messages::texte('trace.static_php') : '')];
 
         return $response;
     }
@@ -250,12 +251,12 @@ final class NginxServer
         if ($upstream === null || $state !== 'open') {
             $this->context->log($container, sprintf('%s [error] 29#29: *1 connect() failed (111: Connection refused) while connecting to upstream, client: %s, server: localhost, request: "%s %s HTTP/1.1", upstream: "fastcgi://%s"', gmdate('Y/m/d H:i:s'), $request->clientIp, $request->method, $request->requestUri(), $target));
 
-            return HttpResponse::page(502, ErrorPages::nginx(502), self::SIGNATURE, [...$trace, sprintf('fastcgi_pass %s : %s', $target, $state === 'unresolved' ? 'nom inconnu' : 'connexion refusée')]);
+            return HttpResponse::page(502, ErrorPages::nginx(502), self::SIGNATURE, [...$trace, sprintf('fastcgi_pass %s : %s', $target, $state === 'unresolved' ? Messages::texte('trace.unknown_name') : Messages::texte('trace.refused'))]);
         }
         if ($process !== ProcessKind::PhpFpm) {
             $this->context->log($container, sprintf('%s [error] 29#29: *1 upstream sent unsupported FastCGI protocol version: 72 while reading response header from upstream, upstream: "fastcgi://%s"', gmdate('Y/m/d H:i:s'), $target));
 
-            return HttpResponse::page(502, ErrorPages::nginx(502), self::SIGNATURE, [...$trace, sprintf('fastcgi_pass %s : %s ne parle pas FastCGI', $target, $process->value ?? 'ce processus')]);
+            return HttpResponse::page(502, ErrorPages::nginx(502), self::SIGNATURE, [...$trace, Messages::texte('trace.not_fastcgi', [$target, $process->value ?? Messages::texte('trace.this_process')])]);
         }
         $scriptName = $request->path;
         $params = [];
@@ -268,7 +269,7 @@ final class NginxServer
             $this->context->log($container, sprintf('%s [error] 29#29: *1 FastCGI sent in stderr: "Primary script unknown" while reading response header from upstream, client: %s, request: "%s %s HTTP/1.1", upstream: "fastcgi://%s"', gmdate('Y/m/d H:i:s'), $request->clientIp, $request->method, $request->requestUri(), $target));
             $this->context->log($upstream, sprintf('%s - %s "%s %s" 404', $request->clientIp, gmdate('d/M/Y:H:i:s O'), $request->method, $request->uri()));
 
-            return new HttpResponse(404, ['Content-Type' => 'text/html; charset=UTF-8', 'Server' => self::SIGNATURE], "File not found.\n", null, [...$trace, $scriptFilename === '' ? 'fastcgi_param SCRIPT_FILENAME absent : php-fpm ne sait pas quel script lancer' : sprintf('php-fpm (%s) : %s n\'existe pas dans ce conteneur', $upstream->name, $scriptFilename)]);
+            return new HttpResponse(404, ['Content-Type' => 'text/html; charset=UTF-8', 'Server' => self::SIGNATURE], "File not found.\n", null, [...$trace, $scriptFilename === '' ? Messages::texte('trace.no_script_filename') : Messages::texte('trace.script_missing', [$upstream->name, $scriptFilename])]);
         }
         $response = $this->context->php()->serve($upstream, $scriptFilename, $root, $request, $scriptName, ['SERVER_SOFTWARE' => self::SIGNATURE]);
         $response->trace = [...$trace, sprintf('fastcgi_pass %s → php-fpm (%s) : %s', $target, $upstream->name, $scriptFilename), ...$response->trace];

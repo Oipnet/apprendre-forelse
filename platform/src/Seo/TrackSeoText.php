@@ -7,6 +7,7 @@ use App\Theme\Theme;
 use App\Repository\TrackPricingRepository;
 use App\Repository\TrackSeoRepository;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Title et description d'une page de parcours. Ce qui est saisi dans l'admin (TrackSeo) passe avant la génération :
@@ -14,6 +15,9 @@ use Psr\Log\LoggerInterface;
  *    framework suivi de « pour … » ; sinon « Formation Symfony en ligne : Découverte ». Toujours suivi du nom
  *    de l'instance (« | <nom du thème> ») ;
  *  - description : le résumé du parcours, puis les chiffres (« 12 chapitres, 74 exercices, premier chapitre gratuit. »).
+ *
+ * Les textes générés viennent du domaine de traduction seo (parcours.*), dans la langue de la page. La détection du
+ * public (« pour … ») et la coupe sur un mot lisent le titre et le résumé du parcours, écrits en français par l'auteur.
  */
 final readonly class TrackSeoText
 {
@@ -27,12 +31,13 @@ final readonly class TrackSeoText
         private TrackPricingRepository $pricings,
         private LoggerInterface $logger,
         private Theme $theme,
+        private TranslatorInterface $translator,
     ) {
     }
 
     public function title(Track $track, string $framework): string
     {
-        $title = $this->overrides->findOneByTrack($track->id)?->getSeoTitle() ?? self::generatedTitle($track->title, $framework);
+        $title = $this->overrides->findOneByTrack($track->id)?->getSeoTitle() ?? $this->generatedTitle($track->title, $framework);
         if (mb_strlen($title) > self::TITLE_MAX) {
             $this->logger->warning('Title du parcours « {track} » trop long : {length} caractères, {max} au plus sans « | {site} ».', [
                 'track' => $track->id, 'length' => mb_strlen($title), 'max' => self::TITLE_MAX, 'site' => $this->theme->name(), 'title' => $title,
@@ -44,7 +49,7 @@ final readonly class TrackSeoText
 
     public function description(Track $track): string
     {
-        return $this->overrides->findOneByTrack($track->id)?->getSeoDescription() ?? self::generatedDescription(
+        return $this->overrides->findOneByTrack($track->id)?->getSeoDescription() ?? $this->generatedDescription(
             $track->description,
             \count($track->chapters),
             \count($track->exerciseIds()),
@@ -53,13 +58,13 @@ final readonly class TrackSeoText
         );
     }
 
-    public static function generatedTitle(string $trackTitle, string $framework): string
+    public function generatedTitle(string $trackTitle, string $framework): string
     {
         $audience = self::audience($trackTitle, $framework);
 
         return null !== $audience
-            ? sprintf('Formation %s en ligne %s', $framework, $audience)
-            : sprintf('Formation %s en ligne : %s', $framework, self::clean($trackTitle));
+            ? $this->translator->trans('parcours.titre_public', ['framework' => $framework, 'public' => $audience], 'seo')
+            : $this->translator->trans('parcours.titre', ['framework' => $framework, 'parcours' => self::clean($trackTitle)], 'seo');
     }
 
     /** « Symfony pour les devs PHP » → « pour les devs PHP » ; null si le titre n'a pas cette forme. */
@@ -70,13 +75,9 @@ final readonly class TrackSeoText
         return 1 === preg_match($pattern, self::clean($trackTitle), $matches) ? rtrim($matches[1], ' .') : null;
     }
 
-    public static function generatedDescription(string $summary, int $chapters, int $exercises, bool $free): string
+    public function generatedDescription(string $summary, int $chapters, int $exercises, bool $free): string
     {
-        $figures = sprintf(
-            '%d chapitre%s, %d exercice%s, %s.',
-            $chapters, $chapters > 1 ? 's' : '', $exercises, $exercises > 1 ? 's' : '',
-            $free ? 'gratuit' : 'premier chapitre gratuit',
-        );
+        $figures = $this->translator->trans('parcours.chiffres', ['chapitres' => $chapters, 'exercices' => $exercises, 'gratuit' => $free ? 'oui' : 'non'], 'seo');
         $summary = self::clean($summary);
         $budget = PageSeo::DESCRIPTION_MAX - mb_strlen($figures) - 1;
         if ('' === $summary) {

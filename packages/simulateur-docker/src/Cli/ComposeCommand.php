@@ -8,6 +8,7 @@ use Forelse\DockerSim\Compose\ComposeException;
 use Forelse\DockerSim\Compose\ComposeFile;
 use Forelse\DockerSim\Compose\Project;
 use Forelse\DockerSim\Engine\Docker;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\ProcessKind;
 use Symfony\Component\Yaml\Yaml;
@@ -112,7 +113,7 @@ final class ComposeCommand implements CliCommand
                 'top' => $this->top($project),
                 'rm' => $this->rm($project, $argv),
                 'port' => $this->port($project, $argv),
-                'watch' => $project->fail("docker compose watch : non disponible dans le simulateur (utilisez un volume monté pour voir vos modifications sans reconstruire).", 1),
+                'watch' => $project->fail(Messages::texte('compose.watch'), 1),
                 'create' => $project->up($this->services($argv), true) ? 0 : 1,
                 default => $project->fail(sprintf("unknown docker command: \"compose %s\"", $command), 1),
             };
@@ -144,7 +145,7 @@ final class ComposeCommand implements CliCommand
         $args = Args::parse($argv, ['d' => ['detach', false], 'detach' => ['detach', false], 'build' => ['build', false], 'no-build' => ['no-build', false], 'force-recreate' => ['force-recreate', false], 'no-deps' => ['no-deps', false], 'wait' => ['wait', false], 'remove-orphans' => ['remove-orphans', false], 'pull' => ['pull', true], 'no-recreate' => ['no-recreate', false], 'abort-on-container-exit' => ['abort', false], 'quiet-pull' => ['quiet-pull', false], 'y' => ['yes', false], 'watch' => ['watch', false], 'w' => ['watch', false]], 'compose up');
         $ok = $project->up($args->positional, $args->has('detach') || $args->has('wait'), $args->has('build'), $args->has('force-recreate'), $args->has('no-deps'), $args->has('wait'), $args->has('no-build'));
         if ($ok && !$args->has('detach') && !$args->has('wait')) {
-            $project->output .= "💡 Un vrai terminal resterait attaché aux journaux (Ctrl+C arrêterait tout). Ici la main vous est rendue et les conteneurs continuent de tourner : docker compose ps, docker compose logs, docker compose down.\n";
+            $project->output .= Messages::texte('compose.up_attached');
         }
 
         return $ok ? 0 : ($project->exitCode ?: 1);
@@ -247,7 +248,7 @@ final class ComposeCommand implements CliCommand
         }
         $code = $project->exec($service, $args->positional, $args->get('user'), $args->get('workdir'), $env);
         if (\count($args->positional) === 1 && \in_array(basename($args->positional[0]), ['sh', 'bash', 'ash', 'psql', 'mysql', 'php'], true) && $code === 0) {
-            $project->output .= sprintf("💡 La console du simulateur n'est pas un terminal : pas de session interactive. Passez la commande directement : docker compose exec %s sh -c \"ls -la\"\n", $service);
+            $project->output .= Messages::texte('compose.exec_no_tty', [$service]);
         }
 
         return $code;

@@ -34,7 +34,7 @@ show:
   motif: 'Motif : {motif}'
   contester: 'Contester la révocation'
   valide: '✓ Certificat valide · code {code}'
-  # {xp} : déjà mis en forme (number_format).
+  # {xp} : déjà mis en forme (filtre nombre).
   resume: '{exercices, plural, one {# exercice réussi} other {# exercices réussis}}, dont {sans_solution} sans consulter la solution et {sans_aide} sans aucune aide (ni indice, ni solution). {xp} XP.'
   telecharger_pdf: 'Télécharger le PDF'
   linkedin: 'Ajouter à mon profil LinkedIn'
@@ -51,7 +51,7 @@ pdf:
   type: 'Certificat de réussite'
   delivre_a: 'délivré à'
   pour_avoir_reussi: 'pour avoir réussi tous les exercices du parcours'
-  # {xp} : déjà mis en forme (number_format).
+  # {xp} : déjà mis en forme (filtre nombre).
   resume: '{exercices} exercices réussis, dont {sans_solution} sans consulter la solution · {xp} XP'
   date: 'Le {date}'
   pied_html: 'Code <strong>{code}</strong> · détail exercice par exercice et vérification :'

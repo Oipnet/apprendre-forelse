@@ -27,7 +27,7 @@
         <p class="holder">{{ certificate.holderName }}</p>
         <p class="intro">{{ 'pdf.pour_avoir_reussi'|trans }}</p>
         <p class="track">{{ certificate.trackTitle }}</p>
-        <p class="summary">{{ 'pdf.resume'|trans({exercices: certificate.exerciseCount, sans_solution: certificate.withoutSolutionCount, xp: certificate.xp|number_format(0, ',', ' ')}) }}</p>
+        <p class="summary">{{ 'pdf.resume'|trans({exercices: certificate.exerciseCount, sans_solution: certificate.withoutSolutionCount, xp: certificate.xp|nombre}) }}</p>
         <p class="summary">{{ 'pdf.date'|trans({date: certificate.issuedAt|format_date('short')}) }}</p>
         {% for mention in certificate.mentions %}<p class="summary"><strong>{{ mention.label }}</strong></p>{% endfor %}
         <p class="footer">

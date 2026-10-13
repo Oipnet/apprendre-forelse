@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Engine;
 
 use Forelse\DockerSim\Catalog\BaseImage;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Blob;
 use Forelse\DockerSim\State\Image;
 use Forelse\DockerSim\State\ImageConfig;
@@ -170,7 +171,7 @@ final class ImageFactory
         $share = 0.85 / $runs;
         $descriptions = match (true) {
             $base->isPhp() => ['RUN /bin/sh -c set -eux; apt-get update; apt-get install -y --no-install-recommends $PHPIZE_DEPS ca-certificates curl xz-utils; rm -rf /var/lib/apt/lists/* # buildkit', 'RUN /bin/sh -c set -eux; mkdir -p "$PHP_INI_DIR/conf.d"; # buildkit', 'COPY docker-php-source /usr/local/bin/ # buildkit', 'RUN /bin/sh -c set -eux; ./configure --with-config-file-path="$PHP_INI_DIR" ...; make -j "$(nproc)"; make install # buildkit', 'COPY docker-php-ext-* docker-php-entrypoint /usr/local/bin/ # buildkit', 'RUN /bin/sh -c docker-php-ext-enable sodium # buildkit'],
-            default => ['RUN /bin/sh -c set -eux; # installation des paquets de l\'image # buildkit', 'COPY docker-entrypoint.sh /usr/local/bin/ # buildkit'],
+            default => ['RUN /bin/sh -c set -eux; # '.Messages::texte('build.base_history').' # buildkit', 'COPY docker-entrypoint.sh /usr/local/bin/ # buildkit'],
         };
         for ($i = 0; $i < $runs; ++$i) {
             $lines[] = [$descriptions[$i % \count($descriptions)], $share];

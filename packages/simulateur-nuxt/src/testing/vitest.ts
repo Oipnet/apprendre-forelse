@@ -13,6 +13,7 @@ import {
 } from '@vitest/expect';
 import { clearAllMocks, fn, isMockFunction, resetAllMocks, restoreAllMocks, spyOn } from '@vitest/spy';
 import type { TestCaseResult } from './types.ts';
+import { m } from '../i18n/index.ts';
 
 chai.use(JestExtend);
 chai.use(JestChaiExpect);
@@ -122,7 +123,7 @@ export class TestFile {
 				return utils;
 			},
 			mock: () => {
-				throw new Error('vi.mock n\'est pas disponible dans le simulateur : pour une fonction de Nuxt, utilisez mockNuxtImport (@nuxt/test-utils/runtime).');
+				throw new Error(m.tests.viMock);
 			},
 		};
 		return utils;

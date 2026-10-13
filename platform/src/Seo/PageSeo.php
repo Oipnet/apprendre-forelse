@@ -2,6 +2,7 @@
 
 namespace App\Seo;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -14,6 +15,11 @@ final class PageSeo implements ResetInterface
 {
     public const int TITLE_MAX = 60;
     public const int DESCRIPTION_MAX = 155;
+    /**
+     * Le pays d'une langue servie sans pays (« fr » → « FR »), pour og:locale et inLanguage : la région que l'on
+     * suppose (likely subtags d'Unicode, qu'intl n'expose pas). Une langue absente prend son code en majuscules.
+     */
+    private const array REGIONS = ['en' => 'US', 'pt' => 'BR', 'zh' => 'CN', 'ja' => 'JP', 'ko' => 'KR', 'sv' => 'SE', 'da' => 'DK', 'cs' => 'CZ', 'el' => 'GR', 'uk' => 'UA'];
 
     private ?string $title = null;
     private ?string $description = null;
@@ -29,6 +35,9 @@ final class PageSeo implements ResetInterface
     public function __construct(
         private readonly RequestStack $requests,
         private readonly SearchIndexing $indexing,
+        /** La langue d'une page rendue hors requête (une commande, un test). */
+        #[Autowire('%kernel.default_locale%')]
+        private readonly string $defaultLocale = 'fr',
     ) {
     }
 
@@ -154,6 +163,24 @@ final class PageSeo implements ResetInterface
         return null === $request ? null : $this->indexing->directive($request);
     }
 
+    /** La langue de la page, pour inLanguage de schema.org : « fr ». */
+    public function getLanguage(): string
+    {
+        return \Locale::getPrimaryLanguage($this->locale()) ?? $this->locale();
+    }
+
+    /** La langue et son pays, au format BCP 47 (inLanguage du site) : « fr-FR ». */
+    public function getLanguageTag(): string
+    {
+        return $this->getLanguage().'-'.$this->region();
+    }
+
+    /** La même, au format d'Open Graph (og:locale) : « fr_FR ». */
+    public function getOgLocale(): string
+    {
+        return $this->getLanguage().'_'.$this->region();
+    }
+
     public function reset(): void
     {
         $this->title = $this->description = $this->canonical = $this->image = $this->imageAlt = $this->imageSize = null;
@@ -173,6 +200,20 @@ final class PageSeo implements ResetInterface
         $cut = false === $space ? mb_substr($cut, 0, $max - 1) : mb_substr($cut, 0, $space);
 
         return preg_replace('/[\s,;:.–(«-]+$/u', '', $cut).'…';
+    }
+
+    /** La langue de la requête en cours (celle du traducteur), sinon celle du site. */
+    private function locale(): string
+    {
+        return $this->requests->getCurrentRequest()?->getLocale() ?? $this->defaultLocale;
+    }
+
+    private function region(): string
+    {
+        $language = $this->getLanguage();
+        $region = \Locale::getRegion($this->locale());
+
+        return null !== $region && '' !== $region ? $region : (self::REGIONS[$language] ?? strtoupper($language));
     }
 
     private static function clean(string $text): string

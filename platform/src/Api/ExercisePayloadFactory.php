@@ -17,6 +17,7 @@ use Symfony\Component\Asset\Packages;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Données d'un exercice pour le playground. Contrat : playground/src/app/types.ts (ExercisePayload).
@@ -37,6 +38,7 @@ final readonly class ExercisePayloadFactory
         private EnvironmentArtifacts $artifacts,
         private LessonRenderer $markdown,
         private ConceptIndex $concepts,
+        private TranslatorInterface $translator,
         #[Autowire('%kernel.environment%')] private string $kernelEnvironment,
         #[Autowire('%kernel.project_dir%/public')] private string $publicDir = __DIR__.'/../../public',
     ) {
@@ -107,8 +109,9 @@ final readonly class ExercisePayloadFactory
                 'id' => $environment->id,
                 'phpVersion' => $environment->phpVersion,
                 // Ce que le navigateur sait du framework vient d'ici : console, dossiers du projet,
-                // caches, namespaces… Il ne redéclare plus rien de son côté (voir FrameworkProfile).
-                'framework' => $environment->framework->forBrowser(),
+                // caches, namespaces… Il ne redéclare plus rien de son côté (voir FrameworkProfile). Ses textes
+                // (note de démarrage, étapes) sont traduits dans la langue de la page.
+                'framework' => $environment->framework->forBrowser($this->translator),
                 'archiveUrl' => $versioned($environment->archivePath()),
                 'completionIndexUrl' => $versioned($environment->completionIndexPath()),
             ],

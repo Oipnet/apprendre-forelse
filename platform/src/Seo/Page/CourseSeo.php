@@ -15,6 +15,7 @@ use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
 use App\Seo\TrackSeoText;
 use App\Twig\DurationExtension;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Les pages d'un parcours : le parcours (Course), le sommaire d'un chapitre et un exercice. Les titres mènent
@@ -32,6 +33,7 @@ final readonly class CourseSeo
         private ContentRepository $content,
         private Theme $theme,
         private ExerciseStory $stories,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -56,8 +58,8 @@ final readonly class CourseSeo
                 'name' => $track->title,
                 'description' => self::plain($track->description),
                 'url' => $url,
-                ...(null === $track->level ? [] : ['educationalLevel' => Track::LEVELS[$track->level]]),
-                'inLanguage' => 'fr',
+                ...(null === $track->level ? [] : ['educationalLevel' => $this->trans('parcours.niveau.'.$track->level)]),
+                'inLanguage' => $this->seo->getLanguage(),
                 'provider' => $this->schema->organization(),
                 ...(null === $image ? [] : ['image' => $this->schema->absolute($image)]),
                 // Le résultat enrichi « Cours » de Google demande la charge de travail sur chaque session (courseWorkload) ;
@@ -65,7 +67,7 @@ final readonly class CourseSeo
                 'hasCourseInstance' => [
                     '@type' => 'CourseInstance',
                     'courseMode' => 'Online',
-                    'inLanguage' => 'fr',
+                    'inLanguage' => $this->seo->getLanguage(),
                     ...(null === $duration ? [] : ['courseWorkload' => $duration]),
                 ],
                 ...(null === $duration ? [] : ['timeRequired' => $duration]),
@@ -94,19 +96,16 @@ final readonly class CourseSeo
         $this->seo
             ->setTitle(
                 ...$this->conceptLed($concepts, $framework, $chapter->title),
-                ...[sprintf('%s – chapitre %d, parcours %s', $chapter->title, $number, $framework), $chapter->title],
+                ...[$this->trans('chapitre.titre', ['chapitre' => $chapter->title, 'numero' => $number, 'framework' => $framework]), $chapter->title],
             )
             ->setDescription(
                 // La description écrite pour le chapitre, quand il en a une (clé « description ») ; sinon, ce qu'il fait travailler.
-                $chapter->description ?? sprintf(
-                    'Chapitre %d du parcours %s : %s. %d exercice%s à faire en écrivant du code, corrigé%s par des tests.',
-                    $number,
-                    $track->title,
-                    $concepts ? mb_strtolower(implode(', ', \array_slice($concepts, 0, 4))) : mb_strtolower($chapter->title),
-                    $count,
-                    $count > 1 ? 's' : '',
-                    $count > 1 ? 's' : '',
-                ),
+                $chapter->description ?? $this->trans('chapitre.description', [
+                    'numero' => $number,
+                    'parcours' => $track->title,
+                    'notions' => $concepts ? mb_strtolower(implode(', ', \array_slice($concepts, 0, 4))) : mb_strtolower($chapter->title),
+                    'n' => $count,
+                ]),
             )
             ->setCanonical($url = $this->schema->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]))
             ->addStructuredData($this->schema->breadcrumb([
@@ -121,12 +120,12 @@ final readonly class CourseSeo
         $framework = $this->framework($exercise->environment);
         $this->seo
             ->setTitle(
-                ...$this->conceptLed($exercise->concepts, $framework, 'exercice : '.$exercise->title),
-                ...[sprintf('%s – exercice %s', $exercise->title, $framework), $exercise->title],
+                ...$this->conceptLed($exercise->concepts, $framework, $this->trans('exercice.libelle', ['exercice' => $exercise->title])),
+                ...[$this->trans('exercice.titre', ['exercice' => $exercise->title, 'framework' => $framework]), $exercise->title],
             )
             ->setDescription(
                 $this->stories->fromInstructions($exercise->instructions),
-                sprintf('Un exercice du chapitre « %s », parcours %s.', $chapter->title, $track->title),
+                $this->trans('exercice.complement', ['chapitre' => $chapter->title, 'parcours' => $track->title]),
             )
             ->setCanonical($url = $this->schema->url('app_exercise', ['trackId' => $track->id, 'exerciseId' => $exercise->id]))
             ->addStructuredData($this->schema->breadcrumb([
@@ -140,11 +139,11 @@ final readonly class CourseSeo
                 'description' => $this->seo->getDescription(),
                 'url' => $url,
                 'learningResourceType' => 'exercise',
-                'inLanguage' => 'fr',
+                'inLanguage' => $this->seo->getLanguage(),
                 'isAccessibleForFree' => $track->isFreeChapter($chapter),
                 ...(null === $exercise->duration ? [] : ['timeRequired' => DurationExtension::iso($exercise->duration)]),
                 ...([] === $exercise->concepts ? [] : ['teaches' => $exercise->concepts]),
-                ...(null === $track->level ? [] : ['educationalLevel' => Track::LEVELS[$track->level]]),
+                ...(null === $track->level ? [] : ['educationalLevel' => $this->trans('parcours.niveau.'.$track->level)]),
                 'isPartOf' => [
                     '@type' => 'Course',
                     '@id' => $this->schema->url('app_track', ['trackId' => $track->id]).'#cours',
@@ -180,25 +179,24 @@ final readonly class CourseSeo
     {
         $frameworks = array_values(array_unique(array_map(fn (Track $track) => $this->framework($track->environment), $tracks)));
         $subject = match (\count($frameworks)) {
-            0 => 'le développement web',
+            0 => $this->trans('catalogue.sujet_par_defaut'),
             1 => $frameworks[0],
-            default => implode(', ', \array_slice($frameworks, 0, -1)).' et '.end($frameworks),
+            default => $this->trans('commun.liste', ['debut' => implode(', ', \array_slice($frameworks, 0, -1)), 'dernier' => end($frameworks)]),
         };
-        $name = $this->theme->name();
         $this->seo
             ->setTitle(
-                sprintf('Parcours pour apprendre %s en codant | %s', $subject, $name),
-                sprintf('Apprendre %s en codant : les parcours', $subject),
-                'Les parcours : apprendre en codant',
+                $this->trans('catalogue.titre_marque', ['sujet' => $subject, 'marque' => $this->theme->name()]),
+                $this->trans('catalogue.titre', ['sujet' => $subject]),
+                $this->trans('catalogue.titre_court'),
             )
             ->setDescription(
-                sprintf('Apprenez %s en écrivant du code dans votre navigateur : un vrai projet, un aperçu en direct, des tests qui valident chaque objectif.', $subject),
-                'Premier chapitre gratuit avec un compte.',
+                $this->trans('catalogue.description', ['sujet' => $subject]),
+                $this->trans('catalogue.complement'),
             )
             ->setCanonical($url = $this->schema->url('app_tracks'))
             ->addStructuredData([
                 '@type' => 'ItemList',
-                'name' => 'Les parcours',
+                'name' => $this->trans('catalogue.liste'),
                 'url' => $url,
                 'numberOfItems' => \count($tracks),
                 'itemListElement' => array_map(fn (Track $track, int $index) => [
@@ -213,7 +211,7 @@ final readonly class CourseSeo
                     ],
                 ], $tracks, array_keys($tracks)),
             ])
-            ->addStructuredData($this->schema->breadcrumb([['Parcours', $url]]));
+            ->addStructuredData($this->schema->breadcrumb([[$this->trans('catalogue.fil_ariane'), $url]]));
     }
 
     /** « Symfony », « Laravel »… d'après l'environnement d'exécution. */
@@ -237,15 +235,21 @@ final readonly class CourseSeo
     {
         $titles = [];
         for ($count = \count($concepts); $count > 0; --$count) {
-            $titles[] = implode(', ', \array_slice($concepts, 0, $count)).' en '.$framework.' – '.$label;
+            $titles[] = $this->trans('contenu.notions_framework', ['notions' => implode(', ', \array_slice($concepts, 0, $count)), 'framework' => $framework, 'libelle' => $label]);
         }
         if ([] !== $concepts) {
             // Dernier recours avant d'abandonner la notion : sans le framework. Jamais sans le libellé,
             // qui seul distingue deux pages — un title en double n'aide personne, et le test du sitemap le refuse.
-            $titles[] = $concepts[0].' – '.$label;
+            $titles[] = $this->trans('contenu.notion', ['notion' => $concepts[0], 'libelle' => $label]);
         }
 
         return $titles;
+    }
+
+    /** @param array<string, mixed> $parameters */
+    private function trans(string $key, array $parameters = []): string
+    {
+        return $this->translator->trans($key, $parameters, 'seo');
     }
 
     private static function plain(string $text): string

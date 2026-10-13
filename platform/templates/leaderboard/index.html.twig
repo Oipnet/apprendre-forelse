@@ -8,7 +8,7 @@
   avant trois classés, l'encart « Vous ouvrez la marche »), tableau à partir du quatrième, et colonne latérale (barème,
   vérification des réussites, visibilité). Les classes lb-* sont des repères pour les tests et les thèmes.
 #}
-{% macro xp(value) %}{{ value|number_format(0, ',', ' ') }}{% endmacro %}
+{% macro xp(value) %}{{ value|nombre }}{% endmacro %}
 {% macro avatar(entry, size) %}
     {%- set colors = ['bg-accent/15', 'bg-success/15', 'bg-highlight/15', 'bg-danger/10', 'bg-ink/10'] -%}
     <span class="flex flex-none items-center justify-center rounded-full font-serif font-semibold text-ink {{ colors[entry.userId % 5] }} {{ size == 'lg' ? 'size-13 text-2xl' : 'size-8.5 text-base' }}" aria-hidden="true">{{ entry.initial }}</span>
@@ -56,12 +56,12 @@
                             <span class="text-2xl font-medium">{{ 'index.rang_suffixe'|trans({n: me.rank}) }}</span>
                         </p>
                         <div class="flex min-w-0 flex-[1_1_260px] flex-col gap-2.5">
-                            <p class="text-lg">{{ 'index.sur_classes'|trans({n: board.total, total: board.total}) }} · <span class="font-mono text-accent-line">{{ 'commun.xp'|trans({xp: me.xp|number_format(0, ',', ' ')}) }}</span> · {{ 'index.exercices'|trans({n: me.exercises}) }}</p>
+                            <p class="text-lg">{{ 'index.sur_classes'|trans({n: board.total, total: board.total}) }} · <span class="font-mono text-accent-line">{{ 'commun.xp'|trans({xp: me.xp|nombre}) }}</span> · {{ 'index.exercices'|trans({n: me.exercises}) }}</p>
                             <div class="h-2 overflow-hidden rounded-full bg-dark-ink/15" aria-hidden="true">
                                 <div class="h-full rounded-full bg-accent-line" style="width: {{ ahead ? max(2, (100 * me.xp / (ahead.xp + 1))|round) : 100 }}%"></div>
                             </div>
                             <p class="text-sm text-dark-ink/75">
-                                {%- if ahead %}{{ 'index.devant'|trans({xp: (ahead.xp - me.xp + 1)|number_format(0, ',', ' '), pseudo: ahead.displayName}) }}
+                                {%- if ahead %}{{ 'index.devant'|trans({xp: (ahead.xp - me.xp + 1)|nombre, pseudo: ahead.displayName}) }}
                                 {%- elseif board.total == 1 %}{{ 'index.premier_seul'|trans }}
                                 {%- else %}{{ 'index.en_tete'|trans }}{% endif -%}
                             </p>
@@ -72,7 +72,7 @@
                                     <span class="font-mono text-2xl text-accent-line">{{ me.move > 0 ? '+' ~ me.move : (me.move < 0 ? '−' ~ (-me.move) : '=') }}{% if me.move != 0 %} {{ 'index.places'|trans({n: me.move|abs}) }}{% endif %}</span>
                                     <span class="text-sm text-dark-ink/75">{{ 'index.depuis'|trans({mois: board.previousMonth}) }}</span>
                                 {% else %}
-                                    <span class="font-mono text-2xl text-accent-line">+{{ 'commun.xp'|trans({xp: (board.monthXp ?? me.xp)|number_format(0, ',', ' ')}) }}</span>
+                                    <span class="font-mono text-2xl text-accent-line">+{{ 'commun.xp'|trans({xp: (board.monthXp ?? me.xp)|nombre}) }}</span>
                                     <span class="text-sm text-dark-ink/75">{{ 'index.ce_mois_ci'|trans }}</span>
                                 {% endif %}
                             </p>
@@ -80,7 +80,7 @@
                     {% else %}
                         <div class="min-w-0 flex-[1_1_320px]">
                             {% if me %}
-                                <p class="font-serif text-2xl font-semibold">{{ 'index.vous_seriez'|trans({rang: me.rank, n: me.rank, xp: me.xp|number_format(0, ',', ' ')})|raw }}</p>
+                                <p class="font-serif text-2xl font-semibold">{{ 'index.vous_seriez'|trans({rang: me.rank, n: me.rank, xp: me.xp|nombre})|raw }}</p>
                                 <p class="mt-1 text-dark-ink/75">{{ 'index.rejoignez_pseudo'|trans({pseudo: app.user.displayName}) }}</p>
                             {% elseif app.user and app.user.leaderboardOptIn %}
                                 <p class="font-serif text-2xl font-semibold">{{ 'index.inscrit'|trans }}</p>
