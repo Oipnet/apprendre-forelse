@@ -24,7 +24,7 @@
         {% if chapter.description %}<p class="lead mt-3 text-lg text-ink-muted">{{ chapter.description }}</p>{% endif %}
         <p class="chapter-outline-facts mt-3 text-sm text-ink-muted">
             {{ 'commun.exercices'|trans({n: exercises|length}) }}
-            · {{ 'commun.xp'|trans({xp: xp|number_format(0, ',', ' ')}) }}
+            · {{ 'commun.xp'|trans({xp: xp|nombre}) }}
             {%- if duration %} · {{ 'chapter.summary.environ'|trans({duree: duration|duree}) }}{% endif %}
             {%- if free %} · <span class="tag free">{{ 'chapter.summary.gratuit'|trans }}</span>{% endif %}
         </p>

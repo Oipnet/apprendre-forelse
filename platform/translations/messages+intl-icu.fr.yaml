@@ -85,3 +85,10 @@ share:
         linkedin: "LinkedIn"
         x: "X"
         bluesky: "Bluesky"
+
+# Les filtres de format (src/Twig) : unités des durées estimées (|duree). Les nombres arrivent déjà écrits.
+format:
+    duree:
+        minutes: "{minutes} min"
+        heures: "{heures} h"
+        heures_minutes: "{heures} h {minutes}"

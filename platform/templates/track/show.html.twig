@@ -18,7 +18,7 @@
                 <p class="track-duration mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
                     <span>{{ (app.user ? 'track.show.exercices_reussis' : 'commun.exercices')|trans({fait: completed, n: total}) }}</span>
                     <span>{{ 'track.show.chapitres'|trans({n: chapters|length}) }}</span>
-                    <span>{{ (app.user ? 'track.show.xp_gagnes' : 'commun.xp')|trans({gagne: xpEarned|number_format(0, ',', ' '), xp: xpTotal|number_format(0, ',', ' ')}) }}</span>
+                    <span>{{ (app.user ? 'track.show.xp_gagnes' : 'commun.xp')|trans({gagne: xpEarned|nombre, xp: xpTotal|nombre}) }}</span>
                     {% if trackDuration %}<span>{{ 'track.show.duree'|trans({duree: trackDuration|duree}) }}</span>{% endif %}
                 </p>
                 {% if app.user %}
@@ -96,7 +96,7 @@
                                         {% if item.free and not offer.fullAccess %}<span class="tag free ml-1 rounded bg-success-bg px-1.5 text-xs font-normal text-success">{{ 'commun.gratuit'|trans }}</span>{% elseif item.locked %}<span class="tag ml-1 rounded bg-bg-2 px-1.5 text-xs font-normal text-ink-muted">{{ 'track.show.parcours_complet'|trans }}</span>{% endif %}
                                     </h2>
                                     <span class="tr-chapter-meta text-sm text-ink-muted">
-                                        {{- (app.user ? 'track.show.exercices_faits' : 'commun.exercices')|trans({fait: chapterDone, n: item.items|length}) }} · {{ 'commun.xp'|trans({xp: item.xp|number_format(0, ',', ' ')}) }}
+                                        {{- (app.user ? 'track.show.exercices_faits' : 'commun.exercices')|trans({fait: chapterDone, n: item.items|length}) }} · {{ 'commun.xp'|trans({xp: item.xp|nombre}) }}
                                         {%- if chapterDuration %} · ≈ {{ chapterDuration|duree }}{% endif %}
                                         {%- if item.lesson %} · {{ 'track.show.fiche_de_cours'|trans }}{% endif -%}
                                     </span>
