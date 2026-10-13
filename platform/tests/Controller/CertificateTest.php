@@ -116,9 +116,13 @@ final class CertificateTest extends WebTestCase
         $this->assertSelectorTextContains('.certificate-exercises', '1 indice sur 2');
         $this->assertSelectorTextContains('.certificate-exercises', 'solution consultée');
         $this->assertSelectorExists('a[href^="https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME"]');
+        $linkedin = (string) $this->client->getCrawler()->filter('.share a[data-share-network="linkedin"]')->attr('href');
+        $this->assertStringContainsString(rawurlencode('/certificat/'.$certificate->getCode().'?utm_source=linkedin&utm_medium=partage&utm_campaign=parcours'), $linkedin, 'Le partage mène à la page du certificat.');
+        $this->assertStringStartsWith('J\'ai terminé le parcours « Découverte »', json_decode((string) $this->client->getCrawler()->filter('.share')->attr('data-share'), true)['text'] ?? '');
 
         $crawler = $this->client->request('GET', '/parcours/decouverte');
         $this->assertSame('/certificat/'.$certificate->getCode(), $crawler->filter('a.track-certificate')->attr('href'), 'Le parcours mène ensuite au certificat.');
+        $this->assertCount(1, $crawler->filter('.track-done .share'), 'Le parcours terminé propose de partager le certificat.');
         $this->client->request('GET', '/parcours/decouverte/certificat');
         $this->assertResponseRedirects('/certificat/'.$certificate->getCode(), message: 'Pas de second certificat.');
     }
@@ -138,7 +142,13 @@ final class CertificateTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSame('noindex', $crawler->filter('meta[name="robots"]')->attr('content'));
         $this->assertSelectorTextContains('main', 'Ada Lovelace');
-        $this->assertSelectorNotExists('a[href*="linkedin.com"]', 'Seul le titulaire ajoute le certificat à son profil.');
+        $this->assertSelectorNotExists('a[href*="linkedin.com"]', 'Seul le titulaire ajoute le certificat à son profil ou le partage.');
+        $image = (string) $crawler->filter('meta[property="og:image"]')->attr('content');
+        $this->assertMatchesRegularExpression('#^http://localhost/certificat/'.$certificate->getCode().'/image-de-partage\?v=[0-9a-f]{16}$#', $image);
+        $this->assertSame('Certificat de réussite · Ada Lovelace : Découverte', $crawler->filter('meta[property="og:image:alt"]')->attr('content'));
+        $this->client->request('GET', $image);
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('Content-Type', 'image/png');
 
         $this->client->request('GET', '/certificat/'.$certificate->getCode().'/certificat.pdf');
         $this->assertResponseIsSuccessful();
@@ -183,6 +193,9 @@ final class CertificateTest extends WebTestCase
 
         $this->client->request('GET', '/certificat/'.$certificate->getCode());
         $this->assertSelectorTextContains('.certificate-status', 'contestation en cours');
+
+        $this->client->request('GET', '/certificat/'.$certificate->getCode().'/image-de-partage');
+        $this->assertResponseStatusCodeSame(404, 'Plus d\'image de partage non plus.');
     }
 
     public function testUnAutreCompteNeRattachePasLeCertificatDAutrui(): void

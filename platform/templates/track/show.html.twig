@@ -32,6 +32,7 @@
                         <p><strong>🎓 Bravo, tout est réussi.</strong></p>
                         {% if certificate %}
                             <a class="track-certificate btn btn-primary w-full" href="{{ path('app_certificate', {code: certificate.code}) }}">Voir mon certificat</a>
+                            {{ include('share/_buttons.html.twig', {links: certificateShare, title: 'Partager ma réussite', mesure: {parcours: track.id}}) }}
                         {% elseif offer.fullAccess %}
                             <a class="track-certificate btn btn-primary w-full" href="{{ path('app_certificate_claim', {trackId: track.id}) }}">Obtenir mon certificat</a>
                         {% endif %}

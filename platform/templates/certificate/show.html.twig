@@ -2,7 +2,7 @@
 
 {#
   La page de vérification d'un certificat : publique (un recruteur, une école), hors de l'index. Le détail de chaque
-  exercice y est, tel qu'au jour de la délivrance. Variables : certificate, holder (le titulaire regarde), linkedinUrl.
+  exercice y est, tel qu'au jour de la délivrance. Variables : certificate, holder (le titulaire regarde), linkedinUrl, share (ses liens de partage, pour le titulaire).
   Repères lus par les tests : certificate-status, certificate-summary, certificate-mentions, certificate-exercises, certificate-contest.
 #}
 {% block title %}Certificat · {{ certificate.trackTitle }} · {{ certificate.holderName }} · {{ theme.name }}{% endblock %}
@@ -44,6 +44,9 @@
                 <a class="btn btn-primary" href="{{ path('app_certificate_pdf', {code: certificate.code}) }}">Télécharger le PDF</a>
                 {% if linkedinUrl %}<a class="btn" href="{{ linkedinUrl }}" target="_blank" rel="noopener">Ajouter à mon profil LinkedIn</a>{% endif %}
             </div>
+            {% if share %}
+                {{ include('share/_buttons.html.twig', {links: share, title: 'Partager ma réussite', mesure: {parcours: certificate.trackId}}) }}
+            {% endif %}
         {% endif %}
 
         <h2 class="mt-10 text-xl font-semibold">Les exercices</h2>
