@@ -20,18 +20,22 @@ final class PurchaseConfirmationType extends AbstractType
     {
         $builder
             ->add('termsOfSale', CheckboxType::class, [
-                'label' => sprintf('J\'ai lu et j\'accepte les <a href="%s" target="_blank" rel="noopener">conditions générales de vente</a>.', htmlspecialchars($options['terms_url'])),
+                'label' => 'form.purchase_confirmation.cgv',
+                'label_translation_parameters' => ['lien' => htmlspecialchars($options['terms_url'])],
                 'label_html' => true,
-                'constraints' => [new Assert\IsTrue(message: 'Acceptez les conditions générales de vente pour acheter le parcours.')],
+                'constraints' => [new Assert\IsTrue(message: 'achat.cgv')],
             ])
             ->add('withdrawalWaiver', CheckboxType::class, [
+                // Le texte conservé avec l'achat, tel qu'il a été coché (voir WithdrawalWaiver) : il n'est pas traduit.
                 'label' => WithdrawalWaiver::TEXT,
-                'constraints' => [new Assert\IsTrue(message: 'Cochez la case pour accéder au parcours dès le paiement.')],
+                'translation_domain' => false,
+                'constraints' => [new Assert\IsTrue(message: 'achat.renonciation')],
             ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setRequired('terms_url')->setAllowedTypes('terms_url', 'string');
+        $resolver->setDefaults(['translation_domain' => 'compte']);
     }
 }

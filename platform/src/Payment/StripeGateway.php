@@ -10,6 +10,8 @@ use Stripe\StripeClient;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
+use function Symfony\Component\Translation\t;
+
 /**
  * Stripe Checkout en paiement unique, avec Stripe Tax : prix TTC (tax_behavior inclusive), TVA du pays du client,
  * adresse de facturation demandée pour la déterminer. Chaque paiement donne une facture Stripe (numérotation et TVA
@@ -74,7 +76,7 @@ final class StripeGateway implements PaymentGateway
                 'expires_at' => $this->clock->now()->getTimestamp() + CheckoutSession::LIFETIME,
             ], ['idempotency_key' => 'purchase-'.$purchase->getId()]);
         } catch (ApiErrorException $e) {
-            throw new PaymentException('Le paiement n\'a pas pu démarrer : '.$e->getMessage(), previous: $e);
+            throw new PaymentException('Le paiement n\'a pas pu démarrer : '.$e->getMessage(), previous: $e, translatable: t('paiement.demarrage', ['detail' => $e->getMessage()], 'compte'));
         }
 
         return new CheckoutSession($session->id, (string) $session->url);
@@ -85,7 +87,7 @@ final class StripeGateway implements PaymentGateway
         try {
             $session = $this->client()->checkout->sessions->retrieve($sessionId);
         } catch (ApiErrorException $e) {
-            throw new PaymentException('Le paiement en cours n\'a pas pu être retrouvé : '.$e->getMessage(), previous: $e);
+            throw new PaymentException('Le paiement en cours n\'a pas pu être retrouvé : '.$e->getMessage(), previous: $e, translatable: t('paiement.introuvable', ['detail' => $e->getMessage()], 'compte'));
         }
 
         return new CheckoutSession($session->id, (string) $session->url, (string) $session->status);
@@ -96,7 +98,7 @@ final class StripeGateway implements PaymentGateway
         try {
             $this->client()->checkout->sessions->expire($sessionId);
         } catch (ApiErrorException $e) {
-            throw new PaymentException('Le paiement en cours n\'a pas pu être annulé : '.$e->getMessage(), previous: $e);
+            throw new PaymentException('Le paiement en cours n\'a pas pu être annulé : '.$e->getMessage(), previous: $e, translatable: t('paiement.annulation', ['detail' => $e->getMessage()], 'compte'));
         }
     }
 
@@ -132,11 +134,11 @@ final class StripeGateway implements PaymentGateway
     private function client(): StripeClient
     {
         if (!$this->isConfigured()) {
-            throw new PaymentException('Le paiement n\'est pas configuré sur cette plateforme (STRIPE_SECRET_KEY).');
+            throw new PaymentException('Le paiement n\'est pas configuré sur cette plateforme (STRIPE_SECRET_KEY).', translatable: t('paiement.non_configure', [], 'compte'));
         }
         // Mode test par défaut : une clé réelle hors production débiterait de vraies cartes pendant un essai.
         if (str_starts_with($this->secretKey, 'sk_live_') && 'prod' !== $this->kernelEnvironment) {
-            throw new PaymentException('Clé Stripe réelle (sk_live_) refusée hors production : utilisez une clé de test.');
+            throw new PaymentException('Clé Stripe réelle (sk_live_) refusée hors production : utilisez une clé de test.', translatable: t('paiement.cle_reelle', [], 'compte'));
         }
 
         return $this->client ??= new StripeClient($this->secretKey);

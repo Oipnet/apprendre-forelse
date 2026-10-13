@@ -7,6 +7,7 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Pose les balises d'une page fixe déclarées par #[Seo] sur son action, juste avant qu'elle s'exécute.
@@ -20,6 +21,7 @@ final readonly class StaticPageSeo
         private PageSeo $seo,
         private SchemaOrg $schema,
         private Theme $theme,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -35,12 +37,18 @@ final readonly class StaticPageSeo
         }
         $request = $event->getRequest();
         $url = $this->schema->url((string) $request->attributes->get('_route'), $request->attributes->get('_route_params', []));
+        $brand = $this->theme->name();
+        $title = null === $page->domain ? $page->title : $this->translator->trans($page->title, [], $page->domain);
+        $description = null === $page->domain
+            ? str_replace('%marque%', $brand, $page->description)
+            : $this->translator->trans($page->description, ['marque' => $brand], $page->domain);
         $this->seo
-            ->setTitle($page->title.' | '.$this->theme->name(), $page->title)
-            ->setDescription(str_replace('%marque%', $this->theme->name(), $page->description))
+            ->setTitle($title.' | '.$brand, $title)
+            ->setDescription($description)
             ->setCanonical($url);
         if (null !== $page->breadcrumb) {
-            $this->seo->addStructuredData($this->schema->breadcrumb([[$page->breadcrumb, $url]]));
+            $breadcrumb = null === $page->domain ? $page->breadcrumb : $this->translator->trans($page->breadcrumb, [], $page->domain);
+            $this->seo->addStructuredData($this->schema->breadcrumb([[$breadcrumb, $url]]));
         }
     }
 

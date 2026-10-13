@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Objet d'un message envoyé par le formulaire de contact. Traduisible : EasyAdmin affiche label() tel quel. */
 enum ContactSubject: string implements TranslatableInterface
@@ -27,6 +28,12 @@ enum ContactSubject: string implements TranslatableInterface
             self::Certificate => 'Un litige sur un certificat',
             self::Other => 'Autre chose',
         };
+    }
+
+    /** Le libellé montré à l'apprenant (compte : enum.contact_subject.<valeur>) ; label() garde le français de l'administration. */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
+    {
+        return $translator->trans('enum.contact_subject.'.$this->value, [], 'compte', $locale);
     }
 
     public function badge(): string

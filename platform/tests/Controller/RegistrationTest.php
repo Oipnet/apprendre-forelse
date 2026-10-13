@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Mime\Email;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class RegistrationTest extends WebTestCase
 {
@@ -89,7 +90,7 @@ final class RegistrationTest extends WebTestCase
         ], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertSelectorTextContains('.form-card', User::EMAIL_TAKEN);
+        $this->assertSelectorTextContains('.form-card', static::getContainer()->get(TranslatorInterface::class)->trans(User::EMAIL_TAKEN, [], 'validators'));
 
         // Le titulaire du compte apprend la tentative.
         $this->assertEmailCount(1);
@@ -108,7 +109,7 @@ final class RegistrationTest extends WebTestCase
         $this->register($client, 'Gorm@Example.test');
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertSelectorTextContains('.form-card', User::EMAIL_TAKEN);
+        $this->assertSelectorTextContains('.form-card', static::getContainer()->get(TranslatorInterface::class)->trans(User::EMAIL_TAKEN, [], 'validators'));
         $this->assertCount(1, static::getContainer()->get(UserRepository::class)->findAll(), 'Pas de second compte.');
         $this->assertEmailCount(1);
         $this->assertEmailAddressContains($this->getMailerMessage(), 'To', 'gorm@example.test', 'Le titulaire est prévenu.');

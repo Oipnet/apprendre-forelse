@@ -25,16 +25,17 @@ final class InvitationCodeType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'label' => 'Code d\'invitation',
+            'label' => 'form.invitation_code.code',
+            'translation_domain' => 'compte',
             'mapped' => false,
             'invite_only' => false,
             'required' => static fn (Options $options): bool => $options['invite_only'],
             'attr' => ['autocomplete' => 'off'],
             'constraints' => fn (Options $options): array => [
-                ...($options['invite_only'] ? [new Assert\NotBlank(message: 'Indiquez votre code d\'invitation.')] : []),
+                ...($options['invite_only'] ? [new Assert\NotBlank(message: 'invitation.vide')] : []),
                 new Assert\Callback(function (?string $code, ExecutionContextInterface $context): void {
                     if (null !== $code && '' !== trim($code) && null === $this->cohorts->findActiveByCode($code)) {
-                        $context->buildViolation('Code d\'invitation inconnu ou expiré.')->addViolation();
+                        $context->buildViolation('invitation.inconnu')->addViolation();
                     }
                 }),
             ],

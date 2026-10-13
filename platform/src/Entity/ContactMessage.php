@@ -21,17 +21,17 @@ class ContactMessage implements Handleable
     private ?int $id = null;
 
     #[ORM\Column(length: 20, enumType: ContactSubject::class)]
-    #[Assert\NotNull(message: 'Choisissez un objet.')]
+    #[Assert\NotNull(message: 'contact.objet.vide')]
     private ?ContactSubject $subject = ContactSubject::Question;
 
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Indiquez votre nom.')]
+    #[Assert\NotBlank(message: 'contact.nom.vide')]
     #[Assert\Length(max: 100)]
     private ?string $name = null;
 
     #[ORM\Column(length: 180)]
-    #[Assert\NotBlank(message: 'Indiquez votre email, pour qu\'on puisse vous répondre.')]
-    #[Assert\Email(message: 'Cet email n\'est pas valide.')]
+    #[Assert\NotBlank(message: 'contact.email.vide')]
+    #[Assert\Email(message: 'email.invalide')]
     #[Assert\Length(max: 180)]
     private ?string $email = null;
 
@@ -42,12 +42,12 @@ class ContactMessage implements Handleable
 
     /** Nombre de personnes à former, estimé. */
     #[ORM\Column(nullable: true)]
-    #[Assert\Range(min: 1, max: 100000, notInRangeMessage: 'Entre {{ min }} et {{ max }} personnes.')]
+    #[Assert\Range(min: 1, max: 100000, notInRangeMessage: 'contact.effectif.hors_limites')]
     private ?int $headcount = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Assert\NotBlank(message: 'Écrivez votre message.')]
-    #[Assert\Length(min: 10, max: 5000, minMessage: 'Un peu plus de détails ? Au moins {{ limit }} caractères.')]
+    #[Assert\NotBlank(message: 'contact.message.vide')]
+    #[Assert\Length(min: 10, max: 5000, minMessage: 'contact.message.trop_court')]
     private ?string $message = null;
 
     /** Le compte connecté au moment de l'envoi, s'il y en avait un. */

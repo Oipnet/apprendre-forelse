@@ -1,20 +1,22 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Créer un compte avec {{ provider.label }} · {{ theme.name }}{% endblock %}
+{% trans_default_domain 'compte' %}
+
+{% block title %}{{ 'security.oauth_register.titre_page'|trans({fournisseur: provider.label, site: theme.name}) }}{% endblock %}
 
 {% block body %}
     <main class="form-card mx-auto my-10 w-full max-w-md space-y-4 rounded-lg border border-line bg-surface p-6 sm:p-8">
-        <h1 class="text-2xl font-semibold">Créer un compte</h1>
-        <p class="text-sm text-ink-muted">Avec votre compte {{ provider.label }} <strong>{{ profile.username }}</strong>, à l'adresse <strong>{{ profile.primaryEmail }}</strong>. Pas de mot de passe : vous vous connecterez avec {{ provider.label }}.</p>
+        <h1 class="text-2xl font-semibold">{{ 'security.oauth_register.titre'|trans }}</h1>
+        <p class="text-sm text-ink-muted">{{ 'security.oauth_register.profil'|trans({fournisseur: provider.label|e, identifiant: profile.username|e, email: profile.primaryEmail|e})|raw }}</p>
         {{ form_start(form) }}
             {{ form_errors(form) }}
             {{ form_row(form.displayName) }}
             {{ form_row(form.invitationCode) }}
-            <p class="text-sm text-ink-muted">Votre adresse ne sert qu'à votre compte : <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
-            <button class="btn btn-primary w-full" type="submit">Créer mon compte</button>
+            <p class="text-sm text-ink-muted">{{ 'security.commun.confidentialite'|trans({lien: path('app_privacy')})|raw }}</p>
+            <button class="btn btn-primary w-full" type="submit">{{ 'security.commun.creer_mon_compte'|trans }}</button>
         {{ form_end(form) }}
         {% if inviteOnly %}
-            <p class="text-sm text-ink-muted">Pas de code d'invitation ? <a href="{{ path('app_home') }}#liste-attente">Laissez votre adresse sur la liste d'attente</a> : vous serez prévenu à l'ouverture.</p>
+            <p class="text-sm text-ink-muted">{{ 'security.commun.liste_attente'|trans({lien: path('app_home') ~ '#liste-attente'})|raw }}</p>
         {% endif %}
     </main>
 {% endblock %}

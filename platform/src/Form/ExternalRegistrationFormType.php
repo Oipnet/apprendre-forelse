@@ -20,20 +20,20 @@ final class ExternalRegistrationFormType extends AbstractType
     {
         $builder
             ->add('displayName', TextType::class, [
-                'label' => 'Pseudo',
+                'label' => 'form.external_registration.pseudo',
                 'attr' => ['autocomplete' => 'nickname', 'maxlength' => 40],
-                'constraints' => [new Assert\NotBlank(message: 'Choisissez un pseudo.'), new Assert\Length(max: 40)],
+                'constraints' => [new Assert\NotBlank(message: 'compte.pseudo.vide'), new Assert\Length(max: 40)],
             ])
             ->add('invitationCode', InvitationCodeType::class, [
                 'invite_only' => $options['invite_only'],
                 'mapped' => true,
-                'help' => $options['invite_only'] ? null : 'Facultatif : celui que votre formateur vous a donné, pour rejoindre sa cohorte.',
+                'help' => $options['invite_only'] ? null : 'form.external_registration.code_aide',
             ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['invite_only' => false]);
+        $resolver->setDefaults(['invite_only' => false, 'translation_domain' => 'compte']);
         $resolver->setAllowedTypes('invite_only', 'bool');
     }
 }

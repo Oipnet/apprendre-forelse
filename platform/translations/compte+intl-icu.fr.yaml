@@ -1,0 +1,348 @@
+# Le compte de l'apprenant (account/), la connexion et l'inscription (security/), le contact (contact/) et l'achat
+# (purchase/) : gabarits, formulaires, messages flash et sujets des e-mails de ces pages (voir README.md).
+
+commun:
+    # La fin d'une liste d'alternatives : « A, B ou C ».
+    liste_ou: "{debut} ou {dernier}"
+
+account:
+    index:
+        titre_page: "Mon compte · {site}"
+        titre: "Mon compte"
+        cohorte: " · cohorte « {nom} »"
+        # Les étiquettes d'un parcours (AccountProgress).
+        etat:
+            started: "En cours"
+            done: "Terminé"
+            open: "Accès actif"
+            free: "Gratuit"
+            not_started: "Non démarré"
+        parcours_termine: "Parcours terminé, bravo."
+        # HTML : rendu avec |raw, le titre échappé.
+        prochain_exercice: "Prochain exercice : <strong>{titre}</strong>"
+        premier_exercice: "Premier exercice : <strong>{titre}</strong>"
+        revoir: "Revoir le parcours"
+        reprendre: "Reprendre"
+        commencer: "Commencer"
+        un_compte_lie: "un compte lié"
+        confirmation:
+            # HTML : rendu avec |raw, l'adresse échappée.
+            texte: "<strong>Confirmez votre adresse {email}.</strong> Le lien est dans l'email reçu à l'inscription. Sans adresse confirmée, un reçu ou un lien de mot de passe oublié risque de ne jamais vous parvenir."
+            renvoyer: "Renvoyer le lien"
+        indicateurs:
+            xp: "XP"
+            exercices: "{n, plural, one {exercice réussi} other {exercices réussis}}"
+            acces: "{n, plural, one {accès actif} other {accès actifs}}"
+        progression:
+            titre: "Reprendre où j'en suis"
+            tous_les_parcours: "Tous les parcours →"
+            en_cours: "En cours"
+            exercices: "{faits} / {total} exercices"
+            xp: "{xp} XP"
+            # HTML : rendu avec |raw.
+            aucun: "Aucun parcours ouvert pour l'instant. <a href=\"{lien}\">Choisir un parcours</a> : le premier chapitre est toujours gratuit."
+        profil:
+            titre: "Profil"
+            # HTML : rendu avec |raw. « cohorte », « classement » : oui ou non.
+            pseudo: "Votre pseudo s'affiche en haut des pages{cohorte, select, oui {, dans le suivi de votre cohorte} other {}}{classement, select, oui { et dans le <a href=\"{lien}\">classement</a>} other {}}."
+            # HTML : rendu avec |raw ; « fournisseurs » : des liens, ou account.index.un_compte_lie.
+            confirmer_identite: "Pour changer d'adresse, confirmez d'abord votre identité avec {fournisseurs}."
+            enregistrer: "Enregistrer"
+        mot_de_passe:
+            titre: "Mot de passe"
+            minimum: "8 caractères minimum"
+            changer: "Changer le mot de passe"
+            # HTML : rendu avec |raw, les paramètres échappés.
+            sans: "Vous vous connectez avec {fournisseurs}. Pour pouvoir aussi vous connecter avec votre adresse, choisissez un mot de passe avec <a href=\"{lien}\">« Mot de passe oublié ? »</a> : le lien part à {email}."
+        fournisseur:
+            # HTML : rendu avec |raw, les paramètres échappés.
+            lie: "Lié au compte {fournisseur} <strong>{identifiant}</strong> depuis le {date} : vous pouvez vous connecter avec."
+            delier: "Délier {fournisseur}"
+            seul_moyen: "C'est votre seul moyen de connexion : pour le délier, choisissez d'abord un mot de passe."
+            proposer: "Liez votre compte {fournisseur} pour vous connecter sans mot de passe."
+            lier: "Lier mon compte {fournisseur}"
+        suppression:
+            titre: "Supprimer mon compte"
+            # HTML : rendu avec |raw.
+            texte: "Votre compte, votre code, votre progression, vos avis et vos accès aux parcours sont effacés tout de suite. <strong>Un parcours acheté ne sera plus accessible</strong> ; l'achat reste dans notre comptabilité, sans lien avec vous. C'est irréversible."
+            annuler: "Annuler"
+            mot_de_passe: "Votre mot de passe, pour confirmer"
+            # HTML : rendu avec |raw ; « fournisseurs » : des liens, ou account.index.un_compte_lie.
+            confirmer_identite: "Confirmez d'abord votre identité avec {fournisseurs}, puis revenez ici."
+            confirmer: "Supprimer définitivement"
+        acces:
+            titre: "Mes accès"
+            aucun: "Aucun accès pour l'instant. Le premier chapitre de chaque parcours est gratuit."
+            actif: "actif"
+            a_venir: "à venir"
+            termine: "terminé"
+            jusqu_au: "jusqu'au {date}"
+            a_vie: "à vie"
+        achats:
+            titre: "Mes achats"
+            aucun: "Aucun pour l'instant."
+            facture: "Facture (PDF)"
+            recu: "Reçu"
+        classement:
+            titre: "Classement"
+            # HTML : rendu avec |raw. « inscrit » : oui ou non.
+            rang: "{inscrit, select, oui {Vous êtes} other {Vous seriez}} <strong>{rang, number, ::group-off}<sup>{rang, selectordinal, one {er} other {e}}</sup></strong> au classement général."
+            aucun: "Réussissez un exercice pour entrer dans le classement."
+            inscrit: "Vous y apparaissez sous votre pseudo."
+            absent: "Vous n'y apparaissez pas : c'est à vous de le choisir. Seul votre pseudo serait affiché, avec votre XP et vos exercices réussis."
+            voir: "Voir le classement"
+        pratique:
+            titre: "Pratique"
+            reussis: "{n, plural, one {# exercice réussi hors parcours.} other {# exercices réussis hors parcours.}}"
+            aucun: "De courts exercices hors parcours, sur une fonctionnalité précise."
+            voir: "Voir les exercices"
+
+security:
+    commun:
+        # HTML : rendu avec |raw.
+        confidentialite: "Votre adresse ne sert qu'à votre compte : <a href=\"{lien}\">politique de confidentialité</a>."
+        creer_mon_compte: "Créer mon compte"
+        # HTML : rendu avec |raw.
+        liste_attente: "Pas de code d'invitation ? <a href=\"{lien}\">Laissez votre adresse sur la liste d'attente</a> : vous serez prévenu à l'ouverture."
+    login:
+        titre_page: "Connexion · {site}"
+        titre: "Connexion"
+        email: "Email"
+        mot_de_passe: "Mot de passe"
+        rester_connecte: "Rester connecté·e sur cet appareil"
+        mot_de_passe_oublie: "Mot de passe oublié ?"
+        se_connecter: "Se connecter"
+        continuer_avec: "Continuer avec {fournisseur}"
+        # HTML : rendu avec |raw.
+        pas_de_compte: "Pas encore de compte ? <a rel=\"nofollow\" href=\"{lien}\">Créez-en un</a>."
+    register:
+        titre_page: "Créer un compte · {site}"
+        titre: "Créer un compte"
+        intro: "Gratuit. Votre progression et votre XP sont sauvegardées."
+        intro_invitation: "Bêta sur invitation. Votre progression et votre XP sont sauvegardées."
+        inscription_avec: "S'inscrire avec {fournisseur}"
+        sans_mot_de_passe: "Sans mot de passe : votre adresse est celle que le service a vérifiée."
+        # HTML : rendu avec |raw.
+        deja_inscrit: "Déjà inscrit ? <a href=\"{lien}\">Connectez-vous</a>."
+    oauth_register:
+        titre_page: "Créer un compte avec {fournisseur} · {site}"
+        titre: "Créer un compte"
+        # HTML : rendu avec |raw, les paramètres échappés.
+        profil: "Avec votre compte {fournisseur} <strong>{identifiant}</strong>, à l'adresse <strong>{email}</strong>. Pas de mot de passe : vous vous connecterez avec {fournisseur}."
+    reset_password:
+        request:
+            titre_page: "Mot de passe oublié · {site}"
+            titre: "Mot de passe oublié"
+            texte: "Indiquez l'email de votre compte : vous recevrez un lien pour choisir un nouveau mot de passe."
+            envoyer: "Recevoir le lien"
+            # HTML : rendu avec |raw.
+            retour: "Il vous revient ? <a href=\"{lien}\">Connectez-vous</a>."
+        check_email:
+            titre_page: "Email envoyé · {site}"
+            titre: "Regardez votre boîte mail"
+            # « duree » : la durée de validité du lien, traduite par ResetPasswordBundle (« 1 heure »).
+            texte: "Si un compte existe avec cette adresse, un email vient de partir avec un lien pour choisir un nouveau mot de passe. Il est valable {duree}."
+            # HTML : rendu avec |raw.
+            rien_recu: "Rien reçu ? Vérifiez vos indésirables, ou <a href=\"{lien}\">refaites une demande</a> une fois ce délai passé."
+        reset:
+            titre_page: "Nouveau mot de passe · {site}"
+            titre: "Nouveau mot de passe"
+            envoyer: "Enregistrer et me connecter"
+
+contact:
+    index:
+        seo:
+            titre: "Contact"
+            description: "Une question sur un parcours, un achat ou une facture, un problème sur le site : écrivez-nous, une personne lit chaque message et vous répond par email."
+        surtitre: "Contact"
+        titre: "Nous écrire"
+        intro: "Une question sur un parcours, un achat ou une facture, un problème sur le site, une idée : une personne lit chaque message et vous répond par email."
+        raccourcis:
+            # HTML : rendu avec |raw.
+            exercice: "<strong>Un souci sur un exercice ?</strong> Le bouton « Un avis ? », dans l'exercice, nous l'envoie avec son contexte : c'est le plus rapide."
+            organisations: "<strong>Former une classe ou une équipe ?</strong> <a href=\"{lien}\">Écoles et entreprises</a> : ce qui existe, et comment demander un devis."
+            compte: "<strong>Votre compte ?</strong> Pseudo, adresse, mot de passe, factures et suppression se gèrent depuis <a href=\"{lien}\">Mon compte</a>."
+        envoyer: "Envoyer le message"
+        # Le début du message pour contester un certificat révoqué, depuis sa page.
+        contestation: "Je conteste la révocation de mon certificat {code} ({parcours}).\nMotif indiqué : {motif}"
+    form:
+        # HTML : rendu avec |raw.
+        confidentialite: "Votre message et votre adresse servent seulement à vous répondre : <a href=\"{lien}\">politique de confidentialité</a>."
+        indisponible: "Le formulaire n'est pas disponible sur cette instance : consultez les <a href=\"{lien}\">mentions légales</a> pour joindre l'éditeur."
+    # QuotaExceeded (ContactInbox).
+    quota: "Beaucoup de messages en peu de temps depuis votre connexion : réessayez dans une heure, ou écrivez-nous directement par email."
+
+purchase:
+    checkout:
+        titre_page: "Acheter « {parcours} » · {site}"
+        prix_normal: "Prix normal"
+        ttc: "TTC"
+        acces_a_vie: "Accès à vie au parcours et à ses mises à jour."
+        fondateur:
+            sans_places: "Prix fondateur."
+            sans_places_date: "Prix fondateur, jusqu'au {date}."
+            places: "Prix fondateur, encore {places, plural, one {# place} other {# places}}."
+            places_date: "Prix fondateur, encore {places, plural, one {# place} other {# places}}, jusqu'au {date}."
+        cohorte: "Tarif de votre cohorte « {nom} »."
+        tva: "La TVA de votre pays est calculée à l'étape suivante, sur la page de paiement sécurisée de Stripe ; le prix affiché la comprend."
+        payer: "Payer {prix}"
+        retour: "Retour au parcours"
+    thanks:
+        titre_page: "Merci · {site}"
+        paye:
+            titre: "Merci !"
+            texte: "Votre accès au parcours est ouvert, à vie. Un email de confirmation vient de partir."
+            texte_parcours: "Votre accès au parcours « {parcours} » est ouvert, à vie. Un email de confirmation vient de partir."
+            aller: "Aller au parcours →"
+            recu: "Voir le reçu"
+        en_attente:
+            titre: "Paiement en cours de confirmation"
+            texte: "Stripe nous confirme le paiement dans un instant : cette page se met à jour toute seule."
+            # HTML : rendu avec |raw.
+            rien_ne_bouge: "Rien ne bouge au bout d'une minute ? Si vous avez abandonné le paiement, rien n'a été débité. Sinon, <a href=\"{lien_page}\">rechargez la page</a> un peu plus tard : l'accès apparaîtra aussi dans <a href=\"{lien_compte}\">votre compte</a>."
+        abandonne:
+            titre: "Paiement non abouti"
+            texte: "Le paiement n'a pas abouti : rien n'a été débité et l'accès n'est pas ouvert."
+            reessayer: "Réessayer le paiement"
+        conteste:
+            titre: "Paiement contesté"
+            texte: "Le paiement est contesté auprès de votre banque : l'accès au parcours est suspendu le temps de la procédure, votre progression est conservée. Il se rouvre si la contestation est close en faveur de l'achat."
+        rembourse:
+            titre: "Achat remboursé"
+            texte: "Cet achat a été remboursé ; l'accès au parcours est fermé, votre progression est conservée."
+
+# Les libellés des champs (translation_domain des types de formulaire) ; les messages des contraintes sont dans
+# validators.fr.yaml.
+form:
+    profile:
+        pseudo: "Pseudo"
+        email: "Email"
+        email_aide: "Une nouvelle adresse ne remplace l'actuelle qu'une fois confirmée par le lien que nous y envoyons."
+        mot_de_passe: "Mot de passe actuel"
+        mot_de_passe_aide: "Demandé seulement pour changer d'adresse."
+    password:
+        actuel: "Mot de passe actuel"
+        nouveau: "Nouveau mot de passe"
+    delete_account:
+        mot_de_passe: "Mot de passe"
+    registration:
+        pseudo: "Pseudo"
+        email: "Email"
+        mot_de_passe: "Mot de passe"
+    external_registration:
+        pseudo: "Pseudo"
+        code_aide: "Facultatif : celui que votre formateur vous a donné, pour rejoindre sa cohorte."
+    invitation_code:
+        code: "Code d'invitation"
+    change_password:
+        nouveau: "Nouveau mot de passe"
+    reset_password_request:
+        email: "Email"
+    contact:
+        objet: "Objet"
+        nom: "Nom"
+        email: "Email"
+        organisation: "Établissement ou entreprise"
+        effectif: "Nombre de personnes à former (environ)"
+        projet: "Votre projet"
+        projet_exemple: "Le public (BUT, licence pro, bootcamp, équipe de développeurs…), les parcours qui vous intéressent, la période visée."
+        message: "Message"
+    purchase_confirmation:
+        # HTML (label_html).
+        cgv: "J'ai lu et j'accepte les <a href=\"{lien}\" target=\"_blank\" rel=\"noopener\">conditions générales de vente</a>."
+
+# Les erreurs de formulaire posées par les contrôleurs.
+erreur:
+    mot_de_passe_requis: "Votre mot de passe actuel est demandé pour changer d'adresse."
+    identite_pour_adresse: "Confirmez d'abord votre identité avec un compte lié (GitHub, Google ou LinkedIn) pour changer d'adresse."
+    identite_pour_suppression: "Confirmez d'abord votre identité avec un compte lié (GitHub, Google ou LinkedIn)."
+    email_pris: "Un compte existe déjà avec cet email."
+    inscriptions_refusees: "Beaucoup d'inscriptions refusées depuis votre connexion : réessayez dans une heure."
+    trop_de_codes: "Trop de codes d'invitation essayés depuis votre connexion : réessayez dans une heure, ou demandez le lien d'invitation à votre formateur."
+
+flash:
+    profil_enregistre: "Profil enregistré."
+    confirmation_envoyee: "Un lien de confirmation vient de partir à {email}. Votre adresse actuelle reste valable jusqu'à ce que vous l'ouvriez."
+    confirmation_renvoyee: "Un nouveau lien de confirmation vient de partir à {email}."
+    confirmation_trop_de_demandes: "Trop de demandes de confirmation : réessayez dans une heure."
+    confirmation_non_envoyee: "L'email de confirmation n'a pas pu partir. Réessayez dans quelques minutes."
+    confirmation_invalide: "Ce lien de confirmation n'est pas valide ou a expiré. Vous pouvez en demander un nouveau depuis votre compte."
+    confirmation_perimee: "Ce lien de confirmation a déjà servi ou ne correspond plus à votre compte. Vous pouvez en demander un nouveau depuis votre compte."
+    adresse_deja_confirmee: "Votre adresse est déjà confirmée."
+    adresse_prise: "Cette adresse est déjà utilisée par un autre compte."
+    adresse_confirmee: "Adresse confirmée, merci."
+    adresse_changee: "Adresse confirmée : votre compte utilise désormais {email}."
+    mot_de_passe_change: "Mot de passe changé. Vos autres appareils devront se reconnecter."
+    facture_indisponible: "La facture n'est pas disponible pour le moment. Réessayez plus tard, ou écrivez-nous."
+    compte_supprime: "Votre compte a été supprimé, avec votre progression. Merci d'être passé."
+    bienvenue: "Bienvenue, {pseudo} ! Votre compte est créé : votre progression est désormais sauvegardée."
+    bienvenue_confirmation: "Bienvenue, {pseudo} ! Votre compte est créé : votre progression est désormais sauvegardée. Un email vient de partir à {email} pour confirmer votre adresse."
+    lien_expire: "Ce lien a expiré. Refaites une demande pour en recevoir un nouveau."
+    lien_invalide: "Ce lien de réinitialisation n'est pas valide, ou a déjà servi. Refaites une demande."
+    mot_de_passe_modifie: "Mot de passe modifié. Bon retour !"
+    message_envoye: "Message envoyé, merci. Nous vous répondons par email."
+    oauth:
+        expiree: "La connexion avec {fournisseur} a expiré. Recommencez."
+        annulee: "Connexion avec {fournisseur} annulée."
+        sans_reponse: "{fournisseur} n'a pas répondu comme prévu. Réessayez dans quelques minutes."
+        connecte: "Connecté avec {fournisseur}."
+        compte_non_confirme: "Un compte existe déjà avec l'adresse de votre compte {fournisseur}, mais elle n'a jamais été confirmée : par sécurité, il n'est pas rattaché d'office. Connectez-vous avec votre mot de passe (ou « Mot de passe oublié ? »), puis liez {fournisseur} depuis votre compte."
+        autre_compte_lie: "Le compte qui utilise l'adresse de votre compte {fournisseur} est déjà lié à un autre compte {fournisseur}. Connectez-vous avec ce compte {fournisseur}, ou avec votre mot de passe."
+        aucune_adresse_verifiee: "Votre compte {fournisseur} n'a aucune adresse email vérifiée. Vérifiez-en une chez {fournisseur}, ou créez un compte avec votre adresse et un mot de passe."
+        compte_cree_entre_temps: "Un compte vient d'être créé avec cette adresse. Reconnectez-vous avec {fournisseur}."
+        delie: "{fournisseur} n'est plus lié à votre compte."
+        dernier_moyen: "Choisissez d'abord un mot de passe (« Mot de passe oublié ? » sur la page de connexion) : sans {fournisseur} ni mot de passe, vous ne pourriez plus vous connecter."
+        lie: "Votre compte {fournisseur} {identifiant} est lié : vous pourrez vous connecter avec."
+        lie_ailleurs: "Ce compte {fournisseur} est lié à un autre compte de la plateforme."
+        deja_lie: "Votre compte est déjà lié à un autre compte {fournisseur} : déliez-le d'abord."
+        identite_confirmee: "Identité confirmée avec {fournisseur} : vous avez cinq minutes."
+        identite_non_confirmee: "Ce compte {fournisseur} n'est pas celui qui est lié au vôtre : identité non confirmée."
+    achat:
+        connexion: "Connectez-vous (ou créez votre compte) pour acheter le parcours : l'accès est rattaché à votre compte."
+        gratuit: "Ce parcours est gratuit : il n'y a rien à acheter."
+        bientot: "L'achat du parcours sera bientôt disponible."
+        deja_acces: "Vous avez déjà accès à tout ce parcours."
+        # « raison » : le message de PaymentException.
+        paiement_impossible: "{raison} Rien n'a été débité ; réessayez dans un instant."
+
+# Les messages de PaymentException montrés à l'apprenant (« detail » : la réponse de Stripe).
+paiement:
+    demarrage: "Le paiement n'a pas pu démarrer : {detail}"
+    introuvable: "Le paiement en cours n'a pas pu être retrouvé : {detail}"
+    annulation: "Le paiement en cours n'a pas pu être annulé : {detail}"
+    non_configure: "Le paiement n'est pas configuré sur cette plateforme (STRIPE_SECRET_KEY)."
+    cle_reelle: "Clé Stripe réelle (sk_live_) refusée hors production : utilisez une clé de test."
+
+# Les libellés des enums montrés à l'apprenant (leur méthode trans()).
+enum:
+    access_source:
+        purchase: "Achat"
+        cohort: "Cohorte"
+        gift: "Offert"
+    purchase_status:
+        pending: "En attente"
+        abandoned: "Abandonné"
+        paid: "Payé"
+        refunded: "Remboursé"
+        disputed: "Contesté"
+    contact_subject:
+        question: "Une question sur les parcours"
+        commande: "Un achat, une facture, un remboursement"
+        probleme: "Un problème sur le site"
+        ecole: "Former une classe ou une équipe"
+        certificat: "Un litige sur un certificat"
+        autre: "Autre chose"
+
+# Les sujets des e-mails envoyés depuis ces pages.
+email:
+    confirmation:
+        sujet: "Confirmez votre adresse email sur {site}"
+        sujet_nouvelle_adresse: "Confirmez votre nouvelle adresse email sur {site}"
+    reinitialisation:
+        sujet: "Choisissez un nouveau mot de passe sur {site}"
+    adresse_changee:
+        sujet: "Votre adresse sur {site} a changé"
+    tentative_inscription:
+        sujet: "Vous avez déjà un compte {site}"
+    achat:
+        sujet: "Votre accès au parcours « {parcours} » sur {site}"

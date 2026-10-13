@@ -19,15 +19,16 @@ use Symfony\Component\Validator\Constraints\Compound;
 #[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD)]
 final class StrongPassword extends Compound
 {
-    public const string TOO_WEAK = 'Ce mot de passe se devine trop facilement. Une phrase de passe de quelques mots (« quatre chats boivent du thé ») est plus sûre, et plus facile à retenir.';
-    public const string COMPROMISED = 'Ce mot de passe figure dans des fuites de données connues : choisissez-en un autre, par exemple une phrase de quelques mots.';
+    /** Les messages, des clés du domaine validators (translations/validators.fr.yaml). */
+    public const string TOO_WEAK = 'mot_de_passe.trop_faible';
+    public const string COMPROMISED = 'mot_de_passe.compromis';
 
     /** @param array<string, mixed> $options */
     protected function getConstraints(array $options): array
     {
         return [new Assert\Sequentially([
-            new Assert\NotBlank(message: 'Choisissez un mot de passe.'),
-            new Assert\Length(min: 8, max: 4096, minMessage: 'Au moins {{ limit }} caractères.'),
+            new Assert\NotBlank(message: 'mot_de_passe.vide'),
+            new Assert\Length(min: 8, max: 4096, minMessage: 'mot_de_passe.trop_court'),
             new Assert\PasswordStrength(minScore: Assert\PasswordStrength::STRENGTH_MEDIUM, message: self::TOO_WEAK),
             new Assert\NotCompromisedPassword(message: self::COMPROMISED, skipOnError: true),
         ])];

@@ -26,24 +26,24 @@ final class ProfileFormType extends AbstractType
     {
         $builder
             ->add('displayName', TextType::class, [
-                'label' => 'Pseudo',
+                'label' => 'form.profile.pseudo',
                 'attr' => ['autocomplete' => 'nickname', 'maxlength' => 40],
-                'constraints' => [new Assert\NotBlank(message: 'Choisissez un pseudo.'), new Assert\Length(max: 40)],
+                'constraints' => [new Assert\NotBlank(message: 'compte.pseudo.vide'), new Assert\Length(max: 40)],
             ])
             ->add('email', EmailType::class, [
-                'label' => 'Email',
-                'help' => 'Une nouvelle adresse ne remplace l\'actuelle qu\'une fois confirmée par le lien que nous y envoyons.',
+                'label' => 'form.profile.email',
+                'help' => 'form.profile.email_aide',
                 'attr' => ['autocomplete' => 'email', 'maxlength' => 180],
                 'constraints' => [
-                    new Assert\NotBlank(message: 'Indiquez votre email.'),
-                    new Assert\Email(message: 'Cet email n\'est pas valide.'),
+                    new Assert\NotBlank(message: 'compte.email.vide'),
+                    new Assert\Email(message: 'email.invalide'),
                     new Assert\Length(max: 180),
                 ],
             ]);
         if ($options['with_password']) {
             $builder->add('currentPassword', PasswordType::class, [
-                'label' => 'Mot de passe actuel',
-                'help' => 'Demandé seulement pour changer d\'adresse.',
+                'label' => 'form.profile.mot_de_passe',
+                'help' => 'form.profile.mot_de_passe_aide',
                 'required' => false,
                 'attr' => ['autocomplete' => 'current-password'],
             ]);
@@ -52,7 +52,7 @@ final class ProfileFormType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['with_password' => true]);
+        $resolver->setDefaults(['with_password' => true, 'translation_domain' => 'compte']);
         $resolver->setAllowedTypes('with_password', 'bool');
     }
 }

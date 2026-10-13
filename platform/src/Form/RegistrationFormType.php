@@ -17,10 +17,10 @@ final class RegistrationFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('displayName', TextType::class, ['label' => 'Pseudo', 'attr' => ['autocomplete' => 'nickname']])
-            ->add('email', EmailType::class, ['label' => 'Email', 'attr' => ['autocomplete' => 'email']])
+            ->add('displayName', TextType::class, ['label' => 'form.registration.pseudo', 'attr' => ['autocomplete' => 'nickname']])
+            ->add('email', EmailType::class, ['label' => 'form.registration.email', 'attr' => ['autocomplete' => 'email']])
             ->add('plainPassword', PasswordType::class, [
-                'label' => 'Mot de passe',
+                'label' => 'form.registration.mot_de_passe',
                 'mapped' => false,
                 'attr' => ['autocomplete' => 'new-password'],
                 'constraints' => [new StrongPassword()],
@@ -39,6 +39,7 @@ final class RegistrationFormType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => User::class,
+            'translation_domain' => 'compte',
             'invite_only' => false,
             'invitation_code' => null,
         ]);

@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** D'où vient l'accès d'un apprenant à un parcours. Traduisible : EasyAdmin affiche label() tel quel. */
 enum AccessSource: string implements TranslatableInterface
@@ -24,6 +25,12 @@ enum AccessSource: string implements TranslatableInterface
             self::Cohort => 'Cohorte',
             self::Gift => 'Offert',
         };
+    }
+
+    /** Le libellé montré à l'apprenant (compte : enum.access_source.<valeur>) ; label() garde le français de l'administration. */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
+    {
+        return $translator->trans('enum.access_source.'.$this->value, [], 'compte', $locale);
     }
 
     public function badge(): string

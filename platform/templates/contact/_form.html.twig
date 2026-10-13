@@ -2,6 +2,7 @@
   Formulaire de contact, partagé par /contact et /ecoles-et-entreprises. Variables : form, open, submitLabel.
   Sans adresse de réception configurée (CONTACT_EMAIL, LEGAL_PUBLISHER_EMAIL), on ne propose pas de formulaire.
 #}
+{% trans_default_domain 'compte' %}
 {% if open %}
     <div class="site-form contact-form mt-6">
         {{ form_start(form) }}
@@ -20,10 +21,10 @@
             {{ form_row(form.message) }}
             {# Piège à robots : un humain ne voit pas ce champ. #}
             {{ form_widget(form.site) }}
-            <p class="text-sm text-ink-muted">Votre message et votre adresse servent seulement à vous répondre : <a href="{{ path('app_privacy') }}">politique de confidentialité</a>.</p>
+            <p class="text-sm text-ink-muted">{{ 'contact.form.confidentialite'|trans({lien: path('app_privacy')})|raw }}</p>
             <button class="btn btn-primary" type="submit">{{ submitLabel }}</button>
         {{ form_end(form) }}
     </div>
 {% else %}
-    <p class="text-sm text-ink-muted">Le formulaire n'est pas disponible sur cette instance : consultez les <a href="{{ path('app_legal_notice') }}">mentions légales</a> pour joindre l'éditeur.</p>
+    <p class="text-sm text-ink-muted">{{ 'contact.form.indisponible'|trans({lien: path('app_legal_notice')})|raw }}</p>
 {% endif %}

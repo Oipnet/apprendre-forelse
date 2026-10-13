@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
 
 /**
@@ -85,8 +86,9 @@ final class PasswordRulesTest extends WebTestCase
 
     public function testLesMessagesDisentQuoiFaire(): void
     {
-        $this->assertStringContainsString('phrase de passe', StrongPassword::TOO_WEAK);
-        $this->assertStringContainsString('phrase', StrongPassword::COMPROMISED);
+        $translator = static::getContainer()->get(TranslatorInterface::class);
+        $this->assertStringContainsString('phrase de passe', $translator->trans(StrongPassword::TOO_WEAK, [], 'validators'));
+        $this->assertStringContainsString('phrase', $translator->trans(StrongPassword::COMPROMISED, [], 'validators'));
     }
 
     private function choisir(string $formulaire, string $motDePasse): void

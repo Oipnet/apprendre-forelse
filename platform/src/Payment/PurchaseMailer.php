@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Email de confirmation d'achat, avec le lien vers le reçu Stripe (ou vers le compte, où il apparaîtra). */
 final readonly class PurchaseMailer
@@ -22,6 +23,7 @@ final readonly class PurchaseMailer
         private Sender $sender,
         private Theme $theme,
         private LegalInfo $legal,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -31,7 +33,7 @@ final readonly class PurchaseMailer
         $track = $this->content->findTrack($purchase->getTrackId());
         $email = $this->sender->email()
             ->to(new Address($purchase->getCustomerEmail(), (string) $purchase->getUser()?->getDisplayName()))
-            ->subject(sprintf('Votre accès au parcours « %s » sur %s', $track->title ?? $purchase->getTrackId(), $this->theme->name()))
+            ->subject($this->translator->trans('email.achat.sujet', ['parcours' => $track->title ?? $purchase->getTrackId(), 'site' => $this->theme->name()], 'compte'))
             ->htmlTemplate('emails/purchase_confirmation.html.twig')
             ->textTemplate('emails/purchase_confirmation.txt.twig')
             // L'identité du vendeur : la confirmation d'une vente à distance est le support durable du contrat.

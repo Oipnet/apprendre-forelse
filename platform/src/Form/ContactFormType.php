@@ -28,26 +28,27 @@ final class ContactFormType extends AbstractType
     {
         if (!$options['organization']) {
             $builder->add('subject', EnumType::class, [
-                'label' => 'Objet',
+                'label' => 'form.contact.objet',
                 'class' => ContactSubject::class,
-                'choice_label' => static fn (ContactSubject $subject) => $subject->label(),
+                // L'objet est traduisible (compte : enum.contact_subject.*).
+                'choice_label' => static fn (ContactSubject $subject) => $subject,
             ]);
         }
         $builder
-            ->add('name', TextType::class, ['label' => 'Nom', 'attr' => ['autocomplete' => 'name', 'maxlength' => 100]])
-            ->add('email', EmailType::class, ['label' => 'Email', 'attr' => ['autocomplete' => 'email', 'maxlength' => 180]]);
+            ->add('name', TextType::class, ['label' => 'form.contact.nom', 'attr' => ['autocomplete' => 'name', 'maxlength' => 100]])
+            ->add('email', EmailType::class, ['label' => 'form.contact.email', 'attr' => ['autocomplete' => 'email', 'maxlength' => 180]]);
         if ($options['organization']) {
             $builder
-                ->add('organization', TextType::class, ['label' => 'Établissement ou entreprise', 'required' => false, 'attr' => ['autocomplete' => 'organization', 'maxlength' => 150]])
-                ->add('headcount', IntegerType::class, ['label' => 'Nombre de personnes à former (environ)', 'required' => false, 'attr' => ['min' => 1]]);
+                ->add('organization', TextType::class, ['label' => 'form.contact.organisation', 'required' => false, 'attr' => ['autocomplete' => 'organization', 'maxlength' => 150]])
+                ->add('headcount', IntegerType::class, ['label' => 'form.contact.effectif', 'required' => false, 'attr' => ['min' => 1]]);
         }
         $builder
             ->add('message', TextareaType::class, [
-                'label' => $options['organization'] ? 'Votre projet' : 'Message',
+                'label' => $options['organization'] ? 'form.contact.projet' : 'form.contact.message',
                 'attr' => [
                     'rows' => 7,
                     'maxlength' => 5000,
-                    'placeholder' => $options['organization'] ? 'Le public (BUT, licence pro, bootcamp, équipe de développeurs…), les parcours qui vous intéressent, la période visée.' : '',
+                    'placeholder' => $options['organization'] ? 'form.contact.projet_exemple' : '',
                 ],
             ])
             ->add(self::TRAP, TextType::class, ['mapped' => false, 'required' => false, 'label' => false, 'attr' => ['class' => 'lp-trap', 'tabindex' => -1, 'autocomplete' => 'off', 'aria-hidden' => 'true']]);
@@ -55,7 +56,7 @@ final class ContactFormType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['data_class' => ContactMessage::class, 'organization' => false]);
+        $resolver->setDefaults(['data_class' => ContactMessage::class, 'organization' => false, 'translation_domain' => 'compte']);
         $resolver->setAllowedTypes('organization', 'bool');
     }
 }

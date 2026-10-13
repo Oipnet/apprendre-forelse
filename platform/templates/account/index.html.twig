@@ -1,31 +1,56 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mon compte · {{ theme.name }}{% endblock %}
+{% trans_default_domain 'compte' %}
+
+{% block title %}{{ 'account.index.titre_page'|trans({site: theme.name}) }}{% endblock %}
 
 {% macro track_tag(state) %}
+    {#- Le libellé : account.index.etat.<état>. -#}
     {%- set tags = {
-        started: ['En cours', 'rust'],
-        done: ['Terminé', 'green'],
-        open: ['Accès actif', 'green'],
-        free: ['Gratuit', 'green'],
-        not_started: ['Non démarré', 'muted'],
+        started: 'rust',
+        done: 'green',
+        open: 'green',
+        free: 'green',
+        not_started: 'muted',
     } -%}
-    <span class="ac-tag tag {{ {rust: 'border-highlight text-highlight', green: 'border-success text-success', muted: ''}[tags[state][1]] }}">{{ tags[state][0] }}</span>
+    <span class="ac-tag tag {{ {rust: 'border-highlight text-highlight', green: 'border-success text-success', muted: ''}[tags[state]] }}">{{ ('account.index.etat.' ~ state)|trans({}, 'compte') }}</span>
 {%- endmacro %}
 
 {% macro next_line(row) %}
     {%- if row.state == 'done' -%}
-        Parcours terminé, bravo.
+        {{ 'account.index.parcours_termine'|trans({}, 'compte') }}
     {%- elseif row.next -%}
-        {{ row.completed or row.lastActivity ? 'Prochain exercice' : 'Premier exercice' }} : <strong>{{ row.next.title }}</strong>
+        {{ (row.completed or row.lastActivity ? 'account.index.prochain_exercice' : 'account.index.premier_exercice')|trans({titre: row.next.title|e}, 'compte')|raw }}
     {%- endif -%}
 {%- endmacro %}
 
 {% macro action(row, class) %}
     {%- if row.state == 'done' -%}
-        <a class="{{ class }}" href="{{ path('app_track', {trackId: row.track.id}) }}">Revoir le parcours <span aria-hidden="true">→</span></a>
+        <a class="{{ class }}" href="{{ path('app_track', {trackId: row.track.id}) }}">{{ 'account.index.revoir'|trans({}, 'compte') }} <span aria-hidden="true">→</span></a>
     {%- elseif row.next -%}
-        <a class="{{ class }}" href="{{ path('app_exercise', {trackId: row.track.id, exerciseId: row.next.id}) }}">{{ row.completed or row.lastActivity ? 'Reprendre' : 'Commencer' }} <span aria-hidden="true">→</span></a>
+        <a class="{{ class }}" href="{{ path('app_exercise', {trackId: row.track.id, exerciseId: row.next.id}) }}">{{ (row.completed or row.lastActivity ? 'account.index.reprendre' : 'account.index.commencer')|trans({}, 'compte') }} <span aria-hidden="true">→</span></a>
+    {%- endif -%}
+{%- endmacro %}
+
+{# Les fournisseurs liés qui confirment l'identité (compte sans mot de passe), en liens : « GitHub ou Google ». #}
+{% macro confirm_links(identities, oauth, fragment) %}
+    {%- set links = [] -%}
+    {%- for name, identity in identities|filter((identity, name) => oauth.get(name)) -%}
+        {%- set links = links|merge(['<a href="' ~ path('app_oauth_start', {fournisseur: name, mode: 'confirmer', suite: path('app_account') ~ fragment})|e ~ '">' ~ oauth.label(name)|e ~ '</a>']) -%}
+    {%- endfor -%}
+    {%- if links is empty -%}
+        {{ 'account.index.un_compte_lie'|trans({}, 'compte') }}
+    {%- else -%}
+        {{ _self.or_list(links) }}
+    {%- endif -%}
+{%- endmacro %}
+
+{# Une liste « A, B ou C », d'éléments déjà échappés. #}
+{% macro or_list(items) %}
+    {%- if items|length > 1 -%}
+        {{ 'commun.liste_ou'|trans({debut: items|slice(0, -1)|join(', '), dernier: items|last}, 'compte')|raw }}
+    {%- else -%}
+        {{ items|join|raw }}
     {%- endif -%}
 {%- endmacro %}
 
@@ -36,23 +61,23 @@
         {% if not user.emailVerified %}
             <div class="mb-6 flex flex-wrap items-center gap-3 rounded-md border border-highlight bg-bg-2 px-4 py-3" id="confirmation">
                 <span class="font-bold text-highlight" aria-hidden="true">!</span>
-                <p class="flex-1"><strong>Confirmez votre adresse {{ user.email }}.</strong> Le lien est dans l'email reçu à l'inscription. Sans adresse confirmée, un reçu ou un lien de mot de passe oublié risque de ne jamais vous parvenir.</p>
+                <p class="flex-1">{{ 'account.index.confirmation.texte'|trans({email: user.email|e})|raw }}</p>
                 <form method="post" action="{{ path('app_account_resend_confirmation') }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
-                    <button class="btn text-sm" type="submit">Renvoyer le lien</button>
+                    <button class="btn text-sm" type="submit">{{ 'account.index.confirmation.renvoyer'|trans }}</button>
                 </form>
             </div>
         {% endif %}
 
         <header class="flex flex-col gap-4 border-b border-line pb-6 md:flex-row md:items-end md:justify-between">
             <div>
-                <h1 class="text-3xl font-semibold">Mon compte</h1>
-                <p class="mt-1 text-ink-muted">{{ user.displayName }}{% if user.cohort %} · cohorte « {{ user.cohort.name }} »{% endif %}</p>
+                <h1 class="text-3xl font-semibold">{{ 'account.index.titre'|trans }}</h1>
+                <p class="mt-1 text-ink-muted">{{ user.displayName }}{% if user.cohort %}{{ 'account.index.cohorte'|trans({nom: user.cohort.name}) }}{% endif %}</p>
             </div>
             <dl class="ac-kpis flex gap-6 [&_dd]:text-2xl [&_dd]:font-semibold [&_div]:flex [&_div]:flex-col-reverse [&_dt]:text-sm [&_dt]:text-ink-muted">
-                <div><dt>XP</dt> <dd>{{ user.xp }}</dd></div>
-                <div><dt>exercice{{ completedExercises > 1 ? 's' }} réussi{{ completedExercises > 1 ? 's' }}</dt> <dd>{{ completedExercises }}</dd></div>
-                <div><dt>accès actif{{ activeAccesses > 1 ? 's' }}</dt> <dd>{{ activeAccesses }}</dd></div>
+                <div><dt>{{ 'account.index.indicateurs.xp'|trans }}</dt> <dd>{{ user.xp }}</dd></div>
+                <div><dt>{{ 'account.index.indicateurs.exercices'|trans({n: completedExercises}) }}</dt> <dd>{{ completedExercises }}</dd></div>
+                <div><dt>{{ 'account.index.indicateurs.acces'|trans({n: activeAccesses}) }}</dt> <dd>{{ activeAccesses }}</dd></div>
             </dl>
         </header>
 
@@ -60,13 +85,13 @@
             <div class="space-y-10">
                 <section id="progression">
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 class="text-xl font-semibold">Reprendre où j'en suis</h2>
-                        <a href="{{ path('app_tracks') }}">Tous les parcours →</a>
+                        <h2 class="text-xl font-semibold">{{ 'account.index.progression.titre'|trans }}</h2>
+                        <a href="{{ path('app_tracks') }}">{{ 'account.index.progression.tous_les_parcours'|trans }}</a>
                     </div>
 
                     {% if featured %}
                         <article class="ac-featured mt-4 rounded-lg border border-line bg-surface p-5">
-                            <div class="text-sm text-ink-muted">En cours</div>
+                            <div class="text-sm text-ink-muted">{{ 'account.index.progression.en_cours'|trans }}</div>
                             <div class="mt-1 flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <a class="text-lg font-semibold" href="{{ path('app_track', {trackId: featured.track.id}) }}">{{ featured.track.title }}</a>
@@ -75,7 +100,7 @@
                                 {{ _self.action(featured, 'btn btn-primary') }}
                             </div>
                             <div class="mt-4">
-                                <div class="flex justify-between text-sm text-ink-muted"><span>{{ featured.completed }} / {{ featured.total }} exercices</span><span class="xp">{{ featured.xp }} XP</span></div>
+                                <div class="flex justify-between text-sm text-ink-muted"><span>{{ 'account.index.progression.exercices'|trans({faits: featured.completed, total: featured.total}) }}</span><span class="xp">{{ 'account.index.progression.xp'|trans({xp: featured.xp}) }}</span></div>
                                 <div class="mt-1 h-2 overflow-hidden rounded-full bg-bg-2" aria-hidden="true"><div class="h-full bg-accent" style="width: {{ featured.total ? max(1, (featured.completed / featured.total * 100)|round) : 0 }}%"></div></div>
                             </div>
                         </article>
@@ -94,7 +119,7 @@
                                         <p>{{ _self.next_line(row) }}</p>
                                     </div>
                                     <div class="mt-3">
-                                        <div class="flex justify-between text-sm text-ink-muted"><span>{{ row.completed }} / {{ row.total }} exercices</span><span class="{{ row.xp ? 'xp' }}">{{ row.xp }} XP</span></div>
+                                        <div class="flex justify-between text-sm text-ink-muted"><span>{{ 'account.index.progression.exercices'|trans({faits: row.completed, total: row.total}) }}</span><span class="{{ row.xp ? 'xp' }}">{{ 'account.index.progression.xp'|trans({xp: row.xp}) }}</span></div>
                                         <div class="my-1 h-1.5 overflow-hidden rounded-full bg-bg-2" aria-hidden="true"><div class="h-full bg-accent" style="width: {{ row.total ? (row.completed / row.total * 100)|round : 0 }}%"></div></div>
                                         {{ _self.action(row, 'btn mt-2') }}
                                     </div>
@@ -102,13 +127,13 @@
                             {% endfor %}
                         </ul>
                     {% elseif not featured %}
-                        <p class="text-sm text-ink-muted">Aucun parcours ouvert pour l'instant. <a href="{{ path('app_tracks') }}">Choisir un parcours</a> : le premier chapitre est toujours gratuit.</p>
+                        <p class="text-sm text-ink-muted">{{ 'account.index.progression.aucun'|trans({lien: path('app_tracks')})|raw }}</p>
                     {% endif %}
                 </section>
 
                 <section id="profil">
-                    <h2 class="text-xl font-semibold">Profil</h2>
-                    <p class="mt-1 text-ink-muted">Votre pseudo s'affiche en haut des pages{% if user.cohort %}, dans le suivi de votre cohorte{% endif %}{% if user.leaderboardOptIn %} et dans le <a href="{{ path('app_leaderboard') }}">classement</a>{% endif %}.</p>
+                    <h2 class="text-xl font-semibold">{{ 'account.index.profil.titre'|trans }}</h2>
+                    <p class="mt-1 text-ink-muted">{{ 'account.index.profil.pseudo'|trans({cohorte: user.cohort ? 'oui' : 'non', classement: user.leaderboardOptIn ? 'oui' : 'non', lien: path('app_leaderboard')})|raw }}</p>
                     <div class="mt-4 space-y-4">
                         <div class="rounded-lg border border-line bg-surface p-4">
                             {{ form_start(profileForm) }}
@@ -117,22 +142,22 @@
                                 {% if profileForm.currentPassword is defined %}
                                     {{ form_row(profileForm.currentPassword, {attr: {placeholder: '••••••••'}}) }}
                                 {% elseif not recentSignIn %}
-                                    <p class="text-sm text-ink-muted">Pour changer d'adresse, confirmez d'abord votre identité avec {% for name, identity in identities|filter((identity, name) => oauth.get(name)) %}{{ not loop.first ? (loop.last ? ' ou ' : ', ') }}<a href="{{ path('app_oauth_start', {fournisseur: name, mode: 'confirmer', suite: path('app_account') ~ '#profil'}) }}">{{ oauth.label(name) }}</a>{% else %}un compte lié{% endfor %}.</p>
+                                    <p class="text-sm text-ink-muted">{{ 'account.index.profil.confirmer_identite'|trans({fournisseurs: _self.confirm_links(identities, oauth, '#profil') ~ ''})|raw }}</p>
                                 {% endif %}
                                 {{ form_errors(profileForm) }}
-                                <button class="btn btn-primary" type="submit">Enregistrer</button>
+                                <button class="btn btn-primary" type="submit">{{ 'account.index.profil.enregistrer'|trans }}</button>
                             {{ form_end(profileForm) }}
                         </div>
                         <div class="rounded-lg border border-line bg-surface p-4" id="mot-de-passe">
-                            <div class="mb-3 font-semibold">Mot de passe</div>
+                            <div class="mb-3 font-semibold">{{ 'account.index.mot_de_passe.titre'|trans }}</div>
                             {% if user.hasPassword %}
                                 {{ form_start(passwordForm) }}
                                     {{ form_row(passwordForm.currentPassword, {attr: {placeholder: '••••••••'}}) }}
-                                    {{ form_row(passwordForm.plainPassword, {attr: {placeholder: '8 caractères minimum'}}) }}
-                                    <button class="btn" type="submit">Changer le mot de passe</button>
+                                    {{ form_row(passwordForm.plainPassword, {attr: {placeholder: 'account.index.mot_de_passe.minimum'|trans}}) }}
+                                    <button class="btn" type="submit">{{ 'account.index.mot_de_passe.changer'|trans }}</button>
                                 {{ form_end(passwordForm) }}
                             {% else %}
-                                <p class="text-sm text-ink-muted">Vous vous connectez avec {{ identities|keys|map(name => oauth.label(name))|join(', ', ' ou ') }}. Pour pouvoir aussi vous connecter avec votre adresse, choisissez un mot de passe avec <a href="{{ path('app_forgot_password_request') }}">« Mot de passe oublié ? »</a> : le lien part à {{ user.email }}.</p>
+                                <p class="text-sm text-ink-muted">{{ 'account.index.mot_de_passe.sans'|trans({fournisseurs: _self.or_list(identities|keys|map(name => oauth.label(name)|e)) ~ '', lien: path('app_forgot_password_request'), email: user.email|e})|raw }}</p>
                             {% endif %}
                         </div>
                         {# Un fournisseur activé, ou retiré de la configuration mais encore lié : on peut toujours le délier. #}
@@ -143,18 +168,18 @@
                             <div class="rounded-lg border border-line bg-surface p-4" id="{{ name }}">
                                 <div class="mb-2 font-semibold">{{ label }}</div>
                                 {% if identity %}
-                                    <p class="text-sm text-ink-muted">Lié au compte {{ label }} <strong>{{ identity.username }}</strong> depuis le {{ identity.linkedAt|date('d/m/Y') }} : vous pouvez vous connecter avec.</p>
+                                    <p class="text-sm text-ink-muted">{{ 'account.index.fournisseur.lie'|trans({fournisseur: label|e, identifiant: identity.username|e, date: identity.linkedAt|format_date('short')})|raw }}</p>
                                     {% if user.hasPassword or identities|length > 1 %}
                                         <form method="post" action="{{ path('app_account_oauth_unlink', {fournisseur: name}) }}">
                                             <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
-                                            <button class="btn text-sm" type="submit">Délier {{ label }}</button>
+                                            <button class="btn text-sm" type="submit">{{ 'account.index.fournisseur.delier'|trans({fournisseur: label}) }}</button>
                                         </form>
                                     {% else %}
-                                        <p class="text-sm text-ink-muted">C'est votre seul moyen de connexion : pour le délier, choisissez d'abord un mot de passe.</p>
+                                        <p class="text-sm text-ink-muted">{{ 'account.index.fournisseur.seul_moyen'|trans }}</p>
                                     {% endif %}
                                 {% else %}
-                                    <p class="text-sm text-ink-muted">Liez votre compte {{ label }} pour vous connecter sans mot de passe.</p>
-                                    <a class="btn text-sm" href="{{ path('app_oauth_start', {fournisseur: name, mode: 'lier'}) }}">Lier mon compte {{ label }}</a>
+                                    <p class="text-sm text-ink-muted">{{ 'account.index.fournisseur.proposer'|trans({fournisseur: label}) }}</p>
+                                    <a class="btn text-sm" href="{{ path('app_oauth_start', {fournisseur: name, mode: 'lier'}) }}">{{ 'account.index.fournisseur.lier'|trans({fournisseur: label}) }}</a>
                                 {% endif %}
                             </div>
                         {% endfor %}
@@ -165,20 +190,20 @@
                     <details class="group rounded-lg border border-danger"{% if deleteOpen %} open{% endif %}>
                         <summary class="flex cursor-pointer list-none flex-wrap items-start gap-4 p-4">
                             <span class="flex-1 text-sm">
-                                <span class="block font-semibold text-danger">Supprimer mon compte</span>
-                                <span>Votre compte, votre code, votre progression, vos avis et vos accès aux parcours sont effacés tout de suite. <strong>Un parcours acheté ne sera plus accessible</strong> ; l'achat reste dans notre comptabilité, sans lien avec vous. C'est irréversible.</span>
+                                <span class="block font-semibold text-danger">{{ 'account.index.suppression.titre'|trans }}</span>
+                                <span>{{ 'account.index.suppression.texte'|trans|raw }}</span>
                             </span>
-                            <span class="btn border-danger text-danger" aria-hidden="true"><span class="group-open:hidden">Supprimer mon compte</span><span class="hidden group-open:inline">Annuler</span></span>
+                            <span class="btn border-danger text-danger" aria-hidden="true"><span class="group-open:hidden">{{ 'account.index.suppression.titre'|trans }}</span><span class="hidden group-open:inline">{{ 'account.index.suppression.annuler'|trans }}</span></span>
                         </summary>
                         <div class="border-t border-danger p-4">
                             {{ form_start(deleteForm) }}
                                 {{ form_errors(deleteForm) }}
                                 {% if deleteForm.password is defined %}
-                                    {{ form_row(deleteForm.password, {label: 'Votre mot de passe, pour confirmer'}) }}
+                                    {{ form_row(deleteForm.password, {label: 'account.index.suppression.mot_de_passe'}) }}
                                 {% elseif not recentSignIn %}
-                                    <p>Confirmez d'abord votre identité avec {% for name, identity in identities|filter((identity, name) => oauth.get(name)) %}{{ not loop.first ? (loop.last ? ' ou ' : ', ') }}<a href="{{ path('app_oauth_start', {fournisseur: name, mode: 'confirmer', suite: path('app_account') ~ '#suppression'}) }}">{{ oauth.label(name) }}</a>{% else %}un compte lié{% endfor %}, puis revenez ici.</p>
+                                    <p>{{ 'account.index.suppression.confirmer_identite'|trans({fournisseurs: _self.confirm_links(identities, oauth, '#suppression') ~ ''})|raw }}</p>
                                 {% endif %}
-                                <button class="btn btn-danger" type="submit">Supprimer définitivement</button>
+                                <button class="btn btn-danger" type="submit">{{ 'account.index.suppression.confirmer'|trans }}</button>
                             {{ form_end(deleteForm) }}
                         </div>
                     </details>
@@ -187,20 +212,20 @@
 
             <aside class="space-y-4">
                 <div class="rounded-lg border border-line bg-surface p-4" id="acces">
-                    <div class="mb-2 font-semibold">Mes accès</div>
+                    <div class="mb-2 font-semibold">{{ 'account.index.acces.titre'|trans }}</div>
                     {% if accesses is empty %}
-                        <p class="text-sm text-ink-muted">Aucun accès pour l'instant. Le premier chapitre de chaque parcours est gratuit.</p>
+                        <p class="text-sm text-ink-muted">{{ 'account.index.acces.aucun'|trans }}</p>
                     {% else %}
                         <ul class="space-y-3">
                             {% for access in accesses %}
                                 {% set track = tracks[access.trackId] ?? null %}
-                                {% set state = access.active(now) ? 'actif' : (access.startsAt > now ? 'à venir' : 'terminé') %}
+                                {% set state = access.active(now) ? 'actif' : (access.startsAt > now ? 'a_venir' : 'termine') %}
                                 <li>
                                     <div class="flex items-center justify-between gap-2">
                                         {% if track %}<a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a>{% else %}<span>{{ access.trackId }}</span>{% endif %}
-                                        <span class="ac-tag tag {{ state == 'actif' ? 'border-success text-success' }}">{{ state }}</span>
+                                        <span class="ac-tag tag {{ state == 'actif' ? 'border-success text-success' }}">{{ ('account.index.acces.' ~ state)|trans }}</span>
                                     </div>
-                                    <div class="text-sm text-ink-muted">{{ access.source.label }}{% if access.cohort %} ({{ access.cohort.name }}){% endif %} · {{ access.endsAt ? 'jusqu\'au ' ~ access.endsAt|date('d/m/Y') : 'à vie' }}</div>
+                                    <div class="text-sm text-ink-muted">{{ access.source|trans }}{% if access.cohort %} ({{ access.cohort.name }}){% endif %} · {{ access.endsAt ? 'account.index.acces.jusqu_au'|trans({date: access.endsAt|format_date('short')}) : 'account.index.acces.a_vie'|trans }}</div>
                                 </li>
                             {% endfor %}
                         </ul>
@@ -208,9 +233,9 @@
                 </div>
 
                 <div class="rounded-lg border border-line bg-surface p-4" id="achats">
-                    <div class="mb-2 font-semibold">Mes achats</div>
+                    <div class="mb-2 font-semibold">{{ 'account.index.achats.titre'|trans }}</div>
                     {% if purchases is empty %}
-                        <p class="text-sm text-ink-muted">Aucun pour l'instant.</p>
+                        <p class="text-sm text-ink-muted">{{ 'account.index.achats.aucun'|trans }}</p>
                     {% else %}
                         <ul class="space-y-3">
                             {% for purchase in purchases %}
@@ -220,11 +245,11 @@
                                         <span>{{ track ? track.title : purchase.trackId }}</span>
                                         <span class="font-mono">{{ (purchase.amountPaid ?? purchase.price)|euros }}</span>
                                     </div>
-                                    <div class="text-sm text-ink-muted">{{ purchase.createdAt|date('d/m/Y') }} · {{ purchase.status.label }}</div>
+                                    <div class="text-sm text-ink-muted">{{ purchase.createdAt|format_date('short') }} · {{ purchase.status|trans }}</div>
                                     {% if purchase.stripeInvoiceId or purchase.receiptUrl %}
                                         <div class="mt-1 flex gap-3">
-                                            {% if purchase.stripeInvoiceId %}<a href="{{ path('app_account_invoice', {id: purchase.id}) }}">Facture (PDF)</a>{% endif %}
-                                            {% if purchase.receiptUrl %}<a href="{{ purchase.receiptUrl }}" target="_blank" rel="noopener">Reçu</a>{% endif %}
+                                            {% if purchase.stripeInvoiceId %}<a href="{{ path('app_account_invoice', {id: purchase.id}) }}">{{ 'account.index.achats.facture'|trans }}</a>{% endif %}
+                                            {% if purchase.receiptUrl %}<a href="{{ purchase.receiptUrl }}" target="_blank" rel="noopener">{{ 'account.index.achats.recu'|trans }}</a>{% endif %}
                                         </div>
                                     {% endif %}
                                 </li>
@@ -234,25 +259,25 @@
                 </div>
 
                 <div class="space-y-3 rounded-lg border border-line bg-surface p-4" id="classement">
-                    <div class="font-semibold">Classement</div>
+                    <div class="font-semibold">{{ 'account.index.classement.titre'|trans }}</div>
                     <p class="text-sm">
                         {%- if leaderboardEntry -%}
-                            {{ user.leaderboardOptIn ? 'Vous êtes' : 'Vous seriez' }} <strong>{{ leaderboardEntry.rank }}<sup>{{ leaderboardEntry.rank == 1 ? 'er' : 'e' }}</sup></strong> au classement général.
+                            {{ 'account.index.classement.rang'|trans({inscrit: user.leaderboardOptIn ? 'oui' : 'non', rang: leaderboardEntry.rank})|raw }}
                         {%- else -%}
-                            Réussissez un exercice pour entrer dans le classement.
+                            {{ 'account.index.classement.aucun'|trans }}
                         {%- endif %}
-                        {{ user.leaderboardOptIn ? 'Vous y apparaissez sous votre pseudo.' : 'Vous n\'y apparaissez pas : c\'est à vous de le choisir. Seul votre pseudo serait affiché, avec votre XP et vos exercices réussis.' }}
+                        {{ (user.leaderboardOptIn ? 'account.index.classement.inscrit' : 'account.index.classement.absent')|trans }}
                     </p>
                     <div class="flex flex-wrap items-center gap-3">
                         {{ include('leaderboard/_opt_in.html.twig', {retour: 'compte'}) }}
-                        <a class="text-sm" href="{{ path('app_leaderboard') }}">Voir le classement <span aria-hidden="true">→</span></a>
+                        <a class="text-sm" href="{{ path('app_leaderboard') }}">{{ 'account.index.classement.voir'|trans }} <span aria-hidden="true">→</span></a>
                     </div>
                 </div>
 
                 <div class="space-y-3 rounded-lg border border-line bg-bg-2 p-4">
-                    <div class="font-semibold">Pratique</div>
-                    <p>{{ practiceCompleted ? practiceCompleted ~ ' exercice' ~ (practiceCompleted > 1 ? 's' : '') ~ ' réussi' ~ (practiceCompleted > 1 ? 's' : '') ~ ' hors parcours.' : 'De courts exercices hors parcours, sur une fonctionnalité précise.' }}</p>
-                    <a class="btn" href="{{ path('app_practice') }}">Voir les exercices <span aria-hidden="true">→</span></a>
+                    <div class="font-semibold">{{ 'account.index.pratique.titre'|trans }}</div>
+                    <p>{{ practiceCompleted ? 'account.index.pratique.reussis'|trans({n: practiceCompleted}) : 'account.index.pratique.aucun'|trans }}</p>
+                    <a class="btn" href="{{ path('app_practice') }}">{{ 'account.index.pratique.voir'|trans }} <span aria-hidden="true">→</span></a>
                 </div>
             </aside>
         </div>

@@ -17,6 +17,9 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function Symfony\Component\Translation\t;
 
 /** Page de contact, et page Écoles et entreprises avec sa demande de devis : les deux arrivent dans la même boîte. */
 final class ContactController extends AbstractController
@@ -25,11 +28,12 @@ final class ContactController extends AbstractController
         private readonly ContactInbox $inbox,
         private readonly ClockInterface $clock,
         private readonly CertificateRepository $certificates,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
     #[Route('/contact', name: 'app_contact', methods: ['GET', 'POST'])]
-    #[Seo('Contact', 'Une question sur un parcours, un achat ou une facture, un problème sur le site : écrivez-nous, une personne lit chaque message et vous répond par email.')]
+    #[Seo('contact.index.seo.titre', 'contact.index.seo.description', domain: 'compte')]
     public function contact(Request $request): Response
     {
         $message = $this->newMessage();
@@ -71,7 +75,7 @@ final class ContactController extends AbstractController
         $done = fn () => $this->redirect($request->getPathInfo().$fragment, Response::HTTP_SEE_OTHER);
         // Un robot remplit le champ piège : on fait comme si tout allait bien, sans rien garder.
         if ('' !== (string) $form->get(ContactFormType::TRAP)->getData()) {
-            $this->addFlash('success', 'Message envoyé, merci. Nous vous répondons par email.');
+            $this->addFlash('success', t('flash.message_envoye', [], 'compte'));
 
             return $done();
         }
@@ -81,11 +85,11 @@ final class ContactController extends AbstractController
         try {
             $this->inbox->receive($form->getData(), $request->getClientIp() ?? 'inconnu');
         } catch (QuotaExceeded $e) {
-            $form->addError(new FormError($e->getMessage()));
+            $form->addError(new FormError($e->trans($this->translator)));
 
             return null;
         }
-        $this->addFlash('success', 'Message envoyé, merci. Nous vous répondons par email.');
+        $this->addFlash('success', t('flash.message_envoye', [], 'compte'));
 
         return $done();
     }
@@ -114,7 +118,7 @@ final class ContactController extends AbstractController
         }
         $message->setCertificate($certificate);
         if (null === $message->getMessage()) {
-            $message->setMessage(sprintf("Je conteste la révocation de mon certificat %s (%s).\nMotif indiqué : %s\n\n", $certificate->getCode(), $certificate->getTrackTitle(), $certificate->getRevocationReason() ?? '—'));
+            $message->setMessage($this->translator->trans('contact.index.contestation', ['code' => $certificate->getCode(), 'parcours' => $certificate->getTrackTitle(), 'motif' => $certificate->getRevocationReason() ?? '—'], 'compte')."\n\n");
         }
     }
 

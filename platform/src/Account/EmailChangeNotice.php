@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Prévient l'ancienne adresse d'un compte qu'elle vient d'être remplacée. */
 final readonly class EmailChangeNotice
@@ -18,6 +19,7 @@ final readonly class EmailChangeNotice
         private LoggerInterface $logger,
         private Theme $theme,
         private Sender $sender,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -26,7 +28,7 @@ final readonly class EmailChangeNotice
         try {
             $this->mailer->send($this->sender->email()
                 ->to(new Address($previousEmail, (string) $user->getDisplayName()))
-                ->subject(sprintf('Votre adresse sur %s a changé', $this->theme->name()))
+                ->subject($this->translator->trans('email.adresse_changee.sujet', ['site' => $this->theme->name()], 'compte'))
                 ->htmlTemplate('emails/email_changed.html.twig')
                 ->textTemplate('emails/email_changed.txt.twig')
                 ->context(['user' => $user, 'newEmail' => (string) $user->getEmail(), 'contact' => $this->sender->contact()]));
