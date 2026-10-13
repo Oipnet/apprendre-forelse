@@ -33,6 +33,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   grille, un niveau par chapitre, et donne le résultat (validée ou à repasser), envoyé par email ; une soutenance à
   repasser se repasse sur un autre créneau. Export CSV des soutenances de la cohorte. Nouvelle table `defense`
   (migration). Le gabarit `track/show.html.twig` reçoit `defense`, et inclut `track/_defense.html.twig`.
+- Environnement `symfony-8-2-dev` : Symfony 8.2.x-dev du 13 octobre. Un voter peut demander une nouvelle
+  authentification plutôt qu'un 403 (`Vote::requestReAuthentication()`), et le point d'entrée de réauthentification
+  lit l'attribut refusé (`SecurityRequestAttributes::RE_AUTHENTICATION_ATTRIBUTE`).
 
 ### Migration
 
