@@ -1,21 +1,22 @@
+{% trans_default_domain 'emails' %}
 {% set grades = defense.grades -%}
-Bonjour {{ learner.displayName }},
+{{ 'commun.bonjour'|trans({nom: learner.displayName}) }}
 
-Votre soutenance du parcours « {{ track.title }} », le {{ defense.startsAt|date('d/m/Y') }} : {{ defense.outcome.label|lower }}.
+{{ 'defense_result.texte.verdict'|trans({parcours: track.title, date: defense.startsAt|format_date('short'), resultat: defense.outcome.value}) }}
 
 {% for chapter in track.chapters %}
-- {{ chapter.title }} : {{ grades[chapter.id].label ?? '' }}
+- {{ 'commun.libelle_valeur'|trans({libelle: chapter.title, valeur: grades[chapter.id] is defined ? grades[chapter.id]|trans : ''}) }}
 {% endfor %}
 {% if defense.comment %}
 
-Le mot de {{ defense.evaluatorName }} :
+{{ 'defense_result.mot_de'|trans({evaluateur: defense.evaluatorName}) }}
 {{ defense.comment }}
 {% endif %}
 {% if defense.outcome.value == 'retake' %}
 
-Vous pouvez réserver un nouveau créneau depuis la page du parcours.
+{{ 'defense_result.nouveau_creneau'|trans }}
 {% endif %}
 
 {{ url('app_track', {trackId: track.id}) }}
 
-{{ include('emails/_footer.txt.twig', {reason: 'Vous recevez cet email parce que vous avez passé cette soutenance sur ' ~ theme.name ~ '.'}) }}
+{{ include('emails/_footer.txt.twig', {reason: 'defense_result.raison'|trans({site: theme.name})}) }}

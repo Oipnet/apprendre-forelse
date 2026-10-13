@@ -1,34 +1,35 @@
 {% extends 'emails/_layout.html.twig' %}
+{% trans_default_domain 'emails' %}
 
 {% set link = url('app_track', {trackId: track.id}) %}
 {% set grades = defense.grades %}
 
-{% block preheader %}{{ defense.outcome.label }} : le résultat de votre soutenance « {{ track.title }} ».{% endblock %}
+{% block preheader %}{{ 'defense_result.apercu'|trans({libelle: defense.outcome|trans, parcours: track.title}) }}{% endblock %}
 
 {% block content %}
-<p style="margin:0 0 12px;">Bonjour {{ learner.displayName }},</p>
+<p style="margin:0 0 12px;">{{ 'commun.bonjour'|trans({nom: learner.displayName}) }}</p>
 
-<p style="margin:0 0 12px;">Votre soutenance du parcours « {{ track.title }} », le {{ defense.startsAt|date('d/m/Y') }} : <strong>{{ defense.outcome.label|lower }}</strong>.</p>
+<p style="margin:0 0 12px;">{{ 'defense_result.verdict_html'|trans({parcours: track.title|e, date: defense.startsAt|format_date('short')|e, resultat: defense.outcome.value})|raw }}</p>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;width:100%;">
     {% for chapter in track.chapters %}
         <tr>
             <td style="padding:4px 8px 4px 0;border-bottom:1px solid {{ theme.emailColors.line }};">{{ chapter.title }}</td>
-            <td style="padding:4px 0;border-bottom:1px solid {{ theme.emailColors.line }};text-align:right;white-space:nowrap;">{{ grades[chapter.id].label ?? '' }}</td>
+            <td style="padding:4px 0;border-bottom:1px solid {{ theme.emailColors.line }};text-align:right;white-space:nowrap;">{{ grades[chapter.id] is defined ? grades[chapter.id]|trans }}</td>
         </tr>
     {% endfor %}
 </table>
 
 {% if defense.comment %}
-    <p style="margin:0 0 4px;">Le mot de {{ defense.evaluatorName }} :</p>
+    <p style="margin:0 0 4px;">{{ 'defense_result.mot_de'|trans({evaluateur: defense.evaluatorName}) }}</p>
     <p style="margin:0 0 12px;white-space:pre-line;">{{ defense.comment }}</p>
 {% endif %}
 
 {% if defense.outcome.value == 'retake' %}
-    <p style="margin:0 0 4px;">Vous pouvez réserver un nouveau créneau depuis la page du parcours.</p>
+    <p style="margin:0 0 4px;">{{ 'defense_result.nouveau_creneau'|trans }}</p>
 {% endif %}
 
-{{ include('emails/_button.html.twig', {href: link, label: 'Voir le parcours'}) }}
+{{ include('emails/_button.html.twig', {href: link, label: 'defense_result.bouton'|trans}) }}
 {% endblock %}
 
-{% block reason %}Vous recevez cet email parce que vous avez passé cette soutenance sur {{ theme.name }}.{% endblock %}
+{% block reason %}{{ 'defense_result.raison'|trans({site: theme.name}) }}{% endblock %}

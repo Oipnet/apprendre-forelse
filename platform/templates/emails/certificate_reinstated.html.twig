@@ -1,13 +1,14 @@
 {% extends 'emails/_layout.html.twig' %}
+{% trans_default_domain 'emails' %}
 
-{% block preheader %}Votre certificat « {{ certificate.trackTitle }} » est de nouveau valide.{% endblock %}
+{% block preheader %}{{ 'certificate_reinstated.apercu'|trans({parcours: certificate.trackTitle}) }}{% endblock %}
 
 {% block content %}
-<p style="margin:0 0 12px;">Bonjour {{ user.displayName }},</p>
+<p style="margin:0 0 12px;">{{ 'commun.bonjour'|trans({nom: user.displayName}) }}</p>
 
-<p style="margin:0 0 12px;">Votre certificat de réussite du parcours <strong>{{ certificate.trackTitle }}</strong> (code {{ certificate.code }}) est rétabli : sa page de vérification le montre de nouveau comme valide.</p>
+<p style="margin:0 0 12px;">{{ 'certificate_reinstated.retabli_html'|trans({parcours: certificate.trackTitle|e, code: certificate.code|e})|raw }}</p>
 
-{{ include('emails/_button.html.twig', {href: url('app_certificate', {code: certificate.code}), label: 'Voir le certificat'}) }}
+{{ include('emails/_button.html.twig', {href: url('app_certificate', {code: certificate.code}), label: 'commun.voir_le_certificat'|trans}) }}
 {% endblock %}
 
-{% block reason %}Vous recevez cet email parce que ce certificat vous a été délivré sur {{ theme.name }}.{% endblock %}
+{% block reason %}{{ 'certificate_reinstated.raison'|trans({site: theme.name}) }}{% endblock %}

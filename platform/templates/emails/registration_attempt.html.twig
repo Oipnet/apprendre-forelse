@@ -1,19 +1,20 @@
 {% extends 'emails/_layout.html.twig' %}
+{% trans_default_domain 'emails' %}
 
-{% block preheader %}Quelqu'un a essayé de créer un compte {{ theme.name }} avec votre adresse.{% endblock %}
+{% block preheader %}{{ 'registration_attempt.apercu'|trans({site: theme.name}) }}{% endblock %}
 
 {% block content %}
-<p style="margin:0 0 12px;">Bonjour {{ user.displayName }},</p>
+<p style="margin:0 0 12px;">{{ 'commun.bonjour'|trans({nom: user.displayName}) }}</p>
 
-<p style="margin:0 0 12px;">Quelqu'un vient d'essayer de créer un compte sur {{ theme.name }} avec votre adresse email. Or vous en avez déjà un.</p>
+<p style="margin:0 0 12px;">{{ 'registration_attempt.tentative'|trans({site: theme.name}) }}</p>
 
-<p style="margin:0 0 4px;">Si c'était vous, connectez-vous :</p>
+<p style="margin:0 0 4px;">{{ 'registration_attempt.si_c_etait_vous'|trans }}</p>
 
-{{ include('emails/_button.html.twig', {href: url('app_login'), label: 'Me connecter'}) }}
+{{ include('emails/_button.html.twig', {href: url('app_login'), label: 'registration_attempt.bouton'|trans}) }}
 
-<p style="margin:0 0 12px;">Mot de passe oublié ? <a class="lien" href="{{ url('app_forgot_password_request') }}" style="color:{{ theme.emailColors.accent }};">Choisissez-en un nouveau</a>.</p>
+<p style="margin:0 0 12px;">{{ 'registration_attempt.oubli_html'|trans({url: url('app_forgot_password_request')|e, couleur: theme.emailColors.accent|e})|raw }}</p>
 
-<p style="margin:0;">Si ce n'était pas vous, ignorez cet email : aucun compte n'a été créé et le vôtre n'a pas changé.</p>
+<p style="margin:0;">{{ 'registration_attempt.ignorer'|trans }}</p>
 {% endblock %}
 
-{% block reason %}Vous recevez cet email parce qu'une inscription à {{ theme.name }} a été tentée avec votre adresse.{% endblock %}
+{% block reason %}{{ 'registration_attempt.raison'|trans({site: theme.name}) }}{% endblock %}

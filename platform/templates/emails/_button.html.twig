@@ -1,4 +1,5 @@
 {#- L'action principale d'un email : un bouton, et l'adresse en clair dessous, pour qui ne peut pas cliquer. Variables : href, label. -#}
+{% trans_default_domain 'emails' %}
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 8px;">
     <tr>
         <td class="bouton" style="border-radius:8px;background:{{ theme.emailColors.accent }};">
@@ -6,4 +7,4 @@
         </td>
     </tr>
 </table>
-<p class="discret" style="margin:0 0 16px;font-size:13px;color:{{ theme.emailColors.muted }};">Le bouton ne s'ouvre pas ? Copiez ce lien dans votre navigateur :<br><a class="lien" href="{{ href }}" style="color:{{ theme.emailColors.accent }};word-break:break-all;">{{ href }}</a></p>
+<p class="discret" style="margin:0 0 16px;font-size:13px;color:{{ theme.emailColors.muted }};">{{ '_button.lien_en_clair'|trans }}<br><a class="lien" href="{{ href }}" style="color:{{ theme.emailColors.accent }};word-break:break-all;">{{ href }}</a></p>
