@@ -39,6 +39,17 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - Complétion de l'éditeur : les authenticators (`Symfony\Component\Security\Http\Authenticator\`, passeports,
   badges et credentials), les points d'entrée, `SecurityRequestAttributes`, `AuthenticationMethod` et
   `CustomUserMessageAuthenticationException`.
+- Pratique : chaque exercice se partage. Sa page propose LinkedIn, X, Bluesky, la copie du lien et, quand le navigateur
+  en a un, le partage du système ; le playground l'offre dans sa barre (« Partager », une boîte avec les mêmes boutons) et dans le panneau de réussite, avec un texte
+  qui annonce l'exercice réussi. Les liens portent `utm_source` (`linkedin`, `x`, `bluesky`, `lien`, `natif`),
+  `utm_medium=partage` et `utm_campaign=exercice`, qu'Umami lit sans réglage ; chaque clic est aussi mesuré
+  (événement `partage`). Aucun script de ces réseaux n'est chargé : ce sont de simples liens.
+- Pratique : chaque exercice a son image d'aperçu (Open Graph, X, données structurées), dessinée par le moteur au
+  premier appel puis gardée en cache : le titre de l'exercice, son framework et sa version, le site. Un thème
+  l'habille par `share_card` dans `theme.yaml` (fond, polices TrueType, couleurs ; voir le README). Le code
+  (`App\Share`) sert à tout ce qui se partage : `ShareCard` et `ShareImage` pour l'image, `ShareLinks` pour les
+  liens, `share/_buttons.html.twig` pour les boutons.
+- Le moteur demande désormais l'extension `gd` de PHP (avec FreeType), ajoutée à l'image Docker.
 
 ### Migration
 

@@ -851,6 +851,30 @@ a.chip:hover {
 .bg-4 { background: #3b62b8; color: #fff; } .bg-5 { background: #8a4b9c; color: #fff; } .bg-6 { background: #2f8591; color: #fff; } .bg-7 { background: #c9c9d1; color: #111; }
 .bold { font-weight: 700; }
 
+/* --- Partage : barre du haut (boîte de dialogue) et panneau de réussite (voir app/share.ts) ---------------- */
+.share {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+}
+.share-title,
+.share-status {
+	color: var(--muted);
+	font-size: 13px;
+}
+.share-status {
+	overflow-wrap: anywhere;
+}
+dialog.share-dialog h2 {
+	margin: 0 0 0.8rem;
+	font-size: 1.1rem;
+}
+dialog.share-dialog .confirm-actions {
+	margin: 1rem 0 0;
+	text-align: right;
+}
+
 /* --- « Un avis ? » : dialogue de retour sur l'exercice --------------------------------- */
 dialog.feedback {
 	width: min(480px, calc(100vw - 2rem));

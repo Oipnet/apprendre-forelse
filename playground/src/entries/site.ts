@@ -39,6 +39,18 @@ async function importGuestProgress(url: string) {
 const importUrl = document.body.dataset.importUrl;
 if (importUrl) void importGuestProgress(importUrl);
 
+/** Les boutons de partage d'une page (share/_buttons.html.twig). */
+const shares = document.querySelectorAll<HTMLElement>('[data-share]');
+if (shares.length) {
+	void import('../app/share').then(({ mountShare }) => {
+		for (const share of shares) {
+			const { mesure, ...links } = JSON.parse(share.dataset.share!) as { text: string; lien: string; natif: string; mesure: Record<string, string> | [] };
+			// Twig encode une table vide en liste : [] veut dire « rien à mesurer ».
+			mountShare(share, links, Array.isArray(mesure) ? {} : mesure);
+		}
+	});
+}
+
 /** L'index des notions : onglets par framework, recherche et filtre par thème. */
 const concepts = document.querySelector<HTMLElement>('[data-concepts]');
 if (concepts) void import('../app/concepts').then(({ mountConcepts }) => mountConcepts(concepts));
