@@ -20,6 +20,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Modifié
 
+- La vérification des réussites part toutes les cinq minutes au lieu de chaque heure : le certificat se débloque en
+  une dizaine de minutes après le dernier exercice.
 - **Classement** refait : bandeau « Votre position » (rang, apprenant à dépasser, gain du mois), podium des trois
   premiers (ou « Vous ouvrez la marche » avant trois classés, avec la copie du lien), tableau avec les parcours suivis
   et, au classement du mois, l'évolution depuis le mois précédent. Filtre par parcours (et Pratique), barème réel de

@@ -268,7 +268,7 @@ l'exercice, elle, reste au compte) ; `/admin` → Progression montre le verdict 
 > l'utilisateur `nobody`, qui ne voit pas le code des autres apprenants. Le service n'a jamais accès au
 > socket Docker.
 
-Le worker envoie les réussites en attente chaque heure et relève les verdicts toutes les cinq minutes
+Le worker envoie les réussites en attente et relève les verdicts toutes les cinq minutes
 (planificateur Symfony, `scheduler_verification`) ; `docker compose logs verificateur` montre chaque verdict.
 
 Sans le service (un `compose.yaml` antérieur à cette version, ou `VERIFICATIONS_DIR` vide), rien n'est
