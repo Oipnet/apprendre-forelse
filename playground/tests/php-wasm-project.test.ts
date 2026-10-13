@@ -160,6 +160,17 @@ describe('PhpWasmProject', () => {
 		expect(tests.isFile('/app/var/cache/test/vieux.php')).toBe(false);
 	});
 
+	it('lance PHPUnit sans debug, comme le vérificateur', async () => {
+		const vus: Record<string, string>[] = [];
+		const { project } = await demarre((_php, options) => {
+			if (options.scriptPath !== '/runner/run-tests.php') return '';
+			vus.push(options.$_SERVER ?? {});
+			return rapport([]);
+		});
+		await project.runTests();
+		expect(vus[0]).toMatchObject({ APP_DEBUG: '0' });
+	});
+
 	it('rend une erreur fatale sans rapport comme un run sans cas', async () => {
 		const { project } = await demarre((_php, options) => {
 			if (options.scriptPath === '/runner/run-tests.php') throw new PHPExecutionFailureError('fatal', new PHPResponse(500, {}, encoder.encode('Fatal error')), 'php-error' as never);

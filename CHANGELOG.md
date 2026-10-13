@@ -36,6 +36,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - Après la mise à jour, attribuer une fois le bonus des parcours déjà terminés :
   `docker compose exec app php bin/console app:classement:bonus-parcours` (sans effet si on la relance).
 
+### Corrigé
+
+- Les tests d'un exercice tournent sans debug (`APP_DEBUG=0`), dans le navigateur comme au vérificateur. En debug, la
+  page d'erreur de Symfony cite le code source, celui du test compris : un test qui cherche un texte dans la page
+  passait sur une 404 dans le navigateur, puis la vérification infirmait la réussite. Le vérificateur ne tenait le
+  `APP_DEBUG=0` que de l'image Docker, il le fixe désormais lui-même.
+- Pack de démonstration, « Bonjour à vous » : `/bonjour` doit répondre 200, plus seulement afficher le texte.
+
 ## 3.5.0 — 2026-10-13
 
 ### Ajouté
