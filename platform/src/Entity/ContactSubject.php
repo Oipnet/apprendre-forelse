@@ -14,6 +14,7 @@ enum ContactSubject: string implements TranslatableInterface
     case Order = 'commande';
     case Bug = 'probleme';
     case Organization = 'ecole';
+    case Certificate = 'certificat';
     case Other = 'autre';
 
     public function label(): string
@@ -23,6 +24,7 @@ enum ContactSubject: string implements TranslatableInterface
             self::Order => 'Un achat, une facture, un remboursement',
             self::Bug => 'Un problème sur le site',
             self::Organization => 'Former une classe ou une équipe',
+            self::Certificate => 'Un litige sur un certificat',
             self::Other => 'Autre chose',
         };
     }
@@ -34,6 +36,7 @@ enum ContactSubject: string implements TranslatableInterface
             self::Order => 'warning',
             self::Bug => 'danger',
             self::Organization => 'success',
+            self::Certificate => 'danger',
             self::Other => 'secondary',
         };
     }

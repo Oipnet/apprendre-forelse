@@ -20,6 +20,8 @@ final class PageSeo implements ResetInterface
     private ?string $canonical = null;
     private ?string $image = null;
     private ?string $imageAlt = null;
+    /** @var array{int, int}|null largeur et hauteur, quand on les connaît : l'aperçu s'affiche dès le premier partage */
+    private ?array $imageSize = null;
     private string $type = 'website';
     /** @var list<array<string, mixed>> */
     private array $structuredData = [];
@@ -77,10 +79,11 @@ final class PageSeo implements ResetInterface
         return $this;
     }
 
-    public function setImage(string $url, string $alt): self
+    public function setImage(string $url, string $alt, ?int $width = null, ?int $height = null): self
     {
         $this->image = $url;
         $this->imageAlt = $alt;
+        $this->imageSize = null === $width || null === $height ? null : [$width, $height];
 
         return $this;
     }
@@ -126,6 +129,12 @@ final class PageSeo implements ResetInterface
         return $this->imageAlt;
     }
 
+    /** @return array{int, int}|null */
+    public function getImageSize(): ?array
+    {
+        return $this->imageSize;
+    }
+
     public function getType(): string
     {
         return $this->type;
@@ -147,7 +156,7 @@ final class PageSeo implements ResetInterface
 
     public function reset(): void
     {
-        $this->title = $this->description = $this->canonical = $this->image = $this->imageAlt = null;
+        $this->title = $this->description = $this->canonical = $this->image = $this->imageAlt = $this->imageSize = null;
         $this->type = 'website';
         $this->structuredData = [];
     }

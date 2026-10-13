@@ -24,6 +24,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 				: `<div class="who guest" title="Progression enregistrée dans ce navigateur"><span>Invité</span>${config.loginUrl ? `<a href="${escapeHtml(config.loginUrl)}">Connexion</a>` : ''}</div>`
 		}
 		<div class="actions">
+			${config.share ? `<button id="share" class="ghost" title="Partager cet exercice"><span class="icon" aria-hidden="true">🔗</span><span class="label"> Partager</span></button>` : ''}
 			${config.feedbackUrl ? `<button id="feedback" class="ghost" title="Signaler un problème ou donner votre avis sur cet exercice"><span class="icon" aria-hidden="true">💬</span><span class="label"> Un avis ?</span></button>` : ''}
 			<button id="solution" class="ghost" hidden><span class="icon" aria-hidden="true">📖</span><span class="label">Solution</span></button>
 			<button id="reset" class="ghost" title="Revenir au code de départ"><span class="icon" aria-hidden="true">⟲</span><span class="label">Réinitialiser</span></button>
@@ -35,7 +36,8 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 	<main class="workspace" data-pane="code">
 		<aside class="panel brief">
 			<div class="already-done" id="already-done" hidden></div>
-			<div class="xp">${exercise.concepts.map((c) => `<span class="chip">${escapeHtml(c)}</span>`).join('')}${exercise.xp > 0 ? `<span class="chip gold">${exercise.xp} XP</span>` : ''}${exercise.practice?.version ? (exercise.practice.versionUrl ? `<a class="chip gold" href="${escapeHtml(exercise.practice.versionUrl)}" title="Les autres exercices de cette version">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</a>` : `<span class="chip gold">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</span>`) : ''}</div>
+			${exercise.practice ? `<p class="lead">${escapeHtml(exercise.practice.summary)}</p>` : ''}
+			<div class="xp">${exercise.concepts.map((c) => conceptChip(c, exercise.conceptUrls[c])).join('')}${exercise.xp > 0 ? `<span class="chip gold">${exercise.xp} XP</span>` : ''}${exercise.practice?.version ? (exercise.practice.versionUrl ? `<a class="chip gold" href="${escapeHtml(exercise.practice.versionUrl)}" title="Les autres exercices de cette version">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</a>` : `<span class="chip gold">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</span>`) : ''}</div>
 			<article class="instructions">${sanitize(exercise.instructionsHtml)}</article>
 			<h3>Objectifs</h3>
 			<ul class="objectives">
@@ -47,6 +49,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig): str
 			<ul class="docs">${exercise.docs.map((d) => `<li><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(d.title)}</a> <span class="host">${escapeHtml(new URL(d.url).hostname.replace(/^www\./, ''))}</span></li>`).join('')}</ul>`
 					: ''
 			}
+			${furtherHtml(exercise, config)}
 			<div id="explain" class="mentor" hidden></div>
 			<div id="success" class="success" hidden></div>
 			<div id="review" class="mentor" hidden></div>
@@ -132,10 +135,35 @@ export function crumbs(exercise: Pick<ExercisePayload, 'title' | 'chapter' | 'pr
 		chapter
 			? `<a class="crumb-chapter" href="${escapeHtml(chapter.url)}" title="Chapitre ${chapter.number} : ${escapeHtml(chapter.title)}">Ch. ${chapter.number} · ${escapeHtml(chapter.title)}</a><span class="sep crumb-chapter">›</span>`
 			: '',
-		`<span class="crumb-current">${escapeHtml(exercise.title)}</span>`,
+		// Le seul titre de la page une fois le playground monté : c'est lui que lisent les moteurs de recherche.
+		`<h1 class="crumb-current">${escapeHtml(exercise.title)}</h1>`,
 		chapter ? `<span class="crumb-position" title="Exercice ${chapter.position} sur ${chapter.total} du chapitre"><span aria-hidden="true">${chapter.position}/${chapter.total}</span><span class="sr-only">Exercice ${chapter.position} sur ${chapter.total} du chapitre</span></span>` : '',
 		previous || next ? `<nav class="crumb-nav" aria-label="Exercices voisins">${arrow(previous, 'prev')}${arrow(next, 'next')}</nav>` : '',
 	].join('');
+}
+
+/** Une notion : un lien vers sa page quand elle en a une, sinon une simple pastille. */
+function conceptChip(concept: string, url: string | undefined): string {
+	return url ? `<a class="chip" href="${escapeHtml(url)}">${escapeHtml(concept)}</a>` : `<span class="chip">${escapeHtml(concept)}</span>`;
+}
+
+/**
+ * Pour aller plus loin, en Pratique : les autres nouveautés de la version, le parcours du framework et toute la Pratique.
+ * Visibles dès l'arrivée, pas seulement après la réussite : un visiteur venu d'un lien partagé (et un moteur de
+ * recherche) trouve où continuer.
+ */
+export function furtherHtml(exercise: Pick<ExercisePayload, 'practice' | 'environment'>, config: Pick<PlaygroundConfig, 'back'>): string {
+	const practice = exercise.practice;
+	if (!practice) {
+		return '';
+	}
+	const links = [
+		practice.versionUrl ? `<li><a href="${escapeHtml(practice.versionUrl)}">Les autres nouveautés de ${escapeHtml(exercise.environment.framework.label)} ${escapeHtml(practice.version ?? '')}</a></li>` : '',
+		practice.track ? `<li><a href="${escapeHtml(practice.track.url)}">Le parcours ${escapeHtml(practice.track.title)}</a></li>` : '',
+		`<li><a href="${escapeHtml(config.back.url)}">Tous les exercices de la Pratique</a></li>`,
+	];
+	return `<h3>Pour aller plus loin</h3>
+			<ul class="further">${links.join('')}</ul>`;
 }
 
 /** Le total d'XP de la barre : l'étoile est décorative, le nombre est lu. */

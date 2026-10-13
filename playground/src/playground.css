@@ -205,6 +205,33 @@ body.playground-page {
 	content: ' ↗';
 	font-size: 11px;
 }
+/* En Pratique : le chapeau sous le titre, et où continuer. */
+.brief .lead {
+	margin: 0 0 0.8rem;
+	color: var(--text);
+	font-size: 14.5px;
+}
+a.chip {
+	text-decoration: none;
+}
+a.chip:hover {
+	color: var(--text);
+}
+.further {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid;
+	gap: 0.3rem;
+	font-size: 13.5px;
+}
+.further a {
+	color: var(--accent-text);
+	text-decoration: none;
+}
+.further a:hover {
+	text-decoration: underline;
+}
 .docs .host {
 	color: var(--muted);
 	font-size: 11.5px;
@@ -297,6 +324,8 @@ body.playground-page {
 	white-space: nowrap;
 }
 .crumbs .crumb-current {
+	margin: 0;
+	font: inherit;
 	color: var(--text);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -821,6 +850,30 @@ body.playground-page {
 .bg-0 { background: #2a2a33; } .bg-1 { background: #b83b3b; color: #fff; } .bg-2 { background: #2e8f5f; color: #fff; } .bg-3 { background: #a8822f; color: #fff; }
 .bg-4 { background: #3b62b8; color: #fff; } .bg-5 { background: #8a4b9c; color: #fff; } .bg-6 { background: #2f8591; color: #fff; } .bg-7 { background: #c9c9d1; color: #111; }
 .bold { font-weight: 700; }
+
+/* --- Partage : barre du haut (boîte de dialogue) et panneau de réussite (voir app/share.ts) ---------------- */
+.share {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+}
+.share-title,
+.share-status {
+	color: var(--muted);
+	font-size: 13px;
+}
+.share-status {
+	overflow-wrap: anywhere;
+}
+dialog.share-dialog h2 {
+	margin: 0 0 0.8rem;
+	font-size: 1.1rem;
+}
+dialog.share-dialog .confirm-actions {
+	margin: 1rem 0 0;
+	text-align: right;
+}
 
 /* --- « Un avis ? » : dialogue de retour sur l'exercice --------------------------------- */
 dialog.feedback {

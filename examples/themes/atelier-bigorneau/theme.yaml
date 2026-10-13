@@ -35,6 +35,14 @@ logo: logo.svg
 icon: favicon.svg
 # share: partage.png        # 1200 × 630, déposée dans ce dossier
 
+# Les images de partage que le moteur dessine pour chaque exercice de la Pratique (titre, framework, site).
+# Tout est facultatif : sans rien, les couleurs ci-dessous (accent, ink, background) et une police du moteur.
+# share_card:
+#   image: fond-partage.png   # 1200 × 630, PNG ou JPEG ; le texte s'écrit à gauche
+#   font: titres.ttf           # TrueType ou OpenType (pas de woff2) : le titre
+#   text_font: texte.ttf       # le surtitre et le site ; sans elle, la police du titre
+#   accent: '#1f6f8b'
+
 # Couleurs des pages du site : elles redéfinissent les jetons du thème default (--color-accent…, voir docs/themes.md).
 # Hexadécimal uniquement ; une valeur mal écrite arrête la page avec un message qui dit laquelle.
 colors:

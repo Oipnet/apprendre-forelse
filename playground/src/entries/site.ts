@@ -1,3 +1,5 @@
+import { mountShare } from '../app/share';
+
 /**
  * Progression jouée en invité (localStorage) : une fois connecté, on la remonte au compte,
  * puis on l'efface du navigateur. La Pratique n'a pas de parcours : sa clé est `formation:null/<id>`.
@@ -38,6 +40,21 @@ async function importGuestProgress(url: string) {
 
 const importUrl = document.body.dataset.importUrl;
 if (importUrl) void importGuestProgress(importUrl);
+
+/**
+ * Les boutons de partage d'une page (share/_buttons.html.twig). Importés d'emblée, pas à la demande : un import
+ * dynamique de ce module, partagé avec le playground, faisait charger le morceau de Monaco, et Vite posait alors sa
+ * feuille sur la page (fond sombre, liens bleus).
+ */
+for (const share of document.querySelectorAll<HTMLElement>('[data-share]')) {
+	const { mesure, ...links } = JSON.parse(share.dataset.share!) as { text: string; lien: string; natif: string; mesure: Record<string, string> | [] };
+	// Twig encode une table vide en liste : [] veut dire « rien à mesurer ».
+	mountShare(share, links, Array.isArray(mesure) ? {} : mesure);
+}
+
+/** L'index des notions : onglets par framework, recherche et filtre par thème. */
+const concepts = document.querySelector<HTMLElement>('[data-concepts]');
+if (concepts) void import('../app/concepts').then(({ mountConcepts }) => mountConcepts(concepts));
 
 /** Atelier des auteurs : les brouillons de post LinkedIn d'un parcours ou d'un exercice de Pratique. */
 const post = document.querySelector<HTMLElement>('[data-post]');
@@ -181,6 +198,17 @@ function filtresEnDirect(form: HTMLFormElement, cleFocus: string, parDefaut: Rec
 	} catch {
 		// stockage indisponible
 	}
+}
+
+/**
+ * Les filtres qui s'appliquent dès qu'on change une liste (le classement) : le formulaire part avec le bouton de période
+ * enfoncé, pour garder la période choisie. Sans script, son bouton « Afficher » fait de même.
+ */
+for (const form of document.querySelectorAll<HTMLFormElement>('form[data-auto-submit]')) {
+	form.addEventListener('change', (event) => {
+		if (!(event.target instanceof HTMLSelectElement)) return;
+		form.requestSubmit(form.querySelector<HTMLButtonElement>('button[aria-pressed="true"]') ?? undefined);
+	});
 }
 
 const filtresPratique = document.querySelector<HTMLFormElement>('[data-practice-filters]');

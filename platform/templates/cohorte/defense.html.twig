@@ -1,0 +1,102 @@
+{# Dossier de soutenance d'un apprenant et grille d'évaluation (ChefDefenseController::show). #}
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Soutenance de {{ defense.learner ? defense.learner.displayName : 'compte supprimé' }}{% endblock %}
+{% block page_actions %}
+    <a class="btn btn-secondary" href="{{ path('chef_cohort', {id: cohort.id, _fragment: 'soutenances'}) }}">← {{ cohort.name }}</a>
+{% endblock %}
+{% block main %}
+    <p>
+        {{ dossier.track.title }} · le {{ defense.startsAt|date('d/m/Y à H:i') }} · {{ defense.durationMinutes }} min ·
+        {{ defense.mode.label }} : {% if defense.mode.value == 'online' %}<a href="{{ defense.place }}" target="_blank" rel="noopener noreferrer">{{ defense.place }}</a>{% else %}{{ defense.place }}{% endif %}
+    </p>
+
+    <section class="beta-panel" id="dossier">
+        <div class="beta-panel-header">
+            <h2>Dossier</h2>
+            <span class="badge badge-{{ dossier.complete ? 'success' : 'warning' }}">{{ dossier.completed }} / {{ dossier.total }} exercices réussis</span>
+            {% if dossier.solutions %}<span class="badge badge-warning">{{ dossier.solutions }} solution{{ dossier.solutions > 1 ? 's' }} consultée{{ dossier.solutions > 1 ? 's' }}</span>{% endif %}
+        </div>
+        <div class="beta-panel-body">
+            <p class="text-muted">
+                Le code de chaque exercice tel que l'apprenant l'a rendu, avec les indices utilisés et la revue du mentor.
+                Choisissez-en deux ou trois à lui faire expliquer : ce qu'il a écrit, pourquoi, ce qu'il changerait.
+            </p>
+            {% for item in dossier.chapters %}
+                <h3>{{ loop.index }}. {{ item.chapter.title }}</h3>
+                <table class="beta-table defense-dossier">
+                    <thead>
+                        <tr><th>Exercice</th><th>Réussi le</th><th>Indices</th><th>Solution</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for exercise in item.exercises %}
+                            {% set p = exercise.progress %}
+                            <tr>
+                                <td>
+                                    {{ exercise.title }}
+                                    {% if p and p.files is not empty %}
+                                        <details>
+                                            <summary>Code rendu ({{ p.files|length }} fichier{{ p.files|length > 1 ? 's' }})</summary>
+                                            {% for path, code in p.files %}
+                                                <p class="mb-1 mt-2"><code>{{ path }}</code></p>
+                                                <pre class="defense-code"><code>{{ code }}</code></pre>
+                                            {% endfor %}
+                                        </details>
+                                    {% endif %}
+                                    {% if p and p.review %}
+                                        <details>
+                                            <summary>Revue du mentor</summary>
+                                            {% if p.review.summary ?? null %}<p>{{ p.review.summary }}</p>{% endif %}
+                                            {% if p.review.points ?? [] %}
+                                                <ul>
+                                                    {% for point in p.review.points %}
+                                                        <li>{% if point.file ?? null %}<code>{{ point.file }}{{ (point.line ?? null) ? ':' ~ point.line }}</code> : {% endif %}{{ point.message ?? '' }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+                                        </details>
+                                    {% endif %}
+                                </td>
+                                <td>{{ p and p.completedAt ? p.completedAt|date('d/m/Y') : (p ? 'en cours' : 'pas commencé') }}</td>
+                                <td>{{ exercise.hints ? (p ? p.hintsUsed : 0) ~ ' / ' ~ exercise.hints : '' }}</td>
+                                <td>{% if p and p.solutionRevealed %}<span class="badge badge-warning">consultée</span>{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="beta-panel" id="evaluation">
+        <div class="beta-panel-header">
+            <h2>Évaluation</h2>
+            {% if defense.outcome %}<span class="badge badge-{{ defense.outcome.badge }}">{{ defense.outcome.label }}</span>{% endif %}
+        </div>
+        <div class="beta-panel-body">
+            {% if defense.evaluatedAt %}
+                <p class="text-muted">Évaluée par {{ defense.evaluatorName }} le {{ defense.evaluatedAt|date('d/m/Y à H:i') }}. Une correction renvoie le résultat à l'apprenant.</p>
+            {% endif %}
+            {% if form %}
+                {% form_theme form 'bootstrap_5_layout.html.twig' %}
+                {{ form_start(form, {attr: {class: 'defense-evaluation-form'}}) }}
+                    <h3>Grille</h3>
+                    {% for field in form.grades %}
+                        {{ form_row(field, {label_attr: {class: 'fw-bold'}}) }}
+                    {% endfor %}
+                    {{ form_row(form.outcome) }}
+                    {{ form_row(form.comment) }}
+                    <p><button class="btn btn-primary" type="submit">{{ defense.outcome ? 'Corriger l\'évaluation' : 'Enregistrer l\'évaluation' }}</button></p>
+                {{ form_end(form) }}
+            {% elseif defense.outcome %}
+                <ul>
+                    {% set grades = defense.grades %}
+                    {% for chapter in dossier.track.chapters %}
+                        <li>{{ chapter.title }} : {{ grades[chapter.id].label ?? '' }}</li>
+                    {% endfor %}
+                </ul>
+                {% if defense.comment %}<p style="white-space: pre-line">{{ defense.comment }}</p>{% endif %}
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

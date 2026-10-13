@@ -8,6 +8,205 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.6.2 — 2026-10-13
+
+### Ajouté
+
+- **Mesure du démarrage du playground** : `exercice-ouvert` porte maintenant la durée du démarrage en secondes
+  (`duree`) et `premier` (l'environnement n'était pas encore dans le cache du navigateur). Deux événements
+  s'ajoutent : `demarrage-echoue` quand PHP ne démarre pas, et `demarrage-interrompu` quand la page passe en
+  arrière-plan ou se ferme avant d'être prête. Une visite d'exercice sans `exercice-ouvert` disait seulement que
+  le playground n'avait pas démarré ; elle dit maintenant si le visiteur est parti pendant le chargement, et au
+  bout de combien de temps.
+
+## 3.6.1 — 2026-10-13
+
+### Corrigé
+
+- Les pages du site qui ont des boutons de partage (classement, parcours, exercice de Pratique, certificat) ne
+  chargent plus la feuille du playground, qui leur donnait un fond sombre et des liens bleus.
+
+## 3.6.0 — 2026-10-13
+
+### Ajouté
+
+- `app:fuseau:convertir` : change le fuseau d'une instance qui a déjà des données. Les dates enregistrées sont
+  réécrites dans le nouveau `APP_TIMEZONE` (par exemple de UTC à Europe/Paris), une seule fois, l'application arrêtée.
+  Voir « Changer de fuseau » dans `auto-hebergement/README.md`.
+- Partage du certificat de réussite : sa page et celle du parcours terminé proposent à son titulaire les boutons
+  LinkedIn, X, Bluesky et « Copier le lien » (`utm_campaign=parcours`), qui mènent à la page publique du certificat.
+  Cette page a son image d'aperçu, dessinée par le moteur : le nom du titulaire et le titre du parcours.
+- **Bonus de parcours terminé** : réussir le dernier exercice d'un parcours rapporte 10 % de l'XP de ses exercices, une
+  fois. Il compte au classement du mois où il tombe et part si une réussite du parcours est infirmée par la
+  vérification. Nouvelle table `track_bonus` (migration). La réponse de `POST /api/progress/…/complete` gagne
+  `trackBonus`.
+
+### Modifié
+
+- La vérification des réussites part toutes les cinq minutes au lieu de chaque heure : le certificat se débloque en
+  une dizaine de minutes après le dernier exercice.
+- **Classement** refait : bandeau « Votre position » (rang, apprenant à dépasser, gain du mois), podium des trois
+  premiers (ou « Vous ouvrez la marche » avant trois classés, avec la copie du lien), tableau avec les parcours suivis
+  et, au classement du mois, l'évolution depuis le mois précédent. Filtre par parcours (et Pratique), barème réel de
+  l'XP, rappel de la vérification et de la visibilité. Le gabarit `leaderboard/index.html.twig` reçoit
+  `trackFilters`, `scale` et `share` ; un thème construit avec Tailwind doit reconstruire sa feuille.
+
+### Migration
+
+- Après la mise à jour, attribuer une fois le bonus des parcours déjà terminés :
+  `docker compose exec app php bin/console app:classement:bonus-parcours` (sans effet si on la relance).
+
+### Corrigé
+
+- Environnements Symfony avec Doctrine : le profilage reste actif dans les tests, qui tournent désormais sans debug.
+  Sans lui, les tests qui comptent les requêtes SQL (`doctrine.debug_data_holder`) ne voyaient plus rien : un exercice
+  sur les requêtes N+1 passait dès le départ, un autre échouait avec sa solution.
+- Les tests d'un exercice tournent sans debug (`APP_DEBUG=0`), dans le navigateur comme au vérificateur. En debug, la
+  page d'erreur de Symfony cite le code source, celui du test compris : un test qui cherche un texte dans la page
+  passait sur une 404 dans le navigateur, puis la vérification infirmait la réussite. Le vérificateur ne tenait le
+  `APP_DEBUG=0` que de l'image Docker, il le fixe désormais lui-même.
+- Pack de démonstration, « Bonjour à vous » : `/bonjour` doit répondre 200, plus seulement afficher le texte.
+
+## 3.5.0 — 2026-10-13
+
+### Ajouté
+
+- Certificat de réussite d'un parcours : une fois tous les exercices réussis, l'apprenant confirme le nom à imprimer
+  et reçoit un certificat figé, avec un code. Sa page publique `/certificat/{code}` (non indexée) le rend vérifiable
+  et détaille chaque exercice : sans indice, indices utilisés, ou solution consultée. PDF paysage à télécharger, et
+  lien « Ajouter à mon profil LinkedIn » prérempli.
+- Révocation d'un certificat, depuis l'administration (Certificats) ou par la vérification des réussites
+  (`CertificateRevocation::revokeForExercise()`) : l'apprenant reçoit le motif par email et peut contester depuis la
+  page du certificat (nouvel objet de contact « Un litige sur un certificat », rattaché au certificat). L'admin le
+  rétablit ou maintient la révocation ; chaque décision reste dans l'historique du certificat.
+- Le certificat attend que la vérification ait confirmé chaque réussite du parcours : « Vérification en cours »
+  tant qu'une réussite est en file, et la liste des exercices infirmés (avec un lien de contact) si l'un ne passe pas.
+  Une réussite impossible à rejouer (exercice Nuxt, par exemple) est acceptée.
+- **Classement** (`/classement`) : les apprenants qui le choisissent dans « Mon compte » y paraissent sous leur
+  pseudo, classés à l'XP, ce mois-ci ou depuis toujours.
+- **Vérification des réussites** : le code qui a réussi est conservé, et le nouveau service `verificateur` le
+  rejoue contre les tests, sans réseau, sans base ni secrets. Une réussite infirmée sort du classement. Le worker
+  fait tourner le planificateur (`messenger:consume async scheduler_verification`).
+- Soutenances de fin de parcours : dans l'espace des chefs (`/cohorte/{id}` → Soutenances), le chef ouvre des
+  créneaux en ligne ou en présentiel. Un apprenant de la cohorte qui a réussi tous les exercices du parcours en
+  réserve un depuis la page du parcours (annulable jusqu'au début) et reçoit sa convocation avec une invitation
+  d'agenda. L'évaluateur lit le dossier (code rendu, indices, solutions consultées, revue du mentor), remplit la
+  grille, un niveau par chapitre, et donne le résultat (validée ou à repasser), envoyé par email ; une soutenance à
+  repasser se repasse sur un autre créneau. Export CSV des soutenances de la cohorte. Nouvelle table `defense`
+  (migration). Le gabarit `track/show.html.twig` reçoit `defense`, et inclut `track/_defense.html.twig`.
+- Environnement `symfony-8-2-dev` : Symfony 8.2.x-dev du 13 octobre. Un voter peut demander une nouvelle
+  authentification plutôt qu'un 403 (`Vote::requestReAuthentication()`), et le point d'entrée de réauthentification
+  lit l'attribut refusé (`SecurityRequestAttributes::RE_AUTHENTICATION_ATTRIBUTE`).
+- Complétion de l'éditeur : les authenticators (`Symfony\Component\Security\Http\Authenticator\`, passeports,
+  badges et credentials), les points d'entrée, `SecurityRequestAttributes`, `AuthenticationMethod` et
+  `CustomUserMessageAuthenticationException`.
+- Pratique : chaque exercice se partage. Sa page propose LinkedIn, X, Bluesky, la copie du lien et, quand le navigateur
+  en a un, le partage du système ; le playground l'offre dans sa barre (« Partager », une boîte avec les mêmes boutons) et dans le panneau de réussite, avec un texte
+  qui annonce l'exercice réussi. Les liens portent `utm_source` (`linkedin`, `x`, `bluesky`, `lien`, `natif`),
+  `utm_medium=partage` et `utm_campaign=exercice`, qu'Umami lit sans réglage ; chaque clic est aussi mesuré
+  (événement `partage`). Aucun script de ces réseaux n'est chargé : ce sont de simples liens.
+- Pratique : chaque exercice a son image d'aperçu (Open Graph, X, données structurées), dessinée par le moteur au
+  premier appel puis gardée en cache : le titre de l'exercice, son framework et sa version dans une pastille, le
+  site avec le logo des emails et le nom du thème, et à droite un éditeur de code stylisé aux couleurs de l'éditeur
+  du thème (`editor`). Un thème
+  l'habille par `share_card` dans `theme.yaml` (fond, polices TrueType, couleurs ; voir le README). Le code
+  (`App\Share`) sert à tout ce qui se partage : `ShareCard` et `ShareImage` pour l'image, `ShareLinks` pour les
+  liens, `share/_buttons.html.twig` pour les boutons.
+- Le moteur demande désormais l'extension `gd` de PHP (avec FreeType), ajoutée à l'image Docker.
+
+### Migration
+
+- **Auto-hébergement** : retéléchargez `compose.yaml` pour avoir le service `verificateur` et le volume
+  `verifications`. Sans eux, rien n'est vérifié et les réussites comptent au classement.
+
+## 3.4.2 — 2026-10-12
+
+### Corrigé
+
+- Éditeur : les classes natives de PHP (`DateInterval`, `DateTimeImmutable`, `DateTimeZone`, les exceptions SPL,
+  `Stringable`, `#[Override]`…) sont proposées par la complétion, avec l'ajout du `use` dans un fichier à namespace.
+  L'index de complétion n'indexait jusqu'ici que les classes du classmap de Composer.
+- Éditeur : la signature d'une méthode Symfony montre aussi les paramètres que Symfony ajoute en commentaire en
+  attendant la version majeure suivante (`UriSigner::sign(…, ?string $version = null)` en 8.2). Reflection ne les
+  voyait pas.
+
+## 3.4.1 — 2026-10-12
+
+### Retiré
+
+- Notions : le champ de recherche de l'index `/notions`. Avec une quarantaine de notions rangées par thème, les
+  onglets et le filtre par thème suffisent ; la recherche du navigateur fait le reste.
+
+## 3.4.0 — 2026-10-12
+
+### Ajouté
+
+- Notions : l'index `/notions` a un onglet par framework (seulement ceux qui ont une notion à ouvrir), un encart
+  « Le fil rouge » pour la notion la plus pratiquée, une recherche et un filtre par thème. Un pack range les notions
+  par thème dans `<pack>/notions/themes.yaml` (par framework : `title`, `description`, `notions`) ; une notion rangée
+  sans page encore s'annonce « bientôt », une notion non rangée tombe dans « Autres notions ». Un moteur antérieur
+  ignore ce fichier. Le gabarit `concept/index.html.twig` reçoit désormais `catalog` au lieu de `concepts`.
+
+## 3.3.0 — 2026-10-12
+
+### Ajouté
+
+- Notions : une intro écrite dans le pack (`<pack>/notions/<notion>.md`, du Markdown sans titre, nommé comme
+  l'adresse de la notion) ouvre la page de la notion et fait sa description. Un en-tête YAML facultatif donne son
+  `title`, le nom de la page tel qu'on le cherche (« Voter Symfony : contrôler l'accès à un objet »), qui remplace
+  l'étiquette courte dans le titre et le `<h1>`. `content:check` signale une intro que rien n'affiche.
+
+### Modifié
+
+- Notions : une page de notion sans intro écrite ne s'indexe plus (`noindex, follow`) et sort du sitemap. Ce n'est
+  qu'une liste de liens, que les moteurs jugent mince : Search Console les laissait en « Détectée, actuellement non
+  indexée », et elles diluaient les pages qui ont du texte. L'index `/notions` les liste toujours.
+
+- Pratique : une fois le playground monté, la page garde ce que lit un moteur de recherche. Le titre de l'exercice
+  est le `<h1>` de la barre du haut, le résumé ouvre le volet Consignes, les notions qui ont une page y mènent, et
+  une rubrique « Pour aller plus loin » propose les autres nouveautés de la version, le parcours du framework et toute
+  la Pratique. Jusqu'ici, le playground remplaçait l'intro de la page : il ne restait ni titre, ni résumé, ni lien
+  vers le reste du site. La page publique d'un exercice de Pratique relie aussi ses notions, comme celle d'un
+  exercice de parcours.
+
+## 3.2.0 — 2026-10-12
+
+### Ajouté
+
+- Pratique : un exercice propose le parcours du même framework, quand un parcours de ce framework est visible. Le
+  lien apparaît après la réussite dans le playground, et sur la page publique de l'exercice (instance sur
+  invitation). Les visiteurs arrivent surtout par un exercice de Pratique, et repartaient sans voir les parcours.
+
+### Modifié
+
+- Blog : dans le flux RSS, les liens du texte qui mènent au site portent `utm_source=rss`, `utm_medium=feed` et
+  `utm_campaign=<slug de l'article>`. Les copies (dev.to, Hashnode) masquent souvent leur referrer : sans ces
+  paramètres, leurs visites se confondaient avec le trafic direct. Le lien de l'article (`<link>`, `<guid>`), dont les
+  copies font leur URL canonique, reste sans paramètre.
+
+## 3.1.0 — 2026-10-12
+
+### Ajouté
+
+- Blog : un flux RSS des articles parus, texte complet compris, à `/blog/rss.xml`, annoncé par chaque page
+  (`<link rel="alternate">`) et par un lien « S'abonner au flux RSS » sous le titre du blog. Les liens relatifs des
+  articles y deviennent absolus. De quoi suivre le blog dans un lecteur de flux, ou reprendre ses articles sur dev.to
+  ou Hashnode, qui importent un flux et pointent vers l'article d'origine.
+
+### Modifié
+
+- Environnement `laravel-13` : Laravel 13.35 (13.31 jusqu'ici), pour les exercices de Pratique sur les nouveautés
+  de septembre et d'octobre : `copyToDisk()` / `moveToDisk()`, l'attribut `#[Refreshes]`, `assertDatabaseCount()`
+  sur plusieurs tables, les routes `QUERY`, les assertions des faux par propriétés et `response()->markdown()`. Seul
+  le verrou change. À refaire suivre aux instances auto-hébergées : l'archive de l'environnement est reconstruite
+  (`environments/bin/build-env.sh laravel-13`).
+
+### Sécurité
+
+- Simulateur Nuxt : `devalue` 5.9.4 (5.9.2 jusqu'ici) et `source-map-js` 1.2.2, que `npm audit` signalait à haut
+  risque (GHSA-j22f-vq7h-c4qm et suivantes, GHSA-68fv-2mgg-jv7q). Les tests de conformité contre le vrai Nuxt de
+  `conformite/reference`, resté en `devalue` 5.9.2, passent toujours.
+
 ## 3.0.0 — 2026-10-01
 
 Cette version sera la **3.0.0** : une instance auto-hébergée sans thème change d'apparence, et les gabarits ou

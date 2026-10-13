@@ -144,6 +144,13 @@ Une **cohorte** est financée par l'établissement (ses apprenants reçoivent l'
 de la cohorte ; l'estimation du devis se règle dans `config/services.yaml`, `app.cohort_quote.*`) ou par ses
 apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
 
+Un chef de cohorte peut organiser des **soutenances de fin de parcours** (`/cohorte/{id}` → Soutenances) : il ouvre
+des créneaux en ligne (lien de visio) ou en présentiel (adresse, salle), un apprenant qui a réussi tous les exercices
+du parcours en réserve un depuis la page du parcours et reçoit sa convocation avec une invitation d'agenda (.ics).
+L'évaluateur (chef de la cohorte ou administrateur) lit le dossier de l'apprenant (code rendu, indices, solutions
+consultées, revue du mentor), remplit la grille (un niveau par chapitre) et donne le résultat, envoyé par email.
+Les résultats s'exportent en CSV.
+
 **Mise à jour d'une instance vers la 0.8** : après la migration, lancer une fois `bin/console app:acces:initialiser`
 (les cohortes et les apprenants existants gardent ce qu'ils avaient), puis seulement fixer des prix.
 
@@ -162,6 +169,8 @@ apprenants (chacun achète, au tarif de la cohorte s'il est fixé).
     solution/         solution de référence (jamais envoyée au navigateur, sauf en dev)
 <pack>/practice/<exercice>/            exercice de Pratique, hors parcours (même contenu qu'un exercice)
 <pack>/versions/<version>.md           intro d'une page de nouveautés (Markdown, facultative)
+<pack>/notions/<notion>.md             intro d'une page de notion (Markdown, facultative ; sans elle, la page ne s'indexe pas)
+<pack>/notions/themes.yaml             rangement de l'index /notions : par framework, des thèmes et leurs notions (facultatif)
 <pack>/articles/<slug>.md              article du blog (en-tête YAML, puis Markdown)
 ```
 
@@ -368,6 +377,21 @@ accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas
   `/theme/<thème>/<date>/<rôle>` : une image remplacée change d'URL. Sans `icon`, l'onglet n'affiche aucune icône.
   `email_logo` (facultatif) est le logo des emails, en PNG, JPEG ou GIF, quand celui du site est dans un format que
   les clients mail lisent mal (webp, svg).
+- `share_card` habille les **images de partage que le moteur dessine** pour chaque exercice de la Pratique (le
+  titre de l'exercice, son framework et le site, en 1200 × 630, sur `/pratique/<exercice>/image-de-partage`). À
+  droite, un éditeur de code stylisé prend les couleurs de l'éditeur du thème (`editor`, ci-dessus) ; en pied, le
+  logo des emails (`email_logo`, ou `logo` en PNG, JPEG ou GIF) et le nom du thème.
+  Tout y est facultatif : `image` (un fond PNG ou JPEG de ce dossier, mis à l'échelle et rogné, qui remplace
+  l'éditeur stylisé ; laissez de la place à gauche, où s'écrit le texte), `font` et `text_font` (TrueType ou OpenType, pas de woff2 : le titre, puis le
+  reste), `background`, `ink`, `accent`, `muted` (couleurs hexadécimales). Sans eux : les couleurs du site (`colors`), sinon
+  celles des emails, et une police du moteur (DejaVu Sans). L'image `share` reste celle des pages qui n'ont pas la leur.
+
+  ```yaml
+  share_card:
+    image: fond-partage.png
+    font: polices/titres-bold.ttf
+    accent: '#9a3412'
+  ```
 - `home.showcase`, `home.author` et `home.demo` remplissent les sections de l'accueil qui parlent de la marque (le
   fil rouge, « qui est derrière », l'illustration du bandeau). Une section non déclarée n'apparaît pas. Piège du
   YAML : **une phrase qui contient « : » doit être entre guillemets**, sinon elle devient un tableau — le message
@@ -489,7 +513,7 @@ Accueil ── /pratique ── /pratique/<exercice>
 ```
 
 - **Sommaire de chapitre** (`ChapterOutline`) : public et indexable. Il annonce ce que le chapitre fait apprendre et mène à chacun de ses exercices. Rien de ce qui résout un exercice n'y figure — pas même le texte des objectifs, que des tests vérifient. La **fiche de cours** du chapitre (`/parcours/<parcours>/chapitre/<chapitre>`), elle, reste réservée à qui a réussi le chapitre.
-- **Notions** (`ConceptIndex`) : les `concepts:` déclarés par les exercices deviennent des pages, qui rapprochent un exercice de parcours d'un exercice de Pratique. Une notion vue sur un seul exercice ne relie rien : elle reste une pastille, sans page à elle (`notion_url()` ne lui donne pas de lien).
+- **Notions** (`ConceptIndex`) : les `concepts:` déclarés par les exercices deviennent des pages, qui rapprochent un exercice de parcours d'un exercice de Pratique. Une notion vue sur un seul exercice ne relie rien : elle reste une pastille, sans page à elle (`notion_url()` ne lui donne pas de lien). Une page de notion sans texte n'est qu'une liste de liens, que les moteurs de recherche jugent mince : elle se suit, mais ne s'indexe pas (`noindex, follow`) et reste hors du sitemap, tant que le pack ne lui écrit pas d'intro (`<pack>/notions/controleur.md`, du Markdown nommé comme l'adresse de la notion, avec un en-tête YAML facultatif dont la seule clé, `title`, donne le nom de la page tel qu'on le cherche). L'intro ouvre alors la page et fait sa description ; `content:check` signale une intro que rien n'affiche. L'index `/notions` a un onglet par framework, seulement pour ceux qui ont au moins une notion à ouvrir. Un pack peut y ranger les notions par thème (`<pack>/notions/themes.yaml` : sous chaque framework, une liste de thèmes avec `title`, `description` facultative et `notions`, par leur libellé dans `concepts:`) ; une notion rangée sans page encore s'annonce « bientôt », une notion qui a une page sans être rangée tombe dans « Autres notions ». La notion la plus pratiquée du framework (au moins trois exercices) a son encart, « Le fil rouge ». Un seul pack range les notions d'un framework. Les onglets et le filtre par thème viennent avec JavaScript ; sans, tout s'affiche.
 - **Nouveautés d'une version** (`PracticeVersionIndex`) : le `version:` déclaré par les exercices de Pratique donne une page par version — « les nouveautés de Symfony 8.2 » est ce qu'un développeur cherche, et il tombe sur des exercices à faire plutôt que sur un billet à lire. Rien n'y est rédigé : la page se remplit quand un exercice paraît, et elle annonce qu'elle ne liste pas toutes les nouveautés de la version, seulement celles qui ont un exercice. Une version qu'un seul exercice pratique n'a pas de page (comme une notion vue une seule fois), et un exercice programmé n'y entre pas avant sa parution. Le texte de la page se compose de ses notions (« 6 exercices courts, autour de Form, Console et Validator ») tant que personne n'en a écrit un : deux pages ne se ressemblent donc jamais, sans rien rédiger. Une intro écrite dans le pack (`<pack>/versions/symfony-8-2.md`, du Markdown sans titre) la remplace, en haut de page comme en description : l'auteur dit ce que la version apporte et répond de ce qu'il promet — la page retire alors sa réserve sur l'exhaustivité. Le nom du fichier est l'identifiant de la version dans l'adresse ; `content:check` signale une intro que rien n'affiche. Le groupement dépend du framework, que son profil déclare (`versionParts`) : une nouveauté Symfony appartient à une mineure qu'on attend (« Symfony 8.2 »), une nouveauté Laravel sort dans une mineure parmi vingt et se range sous la majeure (« Laravel 13 »). La liste `/pratique` mène à ces pages, et la pastille de version d'un exercice mène à la sienne.
 - Le **title** d'un exercice et d'un sommaire est mené par ses notions, puis fermé par son libellé narratif : c'est « Boucle Twig » que l'on cherche dans un moteur, pas « Les prix en pièces d'or » — mais seul ce libellé distingue deux pages d'une même notion.
 - La page publique d'un exercice mène aux **autres exercices de son chapitre** : sans cela, tous les exercices d'un parcours ne pendent que de sa page, sans se relier entre eux.

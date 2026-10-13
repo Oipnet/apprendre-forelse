@@ -9,6 +9,8 @@ use App\Content\Practice;
 use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
+use App\Share\PracticeShare;
+use App\Share\ShareImageRenderer;
 
 /**
  * La Pratique : la liste, les nouveautés d'une version de framework et un exercice (Article).
@@ -22,6 +24,7 @@ final readonly class PracticeSeo
         private Theme $theme,
         private ExerciseStory $stories,
         private ContentDates $dates,
+        private PracticeShare $share,
     ) {
     }
 
@@ -89,6 +92,8 @@ final readonly class PracticeSeo
     {
         $framework = trim($this->frameworks->labelOf($practice->framework).' '.$practice->version);
         $feature = self::lowerFirst($practice->exercise->title);
+        // L'image de partage de l'exercice, dessinée par le moteur : son titre, sur l'habillage du thème.
+        $image = $this->share->imageUrl($practice);
 
         $this->seo
             ->setTitle(
@@ -98,6 +103,7 @@ final readonly class PracticeSeo
             ->setDescription($practice->summary, sprintf('Un exercice court de la Pratique %s, à faire dans le navigateur.', $framework))
             ->setCanonical($url = $this->schema->url('app_exercise_pratique', ['exerciseId' => $practice->exercise->id]))
             ->setType('article')
+            ->setImage($image, $this->share->card($practice)->alt(), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT)
             ->addStructuredData([
                 '@type' => 'Article',
                 'headline' => PageSeo::shorten($practice->exercise->title, 110),
@@ -105,7 +111,7 @@ final readonly class PracticeSeo
                 'url' => $url,
                 'mainEntityOfPage' => $url,
                 'inLanguage' => 'fr',
-                ...(null === ($image = $this->theme->shareUrl()) ? [] : ['image' => $this->schema->absolute($image)]),
+                'image' => $image,
                 'datePublished' => $practice->published->format('Y-m-d'),
                 'dateModified' => $this->dates->practiceModified($practice),
                 'author' => $this->schema->author(),

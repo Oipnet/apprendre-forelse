@@ -167,7 +167,8 @@ export function registerCompletion(
 
 	function useEdit(fqcn: string, model: monaco.editor.ITextModel, ctx: FileContext): monaco.languages.TextEdit[] {
 		const short = fqcn.split('\\').pop()!;
-		const namespaceOf = fqcn.slice(0, fqcn.lastIndexOf('\\'));
+		// Classe native (DateInterval) : namespace global.
+		const namespaceOf = fqcn.includes('\\') ? fqcn.slice(0, fqcn.lastIndexOf('\\')) : '';
 		if (ctx.uses.get(short) === fqcn || namespaceOf === ctx.namespace) return [];
 		// Après le dernier `use`, sinon après le namespace (ligne vide), sinon après `<?php`.
 		const line = ctx.lastUseLine || ctx.namespaceLine || 1;

@@ -9,6 +9,7 @@ use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Entity\ExerciseProgress;
 use App\Entity\User;
+use App\Leaderboard\TrackBonuses;
 use App\Repository\ExerciseProgressRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,6 +24,7 @@ final readonly class ProgressService
         private ContentRepository $content,
         private ExerciseLocator $exercises,
         private ExerciseAccessGuard $guard,
+        private TrackBonuses $trackBonuses,
         private ClockInterface $clock,
     ) {
     }
@@ -45,14 +47,15 @@ final readonly class ProgressService
     }
 
     /**
-     * La réussite est constatée côté navigateur (les tests y tournent) : c'est falsifiable,
-     * ce qui est acceptable pour de l'apprentissage. L'XP n'est attribuée qu'une fois.
+     * La réussite est constatée côté navigateur (les tests y tournent) : c'est falsifiable. L'XP est attribuée
+     * tout de suite, une seule fois ; le code est figé, et le service « verificateur » le rejoue plus tard
+     * (voir App\Verification) : une réussite infirmée sort du classement.
      *
      * Atomique : deux réussites simultanées (double clic, nouvel essai, deux onglets sur deux exercices) se suivent
      * derrière un verrou sur le compte, et chacune relit l'XP et la progression une fois le verrou obtenu. Sans lui,
      * la seconde comptait l'XP une deuxième fois, ou écrasait le total écrit par la première.
      *
-     * @return array{xpEarned: int, totalXp: int, alreadyCompleted: bool}
+     * @return array{xpEarned: int, trackBonus: int, totalXp: int, alreadyCompleted: bool}
      */
     public function complete(User $user, Exercise $exercise, int $hintsUsed): array
     {
@@ -66,8 +69,11 @@ final readonly class ProgressService
             // La solution consultée ne rapporte rien : c'est ce que promet la page d'accueil.
             $xp = $progress->complete($hints, $progress->isSolutionRevealed() ? 0 : $this->xpCalculator->xpFor($exercise->xp, $hints), $this->clock->now());
             $user->addXp($xp);
+            // Le dernier exercice d'un parcours : le bonus du parcours terminé (une seule fois).
+            $track = null === $exercise->trackId ? null : $this->content->findTrack($exercise->trackId);
+            $trackBonus = null === $track ? 0 : $this->trackBonuses->awardIfComplete($user, $track);
 
-            return ['xpEarned' => $xp, 'totalXp' => $user->getXp(), 'alreadyCompleted' => $alreadyCompleted];
+            return ['xpEarned' => $xp, 'trackBonus' => $trackBonus, 'totalXp' => $user->getXp(), 'alreadyCompleted' => $alreadyCompleted];
         });
     }
 

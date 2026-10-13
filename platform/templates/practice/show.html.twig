@@ -9,6 +9,7 @@
 {% block body %}
     <main class="practice exercise-public mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         {{ include('practice/_intro.html.twig') }}
+        {{ include('share/_buttons.html.twig', {links: share.invite, title: 'Partager cet exercice', mesure: {exercice: practice.exercise.id, parcours: 'pratique'}}) }}
 
         <aside class="exercise-access mt-10 space-y-3 rounded-lg border border-line bg-bg-2 p-5" aria-labelledby="exercise-access-title">
             <h2 class="text-xl font-semibold" id="exercise-access-title">À vous d'écrire le code</h2>
@@ -20,5 +21,13 @@
                 <a class="btn" href="{{ path('app_login', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Se connecter</a>
             </p>
         </aside>
+
+        {% if track %}
+            <aside class="practice-track mt-6 space-y-3 rounded-lg border border-line p-5" aria-labelledby="practice-track-title">
+                <h2 class="text-xl font-semibold" id="practice-track-title">Pour aller plus loin</h2>
+                <p>Cet exercice porte sur une seule fonctionnalité. Le parcours <strong>{{ track.title }}</strong> reprend {{ framework }} de bout en bout, chapitre par chapitre{% if track.description %} : {{ track.description }}{% else %}.{% endif %}</p>
+                <p class="pt-2"><a class="btn" href="{{ path('app_track', {trackId: track.id}) }}">Découvrir le parcours</a></p>
+            </aside>
+        {% endif %}
     </main>
 {% endblock %}

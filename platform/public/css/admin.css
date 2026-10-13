@@ -160,3 +160,17 @@
         margin-block-end: var(--ea-sp-2);
     }
 }
+/* Soutenances : le code rendu dans le dossier, et les formulaires de l'espace des chefs. */
+.defense-code {
+    background: var(--bs-tertiary-bg, rgba(127, 127, 127, 0.08));
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    max-block-size: 24rem;
+    overflow: auto;
+    padding: var(--ea-sp-2);
+    white-space: pre;
+}
+.defense-slot-form,
+.defense-evaluation-form {
+    max-inline-size: 40rem;
+}

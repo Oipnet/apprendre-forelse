@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use App\Tests\DatabaseTrait;
+use App\Tests\PacksTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -12,6 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 final class ConceptTest extends WebTestCase
 {
     use DatabaseTrait;
+    use PacksTrait;
 
     public function testLIndexListeLesNotionsAvecLeurNombreDExercices(): void
     {
@@ -23,6 +25,33 @@ final class ConceptTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertFalse($client->getResponse()->headers->has('X-Robots-Tag'), 'L\'index s\'indexe.');
         $this->assertSame(['/notions/controleur'], $crawler->filter('.concepts-list a')->each(static fn ($node) => $node->attr('href')));
+    }
+
+    /**
+     * Les thèmes que déclare un pack (notions/themes.yaml) rangent l'index ; un framework par onglet, et seulement
+     * ceux qui ont une notion à ouvrir : Docker a un thème, mais aucune notion pratiquée.
+     */
+    public function testLIndexRangeLesNotionsParFrameworkEtParTheme(): void
+    {
+        $this->usePacks(__DIR__.'/../../../examples/packs', __DIR__.'/../Fixtures/packs/versions', __DIR__.'/../Fixtures/packs/notions');
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/notions');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(['concepts-symfony', 'concepts-laravel'], $crawler->filter('[role="tab"]')->each(static fn ($node) => $node->attr('aria-controls')));
+        $this->assertCount(0, $crawler->filter('#concepts-docker'), 'Pas d\'onglet sans notion à ouvrir.');
+
+        $symfony = $crawler->filter('#concepts-symfony');
+        $this->assertSame('Les bases', $symfony->filter('.concepts-theme h3')->text());
+        $this->assertSame(['/notions/controleur'], $symfony->filter('.concepts-list a')->each(static fn ($node) => $node->attr('href')));
+        $this->assertSame(['Route Bientôt'], $symfony->filterXPath('descendant::li[not(a)]')->each(static fn ($node) => $node->text()), 'Une notion rangée sans page s\'annonce, sans lien.');
+
+        $laravel = $crawler->filter('#concepts-laravel');
+        $this->assertCount(0, $laravel->filter('.concepts-theme h3'), 'Sans thèmes, une seule liste sans titre.');
+        $this->assertSame(['/notions/files-d-attente'], $laravel->filter('.concepts-list a')->each(static fn ($node) => $node->attr('href')));
+        $this->assertStringContainsString('2 exercices', $laravel->filter('.concepts-list a')->text());
     }
 
     public function testUneNotionRassembleParcoursEtPratique(): void
@@ -97,5 +126,57 @@ final class ConceptTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSame(['/notions/controleur'], $crawler->filter('.exercise-concepts a')->each(static fn ($node) => $node->attr('href')));
         $this->assertSame(['Route'], $crawler->filter('.exercise-concepts span.tag')->each(static fn ($node) => $node->text()));
+    }
+
+    public function testLaPageDUnExerciceDePratiqueLieSesNotions(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/pratique/exemple-map-request-header');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(['/notions/controleur'], $crawler->filter('.exercise-concepts a')->each(static fn ($node) => $node->attr('href')));
+        $this->assertSame(['HttpKernel'], $crawler->filter('.exercise-concepts span.tag')->each(static fn ($node) => $node->text()));
+    }
+
+    /** Sans intro écrite, une notion n'est qu'une liste de liens : sa page se suit, mais ne s'indexe pas. */
+    public function testUneNotionSansIntroNeSIndexePas(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/notions/controleur');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('X-Robots-Tag', 'noindex, follow');
+        $this->assertSame('noindex, follow', $crawler->filter('meta[name="robots"]')->attr('content'));
+        $this->assertCount(0, $crawler->filter('.concept-intro'));
+    }
+
+    /** Une intro écrite dans le pack (notions/controleur.md) ouvre la page, fait sa description et son titre, et la rend indexable. */
+    public function testUneNotionAvecIntroSAfficheEtSIndexe(): void
+    {
+        $this->usePacks(__DIR__.'/../../../examples/packs', __DIR__.'/../Fixtures/packs/pratique');
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/notions/controleur');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertFalse($client->getResponse()->headers->has('X-Robots-Tag'));
+        $this->assertStringContainsString('<code>Request</code>', $crawler->filter('.concept-intro')->html(), 'L\'intro est du Markdown, rendu comme tel.');
+        $this->assertStringStartsWith('Un contrôleur reçoit la Request', (string) $crawler->filter('meta[name="description"]')->attr('content'));
+        $this->assertSame('Contrôleur Symfony : de la requête à la réponse', $crawler->filter('h1')->text(), 'Le titre de l\'en-tête remplace l\'étiquette.');
+        $this->assertStringStartsWith('Contrôleur Symfony : de la requête à la réponse', $crawler->filter('title')->text());
+
+        $client->request('GET', '/sitemap.xml');
+        $this->assertStringContainsString('<loc>http://localhost/notions/controleur</loc>', (string) $client->getResponse()->getContent());
+    }
+
+    protected function tearDown(): void
+    {
+        $this->restorePacks();
+        parent::tearDown();
     }
 }

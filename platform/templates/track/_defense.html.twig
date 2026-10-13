@@ -1,0 +1,54 @@
+{#- La soutenance de fin de parcours, quand la cohorte de l'apprenant en organise sur ce parcours (DefenseOffer). Repères
+    sans style, lus par les tests : track-defense, defense-slot, defense-upcoming, defense-result. -#}
+{% set upcoming = defense.upcoming %}
+{% set last = defense.last %}
+<div class="track-defense mt-4 space-y-2 scroll-mt-4 rounded-lg border border-line bg-surface p-4" id="soutenance">
+    <p class="text-sm text-ink-muted">Soutenance de fin de parcours</p>
+    {% if upcoming %}
+        <div class="defense-upcoming space-y-1">
+            <p class="font-medium">Le {{ upcoming.startsAt|date('d/m/Y à H:i') }}</p>
+            <p class="text-sm">{{ upcoming.durationMinutes }} min · {{ upcoming.mode.label }}</p>
+            <p class="text-sm break-words">{% if upcoming.mode.value == 'online' %}<a href="{{ upcoming.place }}" target="_blank" rel="noopener noreferrer">{{ upcoming.place }}</a>{% else %}{{ upcoming.place }}{% endif %}</p>
+            <p class="text-sm text-ink-muted">Vous expliquerez vos exercices, avec le code que vous avez écrit.</p>
+            <a class="btn mt-2 w-full" href="{{ path('app_defense_calendar', {trackId: track.id, id: upcoming.id}) }}">Ajouter à mon agenda</a>
+            {% if upcoming.startsAt > date() %}
+                <form method="post" action="{{ path('app_defense_cancel', {trackId: track.id, id: upcoming.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                    <button class="mt-2 w-full cursor-pointer text-sm text-accent" type="submit">Annuler ce créneau</button>
+                </form>
+            {% endif %}
+        </div>
+    {% endif %}
+    {% if last %}
+        {% set grades = last.grades %}
+        <div class="defense-result space-y-1">
+            <p><strong>{{ last.outcome.value == 'passed' ? '🎓 ' }}{{ last.outcome.label }}</strong> <span class="text-sm text-ink-muted">le {{ last.startsAt|date('d/m/Y') }}</span></p>
+            <ul class="text-sm">
+                {% for chapter in track.chapters %}
+                    <li class="flex justify-between gap-2"><span>{{ chapter.title }}</span><span class="text-ink-muted">{{ grades[chapter.id].label ?? '' }}</span></li>
+                {% endfor %}
+            </ul>
+            {% if last.comment %}<p class="text-sm whitespace-pre-line">{{ last.comment }}</p>{% endif %}
+        </div>
+    {% endif %}
+    {% if defense.canBook %}
+        {% if defense.slots is empty %}
+            <p class="text-sm">Aucun créneau libre pour l'instant : votre école en ouvrira bientôt.</p>
+        {% else %}
+            <p class="text-sm">{{ last ? 'Choisissez un nouveau créneau :' : 'Parcours terminé : choisissez votre créneau.' }}</p>
+            <ul class="space-y-2">
+                {% for slot in defense.slots %}
+                    <li class="defense-slot">
+                        <form method="post" action="{{ path('app_defense_book', {trackId: track.id, id: slot.id}) }}" class="flex items-center justify-between gap-2">
+                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                            <span class="text-sm">{{ slot.startsAt|date('d/m à H:i') }}<br><span class="text-ink-muted">{{ slot.mode.label }}, {{ slot.durationMinutes }} min</span></span>
+                            <button class="btn btn-primary" type="submit">Réserver</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% elseif not defense.trackComplete and not upcoming and not defense.passed %}
+        <p class="text-sm">Votre école organise une soutenance sur ce parcours : réussissez tous les exercices pour réserver votre créneau.</p>
+    {% endif %}
+</div>

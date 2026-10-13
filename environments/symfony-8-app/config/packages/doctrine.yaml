@@ -24,6 +24,9 @@ doctrine:
 when@test:
     doctrine:
         dbal:
+            # Les tests tournent sans debug (APP_DEBUG=0) : le profilage, qui suit kernel.debug par défaut, reste
+            # actif pour qu'un test puisse compter les requêtes SQL (doctrine.debug_data_holder).
+            profiling: true
             # "TEST_TOKEN" is typically set by ParaTest
             dbname_suffix: '_test%env(default::TEST_TOKEN)%'
 

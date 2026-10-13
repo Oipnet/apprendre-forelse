@@ -8,8 +8,14 @@ namespace App\Service;
  */
 final class XpCalculator
 {
+    /** Ce que coûte chaque indice, en pourcentage de l'XP de l'exercice. */
+    public const int HINT_PENALTY = 25;
+
+    /** Ce qui reste au moins, en pourcentage, quel que soit le nombre d'indices. */
+    public const int FLOOR = 25;
+
     public function xpFor(int $baseXp, int $hintsUsed): int
     {
-        return (int) round($baseXp * max(0.25, 1 - 0.25 * max(0, $hintsUsed)));
+        return (int) round($baseXp * max(self::FLOOR / 100, 1 - self::HINT_PENALTY / 100 * max(0, $hintsUsed)));
     }
 }

@@ -1,4 +1,5 @@
 import type { FrameworkProfile, Grading } from '@forelse/runtime-contract';
+import type { ShareLinks } from './share';
 
 /** Exercice tel que servi par GET /api/exercises/{track}/{exercise} (ou /api/exercises/pratique/{exercise}). */
 export interface ExercisePayload {
@@ -7,6 +8,8 @@ export interface ExercisePayload {
 	trackId: string | null;
 	title: string;
 	concepts: string[];
+	/** L'adresse de la page des notions qui en ont une (vue sur plus d'un exercice), par notion. */
+	conceptUrls: Record<string, string>;
 	xp: number;
 	access: 'free' | 'account';
 	open: string;
@@ -49,7 +52,17 @@ export interface ExercisePayload {
 	/** Fiche de cours que la réussite de cet exercice débloque (dernier exercice de son chapitre). */
 	lesson: { title: string; url: string } | null;
 	/** Exercice de Pratique : d'où vient la fonctionnalité (version du framework, page de cette version, pull request). */
-	practice: { framework: string; version: string | null; versionUrl: string | null; pullRequest: string | null; published: string } | null;
+	practice: {
+		framework: string;
+		version: string | null;
+		/** Ce que la fonctionnalité apporte, en une phrase : le chapeau de la page publique. */
+		summary: string;
+		versionUrl: string | null;
+		pullRequest: string | null;
+		published: string;
+		/** Le parcours du même framework, proposé après la réussite (null : aucun de visible). */
+		track: { id: string; title: string; description: string; url: string } | null;
+	} | null;
 	/** Présent uniquement en environnement de développement de la plateforme. */
 	solution?: Record<string, string>;
 }
@@ -88,4 +101,6 @@ export interface PlaygroundConfig {
 	feedbackUrl?: string | null;
 	/** Le mentor (revue de code, erreurs expliquées) ; null pour un invité ou sans clé d'API côté serveur. */
 	mentor?: { reviewUrl: string; explainUrl: string } | null;
+	/** Pratique : les liens de partage, pour inviter à faire l'exercice ou annoncer sa réussite (App\Share\PracticeShare). */
+	share?: { invite: ShareLinks; success: ShareLinks } | null;
 }

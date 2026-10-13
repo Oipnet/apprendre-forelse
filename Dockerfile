@@ -35,7 +35,8 @@ FROM dunglas/frankenphp:1-php8.4 AS php_base
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 WORKDIR /app
 
-RUN install-php-extensions @composer intl opcache pdo_pgsql pcntl \
+# gd (avec FreeType) dessine les images de partage des pages (App\Share\ShareImageRenderer).
+RUN install-php-extensions @composer gd intl opcache pdo_pgsql pcntl \
     # pcntl pour les seules commandes longues (worker, empaqueteur), qui la chargent avec « php -d extension=pcntl » :
     # elle leur fait entendre le SIGTERM d'un arrêt. Pas pour FrankenPHP (serveur multithread), d'où l'ini retiré.
     && rm "$PHP_INI_DIR/conf.d/docker-php-ext-pcntl.ini"
@@ -100,8 +101,10 @@ ENV APP_ENV=prod \
 RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin git zip util-linux && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 1000 --home /app formation \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
-    && mkdir -p /data/app /config /packs /themes /marque /environnements /app/platform/var \
-    && chown -R formation:formation /data /config /environnements /app/platform/var
+    && mkdir -p /data/app /config /packs /themes /marque /environnements /verifications /app/platform/var \
+    && chown -R formation:formation /data /config /environnements /verifications /app/platform/var \
+    # Réussites à vérifier (voir le service « verificateur ») : fermé à l'utilisateur sous lequel le code est rejoué.
+    && chmod 700 /verifications
 USER formation
 
 VOLUME ["/data"]

@@ -98,13 +98,20 @@ final readonly class Sitemap
                 $entries[] = $this->entry('app_practice_version', ['slug' => $slug], max($dates));
             }
 
-            // Les notions : une page par notion travaillée par plus d'un exercice, datée de son contenu.
-            $conceptEntries = [];
+            // Les notions : une page par notion travaillée par plus d'un exercice, datée de son contenu. Seules celles
+            // qui ont une intro écrite s'indexent (voir ConceptController) : l'index les liste toutes, le sitemap non.
+            $conceptEntries = $conceptDates = [];
             foreach ($this->concepts->directories() as $slug => $directories) {
-                $conceptEntries[] = $this->entry('app_concept', ['slug' => $slug], max(array_map($this->dates->lastModified(...), $directories)));
+                $dates = array_map($this->dates->lastModified(...), $directories);
+                if (null !== ($intro = $this->concepts->introFile($slug))) {
+                    // Une intro réécrite change la page, sans qu'aucun exercice bouge.
+                    $dates[] = date('Y-m-d', (int) filemtime($intro));
+                    $conceptEntries[] = $this->entry('app_concept', ['slug' => $slug], max($dates));
+                }
+                $conceptDates[] = max($dates);
             }
-            if ($conceptEntries) {
-                $entries[] = $this->entry('app_concepts', [], max(array_column($conceptEntries, 'lastmod')));
+            if ($conceptDates) {
+                $entries[] = $this->entry('app_concepts', [], max($conceptDates));
                 array_push($entries, ...$conceptEntries);
             }
 

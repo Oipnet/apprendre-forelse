@@ -1,0 +1,48 @@
+{# Fiche d'un certificat : les champs EasyAdmin, puis la révocation ou le rétablissement, l'historique et les contestations. #}
+{% extends '@EasyAdmin/crud/detail.html.twig' %}
+
+{% block main %}
+    {{ parent() }}
+
+    {% set certificate = entity.instance %}
+    <section class="certificate-decision" style="margin-top: 1.5rem">
+        {% if certificate.revoked %}
+            <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem">Rétablir le certificat</h2>
+            <p class="text-muted">Après une contestation fondée. L'apprenant est prévenu par email ; pour maintenir la révocation, répondez-lui simplement et marquez sa contestation traitée.</p>
+            <form method="post" action="{{ path('admin_certificate_reinstate', {entityId: certificate.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('certificate') }}">
+                <textarea name="note" class="form-control" rows="2" placeholder="Note pour l'historique (facultative)"></textarea>
+                <button class="btn btn-primary" style="margin-top: 0.5rem">Rétablir</button>
+            </form>
+        {% else %}
+            <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem">Révoquer le certificat</h2>
+            <p class="text-muted">La page publique affichera « certificat révoqué ». L'apprenant reçoit le motif par email et peut contester.</p>
+            <form method="post" action="{{ path('admin_certificate_revoke', {entityId: certificate.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('certificate') }}">
+                <textarea name="reason" class="form-control" rows="2" required placeholder="Motif, lu par l'apprenant"></textarea>
+                <button class="btn btn-danger" style="margin-top: 0.5rem">Révoquer</button>
+            </form>
+        {% endif %}
+    </section>
+
+    <section class="certificate-history" style="margin-top: 1.5rem">
+        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem">Historique</h2>
+        <ul>
+            {% for event in certificate.history %}
+                <li>{{ event.at|date('d/m/Y H:i') }} · {{ {delivre: 'délivré', revoque: 'révoqué', retabli: 'rétabli'}[event.action] ?? event.action }}{% if event.note %} : {{ event.note }}{% endif %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="certificate-disputes" style="margin-top: 1.5rem">
+        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem">Contestations</h2>
+        {% for message in certificate.disputes %}
+            <p>
+                <a href="{{ path('admin_contact_message_detail', {entityId: message.id}) }}">{{ message.createdAt|date('d/m/Y H:i') }}</a>
+                {{ message.handled ? '· traitée' : '· à traiter' }}
+            </p>
+        {% else %}
+            <p class="text-muted">Aucune.</p>
+        {% endfor %}
+    </section>
+{% endblock %}

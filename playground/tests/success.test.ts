@@ -28,8 +28,18 @@ describe('nextStepHtml', () => {
 	it('en Pratique, ramène à la Pratique, avec la pull request d\'origine si elle est connue', () => {
 		const pratique = { ...parcours, context: 'practice' as const, back: { title: 'Pratique', url: '/pratique' } };
 		expect(nextStepHtml(exercice, pratique)).toBe('<a class="button" href="/pratique">Retour à la Pratique</a>');
-		const practice = { framework: 'symfony', version: '8.1', versionUrl: null, pullRequest: 'https://github.com/symfony/symfony/pull/1', published: '2026-01-01' };
+		const practice = { framework: 'symfony', version: '8.1', summary: '', versionUrl: null, pullRequest: 'https://github.com/symfony/symfony/pull/1', published: '2026-01-01', track: null };
 		expect(nextStepHtml({ ...exercice, next: suite, practice }, pratique)).toContain('href="https://github.com/symfony/symfony/pull/1"');
+	});
+
+	it('en Pratique, propose le parcours du même framework quand il y en a un', () => {
+		const pratique = { ...parcours, context: 'practice' as const, back: { title: 'Pratique', url: '/pratique' } };
+		const track = { id: 'symfony-pour-dev-php', title: 'Symfony pour les devs PHP', description: 'Une application, <de bout en bout>.', url: '/parcours/symfony-pour-dev-php' };
+		const practice = { framework: 'symfony', version: '8.1', summary: '', versionUrl: null, pullRequest: null, published: '2026-01-01', track };
+		const html = nextStepHtml({ ...exercice, practice }, pratique);
+		expect(html).toContain('<a class="button primary" href="/parcours/symfony-pour-dev-php">Découvrir « Symfony pour les devs PHP » →</a>');
+		expect(html).toContain('&lt;de bout en bout&gt;');
+		expect(html).toContain('href="/pratique">Retour à la Pratique</a>');
 	});
 });
 

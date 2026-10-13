@@ -3,6 +3,8 @@
 namespace App\Tests\Controller;
 
 use App\Entity\User;
+use App\Entity\VerificationStatus;
+use App\Repository\ExerciseProgressRepository;
 use App\Repository\UserRepository;
 use App\Tests\DatabaseTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -63,10 +65,31 @@ final class ProgressApiTest extends WebTestCase
         $user = $this->login();
         $first = $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 1]);
 
-        $this->assertSame(['xpEarned' => 38, 'totalXp' => 38, 'alreadyCompleted' => false], $first, '50 XP − 25 % pour un indice.');
+        $this->assertSame(['xpEarned' => 38, 'trackBonus' => 0, 'totalXp' => 38, 'alreadyCompleted' => false], $first, '50 XP − 25 % pour un indice.');
         $second = $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 0]);
-        $this->assertSame(['xpEarned' => 0, 'totalXp' => 38, 'alreadyCompleted' => true], $second);
+        $this->assertSame(['xpEarned' => 0, 'trackBonus' => 0, 'totalXp' => 38, 'alreadyCompleted' => true], $second);
         $this->assertSame(38, $this->xpOf($user));
+    }
+
+    public function testLaReussiteFigeLeCodeEtAttendSaVerification(): void
+    {
+        $user = $this->login();
+        $this->json($this->client, 'PUT', '/api/progress/decouverte/01-bonjour', ['files' => ['src/Controller/BonjourController.php' => '<?php // réussi'], 'hintsUsed' => 0]);
+        $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 0]);
+        $this->json($this->client, 'PUT', '/api/progress/decouverte/01-bonjour', ['files' => ['src/Controller/BonjourController.php' => '<?php // retouché ensuite'], 'hintsUsed' => 0]);
+
+        $progress = static::getContainer()->get(ExerciseProgressRepository::class)->findOne($user, 'decouverte', '01-bonjour');
+        $this->assertSame(['src/Controller/BonjourController.php' => '<?php // réussi'], $progress->getSubmittedFiles(), 'Le code de la réussite, pas le brouillon d\'après.');
+        $this->assertSame(VerificationStatus::Pending, $progress->getVerification());
+    }
+
+    public function testUneReussiteSansCodeNeSeVerifiePas(): void
+    {
+        $user = $this->login();
+        $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 0]);
+
+        $progress = static::getContainer()->get(ExerciseProgressRepository::class)->findOne($user, 'decouverte', '01-bonjour');
+        $this->assertSame(VerificationStatus::Unverifiable, $progress->getVerification());
     }
 
     public function testLaSolutionSeConsulteContreLXp(): void
@@ -85,7 +108,7 @@ final class ProgressApiTest extends WebTestCase
         $this->assertNull($progress['review']);
 
         $result = $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 0]);
-        $this->assertSame(['xpEarned' => 0, 'totalXp' => 0, 'alreadyCompleted' => false], $result, 'La solution consultée ne rapporte pas l\'XP.');
+        $this->assertSame(['xpEarned' => 0, 'trackBonus' => 0, 'totalXp' => 0, 'alreadyCompleted' => false], $result, 'La solution consultée ne rapporte pas l\'XP.');
         $this->assertSame(0, $this->xpOf($user));
         $this->assertTrue($this->json($this->client, 'GET', '/api/progress/decouverte/01-bonjour')['completed']);
     }
@@ -110,7 +133,8 @@ final class ProgressApiTest extends WebTestCase
         ]);
 
         $this->assertSame(['imported' => 2], $result);
-        $this->assertSame(100, $this->xpOf($user));
+        // Les deux exercices du parcours (100 XP), plus le bonus du parcours terminé : 10 %.
+        $this->assertSame(110, $this->xpOf($user));
         $progress = $this->json($this->client, 'GET', '/api/progress/decouverte/01-bonjour');
         $this->assertTrue($progress['completed']);
 
@@ -118,6 +142,18 @@ final class ProgressApiTest extends WebTestCase
         $this->assertSame(['imported' => 0], $this->json($this->client, 'POST', '/api/progress/import', [
             ['trackId' => 'decouverte', 'exerciseId' => '01-bonjour', 'completed' => true],
         ]));
-        $this->assertSame(100, $this->xpOf($user));
+        $this->assertSame(110, $this->xpOf($user));
+    }
+
+    public function testLeDernierExerciceDuParcoursRapporteLeBonusDuParcours(): void
+    {
+        $user = $this->login();
+        $this->json($this->client, 'POST', '/api/progress/decouverte/01-bonjour/complete', ['hintsUsed' => 0]);
+        $last = $this->json($this->client, 'POST', '/api/progress/decouverte/02-bonjour-prenom/complete', ['hintsUsed' => 0]);
+
+        $this->assertSame(['xpEarned' => 50, 'trackBonus' => 10, 'totalXp' => 110, 'alreadyCompleted' => false], $last, '10 % des 100 XP du parcours.');
+        $again = $this->json($this->client, 'POST', '/api/progress/decouverte/02-bonjour-prenom/complete', ['hintsUsed' => 0]);
+        $this->assertSame(0, $again['trackBonus'], 'Une seule fois.');
+        $this->assertSame(110, $this->xpOf($user));
     }
 }
