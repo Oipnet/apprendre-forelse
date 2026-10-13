@@ -50,6 +50,12 @@ final readonly class ThemeChecker
             $errors[] = $e->getMessage();
         }
 
+        try {
+            (new ThemeTranslations())->load($directory);
+        } catch (\RuntimeException $e) {
+            $errors[] = $e->getMessage();
+        }
+
         $templates = [];
         foreach ($this->templates($directory) as $name => $path) {
             $templates[] = $name;

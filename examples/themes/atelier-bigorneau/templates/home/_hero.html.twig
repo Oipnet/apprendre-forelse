@@ -3,15 +3,17 @@
   Mêmes variables que le gabarit du moteur (tryUrl, tryPractice, theme.home.demo) : on n'en invente pas.
   Les classes bigorneau-* sont stylées par assets/theme.css ; btn et btn-primary viennent de la feuille du moteur.
   Les repères home-hero et home-cta restent : les tests et les scripts s'y fient.
+  Les textes du thème sont dans translations/theme.<langue>.yaml (domaine « theme »).
 #}
+{% trans_default_domain 'theme' %}
 <section class="home-hero bigorneau-hero">
     <div class="bigorneau-hero__inner">
-        <p class="bigorneau-hero__eyebrow">{{ theme.chip ?: 'Atelier' }} · à marée haute comme à marée basse</p>
+        <p class="bigorneau-hero__eyebrow">{{ 'hero.surtitre'|trans({chip: theme.chip ?: 'hero.chip_par_defaut'|trans}) }}</p>
         <h1 class="bigorneau-hero__title">{{ theme.name }}</h1>
         {% if theme.tagline %}<p class="bigorneau-hero__lead">{{ theme.tagline }}</p>{% endif %}
         <p class="home-cta bigorneau-hero__cta">
-            <a class="btn btn-primary" href="{{ tryUrl }}">{{ tryPractice ? 'Essayer un exercice, sans compte' : 'Essayer le premier exercice' }} <span aria-hidden="true">→</span></a>
-            <a href="{{ path('app_tracks') }}">Voir les parcours</a>
+            <a class="btn btn-primary" href="{{ tryUrl }}">{{ (tryPractice ? 'hero.essayer_pratique' : 'hero.essayer_parcours')|trans }} <span aria-hidden="true">→</span></a>
+            <a href="{{ path('app_tracks') }}">{{ 'hero.parcours'|trans }}</a>
         </p>
         {% if theme.home.demo %}{{ include('home/_demo.html.twig', {demo: theme.home.demo}) }}{% endif %}
     </div>

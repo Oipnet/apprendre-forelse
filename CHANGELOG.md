@@ -10,6 +10,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Textes des thèmes dans des fichiers de traduction** : un thème range ses textes dans
+  `translations/theme.<langue>.yaml` (ICU) et ses gabarits les lisent avec `|trans(domain: 'theme')`, dans la langue
+  de la page, avec retour au français. Relus quand ils changent, vérifiés par `app:theme:verifier` et l'admin. Voir
+  « Textes et langues » dans `docs/themes.md`. Un thème sans ces fichiers n'a rien à changer.
+
 - **Blog en anglais** : un article se traduit dans `<pack>/articles/en/<slug>.md`, avec la clé `translation_of` qui
   nomme l'article français. Les traductions parues sont servies sous `/en/blog` (liste, articles, flux RSS
   `/en/blog/rss.xml`), entrent dans le sitemap, et chaque version nomme l'autre (`hreflang`, la française en

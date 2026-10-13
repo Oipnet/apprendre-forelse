@@ -1,0 +1,8 @@
+# Les textes du thème (voir docs/themes.md, « Textes et langues ») : ses gabarits les lisent avec
+# |trans(domain: 'theme'), au format ICU comme ceux du moteur.
+hero:
+    surtitre: "{chip} · à marée haute comme à marée basse"
+    chip_par_defaut: Atelier
+    essayer_pratique: "Essayer un exercice, sans compte"
+    essayer_parcours: "Essayer le premier exercice"
+    parcours: "Voir les parcours"
