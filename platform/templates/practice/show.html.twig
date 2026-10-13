@@ -1,32 +1,32 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
 
 {#
   Un exercice de Pratique sur une instance sur invitation (REGISTRATION_INVITE_ONLY) : l'explication se lit,
   l'éditeur demande un compte. Ailleurs, tout le monde écrit le code sans compte et voit exercise/play.html.twig.
 #}
-{% block title %}{{ practice.exercise.title }} · Pratique · {{ theme.name }}{% endblock %}
+{% block title %}{{ practice.exercise.title }} · {{ 'commun.pratique'|trans }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
     <main class="practice exercise-public mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         {{ include('practice/_intro.html.twig') }}
-        {{ include('share/_buttons.html.twig', {links: share.invite, title: 'Partager cet exercice', mesure: {exercice: practice.exercise.id, parcours: 'pratique'}}) }}
+        {{ include('share/_buttons.html.twig', {links: share.invite, title: 'practice.show.partager'|trans, mesure: {exercice: practice.exercise.id, parcours: 'pratique'}}) }}
 
         <aside class="exercise-access mt-10 space-y-3 rounded-lg border border-line bg-bg-2 p-5" aria-labelledby="exercise-access-title">
-            <h2 class="text-xl font-semibold" id="exercise-access-title">À vous d'écrire le code</h2>
-            <p>Cette plateforme est réservée à ses membres : créez votre compte avec votre code d'invitation,
-                ou laissez votre adresse sur la liste d'attente.</p>
+            <h2 class="text-xl font-semibold" id="exercise-access-title">{{ 'practice.show.a_vous'|trans }}</h2>
+            <p>{{ 'practice.show.invitation'|trans }}</p>
             <p class="exercise-access-actions flex flex-wrap gap-2 pt-2">
-                <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Créer un compte</a>
-                <a class="btn" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>
-                <a class="btn" href="{{ path('app_login', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">Se connecter</a>
+                <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">{{ 'commun.creer_compte'|trans }}</a>
+                <a class="btn" href="{{ path('app_home') }}#liste-attente">{{ 'commun.liste_attente'|trans }}</a>
+                <a class="btn" href="{{ path('app_login', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">{{ 'commun.se_connecter'|trans }}</a>
             </p>
         </aside>
 
         {% if track %}
             <aside class="practice-track mt-6 space-y-3 rounded-lg border border-line p-5" aria-labelledby="practice-track-title">
-                <h2 class="text-xl font-semibold" id="practice-track-title">Pour aller plus loin</h2>
-                <p>Cet exercice porte sur une seule fonctionnalité. Le parcours <strong>{{ track.title }}</strong> reprend {{ framework }} de bout en bout, chapitre par chapitre{% if track.description %} : {{ track.description }}{% else %}.{% endif %}</p>
-                <p class="pt-2"><a class="btn" href="{{ path('app_track', {trackId: track.id}) }}">Découvrir le parcours</a></p>
+                <h2 class="text-xl font-semibold" id="practice-track-title">{{ 'practice.show.plus_loin'|trans }}</h2>
+                <p>{{ (track.description ? 'practice.show.parcours_description' : 'practice.show.parcours')|trans({titre: track.title|e, framework: framework|e, description: track.description|e})|raw }}</p>
+                <p class="pt-2"><a class="btn" href="{{ path('app_track', {trackId: track.id}) }}">{{ 'practice.show.decouvrir'|trans }}</a></p>
             </aside>
         {% endif %}
     </main>

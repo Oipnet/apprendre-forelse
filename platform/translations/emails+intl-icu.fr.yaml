@@ -15,19 +15,6 @@ sujet:
   certificate_revoked: 'Votre certificat « {parcours} » a été révoqué'
   certificate_reinstated: 'Votre certificat « {parcours} » est rétabli'
 
-# Les libellés des enums (TranslatableInterface) : {{ defense.outcome|trans }}.
-enum:
-  defense_outcome:
-    passed: 'Soutenance validée'
-    retake: 'À repasser'
-  defense_mode:
-    online: 'En ligne'
-    on_site: 'En présentiel'
-  defense_level:
-    acquired: 'Acquis'
-    in_progress: "En cours d'acquisition"
-    not_acquired: 'Non acquis'
-
 commun:
   bonjour: 'Bonjour {nom},'
   bonjour_anonyme: 'Bonjour,'

@@ -23,7 +23,9 @@ final class MentorInputSize
             $total += mb_strlen((string) $path) + (\is_string($content) ? mb_strlen($content) : 0);
         }
         if ($total > self::MAX_CHARACTERS) {
-            $context->buildViolation(sprintf('Trop de code pour le mentor : %d caractères, au plus %d.', $total, self::MAX_CHARACTERS))
+            $context->buildViolation('api.mentor.trop_de_code')
+                ->setParameter('{{ total }}', (string) $total)
+                ->setParameter('{{ max }}', (string) self::MAX_CHARACTERS)
                 ->atPath('files')
                 ->addViolation();
         }

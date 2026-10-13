@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Le mentor de l'apprenant connecté (revue de code, erreurs expliquées).
@@ -29,6 +30,7 @@ final class MentorApiController extends AbstractController
         private readonly Mentor $mentor,
         private readonly MentorGate $gate,
         private readonly ProgressService $progress,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -66,10 +68,10 @@ final class MentorApiController extends AbstractController
             return $appel();
         } catch (ModelUnavailableException $e) {
             // Le modèle est injoignable ou en panne : ce n'est pas la faute de l'apprenant, et c'est passager.
-            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, 'Le mentor n\'a pas pu répondre : '.$e->getMessage(), $e);
+            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, $this->translator->trans('api.mentor.sans_reponse', ['raison' => $e->getMessage()], 'apprentissage'), $e);
         } catch (ContentException $e) {
             // Le modèle a répondu de travers : ce n'est pas la faute de l'apprenant.
-            throw new HttpException(Response::HTTP_BAD_GATEWAY, 'Le mentor n\'a pas pu répondre : '.$e->getMessage(), $e);
+            throw new HttpException(Response::HTTP_BAD_GATEWAY, $this->translator->trans('api.mentor.sans_reponse', ['raison' => $e->getMessage()], 'apprentissage'), $e);
         }
     }
 
@@ -79,7 +81,7 @@ final class MentorApiController extends AbstractController
         $user = $this->getUser();
         if (!$user instanceof User) {
             // 401 (et non une redirection vers la connexion) : c'est une API.
-            throw new HttpException(Response::HTTP_UNAUTHORIZED, 'Connectez-vous pour faire appel au mentor.');
+            throw new HttpException(Response::HTTP_UNAUTHORIZED, $this->translator->trans('api.connexion.mentor', [], 'apprentissage'));
         }
 
         return [$user, $this->gate->admit($user, $trackId, $exerciseId, $requireCompleted)];

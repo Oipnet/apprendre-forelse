@@ -14,6 +14,12 @@ enum DefenseLevel: string implements TranslatableInterface
     case InProgress = 'in_progress';
     case NotAcquired = 'not_acquired';
 
+    /** Le libellé montré à l'apprenant, dans la langue de la page ; label() garde le français de l'administration. */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
+    {
+        return $translator->trans('defense.niveau.'.$this->value, [], 'apprentissage', $locale);
+    }
+
     public function label(): string
     {
         return match ($this) {
@@ -23,9 +29,4 @@ enum DefenseLevel: string implements TranslatableInterface
         };
     }
 
-    /** Le libellé traduit (emails, pages, administration) ; label() reste le français des exports et de l'agenda. */
-    public function trans(TranslatorInterface $translator, ?string $locale = null): string
-    {
-        return $translator->trans('enum.defense_level.'.$this->value, [], 'emails', $locale);
-    }
 }

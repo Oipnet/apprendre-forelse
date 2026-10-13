@@ -1,17 +1,18 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
 
 {#
   Une notion et tout ce qui la pratique : exercices de parcours, exercices de Pratique, notions voisines.
   Variables : name, slug, exercises, practices, related, introHtml (l'intro écrite dans le pack, ou null), title (son titre, ou null).
 #}
-{% block title %}{{ name }} · Notion · {{ theme.name }}{% endblock %}
+{% block title %}{{ name }} · {{ 'concept.show.notion'|trans }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
     <main class="concept-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-        <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
             <ol>
-                <li><a href="{{ path('app_home') }}">Accueil</a></li>
-                <li><a href="{{ path('app_concepts') }}">Les notions</a></li>
+                <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
+                <li><a href="{{ path('app_concepts') }}">{{ 'concept.index.fil'|trans }}</a></li>
                 <li aria-current="page">{{ name }}</li>
             </ol>
         </nav>
@@ -21,19 +22,18 @@
             <div class="concept-intro prose prose-theme mt-4 max-w-none">{{ introHtml|raw }}</div>
         {% endif %}
         <p class="lead mt-3 text-lg text-ink-muted">
-            {{ exercises|length + practices|length }} exercice{{ exercises|length + practices|length > 1 ? 's' }}
-            {{- exercises|length + practices|length > 1 ? ' font' : ' fait' }} travailler cette notion, en écrivant du code dans le navigateur.
+            {{ 'concept.show.resume'|trans({n: exercises|length + practices|length}) }}
         </p>
 
         {% if exercises %}
-            <h2 class="mt-10 text-xl font-semibold">Dans les parcours</h2>
+            <h2 class="mt-10 text-xl font-semibold">{{ 'concept.show.parcours'|trans }}</h2>
             <ul class="concept-exercises mt-3 space-y-3">
                 {% for row in exercises %}
                     <li>
                         <a href="{{ path('app_exercise', {trackId: row.track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a>
                         <span class="block text-sm text-ink-muted">
                             <a href="{{ path('app_track', {trackId: row.track.id}) }}">{{ row.track.title }}</a>
-                            · <a href="{{ path('app_chapter_summary', {trackId: row.track.id, chapterId: row.chapter.id}) }}">chapitre {{ row.number }} : {{ row.chapter.title }}</a>
+                            · <a href="{{ path('app_chapter_summary', {trackId: row.track.id, chapterId: row.chapter.id}) }}">{{ 'concept.show.chapitre'|trans({numero: row.number, titre: row.chapter.title}) }}</a>
                         </span>
                     </li>
                 {% endfor %}
@@ -41,7 +41,7 @@
         {% endif %}
 
         {% if practices %}
-            <h2 class="mt-10 text-xl font-semibold">Dans la Pratique</h2>
+            <h2 class="mt-10 text-xl font-semibold">{{ 'concept.show.pratique'|trans }}</h2>
             <ul class="concept-exercises mt-3 space-y-3">
                 {% for practice in practices %}
                     <li>
@@ -53,14 +53,14 @@
         {% endif %}
 
         {% if related %}
-            <h2 class="mt-10 text-xl font-semibold">Notions voisines</h2>
+            <h2 class="mt-10 text-xl font-semibold">{{ 'concept.show.voisines'|trans }}</h2>
             <p class="exercise-concepts mt-3 flex flex-wrap gap-1.5">
                 {%- for other in related %}<a class="tag" href="{{ path('app_concept', {slug: other.slug}) }}">{{ other.name }}</a>{% endfor -%}
             </p>
         {% endif %}
 
         <nav class="lesson-nav mt-12 border-t border-line pt-6">
-            <a class="btn" href="{{ path('app_concepts') }}">← Toutes les notions</a>
+            <a class="btn" href="{{ path('app_concepts') }}">{{ 'concept.show.toutes'|trans }}</a>
         </nav>
     </main>
 {% endblock %}

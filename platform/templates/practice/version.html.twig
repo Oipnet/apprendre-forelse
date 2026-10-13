@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
 
 {#
   Une version d'un framework : les exercices de Pratique qui la font pratiquer. Rien n'y est rédigé à la main —
@@ -9,18 +10,18 @@
     {% import 'practice/_card.html.twig' as ui %}
     <main class="pr">
         <div class="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
-            <nav class="breadcrumb" aria-label="Fil d'Ariane">
+            <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
                 <ol>
-                    <li><a href="{{ path('app_home') }}">Accueil</a></li>
-                    <li><a href="{{ path('app_practice') }}">Pratique</a></li>
-                    <li aria-current="page">Nouveautés {{ label }}</li>
+                    <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
+                    <li><a href="{{ path('app_practice') }}">{{ 'commun.pratique'|trans }}</a></li>
+                    <li aria-current="page">{{ 'practice.version.fil'|trans({version: label}) }}</li>
                 </ol>
             </nav>
 
             <div class="pr-hero mt-3 border-b border-line pb-8">
                 <div class="pr-intro">
-                    <p class="text-sm font-medium text-ink-muted">Pratique</p>
-                    <h1 class="mt-1 text-3xl font-semibold">Les nouveautés de {{ label }}</h1>
+                    <p class="text-sm font-medium text-ink-muted">{{ 'commun.pratique'|trans }}</p>
+                    <h1 class="mt-1 text-3xl font-semibold">{{ 'practice.version.titre'|trans({version: label}) }}</h1>
                     {% if introHtml %}
                         {# Intro écrite dans le pack : l'auteur dit ce que la version apporte, et répond de ce
                            qu'il promet — la page ne rajoute donc pas sa réserve sur l'exhaustivité. #}
@@ -28,11 +29,10 @@
                     {% else %}
                         {% set shown = concepts|slice(0, 4) %}
                         <p class="lead mt-3 text-lg text-ink-muted">
-                            {{ items|length }} exercices courts
-                            {%- if shown %}, autour de {{ shown|slice(0, -1)|join(', ') }}{% if shown|length > 1 %} et {% endif %}{{ shown|last }}{% endif %}.
-                            Un code écrit à l'ancienne, à réécrire avec la nouveauté, directement dans le navigateur. Des tests disent si c'est juste.
+                            {{ (shown ? 'practice.version.resume_notions' : 'practice.version.resume')|trans({n: items|length, notions: shown|join(', ', 'commun.liste_et'|trans)}) }}
+                            {{ 'practice.version.principe'|trans }}
                         </p>
-                        <p class="pr-scope mt-3 text-sm text-ink-muted">Cette page ne liste pas toutes les nouveautés de {{ label }} : seulement celles qui ont un exercice ici. Elle grandit à chaque exercice publié.</p>
+                        <p class="pr-scope mt-3 text-sm text-ink-muted">{{ 'practice.version.portee'|trans({version: label}) }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -46,7 +46,7 @@
 
                 {% if others %}
                     <p class="pr-versions mt-6 flex flex-wrap items-center gap-2 text-sm">
-                        <span class="text-ink-muted">Autres versions de {{ frameworks[framework] ?? framework }} :</span>
+                        <span class="text-ink-muted">{{ 'practice.version.autres'|trans({framework: frameworks[framework] ?? framework}) }}</span>
                         {% for other in others %}
                             <a class="pr-tab tag" href="{{ path('app_practice_version', {slug: other.slug}) }}">{{ other.label }} <span class="pr-tab-count font-medium text-ink">{{ other.exercises }}</span></a>
                         {% endfor %}
@@ -54,7 +54,7 @@
                 {% endif %}
 
                 <p class="pr-versions mt-6 flex flex-wrap items-center gap-2 text-sm">
-                    <a class="pr-tab tag" href="{{ path('app_practice') }}">← Toute la Pratique</a>
+                    <a class="pr-tab tag" href="{{ path('app_practice') }}">{{ 'practice.version.toute_la_pratique'|trans }}</a>
                 </p>
             </div>
         </div>

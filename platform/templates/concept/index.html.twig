@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
 
 {#
   L'index des notions : la porte d'entrée de qui cherche « les filtres Twig » plutôt qu'un parcours.
@@ -7,29 +8,29 @@
   Sans JavaScript, tout s'affiche : chaque framework sous son titre, chaque thème à la suite. Avec, site.ts
   (app/concepts.ts) fait des frameworks des onglets, et ajoute le filtre par thème.
 #}
-{% block title %}Les notions travaillées · {{ theme.name }}{% endblock %}
+{% block title %}{{ 'concept.index.titre'|trans }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
     {% set tabbed = catalog|length > 1 %}
     {% set themed = catalog|filter(f => f.themes|length > 1 or (f.themes|first).title)|length > 0 %}
     <main class="concepts-page mx-auto w-full max-w-5xl px-4 py-10 sm:px-6" data-concepts>
-        <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
             <ol>
-                <li><a href="{{ path('app_home') }}">Accueil</a></li>
-                <li aria-current="page">Les notions</li>
+                <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
+                <li aria-current="page">{{ 'concept.index.fil'|trans }}</li>
             </ol>
         </nav>
 
-        <h1 class="mt-3 text-3xl font-semibold">Les notions travaillées</h1>
+        <h1 class="mt-3 text-3xl font-semibold">{{ 'concept.index.titre'|trans }}</h1>
         {% if themed %}
-            <p class="lead mt-3 max-w-2xl text-lg text-ink-muted">Chaque exercice annonce ce qu'il fait travailler. Voici ces notions rangées par thème : choisissez-en une pour voir les exercices qui la pratiquent.</p>
+            <p class="lead mt-3 max-w-2xl text-lg text-ink-muted">{{ 'concept.index.intro_themes'|trans }}</p>
         {% else %}
-            <p class="lead mt-3 max-w-2xl text-lg text-ink-muted">Chaque exercice annonce ce qu'il fait travailler. Voici toutes ces notions, et par où les pratiquer.</p>
+            <p class="lead mt-3 max-w-2xl text-lg text-ink-muted">{{ 'concept.index.intro'|trans }}</p>
         {% endif %}
 
         {% if catalog %}
             {% if tabbed %}
-                <div class="concepts-tabs mt-8 flex flex-wrap gap-1 border-b border-line" role="tablist" aria-label="Frameworks" data-concepts-tabs hidden>
+                <div class="concepts-tabs mt-8 flex flex-wrap gap-1 border-b border-line" role="tablist" aria-label="{{ 'concept.index.frameworks'|trans }}" data-concepts-tabs hidden>
                     {% for framework in catalog %}
                         <button type="button" role="tab" id="concepts-tab-{{ framework.id }}" aria-controls="concepts-{{ framework.id }}" aria-selected="{{ loop.first ? 'true' : 'false' }}" tabindex="{{ loop.first ? 0 : -1 }}" class="-mb-px min-h-11 cursor-pointer border-b-2 border-transparent px-4 py-2 text-ink-muted aria-selected:border-ink aria-selected:font-semibold aria-selected:text-ink">
                             {{ framework.label }} <span class="font-normal text-ink-muted">· {{ framework.concepts }}</span>
@@ -49,17 +50,17 @@
                         {% set featured = framework.featured %}
                         <section class="concepts-featured mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-bg-2 px-6 py-6 sm:px-8" aria-labelledby="concepts-featured-{{ framework.id }}">
                             <div class="min-w-0 flex-[1_1_24rem]">
-                                <p class="font-mono text-xs tracking-[0.16em] text-accent uppercase">Le fil rouge</p>
+                                <p class="font-mono text-xs tracking-[0.16em] text-accent uppercase">{{ 'concept.index.fil_rouge'|trans }}</p>
                                 <h{{ level }} class="mt-1 font-serif text-2xl font-medium" id="concepts-featured-{{ framework.id }}">{{ featured.name }}</h{{ level }}>
-                                <p class="mt-1 text-ink-muted">La notion la plus pratiquée en {{ framework.label }} : elle revient dans {{ featured.exercises }} exercices, tous thèmes confondus.</p>
+                                <p class="mt-1 text-ink-muted">{{ 'concept.index.fil_rouge_texte'|trans({framework: framework.label, n: featured.exercises}) }}</p>
                             </div>
-                            <a class="btn btn-primary whitespace-nowrap" href="{{ path('app_concept', {slug: featured.slug}) }}">Voir les {{ featured.exercises }} exercices</a>
+                            <a class="btn btn-primary whitespace-nowrap" href="{{ path('app_concept', {slug: featured.slug}) }}">{{ 'concept.index.voir_exercices'|trans({n: featured.exercises}) }}</a>
                         </section>
                     {% endif %}
 
                     {% if framework.themes|length > 1 %}
-                        <div class="concepts-filters mt-8 flex flex-wrap gap-2" role="group" aria-label="Filtrer par thème" data-concepts-themes hidden>
-                            <button type="button" class="concepts-chip inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border border-line px-4 text-sm aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg" aria-pressed="true" data-concepts-theme="all">Tous <span class="opacity-75">{{ framework.themes|reduce((sum, t) => sum + t.concepts|length, 0) }}</span></button>
+                        <div class="concepts-filters mt-8 flex flex-wrap gap-2" role="group" aria-label="{{ 'concept.index.filtrer'|trans }}" data-concepts-themes hidden>
+                            <button type="button" class="concepts-chip inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border border-line px-4 text-sm aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg" aria-pressed="true" data-concepts-theme="all">{{ 'commun.tous'|trans }} <span class="opacity-75">{{ framework.themes|reduce((sum, t) => sum + t.concepts|length, 0) }}</span></button>
                             {% for group in framework.themes %}
                                 <button type="button" class="concepts-chip inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border border-line px-4 text-sm aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg" aria-pressed="false" data-concepts-theme="{{ group.id }}">{{ group.title }} <span class="opacity-75">{{ group.concepts|length }}</span></button>
                             {% endfor %}
@@ -70,7 +71,7 @@
                         <section class="concepts-theme flex flex-wrap gap-x-10 gap-y-4 border-b border-line py-8 last-of-type:border-b-0" data-concepts-group="{{ group.id }}"{% if group.title %} aria-labelledby="concepts-{{ framework.id }}-{{ group.id }}"{% endif %}>
                             {% if group.title %}
                                 <div class="max-w-xs flex-[1_1_14rem]">
-                                    <p class="font-mono text-xs tracking-[0.16em] text-accent uppercase">{{ group.concepts|length }} notion{{ group.concepts|length > 1 ? 's' }}</p>
+                                    <p class="font-mono text-xs tracking-[0.16em] text-accent uppercase">{{ 'concept.index.notions'|trans({n: group.concepts|length}) }}</p>
                                     <h{{ level }} class="mt-1 font-serif text-2xl font-medium" id="concepts-{{ framework.id }}-{{ group.id }}">{{ group.title }}</h{{ level }}>
                                     {% if group.description %}<p class="mt-2 text-sm text-ink-muted">{{ group.description }}</p>{% endif %}
                                 </div>
@@ -85,13 +86,13 @@
                                                     <span class="flex gap-0.5" aria-hidden="true">
                                                         {%- for i in 1..5 %}<span class="block h-3.5 w-1.5 rounded-sm {{ i <= concept.exercises ? 'bg-accent' : 'bg-line' }}"></span>{% endfor -%}
                                                     </span>
-                                                    {{ concept.exercises }} exercice{{ concept.exercises > 1 ? 's' }}
+                                                    {{ 'commun.exercices'|trans({n: concept.exercises}) }}
                                                 </span>
                                             </a>
                                         {% else %}
                                             <div class="flex min-h-13 flex-1 items-center justify-between gap-3 rounded-lg border border-dashed border-line px-4 py-2 text-ink-muted">
                                                 <span>{{ concept.name }}</span>
-                                                <span class="font-mono text-xs tracking-widest uppercase">Bientôt</span>
+                                                <span class="font-mono text-xs tracking-widest uppercase">{{ 'commun.bientot'|trans }}</span>
                                             </div>
                                         {% endif %}
                                     </li>
@@ -103,7 +104,7 @@
                 </section>
             {% endfor %}
         {% else %}
-            <p class="mt-8">Aucune notion n'est encore travaillée par plus d'un exercice.</p>
+            <p class="mt-8">{{ 'concept.index.aucune'|trans }}</p>
         {% endif %}
     </main>
 {% endblock %}

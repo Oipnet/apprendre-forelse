@@ -24,6 +24,8 @@ use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
+use function Symfony\Component\Translation\t;
+
 final class TrackController extends AbstractController
 {
     use TargetPathTrait;
@@ -89,13 +91,13 @@ final class TrackController extends AbstractController
         $user = $this->getUser();
         if (!$user instanceof User) {
             $this->saveTargetPath($request->getSession(), 'main', $request->getRequestUri());
-            $this->addFlash('info', 'Connectez-vous pour télécharger le livret du parcours.');
+            $this->addFlash('info', t('flash.livret_connexion', [], 'apprentissage'));
 
             return $this->redirectToRoute('app_login');
         }
 
         if (!$access->hasFullAccess($user, $track)) {
-            $this->addFlash('info', 'Le livret fait partie du parcours complet : il faut un accès au parcours pour le télécharger.');
+            $this->addFlash('info', t('flash.livret_acces', [], 'apprentissage'));
 
             return $this->redirectToRoute('app_track', ['trackId' => $track->id]);
         }
@@ -103,7 +105,7 @@ final class TrackController extends AbstractController
         $progress = $progressRepository->findByTrack($user, $track->id);
         $remaining = TrackProgress::of($track, $progress)->remaining();
         if ($remaining && !$this->isGranted(User::ROLE_AUTEUR)) {
-            $this->addFlash('info', sprintf('Le livret se débloque une fois le parcours terminé : encore %d exercice%s à réussir.', $remaining, $remaining > 1 ? 's' : ''));
+            $this->addFlash('info', t('flash.livret_verrouille', ['n' => $remaining], 'apprentissage'));
 
             return $this->redirectToRoute('app_track', ['trackId' => $track->id]);
         }
