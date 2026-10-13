@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Shell\Command;
 
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Interpreter;
 use Forelse\DockerSim\Shell\Machine;
 use Forelse\DockerSim\Shell\Result;
@@ -33,7 +34,7 @@ final class ProcessCommands extends CoreutilsCommands
             'sh', 'bash', 'ash', 'dash' => $this->shell($args, $m, $stdin, $sh),
             'ps' => $this->ps($m),
             'kill' => $this->kill($args, $m),
-            'nano', 'vi', 'vim', 'top', 'htop' => Result::error(1, sprintf("%s: pas de terminal interactif dans le simulateur (utilisez cat, sed ou echo)\n", $name)),
+            'nano', 'vi', 'vim', 'top', 'htop' => Result::error(1, Messages::texte('shell.no_tty', [$name])),
             'tini', 'dumb-init' => $this->wrapper($args, $m, $stdin, $sh),
             'su-exec', 'gosu' => $this->switchUser($name, $args, $m, $stdin, $sh),
             'su', 'sudo' => Result::error(1, $name === 'sudo' ? $sh->shellPrefix($m)."sudo: not found\n" : "su: must be run from a terminal\n"),

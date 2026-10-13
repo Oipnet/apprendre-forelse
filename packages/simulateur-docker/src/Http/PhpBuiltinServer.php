@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Http;
 
 use Forelse\DockerSim\Fs\Path;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Container;
 
 /** Le serveur intégré de PHP (php -S adresse:port -t dossier [routeur.php]). */
@@ -41,10 +42,10 @@ final class PhpBuiltinServer
                 $script = $root.'/index.php';
             }
             if ($script === null) {
-                $response = new HttpResponse(404, ['Content-Type' => 'text/html; charset=UTF-8'], ErrorPages::phpServer($path), null, [...$trace, 'introuvable : '.$root.$path]);
+                $response = new HttpResponse(404, ['Content-Type' => 'text/html; charset=UTF-8'], ErrorPages::phpServer($path), null, [...$trace, Messages::texte('trace.not_found', [$root.$path])]);
             } else {
                 $response = $this->context->php()->serve($container, $script, $root, $request, substr($script, \strlen($root)), ['SERVER_SOFTWARE' => 'PHP/'.$version.' (Development Server)']);
-                $response->trace = [...$trace, 'script PHP : '.$script, ...$response->trace];
+                $response->trace = [...$trace, Messages::texte('trace.php_script', [$script]), ...$response->trace];
             }
         }
         $response->headers['Host'] ??= $request->host;

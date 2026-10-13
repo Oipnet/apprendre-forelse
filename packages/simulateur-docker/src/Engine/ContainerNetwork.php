@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Engine;
 
 use Forelse\DockerSim\Http\HttpRequest;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Network;
 use Forelse\DockerSim\State\Container;
 
@@ -99,7 +100,7 @@ final class ContainerNetwork implements Network
         $port = (int) ($parts['port'] ?? 80);
         $connection = $this->connect($host, $port);
         if ($connection['status'] !== 'open') {
-            return ['error' => $connection['status'], 'message' => $connection['status'] === 'unresolved' ? "nom inconnu : {$host}" : "connexion refusée : {$host}:{$port}"];
+            return ['error' => $connection['status'], 'message' => $connection['status'] === 'unresolved' ? Messages::texte('trace.unknown_host', [$host]) : Messages::texte('trace.connection_refused', [$host, $port])];
         }
         $request = HttpRequest::fromUrl($method, ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : ''), ['host' => $host.($port !== 80 ? ':'.$port : '')] + $headers, $body, $this->clientIp($connection['container']), $host, $port);
         $response = $this->docker->serve($connection['container'], $port, $request);

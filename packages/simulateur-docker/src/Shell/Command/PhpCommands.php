@@ -6,6 +6,7 @@ namespace Forelse\DockerSim\Shell\Command;
 
 use Forelse\DockerSim\Catalog\PhpExtensions;
 use Forelse\DockerSim\Fs\MemoryFs;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Interpreter;
 use Forelse\DockerSim\Runtime\PhpExit;
 use Forelse\DockerSim\Shell\Facts;
@@ -74,7 +75,7 @@ final class PhpCommands implements Command
             $missing = PhpExtensions::missing($info[$m->facts->os === 'alpine' ? 'alpine' : 'debian'], $m->facts->packageNames());
             $out .= sprintf("Configuring for:\nPHP Api Version:         ".Facts::phpApi($m->facts->phpVersion)."\nZend Module Api No:      ".Facts::phpApi($m->facts->phpVersion)."\nZend Extension Api No:   4".Facts::phpApi($m->facts->phpVersion)."\nchecking for grep that handles long lines and -e... /bin/grep\nchecking for a sed that does not truncate output... /bin/sed\nchecking for %s support... yes, shared\n", $extension);
             if ($missing !== []) {
-                $m->note(sprintf('L\'extension %s a besoin du paquet %s pour compiler.', $extension, implode(', ', $missing)));
+                $m->note(Messages::texte('shell.php_ext_missing_package', [$extension, implode(', ', $missing)]));
 
                 return Result::error(1, ($info['error'] ?? 'configure: error: missing dependency')."\n", $out, $seconds + 6.0);
             }
@@ -182,7 +183,7 @@ final class PhpCommands implements Command
             // Sur Alpine, les outils de compilation ($PHPIZE_DEPS) ne sont pas installés d'office.
             if (!$m->facts->hasBinary('autoconf') || !$m->facts->hasBinary('gcc')) {
                 $out .= "running: phpize\nConfiguring for:\nPHP Api Version:         ".Facts::phpApi($m->facts->phpVersion)."\nCannot find autoconf. Please check your autoconf installation and the\n\$PHP_AUTOCONF environment variable. Then, rerun this script.\n\n";
-                $m->note('pecl compile les extensions : sur Alpine, installez d\'abord $PHPIZE_DEPS (apk add --no-cache $PHPIZE_DEPS).');
+                $m->note(Messages::texte('shell.pecl_phpize'));
 
                 return Result::error(1, "ERROR: `phpize' failed\n", $out, $seconds + 2.0);
             }
@@ -344,7 +345,7 @@ final class PhpCommands implements Command
         if (\in_array(basename($script), ['composer.phar', 'composer'], true)) {
             return $sh->invoke(['composer', ...\array_slice($args, 1)], $m, $stdin);
         }
-        $m->note(sprintf('php %s : le script n\'est pas exécuté pendant un build (considéré comme réussi).', $script));
+        $m->note(Messages::texte('shell.php_script_skipped', [$script]));
 
         return Result::ok($startup, 1.5);
     }
@@ -354,7 +355,7 @@ final class PhpCommands implements Command
         // Le classique de l'installation de Composer : copy(), hash_file(), unlink().
         if (preg_match("/copy\\(\\s*['\"]([^'\"]+)['\"]\\s*,\\s*['\"]([^'\"]+)['\"]\\s*\\)/", $code, $copy)) {
             if (str_starts_with($copy[1], 'http')) {
-                $m->fs->write($m->path($copy[2]), "<?php // installateur téléchargé depuis {$copy[1]}\n");
+                $m->fs->write($m->path($copy[2]), Messages::texte('shell.php_installer', [$copy[1]]));
             }
 
             return Result::ok($startup, 0.6);
@@ -383,7 +384,7 @@ final class PhpCommands implements Command
         if (!$fallback) {
             return null;
         }
-        $m->note('php -r : seules quelques expressions simples sont simulées pendant un build.');
+        $m->note(Messages::texte('shell.php_eval_limited'));
 
         return Result::ok($startup);
     }

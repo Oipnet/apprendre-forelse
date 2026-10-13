@@ -15,6 +15,7 @@ use Forelse\DockerSim\Dockerfile\ParseError;
 use Forelse\DockerSim\Dockerfile\Parser;
 use Forelse\DockerSim\Engine\Docker;
 use Forelse\DockerSim\Http\HttpResponse;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\Image;
 use Forelse\DockerSim\State\Store;
@@ -83,7 +84,7 @@ abstract class DockerTestCase extends TestCase
     {
         $content = $this->projectFile($path);
         if ($content === null) {
-            $this->fail(sprintf('Le fichier %s n\'existe pas.', $path));
+            $this->fail(Messages::texte('test.file_missing', [$path]));
         }
         try {
             return (new Parser())->parse($content);
@@ -147,10 +148,10 @@ abstract class DockerTestCase extends TestCase
     {
         $script = $this->projectFile($path);
         if ($script === null) {
-            $this->fail(sprintf('Le fichier %s n\'existe pas.', $path));
+            $this->fail(Messages::texte('test.file_missing', [$path]));
         }
         if (\Forelse\DockerSim\Cli\ScriptRunner::commands($script) === [] || array_filter(\Forelse\DockerSim\Cli\ScriptRunner::commands($script), static fn ($c) => !str_starts_with($c, '#')) === []) {
-            $this->fail(sprintf('%s ne contient aucune commande docker.', $path));
+            $this->fail(Messages::texte('test.script_empty', [$path]));
         }
         return \Forelse\DockerSim\Cli\ScriptRunner::run(new Application($this->engine()), $script);
     }
@@ -159,7 +160,7 @@ abstract class DockerTestCase extends TestCase
     protected function runScriptOk(string $path): string
     {
         [$code, $output] = $this->runScript($path);
-        $this->assertSame(0, $code, sprintf("Une commande de %s a échoué (code %d) :\n%s", $path, $code, self::tail($output)));
+        $this->assertSame(0, $code, Messages::texte('test.script_failed', [$path, $code, self::tail($output)]));
 
         return $output;
     }
@@ -168,7 +169,7 @@ abstract class DockerTestCase extends TestCase
     protected function dockerOk(string $command): string
     {
         [$code, $output] = $this->docker($command);
-        $this->assertSame(0, $code, sprintf("« docker %s » a échoué (code %d) :\n%s", $command, $code, self::tail($output)));
+        $this->assertSame(0, $code, Messages::texte('test.docker_failed', [$command, $code, self::tail($output)]));
 
         return $output;
     }
@@ -183,7 +184,7 @@ abstract class DockerTestCase extends TestCase
     {
         $container = $this->engine()->store->findContainer($name);
         if ($container === null) {
-            $this->fail(sprintf('Aucun conteneur « %s ».', $name));
+            $this->fail(Messages::texte('test.no_container', [$name]));
         }
 
         return $container;
@@ -194,7 +195,7 @@ abstract class DockerTestCase extends TestCase
     {
         $container = $this->compose()->containers($service)[0] ?? null;
         if ($container === null) {
-            $this->fail(sprintf('Le service « %s » n\'a pas de conteneur (docker compose up a-t-il réussi ?).', $service));
+            $this->fail(Messages::texte('test.no_service_container', [$service]));
         }
 
         return $container;
@@ -204,7 +205,7 @@ abstract class DockerTestCase extends TestCase
     {
         $image = $this->engine()->store->findImage($reference);
         if ($image === null) {
-            $this->fail(sprintf('Aucune image « %s ».', $reference));
+            $this->fail(Messages::texte('test.no_image', [$reference]));
         }
 
         return $image;
@@ -220,24 +221,24 @@ abstract class DockerTestCase extends TestCase
 
     protected function assertBuildSucceeded(BuildResult $build, string $message = ''): void
     {
-        $this->assertTrue($build->success, ($message !== '' ? $message."\n" : '')."Le build a échoué :\n".self::tail($build->output));
+        $this->assertTrue($build->success, ($message !== '' ? $message."\n" : '').Messages::texte('test.build_failed', [self::tail($build->output)]));
     }
 
     protected function assertBuildFailed(BuildResult $build, string $message = ''): void
     {
-        $this->assertFalse($build->success, $message !== '' ? $message : 'Le build aurait dû échouer.');
+        $this->assertFalse($build->success, $message !== '' ? $message : Messages::texte('test.build_should_fail'));
     }
 
     protected function assertImageHasFile(Image $image, string $path, string $message = ''): void
     {
-        $this->assertArrayHasKey($path, $image->filesystem(), $message !== '' ? $message : sprintf('L\'image ne contient pas %s.', $path));
+        $this->assertArrayHasKey($path, $image->filesystem(), $message !== '' ? $message : Messages::texte('test.image_lacks_file', [$path]));
     }
 
     protected function assertImageLacksFile(Image $image, string $path, string $message = ''): void
     {
         foreach (array_keys($image->filesystem()) as $file) {
             if ($file === $path || str_starts_with($file, rtrim($path, '/').'/')) {
-                $this->fail($message !== '' ? $message : sprintf('L\'image contient %s, qui ne devrait pas y être.', $file));
+                $this->fail($message !== '' ? $message : Messages::texte('test.image_has_file', [$file]));
             }
         }
         $this->addToAssertionCount(1);
@@ -245,19 +246,19 @@ abstract class DockerTestCase extends TestCase
 
     protected function assertImageSizeBelow(Image $image, int $megabytes, string $message = ''): void
     {
-        $this->assertLessThan($megabytes * 1_000_000, $image->size(), $message !== '' ? $message : sprintf('L\'image pèse %d Mo : elle devrait rester sous %d Mo.', intdiv($image->size(), 1_000_000), $megabytes));
+        $this->assertLessThan($megabytes * 1_000_000, $image->size(), $message !== '' ? $message : Messages::texte('test.image_too_big', [intdiv($image->size(), 1_000_000), $megabytes]));
     }
 
     protected function assertRunning(Container $container, string $message = ''): void
     {
-        $this->assertTrue($container->isRunning(), $message !== '' ? $message : sprintf("Le conteneur %s ne tourne pas (%s, code %d). Ses journaux :\n%s", $container->name, $container->status, $container->exitCode, self::tail(implode("\n", $container->logs))));
+        $this->assertTrue($container->isRunning(), $message !== '' ? $message : Messages::texte('test.not_running', [$container->name, $container->status, $container->exitCode, self::tail(implode("\n", $container->logs))]));
     }
 
     protected function assertPageContains(string $url, string $text, string $message = ''): HttpResponse
     {
         $response = $this->http($url);
-        $this->assertNull($response->error, ($message !== '' ? $message."\n" : '').sprintf('%s ne répond pas : %s', $url, implode(' ', $response->trace)));
-        $this->assertStringContainsString($text, $response->body, ($message !== '' ? $message."\n" : '').sprintf("La page %s (HTTP %d) ne contient pas « %s ».\n%s", $url, $response->status, $text, self::tail(strip_tags($response->body), 8)));
+        $this->assertNull($response->error, ($message !== '' ? $message."\n" : '').Messages::texte('test.no_response', [$url, implode(' ', $response->trace)]));
+        $this->assertStringContainsString($text, $response->body, ($message !== '' ? $message."\n" : '').Messages::texte('test.page_lacks_text', [$url, $response->status, $text, self::tail(strip_tags($response->body), 8)]));
 
         return $response;
     }

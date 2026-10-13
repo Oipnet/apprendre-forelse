@@ -8,6 +8,7 @@ use Forelse\DockerSim\Catalog\Catalog;
 use Forelse\DockerSim\Catalog\UnknownImageException;
 use Forelse\DockerSim\Engine\Docker;
 use Forelse\DockerSim\Engine\DockerException;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Image;
 use Forelse\DockerSim\State\Store;
 
@@ -84,7 +85,7 @@ final class ImageCommands implements CliCommand
         if ($result->success && $args->all('tag') === []) {
             $this->out->line('');
             $this->out->line('What\'s next:');
-            $this->out->line('    L\'image n\'a pas de nom : ajoutez -t nom pour la retrouver dans docker images.');
+            $this->out->line('    '.Messages::texte('cli.build_untagged'));
         }
 
         return $result->success ? 0 : 1;
@@ -227,7 +228,7 @@ final class ImageCommands implements CliCommand
             $this->out->line(sprintf("The push refers to repository [docker.io/%s]\nAn image does not exist locally with the tag: %s", $repository, $reference));
         } else {
             $this->out->line(sprintf("The push refers to repository [docker.io/%s]\npush access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed", $repository));
-            $this->out->line('💡 Le simulateur n\'a pas de registre : docker push ne peut pas publier l\'image.');
+            $this->out->line(Messages::texte('cli.push_no_registry'));
         }
 
         return 1;

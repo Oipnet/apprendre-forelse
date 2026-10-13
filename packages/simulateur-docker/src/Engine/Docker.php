@@ -17,6 +17,7 @@ use Forelse\DockerSim\Http\NginxServer;
 use Forelse\DockerSim\Http\PhpBuiltinServer;
 use Forelse\DockerSim\Http\ServerContext;
 use Forelse\DockerSim\Http\StaticFiles;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Runtime\Materializer;
 use Forelse\DockerSim\Runtime\PhpExecutor;
 use Forelse\DockerSim\Runtime\ProcessManager;
@@ -649,7 +650,7 @@ final class Docker implements ServerContext
         $port = (int) ($parts['port'] ?? 80);
         $uri = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
         if (!\in_array($host, ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'], true)) {
-            return HttpResponse::failure('unresolved', sprintf('« %s » : seul localhost désigne la machine hôte (les noms des conteneurs ne sont connus qu\'à l\'intérieur de leur réseau).', $host));
+            return HttpResponse::failure('unresolved', Messages::texte('http.host_only_localhost', [$host]));
         }
         foreach ($this->store->containers as $container) {
             if (!$container->isRunning()) {
@@ -662,11 +663,11 @@ final class Docker implements ServerContext
                 $request = HttpRequest::fromUrl($method, $uri, ['host' => $host.($port !== 80 ? ':'.$port : '')] + $headers, $body, '172.17.0.1', $host, $port);
                 $containerPort = $published['container'];
                 if (!\in_array($containerPort, $container->listening, true)) {
-                    return HttpResponse::failure('reset', sprintf('Le port %d de l\'hôte mène au port %d du conteneur %s, mais rien n\'y écoute (le processus écoute sur : %s).', $port, $containerPort, $container->name, $container->listening === [] ? 'aucun port' : implode(', ', $container->listening)), [$container->name]);
+                    return HttpResponse::failure('reset', Messages::texte('http.port_not_listening', [$port, $containerPort, $container->name, $container->listening === [] ? Messages::texte('http.no_port') : implode(', ', $container->listening)]), [$container->name]);
                 }
                 $address = $container->listenAddresses[$containerPort] ?? '0.0.0.0';
                 if (\in_array($address, ['127.0.0.1', 'localhost'], true)) {
-                    return HttpResponse::failure('empty', sprintf('Le serveur du conteneur %s écoute sur 127.0.0.1:%d : il n\'accepte que les connexions venues de l\'intérieur du conteneur. Écoutez sur 0.0.0.0.', $container->name, $containerPort), [$container->name]);
+                    return HttpResponse::failure('empty', Messages::texte('http.listens_on_loopback', [$container->name, $containerPort]), [$container->name]);
                 }
                 $response = $this->serve($container, $containerPort, $request);
                 $response->container ??= $container->name;
@@ -676,7 +677,7 @@ final class Docker implements ServerContext
             }
         }
 
-        return HttpResponse::failure('refused', sprintf('Aucun conteneur en cours d\'exécution ne publie le port %d de l\'hôte.', $port));
+        return HttpResponse::failure('refused', Messages::texte('http.port_not_published', [$port]));
     }
 
     /** Un conteneur répond sur l'un de ses ports (depuis l'hôte ou depuis un autre conteneur). */
@@ -687,9 +688,9 @@ final class Docker implements ServerContext
             ProcessKind::Nginx => (new NginxServer($this))->handle($container, $request, $port),
             ProcessKind::PhpServer => (new PhpBuiltinServer($this))->handle($container, $request, ['docroot' => (string) ($container->processOptions['docroot'] ?? $container->workdir), 'router' => $container->processOptions['router'] ?? null]),
             ProcessKind::Static, ProcessKind::Mail, ProcessKind::FrankenPhp => $this->serveStatic($container, $request),
-            ProcessKind::PhpFpm => HttpResponse::failure('empty', sprintf('php-fpm (%s) parle FastCGI, pas HTTP : il faut un serveur web (nginx) devant lui.', $container->name)),
-            ProcessKind::Postgres, ProcessKind::Mysql, ProcessKind::Mariadb, ProcessKind::Redis, ProcessKind::Memcached => HttpResponse::failure('empty', sprintf('%s (%s) n\'est pas un serveur web.', $container->process->value, $container->name)),
-            default => HttpResponse::failure('refused', sprintf('Rien n\'écoute sur le port %d du conteneur %s.', $port, $container->name)),
+            ProcessKind::PhpFpm => HttpResponse::failure('empty', Messages::texte('http.php_fpm_not_http', [$container->name])),
+            ProcessKind::Postgres, ProcessKind::Mysql, ProcessKind::Mariadb, ProcessKind::Redis, ProcessKind::Memcached => HttpResponse::failure('empty', Messages::texte('http.not_a_web_server', [$container->process->value, $container->name])),
+            default => HttpResponse::failure('refused', Messages::texte('http.nothing_listening', [$port, $container->name])),
         };
     }
 
@@ -712,10 +713,10 @@ final class Docker implements ServerContext
         return StaticFiles::serve($fs, $file, 'Caddy');
     }
 
-    /** Page affichée dans l'aperçu quand la connexion échoue (comme le ferait le navigateur). */
-    public static function browserError(HttpResponse $response, int $port): string
+    /** Page affichée dans l'aperçu quand la connexion échoue (comme le ferait le navigateur), dans la langue donnée (par défaut : Messages). */
+    public static function browserError(HttpResponse $response, int $port, ?string $langue = null): string
     {
-        return ErrorPages::browser((string) $response->error, 'localhost', $port, implode(' ', $response->trace));
+        return ErrorPages::browser((string) $response->error, 'localhost', $port, implode(' ', $response->trace), $langue);
     }
 
     // --- ServerContext ------------------------------------------------------------------------

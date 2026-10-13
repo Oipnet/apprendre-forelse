@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Shell\Command;
 
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Interpreter;
 use Forelse\DockerSim\Shell\Machine;
 use Forelse\DockerSim\Shell\Result;
@@ -608,7 +609,7 @@ final class FileCommands extends CoreutilsCommands
      */
     private function findNot(array $args, int &$i, array &$options): \Closure
     {
-        $token = $args[$i] ?? throw new \InvalidArgumentException('(fin de l\'expression)');
+        $token = $args[$i] ?? throw new \InvalidArgumentException(Messages::texte('shell.find_end'));
         if ($token === '!' || $token === '-not') {
             ++$i;
             $inner = $this->findNot($args, $i, $options);

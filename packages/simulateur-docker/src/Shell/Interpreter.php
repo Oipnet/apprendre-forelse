@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forelse\DockerSim\Shell;
 
 use Forelse\DockerSim\Fs\Path;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Command;
 use Forelse\DockerSim\Shell\Command\Command as ShellCommand;
 
@@ -409,7 +410,7 @@ final class Interpreter
         }
 
         // Binaire présent mais non simulé : il « réussit » sans effet.
-        $m->note(sprintf('« %s » n\'est pas simulé : la commande est considérée comme réussie.', $name));
+        $m->note(Messages::texte('shell.not_simulated', [$name]));
 
         return Result::ok('', 0.2);
     }
@@ -588,7 +589,7 @@ final class Interpreter
             [$code, $out] = $this->execList($command['body'], $m, $stdin);
             $output .= $out;
             if ($i === 29) {
-                $m->note('Boucle interrompue par le simulateur au bout de 30 tours.');
+                $m->note(Messages::texte('shell.loop_stopped'));
             }
         }
 

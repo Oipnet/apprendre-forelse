@@ -14,6 +14,7 @@ use Forelse\DockerSim\Dockerfile\Stage;
 use Forelse\DockerSim\Engine\ImageFactory;
 use Forelse\DockerSim\Fs\MemoryFs;
 use Forelse\DockerSim\Fs\Path;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Facts;
 use Forelse\DockerSim\Shell\Interpreter;
 use Forelse\DockerSim\Shell\Machine;
@@ -696,9 +697,9 @@ final class Builder
     private function missingContextSource(string $name, Instruction $instruction, string $source, BuildContext $context): BuildResult
     {
         if (str_starts_with(ltrim($source, './'), '..') || str_starts_with($source, '../')) {
-            $this->notes[] = 'COPY ne peut rien prendre en dehors du contexte de build (le dossier passé à docker build).';
+            $this->notes[] = Messages::texte('build.copy_outside_context');
         } elseif ($context->ignore->ignores(trim($source, './'))) {
-            $this->notes[] = sprintf('« %s » est exclu par le .dockerignore : il n\'est pas envoyé au démon.', $source);
+            $this->notes[] = Messages::texte('build.dockerignored', [$source]);
         }
 
         return $this->stepFailure($name, $instruction, sprintf('failed to compute cache key: failed to calculate checksum of ref %s::%s: "/%s": not found', substr(hash('sha256', $context->directory), 0, 25), substr(hash('sha256', $source), 0, 25), trim(preg_replace('#^\./#', '', $source) ?? $source, '/')));
@@ -720,7 +721,7 @@ final class Builder
                 continue;
             }
             if ($kind === 'url') {
-                $state->fs->write($target, "# téléchargé depuis {$source} (simulé)\n", $mode ?? 0600, $owner);
+                $state->fs->write($target, Messages::texte('build.downloaded_file', [$source]), $mode ?? 0600, $owner);
                 continue;
             }
             if ($kind === 'from') {

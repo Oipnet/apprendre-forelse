@@ -6,6 +6,7 @@ namespace Forelse\DockerSim\Shell\Command;
 
 use Forelse\DockerSim\Catalog\Packages;
 use Forelse\DockerSim\Fs\MemoryFs;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Interpreter;
 use Forelse\DockerSim\Shell\Machine;
 use Forelse\DockerSim\Shell\Result;
@@ -109,7 +110,7 @@ final class PackageCommands implements Command
                 $suggestion = Packages::closest('alpine', $name);
                 $err .= "ERROR: unable to select packages:\n  {$name} (no such package):\n    required by: world[{$name}]\n";
                 if ($suggestion !== null) {
-                    $m->note(sprintf('Le paquet Alpine le plus proche de « %s » est « %s ».', $name, $suggestion));
+                    $m->note(Messages::texte('shell.apk_closest', [$name, $suggestion]));
                 }
             }
 

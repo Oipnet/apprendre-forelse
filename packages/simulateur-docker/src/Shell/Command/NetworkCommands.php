@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Shell\Command;
 
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Interpreter;
 use Forelse\DockerSim\Shell\Machine;
 use Forelse\DockerSim\Shell\Result;
@@ -125,7 +126,7 @@ final class NetworkCommands implements Command
 
         if ($this->isInternet($host)) {
             // Téléchargement depuis Internet : le contenu est simulé.
-            $content = str_contains($host, 'getcomposer.org') ? "<?php // installateur de Composer (getcomposer.org)\n" : sprintf("# contenu téléchargé depuis %s (simulé)\n", $url);
+            $content = str_contains($host, 'getcomposer.org') ? Messages::texte('shell.composer_installer') : Messages::texte('shell.downloaded_content', [$url]);
             if ($output !== null) {
                 $target = $output === '__remote__' ? basename(parse_url($url, PHP_URL_PATH) ?: 'index.html') : $output;
                 $m->fs->write($m->path($target), $content, null, $m->isRoot() ? null : $m->userName());
@@ -203,7 +204,7 @@ final class NetworkCommands implements Command
         }
         [$scheme, $port, $host, $path] = $this->parseUrl($url);
         if ($this->isInternet($host)) {
-            $m->fs->write($m->path($output ?? basename($path) ?: 'index.html'), sprintf("# contenu téléchargé depuis %s (simulé)\n", $url));
+            $m->fs->write($m->path($output ?? basename($path) ?: 'index.html'), Messages::texte('shell.downloaded_content', [$url]));
 
             return Result::ok($quiet ? '' : "Connecting to {$host}\nsaving to '".($output ?? basename($path))."'\n", 1.0);
         }
@@ -390,7 +391,7 @@ final class NetworkCommands implements Command
         }
         $sql = $o['c'] ?? null;
         if ($sql === null) {
-            return Result::ok("psql (18.0 (Debian 18.0-1.pgdg13+3))\nType \"help\" for help.\n\n(le simulateur n'ouvre pas de session interactive : utilisez -c \"...\")\n");
+            return Result::ok("psql (18.0 (Debian 18.0-1.pgdg13+3))\nType \"help\" for help.\n\n".Messages::texte('shell.psql_interactive')."\n");
         }
         if (preg_match('/^\s*\\\\l/', $sql)) {
             $out = "                                 List of databases\n   Name    |  Owner   | Encoding | Collate    |  Ctype\n-----------+----------+----------+------------+------------\n";
@@ -407,7 +408,7 @@ final class NetworkCommands implements Command
             return Result::ok("                         version\n----------------------------------------------------------\n PostgreSQL 18.0 (Debian 18.0-1.pgdg13+3) on x86_64-pc-linux-gnu\n(1 row)\n\n");
         }
 
-        return Result::ok("(le simulateur ne rejoue pas les requêtes SQL : seule la connexion est vérifiée)\n");
+        return Result::ok(Messages::texte('shell.sql_not_replayed'));
     }
 
     /** @param list<string> $args */
@@ -438,7 +439,7 @@ final class NetworkCommands implements Command
             return Result::error(1, $error === 'unresolved' ? "ERROR 2005 (HY000): Unknown MySQL server host '{$host}' (-2)\n" : "ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock' (2)\n");
         }
 
-        return Result::ok("(le simulateur ne rejoue pas les requêtes SQL : seule la connexion est vérifiée)\n");
+        return Result::ok(Messages::texte('shell.sql_not_replayed'));
     }
 
     /** @param list<string> $args */
@@ -453,7 +454,7 @@ final class NetworkCommands implements Command
         }
         $command = strtoupper($o['_'][0] ?? '');
 
-        return Result::ok(match ($command) { 'PING' => "PONG\n", '' => "{$host}:{$port}> (session interactive non simulée)\n", default => "OK\n" });
+        return Result::ok(match ($command) { 'PING' => "PONG\n", '' => "{$host}:{$port}> ".Messages::texte('shell.redis_interactive')."\n", default => "OK\n" });
     }
 
     /** @param list<string> $args */
@@ -467,7 +468,7 @@ final class NetworkCommands implements Command
             return Result::ok();
         }
         if ($sub === 'clone') {
-            $m->note('git clone : le simulateur ne télécharge pas de dépôt ; copiez le code depuis le contexte de build (COPY).');
+            $m->note(Messages::texte('shell.git_clone'));
 
             return Result::error(128, sprintf("Cloning into '%s'...\nfatal: unable to access '%s': Could not resolve host\n", basename((string) end($args), '.git'), end($args)));
         }

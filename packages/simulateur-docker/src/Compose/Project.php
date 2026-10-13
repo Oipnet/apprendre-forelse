@@ -7,6 +7,7 @@ namespace Forelse\DockerSim\Compose;
 use Forelse\DockerSim\Engine\ContainerSpec;
 use Forelse\DockerSim\Engine\Docker;
 use Forelse\DockerSim\Engine\DockerException;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\State\Container;
 use Forelse\DockerSim\State\Store;
 
@@ -736,7 +737,7 @@ final class Project
         }
         $this->output .= implode("\n", $container->logs).($container->logs !== [] ? "\n" : '');
         if ($container->isRunning()) {
-            $this->out(sprintf('(simulateur : le conteneur %s continue de tourner en arrière-plan, la console ne peut pas s\'y attacher)', $container->name));
+            $this->out(Messages::texte('compose.run_detached', [$container->name]));
             $this->exitCode = 0;
 
             return 0;

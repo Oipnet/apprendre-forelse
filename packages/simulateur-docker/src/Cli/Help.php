@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Cli;
 
+use Forelse\DockerSim\Messages;
+
 final class Help
 {
     public const MAIN = <<<'TXT'
@@ -11,7 +13,7 @@ final class Help
         Usage:  docker [OPTIONS] COMMAND
 
         A self-sufficient runtime for containers
-        (simulateur forelse : tout se passe dans votre navigateur)
+        {remarque}
 
         Common Commands:
           run         Create and run a new container from an image
@@ -48,6 +50,12 @@ final class Help
         Run 'docker COMMAND --help' for more information on a command.
         TXT;
 
+    /** L'aide générale, avec la remarque du simulateur dans la langue de l'apprenant. */
+    public static function main(): string
+    {
+        return str_replace('{remarque}', Messages::texte('cli.help_banner'), self::MAIN);
+    }
+
     /** @param list<string> $argv */
     public static function command(string $command, array $argv): string
     {
@@ -56,7 +64,7 @@ final class Help
             'build' => "\nUsage:  docker buildx build [OPTIONS] PATH | URL | -\n\nStart a build\n\nOptions:\n      --build-arg stringArray     Set build-time variables\n  -f, --file string               Name of the Dockerfile (default: \"PATH/Dockerfile\")\n      --no-cache                  Do not use cache when building the image\n  -q, --quiet                     Suppress the build output and print image ID on succeed\n  -t, --tag stringArray           Name and optionally a tag (format: \"name:tag\")\n      --target string             Set the target build stage to build",
             'exec' => "\nUsage:  docker exec [OPTIONS] CONTAINER COMMAND [ARG...]\n\nExecute a command in a running container\n\nOptions:\n  -d, --detach               Detached mode: run command in the background\n  -e, --env list             Set environment variables\n  -i, --interactive          Keep STDIN open even if not attached\n  -t, --tty                  Allocate a pseudo-TTY\n  -u, --user string          Username or UID (format: \"<name|uid>[:<group|gid>]\")\n  -w, --workdir string       Working directory inside the container",
             'compose' => "\nUsage:  docker compose [OPTIONS] COMMAND\n\nDefine and run multi-container applications with Docker\n\nOptions:\n      --env-file stringArray     Specify an alternate environment file\n  -f, --file stringArray         Compose configuration files\n  -p, --project-name string      Project name\n\nCommands:\n  build       Build or rebuild services\n  config      Parse, resolve and render compose file in canonical format\n  down        Stop and remove containers, networks\n  exec        Execute a command in a running container\n  images      List images used by the created containers\n  logs        View output from containers\n  ls          List running compose projects\n  ps          List containers\n  pull        Pull service images\n  restart     Restart service containers\n  run         Run a one-off command on a service\n  start       Start services\n  stop        Stop services\n  up          Create and start containers\n  version     Show the Docker Compose version information",
-            default => sprintf("\nUsage:  docker %s [OPTIONS]\n\n(aide détaillée non disponible dans le simulateur : voir https://docs.docker.com/reference/cli/docker/%s/)", $command, $command),
+            default => sprintf("\nUsage:  docker %s [OPTIONS]\n\n%s", $command, Messages::texte('cli.help_unavailable', [$command])),
         };
     }
 }

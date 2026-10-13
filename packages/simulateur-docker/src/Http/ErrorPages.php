@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forelse\DockerSim\Http;
 
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Command\NetworkCommands;
 
 final class ErrorPages
@@ -37,19 +38,21 @@ final class ErrorPages
     }
 
     /** Ce qu'afficherait le navigateur quand rien ne répond : pas une page du serveur, une page d'erreur du navigateur. */
-    public static function browser(string $error, string $host, int $port, string $detail = ''): string
+    public static function browser(string $error, string $host, int $port, string $detail = '', ?string $langue = null): string
     {
+        $langue ??= Messages::langue();
         [$title, $code, $explain] = match ($error) {
-            'refused' => ['Ce site est inaccessible', 'ERR_CONNECTION_REFUSED', "<strong>{$host}</strong> n'autorise pas la connexion."],
-            'reset' => ['Ce site est inaccessible', 'ERR_CONNECTION_RESET', 'La connexion a été réinitialisée.'],
-            'empty' => ['Cette page ne fonctionne pas', 'ERR_EMPTY_RESPONSE', "<strong>{$host}</strong> n'a envoyé aucune donnée."],
-            default => ['Ce site est inaccessible', 'ERR_NAME_NOT_RESOLVED', "Impossible de trouver l'adresse IP du serveur de <strong>{$host}</strong>."],
+            'refused' => [Messages::texte('browser.unreachable', [], $langue), 'ERR_CONNECTION_REFUSED', Messages::texte('browser.refused', [$host], $langue)],
+            'reset' => [Messages::texte('browser.unreachable', [], $langue), 'ERR_CONNECTION_RESET', Messages::texte('browser.reset', [], $langue)],
+            'empty' => [Messages::texte('browser.not_working', [], $langue), 'ERR_EMPTY_RESPONSE', Messages::texte('browser.empty', [$host], $langue)],
+            default => [Messages::texte('browser.unreachable', [], $langue), 'ERR_NAME_NOT_RESOLVED', Messages::texte('browser.unresolved', [$host], $langue)],
         };
-        $detail = $detail !== '' ? '<details open><summary>Ce que voit le simulateur</summary><p>'.htmlspecialchars($detail).'</p></details>' : '';
+        $detail = $detail !== '' ? '<details open><summary>'.Messages::texte('browser.details', [], $langue).'</summary><p>'.htmlspecialchars($detail).'</p></details>' : '';
+        $lang = htmlspecialchars($langue);
 
         return <<<HTML
             <!DOCTYPE html>
-            <html lang="fr"><head><meta charset="utf-8"><title>{$host}:{$port}</title>
+            <html lang="{$lang}"><head><meta charset="utf-8"><title>{$host}:{$port}</title>
             <style>
             body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3c4043;max-width:600px;margin:14vh auto;padding:0 24px;line-height:1.5}
             .icon{width:72px;height:72px;margin-bottom:28px;opacity:.55}

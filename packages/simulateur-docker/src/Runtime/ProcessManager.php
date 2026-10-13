@@ -9,6 +9,7 @@ use Forelse\DockerSim\Engine\DockerException;
 use Forelse\DockerSim\Http\ApacheServer;
 use Forelse\DockerSim\Http\Nginx\ConfigSnapshot;
 use Forelse\DockerSim\Http\Nginx\NginxConfig;
+use Forelse\DockerSim\Messages;
 use Forelse\DockerSim\Shell\Facts;
 use Forelse\DockerSim\Shell\Machine;
 use Forelse\DockerSim\State\Container;
@@ -516,7 +517,7 @@ final class ProcessManager
         }
         $joined = implode(' ', $args);
         if (preg_match('/(messenger:consume|queue:work|schedule:work|horizon|reverb:start|octane:start)/', $joined)) {
-            $this->appendLogs($container, sprintf("[OK] Consuming messages from transport \"async\".\n // (simulateur : le processus tourne en continu, les messages ne sont pas traités)"));
+            $this->appendLogs($container, sprintf("[OK] Consuming messages from transport \"async\".\n // %s", Messages::texte('process.worker')));
             $this->listen($container, ProcessKind::Worker, []);
 
             return;
