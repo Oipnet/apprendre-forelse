@@ -144,7 +144,9 @@ export class PhpWasmProject implements Runtime {
 	private async runPhpUnit(php: PhpInstance, paths: string[] = []): Promise<Omit<TestRunResult, 'durationMs'>> {
 		let text: string;
 		try {
-			text = (await php.run({ scriptPath: RUNNER, $_SERVER: { RUNNER_PATHS: JSON.stringify(paths) } })).text;
+			// Sans debug, comme le vérificateur : la page d'erreur du mode debug cite le code source, celui du test compris,
+			// et un test qui cherche un texte dans la page passerait alors sur une 404.
+			text = (await php.run({ scriptPath: RUNNER, $_SERVER: { RUNNER_PATHS: JSON.stringify(paths), APP_DEBUG: '0' } })).text;
 		} catch (error) {
 			if (!(error instanceof PHPExecutionFailureError)) throw error;
 			text = error.response.text + '\n' + error.response.errors;

@@ -10,9 +10,10 @@ final class ProcessEnvironmentTest extends TestCase
     /** En production, DATABASE_URL est une vraie variable d'environnement, pas une valeur du .env : elle doit être cachée aussi. */
     public function testLesVariablesDeLaPlateformeSontCacheesAuProjetTeste(): void
     {
-        $env = (new ProcessEnvironment(__DIR__.'/../../..'))->isolated(['SYMFONY_DOTENV_VARS' => 'INJECTEE,APP_ENV']);
+        $env = (new ProcessEnvironment(__DIR__.'/../../..'))->isolated(['SYMFONY_DOTENV_VARS' => 'INJECTEE,APP_ENV,APP_DEBUG']);
 
         $this->assertSame('test', $env['APP_ENV']);
+        $this->assertSame('0', $env['APP_DEBUG'], 'Sans debug : la page d\'erreur citerait le code du test.');
         $this->assertFalse($env['DATABASE_URL']);
         $this->assertFalse($env['SANDBOX_ORIGIN'], 'Déclarée dans platform/.env, même si Dotenv ne l\'a pas injectée.');
         $this->assertFalse($env['ANTHROPIC_API_KEY']);

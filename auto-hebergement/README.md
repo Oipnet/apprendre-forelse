@@ -268,7 +268,7 @@ l'exercice, elle, reste au compte) ; `/admin` → Progression montre le verdict 
 > l'utilisateur `nobody`, qui ne voit pas le code des autres apprenants. Le service n'a jamais accès au
 > socket Docker.
 
-Le worker envoie les réussites en attente chaque heure et relève les verdicts toutes les cinq minutes
+Le worker envoie les réussites en attente et relève les verdicts toutes les cinq minutes
 (planificateur Symfony, `scheduler_verification`) ; `docker compose logs verificateur` montre chaque verdict.
 
 Sans le service (un `compose.yaml` antérieur à cette version, ou `VERIFICATIONS_DIR` vide), rien n'est
@@ -287,7 +287,7 @@ docker compose up -d
 | --- | --- | --- |
 | Adresses | `APP_URL`, `SANDBOX_URL` | Deux domaines distincts, avec leur schéma (`https://`). |
 | Base | `POSTGRES_PASSWORD` | Lettres et chiffres. PostgreSQL ne le lit qu'à la création de la base : le changer ensuite ne change pas le mot de passe réel. |
-| Fuseau | `APP_TIMEZONE` | Les dates sont stockées sans fuseau : choisissez-le avant les premiers comptes. |
+| Fuseau | `APP_TIMEZONE` | Les dates sont stockées sans fuseau : choisissez-le avant les premiers comptes. Pour en changer ensuite, voir « Changer de fuseau » ci-dessous. |
 | Mots de passe | `PASSWORD_BREACH_CHECK` | Un nouveau mot de passe présent dans une fuite connue est refusé : seuls les 5 premiers caractères de son empreinte partent vers `api.pwnedpasswords.com`. Mettez `0` si le serveur n'a pas d'accès sortant ; si le service ne répond pas, le mot de passe est accepté. |
 | Emails | `MAILER_DSN`, `MAILER_FROM`, `CONTACT_EMAIL`, `REGISTRATION_ALERT_EMAIL` | Sans `MAILER_DSN`, aucun email ne part : ni confirmation d'adresse, ni mot de passe oublié. Test : `docker compose exec app bin/console mailer:test vous@example.org`. Un `MAILER_FROM` sans nom (`ne-pas-repondre@example.org`) prend celui de votre marque ; les emails aux apprenants ont pour adresse de réponse `CONTACT_EMAIL` (à défaut, l'adresse des mentions légales). Les emails passent par une file d'attente dans la base, que vide le service `worker` : un serveur SMTP en panne ne bloque pas l'inscription, l'email part à son retour. `MESSENGER_TRANSPORT_DSN=sync://` les envoie pendant la requête, sans worker. |
 | Mentions légales | `LEGAL_*` | Remplissent `/mentions-legales` et `/confidentialite` ; tant qu'un champ obligatoire manque, les pages le signalent. Les textes sont écrits pour le droit français. |
@@ -489,6 +489,24 @@ la mise à jour : une migration déjà jouée ne se défait pas toute seule.
 
 Le fichier `compose.yaml` évolue parfois avec le moteur (une nouvelle variable, par exemple) : le journal le
 signale ; retéléchargez-le alors avec la commande `curl` de l'installation.
+
+### Changer de fuseau
+
+Les dates sont écrites à l'heure de `APP_TIMEZONE`, sans fuseau. Changer la variable seule décalerait toutes celles
+déjà enregistrées (d'une à deux heures entre UTC et Paris). `app:fuseau:convertir` les réécrit, une seule fois, dans
+une transaction. Faites d'abord une sauvegarde, puis :
+
+```bash
+docker compose stop app worker                 # plus rien n'écrit dans la base
+# .env : APP_TIMEZONE=Europe/Paris
+docker compose run --rm app php bin/console app:fuseau:convertir UTC Europe/Paris               # compte seulement
+docker compose run --rm app php bin/console app:fuseau:convertir UTC Europe/Paris --appliquer
+docker compose up -d
+```
+
+La commande refuse de tourner tant que `APP_TIMEZONE` ne vaut pas le nouveau fuseau, et une fois les dates
+converties, elle refuse une seconde conversion. Une heure prise dans la nuit du passage à l'heure d'hiver (entre 2 h et
+3 h, qui existe deux fois) garde la première des deux.
 
 ## Sauvegarder et restaurer
 

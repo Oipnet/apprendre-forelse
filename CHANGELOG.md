@@ -10,6 +10,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- `app:fuseau:convertir` : change le fuseau d'une instance qui a déjà des données. Les dates enregistrées sont
+  réécrites dans le nouveau `APP_TIMEZONE` (par exemple de UTC à Europe/Paris), une seule fois, l'application arrêtée.
+  Voir « Changer de fuseau » dans `auto-hebergement/README.md`.
 - Partage du certificat de réussite : sa page et celle du parcours terminé proposent à son titulaire les boutons
   LinkedIn, X, Bluesky et « Copier le lien » (`utm_campaign=parcours`), qui mènent à la page publique du certificat.
   Cette page a son image d'aperçu, dessinée par le moteur : le nom du titulaire et le titre du parcours.
@@ -20,6 +23,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Modifié
 
+- La vérification des réussites part toutes les cinq minutes au lieu de chaque heure : le certificat se débloque en
+  une dizaine de minutes après le dernier exercice.
 - **Classement** refait : bandeau « Votre position » (rang, apprenant à dépasser, gain du mois), podium des trois
   premiers (ou « Vous ouvrez la marche » avant trois classés, avec la copie du lien), tableau avec les parcours suivis
   et, au classement du mois, l'évolution depuis le mois précédent. Filtre par parcours (et Pratique), barème réel de
@@ -30,6 +35,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 - Après la mise à jour, attribuer une fois le bonus des parcours déjà terminés :
   `docker compose exec app php bin/console app:classement:bonus-parcours` (sans effet si on la relance).
+
+### Corrigé
+
+- Les tests d'un exercice tournent sans debug (`APP_DEBUG=0`), dans le navigateur comme au vérificateur. En debug, la
+  page d'erreur de Symfony cite le code source, celui du test compris : un test qui cherche un texte dans la page
+  passait sur une 404 dans le navigateur, puis la vérification infirmait la réussite. Le vérificateur ne tenait le
+  `APP_DEBUG=0` que de l'image Docker, il le fixe désormais lui-même.
+- Pack de démonstration, « Bonjour à vous » : `/bonjour` doit répondre 200, plus seulement afficher le texte.
 
 ## 3.5.0 — 2026-10-13
 

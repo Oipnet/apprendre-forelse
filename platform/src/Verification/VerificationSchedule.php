@@ -10,7 +10,9 @@ use Symfony\Contracts\Cache\CacheInterface;
 
 /**
  * Le planificateur de la vérification, consommé par le worker (`messenger:consume async scheduler_verification`) :
- * les réussites en attente partent chaque heure (à h+05), les verdicts sont relevés toutes les cinq minutes.
+ * toutes les cinq minutes, les réussites en attente partent (à h+02, h+07…) et les verdicts sont relevés (à h+00, h+05…).
+ * Un passage sans réussite en attente ne coûte qu'une requête : une réussite n'est envoyée qu'une fois (voir
+ * VerificationDispatcher::RETRY_AFTER). Le certificat attend ces verdicts : une dizaine de minutes au plus.
  *
  * Horaires fixes (from) et non comptés depuis le démarrage : le worker redémarre toutes les heures (--time-limit), une
  * échéance « une heure après le démarrage » ne tomberait jamais. Avec état (stateful) : une échéance manquée pendant un
@@ -28,7 +30,7 @@ final readonly class VerificationSchedule implements ScheduleProviderInterface
     {
         return (new Schedule())
             ->add(
-                RecurringMessage::every('1 hour', new RequestVerifications(), from: '00:05'),
+                RecurringMessage::every('5 minutes', new RequestVerifications(), from: '00:02'),
                 RecurringMessage::every('5 minutes', new CollectVerifications(), from: '00:00'),
             )
             ->stateful($this->cache)

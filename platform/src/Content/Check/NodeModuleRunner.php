@@ -115,13 +115,13 @@ final readonly class NodeModuleRunner implements TestRunner
     }
 
     /**
-     * Sans les variables de la plateforme, ni APP_ENV ni NODE_ENV : le lanceur choisit lui-même son mode.
+     * Sans les variables de la plateforme, ni APP_ENV, APP_DEBUG ni NODE_ENV : le lanceur choisit lui-même son mode.
      *
      * @return array<string, string|false>
      */
     private function environment(): array
     {
-        return [...$this->processEnvironment->isolated(), 'APP_ENV' => false, 'NODE_ENV' => false];
+        return [...$this->processEnvironment->isolated(), 'APP_ENV' => false, 'APP_DEBUG' => false, 'NODE_ENV' => false];
     }
 
     private function nodeBinary(): ?string

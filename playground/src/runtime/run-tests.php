@@ -5,6 +5,7 @@
  * Le rapport est construit depuis le log JUnit (SimpleXML), plus fiable que la sortie texte.
  *
  * $_SERVER['RUNNER_PATHS'] (JSON) : fichiers de test à lancer, tous par défaut.
+ * $_SERVER['APP_DEBUG'] : repris dans $_ENV et getenv(), où Laravel et le Dotenv de Symfony le cherchent aussi.
  */
 
 const MARKER = "\n@@RAPPORT@@\n";
@@ -16,6 +17,10 @@ $paths = json_decode($_SERVER['RUNNER_PATHS'] ?? '[]', true) ?: [];
 $argv = ['phpunit', '--colors=never', '--do-not-cache-result', '--log-junit', $junit, ...$paths];
 $_SERVER['argv'] = $argv;
 $_SERVER['argc'] = count($argv);
+if (isset($_SERVER['APP_DEBUG'])) {
+    $_ENV['APP_DEBUG'] = $_SERVER['APP_DEBUG'];
+    putenv('APP_DEBUG='.$_SERVER['APP_DEBUG']);
+}
 
 require '/app/vendor/autoload.php';
 
