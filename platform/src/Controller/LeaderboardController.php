@@ -14,6 +14,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function Symfony\Component\Translation\t;
 
 /** Le classement public, et le choix d'y paraître (depuis le classement lui-même ou « Mon compte »). */
 final class LeaderboardController extends AbstractController
@@ -24,7 +27,7 @@ final class LeaderboardController extends AbstractController
     }
 
     #[Route('/classement', name: 'app_leaderboard', methods: ['GET'])]
-    public function index(Request $request, XpScale $scale): Response
+    public function index(Request $request, XpScale $scale, TranslatorInterface $translator): Response
     {
         $period = LeaderboardPeriod::tryFrom($request->query->getString('periode')) ?? LeaderboardPeriod::Month;
         $filters = $this->leaderboard->trackFilters();
@@ -36,7 +39,7 @@ final class LeaderboardController extends AbstractController
             'periods' => LeaderboardPeriod::cases(),
             'trackFilters' => $filters,
             'scale' => $scale->rules(),
-            'share' => ShareLinks::of($this->generateUrl('app_home', [], UrlGeneratorInterface::ABSOLUTE_URL), 'Apprendre à développer en codant, directement dans le navigateur.', 'classement'),
+            'share' => ShareLinks::of($this->generateUrl('app_home', [], UrlGeneratorInterface::ABSOLUTE_URL), $translator->trans('index.partage', [], 'classement'), 'classement'),
         ]);
     }
 
@@ -53,8 +56,8 @@ final class LeaderboardController extends AbstractController
         $user->setLeaderboardOptIn($optIn);
         $entityManager->flush();
         $this->addFlash('success', $optIn
-            ? sprintf('Vous apparaissez dans le classement, sous le pseudo « %s ».', $user->getDisplayName())
-            : 'Vous n\'apparaissez plus dans le classement.');
+            ? t('flash.visible', ['pseudo' => $user->getDisplayName()], 'classement')
+            : t('flash.invisible', [], 'classement'));
 
         return 'classement' === $request->request->getString('retour')
             ? $this->redirectToRoute('app_leaderboard', status: Response::HTTP_SEE_OTHER)

@@ -3,19 +3,20 @@
   Jamais ce qui le résout (indices, tests, solution). Variables : track, chapter, chapterNumber, exercise, position, instructions.
   Inclus aussi par la page d'exercice, qui garde site.css (#235) : ses classes d'avant restent, à côté des utilitaires.
 #}
-<nav class="breadcrumb" aria-label="Fil d'Ariane">
+{% trans_default_domain 'apprentissage' %}
+<nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
     <ol>
-        <li><a href="{{ path('app_home') }}">Accueil</a></li>
+        <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
         <li><a href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a></li>
-        <li><a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: chapter.id}) }}">Chapitre {{ chapterNumber }} : {{ chapter.title }}</a></li>
+        <li><a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: chapter.id}) }}">{{ 'commun.chapitre_titre'|trans({numero: chapterNumber, titre: chapter.title}) }}</a></li>
         <li aria-current="page">{{ exercise.title }}</li>
     </ol>
 </nav>
 <h1 class="mt-3 text-3xl font-semibold">{{ exercise.title }}</h1>
 <p class="meta exercise-facts mt-2 text-sm text-ink-muted">
-    Exercice {{ position }} sur {{ chapter.exerciseIds|length }} du chapitre {{ chapterNumber }}
-    · {{ exercise.xp }} XP
-    · {{ exercise.objectives|length }} objectif{{ exercise.objectives|length > 1 ? 's' }} vérifié{{ exercise.objectives|length > 1 ? 's' }} par des tests
+    {{ 'exercise.intro.position'|trans({position: position, total: chapter.exerciseIds|length, chapitre: chapterNumber}) }}
+    · {{ 'commun.xp'|trans({xp: exercise.xp}) }}
+    · {{ 'commun.objectifs_verifies'|trans({n: exercise.objectives|length}) }}
 </p>
-{{ include('_concepts.html.twig', {concepts: exercise.concepts, label: 'Notions abordées :'}) }}
+{{ include('_concepts.html.twig', {concepts: exercise.concepts, label: 'commun.notions_abordees'|trans}) }}
 <article class="lesson exercise-instructions prose prose-theme mt-6 max-w-none">{{ instructions|raw }}</article>

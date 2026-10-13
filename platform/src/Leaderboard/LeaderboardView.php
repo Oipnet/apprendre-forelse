@@ -8,8 +8,6 @@ final readonly class LeaderboardView
     /** Le podium s'affiche à partir de ce nombre de classés. */
     public const int PODIUM = 3;
 
-    private const array MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-
     /**
      * @param list<LeaderboardEntry> $entries les premiers, dans l'ordre
      */
@@ -27,6 +25,10 @@ final readonly class LeaderboardView
         public ?LeaderboardEntry $ahead = null,
         /** Son XP gagnée ce mois-ci, au classement de toujours. */
         public ?int $monthXp = null,
+        /** Ce que couvre le classement, déjà traduit (voir Leaderboard::periodNote()). */
+        private string $periodNote = '',
+        /** Le mois précédent, en toutes lettres et dans la langue de la page. */
+        private string $previousMonth = '',
     ) {
     }
 
@@ -72,27 +74,12 @@ final readonly class LeaderboardView
     /** Le mois précédent, en toutes lettres : « septembre ». */
     public function previousMonth(): string
     {
-        return self::monthName(($this->since ?? new \DateTimeImmutable())->modify('-1 month'));
+        return $this->previousMonth;
     }
 
     /** Ce que couvre le classement, sous le tableau. */
     public function periodNote(): string
     {
-        if (LeaderboardPeriod::AllTime === $this->period || null === $this->since) {
-            return 'Toute l\'XP gagnée depuis l\'ouverture du site.';
-        }
-        $month = self::monthName($this->since);
-
-        return sprintf(
-            'Classement %s : il repart à zéro le 1er %s. Les évolutions comparent avec la fin %s.',
-            (preg_match('/^[aeiouyéèâà]/u', $month) ? 'd\'' : 'de ').$month,
-            self::monthName($this->since->modify('+1 month')),
-            $this->previousMonth(),
-        );
-    }
-
-    private static function monthName(\DateTimeImmutable $date): string
-    {
-        return self::MONTHS[(int) $date->format('n') - 1];
+        return $this->periodNote;
     }
 }

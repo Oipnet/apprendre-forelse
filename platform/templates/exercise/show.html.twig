@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
 
 {#
   Un exercice qui n'est pas ouvert au visiteur : sa consigne reste lisible (et indexable), l'éditeur est remplacé
@@ -13,37 +14,37 @@
 
         <aside class="exercise-access mt-10 space-y-3 rounded-lg border border-line bg-bg-2 p-5" aria-labelledby="exercise-access-title">
             {% if app.user %}
-                <h2 class="text-xl font-semibold" id="exercise-access-title">Cet exercice fait partie du parcours complet</h2>
+                <h2 class="text-xl font-semibold" id="exercise-access-title">{{ 'exercise.show.parcours_complet'|trans }}</h2>
                 {% if not offer.locked %}
-                    <p>Ce chapitre ne vous est pas ouvert pour l'instant.</p>
+                    <p>{{ 'commun.chapitre_ferme'|trans }}</p>
                 {% else %}
-                    <p>Le premier chapitre est gratuit ; la suite demande un accès au parcours{{ offer.comingSoon ? ', dont l\'achat sera bientôt disponible' }}.</p>
-                    <p>Votre progression est conservée : si vous avez déjà travaillé ici, vous reprendrez exactement où vous en étiez.</p>
+                    <p>{{ (offer.comingSoon ? 'exercise.show.acces_bientot' : 'exercise.show.acces')|trans }}</p>
+                    <p>{{ 'commun.progression_conservee'|trans }}</p>
                     {{ include('track/_price.html.twig', {continueUrl: null}) }}
                 {% endif %}
             {% else %}
                 {% if freeChapter %}
-                    <h2 class="text-xl font-semibold" id="exercise-access-title">Cet exercice est gratuit : créez votre compte pour l'écrire</h2>
+                    <h2 class="text-xl font-semibold" id="exercise-access-title">{{ 'exercise.show.gratuit_titre'|trans }}</h2>
                     {% if inviteOnly %}
-                        <p>Le premier chapitre du parcours ne coûte rien. La plateforme est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
+                        <p>{{ 'exercise.show.gratuit_invitation'|trans }}</p>
                     {% else %}
-                        <p>Tout le premier chapitre du parcours ne coûte rien : il faut seulement un compte pour ouvrir l'éditeur, exécuter le projet et lancer les tests.</p>
-                        <p>Votre progression et votre code sont gardés sur votre compte : vous reprenez où vous en étiez, d'un appareil à l'autre.</p>
+                        <p>{{ 'exercise.show.gratuit_compte'|trans }}</p>
+                        <p>{{ 'exercise.show.gratuit_progression'|trans }}</p>
                     {% endif %}
                 {% else %}
-                    <h2 class="text-xl font-semibold" id="exercise-access-title">Cet exercice fait partie du parcours complet</h2>
+                    <h2 class="text-xl font-semibold" id="exercise-access-title">{{ 'exercise.show.parcours_complet'|trans }}</h2>
                     {% if inviteOnly %}
-                        <p>La suite du parcours est en bêta fermée : créez votre compte avec votre code d'invitation, ou laissez votre adresse sur la liste d'attente.</p>
+                        <p>{{ 'exercise.show.suite_invitation'|trans }}</p>
                     {% else %}
-                        <p>Le premier chapitre est gratuit avec un compte ; la suite demande un accès au parcours.</p>
+                        <p>{{ 'exercise.show.suite_payante'|trans }}</p>
                     {% endif %}
                     {% if not offer.quote.free %}{{ include('track/_price.html.twig', {continueUrl: null}) }}{% endif %}
                 {% endif %}
                 <p class="exercise-access-actions flex flex-wrap gap-2 pt-2">
-                    <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">Créer un compte</a>
-                    {% if inviteOnly %}<a class="btn" href="{{ path('app_home') }}#liste-attente">Liste d'attente</a>{% endif %}
-                    <a class="btn" href="{{ path('app_login', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">Se connecter</a>
-                    {% if firstExercise and not freeChapter %}<a class="btn" href="{{ path('app_exercise', {trackId: track.id, exerciseId: firstExercise.id}) }}">Commencer le premier chapitre →</a>{% endif %}
+                    <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">{{ 'commun.creer_compte'|trans }}</a>
+                    {% if inviteOnly %}<a class="btn" href="{{ path('app_home') }}#liste-attente">{{ 'commun.liste_attente'|trans }}</a>{% endif %}
+                    <a class="btn" href="{{ path('app_login', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">{{ 'commun.se_connecter'|trans }}</a>
+                    {% if firstExercise and not freeChapter %}<a class="btn" href="{{ path('app_exercise', {trackId: track.id, exerciseId: firstExercise.id}) }}">{{ 'exercise.show.premier_chapitre'|trans }}</a>{% endif %}
                 </p>
             {% endif %}
         </aside>
@@ -53,20 +54,20 @@
           d'un même chapitre ne se connaissent pas.
         #}
         <nav class="exercise-siblings mt-10" aria-labelledby="exercise-siblings-title">
-            <h2 class="text-lg font-semibold" id="exercise-siblings-title">La suite du chapitre {{ chapterNumber }} : {{ chapter.title }}</h2>
+            <h2 class="text-lg font-semibold" id="exercise-siblings-title">{{ 'exercise.show.suite_chapitre'|trans({numero: chapterNumber, titre: chapter.title}) }}</h2>
             {% if siblings %}
                 <ol class="exercise-siblings-list mt-3 space-y-2">
                     {% for row in siblings %}
                         <li>
                             <a href="{{ path('app_exercise', {trackId: track.id, exerciseId: row.exercise.id}) }}">{{ row.exercise.title }}</a>
-                            <span class="block text-sm text-ink-muted">Exercice {{ row.position }}{% if row.exercise.concepts %} · {{ row.exercise.concepts|join(', ') }}{% endif %}</span>
+                            <span class="block text-sm text-ink-muted">{{ 'commun.exercice_numero'|trans({numero: row.position}) }}{% if row.exercise.concepts %} · {{ row.exercise.concepts|join(', ') }}{% endif %}</span>
                         </li>
                     {% endfor %}
                 </ol>
             {% endif %}
             <p class="exercise-siblings-more mt-4 text-sm">
-                <a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: chapter.id}) }}">Le sommaire du chapitre</a>
-                · <a href="{{ path('app_track', {trackId: track.id}) }}">Tout le parcours {{ track.title }}</a>
+                <a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: chapter.id}) }}">{{ 'exercise.show.sommaire'|trans }}</a>
+                · <a href="{{ path('app_track', {trackId: track.id}) }}">{{ 'exercise.show.tout_le_parcours'|trans({titre: track.title}) }}</a>
             </p>
         </nav>
     </main>

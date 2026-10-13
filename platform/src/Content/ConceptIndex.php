@@ -5,6 +5,7 @@ namespace App\Content;
 use App\Content\Framework\FrameworkRegistry;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 use Symfony\Contracts\Service\ResetInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Les notions du contenu publié, et les exercices qui les abordent.
@@ -25,6 +26,7 @@ final class ConceptIndex implements ResetInterface
         private readonly ContentRepository $content,
         private readonly PublishedContent $published,
         private readonly EnvironmentRegistry $environments,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -110,7 +112,7 @@ final class ConceptIndex implements ResetInterface
             $collator = new \Collator('fr_FR');
             usort($others, static fn (array $a, array $b) => $collator->compare($a['name'], $b['name']));
             if ([] !== $others) {
-                $themes[] = ['id' => 'autres', 'title' => [] === $themes ? '' : 'Autres notions', 'description' => '', 'concepts' => $others];
+                $themes[] = ['id' => 'autres', 'title' => [] === $themes ? '' : $this->translator->trans('concept.index.autres_notions', [], 'apprentissage'), 'description' => '', 'concepts' => $others];
             }
 
             $catalog[] = [

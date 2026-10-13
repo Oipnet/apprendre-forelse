@@ -1,0 +1,86 @@
+# Le classement : leaderboard/, et ce qu'en affichent LeaderboardController et App\Leaderboard (voir README.md).
+
+commun:
+    xp: "{xp} XP"
+    unite_xp: XP
+    pratique: Pratique
+    me_retirer: Me retirer du classement
+    apparaitre: Apparaître dans le classement
+
+periode:
+    mois: Ce mois-ci
+    tout: Depuis toujours
+
+flash:
+    visible: "Vous apparaissez dans le classement, sous le pseudo « {pseudo} »."
+    invisible: "Vous n'apparaissez plus dans le classement."
+
+index:
+    titre: Classement
+    partage: Apprendre à développer en codant, directement dans le navigateur.
+    communaute: Communauté
+    intro: "L'XP gagnée sur les exercices, parcours et Pratique, entre apprenants qui ont choisi d'y figurer."
+    periode: Période
+    parcours: Parcours
+    tous: Tous
+    afficher: Afficher
+    votre_position: Votre position
+    # Après le rang : 1er, 2e.
+    rang_suffixe: "{n, selectordinal, one {er} other {e}}"
+    sur_classes: "Sur {total} {n, plural, one {apprenant classé} other {apprenants classés}}"
+    exercices: "{n, plural, one {# exercice} other {# exercices}}"
+    devant: "Encore {xp} XP pour dépasser {pseudo}."
+    premier_seul: "Premier classé : la place est à défendre dès les prochaines inscriptions."
+    en_tete: En tête. Gardez la cadence.
+    places: "{n, plural, one {place} other {places}}"
+    depuis: "depuis {mois}"
+    ce_mois_ci: ce mois-ci
+    vous_seriez: "Vous seriez {rang}<sup>{n, selectordinal, one {er} other {e}}</sup>, avec {xp} XP."
+    rejoignez_pseudo: "Rejoignez le classement : seul votre pseudo, « {pseudo} », y apparaît."
+    inscrit: Vous êtes inscrit au classement.
+    reussissez_pour_entrer: "Réussissez un exercice{mois, select, oui { ce mois-ci} other {}}{filtre, select, oui { sur ce filtre} other {}} pour y entrer."
+    rejoignez: Rejoignez le classement.
+    reussissez_pseudo: "Réussissez un exercice et apparaissez ici sous votre pseudo, « {pseudo} »."
+    entrez: Entrez dans la course.
+    creez_compte: "Créez un compte pour garder votre progression et, si vous le souhaitez, figurer ici."
+    creer_compte: Créer un compte
+    podium: Podium
+    place_podium: "{rang}{n, selectordinal, one {re} other {e}} place"
+    vous: Vous
+    ouvrez_la_marche: Vous ouvrez la marche
+    demarre: Le classement démarre
+    podium_bientot: "Le podium s'affiche dès trois apprenants classés. Partagez la plateforme avec un collègue ou votre promo pour lancer la course."
+    copier_lien: Copier le lien
+    tableau: Tableau du classement
+    col_rang: Rang
+    col_apprenant: Apprenant
+    col_evolution: Évolution
+    col_exercices: Exercices
+    nouveau: Nouveau
+    meme_place: même place
+    place_libre: Place libre
+    premiers: "Les {n} premiers sur {total}."
+    # Sous le tableau : ce que couvre le classement du mois. {numero} : le mois (1 à 12), pour l'élision.
+    note_toujours: "Toute l'XP gagnée depuis l'ouverture du site."
+    note_mois: "Classement {numero, select, 4 {d''{mois}} 8 {d''{mois}} 10 {d''{mois}} other {de {mois}}} : il repart à zéro le 1er {suivant}. Les évolutions comparent avec la fin {precedent}."
+    bareme:
+        titre: "Gagner de l'XP"
+        exercice: Exercice réussi seul
+        fourchette: "{min} à {max} XP"
+        indice: Avec un indice
+        indice_valeur: "−{pourcentage} % par indice"
+        solution: Solution consultée
+        parcours: Parcours terminé
+        parcours_valeur: "+{pourcentage} % du parcours"
+        pratique: Défi Pratique
+        plancher: "Avec des indices, un exercice rapporte toujours au moins {pourcentage} % de son XP."
+    verifiees:
+        titre: Réussites vérifiées
+        texte: "Chaque réussite est rejouée sur nos serveurs avec le code envoyé. Si les tests ne la confirment pas, elle sort du classement."
+    visibilite:
+        titre: Votre visibilité
+        visible: 'Vous apparaissez sous le pseudo <strong class="text-ink">{pseudo}</strong>.'
+        invisible: 'Vous n''apparaissez pas au classement. Si vous le rejoignez, ce sera sous le pseudo <strong class="text-ink">{pseudo}</strong>.'
+        confidentialite: Votre e-mail et votre nom ne sont jamais affichés.
+        changer_pseudo: Changer de pseudo
+        rejoindre: Rejoindre le classement

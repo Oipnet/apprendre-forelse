@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
 
 {% block body %}
     {% set trackDuration = track_duration(track) %}
@@ -15,10 +16,10 @@
                 <h1 class="mt-1 text-3xl font-semibold">{{ track.title }}</h1>
                 <p class="lead mt-3 text-lg text-ink-muted">{{ track.description }}</p>
                 <p class="track-duration mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
-                    <span>{{ app.user ? completed ~ ' / ' : '' }}{{ total }} exercice{{ total > 1 ? 's' }}{{ app.user ? ' réussis' : '' }}</span>
-                    <span>{{ chapters|length }} chapitre{{ chapters|length > 1 ? 's' }}</span>
-                    <span>{{ app.user ? xpEarned|number_format(0, ',', ' ') ~ ' / ' : '' }}{{ xpTotal|number_format(0, ',', ' ') }} XP</span>
-                    {% if trackDuration %}<span>Environ {{ trackDuration|duree }} de pratique</span>{% endif %}
+                    <span>{{ (app.user ? 'track.show.exercices_reussis' : 'commun.exercices')|trans({fait: completed, n: total}) }}</span>
+                    <span>{{ 'track.show.chapitres'|trans({n: chapters|length}) }}</span>
+                    <span>{{ (app.user ? 'track.show.xp_gagnes' : 'commun.xp')|trans({gagne: xpEarned|number_format(0, ',', ' '), xp: xpTotal|number_format(0, ',', ' ')}) }}</span>
+                    {% if trackDuration %}<span>{{ 'track.show.duree'|trans({duree: trackDuration|duree}) }}</span>{% endif %}
                 </p>
                 {% if app.user %}
                     <div class="mt-3 h-2 overflow-hidden rounded-full bg-bg-2" aria-hidden="true"><div class="h-full bg-accent" style="width: {{ total ? (completed / total * 100)|round(1) : 0 }}%"></div></div>
@@ -28,27 +29,27 @@
             <div class="md:w-72">
                 {% if done %}
                     <div class="track-done space-y-2 rounded-lg border border-success bg-success-bg p-4">
-                        <p class="text-sm text-success">Parcours terminé</p>
-                        <p><strong>🎓 Bravo, tout est réussi.</strong></p>
+                        <p class="text-sm text-success">{{ 'commun.parcours_termine'|trans }}</p>
+                        <p><strong>{{ 'track.show.bravo'|trans }}</strong></p>
                         {% if certificate %}
-                            <a class="track-certificate btn btn-primary w-full" href="{{ path('app_certificate', {code: certificate.code}) }}">Voir mon certificat</a>
-                            {{ include('share/_buttons.html.twig', {links: certificateShare, title: 'Partager ma réussite', mesure: {parcours: track.id}}) }}
+                            <a class="track-certificate btn btn-primary w-full" href="{{ path('app_certificate', {code: certificate.code}) }}">{{ 'track.show.voir_certificat'|trans }}</a>
+                            {{ include('share/_buttons.html.twig', {links: certificateShare, title: 'track.show.partager'|trans, mesure: {parcours: track.id}}) }}
                         {% elseif offer.fullAccess %}
-                            <a class="track-certificate btn btn-primary w-full" href="{{ path('app_certificate_claim', {trackId: track.id}) }}">Obtenir mon certificat</a>
+                            <a class="track-certificate btn btn-primary w-full" href="{{ path('app_certificate_claim', {trackId: track.id}) }}">{{ 'track.show.obtenir_certificat'|trans }}</a>
                         {% endif %}
                         {% if booklet %}
-                            <a class="btn w-full" href="{{ path('app_track_booklet', {trackId: track.id}) }}">Télécharger le livret (PDF)</a>
+                            <a class="btn w-full" href="{{ path('app_track_booklet', {trackId: track.id}) }}">{{ 'track.show.livret'|trans }}</a>
                         {% endif %}
                         {% if nextTrack %}
-                            <a class="btn btn-primary w-full" href="{{ path('app_track', {trackId: nextTrack.id}) }}">Continuer avec « {{ nextTrack.title }} » <span aria-hidden="true">→</span></a>
+                            <a class="btn btn-primary w-full" href="{{ path('app_track', {trackId: nextTrack.id}) }}">{{ 'track.show.continuer_avec'|trans({titre: nextTrack.title}) }} <span aria-hidden="true">→</span></a>
                         {% endif %}
                     </div>
                 {% elseif current %}
                     <div class="space-y-1 rounded-lg border border-line bg-surface p-4">
-                        <p class="text-sm text-ink-muted">{{ app.user and started ? 'Vous en êtes là' : 'Pour commencer' }}</p>
-                        <p class="text-sm">Chapitre {{ current.chapter }} · exercice {{ current.position }}</p>
+                        <p class="text-sm text-ink-muted">{{ (app.user and started ? 'track.show.vous_en_etes_la' : 'track.show.pour_commencer')|trans }}</p>
+                        <p class="text-sm">{{ 'track.show.position'|trans({chapitre: current.chapter, position: current.position}) }}</p>
                         <p class="font-medium">{{ current.exercise.title }}</p>
-                        <a class="btn btn-primary mt-2 w-full" href="{{ path('app_exercise', {trackId: track.id, exerciseId: current.exercise.id}) }}">{{ app.user and started ? 'Reprendre' : 'Commencer le parcours' }} <span aria-hidden="true">→</span></a>
+                        <a class="btn btn-primary mt-2 w-full" href="{{ path('app_exercise', {trackId: track.id, exerciseId: current.exercise.id}) }}">{{ (app.user and started ? 'commun.reprendre' : 'track.show.commencer')|trans }} <span aria-hidden="true">→</span></a>
                     </div>
                 {% endif %}
                 {{ include('track/_price.html.twig', {continueUrl: null}) }}
@@ -58,10 +59,10 @@
 
         <div class="mt-8 grid gap-8 md:grid-cols-[14rem_1fr]">
             <aside class="text-sm">
-                <nav class="md:sticky md:top-4" aria-label="Chapitres du parcours">
+                <nav class="md:sticky md:top-4" aria-label="{{ 'track.show.chapitres_du_parcours'|trans }}">
                     <div class="flex items-center justify-between">
-                        <span class="font-semibold">Chapitres</span>
-                        <button type="button" class="cursor-pointer text-accent" data-chapters-toggle hidden>Tout ouvrir</button>
+                        <span class="font-semibold">{{ 'track.show.chapitres_titre'|trans }}</span>
+                        <button type="button" class="cursor-pointer text-accent" data-chapters-toggle hidden>{{ 'track.show.tout_ouvrir'|trans }}</button>
                     </div>
                     <ol class="mt-2 space-y-1">
                         {% for item in chapters %}
@@ -74,8 +75,8 @@
                     </ol>
                     {% if bossEveryChapter or hasLessons %}
                         <p class="mt-4 text-ink-muted">
-                            {%- if bossEveryChapter %}Chaque chapitre finit par un boss{{ hasLessons ? ', puis une fiche de cours en page web et en PDF' : '' }}.{% else %}Chaque chapitre réussi débloque sa fiche de cours, en page web et en PDF.{% endif %}
-                            {%- if hasLessons %} Le livret complet arrive à la fin du parcours.{% endif -%}
+                            {%- if bossEveryChapter %}{{ (hasLessons ? 'track.show.boss_fiche' : 'track.show.boss')|trans }}{% else %}{{ 'track.show.fiche_debloquee'|trans }}{% endif %}
+                            {%- if hasLessons %} {{ 'track.show.livret_final'|trans }}{% endif -%}
                         </p>
                     {% endif %}
                 </nav>
@@ -92,12 +93,12 @@
                                 <span class="flex-1">
                                     <h2 class="text-lg font-semibold">
                                         {{ item.chapter.title }}
-                                        {% if item.free and not offer.fullAccess %}<span class="tag free ml-1 rounded bg-success-bg px-1.5 text-xs font-normal text-success">Gratuit</span>{% elseif item.locked %}<span class="tag ml-1 rounded bg-bg-2 px-1.5 text-xs font-normal text-ink-muted">🔒 Parcours complet</span>{% endif %}
+                                        {% if item.free and not offer.fullAccess %}<span class="tag free ml-1 rounded bg-success-bg px-1.5 text-xs font-normal text-success">{{ 'commun.gratuit'|trans }}</span>{% elseif item.locked %}<span class="tag ml-1 rounded bg-bg-2 px-1.5 text-xs font-normal text-ink-muted">{{ 'track.show.parcours_complet'|trans }}</span>{% endif %}
                                     </h2>
                                     <span class="tr-chapter-meta text-sm text-ink-muted">
-                                        {{- app.user ? chapterDone ~ ' / ' : '' }}{{ item.items|length }} exercice{{ item.items|length > 1 ? 's' }} · {{ item.xp|number_format(0, ',', ' ') }} XP
+                                        {{- (app.user ? 'track.show.exercices_faits' : 'commun.exercices')|trans({fait: chapterDone, n: item.items|length}) }} · {{ 'commun.xp'|trans({xp: item.xp|number_format(0, ',', ' ')}) }}
                                         {%- if chapterDuration %} · ≈ {{ chapterDuration|duree }}{% endif %}
-                                        {%- if item.lesson %} · fiche de cours{% endif -%}
+                                        {%- if item.lesson %} · {{ 'track.show.fiche_de_cours'|trans }}{% endif -%}
                                     </span>
                                 </span>
                                 <span class="text-ink-muted transition group-open:rotate-180" aria-hidden="true">▾</span>
@@ -106,13 +107,13 @@
                                 {% for entry in item.items %}
                                     <li data-state="{{ entry.state }}"{% if entry.boss %} class="boss"{% endif %}>
                                         <a class="group/ex relative flex items-baseline gap-3 px-4 py-2 text-ink hover:bg-bg-2 hover:text-ink" href="{{ path('app_exercise', {trackId: track.id, exerciseId: entry.exercise.id}) }}"{% if entry.exercise.concepts %} aria-describedby="notions-{{ entry.exercise.id }}"{% endif %}>
-                                            <span class="state w-6 text-center font-mono text-sm {{ entry.state == 'completed' ? 'text-success' : 'text-ink-muted' }}"><span aria-hidden="true">{{ entry.state == 'completed' ? '✓' : (entry.boss ? '★' : loop.index) }}</span><span class="sr-only">{{ entry.state == 'completed' ? 'Réussi : ' : (entry.boss ? 'Exercice final : ' : 'Exercice ' ~ loop.index ~ ' : ') }}</span></span>
+                                            <span class="state w-6 text-center font-mono text-sm {{ entry.state == 'completed' ? 'text-success' : 'text-ink-muted' }}"><span aria-hidden="true">{{ entry.state == 'completed' ? '✓' : (entry.boss ? '★' : loop.index) }}</span><span class="sr-only">{{ (entry.state == 'completed' ? 'track.show.sr_reussi' : (entry.boss ? 'track.show.sr_final' : 'track.show.sr_exercice'))|trans({numero: loop.index}) }}</span></span>
                                             <span class="title flex-1{{ entry.boss ? ' font-semibold' }}">{{ entry.exercise.title }}</span>
-                                            <span class="meta text-sm text-ink-muted">{% if entry.exercise.duration and entry.state != 'completed' %}{{ entry.exercise.duration|duree }} · {% endif %}{{ entry.state == 'completed' ? '+' ~ entry.xpEarned : entry.exercise.xp }} XP</span>
+                                            <span class="meta text-sm text-ink-muted">{% if entry.exercise.duration and entry.state != 'completed' %}{{ entry.exercise.duration|duree }} · {% endif %}{{ 'commun.xp'|trans({xp: entry.state == 'completed' ? '+' ~ entry.xpEarned : entry.exercise.xp}) }}</span>
                                             {% if entry.exercise.concepts %}
                                                 {# Infobulle des notions abordées : au survol ou au focus clavier du lien #}
                                                 <span class="hint invisible absolute left-12 top-full z-10 mt-1 flex max-w-sm flex-wrap gap-1 rounded-md border border-line bg-surface p-2 text-xs shadow group-hover/ex:visible group-focus/ex:visible" role="tooltip" id="notions-{{ entry.exercise.id }}">
-                                                    <span class="hint-label w-full text-ink-muted">Notions abordées</span>
+                                                    <span class="hint-label w-full text-ink-muted">{{ 'track.show.notions_abordees'|trans }}</span>
                                                     {% for concept in entry.exercise.concepts %}<span class="tag rounded border border-line px-1.5">{{ concept }}</span>{% endfor %}
                                                 </span>
                                             {% endif %}
@@ -124,14 +125,14 @@
                                         {% if item.lesson.unlocked %}
                                             <a class="lesson-link flex items-baseline gap-3 px-4 py-2" href="{{ path('app_chapter', {trackId: track.id, chapterId: item.chapter.id}) }}">
                                                 <span class="state w-6 text-center" aria-hidden="true">▤</span>
-                                                <span class="title flex-1">Fiche de cours du chapitre</span>
-                                                <span class="meta text-sm">Lire →</span>
+                                                <span class="title flex-1">{{ 'track.show.fiche_chapitre'|trans }}</span>
+                                                <span class="meta text-sm">{{ 'track.show.lire'|trans }}</span>
                                             </a>
                                         {% else %}
                                             <p class="lesson-link locked flex items-baseline gap-3 px-4 py-2 text-ink-muted">
                                                 <span class="state w-6 text-center" aria-hidden="true">🔒</span>
-                                                <span class="title flex-1">Fiche de cours du chapitre</span>
-                                                <span class="meta text-sm">{{ app.user ? 'encore ' ~ item.lesson.remaining ~ ' exercice' ~ (item.lesson.remaining > 1 ? 's' : '') ~ ' à réussir' : 'réussissez le chapitre pour la lire' }}</span>
+                                                <span class="title flex-1">{{ 'track.show.fiche_chapitre'|trans }}</span>
+                                                <span class="meta text-sm">{{ (app.user ? 'track.show.fiche_reste' : 'track.show.fiche_a_reussir')|trans({n: item.lesson.remaining}) }}</span>
                                             </p>
                                         {% endif %}
                                     </li>
@@ -139,13 +140,13 @@
                             </ol>
                         </details>
                         {# Hors du <details> : le sommaire reste atteignable chapitre replié, pour un visiteur comme pour un robot. #}
-                        <p class="mt-1 text-right text-sm"><a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: item.chapter.id}) }}">Ce que le chapitre {{ item.number }} fait apprendre →</a></p>
+                        <p class="mt-1 text-right text-sm"><a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: item.chapter.id}) }}">{{ 'track.show.sommaire_chapitre'|trans({numero: item.number}) }}</a></p>
                     </section>
                 {% endfor %}
 
                 {% if nextTrack and not done %}
                     <section class="next-track mt-8 rounded-lg border border-line bg-bg-2 p-5">
-                        <p class="text-sm text-ink-muted">Et ensuite ?</p>
+                        <p class="text-sm text-ink-muted">{{ 'track.show.et_ensuite'|trans }}</p>
                         <h2 class="mt-1 text-xl font-semibold"><a href="{{ path('app_track', {trackId: nextTrack.id}) }}">{{ nextTrack.title }} →</a></h2>
                         <p class="mt-2 text-ink-muted">{{ nextTrack.description }}</p>
                     </section>
