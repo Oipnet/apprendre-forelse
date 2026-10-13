@@ -13,6 +13,23 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - Partage du certificat de réussite : sa page et celle du parcours terminé proposent à son titulaire les boutons
   LinkedIn, X, Bluesky et « Copier le lien » (`utm_campaign=parcours`), qui mènent à la page publique du certificat.
   Cette page a son image d'aperçu, dessinée par le moteur : le nom du titulaire et le titre du parcours.
+- **Bonus de parcours terminé** : réussir le dernier exercice d'un parcours rapporte 10 % de l'XP de ses exercices, une
+  fois. Il compte au classement du mois où il tombe et part si une réussite du parcours est infirmée par la
+  vérification. Nouvelle table `track_bonus` (migration). La réponse de `POST /api/progress/…/complete` gagne
+  `trackBonus`.
+
+### Modifié
+
+- **Classement** refait : bandeau « Votre position » (rang, apprenant à dépasser, gain du mois), podium des trois
+  premiers (ou « Vous ouvrez la marche » avant trois classés, avec la copie du lien), tableau avec les parcours suivis
+  et, au classement du mois, l'évolution depuis le mois précédent. Filtre par parcours (et Pratique), barème réel de
+  l'XP, rappel de la vérification et de la visibilité. Le gabarit `leaderboard/index.html.twig` reçoit
+  `trackFilters`, `scale` et `share` ; un thème construit avec Tailwind doit reconstruire sa feuille.
+
+### Migration
+
+- Après la mise à jour, attribuer une fois le bonus des parcours déjà terminés :
+  `docker compose exec app php bin/console app:classement:bonus-parcours` (sans effet si on la relance).
 
 ## 3.5.0 — 2026-10-13
 

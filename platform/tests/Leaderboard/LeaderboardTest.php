@@ -3,13 +3,14 @@
 namespace App\Tests\Leaderboard;
 
 use App\Entity\ExerciseProgress;
+use App\Entity\TrackBonus;
 use App\Entity\User;
 use App\Entity\VerificationStatus;
 use App\Leaderboard\Leaderboard;
 use App\Leaderboard\LeaderboardPeriod;
-use App\Repository\ExerciseProgressRepository;
 use App\Tests\DatabaseTrait;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\MockClock;
 
@@ -23,8 +24,9 @@ final class LeaderboardTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
+        static::getContainer()->set(ClockInterface::class, new MockClock('2026-10-12 20:00:00'));
         $this->entityManager = $this->resetDatabase();
-        $this->leaderboard = new Leaderboard(static::getContainer()->get(ExerciseProgressRepository::class), new MockClock('2026-10-12 20:00:00'));
+        $this->leaderboard = static::getContainer()->get(Leaderboard::class);
     }
 
     private function learner(string $name, bool $optIn = true): User
@@ -48,9 +50,9 @@ final class LeaderboardTest extends KernelTestCase
     }
 
     /** @return list<array{int, string, int, int}> rang, pseudo, XP, exercices */
-    private function rows(LeaderboardPeriod $period, ?User $viewer = null): array
+    private function rows(LeaderboardPeriod $period, ?User $viewer = null, ?string $track = null): array
     {
-        return array_map(static fn ($entry) => [$entry->rank, $entry->displayName, $entry->xp, $entry->exercises], $this->leaderboard->of($period, $viewer)->entries);
+        return array_map(static fn ($entry) => [$entry->rank, $entry->displayName, $entry->xp, $entry->exercises], $this->leaderboard->of($period, $viewer, $track)->entries);
     }
 
     public function testSeulsLesApprenantsQuiLOntChoisiSontClassesALXp(): void
@@ -134,5 +136,57 @@ final class LeaderboardTest extends KernelTestCase
 
         $this->assertSame(1, $board->viewer?->rank);
         $this->assertTrue($board->viewer->listed);
+    }
+
+    public function testLeBonusDeParcoursCompteAuMoisOuIlTombeMaisPasEnPratique(): void
+    {
+        $ada = $this->learner('Ada');
+        $grace = $this->learner('Grace');
+        $this->success($ada, 'a', 50);
+        $this->success($grace, 'a', 40);
+        $this->entityManager->persist(new TrackBonus($grace, 'decouverte', 30, new \DateTimeImmutable('2026-10-06 10:00:00')));
+        $this->entityManager->persist(new TrackBonus($ada, 'decouverte', 100, new \DateTimeImmutable('2026-09-20 10:00:00')));
+        $this->entityManager->flush();
+
+        $this->assertSame([[1, 'Ada', 150, 1], [2, 'Grace', 70, 1]], $this->rows(LeaderboardPeriod::AllTime));
+        $this->assertSame([[1, 'Grace', 70, 1], [2, 'Ada', 50, 1]], $this->rows(LeaderboardPeriod::Month), 'Le bonus de septembre ne compte pas en octobre.');
+        $this->assertSame([[1, 'Ada', 50, 1], [2, 'Grace', 40, 1]], $this->rows(LeaderboardPeriod::AllTime, track: Leaderboard::PRACTICE), 'Pas de bonus en Pratique.');
+        $this->assertSame([[1, 'Ada', 100, 0], [2, 'Grace', 30, 0]], $this->rows(LeaderboardPeriod::AllTime, track: 'decouverte'), 'Le bonus du parcours, sans ses exercices (ici en Pratique).');
+    }
+
+    public function testLApprenantSaitQuiDepasserEtCeQuIlAGagneCeMois(): void
+    {
+        $ada = $this->learner('Ada');
+        $grace = $this->learner('Grace');
+        $alan = $this->learner('Alan');
+        $this->success($ada, 'a', 90);
+        $this->success($grace, 'a', 60);
+        $this->success($alan, 'a', 40, '2026-09-10 10:00:00');
+        $this->success($alan, 'b', 15);
+
+        $board = $this->leaderboard->of(LeaderboardPeriod::AllTime, $alan);
+        $this->assertSame('Grace', $board->ahead?->displayName, 'Le classé juste devant, pas le premier.');
+        $this->assertSame(15, $board->monthXp);
+
+        $this->assertNull($this->leaderboard->of(LeaderboardPeriod::AllTime, $ada)->ahead, 'En tête.');
+    }
+
+    public function testLeClassementDuMoisCompareAvecLeMoisPrecedent(): void
+    {
+        $ada = $this->learner('Ada');
+        $grace = $this->learner('Grace');
+        $alan = $this->learner('Alan');
+        $this->success($ada, 'a', 90, '2026-09-10 10:00:00');
+        $this->success($grace, 'a', 60, '2026-09-11 10:00:00');
+        $this->success($ada, 'b', 10);
+        $this->success($grace, 'b', 30);
+        $this->success($alan, 'a', 20);
+
+        $board = $this->leaderboard->of(LeaderboardPeriod::Month, $grace);
+
+        $this->assertSame([['Grace', 1, false], ['Alan', null, true], ['Ada', -2, false]], array_map(static fn ($entry) => [$entry->displayName, $entry->move, $entry->isNew], $board->entries));
+        $this->assertSame(1, $board->viewer?->move);
+        $this->assertSame('Classement d\'octobre : il repart à zéro le 1er novembre. Les évolutions comparent avec la fin septembre.', $board->periodNote());
+        $this->assertNull($this->leaderboard->of(LeaderboardPeriod::AllTime)->entries[0]->move, 'Pas d\'évolution au classement de toujours.');
     }
 }

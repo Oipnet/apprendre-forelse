@@ -5,11 +5,14 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Leaderboard\Leaderboard;
 use App\Leaderboard\LeaderboardPeriod;
+use App\Leaderboard\XpScale;
+use App\Share\ShareLinks;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /** Le classement public, et le choix d'y paraître (depuis le classement lui-même ou « Mon compte »). */
@@ -21,14 +24,19 @@ final class LeaderboardController extends AbstractController
     }
 
     #[Route('/classement', name: 'app_leaderboard', methods: ['GET'])]
-    public function index(Request $request): Response
+    public function index(Request $request, XpScale $scale): Response
     {
         $period = LeaderboardPeriod::tryFrom($request->query->getString('periode')) ?? LeaderboardPeriod::Month;
+        $filters = $this->leaderboard->trackFilters();
+        $track = $request->query->getString('parcours');
         $user = $this->getUser();
 
         return $this->render('leaderboard/index.html.twig', [
-            'board' => $this->leaderboard->of($period, $user instanceof User ? $user : null),
+            'board' => $this->leaderboard->of($period, $user instanceof User ? $user : null, isset($filters[$track]) ? $track : null),
             'periods' => LeaderboardPeriod::cases(),
+            'trackFilters' => $filters,
+            'scale' => $scale->rules(),
+            'share' => ShareLinks::of($this->generateUrl('app_home', [], UrlGeneratorInterface::ABSOLUTE_URL), 'Apprendre à développer en codant, directement dans le navigateur.', 'classement'),
         ]);
     }
 

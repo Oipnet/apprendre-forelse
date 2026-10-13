@@ -6,6 +6,7 @@ use App\Certificate\CertificateRevocation;
 use App\Content\ContentRepository;
 use App\Entity\ExerciseProgress;
 use App\Entity\VerificationStatus;
+use App\Leaderboard\TrackBonuses;
 use App\Repository\ExerciseProgressRepository;
 use App\Tests\DatabaseTrait;
 use App\Verification\CollectVerifications;
@@ -48,7 +49,7 @@ final class VerificationDispatcherTest extends KernelTestCase
     {
         $container = static::getContainer();
 
-        return new VerificationDispatcher($queue ?? $this->queue, $container->get(ExerciseProgressRepository::class), $this->entityManager, $this->clock, $container->get(CertificateRevocation::class), $container->get(ContentRepository::class));
+        return new VerificationDispatcher($queue ?? $this->queue, $container->get(ExerciseProgressRepository::class), $this->entityManager, $this->clock, $container->get(CertificateRevocation::class), $container->get(ContentRepository::class), $container->get(TrackBonuses::class));
     }
 
     /** @param array<string, string> $files */

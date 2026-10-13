@@ -3,10 +3,13 @@
 namespace App\Tests\Controller;
 
 use App\Certificate\CertificateRevocation;
+use App\Content\ContentRepository;
 use App\Entity\VerificationStatus;
+use App\Leaderboard\TrackBonuses;
 use App\Repository\CertificateRepository;
 use App\Repository\ExerciseProgressRepository;
-use App\Content\ContentRepository;
+use App\Repository\TrackBonusRepository;
+use App\Repository\UserRepository;
 use App\Service\ProgressService;
 use App\Tests\DatabaseTrait;
 use App\Verification\CollectVerifications;
@@ -17,7 +20,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
-/** Une réussite confirmée puis infirmée par le verificateur (nouvelle vérification) fait révoquer le certificat du parcours qui la comptait. */
+/** Une réussite confirmée puis infirmée par le verificateur (nouvelle vérification) fait révoquer le certificat du parcours qui la comptait, et retire son bonus. */
 final class CertificateVerificationTest extends WebTestCase
 {
     use DatabaseTrait;
@@ -46,7 +49,7 @@ final class CertificateVerificationTest extends WebTestCase
         $queue = new VerificationQueue($directory);
         $second = $container->get(ExerciseProgressRepository::class)->findOne($user, 'decouverte', '02-bonjour-prenom');
         $queue->pushResult(new VerificationResult((int) $second->getId(), VerificationStatus::Failed, 'objectif manqué'));
-        $dispatcher = new VerificationDispatcher($queue, $container->get(ExerciseProgressRepository::class), $container->get(EntityManagerInterface::class), $container->get('clock'), $container->get(CertificateRevocation::class), $content);
+        $dispatcher = new VerificationDispatcher($queue, $container->get(ExerciseProgressRepository::class), $container->get(EntityManagerInterface::class), $container->get('clock'), $container->get(CertificateRevocation::class), $content, $container->get(TrackBonuses::class));
         $dispatcher->collect(new CollectVerifications());
         (new Filesystem())->remove($directory);
 
@@ -54,5 +57,8 @@ final class CertificateVerificationTest extends WebTestCase
         $this->assertTrue($certificate?->isRevoked());
         $this->assertEmailCount(1);
         $this->assertEmailTextBodyContains($this->getMailerMessage(), 'n\'a pas été confirmée');
+        // Le bonus du parcours terminé part avec : il reste l'XP des deux exercices.
+        $this->assertNull($container->get(TrackBonusRepository::class)->findOne($user, 'decouverte'));
+        $this->assertSame(100, $container->get(UserRepository::class)->find($user->getId())?->getXp());
     }
 }
