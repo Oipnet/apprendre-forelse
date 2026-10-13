@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.6.1 — 2026-10-13
+
 ### Corrigé
 
 - Les pages du site qui ont des boutons de partage (classement, parcours, exercice de Pratique, certificat) ne
