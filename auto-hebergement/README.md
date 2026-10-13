@@ -361,11 +361,13 @@ ANALYTICS_SERVER_NAME=https://suivi.example.org
 Caddy obtiendra son certificat tout seul. **À ne faire qu'une fois le mot de passe changé** : cette
 adresse expose la page de connexion d'Umami sur l'internet.
 
-Au-delà des pages vues, la plateforme envoie cinq événements, tous anonymes : `exercice-ouvert`,
+Au-delà des pages vues, la plateforme envoie des événements, tous anonymes : `exercice-ouvert`,
 `tests-lances`, `exercice-reussi`, `indice-demande` et `solution-consultee`, avec l'identifiant de
 l'exercice et du parcours. Ils se lisent dans *Events*, et ils répondent à la question que les pages
 vues laissent entière : un visiteur a-t-il écrit du code, ou seulement lu ? Le code écrit, lui, n'est
-jamais transmis.
+jamais transmis. Le démarrage du playground a aussi sa mesure : `exercice-ouvert` porte sa durée en
+secondes (`duree`) et `premier` (environnement pas encore en cache), `demarrage-echoue` part quand PHP
+ne démarre pas, et `demarrage-interrompu` quand le visiteur quitte la page avant la fin du chargement.
 
 ### Les robots des moteurs de recherche
 

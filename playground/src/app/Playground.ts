@@ -11,7 +11,7 @@ import { shareDialog } from './share';
 import { HintsAndSolution } from './HintsAndSolution';
 import { escapeHtml } from './html';
 import { layout } from './layout';
-import { bindRetry, bootFailureActionsHtml, bootKey, firstLoadNote, loadErrorHtml } from './boot';
+import { bindRetry, bootFailureActionsHtml, bootKey, firstLoadNote, loadErrorHtml, suivreDemarrage } from './boot';
 import { MentorClient, errorTextOf, stripAnsi } from './mentor';
 import { MentorPanel } from './MentorPanel';
 import { mesurer } from '../mesure';
@@ -144,6 +144,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	})();
 	const note = firstLoadNote(seen, archiveUrl);
 	if (note) $('#boot-first').textContent = note;
+	const demarrage = suivreDemarrage(mesure, note !== null, t0);
 	try {
 		await runtime.boot(
 			{
@@ -169,6 +170,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			revealPane('brief');
 		});
 		root.dataset.bootFailed = '';
+		demarrage.echec();
 		throw error;
 	}
 	mark('runtimeReady');
@@ -350,7 +352,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	overlay.inert = true;
 	overlay.setAttribute('aria-hidden', 'true');
 	mark('ready');
-	mesurer('exercice-ouvert', { ...mesure, compte: config.progress.mode === 'api' });
+	demarrage.pret({ compte: config.progress.mode === 'api' });
 	status(`Prêt en ${(metrics.ready / 1000).toFixed(1)} s`, 'ok');
 	Object.assign(window, { playground: { metrics, runtime, editor: editor.instance, monaco } }); // debug / mesures
 }

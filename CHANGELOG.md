@@ -8,6 +8,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Mesure du démarrage du playground** : `exercice-ouvert` porte maintenant la durée du démarrage en secondes
+  (`duree`) et `premier` (l'environnement n'était pas encore dans le cache du navigateur). Deux événements
+  s'ajoutent : `demarrage-echoue` quand PHP ne démarre pas, et `demarrage-interrompu` quand la page passe en
+  arrière-plan ou se ferme avant d'être prête. Une visite d'exercice sans `exercice-ouvert` disait seulement que
+  le playground n'avait pas démarré ; elle dit maintenant si le visiteur est parti pendant le chargement, et au
+  bout de combien de temps.
+
 ## 3.6.1 — 2026-10-13
 
 ### Corrigé
