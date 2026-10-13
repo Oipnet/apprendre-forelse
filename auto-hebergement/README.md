@@ -254,10 +254,14 @@ qui touche son décor, la même commande le réempaquette : elle voit que les so
 défaut) : seul le pseudo est affiché. Un administrateur retire un compte du classement depuis `/admin` →
 Utilisateurs (« Retiré du classement »).
 
+Le dernier exercice réussi d'un parcours rapporte un bonus : 10 % de l'XP du parcours, une fois. Après la mise à jour
+qui l'introduit, attribuez-le aux parcours déjà terminés :
+`docker compose exec app php bin/console app:classement:bonus-parcours` (sans effet si on la relance).
+
 Les tests d'un exercice tournent dans le navigateur, qui annonce la réussite : une réussite peut donc être
 falsifiée. Le code qui a réussi est conservé, et le service **`verificateur`** le rejoue contre les tests de
-l'exercice. Une réussite que les tests n'y confirment pas sort du classement (l'XP de l'apprenant, elle, ne
-change pas) ; `/admin` → Progression montre le verdict et sa raison.
+l'exercice. Une réussite que les tests n'y confirment pas sort du classement, avec le bonus de son parcours (l'XP de
+l'exercice, elle, reste au compte) ; `/admin` → Progression montre le verdict et sa raison.
 
 > ⚠️ **Rejouer une réussite exécute le code d'un apprenant sur ce serveur.** Il tourne dans le service
 > `verificateur`, sans réseau, sans base, sans secrets, le système de fichiers en lecture seule, et sous

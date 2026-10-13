@@ -199,6 +199,17 @@ function filtresEnDirect(form: HTMLFormElement, cleFocus: string, parDefaut: Rec
 	}
 }
 
+/**
+ * Les filtres qui s'appliquent dès qu'on change une liste (le classement) : le formulaire part avec le bouton de période
+ * enfoncé, pour garder la période choisie. Sans script, son bouton « Afficher » fait de même.
+ */
+for (const form of document.querySelectorAll<HTMLFormElement>('form[data-auto-submit]')) {
+	form.addEventListener('change', (event) => {
+		if (!(event.target instanceof HTMLSelectElement)) return;
+		form.requestSubmit(form.querySelector<HTMLButtonElement>('button[aria-pressed="true"]') ?? undefined);
+	});
+}
+
 const filtresPratique = document.querySelector<HTMLFormElement>('[data-practice-filters]');
 if (filtresPratique) filtresEnDirect(filtresPratique, 'pratique:recherche', { tri: 'recent' });
 

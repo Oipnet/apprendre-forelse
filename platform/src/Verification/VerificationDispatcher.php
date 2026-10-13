@@ -5,6 +5,7 @@ namespace App\Verification;
 use App\Certificate\CertificateRevocation;
 use App\Content\ContentRepository;
 use App\Entity\VerificationStatus;
+use App\Leaderboard\TrackBonuses;
 use App\Repository\ExerciseProgressRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -29,6 +30,7 @@ final readonly class VerificationDispatcher
         private ClockInterface $clock,
         private CertificateRevocation $certificates,
         private ContentRepository $content,
+        private TrackBonuses $trackBonuses,
     ) {
     }
 
@@ -74,6 +76,7 @@ final readonly class VerificationDispatcher
             if ($newlyFailed && null !== $progress->getTrackId()) {
                 $title = $this->content->findExercise($progress->getTrackId(), $progress->getExerciseId())->title ?? $progress->getExerciseId();
                 $this->certificates->revokeForExercise($progress->getUser(), $progress->getTrackId(), $progress->getExerciseId(), sprintf('La réussite de l\'exercice « %s » n\'a pas été confirmée quand nous avons rejoué votre code sur nos serveurs.', $title));
+                $this->trackBonuses->revoke($progress->getUser(), $progress->getTrackId());
             }
         }
         $this->entityManager->flush();

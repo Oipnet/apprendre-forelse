@@ -143,6 +143,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    /** Un bonus de parcours retiré (voir App\Leaderboard\TrackBonuses) ; jamais en dessous de zéro. */
+    public function removeXp(int $xp): static
+    {
+        $this->xp = max(0, $this->xp - $xp);
+
+        return $this;
+    }
+
     public function isLeaderboardOptIn(): bool
     {
         return $this->leaderboardOptIn;
