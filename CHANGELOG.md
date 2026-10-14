@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Traduire un exercice de Pratique depuis l'atelier** (`/atelier/pratique/<exercice>/anglais`) : la version anglaise
+  s'édite, s'enregistre et se vérifie dans le même éditeur que l'exercice français. Avec une clé d'API, le modèle
+  propose la traduction entière (ou la met à jour), empreinte `source` comprise ; rien n'est enregistré avant
+  relecture. Une traduction en retard est signalée dans l'éditeur.
+
 ## 3.12.0 — 2026-10-14
 
 ### Modifié

@@ -462,6 +462,93 @@ final class StudioTest extends WebTestCase
         $this->assertSame([false, false], array_column($verdict['objectifs'], 'dejaValide'), 'Aucun objectif ne doit être validé au départ.');
     }
 
+    public function testLaVersionAnglaiseSOuvreSEnregistreEtSeVerifie(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+        $traduction = $this->packs.'/demo/practice/exemple-map-request-header/i18n/en';
+
+        $client->request('GET', '/atelier/pratique/exemple-map-request-header');
+        $config = json_decode($client->getCrawler()->filter('[data-studio]')->attr('data-config'), true);
+        $this->assertSame('/atelier/pratique/exemple-map-request-header/anglais', $config['urls']['anglais'], 'L\'exercice français mène à sa version anglaise.');
+
+        $crawler = $client->request('GET', '/atelier/pratique/exemple-map-request-header/anglais');
+        $this->assertResponseIsSuccessful();
+        $config = json_decode($crawler->filter('[data-studio]')->attr('data-config'), true);
+        $this->assertTrue($config['traduction']);
+        $this->assertSame(['exercise.yaml', 'instructions.md', 'solution/src/Controller/VersionController.php', 'starter/src/Controller/VersionController.php', 'tests/Pratique/VersionTest.php'], array_keys($config['fichiers']), 'Les fichiers sont ceux de i18n/en/, pas ceux de l\'exercice français.');
+        $this->assertSame('/en/practice/exemple-map-request-header', $config['urls']['jouer']);
+        $this->assertSelectorNotExists('#supprimer-exercice', 'Depuis la traduction, on ne supprime pas l\'exercice.');
+
+        $fichiers = [...$config['fichiers'], 'instructions.md' => "# Read a header\n\nUpdated."];
+        $client->jsonRequest('PUT', '/atelier/pratique/exemple-map-request-header/anglais', ['fichiers' => $fichiers]);
+        $this->assertResponseIsSuccessful();
+        $this->assertStringEqualsFile($traduction.'/instructions.md', "# Read a header\n\nUpdated.");
+        $this->assertFileExists($this->packs.'/demo/practice/exemple-map-request-header/instructions.md', 'L\'exercice français ne bouge pas.');
+
+        // Une clé que la traduction ne porte pas : refusée, et rien n'est écrit.
+        $client->jsonRequest('PUT', '/atelier/pratique/exemple-map-request-header/anglais', ['fichiers' => [...$fichiers, 'exercise.yaml' => $fichiers['exercise.yaml']."environment: symfony-8\n"]]);
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertStringContainsString('ne se traduit pas', (string) json_decode((string) $client->getResponse()->getContent(), true)['format']);
+        $this->assertStringEqualsFile($traduction.'/exercise.yaml', $fichiers['exercise.yaml']);
+
+        $client->request('POST', '/atelier/pratique/exemple-map-request-header/anglais/verifier');
+        $verdict = json_decode((string) $client->getResponse()->getContent(), true);
+        $this->assertTrue($verdict['ok'], implode("\n", $verdict['erreurs']));
+        $this->assertStringNotContainsString('a changé depuis la traduction', implode("\n", $verdict['avertissements']), 'La traduction de démo est à jour.');
+    }
+
+    public function testUneTraductionNeuveSeCreeEtUneTraductionRateeNeLaissePasDeTrace(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+        $dossier = $this->packs.'/demo/practice/exemple-map-request-header';
+        $existante = (new \App\Content\Author\ExerciseFiles())->read($dossier.'/i18n/en');
+        (new Filesystem())->remove($dossier.'/i18n');
+
+        $crawler = $client->request('GET', '/atelier/pratique/exemple-map-request-header/anglais');
+        $this->assertSame([], json_decode($crawler->filter('[data-studio]')->attr('data-config'), true)['fichiers'], 'Pas encore de traduction : l\'éditeur est vide.');
+
+        $client->jsonRequest('PUT', '/atelier/pratique/exemple-map-request-header/anglais', ['fichiers' => ['exercise.yaml' => "title: Only a title\n", 'instructions.md' => '# Hi']]);
+        $this->assertResponseStatusCodeSame(422, 'Les objectifs, les indices… manquent : le texte français s\'afficherait.');
+        $this->assertDirectoryDoesNotExist($dossier.'/i18n/en', 'Une première traduction refusée ne laisse pas de dossier.');
+
+        $client->jsonRequest('PUT', '/atelier/pratique/exemple-map-request-header/anglais', ['fichiers' => $existante]);
+        $this->assertResponseIsSuccessful();
+        $client->request('GET', '/en/practice/exemple-map-request-header');
+        $this->assertResponseIsSuccessful('La traduction enregistrée se joue aussitôt.');
+    }
+
+    public function testLeModeleProposeUneTraductionSansRienEcrire(): void
+    {
+        $client = static::createClient();
+        $this->auteur($client);
+        $dossier = $this->packs.'/demo/practice/exemple-map-request-header';
+        $avant = (string) file_get_contents($dossier.'/i18n/en/exercise.yaml');
+        $requetes = [];
+        $http = new MockHttpClient(function (string $method, string $url, array $options) use (&$requetes) {
+            $requetes[] = json_decode($options['body'], true);
+
+            return new JsonMockResponse(['content' => [['type' => 'tool_use', 'name' => 'ecrire_traduction', 'input' => ['fichiers' => [
+                'exercise.yaml' => "source: devinee\ntitle: Read a header\n",
+                'instructions.md' => '# Read a header',
+                'tests/Pratique/Invente.php' => '<?php // aucun fichier français à ce chemin',
+            ]]]]]);
+        });
+        static::getContainer()->set(ModelClient::class, new ModelClient($http, 'cle-de-test', 'claude-sonnet-5'));
+
+        $client->request('POST', '/atelier/pratique/exemple-map-request-header/anglais/traduire');
+
+        $this->assertResponseIsSuccessful();
+        $fichiers = json_decode((string) $client->getResponse()->getContent(), true)['fichiers'];
+        $this->assertSame(['exercise.yaml', 'instructions.md'], array_keys($fichiers), 'Un fichier sans équivalent français est écarté.');
+        $this->assertSame("title: Read a header\nsource: '".\App\Content\ExerciseReader::fingerprint($dossier)."'\n", $fichiers['exercise.yaml'], 'L\'empreinte est calculée, pas devinée.');
+        $this->assertSame('ecrire_traduction', $requetes[0]['tool_choice']['name']);
+        $this->assertStringContainsString('Lire un en-tête', $requetes[0]['messages'][0]['content'], 'Le modèle reçoit l\'exercice français.');
+        $this->assertStringContainsString('Sa traduction actuelle', $requetes[0]['messages'][0]['content'], 'Et la traduction existante, à mettre à jour.');
+        $this->assertStringEqualsFile($dossier.'/i18n/en/exercise.yaml', $avant, 'Rien n\'est enregistré.');
+    }
+
     public function testLesBrouillonsDePostSOuvrentDepuisLeParcoursEtDepuisLaPratique(): void
     {
         $client = static::createClient();

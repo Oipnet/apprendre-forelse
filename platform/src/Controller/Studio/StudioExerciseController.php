@@ -9,6 +9,7 @@ use App\Api\StudioSaveInput;
 use App\Content\Author\ExerciseAssistant;
 use App\Content\Author\ExerciseDrafter;
 use App\Content\Author\ExerciseStudio;
+use App\Content\Author\ExerciseTranslator;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
@@ -46,6 +47,8 @@ final class StudioExerciseController extends AbstractController
             // Le fil d'Ariane : le parcours, ou la Pratique.
             'contexte' => $owner instanceof Track ? $owner->title : 'Pratique',
             'exercise' => $exercise,
+            // Seule la Pratique se traduit : l'auteur passe de l'exercice français à sa version anglaise.
+            'anglaisEnRetard' => $owner instanceof Pack && true === $this->studio->traduction($exercise, ExerciseTranslator::LANGUE)?->outdated,
             'config' => [
                 'fichiers' => $this->studio->lire($exercise),
                 'modifiable' => $this->studio->modifiable($owner),
@@ -59,6 +62,7 @@ final class StudioExerciseController extends AbstractController
                     'jouer' => $urls->generate('app_exercise', $exercise),
                     // Un exercice de Pratique a une page publique : c'est le seul qui se partage.
                     'post' => $owner instanceof Pack ? $this->generateUrl('app_studio_post_pratique', ['exerciseId' => $exercise->id]) : null,
+                    ...($owner instanceof Pack ? ['anglais' => $this->generateUrl('app_studio_translation', ['exerciseId' => $exercise->id])] : []),
                     'atelier' => $this->generateUrl('app_studio'),
                 ],
             ],
