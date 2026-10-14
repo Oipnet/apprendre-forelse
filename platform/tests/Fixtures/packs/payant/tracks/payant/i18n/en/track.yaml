@@ -1,0 +1,6 @@
+# La version anglaise du parcours payant : l'achat en anglais (PurchaseEnglishTest).
+title: Paid track
+description: A free first chapter, then a chapter for those who have access to the track.
+chapters:
+  libre: {title: Free chapter}
+  complet: {title: Full track chapter}

@@ -33,10 +33,11 @@ final class PurchaseController extends AbstractController
     }
 
     /** Le chemin ressemble à celui d'un exercice (/parcours/{trackId}/{exerciseId}) : priorité à l'achat. */
-    #[Route('/parcours/{trackId}/acheter', name: 'app_purchase', methods: ['GET', 'POST'], priority: 1)]
+    #[Route(['fr' => '/parcours/{trackId}/acheter', 'en' => '/en/tracks/{trackId}/buy'], name: 'app_purchase', methods: ['GET', 'POST'], priority: 1)]
     public function checkout(string $trackId, Request $request, PurchaseCheckout $checkout): Response
     {
-        $track = $this->visibility->find($trackId) ?? throw $this->createNotFoundException();
+        // Dans la langue de la page : un parcours pas traduit renvoie à l'achat en français.
+        $track = $this->visibility->findHere($trackId) ?? throw $this->createNotFoundException();
         $user = $this->getUser();
         if (!$user instanceof User) {
             $this->saveTargetPath($request->getSession(), 'main', $request->getRequestUri());
@@ -56,7 +57,7 @@ final class PurchaseController extends AbstractController
             return $this->redirectToRoute('app_track', ['trackId' => $track->id]);
         }
 
-        $form = $this->createForm(PurchaseConfirmationType::class, options: ['terms_url' => $this->generateUrl('app_terms')]);
+        $form = $this->createForm(PurchaseConfirmationType::class, options: ['terms_url' => $this->generateUrl('app_terms'), 'locale' => $track->locale]);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             try {
@@ -80,7 +81,7 @@ final class PurchaseController extends AbstractController
     /**
      * Retour de Stripe. N'ouvre rien : affiche l'état de l'achat, et patiente tant que le webhook n'est pas passé.
      */
-    #[Route('/achat/{id}/merci', name: 'app_purchase_thanks', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[Route(['fr' => '/achat/{id}/merci', 'en' => '/en/purchase/{id}/thanks'], name: 'app_purchase_thanks', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function thanks(#[MapEntity(id: 'id')] Purchase $purchase): Response
     {
         $user = $this->getUser();
@@ -90,7 +91,7 @@ final class PurchaseController extends AbstractController
 
         return $this->render('purchase/thanks.html.twig', [
             'purchase' => $purchase,
-            'track' => $this->visibility->find($purchase->getTrackId()),
+            'track' => null === ($track = $this->visibility->find($purchase->getTrackId())) ? null : $this->visibility->localize($track),
         ]);
     }
 }

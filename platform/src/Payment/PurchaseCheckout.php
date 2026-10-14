@@ -11,6 +11,7 @@ use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Démarre le paiement d'un parcours, sans jamais ouvrir deux sessions Stripe payables pour le même achat : deux
@@ -28,10 +29,13 @@ final readonly class PurchaseCheckout
         private PurchaseRepository $purchases,
         private UrlGeneratorInterface $urls,
         private ClockInterface $clock,
+        private TranslatorInterface $translator,
     ) {
     }
 
     /**
+     * @param Track $track le parcours dans la langue de l'achat : celle de la page Stripe, de l'email et des textes acceptés
+     *
      * @return string l'adresse où envoyer l'apprenant : Stripe, ou la page de remerciement
      *
      * @throws PaymentException rien n'est alors enregistré
@@ -61,15 +65,15 @@ final readonly class PurchaseCheckout
             }
 
             // Le prix est figé maintenant : celui que l'apprenant vient de voir, et que Stripe facturera.
-            $purchase = new Purchase($user, $track->id, $quote->price, $quote->kind, WithdrawalWaiver::TEXT, $this->clock->now(), $quote->cohort, LegalVersions::TERMS_VERSION);
+            $purchase = new Purchase($user, $track->id, $quote->price, $quote->kind, WithdrawalWaiver::text($track->locale), $this->clock->now(), $quote->cohort, LegalVersions::TERMS_VERSION, $track->locale);
             $this->entityManager->persist($purchase);
             $this->entityManager->flush();
 
             $session = $this->gateway->createCheckoutSession(
                 $purchase,
-                sprintf('Parcours « %s » (accès à vie)', $track->title),
+                $this->translator->trans('purchase.produit', ['parcours' => $track->title], 'compte', $track->locale),
                 $this->thanksUrl($purchase),
-                $this->urls->generate('app_track', ['trackId' => $track->id], UrlGeneratorInterface::ABSOLUTE_URL),
+                $this->urls->generate('app_track', ['_locale' => $track->locale, 'trackId' => $track->id], UrlGeneratorInterface::ABSOLUTE_URL),
             );
             $purchase->attachCheckoutSession($session->id);
 
@@ -79,6 +83,6 @@ final readonly class PurchaseCheckout
 
     private function thanksUrl(Purchase $purchase): string
     {
-        return $this->urls->generate('app_purchase_thanks', ['id' => $purchase->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        return $this->urls->generate('app_purchase_thanks', ['_locale' => $purchase->getLocale(), 'id' => $purchase->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 }

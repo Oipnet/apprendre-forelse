@@ -13,7 +13,7 @@ use App\Payment\PaymentGateway;
  */
 final class FakePaymentGateway implements PaymentGateway
 {
-    /** @var list<array{purchaseId: int|null, price: int, productName: string, successUrl: string}> */
+    /** @var list<array{purchaseId: int|null, price: int, productName: string, successUrl: string, cancelUrl: string, locale: string}> */
     public static array $sessions = [];
     /** @var array<string, string> état de chaque session créée (CheckoutSession::OPEN par défaut), par identifiant */
     public static array $statuses = [];
@@ -42,7 +42,7 @@ final class FakePaymentGateway implements PaymentGateway
         if (self::$failing) {
             throw new PaymentException('Stripe ne répond pas.');
         }
-        self::$sessions[] = ['purchaseId' => $purchase->getId(), 'price' => $purchase->getPrice(), 'productName' => $productName, 'successUrl' => $successUrl];
+        self::$sessions[] = ['purchaseId' => $purchase->getId(), 'price' => $purchase->getPrice(), 'productName' => $productName, 'successUrl' => $successUrl, 'cancelUrl' => $cancelUrl, 'locale' => $purchase->getLocale()];
 
         self::$statuses['cs_test_'.$purchase->getId()] = CheckoutSession::OPEN;
 

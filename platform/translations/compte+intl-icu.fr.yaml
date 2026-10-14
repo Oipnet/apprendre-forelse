@@ -173,6 +173,8 @@ contact:
     quota: "Beaucoup de messages en peu de temps depuis votre connexion : réessayez dans une heure, ou écrivez-nous directement par email."
 
 purchase:
+    # Le nom du produit sur la page de paiement Stripe, le reçu et la facture.
+    produit: "Parcours « {parcours} » (accès à vie)"
     checkout:
         titre_page: "Acheter « {parcours} » · {site}"
         prix_normal: "Prix normal"
