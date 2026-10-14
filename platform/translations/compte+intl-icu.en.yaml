@@ -1,0 +1,263 @@
+# English pages for signup, login, password reset and the account page: see compte+intl-icu.fr.yaml for what each
+# key is. Purchase and contact keys (purchase., contact., paiement.) fall back to French for now (see README.md).
+
+commun:
+    # The end of a list of alternatives: "A, B or C".
+    liste_ou: "{debut} or {dernier}"
+
+account:
+    index:
+        titre_page: "My account · {site}"
+        titre: "My account"
+        cohorte: " · cohort “{nom}”"
+        # A track's labels (AccountProgress).
+        etat:
+            started: "In progress"
+            done: "Completed"
+            open: "Active access"
+            free: "Free"
+            not_started: "Not started"
+        parcours_termine: "Track completed, well done."
+        # HTML: rendered with |raw, the title escaped.
+        prochain_exercice: "Next exercise: <strong>{titre}</strong>"
+        premier_exercice: "First exercise: <strong>{titre}</strong>"
+        revoir: "Review the track"
+        reprendre: "Resume"
+        commencer: "Start"
+        un_compte_lie: "a linked account"
+        confirmation:
+            # HTML: rendered with |raw, the address escaped.
+            texte: "<strong>Confirm your address {email}.</strong> The link is in the email you received when you signed up. Without a confirmed address, a receipt or a password reset link may never reach you."
+            renvoyer: "Resend the link"
+        indicateurs:
+            xp: "XP"
+            exercices: "{n, plural, one {exercise completed} other {exercises completed}}"
+            acces: "{n, plural, one {active access} other {active accesses}}"
+        progression:
+            titre: "Pick up where I left off"
+            tous_les_parcours: "All tracks →"
+            en_cours: "In progress"
+            exercices: "{faits} / {total} exercises"
+            xp: "{xp} XP"
+            # HTML: rendered with |raw.
+            aucun: "No track started yet. <a href=\"{lien}\">Choose a track</a>: the first chapter is always free."
+        profil:
+            titre: "Profile"
+            # HTML: rendered with |raw. "cohorte", "classement": oui or non.
+            pseudo: "Your display name appears at the top of pages{cohorte, select, oui {, in your cohort’s progress view} other {}}{classement, select, oui { and on the <a href=\"{lien}\">leaderboard</a>} other {}}."
+            # HTML: rendered with |raw; "fournisseurs": links, or account.index.un_compte_lie.
+            confirmer_identite: "To change your address, first confirm your identity with {fournisseurs}."
+            enregistrer: "Save"
+        mot_de_passe:
+            titre: "Password"
+            minimum: "At least 8 characters"
+            changer: "Change password"
+            # HTML: rendered with |raw, the parameters escaped.
+            sans: "You log in with {fournisseurs}. To also log in with your email address, choose a password via <a href=\"{lien}\">“Forgot your password?”</a>: the link will be sent to {email}."
+        fournisseur:
+            # HTML: rendered with |raw, the parameters escaped.
+            lie: "Linked to the {fournisseur} account <strong>{identifiant}</strong> since {date}: you can log in with it."
+            delier: "Unlink {fournisseur}"
+            seul_moyen: "This is your only way to log in: to unlink it, choose a password first."
+            proposer: "Link your {fournisseur} account to log in without a password."
+            lier: "Link my {fournisseur} account"
+        suppression:
+            titre: "Delete my account"
+            # HTML: rendered with |raw.
+            texte: "Your account, your code, your progress, your feedback and your track access are erased right away. <strong>A track you bought will no longer be accessible</strong>; the purchase stays in our accounting records, with no link to you. This cannot be undone."
+            annuler: "Cancel"
+            mot_de_passe: "Your password, to confirm"
+            # HTML: rendered with |raw; "fournisseurs": links, or account.index.un_compte_lie.
+            confirmer_identite: "First confirm your identity with {fournisseurs}, then come back here."
+            confirmer: "Delete permanently"
+        acces:
+            titre: "My access"
+            aucun: "No access yet. The first chapter of every track is free."
+            actif: "active"
+            a_venir: "upcoming"
+            termine: "ended"
+            jusqu_au: "until {date}"
+            a_vie: "lifetime"
+        achats:
+            titre: "My purchases"
+            aucun: "None yet."
+            facture: "Invoice (PDF)"
+            recu: "Receipt"
+        classement:
+            titre: "Leaderboard"
+            # HTML: rendered with |raw. "inscrit": oui or non.
+            rang: "{inscrit, select, oui {You are} other {You would be}} <strong>{rang, number, ::group-off}<sup>{rang, selectordinal, one {st} two {nd} few {rd} other {th}}</sup></strong> on the overall leaderboard."
+            aucun: "Complete an exercise to enter the leaderboard."
+            inscrit: "You appear on it under your display name."
+            absent: "You don’t appear on it: that’s up to you. Only your display name would be shown, with your XP and your completed exercises."
+            voir: "See the leaderboard"
+        pratique:
+            titre: "Practice"
+            reussis: "{n, plural, one {# exercise completed outside the tracks.} other {# exercises completed outside the tracks.}}"
+            aucun: "Short exercises outside the tracks, each on one specific feature."
+            voir: "See the exercises"
+
+security:
+    commun:
+        # HTML: rendered with |raw.
+        confidentialite: "Your address is only used for your account: <a href=\"{lien}\">privacy policy</a>."
+        creer_mon_compte: "Create my account"
+        # HTML: rendered with |raw.
+        liste_attente: "No invitation code? <a href=\"{lien}\">Join the waitlist</a>: we’ll let you know when we open."
+    login:
+        titre_page: "Log in · {site}"
+        titre: "Log in"
+        email: "Email"
+        mot_de_passe: "Password"
+        rester_connecte: "Stay logged in on this device"
+        mot_de_passe_oublie: "Forgot your password?"
+        se_connecter: "Log in"
+        continuer_avec: "Continue with {fournisseur}"
+        # HTML: rendered with |raw.
+        pas_de_compte: "No account yet? <a rel=\"nofollow\" href=\"{lien}\">Create one</a>."
+    register:
+        titre_page: "Sign up · {site}"
+        titre: "Create an account"
+        intro: "Free. Your progress and XP are saved."
+        intro_invitation: "Invite-only beta. Your progress and XP are saved."
+        inscription_avec: "Sign up with {fournisseur}"
+        sans_mot_de_passe: "No password needed: we use the address the service has already verified."
+        # HTML: rendered with |raw.
+        deja_inscrit: "Already have an account? <a href=\"{lien}\">Log in</a>."
+    oauth_register:
+        titre_page: "Sign up with {fournisseur} · {site}"
+        titre: "Create an account"
+        # HTML: rendered with |raw, the parameters escaped.
+        profil: "With your {fournisseur} account <strong>{identifiant}</strong>, at <strong>{email}</strong>. No password: you'll log in with {fournisseur}."
+    reset_password:
+        request:
+            titre_page: "Forgot your password · {site}"
+            titre: "Forgot your password?"
+            texte: "Enter your account's email: you'll receive a link to choose a new password."
+            envoyer: "Send me the link"
+            # HTML: rendered with |raw.
+            retour: "Remembered it? <a href=\"{lien}\">Log in</a>."
+        check_email:
+            titre_page: "Email sent · {site}"
+            titre: "Check your inbox"
+            # "duree": how long the link is valid, translated by ResetPasswordBundle ("1 hour").
+            texte: "If an account exists with this address, we've just sent an email with a link to choose a new password. It's valid for {duree}."
+            # HTML: rendered with |raw.
+            rien_recu: "Nothing received? Check your spam folder, or <a href=\"{lien}\">request a new link</a> once that time has passed."
+        reset:
+            titre_page: "New password · {site}"
+            titre: "New password"
+            envoyer: "Save and log in"
+
+# Field labels (translation_domain of the form types); constraint messages are in validators.en.yaml.
+form:
+    profile:
+        pseudo: "Display name"
+        email: "Email"
+        email_aide: "A new address only replaces the current one once confirmed through the link we send to it."
+        mot_de_passe: "Current password"
+        mot_de_passe_aide: "Only required to change your address."
+    password:
+        actuel: "Current password"
+        nouveau: "New password"
+    delete_account:
+        mot_de_passe: "Password"
+    registration:
+        pseudo: "Display name"
+        email: "Email"
+        mot_de_passe: "Password"
+    external_registration:
+        pseudo: "Display name"
+        code_aide: "Optional: the one your instructor gave you, to join their cohort."
+    invitation_code:
+        code: "Invitation code"
+    change_password:
+        nouveau: "New password"
+    reset_password_request:
+        email: "Email"
+    contact:
+        objet: "Subject"
+        nom: "Name"
+        email: "Email"
+        organisation: "School or company"
+        effectif: "Number of people to train (approx.)"
+        projet: "Your project"
+        projet_exemple: "The audience (degree program, bootcamp, developer team…), the tracks you're interested in, the intended timeframe."
+        message: "Message"
+    purchase_confirmation:
+        # HTML (label_html).
+        cgv: "I have read and accept the <a href=\"{lien}\" target=\"_blank\" rel=\"noopener\">terms of sale</a>."
+
+# Form errors set by the controllers.
+erreur:
+    mot_de_passe_requis: "Your current password is required to change your address."
+    identite_pour_adresse: "To change your address, first confirm your identity with a linked account (GitHub, Google or LinkedIn)."
+    identite_pour_suppression: "First confirm your identity with a linked account (GitHub, Google or LinkedIn)."
+    email_pris: "An account already exists with this email."
+    inscriptions_refusees: "Too many rejected signups from your connection: try again in an hour."
+    trop_de_codes: "Too many invitation codes tried from your connection: try again in an hour, or ask your instructor for the invitation link."
+
+flash:
+    profil_enregistre: "Profile saved."
+    confirmation_envoyee: "A confirmation link has just been sent to {email}. Your current address stays valid until you open it."
+    confirmation_renvoyee: "A new confirmation link has just been sent to {email}."
+    confirmation_trop_de_demandes: "Too many confirmation requests: try again in an hour."
+    confirmation_non_envoyee: "The confirmation email could not be sent. Try again in a few minutes."
+    confirmation_invalide: "This confirmation link is invalid or has expired. You can request a new one from your account."
+    confirmation_perimee: "This confirmation link has already been used or no longer matches your account. You can request a new one from your account."
+    adresse_deja_confirmee: "Your address is already confirmed."
+    adresse_prise: "This address is already used by another account."
+    adresse_confirmee: "Address confirmed, thank you."
+    adresse_changee: "Address confirmed: your account now uses {email}."
+    mot_de_passe_change: "Password changed. Your other devices will need to log in again."
+    facture_indisponible: "The invoice isn't available right now. Try again later, or contact us."
+    compte_supprime: "Your account has been deleted, along with your progress. Thanks for stopping by."
+    bienvenue: "Welcome, {pseudo}! Your account is created: your progress is now saved."
+    bienvenue_confirmation: "Welcome, {pseudo}! Your account is created: your progress is now saved. We've just sent an email to {email} to confirm your address."
+    lien_expire: "This link has expired. Request a new one."
+    lien_invalide: "This reset link is invalid or has already been used. Request a new one."
+    mot_de_passe_modifie: "Password changed. Welcome back!"
+    message_envoye: "Message sent, thank you. We'll reply by email."
+    oauth:
+        expiree: "Your {fournisseur} login has expired. Please start again."
+        annulee: "{fournisseur} login cancelled."
+        sans_reponse: "{fournisseur} didn't respond as expected. Try again in a few minutes."
+        connecte: "Logged in with {fournisseur}."
+        compte_non_confirme: "An account already exists with your {fournisseur} account's address, but that address was never confirmed: for security, it isn't linked automatically. Log in with your password (or “Forgot your password?”), then link {fournisseur} from your account."
+        autre_compte_lie: "The account using your {fournisseur} account's address is already linked to another {fournisseur} account. Log in with that {fournisseur} account, or with your password."
+        aucune_adresse_verifiee: "Your {fournisseur} account has no verified email address. Verify one with {fournisseur}, or create an account with your address and a password."
+        compte_cree_entre_temps: "An account has just been created with this address. Log in again with {fournisseur}."
+        delie: "{fournisseur} is no longer linked to your account."
+        dernier_moyen: "Choose a password first (“Forgot your password?” on the login page): without {fournisseur} or a password, you could no longer log in."
+        lie: "Your {fournisseur} account {identifiant} is linked: you can now log in with it."
+        lie_ailleurs: "This {fournisseur} account is linked to another account on the platform."
+        deja_lie: "Your account is already linked to another {fournisseur} account: unlink it first."
+        identite_confirmee: "Identity confirmed with {fournisseur}: you have five minutes."
+        identite_non_confirmee: "This {fournisseur} account isn't the one linked to yours: identity not confirmed."
+    achat:
+        connexion: "Log in (or create your account) to buy the track: access is tied to your account."
+        gratuit: "This track is free: there's nothing to buy."
+        bientot: "Buying this track will be available soon."
+        deja_acces: "You already have access to this entire track."
+        # "raison": the PaymentException message.
+        paiement_impossible: "{raison} Nothing was charged; try again in a moment."
+
+# Enum labels shown to learners (their trans() method).
+enum:
+    access_source:
+        purchase: "Purchase"
+        cohort: "Cohort"
+        gift: "Gift"
+    purchase_status:
+        pending: "Pending"
+        abandoned: "Abandoned"
+        paid: "Paid"
+        refunded: "Refunded"
+        disputed: "Disputed"
+    contact_subject:
+        question: "A question about the tracks"
+        commande: "A purchase, an invoice, a refund"
+        probleme: "A problem on the site"
+        ecole: "Train a class or a team"
+        certificat: "A dispute about a certificate"
+        autre: "Something else"

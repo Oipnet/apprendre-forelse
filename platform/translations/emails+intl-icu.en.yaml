@@ -1,0 +1,70 @@
+# Emails sent to learners in English (templates/emails/, subjects in src/): see emails+intl-icu.fr.yaml.
+# Only the account emails are here (confirmation, password reset, address change, signup attempt); purchase,
+# defense and certificate emails fall back to French for now.
+# The *_html messages contain HTML and are rendered with |raw, parameters escaped (|e).
+
+sujet:
+  reset_password: 'Choose a new password on {site}'
+  confirm_email: 'Confirm your email address on {site}'
+  confirm_email_changement: 'Confirm your new email address on {site}'
+  email_changed: 'Your email address on {site} has changed'
+  registration_attempt: 'You already have a {site} account'
+
+commun:
+  bonjour: 'Hi {nom},'
+  bonjour_anonyme: 'Hi,'
+  # A "label: value" line (punctuation varies between languages).
+  libelle_valeur: '{libelle}: {valeur}'
+  voir_le_certificat: 'View the certificate'
+
+_button:
+  lien_en_clair: "Button not working? Copy this link into your browser:"
+
+confirm_email:
+  apercu: 'Confirm your address: the link is valid for {heures, plural, one {# hour} other {# hours}}.'
+  apercu_changement: 'Confirm your new address: the link is valid for {heures, plural, one {# hour} other {# hours}}.'
+  bienvenue: 'Welcome to {site}. All that’s left is to confirm your email address:'
+  changement: 'You asked to use this address for your {site} account. To confirm it:'
+  bouton: 'Confirm my address'
+  validite: "The link is valid for {heures, plural, one {# hour} other {# hours}} and can only be used once."
+  ignorer: "If you didn't create an account, ignore this email."
+  ignorer_changement: "If you didn't request anything, ignore this email: your account's address stays the same."
+  raison: 'You’re receiving this email because this address was entered for a {site} account.'
+  texte:
+    bienvenue: 'Welcome to {site}. To confirm your email address, open this link:'
+    changement: 'You asked to use this address for your {site} account. To confirm it, open this link:'
+    validite: "It's valid for {heures, plural, one {# hour} other {# hours}} and can only be used once."
+
+reset_password:
+  apercu: 'Choose a new password: the link is valid for {validite}.'
+  intro: 'To choose a new password on {site}:'
+  bouton: 'Choose a password'
+  validite: "The link is valid for {validite} and can only be used once."
+  ignorer: "If you didn't request anything, ignore this email: your password stays the same."
+  raison: "You're receiving this email because a new password was requested for your {site} account."
+  texte:
+    intro: 'To choose a new password on {site}, open this link:'
+    validite: "It's valid for {validite} and can only be used once."
+
+email_changed:
+  apercu: "Your {site} account’s address has been changed to {adresse}."
+  remplacee_html: "Your {site} account’s address has just been changed to <strong>{adresse}</strong>. Account emails (password resets, purchases) now go to that address."
+  si_c_est_vous: "If this was you, there's nothing to do."
+  ecrivez_nous_html: "If this wasn't you, someone has taken over your account: write to us as soon as possible at <a class=\"lien\" href=\"mailto:{contact}\" style=\"color:{couleur};\">{contact}</a>, mentioning this address."
+  prevenez_html: "If this wasn't you, someone has taken over your account: notify the site’s publisher as soon as possible (contact details in the <a class=\"lien\" href=\"{url}\" style=\"color:{couleur};\">legal notice</a>), mentioning this address."
+  raison: 'You’re receiving this email because this was your {site} account’s address.'
+  texte:
+    remplacee: "Your {site} account’s address has just been changed to {adresse}. Account emails (password resets, purchases) now go to that address."
+    ecrivez_nous: "If this wasn't you, someone has taken over your account: write to us as soon as possible at {contact}, mentioning this address."
+    prevenez: "If this wasn't you, someone has taken over your account: notify the site’s publisher as soon as possible (contact details in the legal notice: {url}), mentioning this address."
+
+registration_attempt:
+  apercu: "Someone tried to create a {site} account with your address."
+  tentative: "Someone just tried to create an account on {site} with your email address. But you already have one."
+  si_c_etait_vous: "If it was you, log in:"
+  bouton: 'Log in'
+  oubli_html: 'Forgot your password? <a class="lien" href="{url}" style="color:{couleur};">Choose a new one</a>.'
+  ignorer: "If it wasn't you, ignore this email: no account was created and yours hasn't changed."
+  raison: "You're receiving this email because someone tried to sign up for {site} with your address."
+  texte:
+    oubli: 'Forgot your password? Choose a new one:'

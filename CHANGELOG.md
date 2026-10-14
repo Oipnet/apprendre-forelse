@@ -17,6 +17,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   (`/en/api/…`). `content:check` vérifie chaque traduction à part et signale celle dont l'exercice français a changé
   (clé `source`). Une réussite en anglais est revérifiée avec les tests anglais (migration : colonne
   `exercise_progress.submitted_locale`). L'exercice du pack de démo est traduit.
+- **Compte en anglais** : inscription (`/en/signup`), connexion (`/en/login`, connexion par GitHub, Google ou LinkedIn
+  comprise), mot de passe oublié (`/en/forgot-password`) et page du compte (`/en/account`). Les e-mails qu'ils envoient
+  (confirmation d'adresse, nouveau mot de passe, changement d'adresse, inscription avec une adresse déjà prise) partent
+  dans la langue de la page. Achats, contact et e-mails de soutenance ou de certificat restent en français.
+- **Mentor en anglais** : sur un exercice traduit, la revue de code et l'explication d'erreur sont rédigées en anglais.
 
 ## 3.8.0 — 2026-10-14
 

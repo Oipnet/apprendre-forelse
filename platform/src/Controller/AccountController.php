@@ -45,14 +45,14 @@ final class AccountController extends AbstractController
     ) {
     }
 
-    #[Route('/compte', name: 'app_account', methods: ['GET'])]
+    #[Route(['fr' => '/compte', 'en' => '/en/account'], name: 'app_account', methods: ['GET'])]
     #[IsGranted('ROLE_USER')]
     public function index(): Response
     {
         return $this->renderPage();
     }
 
-    #[Route('/compte/profil', name: 'app_account_profile', methods: ['POST'])]
+    #[Route(['fr' => '/compte/profil', 'en' => '/en/account/profile'], name: 'app_account_profile', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function profile(Request $request): Response
     {
@@ -80,7 +80,7 @@ final class AccountController extends AbstractController
         return $this->renderPage(profile: $form);
     }
 
-    #[Route('/compte/mot-de-passe', name: 'app_account_password', methods: ['POST'])]
+    #[Route(['fr' => '/compte/mot-de-passe', 'en' => '/en/account/password'], name: 'app_account_password', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function password(Request $request, Security $security): Response
     {
@@ -98,7 +98,7 @@ final class AccountController extends AbstractController
         return $this->renderPage(password: $form);
     }
 
-    #[Route('/compte/confirmation', name: 'app_account_resend_confirmation', methods: ['POST'])]
+    #[Route(['fr' => '/compte/confirmation', 'en' => '/en/account/confirmation'], name: 'app_account_resend_confirmation', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function resendConfirmation(Request $request): Response
     {
@@ -116,7 +116,7 @@ final class AccountController extends AbstractController
     }
 
     /** Le lien reçu par email. Il fonctionne sans être connecté : on l'ouvre souvent depuis un autre appareil. */
-    #[Route('/compte/confirmer-email', name: 'app_account_confirm_email', methods: ['GET'])]
+    #[Route(['fr' => '/compte/confirmer-email', 'en' => '/en/account/confirm-email'], name: 'app_account_confirm_email', methods: ['GET'])]
     public function confirmEmail(Request $request, Security $security): Response
     {
         $email = $request->query->getString('email');
@@ -154,7 +154,7 @@ final class AccountController extends AbstractController
         return new RedirectResponse($url);
     }
 
-    #[Route('/compte/supprimer', name: 'app_account_delete', methods: ['POST'])]
+    #[Route(['fr' => '/compte/supprimer', 'en' => '/en/account/delete'], name: 'app_account_delete', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function delete(Request $request, Security $security): Response
     {

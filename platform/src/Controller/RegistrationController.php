@@ -36,7 +36,7 @@ final class RegistrationController extends AbstractController
     ) {
     }
 
-    #[Route('/inscription', name: 'app_register')]
+    #[Route(['fr' => '/inscription', 'en' => '/en/signup'], name: 'app_register')]
     public function register(Request $request, Security $security): Response
     {
         if ($this->getUser()) {

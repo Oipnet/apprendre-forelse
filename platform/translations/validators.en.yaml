@@ -1,0 +1,56 @@
+# Constraint messages (#[Assert\…(message: 'cle')]) in English: see validators.fr.yaml. No ICU: the validator passes
+# its parameters as {{ limit }}. Symfony's default messages (maximum length…) come from its own translations.
+
+email:
+    invalide: "This email isn't valid."
+
+compte:
+    pseudo:
+        vide: "Choose a display name."
+    email:
+        vide: "Enter your email."
+        # User::EMAIL_TAKEN: points to logging in, without saying more.
+        pris: "Can't create an account with this email. If it's yours, log in, or choose a new password."
+    mot_de_passe:
+        incorrect: "That's not your password."
+        actuel_incorrect: "That's not your current password."
+
+# App\Validator\StrongPassword.
+mot_de_passe:
+    vide: "Choose a password."
+    trop_court: "At least {{ limit }} characters."
+    trop_faible: "This password is too easy to guess. A passphrase of a few words (“four cats drink tea”) is safer, and easier to remember."
+    compromis: "This password appears in known data breaches: choose another one, for example a phrase of a few words."
+
+invitation:
+    vide: "Enter your invitation code."
+    inconnu: "Unknown or expired invitation code."
+
+contact:
+    objet:
+        vide: "Choose a subject."
+    nom:
+        vide: "Enter your name."
+    email:
+        vide: "Enter your email, so we can reply."
+    effectif:
+        hors_limites: "Between {{ min }} and {{ max }} people."
+    message:
+        vide: "Write your message."
+        trop_court: "A few more details? At least {{ limit }} characters."
+
+achat:
+    cgv: "Accept the terms of sale to buy the track."
+    renonciation: "Tick the box to access the track as soon as you pay."
+
+certificate_claim:
+    holder_name:
+        not_blank: "Enter the name to show on the certificate."
+
+api:
+    retour:
+        type_inconnu: Unknown feedback type.
+        vide: Tell us a bit more.
+        trop_long: "At most {{ limit }} characters."
+    mentor:
+        trop_de_code: "Too much code for the mentor: {{ total }} characters, at most {{ max }}."
