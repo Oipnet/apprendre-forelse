@@ -98,8 +98,8 @@ export class PhpWasmProject implements Runtime {
 	 * Une instance PHP complète, projet copié. `background` : l'instance de tests, préparée pendant que
 	 * l'apprenant travaille déjà ; sa copie du projet rend la main au worker entre deux tranches.
 	 */
-	private async createPhp(background = false): Promise<PhpInstance> {
-		const php = await this.deps.loadPhp(this.phpVersion());
+	private async createPhp(background = false, loading?: Promise<PhpInstance>): Promise<PhpInstance> {
+		const php = await (loading ?? this.deps.loadPhp(this.phpVersion()));
 		php.mkdir(APP_DIR);
 		if (background) await writeTreeInSlices(php, this.baseFiles);
 		else writeTree(php, this.baseFiles);
@@ -242,13 +242,17 @@ export class PhpWasmProject implements Runtime {
 		this.profile = spec.framework;
 		const frameworks = this.deps.frameworks ?? PHP_FRAMEWORKS;
 		this.framework = (Object.hasOwn(frameworks, spec.framework.id) ? frameworks[spec.framework.id] : defaultPhpFramework)();
+		// PHP (le binaire WebAssembly, compilé pendant son téléchargement) et l'archive du projet arrivent en même temps :
+		// PHP attendait la fin de l'archive pour seulement commencer à se télécharger.
+		const php = this.deps.loadPhp(this.phpVersion());
+		php.catch(() => {}); // attendu plus bas : son échec éventuel s'y lève
 		const archive = await this.deps.download(spec.archiveUrl, progress);
 		progress({ step: 'unpack', ratio: null, label: spec.framework.unpackLabel });
 		this.baseFiles = new Map(
 			Object.entries(unzipSync(archive)).filter(([path]) => !path.endsWith('/')),
 		);
 		progress({ step: 'boot', ratio: null, label: m.runtime.booting(spec.options?.phpVersion ?? '') });
-		this.preview = await this.createPhp();
+		this.preview = await this.createPhp(false, php);
 		// Instance de tests préparée en arrière-plan : premier run plus rapide.
 		this.prepareTests().catch(() => {}); // réessayée au premier lancement des tests
 	}
