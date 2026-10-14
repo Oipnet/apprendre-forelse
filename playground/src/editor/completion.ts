@@ -5,7 +5,8 @@
  * PHP : `$this->` (méthodes héritées, ex. AbstractController::render), `$var->`
  * (type déduit des paramètres, `new`, retours de méthodes), `Classe::`, `#[` (attributs),
  * `new`, `use`, noms de classes avec ajout automatique du `use`, snippets Symfony.
- * Paramètres de l'appel en cours (signature help) : constructeurs, attributs, méthodes.
+ * Fonctions de PHP et helpers du framework (str_contains, route…).
+ * Paramètres de l'appel en cours (signature help) : constructeurs, attributs, méthodes, fonctions.
  * Twig : snippets, noms de routes dans path(), variables passées par les contrôleurs.
  */
 import { monaco, pathOf } from './monaco';
@@ -15,8 +16,16 @@ import { projectClasses, type ClassInfo, type MethodInfo } from './project-class
 type Languages = typeof monaco.languages;
 const { CompletionItemKind: Kind, CompletionItemInsertTextRule: Rule } = monaco.languages;
 
+export interface FunctionInfo {
+	params: string[];
+	returns: string;
+	doc: string;
+}
+
 export interface CompletionIndex {
 	classes: Record<string, ClassInfo>;
+	/** Fonctions de PHP et helpers globaux du framework (route(), view()…). Absent des index d'avant. */
+	functions?: Record<string, FunctionInfo>;
 }
 
 /** `?Symfony\Component\HttpFoundation\Response $r = null` → `?Response $r = null` */
@@ -110,6 +119,7 @@ export function registerCompletion(
 	projectFiles: () => Record<string, string> = () => ({}),
 ) {
 	const classes: Record<string, ClassInfo> = { ...index.classes };
+	const functions = index.functions ?? {};
 	let projectSnapshot = '';
 	const families = snippets.filter((name) => Object.hasOwn(SNIPPET_PROVIDERS, name)).map((name) => SNIPPET_PROVIDERS[name]);
 	// Les extraits PHP d'une famille remplacent les extraits PHP génériques ; sans famille qui en déclare, ces derniers.
@@ -189,6 +199,19 @@ export function registerCompletion(
 			sortText: sortPrefix + m.name,
 			range,
 			command: m.params.length ? { id: 'editor.action.triggerParameterHints', title: '' } : undefined,
+		};
+	}
+
+	function functionItem(name: string, f: FunctionInfo, range: monaco.IRange): monaco.languages.CompletionItem {
+		const signature = `(${f.params.map(shorten).join(', ')})${f.returns ? `: ${shorten(f.returns)}` : ''}`;
+		return {
+			label: { label: name, detail: signature },
+			kind: Kind.Function,
+			insertText: f.params.length ? `${name}($0)` : `${name}()`,
+			insertTextRules: Rule.InsertAsSnippet,
+			documentation: { value: `\`${name}${signature}\`${f.doc ? `\n\n${f.doc}` : ''}` },
+			range,
+			command: f.params.length ? { id: 'editor.action.triggerParameterHints', title: '' } : undefined,
 		};
 	}
 
@@ -294,6 +317,12 @@ export function registerCompletion(
 			const suggestions = /^[A-Z]/.test(word.word) || (argumentDAttribut && word.word === '')
 				? classItems(range, model, ctx, () => true)
 				: [];
+			// Fonctions (str_contains, array_map, route…) : un mot en minuscule qui n'est ni une variable,
+			// ni le nom d'une fonction qu'on déclare.
+			const before = line.slice(0, word.startColumn - 1);
+			if (/^[a-z_]/.test(word.word) && !/(\$|\w\\)$/.test(before) && !/\bfunction\s+&?$/.test(before)) {
+				for (const [name, f] of Object.entries(functions)) suggestions.push(functionItem(name, f, range));
+			}
 			suggestions.push(...phpProviders.flatMap((provide) => provide(range, model, ctx, useEdit)));
 			return { suggestions };
 		},
@@ -321,6 +350,9 @@ export function registerCompletion(
 		if (arrow) return method(typeOfVariable(arrow[1], code, ctx), arrow[2]);
 		const scope = before.match(/(?:^|[^\w\\$])(static|self|parent|[A-Z\\][\w\\]*)\s*::\s*(\w+)\s*$/);
 		if (scope) return method(['static', 'self', 'parent'].includes(scope[1]) ? ctx.parent : resolveName(scope[1], ctx), scope[2]);
+		const call = before.match(/(?:^|[^\w\\$>:])\\?(\w+)\s*$/);
+		const f = call && !/\bfunction\s+&?\w+\s*$/.test(before) ? functions[call[1]] : undefined;
+		if (f) return { label: call![1], params: f.params, doc: f.doc };
 		return undefined;
 	}
 
