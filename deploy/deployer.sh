@@ -68,10 +68,18 @@ else
     echo "Pas de base en service : pas de copie avant migration."
 fi
 
+# Le worker s'arrête avant les migrations : quand compose.yaml change la configuration du service db (journaux, réglages),
+# le `run` ci-dessous recrée PostgreSQL, qui coupe les connexions ouvertes (« terminating connection due to administrator
+# command »). Le worker, qui attend un message sur la sienne, plantait alors en remontant l'erreur dans Sentry (vu le
+# 14/10/2026). Arrêté ici (SIGTERM, il finit le message en cours), il est recréé avec la nouvelle image par demarrer().
+# Les messages attendent dans leur table pendant ce temps.
+docker compose stop worker
+
 # Base à jour pour la nouvelle image, avant qu'elle ne serve la moindre requête. La base démarre si besoin (depends_on).
 echo "Migrations de la base."
 if ! APP_IMAGE="$NEW" docker compose run --rm app php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing; then
     echo "::error::Migrations en échec : rien n'a été basculé, la version en service continue."
+    docker compose start worker
     exit 1
 fi
 

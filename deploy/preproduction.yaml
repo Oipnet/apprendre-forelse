@@ -28,6 +28,8 @@ services:
   worker:
     environment:
       MAILER_DSN: smtp://mailpit:1025
+      # Comme « app » : sans lui, ses erreurs arrivaient dans Sentry rangées en production.
+      SENTRY_ENVIRONMENT: preproduction
       THEME: forelse
     volumes:
       - /srv/forelse/themes:/themes:ro
