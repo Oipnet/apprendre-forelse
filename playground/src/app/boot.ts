@@ -45,6 +45,8 @@ export function bindRetry(root: HTMLElement, readBrief?: () => void): void {
  * `demarrage-echoue` part quand PHP ne démarre pas ; `demarrage-interrompu` quand la page passe en arrière-plan
  * ou se ferme avant d'être prête, une fois : un onglet quitté pendant le premier téléchargement se voit enfin.
  * Un visiteur qui revient ensuite compte quand même dans `exercice-ouvert`.
+ * `demarrage-echoue` porte aussi la `raison` (première ligne de l'erreur) : sans elle, un échec chez un visiteur
+ * restait inexplicable, faute de pouvoir le reproduire.
  */
 export function suivreDemarrage(mesure: Record<string, string>, premier: boolean, debut = performance.now()) {
 	const duree = () => Math.round((performance.now() - debut) / 100) / 10;
@@ -61,6 +63,15 @@ export function suivreDemarrage(mesure: Record<string, string>, premier: boolean
 	};
 	return {
 		pret: (donnees?: Record<string, string | number | boolean>) => terminer('exercice-ouvert', donnees),
-		echec: () => terminer('demarrage-echoue'),
+		echec: (erreur?: unknown) => terminer('demarrage-echoue', erreur === undefined ? {} : { raison: raisonDeLEchec(erreur) }),
 	};
+}
+
+/**
+ * La raison d'un échec, telle que la mesure peut la porter : la première ligne du message, sans les paramètres des
+ * URL (une archive de parcours est servie par une URL signée) et courte.
+ */
+export function raisonDeLEchec(erreur: unknown): string {
+	const message = erreur instanceof Error ? `${erreur.name}: ${erreur.message}` : String(erreur);
+	return message.split('\n')[0].replace(/(https?:\/\/[^\s?]*)\?\S*/g, '$1').slice(0, 200);
 }
