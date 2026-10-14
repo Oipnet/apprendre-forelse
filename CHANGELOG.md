@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.11.0 — 2026-10-14
+
 ### Ajouté
 
 - **Classement en anglais** (`/en/leaderboard`) : la page du classement et le choix d'y paraître existent en anglais.
