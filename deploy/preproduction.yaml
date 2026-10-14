@@ -39,10 +39,9 @@ services:
     image: ghcr.io/axllent/mailpit:v1.31.3
     # Comme les autres services (compose.yaml) : une ancre YAML ne passe pas d'un fichier à l'autre.
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: "10m"
-        max-file: "5"
+        tag: "{{.Name}}"
     restart: unless-stopped
     environment:
       MP_WEBROOT: /mails/
