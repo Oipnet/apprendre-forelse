@@ -8,6 +8,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Le playground s'ouvre sans attendre PHP** : la consigne et le code de l'exercice s'affichent tout de suite, et
+  l'apprenant peut lire et modifier son code pendant le premier chargement (une vingtaine de secondes). Seul l'aperçu
+  porte l'écran de démarrage, et la barre de statut suit la progression ; le bouton Exécuter s'active quand PHP est
+  prêt, et les modifications faites entre-temps lui sont transmises. Le binaire PHP se télécharge en même temps que
+  l'archive du projet, et non plus après elle.
+
 ## 3.11.0 — 2026-10-14
 
 ### Ajouté
@@ -17,11 +25,6 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Modifié
 
-- **Le playground s'ouvre sans attendre PHP** : la consigne et le code de l'exercice s'affichent tout de suite, et
-  l'apprenant peut lire et modifier son code pendant le premier chargement (une vingtaine de secondes). Seul l'aperçu
-  porte l'écran de démarrage, et la barre de statut suit la progression ; le bouton Exécuter s'active quand PHP est
-  prêt, et les modifications faites entre-temps lui sont transmises. Le binaire PHP se télécharge en même temps que
-  l'archive du projet, et non plus après elle.
 - **Fichiers du playground précompressés** : l'image contient une variante brotli, zstd et gzip de chaque fichier du
   build (`playground/precompresser.ts`), et Caddy envoie celle que le navigateur accepte. Il ne recompresse plus le
   binaire PHP (≈ 20 Mo) et les données ICU (≈ 30 Mo) à chaque nouveau visiteur, environ une seconde de processeur à
