@@ -54,6 +54,10 @@ class ExerciseProgress
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $submittedFiles = null;
 
+    /** La langue de l'exercice réussi, quand c'est une traduction : ses tests (traduits) sont ceux à rejouer. */
+    #[ORM\Column(length: 5, nullable: true)]
+    private ?string $submittedLocale = null;
+
     /** Vérification serveur de la réussite ; null tant que l'exercice n'est pas réussi. */
     #[ORM\Column(length: 20, nullable: true, enumType: VerificationStatus::class)]
     private ?VerificationStatus $verification = null;
@@ -187,7 +191,7 @@ class ExerciseProgress
     /**
      * Marque l'exercice réussi. Renvoie l'XP gagnée : 0 s'il l'était déjà.
      */
-    public function complete(int $hintsUsed, int $xp, \DateTimeImmutable $now): int
+    public function complete(int $hintsUsed, int $xp, \DateTimeImmutable $now, ?string $locale = null): int
     {
         if ($this->isCompleted()) {
             return 0;
@@ -200,9 +204,15 @@ class ExerciseProgress
         // Sans brouillon, la réussite se vérifie quand même, sur le code de départ : une réussite annoncée sans code
         // ne passe plus pour « non vérifiable », qui ouvrait le certificat et le classement sans rien résoudre.
         $this->submittedFiles = $this->files;
+        $this->submittedLocale = $locale;
         $this->verification = VerificationStatus::Pending;
 
         return $xp;
+    }
+
+    public function getSubmittedLocale(): ?string
+    {
+        return $this->submittedLocale;
     }
 
     /** @return array<string, string>|null */

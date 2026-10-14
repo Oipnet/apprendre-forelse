@@ -4,6 +4,11 @@ namespace App\Content;
 
 final readonly class Exercise
 {
+    /** La langue d'un exercice écrit dans son dossier ; ses traductions vivent dans `i18n/<langue>/` (voir ExerciseReader::translate). */
+    public const string LOCALE = 'fr';
+    /** Les langues dans lesquelles un exercice de Pratique peut être traduit. */
+    public const array TRANSLATIONS = ['en'];
+
     /**
      * @param list<string>    $concepts
      * @param list<string>    $editable   fichiers modifiables par l'apprenant ; un motif (`migrations/*.php`)
@@ -42,6 +47,12 @@ final readonly class Exercise
         public ?int $duration = null,
         /** Anciens identifiants (clé « former_ids ») : leurs adresses redirigent vers celle de l'exercice. */
         public array $formerIds = [],
+        public string $locale = self::LOCALE,
+        /**
+         * Une traduction : son dossier (`i18n/<langue>/`), dont les fichiers starter/, solution/ et tests/ remplacent,
+         * chemin par chemin, ceux de l'exercice français.
+         */
+        public ?string $overlay = null,
     ) {
     }
 

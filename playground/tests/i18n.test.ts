@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { en } from '../src/i18n/en.ts';
 import { fr } from '../src/i18n/fr.ts';
 import { catalogue, m } from '../src/i18n/index.ts';
 
@@ -11,7 +12,11 @@ describe('catalogue', () => {
 	});
 
 	it('se replie sur fr pour une langue absente ou inconnue', () => {
-		for (const lang of ['fr', 'fr-FR', 'FR', '', null, undefined, 'en', 'en-GB', 'toString', '__proto__']) expect(catalogue(lang)).toBe(fr);
+		for (const lang of ['fr', 'fr-FR', 'FR', '', null, undefined, 'de', 'toString', '__proto__']) expect(catalogue(lang)).toBe(fr);
+	});
+
+	it('donne l\'anglais pour « en » et ses variantes', () => {
+		for (const lang of ['en', 'en-GB', 'EN-us']) expect(catalogue(lang)).toBe(en);
 	});
 });
 

@@ -82,6 +82,9 @@ final class SearchIndexingTest extends WebTestCase
             'http://localhost/parcours/decouverte/02-bonjour-prenom',
             'http://localhost/pratique',
             'http://localhost/pratique/exemple-map-request-header',
+            // L'exercice du pack de démo est traduit : la Pratique anglaise n'a que lui.
+            'http://localhost/en/practice',
+            'http://localhost/en/practice/exemple-map-request-header',
             // L'index des notions, sans la page de « Contrôleur » : sans intro écrite, elle ne s'indexe pas.
             'http://localhost/notions',
             'http://localhost/ecoles-et-entreprises',

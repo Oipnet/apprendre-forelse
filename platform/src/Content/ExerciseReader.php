@@ -17,6 +17,16 @@ final class ExerciseReader
     ) {
     }
 
+    /**
+     * Ce qu'une traduction peut changer dans exercise.yaml : les textes, et ce qui dépend des noms traduits dans le
+     * code (l'adresse de l'aperçu, les requêtes d'exemple, les tests des objectifs). Le reste (environnement,
+     * fichiers, date…) se règle dans l'exercice français. Les notions traduites ne sont que des étiquettes : les
+     * pages de notions restent en français.
+     */
+    public const array TRANSLATED_KEYS = ['title', 'summary', 'concepts', 'objectives', 'hints', 'requests', 'docs', 'preview', 'source'];
+    /** Les dossiers dont une traduction peut remplacer des fichiers. */
+    private const array TRANSLATED_FOLDERS = ['starter', 'solution', 'tests'];
+
     /** @return array<string, string> */
     public function deprecations(): array
     {
@@ -27,10 +37,11 @@ final class ExerciseReader
      * @param string|null               $trackId              null pour un exercice de Pratique
      * @param string|null               $inheritedEnvironment environnement du chapitre ou du parcours, faute de clé « environment »
      * @param array<string, mixed>|null $meta                 exercise.yaml déjà lu
+     * @param string|null               $overlay              dossier d'une traduction (voir translate())
      */
-    public function read(string $directory, ?string $trackId, ?string $inheritedEnvironment, ?array $meta = null): Exercise
+    public function read(string $directory, ?string $trackId, ?string $inheritedEnvironment, ?array $meta = null, ?string $overlay = null, string $locale = Exercise::LOCALE): Exercise
     {
-        $file = $directory.'/exercise.yaml';
+        $file = ($overlay ?? $directory).'/exercise.yaml';
         $meta ??= $this->files->parse($file);
         $id = $this->files->required($meta, 'id', $file);
         if (null !== $trackId && \array_key_exists('access', $meta)) {
@@ -40,9 +51,10 @@ final class ExerciseReader
         if (basename($directory) !== $id) {
             throw new ContentException(sprintf('%s : l\'id « %s » doit correspondre au nom du dossier.', $file, $id));
         }
-        $this->files->watch($directory.'/instructions.md');
-        if (!is_file($directory.'/instructions.md')) {
-            throw new ContentException(sprintf('Exercice « %s » : instructions.md manquant.', $id));
+        $instructions = ($overlay ?? $directory).'/instructions.md';
+        $this->files->watch($instructions);
+        if (!is_file($instructions)) {
+            throw new ContentException(sprintf('Exercice « %s » : %s manquant.', $id, null === $overlay ? 'instructions.md' : 'i18n/'.$locale.'/instructions.md'));
         }
 
         $environment = (string) ($meta['environment'] ?? $inheritedEnvironment);
@@ -109,7 +121,7 @@ final class ExerciseReader
             readonly: $readonly,
             objectives: $objectives,
             hints: $this->strings($meta, 'hints', $file),
-            instructions: (string) file_get_contents($directory.'/instructions.md'),
+            instructions: (string) file_get_contents($instructions),
             directory: $directory,
             setup: array_map(
                 static fn ($command) => \is_string($command) && '' !== trim($command) ? trim($command)
@@ -121,6 +133,8 @@ final class ExerciseReader
             mutants: array_values($mutants),
             duration: $this->duration($meta['duration'] ?? null, $file),
             formerIds: FormerIds::parse($meta['former_ids'] ?? null, $file),
+            locale: $locale,
+            overlay: $overlay,
         );
         if (($mutants || array_filter($objectives, static fn (Objective $o) => !$o->isHiddenTest())) && !$exercise->ownTests()) {
             throw new ContentException(sprintf('%s : des objectifs portent sur les tests de l\'apprenant, mais aucun fichier éditable tests/…Test.php ne les accueille.', $file));
@@ -250,5 +264,79 @@ final class ExerciseReader
             // Un objet YAML devient du JSON indenté ; une chaîne est envoyée telle quelle.
             body: \is_array($body) ? json_encode($body, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES) : (null === $body ? null : (string) $body),
         );
+    }
+
+    /**
+     * La traduction d'un exercice, dans `<exercice>/i18n/<langue>/` : un exercise.yaml qui ne porte que les clés
+     * traduites (TRANSLATED_KEYS), un instructions.md complet, et, si les noms du code changent, des fichiers de
+     * starter/, solution/ et tests/ qui remplacent ceux de l'exercice français au même chemin.
+     *
+     * @param array<string, mixed> $meta exercise.yaml de l'exercice français
+     *
+     * @return array{Exercise, array<string, mixed>} l'exercice traduit, et son exercise.yaml complété
+     */
+    public function translate(string $directory, array $meta, string $locale): array
+    {
+        $overlay = $directory.'/i18n/'.$locale;
+        $file = $overlay.'/exercise.yaml';
+        $this->files->watch($overlay);
+        $translated = $this->files->parse($file);
+        if ($unknown = array_diff(array_keys($translated), self::TRANSLATED_KEYS)) {
+            throw new ContentException(sprintf('%s : « %s » ne se traduit pas : réglez-la dans l\'exercice français (clés traduisibles : %s).', $file, implode('», «', $unknown), implode(', ', self::TRANSLATED_KEYS)));
+        }
+        // Un texte laissé de côté s'afficherait en français au milieu de la traduction.
+        foreach (['title', 'summary', 'objectives', 'hints', 'requests', 'docs'] as $key) {
+            if (\array_key_exists($key, $meta) && [] !== $meta[$key] && !\array_key_exists($key, $translated)) {
+                throw new ContentException(sprintf('%s : « %s » manque : sans elle, le texte français s\'afficherait dans la traduction.', $file, $key));
+            }
+        }
+        foreach (new \FilesystemIterator($overlay, \FilesystemIterator::SKIP_DOTS) as $entry) {
+            $name = $entry->getFilename();
+            if (!\in_array($name, ['exercise.yaml', 'instructions.md', ...self::TRANSLATED_FOLDERS], true)) {
+                throw new ContentException(sprintf('%s : « %s » n\'a pas cours dans une traduction (exercise.yaml, instructions.md, %s/).', $overlay, $name, implode('/, ', self::TRANSLATED_FOLDERS)));
+            }
+        }
+        // Un fichier traduit remplace un fichier français : un nouveau chemin ajouterait un fichier (un second test…)
+        // que l'exercice français n'a pas.
+        foreach (self::TRANSLATED_FOLDERS as $folder) {
+            if (!is_dir($overlay.'/'.$folder)) {
+                continue;
+            }
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($overlay.'/'.$folder, \FilesystemIterator::SKIP_DOTS)) as $path => $info) {
+                $relative = substr((string) $path, \strlen($overlay) + 1);
+                if (!is_file($directory.'/'.$relative)) {
+                    throw new ContentException(sprintf('%s : i18n/%s/%s ne remplace aucun fichier de l\'exercice français (%s introuvable).', $directory, $locale, $relative, $relative));
+                }
+            }
+        }
+
+        $merged = [...$meta, ...$translated];
+
+        return [$this->read($directory, null, null, $merged, $overlay, $locale), $merged];
+    }
+
+    /**
+     * L'empreinte de l'exercice français, que sa traduction recopie dans sa clé « source » : quand elle ne
+     * correspond plus, l'exercice a changé depuis la traduction (voir Practice::$outdated).
+     */
+    public static function fingerprint(string $directory): string
+    {
+        $files = [];
+        foreach (['exercise.yaml', 'instructions.md'] as $name) {
+            if (is_file($directory.'/'.$name)) {
+                $files[$name] = (string) file_get_contents($directory.'/'.$name);
+            }
+        }
+        foreach (self::TRANSLATED_FOLDERS as $folder) {
+            if (!is_dir($directory.'/'.$folder)) {
+                continue;
+            }
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory.'/'.$folder, \FilesystemIterator::SKIP_DOTS)) as $path => $info) {
+                $files[str_replace('\\', '/', substr((string) $path, \strlen($directory) + 1))] = (string) file_get_contents((string) $path);
+            }
+        }
+        ksort($files);
+
+        return substr(hash('sha256', serialize($files)), 0, 12);
     }
 }

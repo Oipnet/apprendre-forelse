@@ -23,7 +23,15 @@ final readonly class Practice
         public ?string $pullRequest = null,
         /** « public », ou « admin » : en préparation, visible des seuls administrateurs. */
         public string $visibility = Track::VISIBILITY_PUBLIC,
+        /** Une traduction dont l'exercice français a changé depuis (sa clé « source » n'est plus son empreinte). */
+        public bool $outdated = false,
     ) {
+    }
+
+    /** La langue de l'exercice : celle des packs, ou celle de sa traduction (`i18n/<langue>/`). */
+    public function locale(): string
+    {
+        return $this->exercise->locale;
     }
 
     public function isRestricted(): bool

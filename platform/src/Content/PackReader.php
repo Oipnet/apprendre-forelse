@@ -21,6 +21,8 @@ final class PackReader
     private array $exercises = [];
     /** @var array<string, Practice> */
     private array $practices = [];
+    /** @var array<string, array<string, Practice>> traductions des exercices de Pratique, par langue puis par id */
+    private array $practiceTranslations = [];
     /** @var array<string, array{markdown: string, file: string, packId: string}> */
     private array $versionIntros = [];
     /** @var array<string, array{markdown: string, file: string, packId: string, title: string|null}> */
@@ -81,13 +83,17 @@ final class PackReader
         // (uasort est stable, comme toutes les fonctions de tri depuis PHP 8.0).
         uasort($this->tracks, static fn (Track $a, Track $b) => [null === $a->order, $a->order] <=> [null === $b->order, $b->order]);
         uasort($this->practices, static fn (Practice $a, Practice $b) => [$b->published, $a->exercise->id] <=> [$a->published, $b->exercise->id]);
+        // Les traductions, dans l'ordre des exercices français.
+        foreach ($this->practiceTranslations as $locale => $translations) {
+            $this->practiceTranslations[$locale] = array_replace(array_intersect_key($this->practices, $translations), $translations);
+        }
         $this->checkTranslations();
         foreach ($this->articles as &$articles) {
             uasort($articles, static fn (Article $a, Article $b) => [$b->published, $a->slug] <=> [$a->published, $b->slug]);
         }
         unset($articles);
 
-        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->conceptThemes, $this->articles, $this->files->watched());
+        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->practiceTranslations, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->conceptThemes, $this->articles, $this->files->watched());
     }
 
     private function loadPack(string $directory): void
@@ -522,7 +528,7 @@ final class PackReader
             throw new ContentException(sprintf('%s : visibilité « %s » inconnue (%s).', $file, $visibility, implode(', ', Track::VISIBILITIES)));
         }
 
-        $this->practices[$exercise->id] = new Practice(
+        $practice = $this->practices[$exercise->id] = new Practice(
             exercise: $exercise,
             packId: $pack->id,
             framework: $this->environments->get($exercise->environment)->framework->id,
@@ -532,6 +538,41 @@ final class PackReader
             pullRequest: $pullRequest,
             visibility: $visibility,
         );
+        $this->loadPracticeTranslations($practice, $meta);
+    }
+
+    /**
+     * Les traductions d'un exercice de Pratique : `i18n/<langue>/` (voir ExerciseReader::translate). Le reste de
+     * l'exercice (date, version, visibilité) est celui de l'exercice français.
+     *
+     * @param array<string, mixed> $meta exercise.yaml de l'exercice français
+     */
+    private function loadPracticeTranslations(Practice $practice, array $meta): void
+    {
+        $directory = $practice->exercise->directory;
+        $this->files->watch($directory.'/i18n');
+        foreach (glob($directory.'/i18n/*') ?: [] as $overlay) {
+            $locale = basename($overlay);
+            if (!is_dir($overlay) || !\in_array($locale, Exercise::TRANSLATIONS, true)) {
+                throw new ContentException(sprintf('%s : « %s » n\'est pas une langue de traduction (%s).', $directory.'/i18n', $locale, implode(', ', Exercise::TRANSLATIONS)));
+            }
+            [$exercise, $translated] = $this->exerciseReader->translate($directory, $meta, $locale);
+            $source = $translated['source'] ?? null;
+            if (null !== $source && !\is_string($source)) {
+                throw new ContentException(sprintf('%s/exercise.yaml : « source » est l\'empreinte de l\'exercice français, un texte.', $overlay));
+            }
+            $this->practiceTranslations[$locale][$exercise->id] = new Practice(
+                exercise: $exercise,
+                packId: $practice->packId,
+                framework: $practice->framework,
+                published: $practice->published,
+                summary: $this->files->required($translated, 'summary', $overlay.'/exercise.yaml'),
+                version: $practice->version,
+                pullRequest: $practice->pullRequest,
+                visibility: $practice->visibility,
+                outdated: $source !== ExerciseReader::fingerprint($directory),
+            );
+        }
     }
 
     /** Plus petite image de partage acceptée : celle que LinkedIn, Slack ou X affichent en grand (1,91:1). */

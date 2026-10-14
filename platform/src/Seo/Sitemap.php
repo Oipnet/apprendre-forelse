@@ -85,15 +85,18 @@ final readonly class Sitemap
                 array_unshift($entries, $this->entry('app_tracks', [], $tracksLatest));
             }
 
-            $practiceEntries = [];
-            foreach ($this->published->practices() as $practice) {
-                $practiceEntries[] = $this->entry('app_exercise_pratique', ['exerciseId' => $practice->exercise->id], $this->dates->practiceModified($practice));
-            }
-            if ($practiceEntries) {
-                $practiceLatest = max(array_column($practiceEntries, 'lastmod'));
-                $entries[] = $this->entry('app_practice', [], $practiceLatest);
-                array_push($entries, ...$practiceEntries);
-                $latest = max($latest, $practiceLatest);
+            // La Pratique dans chaque langue où un exercice est traduit : /pratique, puis /en/practice.
+            foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
+                $practiceEntries = [];
+                foreach ($this->published->practices($locale) as $practice) {
+                    $practiceEntries[] = $this->entry('app_exercise_pratique', ['_locale' => $locale, 'exerciseId' => $practice->exercise->id], $this->dates->practiceModified($practice));
+                }
+                if ($practiceEntries) {
+                    $practiceLatest = max(array_column($practiceEntries, 'lastmod'));
+                    $entries[] = $this->entry('app_practice', ['_locale' => $locale], $practiceLatest);
+                    array_push($entries, ...$practiceEntries);
+                    $latest = max($latest, $practiceLatest);
+                }
             }
 
             // Les nouveautés d'une version : une page par version qu'au moins deux exercices pratiquent.

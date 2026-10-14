@@ -23,7 +23,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Le mentor de l'apprenant connecté (revue de code, erreurs expliquées).
  * Contrat : playground/src/app/mentor.ts. Réservé aux comptes, et limité en volume : chaque appel coûte.
  */
-#[Route('/api/mentor', format: 'json')]
+#[Route(['fr' => '/api/mentor', 'en' => '/en/api/mentor'], format: 'json')]
 final class MentorApiController extends AbstractController
 {
     public function __construct(

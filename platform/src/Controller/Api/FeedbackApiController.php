@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Retours des apprenants sur un exercice. Contrat : playground/src/app/feedback.ts. */
-#[Route('/api/feedback', format: 'json')]
+#[Route(['fr' => '/api/feedback', 'en' => '/en/api/feedback'], format: 'json')]
 final class FeedbackApiController extends AbstractController
 {
     #[Route('/{trackId}/{exerciseId}', name: 'api_feedback', methods: ['POST'])]

@@ -3,6 +3,8 @@
 namespace App\Seo\Page;
 
 use App\Content\ContentDates;
+use App\Content\ContentRepository;
+use App\Content\Exercise;
 use App\Content\ExerciseStory;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\Practice;
@@ -27,6 +29,7 @@ final readonly class PracticeSeo
         private ContentDates $dates,
         private PracticeShare $share,
         private TranslatorInterface $translator,
+        private ContentRepository $content,
     ) {
     }
 
@@ -49,6 +52,12 @@ final readonly class PracticeSeo
             ->setDescription($this->trans('pratique.description'))
             ->setCanonical($url = $this->schema->url('app_practice'))
             ->addStructuredData($this->schema->breadcrumb([[$this->trans('pratique.fil_ariane'), $url]]));
+        // La liste existe dans chaque langue où un exercice est traduit (hreflang).
+        foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
+            if ($locale !== $this->seo->getLanguage() && [] !== $this->content->practices($locale)) {
+                $this->seo->addAlternate($locale, $this->schema->url('app_practice', ['_locale' => $locale]));
+            }
+        }
     }
 
     /**
@@ -123,6 +132,12 @@ final readonly class PracticeSeo
                 [$this->trans('pratique.fil_ariane'), $this->schema->url('app_practice')],
                 [$practice->exercise->title, $url],
             ]));
+        // Le même exercice dans ses autres langues (hreflang).
+        foreach ($this->content->practiceLocales($practice->exercise->id) as $locale) {
+            if ($locale !== $practice->locale()) {
+                $this->seo->addAlternate($locale, $this->schema->url('app_exercise_pratique', ['_locale' => $locale, 'exerciseId' => $practice->exercise->id]));
+            }
+        }
     }
 
     /** @param array<string, mixed> $parameters */

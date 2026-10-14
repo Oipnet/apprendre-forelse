@@ -127,10 +127,24 @@ final class ContentRepository implements ResetInterface
         return $this->index()->findExercise($trackId, $exerciseId);
     }
 
-    /** @return array<string, Practice> les exercices de Pratique, du plus récent au plus ancien */
-    public function practices(): array
+    /**
+     * Les exercices de Pratique, du plus récent au plus ancien ; dans une autre langue, ceux qui y sont traduits.
+     *
+     * @return array<string, Practice>
+     */
+    public function practices(string $locale = Exercise::LOCALE): array
     {
-        return $this->content()->practices;
+        return Exercise::LOCALE === $locale ? $this->content()->practices : $this->content()->practiceTranslations[$locale] ?? [];
+    }
+
+    /** @return list<string> les langues de cet exercice de Pratique : le français, puis ses traductions */
+    public function practiceLocales(string $id): array
+    {
+        if (!isset($this->content()->practices[$id])) {
+            return [];
+        }
+
+        return [Exercise::LOCALE, ...array_keys(array_filter($this->content()->practiceTranslations, static fn (array $translations) => isset($translations[$id])))];
     }
 
     /**
@@ -191,9 +205,9 @@ final class ContentRepository implements ResetInterface
         return $versions;
     }
 
-    public function findPractice(string $id): ?Practice
+    public function findPractice(string $id, string $locale = Exercise::LOCALE): ?Practice
     {
-        return $this->practices()[$id] ?? null;
+        return $this->practices($locale)[$id] ?? null;
     }
 
     /** @return list<Exercise> dans l'ordre du parcours */

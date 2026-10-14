@@ -1,0 +1,34 @@
+# The English version of the exercise: only the translated keys. The rest (environment, files, date…) comes
+# from the French exercise.yaml. « source » is the fingerprint of the French exercise this translation follows:
+# content:check warns when the French exercise has changed since.
+source: cd15bbe742fe
+title: 'Read a header with #[MapRequestHeader]'
+concepts: [Controller, HttpKernel]
+summary: An HTTP header arrives straight as a controller argument, and a missing one gives a 400 without a single line of code.
+
+requests:
+  - title: With the header
+    method: GET
+    path: /api/version
+    headers:
+      X-Api-Version: '2'
+  - title: Without the header
+    method: GET
+    path: /api/version
+
+docs:
+  - title: 'Controllers: mapping request headers'
+    url: https://symfony.com/doc/current/controller.html#mapping-request-headers
+
+objectives:
+  - test: testTheRequestedVersionIsRead
+    label: 'GET /api/version with “X-Api-Version: 2” responds “Requested version: 2”'
+  - test: testARequestWithoutTheHeaderIsRejected
+    label: 'Without the header, the response is a 400'
+  - test: testTheControllerUsesMapRequestHeader
+    label: 'The header arrives through #[MapRequestHeader], without a Request object'
+
+hints:
+  - "Replace the `Request $request` argument with a `string` argument marked `#[MapRequestHeader]` (namespace `Symfony\\Component\\HttpKernel\\Attribute`)."
+  - "Without a name, the attribute derives the header from the argument name: `$xApiVersion` reads `x-api-version`. You can also spell it out: `#[MapRequestHeader('x-api-version')]`."
+  - "A non-nullable `string` argument without a default value makes the header required: Symfony responds with a 400 on its own. The `if` can go."

@@ -30,7 +30,7 @@ final readonly class ApiErrorDetailListener
     {
         $exception = $event->getThrowable();
         if (!$exception instanceof HttpExceptionInterface || '' === $exception->getMessage()
-            || !str_starts_with($event->getRequest()->getPathInfo(), '/api/')
+            || !preg_match('#^(/[a-z]{2})?/api/#', $event->getRequest()->getPathInfo())
             || !str_starts_with($exception->getFile(), $this->sources)) {
             return;
         }

@@ -8,6 +8,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Pratique en anglais** (`/en/practice`) : un exercice de Pratique se traduit dans `<exercice>/i18n/en/`
+  (`exercise.yaml` avec les clés traduites, `instructions.md`, et au besoin des fichiers de `starter/`, `solution/`,
+  `tests/` qui remplacent ceux de l'exercice français). La liste anglaise ne montre que les exercices traduits, les
+  deux versions se nomment (`hreflang`) et entrent au sitemap. Le playground et ses API parlent la langue de la page
+  (`/en/api/…`). `content:check` vérifie chaque traduction à part et signale celle dont l'exercice français a changé
+  (clé `source`). Une réussite en anglais est revérifiée avec les tests anglais (migration : colonne
+  `exercise_progress.submitted_locale`). L'exercice du pack de démo est traduit.
+
 ## 3.8.0 — 2026-10-14
 
 ### Ajouté

@@ -5,6 +5,8 @@ namespace App\Command;
 use App\Content\Check\ExerciseChecker;
 use App\Content\ConceptIndex;
 use App\Content\ContentRepository;
+use App\Content\Exercise;
+use App\Content\ExerciseReader;
 use App\Content\PracticeVersionIndex;
 use App\Instance\PackEnvironments;
 use App\Version;
@@ -67,7 +69,7 @@ final class ContentCheckCommand
         foreach ($exercises as $exercise) {
             $start = microtime(true);
             $result = $this->checker->check($exercise, $keep);
-            $label = sprintf('%s/%s — %s', $exercise->trackId ?? ContentRepository::PRACTICE, $exercise->id, $exercise->title);
+            $label = sprintf('%s/%s%s — %s', $exercise->trackId ?? ContentRepository::PRACTICE, $exercise->id, Exercise::LOCALE === $exercise->locale ? '' : ' ['.$exercise->locale.']', $exercise->title);
             $duration = sprintf('(%.1f s)', microtime(true) - $start);
             if ($result->isOk()) {
                 $done = array_sum($result->objectivesBefore);
@@ -103,6 +105,13 @@ final class ContentCheckCommand
         // Une intro de notion que rien n'affiche : même règle.
         foreach ($this->concepts->orphanIntros() as $slug => $file) {
             $io->writeln(sprintf(' <fg=yellow>!</> %s — intro de notion sans page publiée (%s)', $slug, $file));
+        }
+
+        // Une traduction en retard sur l'exercice français : jouable, mais elle ne dit plus la même chose.
+        foreach ($exercises as $exercise) {
+            if (Exercise::LOCALE !== $exercise->locale && true === $this->content->findPractice($exercise->id, $exercise->locale)?->outdated) {
+                $io->writeln(sprintf(' <fg=yellow>!</> %s/%s [%s] — l\'exercice français a changé depuis la traduction : mettez-la à jour, puis « source: %s » dans i18n/%s/exercise.yaml', ContentRepository::PRACTICE, $exercise->id, $exercise->locale, ExerciseReader::fingerprint($exercise->directory), $exercise->locale));
+            }
         }
 
         // Clés dépréciées : acceptées, mais à retirer avant qu'une version majeure ne les refuse.

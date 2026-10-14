@@ -67,7 +67,7 @@ final readonly class ProgressService
             $alreadyCompleted = $progress->isCompleted();
             $hints = max($progress->getHintsUsed(), min($hintsUsed, \count($exercise->hints)));
             // La solution consultée ne rapporte rien : c'est ce que promet la page d'accueil.
-            $xp = $progress->complete($hints, $progress->isSolutionRevealed() ? 0 : $this->xpCalculator->xpFor($exercise->xp, $hints), $this->clock->now());
+            $xp = $progress->complete($hints, $progress->isSolutionRevealed() ? 0 : $this->xpCalculator->xpFor($exercise->xp, $hints), $this->clock->now(), Exercise::LOCALE === $exercise->locale ? null : $exercise->locale);
             $user->addXp($xp);
             // Le dernier exercice d'un parcours : le bonus du parcours terminé (une seule fois).
             $track = null === $exercise->trackId ? null : $this->content->findTrack($exercise->trackId);

@@ -10,6 +10,7 @@ use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentAssembler;
 use App\Content\EnvironmentRegistry;
+use App\Content\Exercise;
 use App\Entity\VerificationStatus;
 
 /**
@@ -35,7 +36,7 @@ final readonly class SubmissionReplayer
     public function replay(VerificationRequest $request): VerificationResult
     {
         $exercise = null === $request->trackId
-            ? $this->content->findPractice($request->exerciseId)?->exercise
+            ? $this->content->findPractice($request->exerciseId, $request->locale ?? Exercise::LOCALE)?->exercise
             : $this->content->findExercise($request->trackId, $request->exerciseId);
         if (null === $exercise) {
             return $this->unverifiable($request, 'Exercice introuvable dans les packs (retiré ou renommé).');

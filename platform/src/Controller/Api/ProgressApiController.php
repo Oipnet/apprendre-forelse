@@ -19,7 +19,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Progression de l'apprenant connecté. Contrat : playground/src/app/progress.ts (ApiProgressStore). */
-#[Route('/api/progress', format: 'json')]
+#[Route(['fr' => '/api/progress', 'en' => '/en/api/progress'], format: 'json')]
 final class ProgressApiController extends AbstractController
 {
     private const int MAX_IMPORT = 200;
