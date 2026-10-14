@@ -731,6 +731,17 @@ final class ContentRepositoryTest extends TestCase
         $this->assertFalse($this->repository($this->tmp)->findPractice('x', 'en')?->outdated);
     }
 
+    public function testUneTraductionDeclareSesPropresMutants(): void
+    {
+        $this->traduction(self::avecMutant("mutants: [{id: double, label: Saved twice, changes: [{file: a.php, search: '\$order', replace: '\$order2'}]}]"));
+
+        $english = $this->repository($this->tmp)->findPractice('x', 'en');
+        $this->assertNotNull($english);
+        $this->assertSame('Saved twice', $english->exercise->mutants[0]->label);
+        $this->assertSame('$order', $english->exercise->mutants[0]->changes[0]['search']);
+        $this->assertSame('mutant:double', $english->exercise->objectives[0]->test);
+    }
+
     /**
      * @param array<string, string> $files
      */
@@ -754,7 +765,23 @@ final class ContentRepositoryTest extends TestCase
         yield 'une langue inconnue' => [['p/practice/x/i18n/de/exercise.yaml' => $yaml], '« de » n\'est pas une langue de traduction'];
         yield 'un fichier qui ne remplace rien' => [['p/practice/x/i18n/en/starter/b.php' => '<?php'], 'i18n/en/starter/b.php ne remplace aucun fichier'];
         yield 'un fichier inattendu' => [['p/practice/x/i18n/en/notes.md' => 'Notes'], '« notes.md » n\'a pas cours dans une traduction'];
+        yield 'des mutants oubliés' => [self::avecMutant(''), '« mutants » manque'];
+        yield 'des mutants renommés' => [self::avecMutant("mutants: [{id: twice, label: Saved twice, changes: [{file: a.php, search: a, replace: b}]}]"), 'gardent les ids de l\'exercice français (double)'];
         yield 'un objectif sans test' => [['p/practice/x/i18n/en/exercise.yaml' => "title: X en\nsummary: S en\nobjectives: [{label: A en}]"], 'clé « test » manquante'];
+    }
+
+    /**
+     * Un exercice « x » à mutant, dont l'apprenant écrit les tests ; $mutants complète sa traduction.
+     *
+     * @return array<string, string>
+     */
+    private static function avecMutant(string $mutants): array
+    {
+        return [
+            'p/practice/x/exercise.yaml' => "id: x\ntitle: X\nenvironment: symfony-8\npublished: 2026-09-01\nsummary: S\neditable: [a.php, tests/ATest.php]\nmutants: [{id: double, label: Enregistré deux fois, changes: [{file: a.php, search: '\$commande', replace: '\$commande2'}]}]\nobjectives: [{mutant: double, label: A}]",
+            'p/practice/x/starter/tests/ATest.php' => '<?php',
+            'p/practice/x/i18n/en/exercise.yaml' => "title: X en\nsummary: S en\nobjectives: [{mutant: double, label: A en}]\n".$mutants,
+        ];
     }
 
     /**

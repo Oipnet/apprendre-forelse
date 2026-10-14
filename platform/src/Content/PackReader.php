@@ -559,7 +559,7 @@ final class PackReader
             [$exercise, $translated] = $this->exerciseReader->translate($directory, $meta, $locale);
             $source = $translated['source'] ?? null;
             if (null !== $source && !\is_string($source)) {
-                throw new ContentException(sprintf('%s/exercise.yaml : « source » est l\'empreinte de l\'exercice français, un texte.', $overlay));
+                throw new ContentException(sprintf('%s/exercise.yaml : « source » est l\'empreinte de l\'exercice français, un texte : écrivez-la entre guillemets (une empreinte faite de chiffres se lirait comme un nombre).', $overlay));
             }
             $this->practiceTranslations[$locale][$exercise->id] = new Practice(
                 exercise: $exercise,

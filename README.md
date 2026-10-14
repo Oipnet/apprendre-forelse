@@ -208,8 +208,9 @@ Les résultats s'exportent en CSV.
   Pratique anglaise ne montre que les exercices traduits ; un exercice non traduit y répond 404. Le dossier
   contient :
   - `exercise.yaml`, avec les seules clés traduites : `title`, `summary`, `objectives`, `hints`, `requests`,
-    `docs` (obligatoires dès que l'exercice français les a, sinon le texte français s'afficherait), `concepts`
-    et `preview` (facultatives). Le reste (environnement, fichiers, date, version…) vient de l'exercice
+    `docs`, `mutants` (obligatoires dès que l'exercice français les a, sinon le texte français s'afficherait),
+    `concepts` et `preview` (facultatives). Les mutants traduits gardent leurs ids, que les objectifs citent ; leurs
+    `search` visent les lignes du code traduit. Le reste (environnement, fichiers, date, version…) vient de l'exercice
     français ; une autre clé est refusée ;
   - `instructions.md`, la consigne complète ;
   - au besoin, des fichiers de `starter/`, `solution/` et `tests/` qui **remplacent** ceux de l'exercice
