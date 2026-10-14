@@ -149,6 +149,35 @@ texte. Quelques composants sont définis une fois pour toutes (`btn`, `btn-prima
 `prose-theme`) : un thème les redessine par les jetons. Les classes `site-*`, `account-*`, `footer-*` des gabarits ne
 portent aucun style : ce sont des repères, pour les tests et pour les thèmes.
 
+## Textes et langues
+
+Les gabarits du moteur n'écrivent aucun texte en dur : ils passent par le traducteur de Symfony (voir
+`platform/translations/README.md`). Un gabarit de thème qui reprend un texte du moteur utilise la même clé
+(`{{ 'header.blog'|trans }}`) et suit la langue de la page sans rien fournir.
+
+Ses propres textes vont dans `translations/theme.<langue>.yaml`, au format ICU, et se lisent dans le domaine
+`theme` :
+
+```twig
+{% trans_default_domain 'theme' %}
+<h1>{{ 'hero.titre'|trans }}</h1>
+<a href="{{ path('app_tracks') }}">{{ 'hero.parcours'|trans }}</a>
+<p>{{ 'header.blog'|trans(domain: 'messages') }}</p>
+```
+
+```yaml
+# translations/theme.fr.yaml
+hero:
+    titre: "Apprendre {sujet} en codant"
+    parcours: Voir les parcours
+```
+
+Une clé absente dans la langue de la page retombe sur le français, puis s'affiche telle quelle. Les fichiers sont
+relus quand ils changent, comme les gabarits. Un fichier invalide (YAML, valeur qui n'est pas un texte, message ICU
+mal formé) est signalé par `app:theme:verifier` et dans l'admin. Le site n'est servi en anglais que sur le blog
+(`/en/blog`) : c'est là qu'un `theme.en.yaml` se voit, dans l'en-tête et le pied de page. L'exemple livré
+(`examples/themes/atelier-bigorneau`) en a un.
+
 ## Aperçu, activation
 
 Dans `/admin` → Thèmes : l'état de chaque thème (son `theme.yaml` valable, ses gabarits qui se compilent), un aperçu
