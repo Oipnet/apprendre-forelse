@@ -19,11 +19,11 @@ final class ExerciseController extends AbstractController
      * Ouvert : le playground. Fermé : la page publique de l'exercice (sa consigne, et l'accès à obtenir), sans éditeur
      * ni moteur WebAssembly — 200 pour un visiteur, 403 pour un apprenant connecté sans accès.
      */
-    #[Route('/parcours/{trackId}/{exerciseId}', name: 'app_exercise', methods: ['GET'])]
+    #[Route(['fr' => '/parcours/{trackId}/{exerciseId}', 'en' => '/en/tracks/{trackId}/{exerciseId}'], name: 'app_exercise', methods: ['GET'])]
     public function play(string $trackId, string $exerciseId, ContentRepository $content, TrackVisibility $visibility, PlaygroundConfigFactory $configs, TrackAccessChecker $access, ExercisePage $page, CourseSeo $seo): Response
     {
-        $track = $visibility->find($trackId) ?? throw $this->createNotFoundException();
-        $exercise = $content->findExercise($trackId, $exerciseId) ?? throw $this->createNotFoundException();
+        $track = $visibility->findHere($trackId) ?? throw $this->createNotFoundException();
+        $exercise = $content->findExercise($trackId, $exerciseId, $track->locale) ?? throw $this->createNotFoundException();
         $chapter = $content->chapterOf($exercise) ?? throw $this->createNotFoundException();
         $user = $this->getUser();
         $user = $user instanceof User ? $user : null;

@@ -38,7 +38,7 @@ final readonly class PlaygroundConfigFactory
     public function create(Exercise $exercise): array
     {
         $user = $this->security->getUser();
-        $track = null === $exercise->trackId ? null : $this->content->findTrack($exercise->trackId);
+        $track = null === $exercise->trackId ? null : $this->content->findTrack($exercise->trackId, $exercise->locale);
         $next = $this->content->next($exercise);
 
         return [

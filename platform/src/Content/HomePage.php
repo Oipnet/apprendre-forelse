@@ -28,9 +28,6 @@ final readonly class HomePage
         /** Instance sur invitation : la Pratique demande un compte, le visiteur n'a rien à essayer. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private bool $inviteOnly = false,
-        /** La langue des parcours : celle du site. */
-        #[Autowire('%kernel.default_locale%')]
-        private string $contentLocale = 'fr',
     ) {
     }
 
@@ -45,7 +42,7 @@ final readonly class HomePage
      */
     public function of(?User $user): array
     {
-        $published = array_values($this->visibility->tracks());
+        $published = array_values($this->visibility->tracksHere());
         $tracks = array_map(fn (Track $track) => $this->card($track, $user), $published);
         $upcoming = $this->upcoming();
         // Le bouton principal : pour un visiteur, un exercice de Pratique, qui se joue sans compte (le premier chapitre
@@ -70,7 +67,7 @@ final readonly class HomePage
      */
     public function catalogue(?User $user, ?string $framework): array
     {
-        $published = array_values($this->visibility->tracks());
+        $published = array_values($this->visibility->tracksHere());
         $frameworks = [];
         foreach ($published as $track) {
             $profile = $this->frameworkOf($track);
@@ -105,7 +102,7 @@ final readonly class HomePage
     private function card(Track $track, ?User $user): array
     {
         $firstId = $track->exerciseIds()[0] ?? null;
-        $first = null === $firstId ? null : $this->content->findExercise($track->id, $firstId);
+        $first = null === $firstId ? null : $this->content->findExercise($track->id, $firstId, $track->locale);
 
         return [
             'track' => $track,
@@ -117,10 +114,10 @@ final readonly class HomePage
                 'concepts' => $this->concepts($track, $chapter),
             ], $track->chapters),
             // Porte d'entrée du parcours : son premier chapitre est gratuit pour tout compte (sauf parcours en préparation).
-            'tryUrl' => $first && !$track->isRestricted() ? $this->urls->generate('app_exercise', ['trackId' => $track->id, 'exerciseId' => $first->id]) : null,
+            'tryUrl' => $first && !$track->isRestricted() ? $this->urls->generate('app_exercise', ['_locale' => $track->locale, 'trackId' => $track->id, 'exerciseId' => $first->id]) : null,
             'offer' => $this->offers->create($track, $user),
-            // Sur une page dans une autre langue, la fiche dit que le parcours, lui, est en français.
-            'language' => $this->translator->getLocale() === $this->contentLocale ? null : $this->contentLocale,
+            // Sur une page dans une autre langue, la fiche dit que le parcours, lui, n'y est pas traduit.
+            'language' => $this->visibility->locale() === $track->locale ? null : $track->locale,
         ];
     }
 
@@ -146,7 +143,7 @@ final readonly class HomePage
     {
         $concepts = [];
         foreach ($chapter->exerciseIds as $exerciseId) {
-            foreach ($this->content->findExercise($track->id, $exerciseId)->concepts ?? [] as $concept) {
+            foreach ($this->content->findExercise($track->id, $exerciseId, $track->locale)->concepts ?? [] as $concept) {
                 $concepts[$concept] = true;
             }
         }

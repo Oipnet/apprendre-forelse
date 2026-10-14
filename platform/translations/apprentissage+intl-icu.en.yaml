@@ -1,11 +1,22 @@
-# Learning pages served in English: the Practice (/en/practice) and its playground. Tracks, chapters, concepts and
-# defenses stay in French for now: their keys fall back to apprentissage+intl-icu.fr.yaml (see README.md).
+# Learning pages served in English: the Practice (/en/practice), the translated tracks (/en/tracks), their chapters
+# and exercises, and the playground. Concept pages and defense booking stay in French for now: their keys fall back
+# to apprentissage+intl-icu.fr.yaml (see README.md).
 
 commun:
     fil_ariane: Breadcrumb
     accueil: Home
     pratique: Practice
     notions_abordees: "Topics covered:"
+    chapitre_numero: "Chapter {numero}"
+    chapitre_titre: "Chapter {numero}: {titre}"
+    exercice_numero: "Exercise {numero}"
+    objectifs_verifies: "{n, plural, one {# objective checked} other {# objectives checked}} by tests"
+    chapitre_ferme: "This chapter is not open to you yet."
+    progression_conservee: "Your progress is saved: if you have already worked here, you will pick up exactly where you left off."
+    retour_parcours: "← Back to the track"
+    parcours_termine: Track completed
+    gratuit: Free
+    bientot: Coming soon
     exercices: "{n, plural, one {# exercise} other {# exercises}}"
     xp: "{xp} XP"
     creer_compte: Create an account
@@ -71,6 +82,134 @@ practice:
         decouvrir: Discover the track
 
 # The playground APIs' refusals, read by the learner (the "detail" field of the JSON response).
+exercise:
+    intro:
+        position: "Exercise {position} of {total} in chapter {chapitre}"
+    show:
+        parcours_complet: This exercise is part of the full track
+        acces: "The first chapter is free; the rest requires access to the track."
+        acces_bientot: "The first chapter is free; the rest requires access to the track, which will soon be available to buy."
+        gratuit_titre: "This exercise is free: create your account to write it"
+        gratuit_invitation: "The first chapter of the track costs nothing. The platform is in private beta: create your account with your invitation code, or leave your address on the waitlist."
+        gratuit_compte: "The whole first chapter of the track costs nothing: you only need an account to open the editor, run the project and run the tests."
+        gratuit_progression: "Your progress and your code are kept on your account: you pick up where you left off, from one device to another."
+        suite_invitation: "The rest of the track is in private beta: create your account with your invitation code, or leave your address on the waitlist."
+        suite_payante: "The first chapter is free with an account; the rest requires access to the track."
+        premier_chapitre: "Start the first chapter →"
+        suite_chapitre: "The rest of chapter {numero}: {titre}"
+        sommaire: The chapter outline
+        tout_le_parcours: "The whole {titre} track"
+
+track:
+    index:
+        titre: Tracks
+        intro: "Each track is a project, written exercise after exercise in your browser: a live preview, tests that check each objective, and course notes at the end of each chapter. The first chapter is free with an account."
+        filtrer: Filter by framework
+        aucun: "No track published yet."
+        pratique: "Fancy a short exercise, without a track? <a href=\"{url}\">Practice</a> works without an account."
+    locked:
+        acces: "This chapter is part of the full track. The first chapter is free; the rest requires access to the track."
+        acces_bientot: "This chapter is part of the full track. The first chapter is free; the rest requires access to the track, which will soon be available to buy."
+    price:
+        continuer: "Continue →"
+        acces_complet: You have access to the whole track.
+        prix_normal: Regular price
+        ttc: "Incl. VAT, lifetime access"
+        fondateur: Founder price.
+        fondateur_date: "Founder price until {date}."
+        fondateur_places: "Founder price, {n, plural, one {# place} other {# places}} left."
+        fondateur_date_places: "Founder price until {date}, {n, plural, one {# place} other {# places}} left."
+        cohorte: "Your cohort's price: “{cohorte}”."
+        acheter: Buy the track
+        bientot_disponible: Coming soon
+        premier_chapitre: First chapter free with an account.
+    show:
+        exercices_faits: "{fait} / {n, plural, one {# exercise} other {# exercises}}"
+        exercices_reussis: "{fait} / {n, plural, one {# exercise} other {# exercises}} completed"
+        chapitres: "{n, plural, one {# chapter} other {# chapters}}"
+        xp_gagnes: "{gagne} / {xp} XP"
+        duree: "About {duree} of practice"
+        bravo: "🎓 Well done, everything is completed."
+        voir_certificat: View my certificate
+        partager: Share my achievement
+        obtenir_certificat: Get my certificate
+        livret: Download the booklet (PDF)
+        continuer_avec: "Continue with “{titre}”"
+        vous_en_etes_la: Where you are
+        pour_commencer: To get started
+        position: "Chapter {chapitre} · exercise {position}"
+        commencer: Start the track
+        chapitres_du_parcours: Chapters of the track
+        chapitres_titre: Chapters
+        tout_ouvrir: Expand all
+        boss: Each chapter ends with a boss.
+        boss_fiche: Each chapter ends with a boss, then course notes as a web page and a PDF.
+        fiche_debloquee: Each completed chapter unlocks its course notes, as a web page and a PDF.
+        livret_final: The full booklet comes at the end of the track.
+        parcours_complet: "🔒 Full track"
+        fiche_de_cours: course notes
+        sr_reussi: "Completed: "
+        sr_final: "Final exercise: "
+        sr_exercice: "Exercise {numero}: "
+        notions_abordees: Topics covered
+        fiche_chapitre: Chapter course notes
+        lire: "Read →"
+        fiche_reste: "{n, plural, one {# more exercise} other {# more exercises}} to complete"
+        fiche_a_reussir: complete the chapter to read them
+        sommaire_chapitre: "What chapter {numero} teaches →"
+        et_ensuite: What's next?
+    defense:
+        titre: End-of-track defense
+        le: "On {date} at {heure}"
+        duree_mode: "{minutes} min · {mode}"
+        consigne: You will explain your exercises, with the code you wrote.
+        agenda: Add to my calendar
+        annuler: Cancel this slot
+        resultat_date: "on {date}"
+        aucun_creneau: "No free slot yet: your school will open some soon."
+        nouveau_creneau: "Choose a new slot:"
+        choisir_creneau: "Track completed: choose your slot."
+        format_jour: MM/dd
+        creneau: "{jour} at {heure}"
+        mode_duree: "{mode}, {minutes} min"
+        reserver: Book
+        a_venir: "Your school is holding a defense for this track: complete all the exercises to book your slot."
+
+chapter:
+    show:
+        fiche: Course notes
+        intro: "Course notes: what this chapter taught you, to keep at hand."
+        exercices: "{n} exercises"
+        xp_gagnes: "{xp} XP earned"
+        pdf: "📄 Download the notes as a PDF"
+        suivant: "Next chapter: {titre} →"
+    summary:
+        du_parcours: 'Chapter {numero} of the <a href="{url}">{titre}</a> track'
+        environ: "about {duree}"
+        gratuit: free first chapter
+        notions: "This chapter works on:"
+        exercices: The chapter's exercises
+        voisins: Neighbouring chapters
+
+defense:
+    mode:
+        online: Online
+        on_site: On site
+    resultat:
+        passed: Defense passed
+        retake: To retake
+    niveau:
+        acquired: Acquired
+        in_progress: In progress
+        not_acquired: Not acquired
+
+flash:
+    fiche_connexion: Log in to read the chapter's course notes.
+    fiche_verrouillee: "The course notes for “{chapitre}” unlock once its exercises are completed: {n} more to go."
+    livret_connexion: Log in to download the track's booklet.
+    livret_acces: "The booklet is part of the full track: you need access to the track to download it."
+    livret_verrouille: "The booklet unlocks once the track is completed: {n, plural, one {# more exercise} other {# more exercises}} to complete."
+
 api:
     connexion:
         exercice: Log in to access this exercise.

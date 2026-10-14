@@ -236,6 +236,7 @@ Les résultats s'exportent en CSV.
   l'autre. Ses exercices peuvent se traduire avant lui, un par un : `content:check` les vérifie déjà. Une
   traduction devenue incomplète (un exercice ou un chapitre ajouté en français) ne bloque rien : le parcours
   anglais disparaît, et `content:check` dit ce qui manque. Le parcours de démo `decouverte` est traduit en exemple.
+  Un parcours traduit a ses pages sous `/en/tracks/<parcours>` ; ailleurs, l'adresse anglaise renvoie au français.
 
 - **Blog** (`<pack>/articles/<slug>.md`) : des articles sur les coulisses du contenu et du moteur, publiés sur
   `/blog/<slug>`. Le nom du fichier est l'adresse de l'article (minuscules, chiffres et tirets). Le fichier commence

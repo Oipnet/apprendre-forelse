@@ -8,7 +8,7 @@ use App\Content\PracticeVisibility;
 
 /**
  * Retrouve l'exercice désigné par une route de l'API : celui d'un parcours, ou, sans parcours (routes
- * « …_pratique »), un exercice de Pratique visible de l'utilisateur courant.
+ * « …_pratique »), un exercice de Pratique visible de l'utilisateur courant. Dans la langue de la page (/en/api…).
  */
 final readonly class ExerciseLocator
 {
@@ -23,6 +23,6 @@ final readonly class ExerciseLocator
         // Recherche dans le contenu déjà chargé : aucun chemin de fichier n'est construit depuis l'URL.
         return null === $trackId
             ? $this->practices->find($exerciseId)?->exercise
-            : $this->content->findExercise($trackId, $exerciseId);
+            : $this->content->findExercise($trackId, $exerciseId, $this->practices->locale());
     }
 }

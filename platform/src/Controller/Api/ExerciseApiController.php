@@ -19,7 +19,7 @@ final class ExerciseApiController extends AbstractController
     public function show(?string $trackId, string $exerciseId, Request $request, ExerciseLocator $exercises, TrackVisibility $visibility, ExercisePayloadFactory $payloads, ExerciseAccessGuard $guard): JsonResponse
     {
         if (null !== $trackId) {
-            $visibility->find($trackId) ?? throw $this->createNotFoundException();
+            $visibility->findHere($trackId) ?? throw $this->createNotFoundException();
         }
         $exercise = $exercises->find($trackId, $exerciseId) ?? throw $this->createNotFoundException();
         $user = $this->getUser();

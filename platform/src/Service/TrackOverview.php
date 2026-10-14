@@ -49,7 +49,7 @@ final readonly class TrackOverview
             $items = [];
             $chapterXp = 0;
             foreach ($chapter->exerciseIds as $position => $exerciseId) {
-                $exercise = $this->content->findExercise($track->id, $exerciseId);
+                $exercise = $this->content->findExercise($track->id, $exerciseId, $track->locale);
                 $state = $progress->stateOf($exerciseId);
                 $chapterXp += $exercise->xp ?? 0;
                 $items[] = [

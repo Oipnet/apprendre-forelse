@@ -40,7 +40,7 @@ final class ChapterController extends AbstractController
     ) {
     }
 
-    #[Route('/parcours/{trackId}/chapitre/{chapterId}', name: 'app_chapter', methods: ['GET'])]
+    #[Route(['fr' => '/parcours/{trackId}/chapitre/{chapterId}', 'en' => '/en/tracks/{trackId}/chapter/{chapterId}'], name: 'app_chapter', methods: ['GET'])]
     public function show(string $trackId, string $chapterId, Request $request, LessonRenderer $renderer): Response
     {
         $lesson = $this->lesson($trackId, $chapterId, $request);
@@ -55,7 +55,7 @@ final class ChapterController extends AbstractController
             'pack' => $this->content->packs()[$track->packId],
             'html' => $renderer->toHtml((string) $chapter->lesson),
             'nextChapter' => $nextChapter,
-            'nextExercise' => $nextChapter && $nextChapter->exerciseIds ? $this->content->findExercise($track->id, $nextChapter->exerciseIds[0]) : null,
+            'nextExercise' => $nextChapter && $nextChapter->exerciseIds ? $this->content->findExercise($track->id, $nextChapter->exerciseIds[0], $track->locale) : null,
         ]);
     }
 
@@ -63,10 +63,10 @@ final class ChapterController extends AbstractController
      * Le sommaire du chapitre : public, indexable, et le seul niveau entre le parcours et ses exercices.
      * Il annonce ce que le chapitre fait apprendre ; la fiche de cours (show) reste, elle, réservée.
      */
-    #[Route('/parcours/{trackId}/chapitre/{chapterId}/sommaire', name: 'app_chapter_summary', methods: ['GET'])]
+    #[Route(['fr' => '/parcours/{trackId}/chapitre/{chapterId}/sommaire', 'en' => '/en/tracks/{trackId}/chapter/{chapterId}/summary'], name: 'app_chapter_summary', methods: ['GET'])]
     public function summary(string $trackId, string $chapterId, ChapterOutline $outlines, CourseSeo $seo): Response
     {
-        $track = $this->visibility->find($trackId) ?? throw $this->createNotFoundException();
+        $track = $this->visibility->findHere($trackId) ?? throw $this->createNotFoundException();
         $chapter = $this->content->findChapter($track, $chapterId) ?? throw $this->createNotFoundException();
         $outline = $outlines->of($track, $chapter) ?? throw $this->createNotFoundException();
         $seo->chapter($track, $chapter, $outline['number'], $outline['concepts']);
@@ -103,7 +103,7 @@ final class ChapterController extends AbstractController
      */
     private function lesson(string $trackId, string $chapterId, Request $request): Response|array
     {
-        $track = $this->visibility->find($trackId) ?? throw $this->createNotFoundException();
+        $track = $this->visibility->findHere($trackId) ?? throw $this->createNotFoundException();
         $chapter = $this->content->findChapter($track, $chapterId) ?? throw $this->createNotFoundException();
         if (!$chapter->hasLesson()) {
             throw $this->createNotFoundException(sprintf('Le chapitre « %s » n\'a pas de fiche de cours.', $chapter->id));
