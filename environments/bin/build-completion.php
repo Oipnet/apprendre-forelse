@@ -425,6 +425,40 @@ foreach (NAMESPACES as $ns) {
     }
 }
 
+// Fonctions : celles de PHP (extensions courantes) et les helpers globaux des frameworks (route(), view(), dd()…).
+// Une extension absente de la machine qui construit l'index est simplement ignorée.
+const FUNCTION_EXTENSIONS = ['Core', 'standard', 'date', 'pcre', 'json', 'mbstring', 'ctype', 'SPL', 'random', 'hash', 'filter', 'intl'];
+// Helpers retenus d'après leur fichier : pas les assertTrue() globaux de PHPUnit, ni les polyfills.
+const FUNCTION_SOURCES = ['/laravel/framework/', '/symfony/var-dumper/'];
+
+$index['functions'] = [];
+$functions = [];
+foreach (FUNCTION_EXTENSIONS as $extension) {
+    array_push($functions, ...(get_extension_funcs($extension) ?: []));
+}
+foreach (get_defined_functions()['user'] as $name) {
+    $file = (string) (new ReflectionFunction($name))->getFileName();
+    foreach (FUNCTION_SOURCES as $source) {
+        if (str_contains($file, $source)) {
+            $functions[] = $name;
+            break;
+        }
+    }
+}
+foreach ($functions as $name) {
+    $rf = new ReflectionFunction($name);
+    // Fonctions dépréciées, ou d'un namespace (Laravel\Prompts\…) : à ne pas suggérer sans namespace.
+    if ($rf->isDeprecated() || $rf->inNamespace() || str_starts_with($rf->getName(), '_')) {
+        continue;
+    }
+    $index['functions'][$rf->getName()] = [
+        'params' => array_map(param(...), $rf->getParameters()),
+        'returns' => typeName($rf->getReturnType() ?? ($rf->hasTentativeReturnType() ? $rf->getTentativeReturnType() : null)),
+        'doc' => summary($rf->getDocComment()),
+    ];
+}
+
 ksort($index['classes']);
+ksort($index['functions']);
 file_put_contents($output, json_encode($index, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
-fprintf(STDERR, "%d classes indexées\n", count($index['classes']));
+fprintf(STDERR, "%d classes et %d fonctions indexées\n", count($index['classes']), count($index['functions']));

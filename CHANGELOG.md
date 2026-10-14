@@ -35,6 +35,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   langue de l'achat est enregistrée (migration `purchase.locale`) : page de paiement Stripe, nom du produit,
   remerciement et email de confirmation en anglais. La renonciation au droit de rétractation est cochée et conservée
   dans le texte anglais.
+- **Complétion des fonctions dans l'éditeur** : les fonctions de PHP (`str_contains`, `array_map`, `sprintf`…) et les
+  helpers globaux de Laravel (`route`, `view`, `redirect`, `old`…) ou de Symfony (`dump`, `dd`) sont proposés, avec
+  l'aide aux paramètres. L'index de complétion de chaque environnement les liste désormais (`functions`).
+
+### Corrigé
+
+- **Import ajouté dans la classe** : dans une classe qui utilise un trait (`use HasFactory;`), compléter `#[Fillable]`
+  ou une autre classe ajoutait son `use` sous le trait, dans le corps de la classe. Il va désormais avec les autres imports.
 
 ## 3.12.0 — 2026-10-14
 
