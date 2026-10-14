@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Mutants traduits** : la traduction d'un exercice (`i18n/en/exercise.yaml`) déclare ses propres `mutants`, avec
+  les mêmes ids que l'exercice français. Leurs libellés s'affichent en anglais, et leurs `search` visent le code
+  traduit (un exercice à mutants gardait sinon des noms français dans son code anglais).
+
 ## 3.9.0 — 2026-10-14
 
 ### Ajouté

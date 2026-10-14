@@ -110,7 +110,7 @@ final class ContentCheckCommand
         // Une traduction en retard sur l'exercice français : jouable, mais elle ne dit plus la même chose.
         foreach ($exercises as $exercise) {
             if (Exercise::LOCALE !== $exercise->locale && true === $this->content->findPractice($exercise->id, $exercise->locale)?->outdated) {
-                $io->writeln(sprintf(' <fg=yellow>!</> %s/%s [%s] — l\'exercice français a changé depuis la traduction : mettez-la à jour, puis « source: %s » dans i18n/%s/exercise.yaml', ContentRepository::PRACTICE, $exercise->id, $exercise->locale, ExerciseReader::fingerprint($exercise->directory), $exercise->locale));
+                $io->writeln(sprintf(' <fg=yellow>!</> %s/%s [%s] — l\'exercice français a changé depuis la traduction : mettez-la à jour, puis « source: '%s' » dans i18n/%s/exercise.yaml', ContentRepository::PRACTICE, $exercise->id, $exercise->locale, ExerciseReader::fingerprint($exercise->directory), $exercise->locale));
             }
         }
 

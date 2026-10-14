@@ -23,7 +23,7 @@ final class ExerciseReader
      * fichiers, date…) se règle dans l'exercice français. Les notions traduites ne sont que des étiquettes : les
      * pages de notions restent en français.
      */
-    public const array TRANSLATED_KEYS = ['title', 'summary', 'concepts', 'objectives', 'hints', 'requests', 'docs', 'preview', 'source'];
+    public const array TRANSLATED_KEYS = ['title', 'summary', 'concepts', 'objectives', 'hints', 'requests', 'docs', 'preview', 'mutants', 'source'];
     /** Les dossiers dont une traduction peut remplacer des fichiers. */
     private const array TRANSLATED_FOLDERS = ['starter', 'solution', 'tests'];
 
@@ -285,10 +285,15 @@ final class ExerciseReader
             throw new ContentException(sprintf('%s : « %s » ne se traduit pas : réglez-la dans l\'exercice français (clés traduisibles : %s).', $file, implode('», «', $unknown), implode(', ', self::TRANSLATED_KEYS)));
         }
         // Un texte laissé de côté s'afficherait en français au milieu de la traduction.
-        foreach (['title', 'summary', 'objectives', 'hints', 'requests', 'docs'] as $key) {
+        foreach (['title', 'summary', 'objectives', 'hints', 'requests', 'docs', 'mutants'] as $key) {
             if (\array_key_exists($key, $meta) && [] !== $meta[$key] && !\array_key_exists($key, $translated)) {
                 throw new ContentException(sprintf('%s : « %s » manque : sans elle, le texte français s\'afficherait dans la traduction.', $file, $key));
             }
+        }
+        // Les mutants traduits suivent le code traduit (leurs « search » visent ses lignes) ; les objectifs les
+        // citent par leur id, qui reste donc celui de l'exercice français.
+        if (\array_key_exists('mutants', $translated) && self::mutantIds($translated['mutants']) !== self::mutantIds($meta['mutants'] ?? [])) {
+            throw new ContentException(sprintf('%s : les mutants traduits gardent les ids de l\'exercice français (%s).', $file, implode(', ', self::mutantIds($meta['mutants'] ?? []))));
         }
         foreach (new \FilesystemIterator($overlay, \FilesystemIterator::SKIP_DOTS) as $entry) {
             $name = $entry->getFilename();
@@ -313,6 +318,15 @@ final class ExerciseReader
         $merged = [...$meta, ...$translated];
 
         return [$this->read($directory, null, null, $merged, $overlay, $locale), $merged];
+    }
+
+    /** @return list<string> */
+    private static function mutantIds(mixed $mutants): array
+    {
+        $ids = \is_array($mutants) ? array_map(static fn (mixed $m) => \is_array($m) && \is_string($m['id'] ?? null) ? $m['id'] : '', $mutants) : [];
+        sort($ids);
+
+        return $ids;
     }
 
     /**
