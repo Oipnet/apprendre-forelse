@@ -391,7 +391,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			revealPane('brief');
 		});
 		root.dataset.bootFailed = '';
-		demarrage.echec();
+		demarrage.echec(error);
 		throw error;
 	}
 	await relais;
