@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.9.0 — 2026-10-14
+
 ### Ajouté
 
 - **Pratique en anglais** (`/en/practice`) : un exercice de Pratique se traduit dans `<exercice>/i18n/en/`
