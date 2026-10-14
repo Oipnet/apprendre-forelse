@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.10.0 — 2026-10-14
+
 ### Ajouté
 
 - **Mutants traduits** : la traduction d'un exercice (`i18n/en/exercise.yaml`) déclare ses propres `mutants`, avec
