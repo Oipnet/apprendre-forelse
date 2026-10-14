@@ -5,6 +5,7 @@ namespace App\Seo\Page;
 use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -17,6 +18,9 @@ final readonly class HomeSeo
         private SchemaOrg $schema,
         private Theme $theme,
         private TranslatorInterface $translator,
+        /** @var list<string> */
+        #[Autowire('%kernel.enabled_locales%')]
+        private array $locales = [],
     ) {
     }
 
@@ -27,7 +31,14 @@ final readonly class HomeSeo
         $this->seo
             ->setTitle($this->translator->trans('seo.titre_marque', ['marque' => $this->theme->name()], 'accueil'), $this->translator->trans('seo.titre', [], 'accueil'))
             ->setDescription($this->translator->trans('seo.description', [], 'accueil'))
-            ->setCanonical($home)
+            ->setCanonical($home);
+        // Les autres langues de l'accueil : celles que le thème parle.
+        foreach ($this->locales as $locale) {
+            if ($locale !== $this->seo->getLanguage() && $this->theme->speaks($locale)) {
+                $this->seo->addAlternate($locale, $this->schema->url('app_home', ['_locale' => $locale]));
+            }
+        }
+        $this->seo
             ->addStructuredData(['@graph' => [
                 [
                     ...$this->schema->organization(),
@@ -41,7 +52,7 @@ final readonly class HomeSeo
                     'alternateName' => $this->theme->signature(),
                     'url' => $home,
                     'inLanguage' => $this->seo->getLanguageTag(),
-                    'publisher' => ['@id' => $home.'#organisation'],
+                    'publisher' => ['@id' => $this->schema->site().'/#organisation'],
                 ],
                 // La personne derrière la plateforme, si le thème en déclare une : sinon, author() ne renvoie qu'une
                 // référence à l'organisation, déjà décrite plus haut.

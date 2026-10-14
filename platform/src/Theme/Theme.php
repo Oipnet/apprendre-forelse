@@ -4,7 +4,9 @@ namespace App\Theme;
 
 use App\Share\ShareImageRenderer;
 use Symfony\Component\Asset\Packages;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -46,6 +48,11 @@ final class Theme implements ResetInterface
         private readonly UrlGeneratorInterface $urls,
         private readonly Packages $assets,
         private readonly ThemeLoader $loader = new ThemeLoader(),
+        /** La langue de la page : le thème sert ses textes traduits (« locales ») quand il en a. */
+        private readonly ?LocaleSwitcher $locale = null,
+        /** La langue de theme.yaml, celle du site. */
+        #[Autowire('%kernel.default_locale%')]
+        private readonly string $defaultLocale = 'fr',
     ) {
     }
 
@@ -94,19 +101,28 @@ final class Theme implements ResetInterface
     /** La puce affichée à côté du nom, dans l'en-tête et le pied de page. Vide : pas de puce. */
     public function chip(): string
     {
-        return $this->config()->chip;
+        return $this->translated()['chip'] ?? $this->config()->chip;
     }
 
     /** Le <title> de l'accueil ; les autres pages ajoutent « · <nom> » au leur. */
     public function title(): string
     {
-        return $this->config()->title;
+        return $this->translated()['title'] ?? $this->config()->title;
     }
 
     /** Une phrase, affichée sous la marque dans le pied de page et dans les balises de partage. */
     public function tagline(): string
     {
-        return $this->config()->tagline;
+        return $this->translated()['tagline'] ?? $this->config()->tagline;
+    }
+
+    /**
+     * Le thème a ses textes dans cette langue : celle de theme.yaml, ou une langue qu'il traduit (« locales »). Une
+     * page ne s'ouvre pas dans une langue que le thème ne parle pas : elle mélangerait deux langues.
+     */
+    public function speaks(string $locale): bool
+    {
+        return $locale === $this->defaultLocale || isset($this->config()->locales[$locale]);
     }
 
     /** La signature des emails : le nom, et la puce quand il y en a une. */
@@ -287,7 +303,20 @@ final class Theme implements ResetInterface
      */
     public function home(): array
     {
-        return $this->config()->home;
+        return [...$this->config()->home, ...($this->translated()['home'] ?? [])];
+    }
+
+    /**
+     * Les textes traduits dans la langue de la page, vides dans la langue de theme.yaml.
+     *
+     * @return array{chip?: string, title?: string, tagline?: string, home?: array<string, array<string, mixed>>}
+     */
+    private function translated(): array
+    {
+        $locale = $this->locale?->getLocale() ?? $this->defaultLocale;
+        $locales = $this->config()->locales;
+
+        return $locales[$locale] ?? $locales[\Locale::getPrimaryLanguage($locale) ?? $locale] ?? [];
     }
 
     /**

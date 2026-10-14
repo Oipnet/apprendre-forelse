@@ -45,6 +45,9 @@ track_card:
     acheter: "Acheter"
     bientot: "Achat bientôt disponible"
     premier_chapitre_gratuit: "Premier chapitre gratuit"
+    # Sur une page dans une autre langue : la langue du parcours (voir HomePage::card).
+    langue:
+        fr: "En français"
     # Une ligne de chapitre : le premier est gratuit pour qui n'a pas le parcours ; la durée, si on la connaît.
     chapitre:
         normal: "{exercices} ex."

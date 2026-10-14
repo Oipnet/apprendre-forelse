@@ -11,6 +11,7 @@ use App\Content\PracticeVersionIndex;
 use App\Content\PublishedContent;
 use App\Instance\SelfHostingPage;
 use App\Legal\LegalVersions;
+use App\Theme\Theme;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -39,13 +40,20 @@ final readonly class Sitemap
         private CacheInterface $cache,
         private SelfHostingPage $selfHosting,
         private ContentDates $dates,
+        private Theme $theme,
+        /** @var list<string> */
+        #[Autowire('%kernel.enabled_locales%')]
+        private array $locales = ['fr'],
     ) {
     }
 
     /** @return list<array{loc: string, lastmod: string}> lastmod au format AAAA-MM-JJ */
     public function entries(): array
     {
-        return $this->cache->get('sitemap', function (ItemInterface $item): array {
+        // L'accueil dans chaque langue que le thème parle : changer de thème change la liste.
+        $homes = array_values(array_filter($this->locales, $this->theme->speaks(...)));
+
+        return $this->cache->get('sitemap.'.implode('-', $homes), function (ItemInterface $item) use ($homes): array {
             $entries = [];
             $latest = LegalVersions::UPDATED_AT;
             $tracksLatest = null;
@@ -133,7 +141,7 @@ final readonly class Sitemap
             $entries[] = $this->entry('app_privacy', [], LegalVersions::UPDATED_AT);
             $entries[] = $this->entry('app_terms', [], LegalVersions::TERMS_VERSION);
 
-            return [$this->entry('app_home', [], $latest), ...$entries];
+            return [...array_map(fn (string $locale) => $this->entry('app_home', ['_locale' => $locale], $latest), $homes), ...$entries];
         });
     }
 

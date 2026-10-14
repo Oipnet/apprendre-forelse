@@ -31,6 +31,10 @@ header:
 
 footer:
     navigation: "Footer"
+    # Le lien vers la même page dans une autre langue, écrit dans cette langue.
+    langue:
+        fr: "Version française"
+        en: "English version"
     apprendre: "Learn"
     parcours: "Tracks"
     pratique: "Practice"

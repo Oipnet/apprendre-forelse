@@ -18,6 +18,7 @@ final readonly class ThemeConfig
      * @param list<string>                                                                                   $preload     polices du thème à précharger
      * @param array{name: string, jobTitle: string}|null                                                     $person    la personne derrière les contenus (marque du moteur seulement)
      * @param array{image: string|null, font: string|null, text_font: string|null, colors: array<string, string>} $shareCard l'habillage des images de partage dessinées par le moteur (fichiers du dossier du thème)
+     * @param array<string, array{chip?: string, title?: string, tagline?: string, home: array<string, array<string, mixed>>}> $locales les textes traduits, par langue (« locales » de theme.yaml)
      */
     public function __construct(
         /** Vrai quand aucun theme.yaml n'est monté : c'est le thème du moteur. */
@@ -42,6 +43,7 @@ final readonly class ThemeConfig
         /** Vrai quand les feuilles du thème remplacent celle du moteur, au lieu de s'y ajouter. */
         public bool $replacesEngineStyles = false,
         public array $shareCard = ['image' => null, 'font' => null, 'text_font' => null, 'colors' => []],
+        public array $locales = [],
     ) {
     }
 }

@@ -5,8 +5,10 @@ namespace App\Controller;
 use App\Content\HomePage;
 use App\Entity\User;
 use App\Seo\Page\HomeSeo;
+use App\Theme\Theme;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -20,9 +22,13 @@ final class HomeController extends AbstractController
     ) {
     }
 
-    #[Route('/', name: 'app_home', methods: ['GET'])]
-    public function index(HomePage $page, HomeSeo $seo): Response
+    /** L'accueil anglais n'existe que si le thème a ses textes en anglais (« locales » de theme.yaml). */
+    #[Route(['fr' => '/', 'en' => '/en'], name: 'app_home', methods: ['GET'])]
+    public function index(Request $request, HomePage $page, HomeSeo $seo, Theme $theme): Response
     {
+        if (!$theme->speaks($request->getLocale())) {
+            throw $this->createNotFoundException();
+        }
         $user = $this->getUser();
         $home = $page->of($user instanceof User ? $user : null);
         $seo->write($home['faq']);
