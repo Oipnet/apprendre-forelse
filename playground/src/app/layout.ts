@@ -97,6 +97,16 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 				<div class="preview-frozen" id="preview-frozen" role="alert" hidden>${m.layout.previewFrozen}</div>
 				<iframe id="frame" title="${m.layout.previewFrame}" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"></iframe>
 				<div class="requestlog"><span id="requestlog"></span><button id="explain-preview" class="ghost small" hidden title="${m.layout.explainTitle}"><span aria-hidden="true">🩺</span> ${m.layout.explainError}</button></div>
+				<!-- Le démarrage ne couvre que l'aperçu : consignes et code se lisent, et s'éditent, pendant le chargement. -->
+				<div class="overlay">
+					<div class="boot">
+						<div class="logo">🐉</div>
+						<p id="boot-label" role="status">${m.layout.bootPreparing}</p>
+						<div class="bar"><div id="boot-bar"></div></div>
+						<small>${escapeHtml(framework.bootNote)}</small>
+						<small id="boot-first" class="boot-first"></small>
+					</div>
+				</div>
 			</div>
 			<div class="pane-console" hidden>
 				<div class="console-output" id="console-output"></div>
@@ -118,16 +128,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 				</div>
 			</div>
 		</section>
-	</main>
-	<div class="overlay">
-		<div class="boot">
-			<div class="logo">🐉</div>
-			<p id="boot-label" role="status">${m.layout.bootPreparing}</p>
-			<div class="bar"><div id="boot-bar"></div></div>
-			<small>${escapeHtml(framework.bootNote)}</small>
-			<small id="boot-first" class="boot-first"></small>
-		</div>
-	</div>`;
+	</main>`;
 }
 
 /**

@@ -3,6 +3,7 @@ import { PreviewBridge } from '../preview/bridge';
 import type { CommandResult } from '@forelse/runtime-contract';
 import '../runtime/builtin';
 import { createRuntime, runtimeLabel } from '../runtime/registry';
+import { apresDemarrage } from './attente';
 import { ConsolePanel } from './console';
 import { cheminsExplicites, estModifiable } from './editable';
 import { Emitter, Mailbox } from './emitter';
@@ -112,7 +113,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const mentor = new MentorPanel(root, config.mentor ? new MentorClient(config.mentor) : null, () => revealPane('brief'));
 
 	// --- Runtime et aperçu isolé ---------------------------------------------------------
-	const runtime = createRuntime(framework.runtime);
+	// La page se monte sans attendre PHP : consignes, éditeur et explorateur s'affichent tout de suite, et chaque appel
+	// au runtime (frappes, lecture d'un fichier, aperçu) attend `demarre` : PHP prêt, projet de départ écrit. Seuls le
+	// bouton Exécuter et la mise en route de l'aperçu attendent la fin de tout le démarrage.
+	const moteur = createRuntime(framework.runtime);
+	let demarrer!: (etapes: Promise<void>) => void;
+	const demarre = new Promise<void>((resolve) => (demarrer = resolve));
+	demarre.catch(() => {}); // l'échec s'affiche plus bas, dans l'écran de démarrage
+	const runtime = apresDemarrage(moteur, demarre);
 	const urlInput = $<HTMLInputElement>('#url');
 	// La console est créée plus bas : les messages de l'aperçu arrivés avant sont gardés en attente.
 	const messagesDeLApercu = new Mailbox<[level: 'warn' | 'error', message: string]>();
@@ -160,53 +168,55 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const note = firstLoadNote(seen, archiveUrl);
 	if (note) $('#boot-first').textContent = note;
 	const demarrage = suivreDemarrage(mesure, note !== null, t0);
-	try {
-		await runtime.boot(
-			{
-				id: exercise.environment.id,
-				framework,
-				options: { phpVersion: exercise.environment.phpVersion },
-				// URL absolue : le worker peut tourner depuis une URL blob: (dev), sans base relative.
-				archiveUrl,
-				previewBasePath: bridge.base,
-				previewSecure: new URL(config.sandboxUrl).protocol === 'https:',
-			},
-			bootProgress(root),
-		);
-	} catch (error) {
-		$('#boot-label').textContent = m.boot.runtimeFailed(runtimeLabel(framework.runtime), error instanceof Error ? error.message.split('\n')[0] : String(error));
-		$('#boot-first').textContent = '';
-		status(m.boot.startFailed, 'ko');
-		$('.boot').insertAdjacentHTML('beforeend', bootFailureActionsHtml());
-		bindRetry(root, () => {
-			const overlay = $('.overlay');
-			overlay.classList.add('hidden');
-			overlay.inert = true;
-			revealPane('brief');
+	// Le brouillon d'une session précédente se charge pendant le téléchargement : il fait partie du projet de départ.
+	const depart = progress
+		.load()
+		.catch(() => null)
+		.then((saved) => {
+			const initial: Record<string, string> = { ...exercise.files };
+			// Les motifs (migrations/*.php) couvrent les fichiers générés lors d'une session précédente.
+			for (const [path, content] of Object.entries(saved?.files ?? {})) if (estModifiable(path, exercise.editable)) initial[path] = content;
+			return { saved, initial };
 		});
-		root.dataset.bootFailed = '';
-		demarrage.echec();
-		throw error;
-	}
-	mark('runtimeReady');
-	try {
-		localStorage.setItem(bootKey(exercise.environment.id), archiveUrl);
-	} catch {
-		// stockage indisponible : le prochain démarrage préviendra encore, sans conséquence
-	}
+	const suivreProgression = bootProgress(root);
+	demarrer(
+		(async () => {
+			await moteur.boot(
+				{
+					id: exercise.environment.id,
+					framework,
+					options: { phpVersion: exercise.environment.phpVersion },
+					// URL absolue : le worker peut tourner depuis une URL blob: (dev), sans base relative.
+					archiveUrl,
+					previewBasePath: bridge.base,
+					previewSecure: new URL(config.sandboxUrl).protocol === 'https:',
+				},
+				(p) => {
+					suivreProgression(p);
+					// L'écran de démarrage ne couvre que l'aperçu (replié, ou caché sur petit écran) : la barre de statut le dit aussi.
+					status(p.label, 'busy');
+				},
+			);
+			mark('runtimeReady');
+			try {
+				localStorage.setItem(bootKey(exercise.environment.id), archiveUrl);
+			} catch {
+				// stockage indisponible : le prochain démarrage préviendra encore, sans conséquence
+			}
+			// Un seul message pour tout le projet de départ, au lieu d'un aller-retour par fichier.
+			await moteur.writeFiles({ ...(await depart).initial, ...exercise.tests });
+			mark('filesWritten');
+		})(),
+	);
 
-	const saved = await progress.load().catch(() => null);
-	const initial: Record<string, string> = { ...exercise.files };
-	// Les motifs (migrations/*.php) couvrent les fichiers générés lors d'une session précédente.
-	for (const [path, content] of Object.entries(saved?.files ?? {})) if (estModifiable(path, exercise.editable)) initial[path] = content;
+	const { saved, initial } = await depart;
 	const editables = [...new Set([...cheminsExplicites(exercise.editable), ...Object.keys(initial).filter((path) => estModifiable(path, exercise.editable))])];
-	// Un seul message pour tout le projet de départ, au lieu d'un aller-retour par fichier.
-	await runtime.writeFiles({ ...initial, ...exercise.tests });
-	mark('filesWritten');
 
-	await relais;
-	mark('relayReady');
-	const reload = () => bridge.navigate(urlInput.value || '/');
+	/** Recharge l'aperçu ; pendant le démarrage, rien : il s'ouvrira de lui-même à la fin. */
+	let apercuPret = false;
+	const reload = () => {
+		if (apercuPret) bridge.navigate(urlInput.value || '/');
+	};
 	urlInput.addEventListener('keydown', (e) => e.key === 'Enter' && reload());
 	$('#reload').addEventListener('click', reload);
 
@@ -233,21 +243,10 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const commandes = exercise.setup.length > 0 && runtime.runCommand ? exercise.setup : [];
 	if (!runtime.runCommand) $('.console-input').hidden = true;
 
-	// Commandes de préparation (ex. schéma de la base de l'aperçu, qui vit en mémoire).
-	for (const command of commandes) {
-		$('#boot-label').textContent = m.boot.preparing(`${consoleName} ${command}`);
-		const result = await consolePanel.run(command, { quiet: true });
-		if (result?.exitCode !== 0) {
-			$('.pane-tabs .badge').hidden = false;
-			folding.showPreviewAlert(m.playground.setupFailedSpoken);
-		}
-	}
-	bridge.navigate(exercise.preview);
-
 	// Une boucle infinie bloque le runtime : il est relancé avec les fichiers, mais ce qui vivait en mémoire
 	// (la base de l'aperçu) est à refaire. L'aperçu n'est pas rechargé : il retomberait dans la boucle.
 	// La prochaine modification le rechargera.
-	runtime.onRestart?.((event) => {
+	moteur.onRestart?.((event) => {
 		if (event.phase === 'restarting') status(m.playground.restarting, 'ko');
 		else if (event.phase === 'failed') status(m.playground.restartFailed(String(event.error)), 'ko');
 		else void (async () => {
@@ -272,12 +271,15 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	mark('editorLoaded');
 	const editor = new EditorPanel($('#tabs'), $('#editor'), (path, content) => session.edit(path, content));
 	const files = new ProjectFilesController(root, editor, runtime, exercise, session, compact.matches);
-	await files.addInitialFiles(initial, editables);
+	// Les fichiers modifiables arrivent tout de suite ; ceux à lire seulement, quand PHP peut les lire.
+	const fichiersALire = files.addInitialFiles(initial, editables);
 	// Explorateur : tout le projet, sauf les tests cachés de l'exercice (ils donneraient la solution).
 	files.load();
 	commandRan.on((result) => files.synchronise(result));
 	fitEditor(editor, narrow);
-	files.openStart();
+	if (editor.has(exercise.open)) files.openStart();
+	else void fichiersALire.then(() => files.openStart(), () => {});
+	mark('editorShown');
 
 	// Onglet « Requêtes » : les dernières frappes sont écrites dans PHP avant chaque envoi.
 	new RequestsPanel($('.pane-requests'), exercise.requests, runtime, bridge.base, new URL(config.sandboxUrl).host, async () => (await session.flush()) && reload());
@@ -373,6 +375,41 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	// Rappel « déjà réussi » : la revue de code, la fiche de cours et le bouton avant/après.
 	if (session.completed) success.markCompleted(true);
+
+	// --- Fin du démarrage : PHP, puis les commandes de préparation et l'aperçu -------------------
+	try {
+		await demarre;
+	} catch (error) {
+		$('#boot-label').textContent = m.boot.runtimeFailed(runtimeLabel(framework.runtime), error instanceof Error ? error.message.split('\n')[0] : String(error));
+		$('#boot-first').textContent = '';
+		status(m.boot.startFailed, 'ko');
+		$('.boot').insertAdjacentHTML('beforeend', bootFailureActionsHtml());
+		bindRetry(root, () => {
+			const overlay = $('.overlay');
+			overlay.classList.add('hidden');
+			overlay.inert = true;
+			revealPane('brief');
+		});
+		root.dataset.bootFailed = '';
+		demarrage.echec();
+		throw error;
+	}
+	await relais;
+	mark('relayReady');
+	// Commandes de préparation (ex. schéma de la base de l'aperçu, qui vit en mémoire).
+	for (const command of commandes) {
+		$('#boot-label').textContent = m.boot.preparing(`${consoleName} ${command}`);
+		status(m.boot.preparing(`${consoleName} ${command}`), 'busy');
+		const result = await consolePanel.run(command, { quiet: true });
+		if (result?.exitCode !== 0) {
+			$('.pane-tabs .badge').hidden = false;
+			folding.showPreviewAlert(m.playground.setupFailedSpoken);
+		}
+	}
+	apercuPret = true;
+	// Les frappes faites pendant le chargement sont dans PHP avant que l'aperçu ne s'ouvre.
+	await session.flush().catch(() => false);
+	bridge.navigate(exercise.preview);
 
 	// --- Prêt ----------------------------------------------------------------------------
 	runButton.disabled = false;

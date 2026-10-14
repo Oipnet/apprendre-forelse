@@ -123,6 +123,28 @@ describe('PhpWasmProject', () => {
 		}
 	});
 
+	it('charge PHP pendant le téléchargement de l\'archive, pas après', async () => {
+		const ordre: string[] = [];
+		let archiveArrivee!: () => void;
+		const project = new PhpWasmProject({
+			async loadPhp() {
+				ordre.push('php');
+				return new FauxPhp(() => '');
+			},
+			async download() {
+				ordre.push('archive demandée');
+				await new Promise<void>((resolve) => (archiveArrivee = resolve));
+				ordre.push('archive reçue');
+				return archive;
+			},
+		});
+		const boot = project.boot(env());
+		await Promise.resolve();
+		archiveArrivee();
+		await boot;
+		expect(ordre.slice(0, 3)).toEqual(['php', 'archive demandée', 'archive reçue']);
+	});
+
 	it('refuse un environnement qui ne se joue pas en PHP', async () => {
 		const { project } = projet();
 		await expect(project.boot(env(profile({ runtime: 'nuxt-sim' })))).rejects.toThrow('ne se joue pas avec PHP');
