@@ -19,7 +19,8 @@
 {$SERVER_NAME} {
 	root /app/platform/public
 
-	# Le binaire PHP WebAssembly (≈ 19 Mo) tombe à ≈ 7 Mo compressé. Les fichiers sans type connu
+	# Le binaire PHP WebAssembly (≈ 19 Mo) tombe à ≈ 7 Mo compressé (les fichiers du build arrivent déjà compressés,
+	# voir handle /build/* plus bas). Les fichiers sans type connu
 	# (données ICU .dat ≈ 29 Mo, extensions .so) sortent en application/octet-stream : compressés
 	# aussi. Les archives .zip des environnements (application/zip) ne le sont pas, inutile.
 	encode {
@@ -84,6 +85,16 @@
 	# Manifestes du build Vite : lus par la plateforme sur le disque, jamais par le navigateur. Inutile de les servir.
 	handle /build/.vite/* {
 		respond 404
+	}
+
+	# Fichiers du build : leurs variantes compressées sont écrites à la construction de l'image
+	# (playground/precompresser.ts), Caddy envoie celle que le navigateur accepte. Sans elles, il recompressait
+	# le binaire PHP et les données ICU à chaque nouveau visiteur, environ une seconde de processeur à chaque fois.
+	# La directive encode laisse passer une réponse déjà compressée ; elle compresse encore ce qui n'a pas de variante.
+	handle /build/* {
+		file_server {
+			precompressed br zstd gzip
+		}
 	}
 
 	handle {

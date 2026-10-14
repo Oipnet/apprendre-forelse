@@ -27,6 +27,8 @@ COPY playground/ ./
 COPY platform/templates /src/platform/templates
 # Sortie : /src/platform/public/build (voir playground/vite.config.ts)
 RUN npm run build
+# Variantes .br, .zst et .gz à côté de chaque fichier, servies telles quelles par Caddy (docker/Caddyfile).
+RUN node precompresser.ts /src/platform/public/build
 
 
 # --- 2. Base PHP commune ----------------------------------------------------------------

@@ -8,6 +8,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Fichiers du playground précompressés** : l'image contient une variante brotli, zstd et gzip de chaque fichier du
+  build (`playground/precompresser.ts`), et Caddy envoie celle que le navigateur accepte. Il ne recompresse plus le
+  binaire PHP (≈ 20 Mo) et les données ICU (≈ 30 Mo) à chaque nouveau visiteur, environ une seconde de processeur à
+  chaque fois, et le binaire PHP pèse ≈ 5,6 Mo téléchargé (brotli au niveau maximal). La construction de
+  l'image prend environ deux minutes et demie de plus.
+
 ## 3.10.0 — 2026-10-14
 
 ### Ajouté
