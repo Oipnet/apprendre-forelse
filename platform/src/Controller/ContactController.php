@@ -32,7 +32,7 @@ final class ContactController extends AbstractController
     ) {
     }
 
-    #[Route('/contact', name: 'app_contact', methods: ['GET', 'POST'])]
+    #[Route(['fr' => '/contact', 'en' => '/en/contact'], name: 'app_contact', methods: ['GET', 'POST'])]
     #[Seo('contact.index.seo.titre', 'contact.index.seo.description', domain: 'compte')]
     public function contact(Request $request): Response
     {

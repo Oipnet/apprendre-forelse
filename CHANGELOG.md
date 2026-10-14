@@ -25,6 +25,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 - **Classement en anglais** (`/en/leaderboard`) : la page du classement et le choix d'y paraître existent en anglais.
   Les titres des parcours y restent en français, comme les parcours eux-mêmes.
+- **Contact en anglais** (`/en/contact`) : la page de contact et son formulaire existent en anglais ; le message arrive
+  dans la même boîte, et l'e-mail à l'équipe reste en français.
 
 ### Modifié
 
