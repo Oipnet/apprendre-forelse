@@ -80,6 +80,12 @@ final class SearchIndexingTest extends WebTestCase
             'http://localhost/parcours/decouverte/chapitre/bonjour/sommaire',
             'http://localhost/parcours/decouverte/01-bonjour',
             'http://localhost/parcours/decouverte/02-bonjour-prenom',
+            // Le parcours de démo est traduit : ses pages anglaises aussi.
+            'http://localhost/en/tracks',
+            'http://localhost/en/tracks/decouverte',
+            'http://localhost/en/tracks/decouverte/chapter/bonjour/summary',
+            'http://localhost/en/tracks/decouverte/01-bonjour',
+            'http://localhost/en/tracks/decouverte/02-bonjour-prenom',
             'http://localhost/pratique',
             'http://localhost/pratique/exemple-map-request-header',
             // L'exercice du pack de démo est traduit : la Pratique anglaise n'a que lui.

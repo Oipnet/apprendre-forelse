@@ -26,7 +26,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   chapitre, ses fiches de cours et ses exercices, joués avec les tests anglais (la réussite garde sa langue pour le
   vérificateur). Le catalogue anglais montre aussi les parcours pas encore traduits, en français ; l'adresse
   anglaise d'un tel parcours renvoie (302) vers sa page française. Les pages traduites s'annoncent aux moteurs
-  (`hreflang`), avec des title et descriptions générés en anglais (ceux saisis dans l'admin restent au français).
+  (`hreflang`) et figurent au sitemap, avec des title et descriptions générés en anglais (ceux saisis dans l'admin
+  restent au français).
 - **L'achat en anglais** : un parcours traduit s'achète depuis sa page anglaise (`/en/tracks/<parcours>/buy`). La
   langue de l'achat est enregistrée (migration `purchase.locale`) : page de paiement Stripe, nom du produit,
   remerciement et email de confirmation en anglais. La renonciation au droit de rétractation est cochée et conservée

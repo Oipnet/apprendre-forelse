@@ -56,33 +56,42 @@ final readonly class Sitemap
         return $this->cache->get('sitemap.'.implode('-', $homes), function (ItemInterface $item) use ($homes): array {
             $entries = [];
             $latest = LegalVersions::UPDATED_AT;
-            $tracksLatest = null;
 
-            foreach ($this->published->tracks() as $track) {
-                $trackEntries = [];
-                foreach ($this->content->exercisesOf($track) as $exercise) {
-                    $trackEntries[] = $this->entry('app_exercise', ['trackId' => $track->id, 'exerciseId' => $exercise->id], $this->dates->lastModified($exercise->directory));
-                }
-                // Le sommaire d'un chapitre change quand un de ses exercices change.
-                $chapterEntries = [];
-                foreach ($track->chapters as $chapter) {
-                    $dates = array_map(fn (Exercise $exercise) => $this->dates->lastModified($exercise->directory), $this->content->exercisesOfChapter($track, $chapter));
-                    // Un chapitre sans exercice lisible n'a pas de sommaire (voir ChapterOutline).
-                    if ([] !== $dates) {
-                        $chapterEntries[] = $this->entry('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id], max($dates));
+            // Les parcours dans chaque langue où ils sont traduits : /parcours, puis /en/tracks (et le catalogue anglais
+            // dès qu'un parcours l'est).
+            foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
+                $tracksLatest = null;
+                $localeEntries = [];
+                foreach ($this->published->tracks() as $published) {
+                    $track = $this->content->findTrack($published->id, $locale);
+                    if (null === $track) {
+                        continue;
                     }
-                }
+                    $trackEntries = [];
+                    foreach ($this->content->exercisesOf($track) as $exercise) {
+                        $trackEntries[] = $this->entry('app_exercise', ['_locale' => $locale, 'trackId' => $track->id, 'exerciseId' => $exercise->id], $this->dates->lastModified($exercise->directory));
+                    }
+                    // Le sommaire d'un chapitre change quand un de ses exercices change.
+                    $chapterEntries = [];
+                    foreach ($track->chapters as $chapter) {
+                        $dates = array_map(fn (Exercise $exercise) => $this->dates->lastModified($exercise->directory), $this->content->exercisesOfChapter($track, $chapter));
+                        // Un chapitre sans exercice lisible n'a pas de sommaire (voir ChapterOutline).
+                        if ([] !== $dates) {
+                            $chapterEntries[] = $this->entry('app_chapter_summary', ['_locale' => $locale, 'trackId' => $track->id, 'chapterId' => $chapter->id], max($dates));
+                        }
+                    }
 
-                // Le parcours change quand track.yaml, une fiche ou un de ses exercices change.
-                $modified = max($this->dates->lastModified($track->directory), ...array_column($trackEntries, 'lastmod') ?: ['']);
-                $entries[] = $this->entry('app_track', ['trackId' => $track->id], $modified);
-                array_push($entries, ...$chapterEntries, ...$trackEntries);
-                $latest = max($latest, $modified);
-                $tracksLatest = max($tracksLatest ?? '', $modified);
-            }
-            // Le catalogue change quand un parcours change.
-            if (null !== $tracksLatest) {
-                array_unshift($entries, $this->entry('app_tracks', [], $tracksLatest));
+                    // Le parcours change quand track.yaml, une fiche ou un de ses exercices change.
+                    $modified = max($this->dates->lastModified($published->directory), ...array_column($trackEntries, 'lastmod') ?: ['']);
+                    $localeEntries[] = $this->entry('app_track', ['_locale' => $locale, 'trackId' => $track->id], $modified);
+                    array_push($localeEntries, ...$chapterEntries, ...$trackEntries);
+                    $latest = max($latest, $modified);
+                    $tracksLatest = max($tracksLatest ?? '', $modified);
+                }
+                // Le catalogue change quand un parcours change.
+                if (null !== $tracksLatest) {
+                    array_push($entries, $this->entry('app_tracks', ['_locale' => $locale], $tracksLatest), ...$localeEntries);
+                }
             }
 
             // La Pratique dans chaque langue où un exercice est traduit : /pratique, puis /en/practice.
