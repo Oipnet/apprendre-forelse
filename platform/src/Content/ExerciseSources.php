@@ -23,7 +23,7 @@ final readonly class ExerciseSources
     {
         $files = null === $exercise->base ? [] : $this->solvedFiles($this->baseOf($exercise));
 
-        return [...$files, ...$this->readDirectory($exercise->directory.'/starter')];
+        return [...$files, ...$this->read($exercise, 'starter')];
     }
 
     /** @return array<string, string> état de départ + solution */
@@ -35,14 +35,14 @@ final readonly class ExerciseSources
     /** @return array<string, string> fichiers de solution seuls (jamais envoyés au navigateur) */
     public function solutionFiles(Exercise $exercise): array
     {
-        return $this->readDirectory($exercise->directory.'/solution');
+        return $this->read($exercise, 'solution');
     }
 
     /** @return array<string, string> tests cachés, écrits dans tests/ du projet */
     public function testFiles(Exercise $exercise): array
     {
         $tests = [];
-        foreach ($this->readDirectory($exercise->directory.'/tests') as $path => $content) {
+        foreach ($this->read($exercise, 'tests') as $path => $content) {
             $tests['tests/'.$path] = $content;
         }
 
@@ -53,6 +53,18 @@ final readonly class ExerciseSources
     {
         return (null === $exercise->trackId ? null : $this->index->findExercise($exercise->trackId, (string) $exercise->base))
             ?? throw new ContentException(sprintf('Exercice « %s » : base « %s » introuvable.', $exercise->id, $exercise->base));
+    }
+
+    /**
+     * Un dossier de l'exercice (starter, solution, tests) ; pour une traduction, ses fichiers traduits par-dessus.
+     *
+     * @return array<string, string>
+     */
+    private function read(Exercise $exercise, string $folder): array
+    {
+        $files = $this->readDirectory($exercise->directory.'/'.$folder);
+
+        return null === $exercise->overlay ? $files : [...$files, ...$this->readDirectory($exercise->overlay.'/'.$folder)];
     }
 
     /** @return array<string, string> */

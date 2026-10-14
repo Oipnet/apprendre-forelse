@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Api\PlaygroundConfigFactory;
+use App\Content\Exercise;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\LessonRenderer;
 use App\Content\Practice;
@@ -44,7 +45,7 @@ final class PracticeController extends AbstractController
     }
 
     /** Les filtres tiennent dans l'URL (et donc fonctionnent sans JavaScript) : voir PracticeFilter. */
-    #[Route('/pratique', name: 'app_practice', methods: ['GET'])]
+    #[Route(['fr' => '/pratique', 'en' => '/en/practice'], name: 'app_practice', methods: ['GET'])]
     public function index(
         ExerciseProgressRepository $progressRepository,
         PracticeVersionIndex $versions,
@@ -62,7 +63,8 @@ final class PracticeController extends AbstractController
             'frameworks' => array_intersect_key($this->frameworks->labels(), array_flip(array_map(static fn (Practice $p) => $p->framework, $listing->all))),
             'notionCounts' => $listing->notionCounts,
             'filters' => $listing->filter->toArray(),
-            'versions' => $versions->all(),
+            // Les pages de nouveautés sont en français : la liste anglaise n'y renvoie pas.
+            'versions' => $this->translated() ? [] : $versions->all(),
             'total' => \count($listing->all),
             'newCount' => $listing->newCount,
             'completedCount' => $listing->completedCount,
@@ -103,7 +105,7 @@ final class PracticeController extends AbstractController
      * L'image de partage d'un exercice, dessinée par le moteur au premier appel (voir ShareImage). L'adresse que
      * donnent les pages porte sa version : sous cette adresse, l'image ne change plus.
      */
-    #[Route('/pratique/{exerciseId}/image-de-partage', name: 'app_practice_image', methods: ['GET'], priority: 1)]
+    #[Route(['fr' => '/pratique/{exerciseId}/image-de-partage', 'en' => '/en/practice/{exerciseId}/share-image'], name: 'app_practice_image', methods: ['GET'], priority: 1)]
     public function image(string $exerciseId, Request $request, PracticeShare $share, ShareImage $images): BinaryFileResponse
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
@@ -116,7 +118,7 @@ final class PracticeController extends AbstractController
      * et remontent sur son compte s'il en crée un. Seule une instance sur invitation le renvoie vers la page
      * publique de l'exercice — le problème et la fonctionnalité expliquée, sans éditeur (TrackAccessChecker).
      */
-    #[Route('/pratique/{exerciseId}', name: 'app_exercise_pratique', methods: ['GET'])]
+    #[Route(['fr' => '/pratique/{exerciseId}', 'en' => '/en/practice/{exerciseId}'], name: 'app_exercise_pratique', methods: ['GET'])]
     public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access, PracticeTrack $tracks, PracticeShare $share): Response
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
@@ -126,9 +128,10 @@ final class PracticeController extends AbstractController
             'framework' => $this->frameworks->labelOf($practice->framework),
             'instructions' => $markdown->toHtmlUnderTitle($practice->exercise->instructions),
             // La pastille de version mène aux autres exercices de cette version, quand cette page existe.
-            'versionSlug' => $versions->slugOf($practice),
+            // Les pages de nouveautés et les parcours sont en français : une traduction n'y renvoie pas.
+            'versionSlug' => $this->translated() ? null : $versions->slugOf($practice),
             // Pour aller plus loin : le parcours du même framework, s'il y en a un de visible.
-            'track' => $tracks->of($practice),
+            'track' => $this->translated() ? null : $tracks->of($practice),
             // Les liens de partage : inviter à faire l'exercice, ou annoncer l'avoir réussi (panneau de réussite).
             'share' => ['invite' => $share->links($practice), 'success' => $share->links($practice, true)],
         ];
@@ -139,5 +142,11 @@ final class PracticeController extends AbstractController
         }
 
         return $this->render('exercise/play.html.twig', [...$context, 'exercise' => $practice->exercise, 'config' => [...$configs->create($practice->exercise), 'share' => $context['share']]]);
+    }
+
+    /** La page est-elle dans une autre langue que celle des packs (/en/practice) ? */
+    private function translated(): bool
+    {
+        return Exercise::LOCALE !== $this->practices->locale();
     }
 }

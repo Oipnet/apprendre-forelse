@@ -45,7 +45,7 @@ final readonly class VerificationDispatcher
         $now = $this->clock->now();
         $sent = 0;
         foreach ($this->progress->findVerificationsToRequest($now->modify(self::RETRY_AFTER), self::BATCH) as $progress) {
-            $this->queue->push(new VerificationRequest((int) $progress->getId(), $progress->getTrackId(), $progress->getExerciseId(), $progress->getSubmittedFiles() ?? []));
+            $this->queue->push(new VerificationRequest((int) $progress->getId(), $progress->getTrackId(), $progress->getExerciseId(), $progress->getSubmittedFiles() ?? [], $progress->getSubmittedLocale()));
             $progress->markVerificationRequested($now);
             ++$sent;
         }

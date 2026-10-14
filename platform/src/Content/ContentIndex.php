@@ -48,6 +48,12 @@ final class ContentIndex
         foreach ($this->content->practices as $practice) {
             if (null === $target || \in_array($target, [$practice->packId, ContentRepository::PRACTICE, ContentRepository::PRACTICE.'/'.$practice->exercise->id], true)) {
                 $exercises[] = $practice->exercise;
+                // Chaque traduction se vérifie à part : ses fichiers traduits peuvent casser l'exercice.
+                foreach ($this->content->practiceTranslations as $translations) {
+                    if (null !== ($translation = $translations[$practice->exercise->id] ?? null)) {
+                        $exercises[] = $translation->exercise;
+                    }
+                }
             }
         }
 

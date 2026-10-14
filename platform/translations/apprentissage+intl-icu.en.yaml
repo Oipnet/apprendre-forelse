@@ -1,0 +1,105 @@
+# Learning pages served in English: the Practice (/en/practice) and its playground. Tracks, chapters, concepts and
+# defenses stay in French for now: their keys fall back to apprentissage+intl-icu.fr.yaml (see README.md).
+
+commun:
+    fil_ariane: Breadcrumb
+    accueil: Home
+    pratique: Practice
+    notions_abordees: "Topics covered:"
+    exercices: "{n, plural, one {# exercise} other {# exercises}}"
+    xp: "{xp} XP"
+    creer_compte: Create an account
+    se_connecter: Log in
+    liste_attente: Waiting list
+    nouveaute: New
+    en_preparation: In preparation
+    tous: All
+    reprendre: Resume
+    liste_et: " and "
+
+practice:
+    card:
+        programme: "Scheduled for {date}"
+        reussi: "✓ Completed"
+        en_cours: In progress
+        refaire: Redo the exercise
+        faire: Do the exercise
+    intro:
+        publie: 'Published on <time datetime="{datetime}">{date}</time>'
+        origine: "Where the feature comes from: <a href=\"{url}\" rel=\"noopener\">the original pull request</a>."
+    index:
+        titre: Use a feature, right now
+        intro: "Short exercises, separate from the tracks: code written the old way, to rewrite with the feature. Often something new in the framework, sometimes a specific point worth a closer look."
+        par_version: "By version:"
+        kpi_exercices: "{n, plural, one {exercise} other {exercises}}"
+        kpi_nouveautes: "{n, plural, one {new feature} other {new features}}"
+        kpi_reussis: "{n, plural, one {completed} other {completed}}"
+        filtres: Filters
+        filtres_actifs: "{n} active"
+        rechercher: Search
+        rechercher_exemple: "chunkBy, mail, validation…"
+        framework: Framework
+        nouveautes_seulement: New features only
+        nouveautes_aide: Released in the latest versions
+        notions: Topics
+        notions_retenues: "{n} selected"
+        voir_autres: "Show the {n} others"
+        voir_moins: Show less
+        appliquer: Apply filters
+        reinitialiser: Reset filters
+        trouves: "{n, plural, =0 {No exercise} one {# exercise} other {# exercises}}"
+        trier: "Sort:"
+        tri_recents: Recent
+        tri_titre: Title
+        groupe:
+            par_titre: By title
+            a_venir: Upcoming
+            cette_semaine: This week
+            avant: Earlier
+        aucun_filtre: No exercise matches these filters.
+        tout_afficher: Show all
+        inscription_invitation: "This platform is for its members only: <a rel=\"nofollow\" href=\"{inscription}\">create your account</a> with your invitation code, or <a href=\"{connexion}\">log in</a>."
+        inscription: "No account needed for these exercises: the editor opens right away. An account keeps your progress and unlocks the mentor and feedback. <a rel=\"nofollow\" href=\"{inscription}\">Create yours</a> or <a href=\"{connexion}\">log in</a>."
+        vide: "No exercise here yet: come back soon."
+    show:
+        partager: Share this exercise
+        a_vous: Your turn to write the code
+        invitation: "This platform is for its members only: create your account with your invitation code, or leave your address on the waiting list."
+        plus_loin: Going further
+        parcours: "This exercise covers a single feature. The <strong>{titre}</strong> track covers {framework} from start to finish, chapter by chapter."
+        parcours_description: "This exercise covers a single feature. The <strong>{titre}</strong> track covers {framework} from start to finish, chapter by chapter: {description}"
+        decouvrir: Discover the track
+
+# The playground APIs' refusals, read by the learner (the "detail" field of the JSON response).
+api:
+    connexion:
+        exercice: Log in to access this exercise.
+        progression: Log in to save your progress.
+        mentor: Log in to call on the mentor.
+        retour: Log in to send feedback.
+    parcours_complet: "This exercise is part of the full track: buy the track to access it."
+    import_trop_grand: "At most {max} exercises per import."
+    mentor:
+        inactif: The mentor is not enabled on this platform.
+        revue_apres_reussite: "The code review comes after success: make the tests pass first."
+        email_a_confirmer: "Confirm your email address to call on the mentor: the link is in the email you received when signing up, or can be resent from your account."
+        trop_d_appels: "The mentor has been working hard: try again a little later."
+        budget_epuise: "The mentor has reached its daily limit on this platform: it will be back tomorrow."
+        sans_reponse: "The mentor could not answer: {raison}"
+
+# The texts the server sends to the playground (PlaygroundConfigFactory, ExercisePayloadFactory).
+playground:
+    retour_pratique: Practice
+    framework:
+        symfony:
+            demarrage: "Symfony runs entirely in your browser, thanks to PHP compiled to WebAssembly."
+            decompression: Unpacking the Symfony project
+        laravel:
+            demarrage: "Laravel runs entirely in your browser, thanks to PHP compiled to WebAssembly."
+            decompression: Unpacking the Laravel project
+        docker:
+            demarrage: "Docker is simulated in your browser: images, containers and Compose, and the PHP in your containers really runs in WebAssembly."
+            decompression: Unpacking the project
+        nuxt:
+            demarrage: "Nuxt is simulated in your browser: your pages are rendered on the server, then hydrated, just like with nuxi dev."
+            decompression: Unpacking the project

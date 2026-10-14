@@ -1,6 +1,6 @@
 framework:
     default_locale: fr
-    # Les langues servies par le site : le français partout, l'anglais pour le blog seulement (/en/blog). Les textes
+    # Les langues servies par le site : le français partout, l'anglais pour l'accueil, le blog et la Pratique. Les textes
     # sont sortis des gabarits (translations/, voir son README) : une autre langue n'a plus qu'à fournir ses fichiers.
     enabled_locales: [fr, en]
     translator:

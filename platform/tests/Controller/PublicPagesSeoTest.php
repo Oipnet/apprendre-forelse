@@ -63,9 +63,9 @@ final class PublicPagesSeoTest extends WebTestCase
             $this->assertSame($url, $crawler->filter('link[rel="canonical"]')->attr('href'), 'Canonical absolu, sans paramètre : '.$url);
             $this->assertSame($url, $crawler->filter('meta[property="og:url"]')->attr('content'), $url);
             $this->assertSame($title, $crawler->filter('meta[property="og:title"]')->attr('content'), $url);
-            if (1 === preg_match('#^http://localhost/pratique/(?!nouveautes/)[^/]+$#', $url)) {
+            if (1 === preg_match('#^http://localhost/(pratique|en/practice)/(?!nouveautes/)[^/]+$#', $url, $match)) {
                 // Un exercice de la Pratique a son image, dessinée par le moteur (voir PracticeShareTest).
-                $this->assertStringStartsWith($url.'/image-de-partage?v=', (string) $crawler->filter('meta[property="og:image"]')->attr('content'), $url);
+                $this->assertStringStartsWith($url.('pratique' === $match[1] ? '/image-de-partage?v=' : '/share-image?v='), (string) $crawler->filter('meta[property="og:image"]')->attr('content'), $url);
                 $this->assertSame('summary_large_image', $crawler->filter('meta[name="twitter:card"]')->attr('content'), $url);
             } else {
                 // Le thème du moteur n'a pas d'image de partage : pas d'og:image, une carte simple (titre et description).

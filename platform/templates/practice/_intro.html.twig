@@ -23,7 +23,7 @@
 </p>
 <h1 class="mt-3 text-3xl font-semibold">{{ practice.exercise.title }}</h1>
 <p class="lead mt-3 text-lg text-ink-muted">{{ practice.summary }}</p>
-{{ include('_concepts.html.twig', {concepts: practice.exercise.concepts, label: 'commun.notions_abordees'|trans}) }}
+{{ include('_concepts.html.twig', {concepts: practice.exercise.concepts, label: 'commun.notions_abordees'|trans, linked: practice.exercise.overlay is null}) }}
 <article class="lesson exercise-instructions prose prose-theme mt-6 max-w-none">{{ instructions|raw }}</article>
 {% if practice.pullRequest %}
     <p class="meta mt-6 text-sm text-ink-muted">{{ 'practice.intro.origine'|trans({url: practice.pullRequest|e})|raw }}</p>

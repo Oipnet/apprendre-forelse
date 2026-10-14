@@ -590,12 +590,12 @@ final class ContentRepositoryTest extends TestCase
     public function testSelectionnerLaPratique(): void
     {
         $repository = $this->repository(self::ROOT.'/examples/packs', __DIR__.'/../Fixtures/packs/pratique');
-        $ids = static fn (array $exercises) => array_map(static fn ($e) => ($e->trackId ?? 'pratique').'/'.$e->id, $exercises);
+        $ids = static fn (array $exercises) => array_map(static fn ($e) => ($e->trackId ?? 'pratique').'/'.$e->id.('fr' === $e->locale ? '' : ' ['.$e->locale.']'), $exercises);
 
-        $this->assertSame(['pratique/programme', 'pratique/exemple-map-request-header', 'pratique/en-preparation', 'pratique/nouveaute-recente', 'pratique/point-precis', 'pratique/cote-laravel'], $ids($repository->select('pratique')));
+        $this->assertSame(['pratique/programme', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]', 'pratique/en-preparation', 'pratique/nouveaute-recente', 'pratique/point-precis', 'pratique/cote-laravel'], $ids($repository->select('pratique')));
         $this->assertSame(['pratique/point-precis'], $ids($repository->select('pratique/point-precis')));
         $this->assertCount(5, $repository->select('pratique-test'), 'Un pack comprend ses exercices de Pratique.');
-        $this->assertSame(['decouverte/01-bonjour', 'decouverte/02-bonjour-prenom', 'pratique/exemple-map-request-header'], $ids($repository->select('demo')));
+        $this->assertSame(['decouverte/01-bonjour', 'decouverte/02-bonjour-prenom', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]'], $ids($repository->select('demo')), 'Chaque traduction se vérifie aussi.');
         $this->assertContains('pratique/point-precis', $ids($repository->select(null)));
         $this->assertSame(['decouverte/01-bonjour', 'decouverte/02-bonjour-prenom'], $ids($repository->select(null, 'bonjour')), 'Un chapitre exclut la Pratique.');
     }
@@ -677,6 +677,108 @@ final class ContentRepositoryTest extends TestCase
         yield 'pas une image' => ['partage.png', 'bonjour', 'PNG, JPEG ou WebP attendu'];
         yield 'trop petite' => ['partage.png', self::pngHeader(600, 315), 'en 600 × 315 : il faut au moins 1200 × 630'];
         yield 'carrée' => ['partage.png', self::pngHeader(1200, 1200), 'au format 1,91:1'];
+    }
+
+    public function testChargeLesTraductionsDesExercicesDePratique(): void
+    {
+        $repository = $this->repository(self::ROOT.'/examples/packs', __DIR__.'/../Fixtures/packs/pratique');
+
+        $this->assertSame(['exemple-map-request-header'], array_keys($repository->practices('en')), 'En anglais, seuls les exercices traduits.');
+        $this->assertSame(['fr', 'en'], $repository->practiceLocales('exemple-map-request-header'));
+        $this->assertSame(['fr'], $repository->practiceLocales('point-precis'));
+        $this->assertNull($repository->findPractice('point-precis', 'en'));
+
+        $french = $repository->findPractice('exemple-map-request-header');
+        $english = $repository->findPractice('exemple-map-request-header', 'en');
+        $this->assertNotNull($french);
+        $this->assertNotNull($english);
+        $this->assertSame('fr', $french->locale());
+        $this->assertSame('en', $english->locale());
+        $this->assertSame('Read a header with #[MapRequestHeader]', $english->exercise->title);
+        $this->assertStringStartsWith('An HTTP header arrives', $english->summary);
+        $this->assertStringStartsWith('# Read a header', $english->exercise->instructions);
+        $this->assertSame(['testTheRequestedVersionIsRead', 'testARequestWithoutTheHeaderIsRejected', 'testTheControllerUsesMapRequestHeader'], array_map(static fn ($o) => $o->test, $english->exercise->objectives));
+        $this->assertSame('With the header', $english->exercise->requests[0]->title);
+        $this->assertSame(['Controller', 'HttpKernel'], $english->exercise->concepts);
+        // Ce qui ne se traduit pas vient de l'exercice français.
+        $this->assertSame($french->published, $english->published);
+        $this->assertSame($french->version, $english->version);
+        $this->assertSame($french->exercise->environment, $english->exercise->environment);
+        $this->assertSame($french->exercise->editable, $english->exercise->editable);
+        $this->assertFalse($english->outdated, 'La traduction suit la dernière version de l\'exercice français.');
+
+        // Les fichiers traduits remplacent ceux de l'exercice français, chemin par chemin.
+        $this->assertStringContainsString('Missing X-Api-Version header.', $repository->startingFiles($english->exercise)['src/Controller/VersionController.php']);
+        $this->assertStringContainsString('En-tête X-Api-Version manquant.', $repository->startingFiles($french->exercise)['src/Controller/VersionController.php']);
+        $this->assertStringContainsString('Requested version: ', $repository->solutionFiles($english->exercise)['src/Controller/VersionController.php']);
+        $this->assertSame(['tests/Pratique/VersionTest.php'], array_keys($repository->testFiles($english->exercise)));
+        $this->assertStringContainsString('testTheRequestedVersionIsRead', $repository->testFiles($english->exercise)['tests/Pratique/VersionTest.php']);
+
+        // content:check vérifie chaque langue.
+        $this->assertSame(['fr', 'en'], array_map(static fn ($e) => $e->locale, $repository->select('pratique/exemple-map-request-header')));
+    }
+
+    public function testUneTraductionEnRetardEstSignalee(): void
+    {
+        $this->traduction(['p/practice/x/i18n/en/exercise.yaml' => "source: autrefois\ntitle: X en\nsummary: S en\nobjectives: [{test: testA, label: A en}]"]);
+        $this->assertTrue($this->repository($this->tmp)->findPractice('x', 'en')?->outdated, 'L\'empreinte ne correspond plus à l\'exercice français.');
+
+        $this->traduction(['p/practice/x/i18n/en/exercise.yaml' => "title: X en\nsummary: S en\nobjectives: [{test: testA, label: A en}]"]);
+        $this->assertTrue($this->repository($this->tmp)->findPractice('x', 'en')?->outdated, 'Sans empreinte, rien ne dit ce qu\'elle suit.');
+
+        $source = \App\Content\ExerciseReader::fingerprint($this->tmp.'/p/practice/x');
+        $this->traduction(['p/practice/x/i18n/en/exercise.yaml' => "source: $source\ntitle: X en\nsummary: S en\nobjectives: [{test: testA, label: A en}]"]);
+        $this->assertFalse($this->repository($this->tmp)->findPractice('x', 'en')?->outdated);
+    }
+
+    /**
+     * @param array<string, string> $files
+     */
+    #[DataProvider('traductionsInvalides')]
+    public function testUneTraductionDExerciceMalFormeeEstRefusee(array $files, string $message): void
+    {
+        $this->traduction($files);
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage($message);
+        $this->repository($this->tmp)->packs();
+    }
+
+    public static function traductionsInvalides(): iterable
+    {
+        $yaml = "title: X en\nsummary: S en\nobjectives: [{test: testA, label: A en}]\n";
+
+        yield 'une clé qui ne se traduit pas' => [['p/practice/x/i18n/en/exercise.yaml' => $yaml.'environment: laravel-13'], '« environment » ne se traduit pas'];
+        yield 'un texte oublié' => [['p/practice/x/i18n/en/exercise.yaml' => "title: X en\nsummary: S en"], '« objectives » manque'];
+        yield 'sans consignes' => [['p/practice/x/i18n/en/instructions.md' => null], 'i18n/en/instructions.md manquant'];
+        yield 'une langue inconnue' => [['p/practice/x/i18n/de/exercise.yaml' => $yaml], '« de » n\'est pas une langue de traduction'];
+        yield 'un fichier qui ne remplace rien' => [['p/practice/x/i18n/en/starter/b.php' => '<?php'], 'i18n/en/starter/b.php ne remplace aucun fichier'];
+        yield 'un fichier inattendu' => [['p/practice/x/i18n/en/notes.md' => 'Notes'], '« notes.md » n\'a pas cours dans une traduction'];
+        yield 'un objectif sans test' => [['p/practice/x/i18n/en/exercise.yaml' => "title: X en\nsummary: S en\nobjectives: [{label: A en}]"], 'clé « test » manquante'];
+    }
+
+    /**
+     * Un exercice de Pratique « x » (starter/a.php) et sa traduction anglaise ; null retire un fichier.
+     *
+     * @param array<string, string|null> $files
+     */
+    private function traduction(array $files): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->remove($this->tmp);
+        $files += [
+            'p/pack.yaml' => "id: p\ntitle: P",
+            'p/practice/x/exercise.yaml' => "id: x\ntitle: X\nenvironment: symfony-8\npublished: 2026-09-01\nsummary: S\neditable: [a.php]\nobjectives: [{test: testA, label: A}]",
+            'p/practice/x/instructions.md' => 'Consignes',
+            'p/practice/x/starter/a.php' => '<?php',
+            'p/practice/x/i18n/en/exercise.yaml' => "title: X en\nsummary: S en\nobjectives: [{test: testA, label: A en}]",
+            'p/practice/x/i18n/en/instructions.md' => 'Instructions',
+        ];
+        foreach ($files as $path => $content) {
+            if (null !== $content) {
+                $filesystem->dumpFile($this->tmp.'/'.$path, $content);
+            }
+        }
     }
 
     /**

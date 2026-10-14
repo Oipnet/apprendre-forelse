@@ -204,6 +204,24 @@ Les résultats s'exportent en CSV.
   playground propose un « Avant / après » (le code de départ face à celui de l'apprenant). L'atelier
   crée un exercice de Pratique en préparation (`visibility: admin`) dans un pack modifiable.
 
+  **Traduction** (`<exercice>/i18n/en/`) : l'exercice en anglais, joué sur `/en/practice/<exercice>`. La
+  Pratique anglaise ne montre que les exercices traduits ; un exercice non traduit y répond 404. Le dossier
+  contient :
+  - `exercise.yaml`, avec les seules clés traduites : `title`, `summary`, `objectives`, `hints`, `requests`,
+    `docs` (obligatoires dès que l'exercice français les a, sinon le texte français s'afficherait), `concepts`
+    et `preview` (facultatives). Le reste (environnement, fichiers, date, version…) vient de l'exercice
+    français ; une autre clé est refusée ;
+  - `instructions.md`, la consigne complète ;
+  - au besoin, des fichiers de `starter/`, `solution/` et `tests/` qui **remplacent** ceux de l'exercice
+    français au même chemin, quand le code contient du français (messages, noms de méthodes de test). Un
+    chemin que l'exercice français n'a pas est refusé.
+
+  `content:check` vérifie chaque traduction comme un exercice à part (`pratique/<exercice> [en]`). La clé
+  `source` recopie l'empreinte de l'exercice français : quand il change, `content:check` signale la traduction
+  en retard et donne la nouvelle empreinte à recopier une fois la traduction à jour. Une réussite en anglais
+  est revérifiée avec les tests anglais. Les pages de notions, de nouveautés et les parcours restent en
+  français : la page anglaise n'y renvoie pas.
+
 - **Blog** (`<pack>/articles/<slug>.md`) : des articles sur les coulisses du contenu et du moteur, publiés sur
   `/blog/<slug>`. Le nom du fichier est l'adresse de l'article (minuscules, chiffres et tirets). Le fichier commence
   par un en-tête YAML entre deux lignes `---`, suivi du Markdown (rendu comme une fiche de cours : HTML brut

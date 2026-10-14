@@ -1,4 +1,4 @@
-# SEO tags of the pages served in English (the blog): see seo+intl-icu.fr.yaml. Other keys fall back to French.
+# SEO tags of the pages served in English (home, blog, Practice): see seo+intl-icu.fr.yaml. Other keys fall back to French.
 
 commun:
     accueil: Home
@@ -10,3 +10,15 @@ blog:
     description: "Articles that start from an exercise and go further: what the framework really does, where it stops, and how to use it in production. Plus behind the scenes of the platform."
     nombre_articles: "{n} articles."
     fil_ariane: Blog
+
+pratique:
+    fil_ariane: Practice
+    sujet_par_defaut: framework
+    titre_marque: "{sujet} new features as short exercises | {marque}"
+    titre: "{sujet} new features as short exercises"
+    titre_court: Framework new features as short exercises
+    description: "Short exercises, separate from the tracks: code written the old way, to rewrite with the framework's new feature, right in the browser."
+    exercice:
+        titre: "{framework}: {fonctionnalite} – exercise"
+        titre_court: "{framework}: {fonctionnalite}"
+        complement: "A short {framework} Practice exercise, to do in the browser."

@@ -64,9 +64,11 @@ final readonly class ExercisePayloadFactory
         $track = null === $exercise->trackId ? null : $this->content->findTrack($exercise->trackId);
         $nextTrack = null === $next && null !== $track ? $this->visibility->nextTrack($track) : null;
         // Un exercice de Pratique n'a ni suite ni fiche : il dit d'où vient la fonctionnalité.
-        $practice = null === $exercise->trackId ? $this->content->findPractice($exercise->id) : null;
+        $practice = null === $exercise->trackId ? $this->content->findPractice($exercise->id, $exercise->locale) : null;
         // Après la réussite, la Pratique propose le parcours du même framework, s'il y en a un de visible.
-        $practiceTrack = null === $practice ? null : $this->practiceTracks->of($practice);
+        // Les parcours, les pages de notions et de nouveautés sont en français : une traduction n'y renvoie pas.
+        $translated = Exercise::LOCALE !== $exercise->locale;
+        $practiceTrack = null === $practice || $translated ? null : $this->practiceTracks->of($practice);
         // Dernier exercice d'un chapitre doté d'une fiche de cours : la réussite la débloque.
         $inChapter = null === $track ? null : $this->content->chapterOf($exercise);
         $lesson = $inChapter?->hasLesson() && $this->content->closesChapter($exercise) ? $inChapter : null;
@@ -77,7 +79,7 @@ final readonly class ExercisePayloadFactory
             'title' => $exercise->title,
             'concepts' => $exercise->concepts,
             // Les notions qui ont leur page : les pastilles du volet Consignes y mènent (voir ConceptIndex).
-            'conceptUrls' => (object) $this->conceptUrls($exercise->concepts),
+            'conceptUrls' => (object) ($translated ? [] : $this->conceptUrls($exercise->concepts)),
             'xp' => $exercise->xp,
             // « free » : le premier chapitre d'un parcours, gratuit pour tout compte ; « account » : le reste, qui demande un accès.
             'access' => $this->access->isFreeExercise($exercise) ? 'free' : 'account',
@@ -149,7 +151,7 @@ final readonly class ExercisePayloadFactory
                 // Le résumé de la page publique : sous le titre, il dit ce que la fonctionnalité apporte.
                 'summary' => $practice->summary,
                 // Les autres exercices de cette version, quand ils sont assez nombreux pour avoir une page.
-                'versionUrl' => null === ($slug = $this->versions->slugOf($practice)) ? null : $this->urls->generate('app_practice_version', ['slug' => $slug]),
+                'versionUrl' => $translated || null === ($slug = $this->versions->slugOf($practice)) ? null : $this->urls->generate('app_practice_version', ['slug' => $slug]),
                 'pullRequest' => $practice->pullRequest,
                 'published' => $practice->published->format('Y-m-d'),
                 'track' => $practiceTrack ? [

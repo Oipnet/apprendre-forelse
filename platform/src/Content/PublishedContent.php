@@ -26,10 +26,10 @@ final readonly class PublishedContent
         return array_values(array_filter($this->content->tracks(), static fn (Track $track) => !$track->isRestricted()));
     }
 
-    /** @return list<Practice> */
-    public function practices(): array
+    /** @return list<Practice> dans une autre langue, ceux qui y sont traduits */
+    public function practices(string $locale = Exercise::LOCALE): array
     {
-        return array_values(array_filter($this->content->practices(), fn (Practice $p) => !$p->isRestricted() && !$p->isScheduled($this->clock->now())));
+        return array_values(array_filter($this->content->practices($locale), fn (Practice $p) => !$p->isRestricted() && !$p->isScheduled($this->clock->now())));
     }
 
     /** @return list<Article> du plus récent au plus ancien */

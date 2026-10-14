@@ -13,6 +13,7 @@ final readonly class LoadedContent
      * @param array<string, Track>                                                $tracks
      * @param array<string, array<string, Exercise>>                              $exercises     exercices par parcours, dans l'ordre
      * @param array<string, Practice>                                             $practices     du plus récent au plus ancien
+     * @param array<string, array<string, Practice>>                              $practiceTranslations traductions par langue, dans le même ordre
      * @param array<string, string>                                               $deprecations  clés dépréciées, par « parcours/exercice »
      * @param array<string, array{markdown: string, file: string, packId: string}> $versionIntros intros de pages de nouveautés, par version
      * @param array<string, array{markdown: string, file: string, packId: string, title: string|null}> $conceptIntros intros de pages de notions, par notion
@@ -25,6 +26,7 @@ final readonly class LoadedContent
         public array $tracks,
         public array $exercises,
         public array $practices,
+        public array $practiceTranslations,
         public array $deprecations,
         public array $versionIntros,
         public array $conceptIntros,
@@ -35,20 +37,20 @@ final readonly class LoadedContent
     }
 
     /**
-     * @param array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>} $data
+     * @param array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, practiceTranslations: array<string, array<string, Practice>>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>} $data
      */
     public static function fromArray(array $data): self
     {
-        return new self($data['packs'], $data['tracks'], $data['exercises'], $data['practices'], $data['deprecations'], $data['versionIntros'], $data['conceptIntros'], $data['conceptThemes'], $data['articles'], $data['watched']);
+        return new self($data['packs'], $data['tracks'], $data['exercises'], $data['practices'], $data['practiceTranslations'], $data['deprecations'], $data['versionIntros'], $data['conceptIntros'], $data['conceptThemes'], $data['articles'], $data['watched']);
     }
 
     /**
-     * @return array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>}
+     * @return array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, practiceTranslations: array<string, array<string, Practice>>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>}
      */
     public function toArray(): array
     {
         return [
-            'packs' => $this->packs, 'tracks' => $this->tracks, 'exercises' => $this->exercises, 'practices' => $this->practices,
+            'packs' => $this->packs, 'tracks' => $this->tracks, 'exercises' => $this->exercises, 'practices' => $this->practices, 'practiceTranslations' => $this->practiceTranslations,
             'deprecations' => $this->deprecations, 'versionIntros' => $this->versionIntros, 'conceptIntros' => $this->conceptIntros, 'conceptThemes' => $this->conceptThemes, 'articles' => $this->articles, 'watched' => $this->watched,
         ];
     }

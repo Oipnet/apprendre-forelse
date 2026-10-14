@@ -14,8 +14,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ExerciseApiController extends AbstractController
 {
-    #[Route('/api/exercises/{trackId}/{exerciseId}', name: 'api_exercise', methods: ['GET'], format: 'json')]
-    #[Route('/api/exercises/pratique/{exerciseId}', name: 'api_exercise_pratique', defaults: ['trackId' => null], methods: ['GET'], format: 'json', priority: 1)]
+    #[Route(['fr' => '/api/exercises/{trackId}/{exerciseId}', 'en' => '/en/api/exercises/{trackId}/{exerciseId}'], name: 'api_exercise', methods: ['GET'], format: 'json')]
+    #[Route(['fr' => '/api/exercises/pratique/{exerciseId}', 'en' => '/en/api/exercises/pratique/{exerciseId}'], name: 'api_exercise_pratique', defaults: ['trackId' => null], methods: ['GET'], format: 'json', priority: 1)]
     public function show(?string $trackId, string $exerciseId, Request $request, ExerciseLocator $exercises, TrackVisibility $visibility, ExercisePayloadFactory $payloads, ExerciseAccessGuard $guard): JsonResponse
     {
         if (null !== $trackId) {
