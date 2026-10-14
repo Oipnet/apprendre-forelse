@@ -3,6 +3,7 @@
 namespace App\Seo;
 
 use App\Theme\Theme;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
@@ -22,6 +23,9 @@ final readonly class StaticPageSeo
         private SchemaOrg $schema,
         private Theme $theme,
         private TranslatorInterface $translator,
+        /** @var list<string> */
+        #[Autowire('%kernel.enabled_locales%')]
+        private array $locales,
     ) {
     }
 
@@ -46,6 +50,16 @@ final readonly class StaticPageSeo
             ->setTitle($title.' | '.$brand, $title)
             ->setDescription($description)
             ->setCanonical($url);
+        // Une route traduite (#[Route(['fr' => …, 'en' => …])]) porte sa langue : chaque version nomme les autres (hreflang).
+        /** @var array<string, mixed> $parameters */
+        $parameters = $request->attributes->get('_route_params', []);
+        if (isset($parameters['_locale'])) {
+            foreach ($this->locales as $locale) {
+                if ($locale !== $parameters['_locale']) {
+                    $this->seo->addAlternate($locale, $this->schema->url((string) $request->attributes->get('_route'), ['_locale' => $locale] + $parameters));
+                }
+            }
+        }
         if (null !== $page->breadcrumb) {
             $breadcrumb = null === $page->domain ? $page->breadcrumb : $this->translator->trans($page->breadcrumb, [], $page->domain);
             $this->seo->addStructuredData($this->schema->breadcrumb([[$breadcrumb, $url]]));

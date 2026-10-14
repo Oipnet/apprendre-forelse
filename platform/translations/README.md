@@ -21,13 +21,15 @@ Un domaine par zone du site, au format [ICU](https://symfony.com/doc/current/ref
 | `blog` | `blog/` |
 | `classement` | `leaderboard/` |
 | `certificat` | `certificate/` |
+| `legal` | les balises des pages juridiques (`legal/`), dont le texte reste dans les gabarits (voir plus bas) |
 | `emails` | `emails/` |
 | `seo` | balises calculées en PHP (`src/Seo`) : title, description, noms lisibles des données structurées, fil d'Ariane, pages fixes de `#[Seo(…, domain: 'seo')]` |
 | `validators` | messages des contraintes (`#[Assert\…(message: 'cle')]`), **sans** ICU : le validateur passe ses paramètres sous la forme `{{ limit }}` |
 
 Hors du périmètre, et donc en français dans le gabarit : l'administration, l'atelier des auteurs et l'espace des
-chefs de cohorte (outils internes ou clientèle française), et les pages juridiques, qui auront un gabarit par
-langue (`privacy.en.html.twig`), relu tel quel.
+chefs de cohorte (outils internes ou clientèle française). Les pages juridiques ont un gabarit par langue
+(`legal/privacy.html.twig`, `legal/en/privacy.html.twig`), relu tel quel : la version anglaise renvoie à la française,
+qui fait foi, et toute modification du texte français s'y reporte.
 
 ## Écrire un gabarit
 

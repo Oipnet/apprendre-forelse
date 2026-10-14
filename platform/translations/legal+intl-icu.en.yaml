@@ -1,0 +1,13 @@
+# The tags of the English legal pages: see legal+intl-icu.fr.yaml. The pages themselves are in templates/legal/en/.
+
+mentions:
+    titre: Legal notice
+    description: "Legal notice: the site's publisher, director of publication, and the host of the platform and of the sandbox where learners' code runs."
+
+confidentialite:
+    titre: Privacy policy
+    description: "Privacy policy: what data is collected and why, how long it is kept, which processors are involved, and how to exercise your rights."
+
+cgv:
+    titre: Terms of sale
+    description: "Terms of sale for the tracks: prices including VAT, ordering and payment, access to the content, right of withdrawal, guarantees and mediation."

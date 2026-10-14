@@ -14,6 +14,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   s'édite, s'enregistre et se vérifie dans le même éditeur que l'exercice français. Avec une clé d'API, le modèle
   propose la traduction entière (ou la met à jour), empreinte `source` comprise ; rien n'est enregistré avant
   relecture. Une traduction en retard est signalée dans l'éditeur.
+- **Les pages légales en anglais** : `/en/legal-notice`, `/en/privacy` et `/en/terms`, traductions des mentions
+  légales, de la politique de confidentialité et des CGV. Chacune rappelle que la version française fait foi et y
+  renvoie. Les pages fixes traduites (contact compris) annoncent leurs autres langues aux moteurs (`hreflang`), et
+  le pied de page propose de changer de langue.
 
 ## 3.12.0 — 2026-10-14
 

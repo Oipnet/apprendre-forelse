@@ -1,0 +1,124 @@
+{#
+  Traduction anglaise des CGV (legal/terms.html.twig, qui fait foi). Toute modification du texte français se reporte
+  ici : les deux partagent LegalVersions::TERMS_VERSION.
+#}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    {% set seller = legal.publisherName ?: 'the site\'s publisher' %}
+    {% set refundDays = legal.refundGuaranteeDays %}
+    <main class="legal-page prose prose-theme mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <p class="text-sm text-ink-muted">The site</p>
+        <h1>Terms of sale</h1>
+        <p class="lead">What you buy on {{ siteHost }}, how, and what it guarantees you.</p>
+
+        {{ include('legal/en/_translation.html.twig', {route: 'app_terms'}) }}
+
+        {% if missing is not empty %}
+            <div class="legal-missing" role="alert">
+                <strong>Incomplete terms: the tracks are not on sale yet.</strong> The operator of this site has not yet provided:
+                {% for variable in missing %}<code>{{ variable }}</code>{{ not loop.last ? ', ' }}{% endfor %}.
+            </div>
+        {% endif %}
+
+        <section id="objet">
+            <h2>1. Scope</h2>
+            <p>These general terms of sale (the “Terms”) apply to any purchase of access to a training track on the site {{ siteHost }}, between {{ seller }} (the “seller”) and any person placing an order (the “learner”). They are accepted, by ticking the box provided for this purpose, before each payment; the accepted version is kept with the order.</p>
+            <p>Access opened to a group by an institution, a school or a company (cohorts) is governed by the contract concluded with that organisation, not by these Terms.</p>
+        </section>
+
+        <section id="vendeur">
+            <h2>2. Seller</h2>
+            <dl class="legal-facts">
+                {% if legal.publisherName %}<div><dt>Name</dt><dd>{{ legal.publisherName }}</dd></div>{% endif %}
+                {% if legal.publisherLegalForm %}<div><dt>Legal form</dt><dd>{{ legal.publisherLegalForm }}</dd></div>{% endif %}
+                {% if legal.publisherRegistration %}<div><dt>Registration</dt><dd>{{ legal.publisherRegistration }}</dd></div>{% endif %}
+                {% if legal.publisherVat %}<div><dt>EU VAT number</dt><dd>{{ legal.publisherVat }}</dd></div>{% endif %}
+                {% if legal.publisherAddress %}<div><dt>Registered office</dt><dd>{{ legal.publisherAddress }}</dd></div>{% endif %}
+                {% if legal.publisherEmail %}<div><dt>Contact</dt><dd><a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a></dd></div>{% endif %}
+                {% if legal.publisherPhone %}<div><dt>Phone</dt><dd>{{ legal.publisherPhone }}</dd></div>{% endif %}
+            </dl>
+        </section>
+
+        <section id="offre">
+            <h2>3. What is sold</h2>
+            <p>A track is an online course made up of chapters of interactive exercises: the learner writes code in their browser, where it runs, and tests check their work. The content of each track (chapters, concepts, number of exercises) is described on its page before purchase.</p>
+            <p>The first chapter of every track is available free of charge, with an account: it lets the learner check, before buying, that the track and the platform suit them.</p>
+            <p>Use requires a computer with a recent browser (an up-to-date Chrome, Firefox, Safari or Edge) and an Internet connection. Small screens are poorly suited to writing code.</p>
+        </section>
+
+        <section id="prix">
+            <h2>4. Prices</h2>
+            <p>Prices are shown in euros, including all taxes. The applicable VAT is that of the learner's country, determined from the billing address entered at payment; it is included in the displayed price and itemised on the invoice.</p>
+            <p>A track may be offered at a launch price (“founder price”), limited in time or to a number of purchases, which is stated next to the price. The price charged is the one shown on the confirmation page at the time of the order.</p>
+        </section>
+
+        <section id="commande">
+            <h2>5. Order</h2>
+            <p>A purchase requires an account on the site. From the track's page, the learner reaches a confirmation page that restates the track and its price; they accept these Terms, request immediate access to the track and waive their right of withdrawal (section 8), and are then taken to the secure payment page.</p>
+            <p>The order is concluded when the payment is confirmed. A confirmation email, with the link to the receipt, is then sent to the account's address; the purchase, its receipt and its invoice are also listed on the “My account” page. A business may enter its company name and VAT number at payment: they appear on the invoice.</p>
+        </section>
+
+        <section id="paiement">
+            <h2>6. Payment</h2>
+            <p>Payment is due in full at the time of the order, in one payment, by the means offered on the payment page. It is processed by Stripe, a payment service provider; the seller never has access to the learner's card details and does not store them.</p>
+        </section>
+
+        <section id="acces">
+            <h2>7. Access to the track</h2>
+            <p>Access to the full track is opened on the learner's account as soon as the payment is confirmed. It is personal: it may not be shared, assigned or resold.</p>
+            <p>Access is acquired “for life”, that is, with no time limit for as long as the seller operates the site, and includes updates to the track (corrections, adaptation to new versions of the tools taught, exercises added to the track). The seller may change the content of a track without substantially reducing its scope.</p>
+            <p>The seller endeavours to keep the site available at all times, without being able to guarantee it: interruptions may occur for maintenance, updates or incidents. The learner's progress is kept.</p>
+        </section>
+
+        <section id="retractation">
+            <h2>8. Right of withdrawal</h2>
+            <p>A consumer normally has fourteen days to withdraw from a contract concluded at a distance (article L221-18 of the French Consumer Code). However, this right cannot be exercised for the supply of digital content not on a tangible medium whose performance has begun with the consumer's prior express consent and express waiver of their right of withdrawal (article L221-28, 13°).</p>
+            <p>Since access to the track is opened upon payment, the learner, by ticking the box provided on the confirmation page, expressly requests immediate performance of the contract and acknowledges that they lose their right of withdrawal. The text of that box and the time it was accepted are kept with the order and restated in the confirmation email.</p>
+        </section>
+
+        <section id="remboursement">
+            <h2>9. Money-back guarantee</h2>
+            {% if refundDays %}
+                <p>Independently of the right of withdrawal, the seller grants a commercial guarantee: for {{ refundDays }} days after the purchase, the learner may request a full refund of their track, without having to give a reason, by writing to {% if legal.publisherEmail %}<a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>{% else %}the seller's contact address{% endif %} from their account's address.</p>
+                <p>The refund is made to the means of payment used, usually within a few working days depending on the bank. Access to the track is closed on the date of the refund; progress remains saved.</p>
+            {% else %}
+                <p>The seller does not grant any commercial refund guarantee in addition to the legal guarantees below.</p>
+            {% endif %}
+        </section>
+
+        <section id="garanties">
+            <h2>10. Legal guarantees</h2>
+            <p>The seller is bound by the legal guarantee of conformity for digital content and services provided for in articles L224-25-12 et seq. of the French Consumer Code. In the event of a lack of conformity (content inaccessible, exercises that do not work as described), the learner reports it to {% if legal.publisherEmail %}<a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>{% else %}the seller's contact address{% endif %}: the seller brings it into conformity within a reasonable time or, failing that, the learner may obtain a price reduction or the rescission of the contract and a refund.</p>
+        </section>
+
+        <section id="responsabilite">
+            <h2>11. Liability</h2>
+            <p>The tracks are learning content. They are written with care but do not guarantee success in an exam, a certification or a recruitment process, nor the suitability of the code learned for any particular professional use. The seller cannot be held liable for indirect loss, nor for an interruption of the service due to force majeure.</p>
+        </section>
+
+        <section id="propriete">
+            <h2>12. Intellectual property</h2>
+            <p>The tracks, exercises, course notes and texts remain the property of the seller or of their authors. The purchase grants a right of personal use for learning purposes; any reproduction or distribution requires written permission. The code written by the learner in the exercises belongs to them. See also the <a href="{{ path('app_legal_notice') }}#propriete">legal notice</a>.</p>
+        </section>
+
+        <section id="donnees">
+            <h2>13. Personal data</h2>
+            <p>The data needed for the order (account, purchase, receipt, invoice) is processed by the seller to perform the contract and meet its accounting obligations. Its processing and your rights are described in the <a href="{{ path('app_privacy') }}">privacy policy</a>.</p>
+        </section>
+
+        <section id="mediation">
+            <h2>14. Complaints and mediation</h2>
+            <p>Any complaint should first be sent to the seller, {% if legal.publisherEmail %}at <a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>{% else %}at its contact address{% endif %}.</p>
+            <p>If no solution is found, the consumer may refer the matter free of charge to the consumer mediator the seller is affiliated with (articles L611-1 et seq. of the French Consumer Code), within one year of their written complaint:
+                {% if legal.mediatorName %}<strong>{{ legal.mediatorName }}</strong>{% if legal.mediatorUrl %}, <a href="{{ legal.mediatorUrl }}">{{ legal.mediatorUrl }}</a>{% endif %}{% else %}not provided{% endif %}.</p>
+        </section>
+
+        <section id="droit">
+            <h2>15. Governing law</h2>
+            <p>These Terms are governed by French law. They do not deprive a consumer residing in another country of the European Union of the protection afforded by the mandatory provisions of the law of that country. In the event of a dispute, the competent courts are those designated by law.</p>
+        </section>
+
+        <p class="text-sm text-ink-muted">Version dated {{ termsVersion|format_date('long') }}.</p>
+    </main>
+{% endblock %}

@@ -1,0 +1,14 @@
+# Les balises des pages légales (#[Seo] de LegalController). Le texte des pages est dans templates/legal/ : un texte
+# juridique se relit d'un bloc, il ne se découpe pas en clés.
+
+mentions:
+    titre: Mentions légales
+    description: "Mentions légales du site : éditeur, directeur de la publication, hébergeur de la plateforme et du bac à sable où s'exécute le code des apprenants."
+
+confidentialite:
+    titre: Politique de confidentialité
+    description: "Politique de confidentialité : données collectées, finalités, durées de conservation, sous-traitants et exercice de vos droits sur vos données."
+
+cgv:
+    titre: Conditions générales de vente
+    description: "Conditions générales de vente des parcours : prix TTC, commande et paiement, accès aux contenus, droit de rétractation, garanties et médiation."
