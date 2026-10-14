@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.8.0 — 2026-10-14
+
 ### Ajouté
 
 - **Accueil en anglais** (`/en`) : servi quand le thème a ses textes en anglais. Les textes de `theme.yaml` (`chip`,
