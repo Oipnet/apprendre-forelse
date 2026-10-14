@@ -188,3 +188,22 @@ Une sauvegarde n'est bonne que si elle se restaure : de temps en temps, dans `/s
 `sh verifier-sauvegarde.sh` (la plus récente) ou `sh verifier-sauvegarde.sh chemin/vers/base.dump`. Elle la charge
 dans une base temporaire du même PostgreSQL, affiche le nombre de comptes et d'exercices suivis, puis supprime cette
 base.
+
+## 6. Journaux
+
+Les services des deux instances écrivent leurs journaux dans celui du serveur (pilote `journald` de Docker, voir
+`compose.yaml`) : ils survivent aux déploiements, qui recréent les conteneurs. On les lit comme avant avec
+`docker compose logs app` (`--since 168h` pour une semaine), ou avec `journalctl CONTAINER_NAME=forelse-app-1`.
+
+Mise en place, une fois, avec un compte administrateur : la politique de confidentialité promet douze mois au plus.
+
+```sh
+sudo mkdir -p /etc/systemd/journald.conf.d /var/log/journal
+printf '[Journal]\nStorage=persistent\nSystemMaxUse=2G\nMaxRetentionSec=12month\n' \
+    | sudo tee /etc/systemd/journald.conf.d/forelse.conf
+sudo systemctl restart systemd-journald
+```
+
+`Storage=persistent` garde le journal après un redémarrage du serveur ; `SystemMaxUse` borne sa taille, et
+`MaxRetentionSec` efface ce qui a plus de douze mois. Le changement de pilote vaut pour les conteneurs créés ensuite,
+donc au déploiement suivant. Le proxy commun (`front/`) garde ses fichiers en rotation.

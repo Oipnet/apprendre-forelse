@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Journaux du serveur conservés entre deux déploiements** : les services de `deploy/compose.yaml` écrivent dans le
+  journal du serveur (pilote `journald` de Docker) au lieu de fichiers propres à chaque conteneur, perdus quand un
+  déploiement le recrée. `docker compose logs` les lit toujours. Conservation réglée côté serveur (douze mois au plus) :
+  `deploy/README.md`, section 6. `auto-hebergement/` ne change pas.
+
 ## 3.7.0 — 2026-10-14
 
 ### Ajouté
