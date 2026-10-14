@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.12.0 — 2026-10-14
+
 ### Modifié
 
 - **Le playground s'ouvre sans attendre PHP** : la consigne et le code de l'exercice s'affichent tout de suite, et
