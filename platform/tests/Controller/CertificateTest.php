@@ -37,7 +37,7 @@ final class CertificateTest extends WebTestCase
         return static::getContainer()->get(EntityManagerInterface::class);
     }
 
-    /** Le premier exercice avec un indice, le second en consultant la solution. */
+    /** Le premier exercice avec un indice, le second en consultant la solution ; les deux confirmés par le verificateur. */
     private function completeTrack(User $user): void
     {
         $content = static::getContainer()->get(ContentRepository::class);
@@ -47,6 +47,9 @@ final class CertificateTest extends WebTestCase
         $second = $content->findExercise('decouverte', '02-bonjour-prenom');
         $progress->revealSolution($user, $second);
         $progress->complete($user, $second, 0);
+        // Les deux réussites confirmées par le verificateur : le certificat attend ce verdict.
+        $this->verify($user, '01-bonjour', VerificationStatus::Passed);
+        $this->verify($user, '02-bonjour-prenom', VerificationStatus::Passed);
     }
 
     private function verify(User $user, string $exerciseId, VerificationStatus $status): void

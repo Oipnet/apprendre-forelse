@@ -83,8 +83,9 @@ final class SubmissionReplayerTest extends TestCase
         $this->assertSame(VerificationStatus::Unverifiable, $this->replay([self::FILE => '<?php'], 'retire')->status);
     }
 
-    public function testSansFichierEditableRienNeSeVerifie(): void
+    public function testSansFichierEditableLeCodeDeDepartEstInfirme(): void
     {
-        $this->assertSame(VerificationStatus::Unverifiable, $this->replay(['config/services.yaml' => 'piraté'])->status);
+        $this->assertSame(VerificationStatus::Failed, $this->replay(['config/services.yaml' => 'piraté'])->status);
+        $this->assertSame(VerificationStatus::Failed, $this->replay([])->status);
     }
 }
