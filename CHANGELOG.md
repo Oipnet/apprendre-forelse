@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.7.0 — 2026-10-14
+
 ### Ajouté
 
 - **Textes des thèmes dans des fichiers de traduction** : un thème range ses textes dans
