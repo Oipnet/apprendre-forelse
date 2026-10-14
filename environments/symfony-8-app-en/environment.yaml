@@ -1,0 +1,7 @@
+# The English version of symfony-8-app, used by English translations of its exercises (the engine picks
+# <environment>-<language> when it exists): English locale for Symfony's messages, English test helpers.
+# Il prolonge symfony-8-app : ne vivent ici que les fichiers qu'il remplace.
+id: symfony-8-app-en
+extends: symfony-8-app
+title: Symfony 8.1 (English) — Twig, Doctrine (SQLite), Form, Validator, Security, Serializer, Messenger, Mailer, Workflow, PHPUnit
+php: '8.4'

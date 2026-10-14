@@ -28,6 +28,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   anglaise d'un tel parcours renvoie (302) vers sa page française. Les pages traduites s'annoncent aux moteurs
   (`hreflang`) et figurent au sitemap, avec des title et descriptions générés en anglais (ceux saisis dans l'admin
   restent au français).
+- **Environnements par langue** : un exercice traduit tourne dans `<environnement>-<langue>` quand il existe.
+  `symfony-8-app-en` (messages de Symfony en anglais, outils de test commentés en anglais) et
+  `symfony-8-doctrine-en` accueillent les traductions des exercices Symfony.
 - **L'achat en anglais** : un parcours traduit s'achète depuis sa page anglaise (`/en/tracks/<parcours>/buy`). La
   langue de l'achat est enregistrée (migration `purchase.locale`) : page de paiement Stripe, nom du produit,
   remerciement et email de confirmation en anglais. La renonciation au droit de rétractation est cochée et conservée

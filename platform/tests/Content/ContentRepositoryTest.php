@@ -848,6 +848,18 @@ final class ContentRepositoryTest extends TestCase
         $this->repository($this->tmp)->packs();
     }
 
+    public function testUneTraductionPrendLEnvironnementDeSaLangue(): void
+    {
+        $this->parcoursTraduit(['p/tracks/t/track.yaml' => "id: t\ntitle: T\nenvironment: symfony-8-app\nchapters:\n  - {id: c, title: C, exercises: [x]}"]);
+        $repository = $this->repository($this->tmp);
+
+        $this->assertSame('symfony-8-app', $repository->findExercise('t', 'x')?->environment);
+        $this->assertSame('symfony-8-app-en', $repository->findExercise('t', 'x', 'en')?->environment, 'Messages de Symfony et outils de test en anglais.');
+
+        $demo = $this->repository(self::ROOT.'/examples/packs');
+        $this->assertSame('symfony-8', $demo->findExercise('decouverte', '01-bonjour', 'en')?->environment, 'Sans variante anglaise, l\'environnement français.');
+    }
+
     public static function parcoursTraduitsInvalides(): iterable
     {
         yield 'une clé qui ne se traduit pas' => [['p/tracks/t/i18n/en/track.yaml' => "title: T en\nenvironment: laravel-13\nchapters: {c: {title: C en}}"], '« environment » ne se traduit pas'];

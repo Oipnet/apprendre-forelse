@@ -59,6 +59,11 @@ final class ExerciseReader
 
         $environment = (string) ($meta['environment'] ?? $inheritedEnvironment);
         $this->environments->get($environment);
+        // Une traduction prend la variante de l'environnement dans sa langue quand elle existe (symfony-8-app-en) :
+        // messages de Symfony et outils de test dans la langue de l'exercice.
+        if (Exercise::LOCALE !== $locale && $this->environments->has($environment.'-'.$locale)) {
+            $environment .= '-'.$locale;
+        }
 
         $mutants = [];
         foreach ($this->items($meta, 'mutants', $file) as $mutant) {
