@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bootFailureActionsHtml, firstLoadNote, loadErrorHtml, suivreDemarrage } from '../src/app/boot.ts';
+import { bootFailureActionsHtml, firstLoadNote, loadErrorHtml, raisonDeLEchec, suivreDemarrage } from '../src/app/boot.ts';
 
 describe('firstLoadNote', () => {
 	const archive = 'https://exemple.test/envs/symfony-8.zip?v=2';
@@ -76,6 +76,11 @@ describe('suivreDemarrage', () => {
 		expect(track).toHaveBeenCalledWith('demarrage-echoue', expect.objectContaining({ ...mesure, premier: false }));
 	});
 
+	it('échec : la raison accompagne l\'événement', () => {
+		suivreDemarrage(mesure, true).echec(new RangeError('WebAssembly.Memory(): could not allocate memory'));
+		expect(track).toHaveBeenCalledWith('demarrage-echoue', expect.objectContaining({ raison: 'RangeError: WebAssembly.Memory(): could not allocate memory' }));
+	});
+
 	it('page quittée avant d\'être prête : demarrage-interrompu une fois, et l\'ouverture compte au retour', () => {
 		const suivi = suivreDemarrage(mesure, true);
 		cacher();
@@ -89,5 +94,17 @@ describe('suivreDemarrage', () => {
 		suivreDemarrage(mesure, false).pret();
 		cacher();
 		expect(track.mock.calls.map(([nom]) => nom)).toEqual(['exercice-ouvert']);
+	});
+});
+
+describe('raisonDeLEchec', () => {
+	it('garde la première ligne, sans les paramètres des URL', () => {
+		const erreur = new Error('Téléchargement impossible : https://exemple.test/envs/symfony.zip?expires=1&signature=abc (403)\nà la ligne');
+		expect(raisonDeLEchec(erreur)).toBe('Error: Téléchargement impossible : https://exemple.test/envs/symfony.zip (403)');
+	});
+
+	it('reste courte, et accepte ce qui n\'est pas une Error', () => {
+		expect(raisonDeLEchec('x'.repeat(500))).toHaveLength(200);
+		expect(raisonDeLEchec(42)).toBe('42');
 	});
 });

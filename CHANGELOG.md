@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **La mesure dit pourquoi le playground n'a pas démarré** : l'événement `demarrage-echoue` porte la `raison`, la
+  première ligne de l'erreur (sans les paramètres des URL, 200 caractères au plus). Un échec chez un visiteur se
+  lit dans Umami au lieu de rester une énigme.
+
 ## 3.11.0 — 2026-10-14
 
 ### Ajouté
