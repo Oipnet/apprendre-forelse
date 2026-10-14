@@ -14,6 +14,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   s'édite, s'enregistre et se vérifie dans le même éditeur que l'exercice français. Avec une clé d'API, le modèle
   propose la traduction entière (ou la met à jour), empreinte `source` comprise ; rien n'est enregistré avant
   relecture. Une traduction en retard est signalée dans l'éditeur.
+- **Complétion des fonctions dans l'éditeur** : les fonctions de PHP (`str_contains`, `array_map`, `sprintf`…) et les
+  helpers globaux de Laravel (`route`, `view`, `redirect`, `old`…) ou de Symfony (`dump`, `dd`) sont proposés, avec
+  l'aide aux paramètres. L'index de complétion de chaque environnement les liste désormais (`functions`).
 
 ## 3.12.0 — 2026-10-14
 
