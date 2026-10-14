@@ -1,0 +1,9 @@
+# The English version of the track: its titles only, the rest comes from the French track.yaml. Its exercises are
+# translated in their own i18n/en/ folders, and the course notes in chapters/<id>/lesson.md here. « source » is
+# the fingerprint of the French track (track.yaml and course notes): content:check warns when it changes.
+source: '94a218b3e51e'
+title: Discovery
+description: A taste of Symfony in two exercises.
+chapters:
+  bonjour:
+    title: Hello Symfony

@@ -23,6 +23,14 @@ final class PackReader
     private array $practices = [];
     /** @var array<string, array<string, Practice>> traductions des exercices de Pratique, par langue puis par id */
     private array $practiceTranslations = [];
+    /** @var array<string, array<string, Track>> traductions des parcours, par langue puis par id */
+    private array $trackTranslations = [];
+    /** @var array<string, array<string, array<string, Exercise>>> traductions des exercices de parcours, par langue, parcours puis id */
+    private array $exerciseTranslations = [];
+    /** @var array<string, list<string>> traductions en retard sur le français, par langue : « parcours » ou « parcours/exercice » */
+    private array $outdatedTranslations = [];
+    /** @var array<string, array<string, list<string>>> parcours dont la traduction est incomplète, par langue : ce qui manque */
+    private array $incompleteTranslations = [];
     /** @var array<string, array{markdown: string, file: string, packId: string}> */
     private array $versionIntros = [];
     /** @var array<string, array{markdown: string, file: string, packId: string, title: string|null}> */
@@ -82,6 +90,9 @@ final class PackReader
         // de l'accueil. Les parcours qui ont un rang passent devant ; les autres gardent l'ordre de chargement
         // (uasort est stable, comme toutes les fonctions de tri depuis PHP 8.0).
         uasort($this->tracks, static fn (Track $a, Track $b) => [null === $a->order, $a->order] <=> [null === $b->order, $b->order]);
+        foreach ($this->trackTranslations as $locale => $translations) {
+            $this->trackTranslations[$locale] = array_replace(array_intersect_key($this->tracks, $translations), $translations);
+        }
         uasort($this->practices, static fn (Practice $a, Practice $b) => [$b->published, $a->exercise->id] <=> [$a->published, $b->exercise->id]);
         // Les traductions, dans l'ordre des exercices français.
         foreach ($this->practiceTranslations as $locale => $translations) {
@@ -93,7 +104,7 @@ final class PackReader
         }
         unset($articles);
 
-        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->practiceTranslations, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->conceptThemes, $this->articles, $this->files->watched());
+        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->practiceTranslations, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->conceptThemes, $this->articles, $this->files->watched(), $this->trackTranslations, $this->exerciseTranslations, $this->outdatedTranslations, $this->incompleteTranslations);
     }
 
     private function loadPack(string $directory): void
@@ -473,6 +484,141 @@ final class PackReader
                 $this->exercises[$id][$exerciseId] = $this->loadChapterExercise($track, $chapter, $directory.'/exercises/'.$exerciseId);
             }
         }
+        $this->loadTrackTranslations($track, $meta);
+    }
+
+    /**
+     * Les traductions d'un parcours : celles de ses exercices (`<exercice>/i18n/<langue>/`, comme en Pratique), et
+     * `i18n/<langue>/track.yaml` pour ses titres, avec les fiches de cours dans `i18n/<langue>/chapters/<id>/lesson.md`.
+     * Un parcours ne paraît dans une langue qu'entièrement traduit (track.yaml, fiches de cours, exercices) : on ne
+     * passe pas d'une langue à l'autre au milieu d'un parcours. Ses exercices peuvent se traduire avant lui, un par un,
+     * et ce qui manque est signalé par content:check (voir ContentRepository::incompleteTranslations()).
+     *
+     * @param array<string, mixed> $meta track.yaml du parcours français
+     */
+    private function loadTrackTranslations(Track $track, array $meta): void
+    {
+        foreach ($track->chapters as $chapter) {
+            foreach ($chapter->exerciseIds as $exerciseId) {
+                $exercise = $this->exercises[$track->id][$exerciseId];
+                $this->files->watch($exercise->directory.'/i18n');
+                foreach ($this->overlays($exercise->directory) as $locale) {
+                    $french = $this->files->parse($exercise->directory.'/exercise.yaml');
+                    [$translated, $translatedMeta] = $this->exerciseReader->translate($exercise->directory, $french, $locale, $track->id, $chapter->environment ?? $track->environment);
+                    $this->exerciseTranslations[$locale][$track->id][$exerciseId] = $translated;
+                    if ($this->source($translatedMeta, $exercise->directory.'/i18n/'.$locale.'/exercise.yaml') !== ExerciseReader::fingerprint($exercise->directory)) {
+                        $this->outdatedTranslations[$locale][] = $track->id.'/'.$exerciseId;
+                    }
+                }
+            }
+        }
+
+        $this->files->watch($track->directory.'/i18n');
+        foreach ($this->overlays($track->directory) as $locale) {
+            $overlay = $track->directory.'/i18n/'.$locale;
+            $file = $overlay.'/track.yaml';
+            $this->files->watch($file);
+            if (!is_file($file)) {
+                throw new ContentException(sprintf('%s : track.yaml manquant (titre et chapitres traduits du parcours).', $overlay));
+            }
+            $translated = $this->files->parse($file);
+            if ($unknown = array_diff(array_keys($translated), ['title', 'description', 'chapters', 'source'])) {
+                throw new ContentException(sprintf('%s : « %s » ne se traduit pas : réglez-la dans le parcours français (clés traduisibles : title, description, chapters, source).', $file, implode('», «', $unknown)));
+            }
+            $texts = $translated['chapters'] ?? [];
+            if (!\is_array($texts) || [] !== array_filter($texts, static fn (mixed $chapter) => !\is_array($chapter))) {
+                throw new ContentException(sprintf('%s : « chapters » associe à l\'id de chaque chapitre son titre traduit (bonjour: {title: Hello}).', $file));
+            }
+
+            // Une traduction incomplète n'empêche pas le reste du contenu de se charger : le français vient de bouger
+            // (un exercice, un chapitre ajouté dans l'atelier…), le parcours attend sa traduction pour paraître.
+            $missing = array_map(static fn (string $id) => sprintf('exercice « %s » non traduit (exercises/%s/i18n/%s/)', $id, $id, $locale), array_values(array_diff($track->exerciseIds(), array_keys($this->exerciseTranslations[$locale][$track->id] ?? []))));
+            $chapters = [];
+            foreach ($track->chapters as $chapter) {
+                $chapterTexts = $texts[$chapter->id] ?? null;
+                $where = sprintf('%s : chapitre « %s »', $file, $chapter->id);
+                if (null === $chapterTexts) {
+                    $missing[] = sprintf('chapitre « %s » sans titre traduit (chapters.%s.title)', $chapter->id, $chapter->id);
+                    continue;
+                }
+                if ($unknown = array_diff(array_keys($chapterTexts), ['title', 'description'])) {
+                    throw new ContentException(sprintf('%s : « %s » ne se traduit pas (title, description).', $where, implode('», «', $unknown)));
+                }
+                if (null !== $chapter->description && !isset($chapterTexts['description'])) {
+                    $missing[] = sprintf('chapitre « %s » sans description traduite', $chapter->id);
+                }
+                $lesson = $overlay.'/chapters/'.$chapter->id.'/lesson.md';
+                $this->files->watch($lesson);
+                if ($chapter->hasLesson() && !is_file($lesson)) {
+                    $missing[] = sprintf('fiche de cours du chapitre « %s » non traduite (i18n/%s/chapters/%s/lesson.md)', $chapter->id, $locale, $chapter->id);
+                }
+                $chapters[] = new Chapter(
+                    id: $chapter->id,
+                    title: $this->files->required($chapterTexts, 'title', $where),
+                    exerciseIds: $chapter->exerciseIds,
+                    environment: $chapter->environment,
+                    lesson: $chapter->hasLesson() && is_file($lesson) ? (string) file_get_contents($lesson) : null,
+                    description: $this->optionalText($chapterTexts['description'] ?? null, $where.', « description »'),
+                );
+            }
+            foreach (array_diff(array_keys($texts), array_map(static fn (Chapter $c) => $c->id, $track->chapters)) as $gone) {
+                $missing[] = sprintf('chapitre « %s » traduit, mais absent du parcours français', $gone);
+            }
+            if (!isset($translated['description']) && '' !== ($meta['description'] ?? '')) {
+                $missing[] = 'description du parcours non traduite';
+            }
+            $title = $this->files->required($translated, 'title', $file);
+            if ($missing) {
+                $this->incompleteTranslations[$locale][$track->id] = $missing;
+                continue;
+            }
+            $this->trackTranslations[$locale][$track->id] = new Track($track->id, $track->packId, $title, (string) ($translated['description'] ?? ''), $track->environment, $chapters, $track->directory, $track->next, $track->visibility, $track->order, $track->downloads, $track->image, $track->formerIds, $track->level, $locale);
+            if ($this->source($translated, $file) !== self::trackFingerprint($track)) {
+                $this->outdatedTranslations[$locale][] = $track->id;
+            }
+        }
+    }
+
+    /** @return list<string> les langues traduites dans `<dossier>/i18n/` */
+    private function overlays(string $directory): array
+    {
+        $locales = [];
+        foreach (glob($directory.'/i18n/*') ?: [] as $overlay) {
+            $locale = basename($overlay);
+            if (!is_dir($overlay) || !\in_array($locale, Exercise::TRANSLATIONS, true)) {
+                throw new ContentException(sprintf('%s : « %s » n\'est pas une langue de traduction (%s).', $directory.'/i18n', $locale, implode(', ', Exercise::TRANSLATIONS)));
+            }
+            $locales[] = $locale;
+        }
+
+        return $locales;
+    }
+
+    /** @param array<string, mixed> $meta */
+    private function source(array $meta, string $file): ?string
+    {
+        $source = $meta['source'] ?? null;
+        if (null !== $source && !\is_string($source)) {
+            throw new ContentException(sprintf('%s : « source » est l\'empreinte du français, un texte : écrivez-la entre guillemets (une empreinte faite de chiffres se lirait comme un nombre).', $file));
+        }
+
+        return $source;
+    }
+
+    /**
+     * L'empreinte d'un parcours français (track.yaml et fiches de cours), que sa traduction recopie dans sa clé
+     * « source » : quand elle ne correspond plus, le parcours a changé depuis la traduction.
+     */
+    public static function trackFingerprint(Track $track): string
+    {
+        $files = ['track.yaml' => (string) @file_get_contents($track->directory.'/track.yaml')];
+        foreach ($track->chapters as $chapter) {
+            if (null !== $chapter->lesson) {
+                $files['chapters/'.$chapter->id.'/lesson.md'] = $chapter->lesson;
+            }
+        }
+
+        return substr(hash('sha256', serialize($files)), 0, 12);
     }
 
     private function loadChapterExercise(Track $track, Chapter $chapter, string $directory): Exercise
@@ -551,22 +697,15 @@ final class PackReader
     {
         $directory = $practice->exercise->directory;
         $this->files->watch($directory.'/i18n');
-        foreach (glob($directory.'/i18n/*') ?: [] as $overlay) {
-            $locale = basename($overlay);
-            if (!is_dir($overlay) || !\in_array($locale, Exercise::TRANSLATIONS, true)) {
-                throw new ContentException(sprintf('%s : « %s » n\'est pas une langue de traduction (%s).', $directory.'/i18n', $locale, implode(', ', Exercise::TRANSLATIONS)));
-            }
+        foreach ($this->overlays($directory) as $locale) {
             [$exercise, $translated] = $this->exerciseReader->translate($directory, $meta, $locale);
-            $source = $translated['source'] ?? null;
-            if (null !== $source && !\is_string($source)) {
-                throw new ContentException(sprintf('%s/exercise.yaml : « source » est l\'empreinte de l\'exercice français, un texte : écrivez-la entre guillemets (une empreinte faite de chiffres se lirait comme un nombre).', $overlay));
-            }
+            $source = $this->source($translated, $directory.'/i18n/'.$locale.'/exercise.yaml');
             $this->practiceTranslations[$locale][$exercise->id] = new Practice(
                 exercise: $exercise,
                 packId: $practice->packId,
                 framework: $practice->framework,
                 published: $practice->published,
-                summary: $this->files->required($translated, 'summary', $overlay.'/exercise.yaml'),
+                summary: $this->files->required($translated, 'summary', $directory.'/i18n/'.$locale.'/exercise.yaml'),
                 version: $practice->version,
                 pullRequest: $practice->pullRequest,
                 visibility: $practice->visibility,

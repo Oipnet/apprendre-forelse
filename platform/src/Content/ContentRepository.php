@@ -96,10 +96,31 @@ final class ContentRepository implements ResetInterface
         return $this->content()->deprecations;
     }
 
-    /** @return array<string, Track> */
-    public function tracks(): array
+    /** @return array<string, Track> dans une autre langue, ceux qui y sont traduits, dans le même ordre */
+    public function tracks(string $locale = Exercise::LOCALE): array
     {
-        return $this->content()->tracks;
+        return $this->index()->tracks($locale);
+    }
+
+    /** @return list<string> les langues de ce parcours : le français, puis ses traductions */
+    public function trackLocales(string $trackId): array
+    {
+        if (!isset($this->content()->tracks[$trackId])) {
+            return [];
+        }
+
+        return [Exercise::LOCALE, ...array_keys(array_filter($this->content()->trackTranslations, static fn (array $translations) => isset($translations[$trackId])))];
+    }
+
+    /**
+     * Une traduction en retard sur le français (sa clé « source » n'est plus l'empreinte du parcours ou de
+     * l'exercice) : jouable, mais elle ne dit plus tout à fait la même chose.
+     */
+    public function isOutdated(Track|Exercise $translation): bool
+    {
+        $key = $translation instanceof Track ? $translation->id : $translation->trackId.'/'.$translation->id;
+
+        return \in_array($key, $this->content()->outdatedTranslations[$translation->locale] ?? [], true);
     }
 
     /** @return list<Track> les parcours qui déclarent ce fichier à télécharger (clé « downloads ») */
@@ -108,9 +129,20 @@ final class ContentRepository implements ResetInterface
         return array_values(array_filter($this->tracks(), static fn (Track $track) => \in_array($download, $track->downloads, true)));
     }
 
-    public function findTrack(string $trackId): ?Track
+    /**
+     * Les parcours dont la traduction attend encore un texte (un exercice ajouté depuis, un chapitre…) : ils ne
+     * paraissent pas dans cette langue.
+     *
+     * @return array<string, array<string, list<string>>> par langue, puis par parcours : ce qui manque
+     */
+    public function incompleteTranslations(): array
     {
-        return $this->tracks()[$trackId] ?? null;
+        return $this->content()->incompleteTranslations;
+    }
+
+    public function findTrack(string $trackId, string $locale = Exercise::LOCALE): ?Track
+    {
+        return $this->tracks($locale)[$trackId] ?? null;
     }
 
     /**
@@ -119,12 +151,12 @@ final class ContentRepository implements ResetInterface
      */
     public function nextTrack(Track $track): ?Track
     {
-        return null === $track->next || $track->next === $track->id ? null : $this->findTrack($track->next);
+        return null === $track->next || $track->next === $track->id ? null : $this->findTrack($track->next, $track->locale);
     }
 
-    public function findExercise(string $trackId, string $exerciseId): ?Exercise
+    public function findExercise(string $trackId, string $exerciseId, string $locale = Exercise::LOCALE): ?Exercise
     {
-        return $this->index()->findExercise($trackId, $exerciseId);
+        return $this->index()->findExercise($trackId, $exerciseId, $locale);
     }
 
     /**
@@ -210,10 +242,10 @@ final class ContentRepository implements ResetInterface
         return $this->practices($locale)[$id] ?? null;
     }
 
-    /** @return list<Exercise> dans l'ordre du parcours */
+    /** @return list<Exercise> dans l'ordre du parcours, dans sa langue */
     public function exercisesOf(Track $track): array
     {
-        return array_values($this->content()->exercises[$track->id] ?? []);
+        return $this->exercisesOfChapter($track);
     }
 
     /**
@@ -225,7 +257,7 @@ final class ContentRepository implements ResetInterface
     public function exercisesOfChapter(Track $track, ?Chapter $chapter = null): array
     {
         return array_values(array_filter(array_map(
-            fn (string $id) => $this->findExercise($track->id, $id),
+            fn (string $id) => $this->findExercise($track->id, $id, $track->locale),
             null === $chapter ? $track->exerciseIds() : $chapter->exerciseIds,
         )));
     }

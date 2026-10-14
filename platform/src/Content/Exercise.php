@@ -6,7 +6,7 @@ final readonly class Exercise
 {
     /** La langue d'un exercice écrit dans son dossier ; ses traductions vivent dans `i18n/<langue>/` (voir ExerciseReader::translate). */
     public const string LOCALE = 'fr';
-    /** Les langues dans lesquelles un exercice de Pratique peut être traduit. */
+    /** Les langues dans lesquelles un exercice (de Pratique ou de parcours) et un parcours peuvent être traduits. */
     public const array TRANSLATIONS = ['en'];
 
     /**

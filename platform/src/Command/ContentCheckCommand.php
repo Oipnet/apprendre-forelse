@@ -7,6 +7,7 @@ use App\Content\ConceptIndex;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Content\ExerciseReader;
+use App\Content\PackReader;
 use App\Content\PracticeVersionIndex;
 use App\Instance\PackEnvironments;
 use App\Version;
@@ -109,8 +110,27 @@ final class ContentCheckCommand
 
         // Une traduction en retard sur l'exercice français : jouable, mais elle ne dit plus la même chose.
         foreach ($exercises as $exercise) {
-            if (Exercise::LOCALE !== $exercise->locale && true === $this->content->findPractice($exercise->id, $exercise->locale)?->outdated) {
-                $io->writeln(sprintf(' <fg=yellow>!</> %s/%s [%s] — l\'exercice français a changé depuis la traduction : mettez-la à jour, puis « source: \'%s\' » dans i18n/%s/exercise.yaml', ContentRepository::PRACTICE, $exercise->id, $exercise->locale, ExerciseReader::fingerprint($exercise->directory), $exercise->locale));
+            if (Exercise::LOCALE === $exercise->locale) {
+                continue;
+            }
+            $outdated = null === $exercise->trackId ? true === $this->content->findPractice($exercise->id, $exercise->locale)?->outdated : $this->content->isOutdated($exercise);
+            if ($outdated) {
+                $io->writeln(sprintf(' <fg=yellow>!</> %s/%s [%s] — l\'exercice français a changé depuis la traduction : mettez-la à jour, puis « source: \'%s\' » dans i18n/%s/exercise.yaml', $exercise->trackId ?? ContentRepository::PRACTICE, $exercise->id, $exercise->locale, ExerciseReader::fingerprint($exercise->directory), $exercise->locale));
+            }
+        }
+        $trackIds = array_map(static fn (Exercise $e) => $e->trackId, $exercises);
+        foreach ($this->content->incompleteTranslations() as $locale => $tracks) {
+            foreach ($tracks as $trackId => $missing) {
+                if (\in_array($trackId, $trackIds, true)) {
+                    $io->writeln(sprintf(' <fg=yellow>!</> %s [%s] — traduction incomplète, le parcours ne paraît pas dans cette langue : %s', $trackId, $locale, implode(' ; ', $missing)));
+                }
+            }
+        }
+        foreach (Exercise::TRANSLATIONS as $locale) {
+            foreach ($this->content->tracks($locale) as $track) {
+                if ($this->content->isOutdated($track) && \in_array($track->id, $trackIds, true)) {
+                    $io->writeln(sprintf(' <fg=yellow>!</> %s [%s] — le parcours français (track.yaml ou une fiche de cours) a changé depuis la traduction : mettez-la à jour, puis « source: \'%s\' » dans i18n/%s/track.yaml', $track->id, $locale, PackReader::trackFingerprint($this->content->findTrack($track->id) ?? $track), $locale));
+                }
             }
         }
 

@@ -31,6 +31,8 @@ final readonly class Track
         public array $formerIds = [],
         /** Niveau visé (clé « level ») : un des LEVELS, repris en educationalLevel du Course. */
         public ?string $level = null,
+        /** La langue du parcours : celle des packs, ou celle de sa traduction (`i18n/<langue>/track.yaml`). */
+        public string $locale = Exercise::LOCALE,
     ) {
     }
 

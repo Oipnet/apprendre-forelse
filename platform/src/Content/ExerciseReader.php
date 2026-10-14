@@ -271,11 +271,13 @@ final class ExerciseReader
      * traduites (TRANSLATED_KEYS), un instructions.md complet, et, si les noms du code changent, des fichiers de
      * starter/, solution/ et tests/ qui remplacent ceux de l'exercice français au même chemin.
      *
-     * @param array<string, mixed> $meta exercise.yaml de l'exercice français
+     * @param array<string, mixed> $meta                 exercise.yaml de l'exercice français
+     * @param string|null          $trackId              null pour un exercice de Pratique
+     * @param string|null          $inheritedEnvironment environnement du chapitre ou du parcours (voir read())
      *
      * @return array{Exercise, array<string, mixed>} l'exercice traduit, et son exercise.yaml complété
      */
-    public function translate(string $directory, array $meta, string $locale): array
+    public function translate(string $directory, array $meta, string $locale, ?string $trackId = null, ?string $inheritedEnvironment = null): array
     {
         $overlay = $directory.'/i18n/'.$locale;
         $file = $overlay.'/exercise.yaml';
@@ -317,7 +319,7 @@ final class ExerciseReader
 
         $merged = [...$meta, ...$translated];
 
-        return [$this->read($directory, null, null, $merged, $overlay, $locale), $merged];
+        return [$this->read($directory, $trackId, $inheritedEnvironment, $merged, $overlay, $locale), $merged];
     }
 
     /** @return list<string> */
@@ -331,7 +333,7 @@ final class ExerciseReader
 
     /**
      * L'empreinte de l'exercice français, que sa traduction recopie dans sa clé « source » : quand elle ne
-     * correspond plus, l'exercice a changé depuis la traduction (voir Practice::$outdated).
+     * correspond plus, l'exercice a changé depuis la traduction (voir Practice::$outdated, ContentRepository::isOutdated()).
      */
     public static function fingerprint(string $directory): string
     {

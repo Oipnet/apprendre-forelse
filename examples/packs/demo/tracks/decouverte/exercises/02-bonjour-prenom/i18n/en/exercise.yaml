@@ -1,0 +1,21 @@
+# The English version of the exercise: see 01-bonjour/i18n/en/exercise.yaml.
+source: 'ae99ba24c562'
+title: Hello to you
+concepts: [Route parameter]
+preview: /hello/Ada
+
+docs:
+  - title: 'Route parameters'
+    url: https://symfony.com/doc/current/routing.html#route-parameters
+  - title: 'Controllers'
+    url: https://symfony.com/doc/current/controller.html
+
+objectives:
+  - test: testThePageGreetsByName
+    label: /hello/Ada displays “Hello Ada!”
+  - test: testThePageWithoutANameStillWorks
+    label: /hello still displays “Hello Symfony!”
+
+hints:
+  - A route can contain a parameter between braces, received as an argument of the method.
+  - "`#[Route('/hello/{name}')]` with `public function name(string $name): Response`."

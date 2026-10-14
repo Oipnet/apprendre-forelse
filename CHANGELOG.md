@@ -18,6 +18,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   légales, de la politique de confidentialité et des CGV. Chacune rappelle que la version française fait foi et y
   renvoie. Les pages fixes traduites (contact compris) annoncent leurs autres langues aux moteurs (`hreflang`), et
   le pied de page propose de changer de langue.
+- **Traduire un parcours** (`<parcours>/i18n/en/track.yaml`, fiches de cours dans `i18n/en/chapters/`, et chaque
+  exercice dans son `i18n/en/` comme en Pratique) : le moteur charge la version anglaise d'un parcours entièrement
+  traduit, et `content:check` vérifie chaque exercice traduit, signale une traduction en retard ou incomplète. Le
+  parcours de démo `decouverte` est traduit en exemple. Les pages anglaises des parcours viennent ensuite.
 
 ## 3.12.0 — 2026-10-14
 
