@@ -1,0 +1,85 @@
+# The English leaderboard (/en/leaderboard): see classement+intl-icu.fr.yaml for what each key is.
+
+commun:
+    xp: "{xp} XP"
+    unite_xp: XP
+    pratique: Practice
+    me_retirer: Leave the leaderboard
+    apparaitre: Join the leaderboard
+
+periode:
+    mois: This month
+    tout: All time
+
+flash:
+    visible: "You now appear on the leaderboard as “{pseudo}”."
+    invisible: "You no longer appear on the leaderboard."
+
+index:
+    titre: Leaderboard
+    partage: Learn to code by coding, right in your browser.
+    communaute: Community
+    intro: "XP earned on exercises, tracks and Practice, among learners who chose to be listed."
+    periode: Period
+    parcours: Track
+    tous: All
+    afficher: Show
+    votre_position: Your position
+    # After the rank: 1st, 2nd, 3rd, 4th.
+    rang_suffixe: "{n, selectordinal, one {st} two {nd} few {rd} other {th}}"
+    sur_classes: "Out of {total} {n, plural, one {ranked learner} other {ranked learners}}"
+    exercices: "{n, plural, one {# exercise} other {# exercises}}"
+    devant: "{xp} more XP to overtake {pseudo}."
+    premier_seul: "First on the board: defend your spot as new learners sign up."
+    en_tete: In the lead. Keep up the pace.
+    places: "{n, plural, one {place} other {places}}"
+    depuis: "since {mois}"
+    ce_mois_ci: this month
+    vous_seriez: "You would be {rang}<sup>{n, selectordinal, one {st} two {nd} few {rd} other {th}}</sup>, with {xp} XP."
+    rejoignez_pseudo: "Join the leaderboard: only your display name, “{pseudo}”, is shown."
+    inscrit: You have joined the leaderboard.
+    reussissez_pour_entrer: "Complete an exercise{mois, select, oui { this month} other {}}{filtre, select, oui { in this filter} other {}} to get on the board."
+    rejoignez: Join the leaderboard.
+    reussissez_pseudo: "Complete an exercise and appear here under your display name, “{pseudo}”."
+    entrez: Join the race.
+    creez_compte: "Create an account to keep your progress and, if you wish, appear here."
+    creer_compte: Create an account
+    podium: Podium
+    place_podium: "{rang}{n, selectordinal, one {st} two {nd} few {rd} other {th}} place"
+    vous: You
+    ouvrez_la_marche: You are leading the way
+    demarre: The leaderboard is starting
+    podium_bientot: "The podium appears once three learners are ranked. Share the platform with a colleague or your class to get the race going."
+    copier_lien: Copy the link
+    tableau: Leaderboard table
+    col_rang: Rank
+    col_apprenant: Learner
+    col_evolution: Change
+    col_exercices: Exercises
+    nouveau: New
+    meme_place: same place
+    place_libre: Open spot
+    premiers: "The top {n} out of {total}."
+    note_toujours: "All XP earned since the site opened."
+    note_mois: "{mois} leaderboard: it resets on {suivant} 1. Changes compare with the end of {precedent}."
+    bareme:
+        titre: Earning XP
+        exercice: Exercise completed unaided
+        fourchette: "{min} to {max} XP"
+        indice: With a hint
+        indice_valeur: "−{pourcentage}% per hint"
+        solution: Solution viewed
+        parcours: Track completed
+        parcours_valeur: "+{pourcentage}% of the track"
+        pratique: Practice challenge
+        plancher: "With hints, an exercise always earns at least {pourcentage}% of its XP."
+    verifiees:
+        titre: Verified completions
+        texte: "Every completed exercise is replayed on our servers with the code you submitted. If the tests don’t confirm it, it is removed from the leaderboard."
+    visibilite:
+        titre: Your visibility
+        visible: 'You appear as <strong class="text-ink">{pseudo}</strong>.'
+        invisible: 'You are not on the leaderboard. If you join, it will be as <strong class="text-ink">{pseudo}</strong>.'
+        confidentialite: Your email and name are never shown.
+        changer_pseudo: Change display name
+        rejoindre: Join the leaderboard

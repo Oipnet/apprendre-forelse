@@ -153,6 +153,26 @@ final class LeaderboardTest extends WebTestCase
         $this->assertFalse(static::getContainer()->get(UserRepository::class)->find($alan->getId())->isLeaderboardOptIn());
     }
 
+    /** Le classement anglais : mêmes classés, textes anglais, et le choix d'y paraître ramène sur la page anglaise. */
+    public function testLeClassementExisteEnAnglais(): void
+    {
+        $this->learner('Ada', 50, optIn: true);
+        $alan = $this->learner('Alan', 30, optIn: false);
+        $this->client->loginUser($alan);
+
+        $crawler = $this->client->request('GET', '/en/leaderboard?periode=tout');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('en', $crawler->filter('html')->attr('lang'));
+        $this->assertSelectorTextContains('h1', 'Leaderboard');
+        $this->assertStringContainsString('You would be 2nd', preg_replace('/\s+/', ' ', $crawler->filter('.lb-me')->text()));
+
+        $this->client->submitForm('Join the leaderboard', serverParameters: self::ORIGIN);
+        $this->assertResponseRedirects('/en/leaderboard');
+        $crawler = $this->client->followRedirect();
+        $this->assertCount(2, self::rows($crawler));
+        $this->assertStringContainsString('21 more XP to overtake Ada.', preg_replace('/\s+/', ' ', $crawler->filter('.lb-me')->text()));
+    }
+
     public function testUnInviteNePeutPasChoisir(): void
     {
         $this->client->request('POST', '/compte/classement', ['participer' => '1'], server: self::ORIGIN);

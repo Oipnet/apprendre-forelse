@@ -26,7 +26,7 @@ final class LeaderboardController extends AbstractController
     ) {
     }
 
-    #[Route('/classement', name: 'app_leaderboard', methods: ['GET'])]
+    #[Route(['fr' => '/classement', 'en' => '/en/leaderboard'], name: 'app_leaderboard', methods: ['GET'])]
     public function index(Request $request, XpScale $scale, TranslatorInterface $translator): Response
     {
         $period = LeaderboardPeriod::tryFrom($request->query->getString('periode')) ?? LeaderboardPeriod::Month;
@@ -43,7 +43,7 @@ final class LeaderboardController extends AbstractController
         ]);
     }
 
-    #[Route('/compte/classement', name: 'app_leaderboard_opt_in', methods: ['POST'])]
+    #[Route(['fr' => '/compte/classement', 'en' => '/en/account/leaderboard'], name: 'app_leaderboard_opt_in', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function optIn(Request $request, EntityManagerInterface $entityManager): Response
     {
