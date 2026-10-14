@@ -46,7 +46,12 @@ function analyse(text: string): FileContext {
 	let lastUseLine = 0;
 	let namespaceLine = 0;
 	let namespace = '';
+	// Passé la déclaration de la classe, un `use` importe un trait (`use HasFactory;`) : ni un import,
+	// ni l'endroit où ajouter les suivants (sinon le `use` d'un attribut atterrit dans la classe).
+	let body = false;
 	text.split('\n').forEach((line, i) => {
+		if (body) return;
+		if (/^\s*(?:(?:final|abstract|readonly)\s+)*(?:class|interface|trait|enum)\s+\w/.test(line)) body = true;
 		const ns = line.match(/^\s*namespace\s+([\w\\]+)\s*;/);
 		if (ns) {
 			namespace = ns[1];
