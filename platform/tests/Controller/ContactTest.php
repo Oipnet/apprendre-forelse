@@ -53,6 +53,29 @@ final class ContactTest extends WebTestCase
         $this->assertSelectorTextContains('.flash', 'Message envoyé');
     }
 
+    /** La page de contact anglaise : textes, objets et erreurs en anglais ; le message arrive dans la même boîte. */
+    public function testLaPageDeContactExisteEnAnglais(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $crawler = $client->request('GET', '/en/contact?objet=probleme');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('en', $crawler->filter('html')->attr('lang'));
+        $this->assertSelectorTextContains('h1', 'Write to us');
+        $this->assertSelectorTextContains('select#contact_form_subject option[selected]', 'A problem on the site');
+
+        $client->submitForm('Send the message', ['contact_form[name]' => 'Gorm', 'contact_form[email]' => 'gorm@example.test', 'contact_form[message]' => 'x'], serverParameters: self::ORIGIN);
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSelectorTextContains('.contact-form', 'A few more details?');
+
+        $client->submitForm('Send the message', ['contact_form[message]' => 'The editor stays blank on my phone.'], serverParameters: self::ORIGIN);
+        $this->assertResponseRedirects('/en/contact', 303);
+        $this->assertCount(1, $this->messages());
+        $client->followRedirect();
+        $this->assertSelectorTextContains('.flash', 'Message sent');
+    }
+
     public function testUnMessageIncompletEstRefuse(): void
     {
         $client = static::createClient();

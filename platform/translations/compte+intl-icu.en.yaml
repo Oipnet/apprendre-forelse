@@ -1,5 +1,5 @@
-# English pages for signup, login, password reset and the account page: see compte+intl-icu.fr.yaml for what each
-# key is. Purchase and contact keys (purchase., contact., paiement.) fall back to French for now (see README.md).
+# English pages for signup, login, password reset, the account page and contact: see compte+intl-icu.fr.yaml for
+# what each key is. Purchase keys (purchase., paiement.) fall back to French for now (see README.md).
 
 commun:
     # The end of a list of alternatives: "A, B or C".
@@ -148,6 +148,27 @@ security:
             titre_page: "New password · {site}"
             titre: "New password"
             envoyer: "Save and log in"
+
+contact:
+    index:
+        seo:
+            titre: "Contact"
+            description: "A question about a track, a purchase or an invoice, a problem on the site: write to us. A person reads every message and replies by email."
+        surtitre: "Contact"
+        titre: "Write to us"
+        intro: "A question about a track, a purchase or an invoice, a problem on the site, an idea: a person reads every message and replies by email."
+        raccourcis:
+            # HTML: rendered with |raw.
+            exercice: "<strong>A problem with an exercise?</strong> The “Feedback?” button in the exercise sends it to us with its context: that’s the fastest way."
+            organisations: "<strong>Training a class or a team?</strong> <a href=\"{lien}\">Schools and companies</a> (in French): what we offer, and how to request a quote."
+            compte: "<strong>Your account?</strong> Display name, address, password, invoices and deletion are managed from <a href=\"{lien}\">My account</a>."
+        envoyer: "Send the message"
+        contestation: "I am disputing the revocation of my certificate {code} ({parcours}).\nReason given: {motif}"
+    form:
+        # HTML: rendered with |raw.
+        confidentialite: "Your message and address are only used to reply to you: <a href=\"{lien}\">privacy policy</a>."
+        indisponible: "The form isn’t available on this instance: see the <a href=\"{lien}\">legal notice</a> to reach the publisher."
+    quota: "Many messages in a short time from your connection: try again in an hour, or email us directly."
 
 # Field labels (translation_domain of the form types); constraint messages are in validators.en.yaml.
 form:
