@@ -18,6 +18,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   helpers globaux de Laravel (`route`, `view`, `redirect`, `old`…) ou de Symfony (`dump`, `dd`) sont proposés, avec
   l'aide aux paramètres. L'index de complétion de chaque environnement les liste désormais (`functions`).
 
+### Corrigé
+
+- **Import ajouté dans la classe** : dans une classe qui utilise un trait (`use HasFactory;`), compléter `#[Fillable]`
+  ou une autre classe ajoutait son `use` sous le trait, dans le corps de la classe. Il va désormais avec les autres imports.
+
 ## 3.12.0 — 2026-10-14
 
 ### Modifié
