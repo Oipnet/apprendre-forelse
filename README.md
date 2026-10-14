@@ -98,6 +98,8 @@ Avec une clé d'API, l'atelier peut **proposer un brouillon d'exercice** à part
 
 Avec la même clé, un bouton **Post LinkedIn** apparaît sur la page d'un parcours et sur l'éditeur d'un exercice de Pratique — les deux objets du contenu qui ont une page publique à partager. Il ouvre `/atelier/<parcours>/post`, où le modèle écrit **trois brouillons sous trois angles** (annonce, coulisses, pédagogique) à partir du contenu déjà écrit : résumé, chapitres, notions, consignes. Chaque brouillon se relit et se retouche sur place, avec le compte de caractères que LinkedIn impose (3 000 au total, ~200 avant « …voir plus »), puis se copie. Rien n'est publié — l'atelier ne parle jamais à LinkedIn — et rien n'est enregistré : un post vit dans LinkedIn, pas dans le pack.
 
+L'éditeur d'un exercice de Pratique mène aussi à sa **version anglaise** (`/atelier/pratique/<exercice>/anglais`) : le même éditeur, sur les fichiers de `i18n/en/` (voir « Traduction »). Avec la clé, **Traduire avec l'IA** propose la traduction entière, en partant de celle qui existe : `exercise.yaml` réduit aux clés traduisibles, consignes, fichiers de code qui changent, mutants, et l'empreinte `source` calculée par la plateforme. Rien n'est enregistré avant que l'auteur relise ; **Vérifier** lance `content:check` sur la version anglaise. Une traduction en retard sur l'exercice français est signalée dans l'éditeur, avec l'empreinte à recopier.
+
 ```dotenv
 # platform/.env.local
 ANTHROPIC_API_KEY=sk-ant-…

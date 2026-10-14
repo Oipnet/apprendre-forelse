@@ -10,7 +10,9 @@ export interface StudioConfig {
 	ia: boolean;
 	/** Exercice de Pratique : pas de ligne dans track.yaml. */
 	pratique?: boolean;
-	urls: { enregistrer: string; verifier: string; corriger: string; supprimer: string; jouer: string; atelier: string };
+	/** La version anglaise d'un exercice de Pratique (i18n/en/) : les fichiers sont ceux de la traduction. */
+	traduction?: boolean;
+	urls: { enregistrer: string; verifier: string; corriger?: string; supprimer?: string; traduire?: string; jouer: string; atelier: string };
 }
 
 interface Verdict {
@@ -61,8 +63,15 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 		arbre?.setActive(chemin);
 	};
 
+	const ouvrirLePremier = () => {
+		const premier = fichiers.has('exercise.yaml') ? 'exercise.yaml' : [...fichiers.keys()][0];
+		if (premier) ouvrir(premier);
+	};
+
 	dessinerArbre();
-	ouvrir(fichiers.has('exercise.yaml') ? 'exercise.yaml' : [...fichiers.keys()][0]);
+	// Une traduction pas encore écrite n'a aucun fichier : l'éditeur attend la proposition du modèle, ou un ajout.
+	ouvrirLePremier();
+	if (config.traduction && fichiers.size === 0) etat(config.ia ? 'Pas encore de traduction : « Traduire avec l\'IA » la propose' : 'Pas encore de traduction : ajoutez exercise.yaml et instructions.md');
 
 	// --- Ajouter / supprimer un fichier ---------------------------------------------------
 	$('#ajouter').addEventListener('click', () => {
@@ -86,8 +95,8 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 	});
 
 	// --- Supprimer l'exercice --------------------------------------------------------------
-	$('#supprimer-exercice').addEventListener('click', async () => {
-		if (!confirm(config.pratique ? 'Supprimer cet exercice ? Son dossier disparaît.' : 'Supprimer cet exercice ? Son dossier et sa ligne dans track.yaml disparaissent.')) return;
+	root.querySelector('#supprimer-exercice')?.addEventListener('click', async () => {
+		if (!config.urls.supprimer || !confirm(config.pratique ? 'Supprimer cet exercice ? Son dossier disparaît.' : 'Supprimer cet exercice ? Son dossier et sa ligne dans track.yaml disparaissent.')) return;
 		const reponse = await fetch(config.urls.supprimer, { method: 'DELETE' });
 		const corps = (await reponse.json().catch(() => ({}))) as { url?: string; erreur?: string };
 		if (reponse.ok && corps.url) {
@@ -145,31 +154,37 @@ export async function mountStudio(root: HTMLElement, config: StudioConfig) {
 		}
 	});
 
-	// --- Corriger avec l'IA ---------------------------------------------------------------
-	root.querySelector('#corriger')?.addEventListener('click', async () => {
+	// --- Corriger ou traduire avec l'IA ---------------------------------------------------
+	const proposer = async (url: string, attente: string, echec: string) => {
 		const boutons = root.querySelectorAll<HTMLButtonElement>('.actions button');
 		for (const bouton of boutons) bouton.disabled = true;
-		etat('Le modèle relit l\'exercice…', 'busy');
+		etat(attente, 'busy');
 		try {
-			const reponse = await fetch(config.urls.corriger, { method: 'POST' });
-			const corps = (await reponse.json()) as { fichiers?: Record<string, string>; erreur?: string };
+			const reponse = await fetch(url, { method: 'POST' });
+			const corps = (await reponse.json().catch(() => ({}))) as { fichiers?: Record<string, string>; erreur?: string };
 			if (!reponse.ok || !corps.fichiers) {
-				etat(corps.erreur ?? 'La correction a échoué', 'ko');
+				etat(corps.erreur ?? echec, 'ko');
 				return;
 			}
 			// Proposition, pas vérité : elle atterrit dans l'éditeur, l'auteur relit et enregistre.
-			for (const [chemin, contenu] of Object.entries(corps.fichiers)) {
-				fichiers.set(chemin, contenu);
-				editor.removeFile(chemin);
-			}
-			for (const chemin of [...fichiers.keys()]) if (!(chemin in corps.fichiers)) fichiers.delete(chemin);
+			for (const chemin of [...fichiers.keys()]) editor.removeFile(chemin);
+			fichiers.clear();
+			for (const [chemin, contenu] of Object.entries(corps.fichiers)) fichiers.set(chemin, contenu);
 			changer();
 			dessinerArbre();
-			ouvrir(fichiers.has('exercise.yaml') ? 'exercise.yaml' : [...fichiers.keys()][0]);
-			etat('Proposition du modèle chargée : relisez, puis vérifiez', 'ok');
+			ouvrirLePremier();
+			etat('Proposition du modèle chargée : relisez, enregistrez, puis vérifiez', 'ok');
 		} finally {
 			for (const bouton of boutons) bouton.disabled = false;
 		}
+	};
+	root.querySelector('#corriger')?.addEventListener('click', () => {
+		if (config.urls.corriger) void proposer(config.urls.corriger, 'Le modèle relit l\'exercice…', 'La correction a échoué');
+	});
+	root.querySelector('#traduire')?.addEventListener('click', () => {
+		if (!config.urls.traduire) return;
+		if (fichiers.size > 0 && !confirm('Remplacer la traduction dans l\'éditeur par celle du modèle ? Rien n\'est enregistré tant que vous n\'enregistrez pas.')) return;
+		void proposer(config.urls.traduire, 'Le modèle traduit l\'exercice (une à deux minutes)…', 'La traduction a échoué');
 	});
 
 	function afficherVerdict(verdict: Verdict) {

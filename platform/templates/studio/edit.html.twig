@@ -20,17 +20,19 @@
         <header class="topbar">
             <div class="crumbs">
                 <a class="lp-brand" href="{{ path('app_home') }}" title="{{ theme.title }}">{% if theme.logoUrl %}<img src="{{ theme.logoUrl }}" alt="" width="72" height="84">{% endif %}<span class="lp-serif">{{ theme.name }}</span>{% if theme.chip %}<span class="lp-chip">{{ theme.chip }}</span>{% endif %}</a><span>›</span>
-                <a href="{{ path('app_studio') }}">Atelier</a><span>›</span>{{ contexte }}<span>›</span>{{ exercise.title }}
+                <a href="{{ path('app_studio') }}">Atelier</a><span>›</span>{{ contexte }}<span>›</span>{% if traduction is defined %}<a href="{{ traduction.francais }}">{{ exercise.title }}</a><span>›</span>Anglais{% else %}{{ exercise.title }}{% endif %}
             </div>
             <div class="status">Prêt</div>
             <div class="actions">
                 <a class="button ghost small" href="{{ config.urls.jouer }}" target="_blank" rel="noopener">Jouer l'exercice ↗</a>
-                {% if config.ia and config.urls.post %}<a class="button ghost small" href="{{ config.urls.post }}">Post LinkedIn</a>{% endif %}
+                {% if config.ia and config.urls.post is defined and config.urls.post %}<a class="button ghost small" href="{{ config.urls.post }}">Post LinkedIn</a>{% endif %}
+                {% if config.urls.anglais is defined %}<a class="button ghost small" href="{{ config.urls.anglais }}">Version anglaise{% if anglaisEnRetard %} (en retard){% endif %}</a>{% endif %}
                 <button id="ajouter" class="ghost">+ Fichier</button>
                 <button id="supprimer" class="ghost">Supprimer le fichier</button>
-                <button id="supprimer-exercice" class="ghost" title="Supprimer l'exercice entier">🗑</button>
+                {% if traduction is not defined %}<button id="supprimer-exercice" class="ghost" title="Supprimer l'exercice entier">🗑</button>{% endif %}
                 <button id="enregistrer" class="ghost">Enregistrer</button>
-                {% if config.ia %}<button id="corriger" class="ghost" hidden>Corriger avec l'IA</button>{% endif %}
+                {% if config.ia and traduction is not defined %}<button id="corriger" class="ghost" hidden>Corriger avec l'IA</button>{% endif %}
+                {% if config.ia and traduction is defined %}<button id="traduire" class="ghost">{{ config.fichiers ? 'Retraduire avec l\'IA' : 'Traduire avec l\'IA' }}</button>{% endif %}
                 <button id="verifier" class="primary">Vérifier</button>
             </div>
         </header>
@@ -41,13 +43,21 @@
                 </nav>
                 <div class="code-body">
                     <aside class="filetree" id="filetree">
-                        <div class="filetree-head">Exercice</div>
+                        <div class="filetree-head">{{ traduction is defined ? 'i18n/en/' : 'Exercice' }}</div>
                         <div id="filetree-body"></div>
                     </aside>
                     <div class="editor" id="editor"></div>
                 </div>
             </section>
             <section class="panel verdict">
+                {% if traduction is defined %}
+                    {% if traduction.retard %}<p class="aide retard"><strong>Traduction en retard :</strong> l'exercice français a changé depuis. Retraduisez-la, ou mettez-la à jour à la main puis recopiez l'empreinte que donne <strong>Vérifier</strong>.</p>{% endif %}
+                    <p class="aide">
+                        La version anglaise, jouée sur <code>/en/practice</code>. <code>exercise.yaml</code> ne porte que les clés traduites, <code>instructions.md</code> est complet,
+                        et un fichier de <code>starter/</code>, <code>solution/</code> ou <code>tests/</code> remplace le fichier français au même chemin.
+                        {% if config.ia %}<strong>Traduire avec l'IA</strong> propose le tout, sans rien enregistrer : relisez, puis vérifiez.{% endif %}
+                    </p>
+                {% endif %}
                 <p class="aide">
                     <strong>Vérifier</strong> enregistre puis lance <code>content:check</code> :
                     les tests doivent être <strong>rouges</strong> sur l'état de départ, et <strong>verts</strong> avec la solution.

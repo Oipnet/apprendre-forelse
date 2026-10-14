@@ -12,6 +12,7 @@ use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
 use App\Content\Pack;
+use App\Content\Practice;
 use App\Content\Track;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
@@ -247,6 +248,68 @@ final class ExerciseStudio
     public function verifier(Exercise $exercise): CheckResult
     {
         return $this->checker->check($exercise);
+    }
+
+    /**
+     * La traduction d'un exercice de Pratique (`i18n/<langue>/`), par chemin relatif à ce dossier ; vide s'il n'y en a pas.
+     *
+     * @return array<string, string>
+     */
+    public function lireTraduction(Exercise $exercise, string $langue): array
+    {
+        return $this->fichiers->read($this->dossierTraduction($exercise, $langue));
+    }
+
+    /** L'exercice traduit, tel que le contenu le charge ; null sans traduction. */
+    public function traduction(Exercise $exercise, string $langue): ?Practice
+    {
+        return $this->content->findPractice($exercise->id, $langue);
+    }
+
+    /**
+     * Enregistre la traduction puis relit tout le contenu, comme enregistrer() : une traduction qui ne se charge pas
+     * n'est pas gardée.
+     *
+     * @param array<string, string> $fichiers par chemin relatif à i18n/<langue>/
+     *
+     * @return string|null le message d'erreur du format (rien n'a été enregistré), ou null si tout est bon
+     */
+    public function enregistrerTraduction(Pack $pack, Exercise $exercise, string $langue, array $fichiers): ?string
+    {
+        $this->writability->assert($pack);
+        $dossier = $this->dossierTraduction($exercise, $langue);
+        $existait = is_dir($dossier);
+        $avant = $this->fichiers->read($dossier);
+        $this->fichiers->write($dossier, $fichiers);
+
+        $this->content->forget();
+        try {
+            if (null === $this->content->findPractice($exercise->id, $langue)) {
+                throw new ContentException(sprintf('La traduction « %s » de « %s » ne se retrouve pas après l\'écriture.', $langue, $exercise->id));
+            }
+        } catch (\Throwable $e) {
+            if ($existait) {
+                $this->fichiers->write($dossier, $avant);
+            } else {
+                (new Filesystem())->remove($dossier);
+            }
+            $this->content->forget();
+            if ($e instanceof ContentException) {
+                return $e->getMessage();
+            }
+            throw $e;
+        }
+
+        return null;
+    }
+
+    private function dossierTraduction(Exercise $exercise, string $langue): string
+    {
+        if (!\in_array($langue, Exercise::TRANSLATIONS, true)) {
+            throw new ContentException(sprintf('Langue de traduction inconnue : « %s ».', $langue));
+        }
+
+        return $exercise->directory.'/i18n/'.$langue;
     }
 
     /**
