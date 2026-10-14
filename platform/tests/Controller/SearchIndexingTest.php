@@ -73,6 +73,8 @@ final class SearchIndexingTest extends WebTestCase
 
         $this->assertSame([
             'http://localhost/',
+            // Le thème du moteur a ses textes en anglais : l'accueil existe dans les deux langues.
+            'http://localhost/en',
             'http://localhost/parcours',
             'http://localhost/parcours/decouverte',
             'http://localhost/parcours/decouverte/chapitre/bonjour/sommaire',

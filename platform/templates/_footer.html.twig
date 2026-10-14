@@ -1,5 +1,5 @@
 {#
-  @theme Point de surcharge. Variables : theme (App\Theme\Theme), blog (App\Content\Blog), login_suite (string|null), moteur_version.
+  @theme Point de surcharge. Variables : theme (App\Theme\Theme), seo (App\Seo\PageSeo : alternates, les autres langues de la page), blog (App\Content\Blog), login_suite (string|null), moteur_version.
   Obligatoire : la version et la licence du moteur (AGPL) avec le lien vers son code, les liens vers les mentions
   légales et la confidentialité.
   Pied de page commun à toutes les pages du site (l'éditeur d'exercice et l'atelier, en plein écran, n'en ont pas).
@@ -13,6 +13,9 @@
                 {% if theme.chip %}<span class="rounded border border-line px-1.5 text-xs font-normal text-ink-muted">{{ theme.chip }}</span>{% endif %}
             </a>
             <p class="mt-2 text-ink-muted">{{ theme.tagline }}</p>
+            {% for language, url in seo.alternates|filter((url, language) => language != 'x-default' and language != seo.language) %}
+                <p class="footer-language mt-2"><a href="{{ url }}" hreflang="{{ language }}" lang="{{ language }}">{{ ('footer.langue.' ~ language)|trans }}</a></p>
+            {% endfor %}
         </div>
         <nav class="grid gap-6 sm:grid-cols-3" aria-label="{{ 'footer.navigation'|trans }}">
             <div>

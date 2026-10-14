@@ -8,6 +8,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Accueil en anglais** (`/en`) : servi quand le thème a ses textes en anglais. Les textes de `theme.yaml` (`chip`,
+  `title`, `tagline`, sections de `home`) se traduisent sous `locales: en:` ; une section traduite remplace l'originale
+  en entier. Sans `locales: en:`, `/en` répond 404 et n'entre pas au sitemap. Les deux accueils se nomment
+  (`hreflang`), le pied de page du moteur mène à l'autre langue, et la fiche d'un parcours précise « In French ». Le
+  thème du moteur et l'exemple `atelier-bigorneau` ont leurs textes anglais. Un moteur antérieur refuse la clé
+  `locales` : un thème qui l'ajoute attend cette version.
+
 ### Modifié
 
 - **Journaux du serveur conservés entre deux déploiements** : les services de `deploy/compose.yaml` écrivent dans le

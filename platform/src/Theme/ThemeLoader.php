@@ -24,7 +24,13 @@ final readonly class ThemeLoader
     public const string LEGACY_FILE = 'marque.yaml';
 
     /** Les clés acceptées à la racine de theme.yaml. */
-    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'colors', 'editor', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'share_card', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles'];
+    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'colors', 'editor', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'share_card', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles', 'locales'];
+
+    /**
+     * Ce qu'une langue peut traduire, sous « locales: <langue>: » : les textes de la marque et les sections de
+     * l'accueil. Le reste (couleurs, images, polices) ne dépend pas de la langue.
+     */
+    public const array LOCALE_KEYS = ['chip', 'title', 'tagline', 'home'];
 
     /** Le sous-dossier du thème servi tel quel sur /theme/<thème>/<version>/assets/… (voir ThemeController). */
     public const string ASSETS = 'assets';
@@ -150,6 +156,7 @@ final readonly class ThemeLoader
             scripts: self::assets($config, 'scripts', 'js', $directory, $error),
             preload: self::assets($config, 'preload', 'woff2', $directory, $error),
             replacesEngineStyles: self::replacesEngineStyles($config, $error),
+            locales: self::locales($config['locales'] ?? null, $error),
         );
     }
 
@@ -387,6 +394,49 @@ final readonly class ThemeLoader
             'author' => self::section($home, 'author', $error),
             'demo' => self::section($home, 'demo', $error),
         ];
+    }
+
+    /**
+     * Les textes du thème dans d'autres langues que celle de theme.yaml. Une section de l'accueil traduite remplace
+     * la section entière : elle se vérifie comme l'originale, et ce qui n'est pas traduit reste dans la langue du
+     * fichier.
+     *
+     * @param \Closure(string): \RuntimeException $error
+     *
+     * @return array<string, array{chip?: string, title?: string, tagline?: string, home: array<string, array<string, mixed>>}>
+     */
+    private static function locales(mixed $locales, \Closure $error): array
+    {
+        if (null === $locales) {
+            return [];
+        }
+        if (!\is_array($locales) || array_is_list($locales)) {
+            throw $error(sprintf('« locales » associe une langue (en, de…) à ses textes (%s).', implode(', ', self::LOCALE_KEYS)));
+        }
+        $result = [];
+        foreach ($locales as $locale => $texts) {
+            if (!\is_string($locale) || 1 !== preg_match('/^[a-z]{2}$/', $locale)) {
+                throw $error(sprintf('« locales.%s » : une langue s\'écrit en deux lettres minuscules (en, de…).', $locale));
+            }
+            $localeError = static fn (string $message) => $error(sprintf('locales.%s, %s', $locale, $message));
+            if (!\is_array($texts) || array_is_list($texts)) {
+                throw $localeError(sprintf('ses textes sont attendus (%s).', implode(', ', self::LOCALE_KEYS)));
+            }
+            foreach (array_keys($texts) as $key) {
+                if (!\in_array($key, self::LOCALE_KEYS, true)) {
+                    throw $localeError(sprintf('clé « %s » inconnue (acceptées : %s).', $key, implode(', ', self::LOCALE_KEYS)));
+                }
+            }
+            $translated = ['home' => array_filter(self::home($texts['home'] ?? [], $localeError))];
+            foreach (['chip', 'title', 'tagline'] as $key) {
+                if (isset($texts[$key])) {
+                    $translated[$key] = self::text($texts, $key, '', $localeError);
+                }
+            }
+            $result[$locale] = $translated;
+        }
+
+        return $result;
     }
 
     /**

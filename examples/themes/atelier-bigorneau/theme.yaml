@@ -128,6 +128,50 @@ home:
     title: Une équipe de formateurs, pas une plateforme de cours en masse.
     lead: Écrit par les formateurs de l'Atelier Bigorneau, qui enseignent ces sujets en salle depuis dix ans.
 
+# Les textes ci-dessus dans d'autres langues : l'accueil anglais (/en) n'existe que si le thème a les siens. Une
+# section de l'accueil traduite remplace l'originale en entier ; ce qui n'est pas traduit reste en français.
+locales:
+  en:
+    chip: code
+    title: Atelier Bigorneau · learn to code online
+    tagline: Learn to code by coding in the browser, with the workshop's tools.
+    home:
+      demo:
+        files: [PortController.php, index.html.twig]
+        code: |
+          <span class="cm">// Gaston wants the list of boats at the quay</span>
+          <span class="at">#[Route(</span><span class="st">'/quay'</span><span class="at">)]</span>
+          <span class="kw">public function</span> index(): Response
+          {
+              <span class="kw">return</span> $this->render(<span class="st">'quay/index.html.twig'</span>, [
+                  <span class="st">'port'</span> => <span class="st">'Port-Bigorneau'</span>,
+              ]);
+          }<span class="cursor">▌</span>
+        preview:
+          url: localhost/quay
+          name: Port-Bigorneau
+          label: At the quay this morning
+          value: Le Grand Bigorneau
+          row: ['Trawler Marie-Jeanne', 'quay 3']
+        goals:
+          - The /quay page responds
+          - The port's name is displayed
+          - The boats come from the controller
+      showcase:
+        eyebrow: The common thread
+        title: 'Every track has its common thread. The first one: a fishing port.'
+        lead:
+          - 'No catalogue of unrelated examples: a single project, growing chapter after chapter.'
+          - The code from the first exercise is still used in the last one. You learn the way real development works.
+        sign:
+          name: "Port-\nBigorneau"
+          note: Founded in chapter 1
+          alt: Port-Bigorneau sign, the common thread of the first track
+      author:
+        eyebrow: Who's behind it
+        title: A team of trainers, not a mass-market course platform.
+        lead: Written by the Atelier Bigorneau trainers, who have taught these topics in the classroom for ten years.
+
 # Les fichiers à charger sur les pages du site, après ceux du moteur, pris dans assets/. La page d'exercice et les
 # éditeurs de l'atelier ne les chargent pas.
 stylesheets: [assets/theme.css]

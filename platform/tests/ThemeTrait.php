@@ -11,14 +11,17 @@ use Symfony\Component\Routing\Generator\UrlGenerator;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
+use Symfony\Component\Translation\LocaleSwitcher;
 
 /**
  * Construit un thème hors du conteneur, pour les tests unitaires : le dossier donné, ou celui du
- * moteur quand il est vide. Le routeur ne connaît que les routes des images et des fichiers du thème.
+ * moteur quand il est vide, dans la langue donnée. Le routeur ne connaît que les routes des images
+ * et des fichiers du thème.
  */
 trait ThemeTrait
 {
-    protected static function theme(string $directory = ''): Theme
+    /** @param string|null $locale la langue de la page ; null : celle du site */
+    protected static function theme(string $directory = '', ?string $locale = null): Theme
     {
         $routes = new RouteCollection();
         $routes->add('app_theme_image', new Route('/theme/{theme}/{version}/{role}'));
@@ -28,6 +31,7 @@ trait ThemeTrait
             new FixedTheme($directory),
             new UrlGenerator($routes, new RequestContext()),
             new Packages(new PathPackage('/', new EmptyVersionStrategy())),
+            locale: null === $locale ? null : new LocaleSwitcher($locale, []),
         );
     }
 }

@@ -174,9 +174,27 @@ hero:
 
 Une clé absente dans la langue de la page retombe sur le français, puis s'affiche telle quelle. Les fichiers sont
 relus quand ils changent, comme les gabarits. Un fichier invalide (YAML, valeur qui n'est pas un texte, message ICU
-mal formé) est signalé par `app:theme:verifier` et dans l'admin. Le site n'est servi en anglais que sur le blog
-(`/en/blog`) : c'est là qu'un `theme.en.yaml` se voit, dans l'en-tête et le pied de page. L'exemple livré
-(`examples/themes/atelier-bigorneau`) en a un.
+mal formé) est signalé par `app:theme:verifier` et dans l'admin.
+
+Les textes de `theme.yaml` (nom court, titre, phrase d'accroche, sections de l'accueil) se traduisent sous
+`locales` :
+
+```yaml
+tagline: Apprendre à développer en codant dans le navigateur.
+locales:
+  en:
+    tagline: Learn to code by coding in the browser.
+    home:
+      author: {title: A team of trainers, lead: Written by trainers who teach these topics.}
+```
+
+Seuls `chip`, `title`, `tagline` et `home` se traduisent. Une section de l'accueil traduite remplace l'originale en
+entier et se vérifie comme elle ; une section absente reste en français.
+
+Le site est servi en anglais sur l'accueil (`/en`) et le blog (`/en/blog`). L'accueil anglais n'existe que si le
+thème déclare `locales: en:`, sans quoi il répond 404 : une page à moitié traduite ne se publie pas. Le pied de page
+du moteur propose alors la même page dans l'autre langue. L'exemple livré (`examples/themes/atelier-bigorneau`)
+fait les deux : `theme.en.yaml` et `locales: en:`.
 
 ## Aperçu, activation
 

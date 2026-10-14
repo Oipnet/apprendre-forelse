@@ -11,6 +11,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <{{ heading }} class="text-xl font-semibold"><a class="text-ink" href="{{ path('app_track', {trackId: item.track.id}) }}">{{ item.track.title }}</a></{{ heading }}>
                 {% if inviteOnly %}<span class="rounded bg-bg-2 px-1.5 text-xs text-ink-muted">{{ 'track_card.beta'|trans }}</span>{% endif %}
+                {% if item.language %}<span class="track-language rounded bg-bg-2 px-1.5 text-xs text-ink-muted">{{ ('track_card.langue.' ~ item.language)|trans }}</span>{% endif %}
             </div>
             <p class="mt-2 text-ink-muted">{{ item.track.description }}</p>
         </div>

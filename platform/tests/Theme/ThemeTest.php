@@ -106,6 +106,68 @@ final class ThemeTest extends TestCase
         $this->assertNull($home['author'], 'Une section non déclarée reste absente.');
     }
 
+    /** Les textes traduits sous « locales » suivent la langue de la page ; le reste reste dans celle du fichier. */
+    public function testLesTextesTraduitsSuiventLaLangueDeLaPage(): void
+    {
+        $this->write(<<<'YAML'
+            name: Atelier Bigorneau
+            chip: coder
+            tagline: Apprendre en codant.
+            home:
+              showcase: {title: Un port de pêche}
+              author: {title: Des formateurs, lead: Qui enseignent depuis dix ans.}
+            locales:
+              en:
+                tagline: Learn by coding.
+                home:
+                  showcase: {title: A fishing port}
+            YAML);
+
+        $fr = self::theme($this->tmp, 'fr');
+        $this->assertSame('Apprendre en codant.', $fr->tagline());
+        $this->assertSame('Un port de pêche', $fr->home()['showcase']['title']);
+
+        $en = self::theme($this->tmp, 'en');
+        $this->assertSame('Learn by coding.', $en->tagline());
+        $this->assertSame('coder', $en->chip(), 'Un texte non traduit reste dans la langue du fichier.');
+        $this->assertSame(['title' => 'A fishing port'], $en->home()['showcase'], 'Une section traduite remplace l\'originale en entier.');
+        $this->assertSame('Des formateurs', $en->home()['author']['title'], 'Une section non traduite reste en français.');
+        $this->assertSame('Learn by coding.', self::theme($this->tmp, 'en_GB')->tagline(), 'en_GB prend les textes de en.');
+    }
+
+    /** Une page ne s'ouvre pas dans une langue que le thème ne parle pas. */
+    public function testUnThemeParleSaLangueEtCellesQuIlTraduit(): void
+    {
+        $this->write("name: A\nlocales:\n  en: {tagline: Learn.}\n");
+        $this->assertTrue(self::theme($this->tmp)->speaks('fr'));
+        $this->assertTrue(self::theme($this->tmp)->speaks('en'));
+        $this->assertFalse(self::theme($this->tmp)->speaks('de'));
+
+        $this->write("name: A\n");
+        $this->assertFalse(self::theme($this->tmp)->speaks('en'), 'Sans « locales: en: », pas d\'accueil anglais.');
+        $this->assertTrue(self::theme()->speaks('en'), 'Le thème du moteur a ses textes en anglais.');
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function localesInvalides(): iterable
+    {
+        yield 'liste' => ["locales: [en]\n", '« locales » associe une langue'];
+        yield 'langue mal écrite' => ["locales:\n  English: {tagline: Learn.}\n", '« locales.English » : une langue s\'écrit en deux lettres'];
+        yield 'clé non traduisible' => ["locales:\n  en: {colors: {accent: '#000000'}}\n", 'locales.en, clé « colors » inconnue (acceptées : chip, title, tagline, home)'];
+        yield 'section incomplète' => ["locales:\n  en:\n    home:\n      author: {title: Us}\n", 'locales.en, « home.author.lead » est obligatoire'];
+        yield 'texte qui n\'en est pas un' => ["locales:\n  en: {tagline: [Learn]}\n", 'locales.en, « tagline » doit être du texte'];
+    }
+
+    #[DataProvider('localesInvalides')]
+    public function testDesTextesTraduitsInvalidesSontSignales(string $yaml, string $message): void
+    {
+        $this->write("name: A\n".$yaml);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage($message);
+        (new ThemeLoader())->load($this->tmp);
+    }
+
     /** Le piège du YAML : « - Un titre : une suite » devient un tableau, pas une phrase. */
     public function testUnePhraseNonEchappeeEstSignaleeAvecSaCause(): void
     {

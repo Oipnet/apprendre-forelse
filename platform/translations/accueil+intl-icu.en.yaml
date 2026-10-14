@@ -1,0 +1,101 @@
+# The home page and the track card, in English: see accueil+intl-icu.fr.yaml for what each key is.
+# The tracks themselves are in French: the card says so (track_card.langue.fr).
+
+seo:
+    titre: "Learn to code by coding in your browser"
+    titre_marque: "Learn to code by coding in your browser | {marque}"
+    description: "Learn to code in your browser, with no videos and nothing to install: a real project, automated tests, and the first chapter free."
+
+commun:
+    essayer_pratique: "Try an exercise, no account needed"
+    essayer_parcours: "Try the first exercise"
+
+hero:
+    gratuit_pratique: "The first chapter of every track is free with an account."
+    gratuit_parcours: "Free: create your account and you're coding in two minutes."
+    parcours: "Tracks"
+    pratique: "Practice"
+    blog: "Blog"
+
+demo:
+    description: "An exercise: the code, the page preview and the goals met"
+    objectifs: "Goals"
+    score: "{valides} / {total} passed"
+    xp: "+ {xp} XP"
+
+tracks:
+    titre: "{n, plural, one {The track} other {The tracks}}"
+    aucun: "No track installed: add a content pack (CONTENT_PACKS_PATHS variable)."
+    en_preparation: "In the works"
+    bientot: "Coming soon"
+
+track_card:
+    beta: "In beta"
+    taille: "{chapitres, plural, one {# chapter} other {# chapters}} · {exercices, plural, one {# exercise} other {# exercises}}"
+    taille_duree: "{chapitres, plural, one {# chapter} other {# chapters}} · {exercices, plural, one {# exercise} other {# exercises}} · about {duree}"
+    prix_normal: "Regular price"
+    # HTML: rendered with |raw, the price escaped.
+    prix: "<strong>{prix}</strong> incl. VAT, lifetime access"
+    fondateur:
+        sans_date: "Founder price"
+        date: "Founder price until {date}"
+        sans_date_places: "Founder price, {places, plural, one {# seat} other {# seats}} left"
+        date_places: "Founder price until {date}, {places, plural, one {# seat} other {# seats}} left"
+    continuer: "Continue"
+    acheter: "Buy"
+    bientot: "Available for purchase soon"
+    premier_chapitre_gratuit: "First chapter free"
+    langue:
+        fr: "In French"
+    chapitre:
+        normal: "{exercices} ex."
+        normal_duree: "{exercices} ex. · ≈ {duree}"
+        gratuit: "free · {exercices} ex."
+        gratuit_duree: "free · {exercices} ex. · ≈ {duree}"
+
+author:
+    # HTML: rendered with |raw, the link escaped.
+    moteur: 'The platform''s engine is open source (AGPL): its code is public, to read or to <a href="{lien}">run yourself</a>.'
+
+signup:
+    attente:
+        titre: "Get notified when it opens."
+        texte: "The tracks are in closed beta. Leave your address and you'll know when they open."
+        ok: "Got it: you'll be notified at launch."
+        invalide: "This address doesn't look valid, please check it."
+        exemple: "you@example.com"
+        adresse: "Email address"
+        envoyer: "Notify me"
+        # HTML: rendered with |raw.
+        donnees: "Two emails at most: the opening, and a beta invitation if seats free up. Nothing else. <a href=\"{lien}\">How your data is handled</a>."
+    ouverte:
+        titre: "The first chapter of every track is free."
+        texte: "Create your account: your progress follows you."
+        creer_compte: "Create an account"
+
+faq:
+    titre: "Frequently asked questions"
+    navigateur:
+        question: "Does it really run in the browser?"
+        reponse: "Yes. The track's language and framework run in WebAssembly, in a browser tab. Nothing is sent to a server to run your code."
+    parcours:
+        question: "Which tracks?"
+        ouverts: "Today: {liste}. The tracks are in French for now."
+        aucun: "No track is open yet."
+        en_preparation: "In the works: {liste}."
+        liste: "{debut} and {dernier}"
+    prix:
+        question: "How much does it cost?"
+        reponse: "The first chapter of every track is free: you just need an account. The full track is a one-time purchase, with the price shown including VAT, lifetime access and updates: no subscription. A school or a company can also open access for a whole group; contact us for a quote."
+    blocage:
+        question: "What happens if I get stuck on an exercise?"
+        reponse: "You ask for a hint, then a second, more precise one. With an account, the full solution is available, but it won't earn you the exercise's XP."
+    video:
+        question: "How is it different from video tutorials?"
+        reponse: "You don't watch anything: you write all the code yourself, on a project that grows exercise after exercise. The time you spend is practice time."
+    a_jour:
+        question: "Is it up to date?"
+        reponse: "Each track targets the current versions (Symfony 8 and PHP 8.4 for the first one), and the exercises are checked automatically with every engine update."
+    hebergement:
+        question: "Can I host it myself?"
+        reponse: "Yes, eventually: the engine is licensed under the AGPL and its code will be published at launch. The tracks are the paid content: that's what you buy."

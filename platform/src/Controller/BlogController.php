@@ -43,7 +43,7 @@ final class BlogController extends AbstractController
         if (!$blog->isOpen()) {
             throw $this->createNotFoundException();
         }
-        $site = rtrim($schema->url('app_home'), '/');
+        $site = $schema->site();
         $items = array_map(fn (Article $article): array => [
             'article' => $article,
             'url' => $schema->url('app_article', ['slug' => $article->slug]),

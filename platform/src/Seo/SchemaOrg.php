@@ -3,6 +3,7 @@
 namespace App\Seo;
 
 use App\Theme\Theme;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -16,6 +17,8 @@ final readonly class SchemaOrg
         private UrlGeneratorInterface $urls,
         private Theme $theme,
         private TranslatorInterface $translator,
+        #[Autowire('%kernel.default_locale%')]
+        private string $defaultLocale = 'fr',
     ) {
     }
 
@@ -29,16 +32,25 @@ final readonly class SchemaOrg
         return $this->urls->generate($route, $parameters, UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
+    /**
+     * La racine du site, sans « / » final, quelle que soit la langue de la page : l'accueil anglais est sous /en, mais
+     * l'éditeur et les fichiers du site n'ont qu'une adresse.
+     */
+    public function site(): string
+    {
+        return rtrim($this->url('app_home', ['_locale' => $this->defaultLocale]), '/');
+    }
+
     /** Un chemin du site (image, logo) vu de l'extérieur, pour les données structurées. */
     public function absolute(string $path): string
     {
-        return str_starts_with($path, 'http') ? $path : rtrim($this->url('app_home'), '/').$path;
+        return str_starts_with($path, 'http') ? $path : $this->site().$path;
     }
 
     /** @return array<string, mixed> l'éditeur du site */
     public function organization(): array
     {
-        return ['@type' => 'Organization', '@id' => $this->url('app_home').'#organisation', 'name' => $this->theme->name(), 'url' => $this->url('app_home')];
+        return ['@type' => 'Organization', '@id' => $this->site().'/#organisation', 'name' => $this->theme->name(), 'url' => $this->site().'/'];
     }
 
     /**
@@ -50,15 +62,15 @@ final readonly class SchemaOrg
     public function author(): array
     {
         if (null === ($person = $this->theme->person())) {
-            return ['@id' => $this->url('app_home').'#organisation'];
+            return ['@id' => $this->site().'/#organisation'];
         }
 
         return [
             '@type' => 'Person',
-            '@id' => $this->url('app_home').'#auteur',
+            '@id' => $this->site().'/#auteur',
             'name' => $person['name'],
             'jobTitle' => $person['jobTitle'],
-            'worksFor' => ['@id' => $this->url('app_home').'#organisation'],
+            'worksFor' => ['@id' => $this->site().'/#organisation'],
             'url' => $this->theme->url(),
         ];
     }

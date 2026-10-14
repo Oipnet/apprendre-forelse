@@ -5,3 +5,7 @@
 name: default
 title: default
 tagline: 'Apprendre à développer en codant dans le navigateur.'
+
+locales:
+  en:
+    tagline: 'Learn to code by coding in the browser.'

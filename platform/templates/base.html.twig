@@ -46,7 +46,7 @@
     {# data-import-url : la progression d'invité est remontée au compte après connexion (voir site.ts). #}
     <body class="{% block body_class %}site-page{% endblock %}"{% if app.user %} data-import-url="{{ path('api_progress_import') }}"{% endif %}>
     {# Le lien « Connexion » ramène à la page courante (voir SecurityController::login), sauf depuis l'accueil, les pages de compte et d'erreur. #}
-    {% set current_route = app.request.attributes.get('_route') %}
+    {% set current_route = app.request.attributes.get('_canonical_route') ?? app.request.attributes.get('_route') %}
     {% set login_suite = current_route is null or current_route in ['app_home', 'app_login', 'app_register'] ? null : app.request.pathInfo %}
         <a class="skip-link sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-surface focus:px-4 focus:py-2 focus:shadow" href="#contenu">{{ 'base.aller_au_contenu'|trans }}</a>
         {% if theme.preview %}{{ include('_theme_preview.html.twig') }}{% endif %}

@@ -28,6 +28,9 @@ final readonly class HomePage
         /** Instance sur invitation : la Pratique demande un compte, le visiteur n'a rien à essayer. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private bool $inviteOnly = false,
+        /** La langue des parcours : celle du site. */
+        #[Autowire('%kernel.default_locale%')]
+        private string $contentLocale = 'fr',
     ) {
     }
 
@@ -116,6 +119,8 @@ final readonly class HomePage
             // Porte d'entrée du parcours : son premier chapitre est gratuit pour tout compte (sauf parcours en préparation).
             'tryUrl' => $first && !$track->isRestricted() ? $this->urls->generate('app_exercise', ['trackId' => $track->id, 'exerciseId' => $first->id]) : null,
             'offer' => $this->offers->create($track, $user),
+            // Sur une page dans une autre langue, la fiche dit que le parcours, lui, est en français.
+            'language' => $this->translator->getLocale() === $this->contentLocale ? null : $this->contentLocale,
         ];
     }
 
