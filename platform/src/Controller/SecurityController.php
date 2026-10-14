@@ -15,7 +15,7 @@ final class SecurityController extends AbstractController
      * `?suite=/chemin` : la page d'où l'on vient (un exercice verrouillé, par exemple), où la connexion ramène. Chemin
      * local uniquement, comme à l'inscription : pas de redirection ouverte.
      */
-    #[Route('/connexion', name: 'app_login')]
+    #[Route(['fr' => '/connexion', 'en' => '/en/login'], name: 'app_login')]
     public function login(Request $request, AuthenticationUtils $authenticationUtils): Response
     {
         $suite = SafeRedirect::localPath($request->query->getString('suite') ?: null);

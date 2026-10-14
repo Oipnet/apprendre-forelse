@@ -47,7 +47,7 @@ final class Mentor
             courte, comme un développeur senior bienveillant en revue de pull request.
 
             Règles :
-            - Écrivez en français, en vouvoyant l'apprenant. Ton direct, concret, jamais condescendant.
+            - {langue} Ton direct, concret, jamais condescendant.
             - Concentrez-vous sur ce qui pourrait être plus idiomatique (conventions du framework), plus lisible,
               plus robuste ou plus sûr. Ignorez le style pur (espaces, ordre des imports).
             - Au plus quatre points, du plus important au moins important. Chaque point désigne un fichier,
@@ -59,6 +59,7 @@ final class Mentor
               « la solution attendue ». L'apprenant a le droit d'avoir fait autrement.
             TXT;
 
+        $consignes = $this->enSaLangue($consignes, $exercise);
         $contexte = $this->contexte($exercise, $fichiers);
         $contexte .= "\n\n# Solution de référence (pour comparaison, à ne pas citer)\n".$this->listerFichiers($this->content->solutionFiles($exercise));
 
@@ -123,7 +124,7 @@ final class Mentor
             de lui : la cause probable, en termes qu'il comprend, puis une piste pour la trouver lui-même.
 
             Règles :
-            - Écrivez en français, en vouvoyant l'apprenant. Court : la cause en deux ou trois phrases,
+            - {langue} Court : la cause en deux ou trois phrases,
               la piste en une ou deux.
             - Traduisez le jargon : dites ce que signifie l'erreur dans le contexte de son code.
             - La piste dit où regarder et quoi vérifier (un fichier, une méthode, une convention, une page
@@ -132,6 +133,7 @@ final class Mentor
             - Si l'erreur ne vient visiblement pas de son code (environnement, exercice), dites-le.
             TXT;
 
+        $consignes = $this->enSaLangue($consignes, $exercise);
         $sources = ['preview' => 'l\'aperçu de l\'application (réponse HTTP en erreur)', 'tests' => 'l\'exécution des tests', 'console' => 'une commande de la console du projet (bin/console, php artisan ou docker, selon le projet)'];
         $contexte = $this->contexte($exercise, $fichiers);
         $contexte .= "\n\n# L'erreur\nSource : ".$sources[$source]."\n\n```\n".PromptFiles::truncate($erreur, self::MAX_ERROR_CHARS)."\n```";
@@ -157,6 +159,15 @@ final class Mentor
             'piste' => \is_string($reponse['piste'] ?? null) ? trim($reponse['piste']) : '',
             'file' => $file,
         ];
+    }
+
+    /** Le mentor répond dans la langue de l'exercice : une traduction anglaise (i18n/en/) reçoit des réponses en anglais. */
+    private function enSaLangue(string $consignes, Exercise $exercise): string
+    {
+        return str_replace('{langue}', match ($exercise->locale) {
+            'en' => 'Écrivez en anglais (l\'apprenant suit l\'exercice en anglais), en vous adressant à lui directement (« you »).',
+            default => 'Écrivez en français, en vouvoyant l\'apprenant.',
+        }, $consignes);
     }
 
     /**

@@ -10,9 +10,9 @@ commun:
     xp: "{xp} XP"
     creer_compte: Create an account
     se_connecter: Log in
-    liste_attente: Waiting list
+    liste_attente: Waitlist
     nouveaute: New
-    en_preparation: In preparation
+    en_preparation: Coming soon
     tous: All
     reprendre: Resume
     liste_et: " and "
@@ -43,7 +43,7 @@ practice:
         nouveautes_aide: Released in the latest versions
         notions: Topics
         notions_retenues: "{n} selected"
-        voir_autres: "Show the {n} others"
+        voir_autres: "Show {n} more"
         voir_moins: Show less
         appliquer: Apply filters
         reinitialiser: Reset filters
@@ -64,10 +64,10 @@ practice:
     show:
         partager: Share this exercise
         a_vous: Your turn to write the code
-        invitation: "This platform is for its members only: create your account with your invitation code, or leave your address on the waiting list."
+        invitation: "This platform is for its members only: create your account with your invitation code, or join the waitlist."
         plus_loin: Going further
-        parcours: "This exercise covers a single feature. The <strong>{titre}</strong> track covers {framework} from start to finish, chapter by chapter."
-        parcours_description: "This exercise covers a single feature. The <strong>{titre}</strong> track covers {framework} from start to finish, chapter by chapter: {description}"
+        parcours: "This exercise covers a single feature. The <strong>{titre}</strong> track covers {framework} end to end, chapter by chapter."
+        parcours_description: "This exercise covers a single feature. The <strong>{titre}</strong> track covers {framework} end to end, chapter by chapter: {description}"
         decouvrir: Discover the track
 
 # The playground APIs' refusals, read by the learner (the "detail" field of the JSON response).
@@ -75,14 +75,14 @@ api:
     connexion:
         exercice: Log in to access this exercise.
         progression: Log in to save your progress.
-        mentor: Log in to call on the mentor.
+        mentor: Log in to ask the mentor.
         retour: Log in to send feedback.
     parcours_complet: "This exercise is part of the full track: buy the track to access it."
     import_trop_grand: "At most {max} exercises per import."
     mentor:
         inactif: The mentor is not enabled on this platform.
-        revue_apres_reussite: "The code review comes after success: make the tests pass first."
-        email_a_confirmer: "Confirm your email address to call on the mentor: the link is in the email you received when signing up, or can be resent from your account."
+        revue_apres_reussite: "The code review comes once the exercise is completed: make the tests pass first."
+        email_a_confirmer: "Confirm your email address to ask the mentor: the link is in the email you received when you signed up, and can be resent from your account."
         trop_d_appels: "The mentor has been working hard: try again a little later."
         budget_epuise: "The mentor has reached its daily limit on this platform: it will be back tomorrow."
         sans_reponse: "The mentor could not answer: {raison}"

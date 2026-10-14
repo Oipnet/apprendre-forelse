@@ -13,10 +13,10 @@ blog:
 
 pratique:
     fil_ariane: Practice
-    sujet_par_defaut: framework
-    titre_marque: "{sujet} new features as short exercises | {marque}"
-    titre: "{sujet} new features as short exercises"
-    titre_court: Framework new features as short exercises
+    sujet_par_defaut: the frameworks
+    titre_marque: "What’s new in {sujet}, as short exercises | {marque}"
+    titre: "What’s new in {sujet}, as short exercises"
+    titre_court: "New framework features as short exercises"
     description: "Short exercises, separate from the tracks: code written the old way, to rewrite with the framework's new feature, right in the browser."
     exercice:
         titre: "{framework}: {fonctionnalite} – exercise"

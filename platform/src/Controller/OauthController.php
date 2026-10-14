@@ -26,6 +26,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -57,10 +58,14 @@ final class OauthController extends AbstractController
         private readonly RecentSignIn $recent,
         private readonly LoggerInterface $logger,
         private readonly TranslatorInterface $translator,
+        private readonly LocaleSwitcher $locale,
+        /** @var list<string> */
+        #[Autowire('%kernel.enabled_locales%')]
+        private readonly array $enabledLocales = ['fr'],
     ) {
     }
 
-    #[Route('/connexion/{fournisseur}', name: 'app_oauth_start', requirements: ['fournisseur' => self::PROVIDERS], methods: ['GET'])]
+    #[Route(['fr' => '/connexion/{fournisseur}', 'en' => '/en/login/{fournisseur}'], name: 'app_oauth_start', requirements: ['fournisseur' => self::PROVIDERS], methods: ['GET'])]
     public function start(Request $request, string $fournisseur): Response
     {
         $provider = $this->provider($fournisseur);
@@ -83,6 +88,8 @@ final class OauthController extends AbstractController
             'state' => $state,
             'mode' => $mode,
             'suite' => SafeRedirect::localPath(\is_string($suite) ? $suite : null),
+            // Le retour du fournisseur n'a qu'une adresse : la langue de la page de départ voyage avec le reste.
+            'locale' => $request->getLocale(),
         ]);
 
         return $this->redirect($provider->authorizationUrl($state, $this->callbackUrl($provider)));
@@ -96,6 +103,9 @@ final class OauthController extends AbstractController
         $session = $request->getSession();
         $flow = $session->get(self::FLOW);
         $session->remove(self::FLOW);
+        if (\is_array($flow) && \in_array($flow['locale'] ?? null, $this->enabledLocales, true)) {
+            $this->locale->setLocale($flow['locale']);
+        }
         $state = $request->query->getString('state');
         if (!\is_array($flow) || ($flow['provider'] ?? null) !== $provider->name() || !\is_string($flow['state'] ?? null) || '' === $state || !hash_equals($flow['state'], $state)) {
             return $this->fail(t('flash.oauth.expiree', ['fournisseur' => $label], 'compte'));
@@ -140,7 +150,7 @@ final class OauthController extends AbstractController
     }
 
     /** Nouvel apprenant venu d'un fournisseur : il choisit son pseudo et, s'il en a un, son code d'invitation. */
-    #[Route('/inscription/{fournisseur}', name: 'app_oauth_register', requirements: ['fournisseur' => self::PROVIDERS], methods: ['GET', 'POST'])]
+    #[Route(['fr' => '/inscription/{fournisseur}', 'en' => '/en/signup/{fournisseur}'], name: 'app_oauth_register', requirements: ['fournisseur' => self::PROVIDERS], methods: ['GET', 'POST'])]
     public function register(
         Request $request,
         Security $security,

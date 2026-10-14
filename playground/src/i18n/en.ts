@@ -109,7 +109,7 @@ export const en: Messages = {
 		consoleCommand: (console: string) => `${console} command`,
 		requestMethod: 'HTTP method',
 		requestPath: 'Request path',
-		requestSendTitle: 'Enter in the path, or Ctrl/⌘ + Enter',
+		requestSendTitle: 'Press Enter in the path field, or Ctrl/⌘ + Enter',
 		requestHeadersPlaceholder: 'Headers, one per line (e.g. Authorization: Bearer …)',
 		requestHeaders: 'Headers',
 		requestBodyPlaceholder: 'JSON body (e.g. {"nom": "Gimli"})',
@@ -161,7 +161,7 @@ export const en: Messages = {
 		looking: 'The mentor is looking…',
 		reading: 'Reading the error and your code…',
 		nothingToSay: 'Nothing to add: it\'s clean.',
-		clue: 'Hint:',
+		clue: 'Clue:',
 		/** `fichier`: the link to the file, ready. */
 		lookAt: (fichier: string) => `Take a look at ${fichier}.`,
 		sessionExpired: 'Your session has expired: log in again, then reload the page.',
@@ -207,7 +207,7 @@ export const en: Messages = {
 	feedback: {
 		kinds: {
 			bug: 'A bug (tests, preview, editor…)',
-			unclear: 'The instructions are unclear',
+			unclear: 'The brief is unclear',
 			'too-easy': 'Too easy',
 			'too-hard': 'Too hard',
 			other: 'Something else',
@@ -245,7 +245,7 @@ export const en: Messages = {
 		hide: { brief: 'Collapse the brief', preview: 'Collapse the preview' },
 		/** Read by a screen reader on the brief rail. */
 		allPassed: 'all objectives met',
-		failing: (failed: number) => `${failed} objective${failed > 1 ? 's' : ''} failing`,
+		failing: (failed: number) => `${failed} objective${failed > 1 ? 's' : ''} not met`,
 	},
 
 	files: {

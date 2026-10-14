@@ -96,6 +96,24 @@ final class MentorTest extends TestCase
         $this->assertStringContainsString('réponse HTTP en erreur', $message);
     }
 
+    /** Une traduction (i18n/en/) : le mentor répond en anglais, sur la consigne et le code de la traduction. */
+    public function testLeMentorParleLaLangueDeLExercice(): void
+    {
+        $english = $this->content()->findPractice('exemple-map-request-header', 'en')?->exercise;
+        $this->assertNotNull($english);
+
+        $this->mentor('revue_de_code', ['summary' => 'Clean.', 'points' => []])->revue($english, ['src/Controller/VersionController.php' => '<?php']);
+        $this->mentor('expliquer_erreur', ['cause' => 'C', 'piste' => 'P', 'file' => null])->expliquer($english, [], 'Error', 'tests');
+        $this->mentor('revue_de_code', ['summary' => 'Propre.', 'points' => []])->revue($this->exercice(), []);
+
+        foreach ([0, 1] as $i) {
+            $this->assertStringContainsString('Écrivez en anglais', $this->requetes[$i]['corps']['system']);
+            $this->assertStringNotContainsString('{langue}', $this->requetes[$i]['corps']['system']);
+        }
+        $this->assertStringContainsString('Read a header with', $this->requetes[0]['corps']['messages'][0]['content']);
+        $this->assertStringContainsString('Écrivez en français, en vouvoyant', $this->requetes[2]['corps']['system']);
+    }
+
     public function testUnFichierInconnuDansLExplicationEstIgnore(): void
     {
         $mentor = $this->mentor('expliquer_erreur', ['cause' => 'c', 'piste' => 'p', 'file' => 'vendor/autoload.php']);
