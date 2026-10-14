@@ -49,8 +49,9 @@ final readonly class PhpunitRunner implements TestRunner
             // Crash de PHP (ex. récursion infinie) : signalé comme une absence de rapport.
             return RunReport::none(sprintf('PHP a planté (signal %d).', $e->getSignal()));
         }
-        if (!is_file($junit)) {
-            // Pas de rapport (erreur fatale au chargement, le plus souvent) : la fin de la sortie dit pourquoi.
+        // Pas de rapport, ou un rapport vide (erreur fatale au chargement ou en cours de route, comme une méthode de
+        // test qui en masque une de PHPUnit) : la fin de la sortie dit pourquoi.
+        if (!is_file($junit) || '' === trim((string) file_get_contents($junit))) {
             $sortie = trim($process->getErrorOutput()."\n".$process->getOutput());
 
             return RunReport::none('' !== $sortie ? implode("\n", \array_slice(explode("\n", $sortie), -5)) : '(erreur fatale ?)');
