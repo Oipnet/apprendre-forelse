@@ -212,7 +212,8 @@ Les résultats s'exportent en CSV.
   contient :
   - `exercise.yaml`, avec les seules clés traduites : `title`, `summary`, `objectives`, `hints`, `requests`,
     `docs`, `mutants` (obligatoires dès que l'exercice français les a, sinon le texte français s'afficherait),
-    `concepts` et `preview` (facultatives). Les mutants traduits gardent leurs ids, que les objectifs citent ; leurs
+    `concepts`, `preview` et `readonly` (facultatives ; `readonly` quand un fichier montré en lecture seule a son
+    équivalent dans l'environnement de la langue, `lang/en/validation.php` au lieu de `lang/fr/validation.php`). Les mutants traduits gardent leurs ids, que les objectifs citent ; leurs
     `search` visent les lignes du code traduit. Le reste (environnement, fichiers, date, version…) vient de l'exercice
     français ; une autre clé est refusée ;
   - `instructions.md`, la consigne complète ;

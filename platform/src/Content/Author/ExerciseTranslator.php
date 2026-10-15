@@ -140,7 +140,8 @@ final class ExerciseTranslator
 
         Les fichiers de la traduction :
         - exercise.yaml : UNIQUEMENT les clés traduisibles présentes dans l'exercice français, parmi title, summary,
-          concepts, objectives, hints, requests, docs, preview, mutants. Aucune autre clé (ni id, ni environment, ni
+          concepts, objectives, hints, requests, docs, preview, readonly, mutants (readonly seulement pour viser l'équivalent
+          d'un fichier de langue, lang/en/… au lieu de lang/fr/…). Aucune autre clé (ni id, ni environment, ni
           published, ni visibility, ni source : l'empreinte est ajoutée par la plateforme).
         - instructions.md : les consignes complètes, en anglais.
         - starter/…, solution/…, tests/… : seulement les fichiers dont le texte change. Chaque fichier traduit

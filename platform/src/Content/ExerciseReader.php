@@ -23,7 +23,7 @@ final class ExerciseReader
      * fichiers, date…) se règle dans l'exercice français. Les notions traduites ne sont que des étiquettes : les
      * pages de notions restent en français.
      */
-    public const array TRANSLATED_KEYS = ['title', 'summary', 'concepts', 'objectives', 'hints', 'requests', 'docs', 'preview', 'mutants', 'source'];
+    public const array TRANSLATED_KEYS = ['title', 'summary', 'concepts', 'objectives', 'hints', 'requests', 'docs', 'preview', 'readonly', 'mutants', 'source'];
     /** Les dossiers dont une traduction peut remplacer des fichiers. */
     private const array TRANSLATED_FOLDERS = ['starter', 'solution', 'tests'];
 

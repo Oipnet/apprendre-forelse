@@ -31,7 +31,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Environnements par langue** : un exercice traduit tourne dans `<environnement>-<langue>` quand il existe.
   `symfony-8-app-en` (messages de Symfony en anglais, outils de test commentés en anglais) et
   `symfony-8-doctrine-en` accueillent les traductions des exercices Symfony, `laravel-13-en`
-  (messages de Laravel et Faker en anglais) celles des exercices Laravel.
+  (messages de Laravel et Faker en anglais, page d'accueil et fichiers `lang/en/` livrés) celles des exercices Laravel.
+  Une traduction peut redéfinir `readonly`, pour ouvrir en lecture seule `lang/en/…` au lieu de `lang/fr/…`.
 - **Les notions en anglais** : `/en/concepts` et `/en/concepts/<notion>`, faites du seul contenu traduit (exercices
   de Pratique traduits, parcours entièrement traduits), sous les libellés anglais des exercices et avec des liens vers
   leurs pages anglaises. L'intro d'une notion anglaise s'écrit dans `<pack>/notions/en/<notion>.md`, au même format
