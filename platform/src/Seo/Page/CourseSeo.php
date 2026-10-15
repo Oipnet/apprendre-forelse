@@ -15,6 +15,7 @@ use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
 use App\Seo\TrackSeoText;
 use App\Twig\DurationExtension;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -34,6 +35,9 @@ final readonly class CourseSeo
         private Theme $theme,
         private ExerciseStory $stories,
         private TranslatorInterface $translator,
+        /** @var list<string> */
+        #[Autowire('%kernel.enabled_locales%')]
+        private array $locales = [Exercise::LOCALE],
     ) {
     }
 
@@ -42,7 +46,8 @@ final readonly class CourseSeo
         $this->seo
             ->setFullTitle($this->trackText->title($track, $this->framework($track->environment)))
             ->setDescription($this->trackText->description($track))
-            ->setCanonical($url = $this->schema->url('app_track', ['trackId' => $track->id]));
+            ->setCanonical($url = $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id]));
+        $this->alternates($track, 'app_track', ['trackId' => $track->id]);
 
         // Le prix affiché à un visiteur : prix courant (fondateur compris), en euros TTC.
         $offer = $this->offers->create($track, null);
@@ -107,11 +112,12 @@ final readonly class CourseSeo
                     'n' => $count,
                 ]),
             )
-            ->setCanonical($url = $this->schema->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]))
+            ->setCanonical($url = $this->schema->url('app_chapter_summary', ['_locale' => $track->locale, 'trackId' => $track->id, 'chapterId' => $chapter->id]))
             ->addStructuredData($this->schema->breadcrumb([
-                [$track->title, $this->schema->url('app_track', ['trackId' => $track->id])],
+                [$track->title, $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id])],
                 [$chapter->title, $url],
             ]));
+        $this->alternates($track, 'app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]);
         $this->shareImage($track);
     }
 
@@ -127,10 +133,10 @@ final readonly class CourseSeo
                 $this->stories->fromInstructions($exercise->instructions),
                 $this->trans('exercice.complement', ['chapitre' => $chapter->title, 'parcours' => $track->title]),
             )
-            ->setCanonical($url = $this->schema->url('app_exercise', ['trackId' => $track->id, 'exerciseId' => $exercise->id]))
+            ->setCanonical($url = $this->schema->url('app_exercise', ['_locale' => $track->locale, 'trackId' => $track->id, 'exerciseId' => $exercise->id]))
             ->addStructuredData($this->schema->breadcrumb([
-                [$track->title, $this->schema->url('app_track', ['trackId' => $track->id])],
-                [$chapter->title, $this->schema->url('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id])],
+                [$track->title, $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id])],
+                [$chapter->title, $this->schema->url('app_chapter_summary', ['_locale' => $track->locale, 'trackId' => $track->id, 'chapterId' => $chapter->id])],
                 [$exercise->title, $url],
             ]))
             ->addStructuredData([
@@ -146,12 +152,13 @@ final readonly class CourseSeo
                 ...(null === $track->level ? [] : ['educationalLevel' => $this->trans('parcours.niveau.'.$track->level)]),
                 'isPartOf' => [
                     '@type' => 'Course',
-                    '@id' => $this->schema->url('app_track', ['trackId' => $track->id]).'#cours',
+                    '@id' => $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id]).'#cours',
                     'name' => $track->title,
-                    'url' => $this->schema->url('app_track', ['trackId' => $track->id]),
+                    'url' => $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id]),
                 ],
                 'provider' => $this->schema->organization(),
             ]);
+        $this->alternates($track, 'app_exercise', ['trackId' => $track->id, 'exerciseId' => $exercise->id]);
         $this->shareImage($track);
     }
 
@@ -206,12 +213,32 @@ final readonly class CourseSeo
                         '@type' => 'Course',
                         'name' => $track->title,
                         'description' => self::plain($track->description),
-                        'url' => $this->schema->url('app_track', ['trackId' => $track->id]),
+                        'url' => $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id]),
                         'provider' => $this->schema->organization(),
                     ],
                 ], $tracks, array_keys($tracks)),
             ])
             ->addStructuredData($this->schema->breadcrumb([[$this->trans('catalogue.fil_ariane'), $url]]));
+        // Le catalogue existe dans chaque langue, mais ne s'annonce que là où un parcours est traduit (hreflang).
+        foreach ($this->locales as $locale) {
+            if ($locale !== $this->seo->getLanguage() && [] !== $this->content->tracks($locale)) {
+                $this->seo->addAlternate($locale, $this->schema->url('app_tracks', ['_locale' => $locale]));
+            }
+        }
+    }
+
+    /**
+     * Les autres langues d'une page de parcours : celles où le parcours est traduit (hreflang).
+     *
+     * @param array<string, string> $parameters
+     */
+    private function alternates(Track $track, string $route, array $parameters): void
+    {
+        foreach ($this->content->trackLocales($track->id) as $locale) {
+            if ($locale !== $track->locale) {
+                $this->seo->addAlternate($locale, $this->schema->url($route, ['_locale' => $locale] + $parameters));
+            }
+        }
     }
 
     /** « Symfony », « Laravel »… d'après l'environnement d'exécution. */

@@ -171,6 +171,45 @@ contact:
     quota: "Many messages in a short time from your connection: try again in an hour, or email us directly."
 
 # Field labels (translation_domain of the form types); constraint messages are in validators.en.yaml.
+purchase:
+    produit: "“{parcours}” track (lifetime access)"
+    checkout:
+        titre_page: "Buy “{parcours}” · {site}"
+        prix_normal: "Regular price"
+        ttc: "incl. VAT"
+        acces_a_vie: "Lifetime access to the track and its updates."
+        fondateur:
+            sans_places: "Founder price."
+            sans_places_date: "Founder price, until {date}."
+            places: "Founder price, {places, plural, one {# seat} other {# seats}} left."
+            places_date: "Founder price, {places, plural, one {# seat} other {# seats}} left, until {date}."
+        cohorte: "Your “{nom}” cohort rate."
+        tva: "Your country's VAT is calculated at the next step, on Stripe's secure payment page; the price shown includes it."
+        payer: "Pay {prix}"
+        retour: "Back to the track"
+    thanks:
+        titre_page: "Thank you · {site}"
+        paye:
+            titre: "Thank you!"
+            texte: "Your access to the track is open, for life. A confirmation email is on its way."
+            texte_parcours: "Your access to the “{parcours}” track is open, for life. A confirmation email is on its way."
+            aller: "Go to the track →"
+            recu: "View the receipt"
+        en_attente:
+            titre: "Confirming your payment"
+            texte: "Stripe is confirming the payment: this page updates by itself."
+            rien_ne_bouge: "Nothing after a minute? If you abandoned the payment, nothing was charged. Otherwise, <a href=\"{lien_page}\">reload the page</a> a little later: the access will also show in <a href=\"{lien_compte}\">your account</a>."
+        abandonne:
+            titre: "Payment not completed"
+            texte: "The payment did not go through: nothing was charged and access is not open."
+            reessayer: "Try the payment again"
+        conteste:
+            titre: "Payment disputed"
+            texte: "The payment is disputed with your bank: access to the track is suspended during the procedure, and your progress is kept. It reopens if the dispute is closed in favour of the purchase."
+        rembourse:
+            titre: "Purchase refunded"
+            texte: "This purchase was refunded; access to the track is closed, and your progress is kept."
+
 form:
     profile:
         pseudo: "Display name"
@@ -264,6 +303,13 @@ flash:
         paiement_impossible: "{raison} Nothing was charged; try again in a moment."
 
 # Enum labels shown to learners (their trans() method).
+paiement:
+    demarrage: "The payment could not start: {detail}"
+    introuvable: "The payment in progress could not be found: {detail}"
+    annulation: "The payment in progress could not be cancelled: {detail}"
+    non_configure: "Payment is not configured on this platform (STRIPE_SECRET_KEY)."
+    cle_reelle: "Live Stripe key (sk_live_) refused outside production: use a test key."
+
 enum:
     access_source:
         purchase: "Purchase"

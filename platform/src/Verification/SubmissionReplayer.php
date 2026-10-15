@@ -37,7 +37,7 @@ final readonly class SubmissionReplayer
     {
         $exercise = null === $request->trackId
             ? $this->content->findPractice($request->exerciseId, $request->locale ?? Exercise::LOCALE)?->exercise
-            : $this->content->findExercise($request->trackId, $request->exerciseId);
+            : $this->content->findExercise($request->trackId, $request->exerciseId, $request->locale ?? Exercise::LOCALE);
         if (null === $exercise) {
             return $this->unverifiable($request, 'Exercice introuvable dans les packs (retiré ou renommé).');
         }

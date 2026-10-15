@@ -58,7 +58,7 @@ final readonly class ExercisePage
     {
         $siblings = [];
         foreach ($chapter->exerciseIds as $position => $exerciseId) {
-            $sibling = $exerciseId === $exercise->id ? null : $this->content->findExercise($track->id, $exerciseId);
+            $sibling = $exerciseId === $exercise->id ? null : $this->content->findExercise($track->id, $exerciseId, $track->locale);
             if (null !== $sibling) {
                 $siblings[] = ['exercise' => $sibling, 'position' => $position + 1];
             }
@@ -77,7 +77,7 @@ final readonly class ExercisePage
             'inviteOnly' => $this->inviteOnly,
             // Le premier chapitre est gratuit : un visiteur n'a qu'un compte à créer, pas un parcours à acheter.
             'freeChapter' => $track->isFreeChapter($chapter),
-            'firstExercise' => null === $firstId ? null : $this->content->findExercise($track->id, $firstId),
+            'firstExercise' => null === $firstId ? null : $this->content->findExercise($track->id, $firstId, $track->locale),
         ]), null === $user ? Response::HTTP_OK : Response::HTTP_FORBIDDEN);
     }
 

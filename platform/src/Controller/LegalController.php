@@ -10,6 +10,7 @@ use App\Seo\Seo;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Psr\Clock\ClockInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -17,6 +18,9 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 /**
  * Mentions légales et politique de confidentialité. Les textes décrivent ce que le moteur fait
  * réellement ; ce qui dépend de l'instance (éditeur, hébergeur, IA activée, bêta fermée) est injecté.
+ *
+ * Le texte juridique s'écrit d'un bloc, pas en clés de traduction : chaque langue a ses gabarits (legal/en/…), et la
+ * version anglaise renvoie à la française, qui fait foi.
  */
 final class LegalController extends AbstractController
 {
@@ -33,25 +37,25 @@ final class LegalController extends AbstractController
     ) {
     }
 
-    #[Route('/mentions-legales', name: 'app_legal_notice', methods: ['GET'])]
-    #[Seo('Mentions légales', 'Mentions légales du site : éditeur, directeur de la publication, hébergeur de la plateforme et du bac à sable où s\'exécute le code des apprenants.')]
-    public function notice(): Response
+    #[Route(['fr' => '/mentions-legales', 'en' => '/en/legal-notice'], name: 'app_legal_notice', methods: ['GET'])]
+    #[Seo('mentions.titre', 'mentions.description', domain: 'legal')]
+    public function notice(Request $request): Response
     {
-        return $this->render('legal/notice.html.twig', $this->context());
+        return $this->render($this->template($request, 'notice'), $this->context());
     }
 
-    #[Route('/confidentialite', name: 'app_privacy', methods: ['GET'])]
-    #[Seo('Politique de confidentialité', 'Politique de confidentialité : données collectées, finalités, durées de conservation, sous-traitants et exercice de vos droits sur vos données.')]
-    public function privacy(): Response
+    #[Route(['fr' => '/confidentialite', 'en' => '/en/privacy'], name: 'app_privacy', methods: ['GET'])]
+    #[Seo('confidentialite.titre', 'confidentialite.description', domain: 'legal')]
+    public function privacy(Request $request): Response
     {
-        return $this->render('legal/privacy.html.twig', $this->context());
+        return $this->render($this->template($request, 'privacy'), $this->context());
     }
 
-    #[Route('/cgv', name: 'app_terms', methods: ['GET'])]
-    #[Seo('Conditions générales de vente', 'Conditions générales de vente des parcours : prix TTC, commande et paiement, accès aux contenus, droit de rétractation, garanties et médiation.')]
-    public function terms(): Response
+    #[Route(['fr' => '/cgv', 'en' => '/en/terms'], name: 'app_terms', methods: ['GET'])]
+    #[Seo('cgv.titre', 'cgv.description', domain: 'legal')]
+    public function terms(Request $request): Response
     {
-        return $this->render('legal/terms.html.twig', [
+        return $this->render($this->template($request, 'terms'), [
             ...$this->context(),
             'missing' => $this->legal->termsMissing(),
             'termsVersion' => new \DateTimeImmutable(LegalVersions::TERMS_VERSION),
@@ -79,6 +83,14 @@ final class LegalController extends AbstractController
         ];
 
         return (new Response(implode("\n", $lines)."\n", headers: ['Content-Type' => 'text/plain; charset=UTF-8']))->setPublic()->setMaxAge(86400);
+    }
+
+    /** legal/<page>.html.twig en français, legal/<langue>/<page>.html.twig sinon. */
+    private function template(Request $request, string $page): string
+    {
+        $locale = $request->getLocale();
+
+        return sprintf('legal/%s%s.html.twig', $locale === $request->getDefaultLocale() ? '' : $locale.'/', $page);
     }
 
     /** @return array<string, mixed> */

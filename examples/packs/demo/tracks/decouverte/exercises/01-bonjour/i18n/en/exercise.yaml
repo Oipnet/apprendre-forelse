@@ -1,0 +1,22 @@
+# The English version of the exercise: only the translated keys, the rest comes from the French exercise.yaml.
+# « source » is the fingerprint of the French exercise this translation follows (content:check warns when it changes).
+source: 'e5666b5db21f'
+title: Hello Symfony
+concepts: [Route, Controller]
+preview: /hello
+
+docs:
+  - title: 'Create your first page: route and controller'
+    url: https://symfony.com/doc/current/page_creation.html
+  - title: 'Routing'
+    url: https://symfony.com/doc/current/routing.html
+
+objectives:
+  - test: testThePageResponds
+    label: The /hello page responds with a 200 status code
+  - test: testThePageSaysHello
+    label: It displays “Hello Symfony!”
+
+hints:
+  - Add a `#[Route('/hello')]` attribute above the method.
+  - "The method can return `new Response('Hello Symfony!')`."

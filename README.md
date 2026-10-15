@@ -222,8 +222,21 @@ Les résultats s'exportent en CSV.
   `content:check` vérifie chaque traduction comme un exercice à part (`pratique/<exercice> [en]`). La clé
   `source` recopie l'empreinte de l'exercice français : quand il change, `content:check` signale la traduction
   en retard et donne la nouvelle empreinte à recopier une fois la traduction à jour. Une réussite en anglais
-  est revérifiée avec les tests anglais. Les pages de notions, de nouveautés et les parcours restent en
-  français : la page anglaise n'y renvoie pas.
+  est revérifiée avec les tests anglais. Les pages de notions et de nouveautés restent en français : la page
+  anglaise n'y renvoie pas.
+
+  **Traduction d'un parcours** : chaque exercice se traduit comme en Pratique (`<exercice>/i18n/en/`, sans
+  `summary`), et le parcours lui-même dans `<parcours>/i18n/en/` :
+  - `track.yaml`, avec `title`, `description` et `chapters`, qui associe à l'id de chaque chapitre son `title`
+    (et sa `description` si le chapitre français en a une) ; `source` recopie l'empreinte du parcours français
+    (track.yaml et fiches de cours) ;
+  - `chapters/<chapitre>/lesson.md`, la fiche de cours traduite de chaque chapitre qui en a une.
+
+  Un parcours ne paraît en anglais qu'entièrement traduit : il ne fait pas passer l'apprenant d'une langue à
+  l'autre. Ses exercices peuvent se traduire avant lui, un par un : `content:check` les vérifie déjà. Une
+  traduction devenue incomplète (un exercice ou un chapitre ajouté en français) ne bloque rien : le parcours
+  anglais disparaît, et `content:check` dit ce qui manque. Le parcours de démo `decouverte` est traduit en exemple.
+  Un parcours traduit a ses pages sous `/en/tracks/<parcours>` ; ailleurs, l'adresse anglaise renvoie au français.
 
 - **Blog** (`<pack>/articles/<slug>.md`) : des articles sur les coulisses du contenu et du moteur, publiés sur
   `/blog/<slug>`. Le nom du fichier est l'adresse de l'article (minuscules, chiffres et tirets). Le fichier commence

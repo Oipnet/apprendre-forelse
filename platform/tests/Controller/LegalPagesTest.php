@@ -86,6 +86,38 @@ final class LegalPagesTest extends WebTestCase
         $this->assertSelectorTextContains('#conservation', 'mentor');
     }
 
+    public function testLesPagesLegalesExistentEnAnglais(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/en/legal-notice');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'Legal notice');
+        $this->assertSelectorTextContains('#editeur', 'Exemple SAS');
+        $this->assertSelectorTextContains('#editeur', 'Director of publication');
+        $this->assertSelectorExists('.legal-translation a[href="/mentions-legales"]', 'La version française fait foi : elle est à un clic.');
+        $this->assertSelectorExists('link[rel="alternate"][hreflang="fr"][href="http://localhost/mentions-legales"]');
+        $this->assertSelectorExists('.site-footer a[href="/en/privacy"]', 'Le pied de page reste en anglais.');
+
+        $client->request('GET', '/en/privacy');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'Privacy policy');
+        $this->assertSelectorTextContains('#destinataires', 'Stripe');
+        $this->assertSelectorExists('#responsable a[href="/en/legal-notice"]');
+
+        $client->request('GET', '/en/terms');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'Terms of sale');
+        $this->assertSelectorTextContains('#retractation', 'L221-28');
+        $this->assertSelectorTextContains('#remboursement', 'for 14 days');
+        $this->assertSelectorTextContains('#mediation', 'Médiateur Test');
+        $this->assertSelectorExists('.legal-translation a[href="/cgv"]');
+
+        $client->request('GET', '/cgv');
+        $this->assertSelectorExists('link[rel="alternate"][hreflang="en"][href="http://localhost/en/terms"]', 'La version française annonce l\'anglaise.');
+        $this->assertSelectorNotExists('.legal-translation');
+    }
+
     public function testLesPagesSontAccessiblesDepuisLeSite(): void
     {
         $client = static::createClient();

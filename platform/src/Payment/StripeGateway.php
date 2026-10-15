@@ -44,7 +44,8 @@ final class StripeGateway implements PaymentGateway
         try {
             $session = $this->client()->checkout->sessions->create([
                 'mode' => 'payment',
-                'locale' => 'fr',
+                // La page de paiement dans la langue de l'achat (celle de la page d'où il part).
+                'locale' => $purchase->getLocale(),
                 'customer_email' => $purchase->getCustomerEmail(),
                 'client_reference_id' => (string) $purchase->getId(),
                 'metadata' => $metadata,

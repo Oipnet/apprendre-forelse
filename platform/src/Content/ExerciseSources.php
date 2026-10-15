@@ -51,7 +51,7 @@ final readonly class ExerciseSources
 
     private function baseOf(Exercise $exercise): Exercise
     {
-        return (null === $exercise->trackId ? null : $this->index->findExercise($exercise->trackId, (string) $exercise->base))
+        return (null === $exercise->trackId ? null : $this->index->findExercise($exercise->trackId, (string) $exercise->base, $exercise->locale))
             ?? throw new ContentException(sprintf('Exercice « %s » : base « %s » introuvable.', $exercise->id, $exercise->base));
     }
 

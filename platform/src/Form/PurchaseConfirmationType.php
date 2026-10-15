@@ -26,8 +26,9 @@ final class PurchaseConfirmationType extends AbstractType
                 'constraints' => [new Assert\IsTrue(message: 'achat.cgv')],
             ])
             ->add('withdrawalWaiver', CheckboxType::class, [
-                // Le texte conservé avec l'achat, tel qu'il a été coché (voir WithdrawalWaiver) : il n'est pas traduit.
-                'label' => WithdrawalWaiver::TEXT,
+                // Le texte conservé avec l'achat, tel qu'il a été coché (voir WithdrawalWaiver) : pas de traduction
+                // ici, WithdrawalWaiver donne celui de la langue de l'achat.
+                'label' => WithdrawalWaiver::text($options['locale']),
                 'translation_domain' => false,
                 'constraints' => [new Assert\IsTrue(message: 'achat.renonciation')],
             ]);
@@ -36,6 +37,6 @@ final class PurchaseConfirmationType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setRequired('terms_url')->setAllowedTypes('terms_url', 'string');
-        $resolver->setDefaults(['translation_domain' => 'compte']);
+        $resolver->setDefaults(['translation_domain' => 'compte', 'locale' => 'fr'])->setAllowedTypes('locale', 'string');
     }
 }

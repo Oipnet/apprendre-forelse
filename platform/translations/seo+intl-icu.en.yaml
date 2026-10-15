@@ -1,4 +1,4 @@
-# SEO tags of the pages served in English (home, blog, Practice): see seo+intl-icu.fr.yaml. Other keys fall back to French.
+# SEO tags of the pages served in English (home, blog, Practice, tracks): see seo+intl-icu.fr.yaml. Other keys fall back to French.
 
 commun:
     accueil: Home
@@ -22,3 +22,35 @@ pratique:
         titre: "{framework}: {fonctionnalite} – exercise"
         titre_court: "{framework}: {fonctionnalite}"
         complement: "A short {framework} Practice exercise, to do in the browser."
+
+catalogue:
+    sujet_par_defaut: web development
+    titre_marque: "Tracks to learn {sujet} by coding | {marque}"
+    titre: "Learn {sujet} by coding: the tracks"
+    titre_court: "The tracks: learn by coding"
+    description: "Learn {sujet} by writing code in your browser: a real project, a live preview, and tests that check every goal."
+    complement: First chapter free with an account.
+    liste: The tracks
+    fil_ariane: Tracks
+
+parcours:
+    titre_public: "{framework} online course {public}"
+    titre: "{framework} online course: {parcours}"
+    chiffres: "{chapitres, plural, one {# chapter} other {# chapters}}, {exercices, plural, one {# exercise} other {# exercises}}, {gratuit, select, oui {free} other {first chapter free}}."
+    niveau:
+        beginner: Beginner
+        intermediate: Intermediate
+        advanced: Advanced
+
+contenu:
+    notions_framework: "{notions} in {framework} – {libelle}"
+    notion: "{notion} – {libelle}"
+
+chapitre:
+    titre: "{chapitre} – chapter {numero}, {framework} track"
+    description: "Chapter {numero} of the {parcours} track: {notions}. {n, plural, one {# exercise to do by writing code, checked by tests.} other {# exercises to do by writing code, checked by tests.}}"
+
+exercice:
+    libelle: "exercise: {exercice}"
+    titre: "{exercice} – {framework} exercise"
+    complement: "An exercise from the “{chapitre}” chapter, {parcours} track."

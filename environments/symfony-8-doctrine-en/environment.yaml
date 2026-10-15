@@ -1,0 +1,7 @@
+# The English version of symfony-8-doctrine, used by English translations of its exercises (the engine picks
+# <environment>-<language> when it exists): English test helpers.
+# Il prolonge symfony-8-doctrine : ne vivent ici que les fichiers qu'il remplace.
+id: symfony-8-doctrine-en
+extends: symfony-8-doctrine
+title: Symfony 8.1 (English) — Twig, Doctrine ORM (SQLite), PHPUnit
+php: '8.4'

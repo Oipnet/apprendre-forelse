@@ -30,8 +30,11 @@ final class TrackController extends AbstractController
 {
     use TargetPathTrait;
 
-    /** Le catalogue : tous les parcours publiés, à filtrer par framework (?framework=, non indexé : voir SearchIndexing). */
-    #[Route('/parcours', name: 'app_tracks', methods: ['GET'])]
+    /**
+     * Le catalogue : tous les parcours publiés, à filtrer par framework (?framework=, non indexé : voir SearchIndexing).
+     * Sous /en, chaque parcours dans sa traduction, ou en français faute de mieux.
+     */
+    #[Route(['fr' => '/parcours', 'en' => '/en/tracks'], name: 'app_tracks', methods: ['GET'])]
     public function index(
         HomePage $page,
         TrackVisibility $visibility,
@@ -39,7 +42,7 @@ final class TrackController extends AbstractController
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')] bool $inviteOnly,
         #[MapQueryParameter] ?string $framework = null,
     ): Response {
-        $seo->catalogue(array_values($visibility->tracks()));
+        $seo->catalogue(array_values($visibility->tracksHere()));
         $user = $this->getUser();
 
         return $this->render('track/index.html.twig', [...$page->catalogue($user instanceof User ? $user : null, $framework), 'inviteOnly' => $inviteOnly]);
@@ -65,10 +68,10 @@ final class TrackController extends AbstractController
         return $response;
     }
 
-    #[Route('/parcours/{trackId}', name: 'app_track', methods: ['GET'])]
+    #[Route(['fr' => '/parcours/{trackId}', 'en' => '/en/tracks/{trackId}'], name: 'app_track', methods: ['GET'])]
     public function show(string $trackId, TrackVisibility $visibility, TrackOverview $overview, CourseSeo $seo): Response
     {
-        $track = $visibility->find($trackId) ?? throw $this->createNotFoundException();
+        $track = $visibility->findHere($trackId) ?? throw $this->createNotFoundException();
         $seo->track($track);
         $user = $this->getUser();
 

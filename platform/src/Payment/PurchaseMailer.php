@@ -30,10 +30,13 @@ final readonly class PurchaseMailer
     /** N'échoue jamais : l'accès est ouvert, l'email n'en est que la confirmation. */
     public function sendConfirmation(Purchase $purchase): void
     {
-        $track = $this->content->findTrack($purchase->getTrackId());
+        // Dans la langue de l'achat : l'email part du webhook Stripe, sans page dont prendre la langue.
+        $locale = $purchase->getLocale();
+        $track = $this->content->findTrack($purchase->getTrackId(), $locale) ?? $this->content->findTrack($purchase->getTrackId());
         $email = $this->sender->email()
             ->to(new Address($purchase->getCustomerEmail(), (string) $purchase->getUser()?->getDisplayName()))
-            ->subject($this->translator->trans('sujet.purchase_confirmation', ['parcours' => $track->title ?? $purchase->getTrackId(), 'site' => $this->theme->name()], 'emails'))
+            ->subject($this->translator->trans('sujet.purchase_confirmation', ['parcours' => $track->title ?? $purchase->getTrackId(), 'site' => $this->theme->name()], 'emails', $locale))
+            ->locale($locale)
             ->htmlTemplate('emails/purchase_confirmation.html.twig')
             ->textTemplate('emails/purchase_confirmation.txt.twig')
             // L'identité du vendeur : la confirmation d'une vente à distance est le support durable du contrat.

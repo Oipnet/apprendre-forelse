@@ -33,7 +33,7 @@ final readonly class ChapterOutline
     {
         $exercises = [];
         foreach ($chapter->exerciseIds as $position => $exerciseId) {
-            $exercise = $this->content->findExercise($track->id, $exerciseId);
+            $exercise = $this->content->findExercise($track->id, $exerciseId, $track->locale);
             if (null !== $exercise) {
                 $exercises[] = [
                     'exercise' => $exercise,

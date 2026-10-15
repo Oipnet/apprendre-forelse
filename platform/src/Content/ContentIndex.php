@@ -7,16 +7,28 @@ namespace App\Content;
  */
 final class ContentIndex
 {
-    /** @var array<string, Chapter>|null chapitre de chaque exercice, par « parcours/exercice » (voir chapterOf()) */
-    private ?array $chapterIndex = null;
+    /** @var array<string, array<string, Chapter>> chapitre de chaque exercice, par langue puis « parcours/exercice » (voir chapterOf()) */
+    private array $chapterIndex = [];
 
     public function __construct(private readonly LoadedContent $content)
     {
     }
 
-    public function findExercise(string $trackId, string $exerciseId): ?Exercise
+    public function findExercise(string $trackId, string $exerciseId, string $locale = Exercise::LOCALE): ?Exercise
     {
-        return $this->content->exercises[$trackId][$exerciseId] ?? null;
+        return $this->exercisesOf($trackId, $locale)[$exerciseId] ?? null;
+    }
+
+    /** @return array<string, Track> les parcours de cette langue, dans l'ordre des parcours français */
+    public function tracks(string $locale = Exercise::LOCALE): array
+    {
+        return Exercise::LOCALE === $locale ? $this->content->tracks : $this->content->trackTranslations[$locale] ?? [];
+    }
+
+    /** @return array<string, Exercise> les exercices d'un parcours dans cette langue, dans l'ordre */
+    private function exercisesOf(string $trackId, string $locale): array
+    {
+        return Exercise::LOCALE === $locale ? $this->content->exercises[$trackId] ?? [] : $this->content->exerciseTranslations[$locale][$trackId] ?? [];
     }
 
     /**
@@ -38,6 +50,12 @@ final class ContentIndex
                     $exercise = $this->findExercise($track->id, $exerciseId);
                     if (null !== $exercise && (null === $target || \in_array($target, [$track->packId, $track->id, $track->id.'/'.$exercise->id], true))) {
                         $exercises[] = $exercise;
+                        // Chaque traduction se vérifie à part, même avant celle du parcours.
+                        foreach ($this->content->exerciseTranslations as $translations) {
+                            if (null !== ($translation = $translations[$track->id][$exerciseId] ?? null)) {
+                                $exercises[] = $translation;
+                            }
+                        }
                     }
                 }
             }
@@ -68,7 +86,7 @@ final class ContentIndex
     {
         $total = 0;
         foreach ($chapter->exerciseIds ?? $track->exerciseIds() as $exerciseId) {
-            $duration = $this->findExercise($track->id, $exerciseId)?->duration;
+            $duration = $this->findExercise($track->id, $exerciseId, $track->locale)?->duration;
             if (null === $duration) {
                 return null;
             }
@@ -98,19 +116,19 @@ final class ContentIndex
         if (null === $exercise->trackId) {
             return null;
         }
-        if (null === $this->chapterIndex) {
-            $this->chapterIndex = [];
-            foreach ($this->content->tracks as $track) {
+        if (!isset($this->chapterIndex[$exercise->locale])) {
+            $this->chapterIndex[$exercise->locale] = [];
+            foreach ($this->tracks($exercise->locale) as $track) {
                 foreach ($track->chapters as $chapter) {
                     foreach ($chapter->exerciseIds as $exerciseId) {
                         // Le premier chapitre qui le cite, comme chaptersOf().
-                        $this->chapterIndex[$track->id.'/'.$exerciseId] ??= $chapter;
+                        $this->chapterIndex[$exercise->locale][$track->id.'/'.$exerciseId] ??= $chapter;
                     }
                 }
             }
         }
 
-        return $this->chapterIndex[$exercise->trackId.'/'.$exercise->id] ?? null;
+        return $this->chapterIndex[$exercise->locale][$exercise->trackId.'/'.$exercise->id] ?? null;
     }
 
     /** L'exercice qui clôt un chapitre est le dernier de sa liste. */
@@ -122,7 +140,8 @@ final class ContentIndex
     }
 
     /**
-     * Les chapitres auxquels appartiennent ces exercices, dans l'ordre des parcours.
+     * Les chapitres auxquels appartiennent ces exercices, dans l'ordre des parcours, dans la langue des exercices
+     * (le français s'ils en mêlent plusieurs).
      *
      * @param list<Exercise> $exercises
      *
@@ -130,9 +149,11 @@ final class ContentIndex
      */
     public function chaptersOf(array $exercises): array
     {
-        $ids = array_map(static fn (Exercise $e) => $e->trackId.'/'.$e->id, array_filter($exercises, static fn (Exercise $e) => null !== $e->trackId));
+        $exercises = array_filter($exercises, static fn (Exercise $e) => null !== $e->trackId);
+        $locales = array_unique(array_map(static fn (Exercise $e) => $e->locale, $exercises));
+        $ids = array_map(static fn (Exercise $e) => $e->trackId.'/'.$e->id, $exercises);
         $chapters = [];
-        foreach ($this->content->tracks as $track) {
+        foreach ($this->tracks(1 === \count($locales) ? (string) reset($locales) : Exercise::LOCALE) as $track) {
             foreach ($track->chapters as $chapter) {
                 foreach ($chapter->exerciseIds as $exerciseId) {
                     if (\in_array($track->id.'/'.$exerciseId, $ids, true)) {
@@ -175,9 +196,9 @@ final class ContentIndex
         if (null === $exercise->trackId) {
             return null;
         }
-        $ids = array_keys($this->content->exercises[$exercise->trackId] ?? []);
+        $ids = array_keys($this->exercisesOf($exercise->trackId, $exercise->locale));
         $position = array_search($exercise->id, $ids, true);
 
-        return false === $position ? null : $this->findExercise($exercise->trackId, (string) ($ids[$position + $offset] ?? ''));
+        return false === $position ? null : $this->findExercise($exercise->trackId, (string) ($ids[$position + $offset] ?? ''), $exercise->locale);
     }
 }

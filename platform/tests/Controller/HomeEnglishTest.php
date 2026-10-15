@@ -25,7 +25,9 @@ final class HomeEnglishTest extends WebTestCase
         $this->assertSame('Learn to code by coding in your browser | default', $crawler->filter('title')->text());
         $this->assertSame('Frequently asked questions', $crawler->filter('#questions h2, .home-faq h2')->first()->text());
         $this->assertSame('Learn to code by coding in the browser.', $crawler->filter('.footer-brand p')->first()->text());
-        $this->assertSame('In French', $crawler->filter('.track-language')->first()->text(), 'Les parcours, eux, sont en français.');
+        $this->assertSelectorTextContains('main', 'Discovery', 'Le parcours de démo est traduit : sa fiche est en anglais.');
+        $this->assertSelectorExists('a[href="/en/tracks/decouverte"]');
+        $this->assertSelectorNotExists('.track-language', 'Pas de mention « In French » pour un parcours traduit.');
         $this->assertSame('http://localhost/en', $crawler->filter('link[rel="canonical"]')->attr('href'));
         $this->assertSame('/en', $crawler->filter('.site-header a')->first()->attr('href'), 'Le logo ramène à l\'accueil anglais.');
     }

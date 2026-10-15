@@ -9,7 +9,7 @@
     <div class="flex flex-col gap-4 md:flex-row md:justify-between">
         <div class="md:max-w-xl">
             <div class="flex flex-wrap items-center gap-2">
-                <{{ heading }} class="text-xl font-semibold"><a class="text-ink" href="{{ path('app_track', {trackId: item.track.id}) }}">{{ item.track.title }}</a></{{ heading }}>
+                <{{ heading }} class="text-xl font-semibold"><a class="text-ink" href="{{ path('app_track', {_locale: item.track.locale, trackId: item.track.id}) }}">{{ item.track.title }}</a></{{ heading }}>
                 {% if inviteOnly %}<span class="rounded bg-bg-2 px-1.5 text-xs text-ink-muted">{{ 'track_card.beta'|trans }}</span>{% endif %}
                 {% if item.language %}<span class="track-language rounded bg-bg-2 px-1.5 text-xs text-ink-muted">{{ ('track_card.langue.' ~ item.language)|trans }}</span>{% endif %}
             </div>
@@ -30,7 +30,7 @@
                 {% endif %}
             {% endif %}
             {% if item.offer.fullAccess and app.user %}
-                <a class="btn mt-1" href="{{ path('app_track', {trackId: item.track.id}) }}">{{ 'track_card.continuer'|trans }} <span aria-hidden="true">→</span></a>
+                <a class="btn mt-1" href="{{ path('app_track', {_locale: item.track.locale, trackId: item.track.id}) }}">{{ 'track_card.continuer'|trans }} <span aria-hidden="true">→</span></a>
             {% elseif item.offer.purchasable %}
                 <a class="btn btn-primary mt-1" href="{{ path('app_purchase', {trackId: item.track.id}) }}">{{ 'track_card.acheter'|trans }}</a>
             {% elseif item.offer.comingSoon %}

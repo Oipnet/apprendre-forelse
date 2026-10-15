@@ -291,8 +291,8 @@ final class ContentRepositoryTest extends TestCase
         $repository = $this->repository(self::ROOT.'/examples/packs');
         $ids = static fn (array $exercices) => array_map(static fn ($e) => $e->id, $exercices);
 
-        $this->assertSame(['01-bonjour', '02-bonjour-prenom'], $ids($repository->select(null, 'bonjour')));
-        $this->assertSame(['01-bonjour'], $ids($repository->select('decouverte/01-bonjour', 'bonjour')));
+        $this->assertSame(['01-bonjour', '01-bonjour', '02-bonjour-prenom', '02-bonjour-prenom'], $ids($repository->select(null, 'bonjour')), 'Avec leur traduction.');
+        $this->assertSame(['01-bonjour', '01-bonjour'], $ids($repository->select('decouverte/01-bonjour', 'bonjour')));
         $this->assertSame([], $repository->select(null, 'chapitre-inconnu'));
         $this->assertContains('bonjour', $repository->chapterIds());
     }
@@ -595,9 +595,9 @@ final class ContentRepositoryTest extends TestCase
         $this->assertSame(['pratique/programme', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]', 'pratique/en-preparation', 'pratique/nouveaute-recente', 'pratique/point-precis', 'pratique/cote-laravel'], $ids($repository->select('pratique')));
         $this->assertSame(['pratique/point-precis'], $ids($repository->select('pratique/point-precis')));
         $this->assertCount(5, $repository->select('pratique-test'), 'Un pack comprend ses exercices de Pratique.');
-        $this->assertSame(['decouverte/01-bonjour', 'decouverte/02-bonjour-prenom', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]'], $ids($repository->select('demo')), 'Chaque traduction se vérifie aussi.');
+        $this->assertSame(['decouverte/01-bonjour', 'decouverte/01-bonjour [en]', 'decouverte/02-bonjour-prenom', 'decouverte/02-bonjour-prenom [en]', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]'], $ids($repository->select('demo')), 'Chaque traduction se vérifie aussi.');
         $this->assertContains('pratique/point-precis', $ids($repository->select(null)));
-        $this->assertSame(['decouverte/01-bonjour', 'decouverte/02-bonjour-prenom'], $ids($repository->select(null, 'bonjour')), 'Un chapitre exclut la Pratique.');
+        $this->assertSame(['decouverte/01-bonjour', 'decouverte/01-bonjour [en]', 'decouverte/02-bonjour-prenom', 'decouverte/02-bonjour-prenom [en]'], $ids($repository->select(null, 'bonjour')), 'Un chapitre exclut la Pratique.');
     }
 
     /** @param array<string, string> $extra */
@@ -768,6 +768,153 @@ final class ContentRepositoryTest extends TestCase
         yield 'des mutants oubliés' => [self::avecMutant(''), '« mutants » manque'];
         yield 'des mutants renommés' => [self::avecMutant("mutants: [{id: twice, label: Saved twice, changes: [{file: a.php, search: a, replace: b}]}]"), 'gardent les ids de l\'exercice français (double)'];
         yield 'un objectif sans test' => [['p/practice/x/i18n/en/exercise.yaml' => "title: X en\nsummary: S en\nobjectives: [{label: A en}]"], 'clé « test » manquante'];
+    }
+
+    public function testChargeLaTraductionDUnParcours(): void
+    {
+        $repository = $this->repository(self::ROOT.'/examples/packs');
+
+        $this->assertSame(['fr', 'en'], $repository->trackLocales('decouverte'));
+        $this->assertSame(['decouverte'], array_keys($repository->tracks('en')));
+        $french = $repository->findTrack('decouverte');
+        $english = $repository->findTrack('decouverte', 'en');
+        $this->assertNotNull($french);
+        $this->assertNotNull($english);
+        $this->assertSame('en', $english->locale);
+        $this->assertSame('Discovery', $english->title);
+        $this->assertSame('Hello Symfony', $english->chapters[0]->title);
+        $this->assertStringStartsWith('## What you learned', (string) $english->chapters[0]->lesson);
+        $this->assertSame($french->chapters[0]->exerciseIds, $english->chapters[0]->exerciseIds);
+        $this->assertFalse($repository->isOutdated($english));
+
+        [$first, $second] = $repository->exercisesOf($english);
+        $this->assertSame(['en', 'en'], [$first->locale, $second->locale]);
+        $this->assertSame('Hello to you', $second->title);
+        $this->assertSame('decouverte', $second->trackId);
+        $this->assertFalse($repository->isOutdated($second));
+        $this->assertSame($second, $repository->next($first), 'On reste dans la langue du parcours.');
+        $this->assertSame('Hello Symfony', $repository->chapterOf($second)?->title);
+        $this->assertSame([[$english, $english->chapters[0]]], $repository->chaptersOf([$first]));
+        // Un exercice qui part du précédent part de sa solution traduite.
+        $this->assertStringContainsString("#[Route('/hello', name: 'app_hello')]", $repository->startingFiles($second)['src/Controller/BonjourController.php']);
+        $this->assertStringContainsString("#[Route('/bonjour', name: 'app_bonjour')]", $repository->startingFiles($repository->exercisesOf($french)[1])['src/Controller/BonjourController.php']);
+
+        // content:check vérifie chaque langue.
+        $this->assertSame(['fr', 'en'], array_map(static fn ($e) => $e->locale, $repository->select('decouverte/01-bonjour')));
+    }
+
+    public function testUnParcoursEnRetardEstSignale(): void
+    {
+        $this->parcoursTraduit(['p/tracks/t/i18n/en/track.yaml' => "source: 'autrefois'\ntitle: T en\nchapters: {c: {title: C en}}"]);
+        $repository = $this->repository($this->tmp);
+        $english = $repository->findTrack('t', 'en');
+        $this->assertNotNull($english);
+        $this->assertTrue($repository->isOutdated($english));
+        $this->assertTrue($repository->isOutdated($repository->exercisesOf($english)[0]), 'Sans empreinte, rien ne dit ce que la traduction suit.');
+
+        $french = $repository->findTrack('t');
+        $this->assertNotNull($french);
+        $this->parcoursTraduit([
+            'p/tracks/t/i18n/en/track.yaml' => sprintf("source: '%s'\ntitle: T en\nchapters: {c: {title: C en}}", \App\Content\PackReader::trackFingerprint($french)),
+            'p/tracks/t/exercises/x/i18n/en/exercise.yaml' => sprintf("source: '%s'\ntitle: X en\nobjectives: [{test: testA, label: A en}]", \App\Content\ExerciseReader::fingerprint($this->tmp.'/p/tracks/t/exercises/x')),
+        ]);
+        $repository = $this->repository($this->tmp);
+        $english = $repository->findTrack('t', 'en');
+        $this->assertNotNull($english);
+        $this->assertFalse($repository->isOutdated($english));
+        $this->assertFalse($repository->isOutdated($repository->exercisesOf($english)[0]));
+    }
+
+    public function testUnParcoursNeParaitPasDansUneLangueAvantSaTraduction(): void
+    {
+        $this->parcoursTraduit(['p/tracks/t/i18n/en/track.yaml' => null]);
+        $repository = $this->repository($this->tmp);
+
+        $this->assertNull($repository->findTrack('t', 'en'));
+        $this->assertSame(['fr'], $repository->trackLocales('t'));
+        $this->assertSame(['fr', 'en'], array_map(static fn ($e) => $e->locale, $repository->select('t')), 'Ses exercices traduits se vérifient déjà.');
+    }
+
+    /**
+     * @param array<string, string|null> $files
+     */
+    #[DataProvider('parcoursTraduitsInvalides')]
+    public function testUneTraductionDeParcoursMalFormeeEstRefusee(array $files, string $message): void
+    {
+        $this->parcoursTraduit($files);
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage($message);
+        $this->repository($this->tmp)->packs();
+    }
+
+    public function testUneTraductionPrendLEnvironnementDeSaLangue(): void
+    {
+        $this->parcoursTraduit(['p/tracks/t/track.yaml' => "id: t\ntitle: T\nenvironment: symfony-8-app\nchapters:\n  - {id: c, title: C, exercises: [x]}"]);
+        $repository = $this->repository($this->tmp);
+
+        $this->assertSame('symfony-8-app', $repository->findExercise('t', 'x')?->environment);
+        $this->assertSame('symfony-8-app-en', $repository->findExercise('t', 'x', 'en')?->environment, 'Messages de Symfony et outils de test en anglais.');
+
+        $demo = $this->repository(self::ROOT.'/examples/packs');
+        $this->assertSame('symfony-8', $demo->findExercise('decouverte', '01-bonjour', 'en')?->environment, 'Sans variante anglaise, l\'environnement français.');
+    }
+
+    public static function parcoursTraduitsInvalides(): iterable
+    {
+        yield 'une clé qui ne se traduit pas' => [['p/tracks/t/i18n/en/track.yaml' => "title: T en\nenvironment: laravel-13\nchapters: {c: {title: C en}}"], '« environment » ne se traduit pas'];
+        yield 'un chapitre sans titre' => [['p/tracks/t/i18n/en/track.yaml' => "title: T en\nchapters: {c: {description: D}}"], 'clé « title » manquante'];
+        yield 'des chapitres en liste' => [['p/tracks/t/i18n/en/track.yaml' => "title: T en\nchapters: [C en]"], '« chapters » associe à l\'id de chaque chapitre'];
+        yield 'sans track.yaml' => [['p/tracks/t/i18n/en/track.yaml' => null, 'p/tracks/t/i18n/en/chapters/c/lesson.md' => 'Lesson'], 'track.yaml manquant'];
+        yield 'une langue inconnue' => [['p/tracks/t/i18n/de/track.yaml' => 'title: T de'], '« de » n\'est pas une langue de traduction'];
+    }
+
+    /**
+     * @param array<string, string|null> $files
+     */
+    #[DataProvider('parcoursTraduitsIncomplets')]
+    public function testUnParcoursIncompletNeParaitPasDansLaLangue(array $files, string $missing): void
+    {
+        $this->parcoursTraduit($files);
+        $repository = $this->repository($this->tmp);
+
+        $this->assertNull($repository->findTrack('t', 'en'), 'Le reste du contenu se charge ; le parcours attend sa traduction.');
+        $this->assertNotNull($repository->findTrack('t'));
+        $this->assertStringContainsString($missing, implode(' ; ', $repository->incompleteTranslations()['en']['t'] ?? []));
+    }
+
+    public static function parcoursTraduitsIncomplets(): iterable
+    {
+        yield 'un exercice non traduit' => [['p/tracks/t/exercises/x/i18n/en/exercise.yaml' => null, 'p/tracks/t/exercises/x/i18n/en/instructions.md' => null], 'exercice « x » non traduit'];
+        yield 'un chapitre ajouté' => [['p/tracks/t/i18n/en/track.yaml' => 'title: T en'], 'chapitre « c » sans titre traduit'];
+        yield 'un chapitre retiré' => [['p/tracks/t/i18n/en/track.yaml' => "title: T en\nchapters: {c: {title: C en}, d: {title: D en}}"], 'chapitre « d » traduit, mais absent du parcours français'];
+        yield 'une fiche de cours non traduite' => [['p/tracks/t/chapters/c/lesson.md' => 'Fiche'], 'fiche de cours du chapitre « c » non traduite'];
+    }
+
+    /**
+     * Un parcours « t » d'un chapitre « c » et d'un exercice « x », traduits en anglais ; null retire un fichier.
+     *
+     * @param array<string, string|null> $files
+     */
+    private function parcoursTraduit(array $files): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->remove($this->tmp);
+        $files += [
+            'p/pack.yaml' => "id: p\ntitle: P\ntracks: [t]",
+            'p/tracks/t/track.yaml' => "id: t\ntitle: T\nenvironment: symfony-8\nchapters:\n  - {id: c, title: C, exercises: [x]}",
+            'p/tracks/t/exercises/x/exercise.yaml' => "id: x\ntitle: X\neditable: [a.php]\nobjectives: [{test: testA, label: A}]",
+            'p/tracks/t/exercises/x/instructions.md' => 'Consignes',
+            'p/tracks/t/exercises/x/starter/a.php' => '<?php',
+            'p/tracks/t/exercises/x/i18n/en/exercise.yaml' => "title: X en\nobjectives: [{test: testA, label: A en}]",
+            'p/tracks/t/exercises/x/i18n/en/instructions.md' => 'Instructions',
+            'p/tracks/t/i18n/en/track.yaml' => "title: T en\nchapters: {c: {title: C en}}",
+        ];
+        foreach ($files as $path => $content) {
+            if (null !== $content) {
+                $filesystem->dumpFile($this->tmp.'/'.$path, $content);
+            }
+        }
     }
 
     /**

@@ -61,7 +61,7 @@ final readonly class ExercisePayloadFactory
         $next = $this->content->next($exercise);
         $previous = $this->content->previous($exercise);
         // Dernier exercice du parcours : on conseille le parcours suivant, s'il y en a un.
-        $track = null === $exercise->trackId ? null : $this->content->findTrack($exercise->trackId);
+        $track = null === $exercise->trackId ? null : $this->content->findTrack($exercise->trackId, $exercise->locale);
         $nextTrack = null === $next && null !== $track ? $this->visibility->nextTrack($track) : null;
         // Un exercice de Pratique n'a ni suite ni fiche : il dit d'où vient la fonctionnalité.
         $practice = null === $exercise->trackId ? $this->content->findPractice($exercise->id, $exercise->locale) : null;

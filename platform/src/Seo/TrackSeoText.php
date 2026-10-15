@@ -2,7 +2,9 @@
 
 namespace App\Seo;
 
+use App\Content\Exercise;
 use App\Content\Track;
+use App\Entity\TrackSeo;
 use App\Theme\Theme;
 use App\Repository\TrackPricingRepository;
 use App\Repository\TrackSeoRepository;
@@ -17,7 +19,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *  - description : le résumé du parcours, puis les chiffres (« 12 chapitres, 74 exercices, premier chapitre gratuit. »).
  *
  * Les textes générés viennent du domaine de traduction seo (parcours.*), dans la langue de la page. La détection du
- * public (« pour … ») et la coupe sur un mot lisent le titre et le résumé du parcours, écrits en français par l'auteur.
+ * public (« pour … », « for … ») et la coupe sur un mot lisent le titre et le résumé du parcours dans sa langue.
+ * Ce que l'admin saisit est en français : il ne vaut que pour le parcours français, une traduction est générée.
  */
 final readonly class TrackSeoText
 {
@@ -37,7 +40,7 @@ final readonly class TrackSeoText
 
     public function title(Track $track, string $framework): string
     {
-        $title = $this->overrides->findOneByTrack($track->id)?->getSeoTitle() ?? $this->generatedTitle($track->title, $framework);
+        $title = $this->override($track)?->getSeoTitle() ?? $this->generatedTitle($track->title, $framework);
         if (mb_strlen($title) > self::TITLE_MAX) {
             $this->logger->warning('Title du parcours « {track} » trop long : {length} caractères, {max} au plus sans « | {site} ».', [
                 'track' => $track->id, 'length' => mb_strlen($title), 'max' => self::TITLE_MAX, 'site' => $this->theme->name(), 'title' => $title,
@@ -49,13 +52,18 @@ final readonly class TrackSeoText
 
     public function description(Track $track): string
     {
-        return $this->overrides->findOneByTrack($track->id)?->getSeoDescription() ?? $this->generatedDescription(
+        return $this->override($track)?->getSeoDescription() ?? $this->generatedDescription(
             $track->description,
             \count($track->chapters),
             \count($track->exerciseIds()),
             // « Gratuit » seulement pour un tarif enregistré à 0 € : sans tarif, le parcours est seulement « pas encore tarifé ».
             $this->pricings->findOneByTrack($track->id)?->isFree() ?? false,
         );
+    }
+
+    private function override(Track $track): ?TrackSeo
+    {
+        return Exercise::LOCALE === $track->locale ? $this->overrides->findOneByTrack($track->id) : null;
     }
 
     public function generatedTitle(string $trackTitle, string $framework): string
@@ -67,10 +75,10 @@ final readonly class TrackSeoText
             : $this->translator->trans('parcours.titre', ['framework' => $framework, 'parcours' => self::clean($trackTitle)], 'seo');
     }
 
-    /** « Symfony pour les devs PHP » → « pour les devs PHP » ; null si le titre n'a pas cette forme. */
+    /** « Symfony pour les devs PHP » → « pour les devs PHP » (« Symfony for PHP devs » → « for PHP devs ») ; null sinon. */
     public static function audience(string $trackTitle, string $framework): ?string
     {
-        $pattern = sprintf('/^%s\s+(pour\s+\p{L}.{2,})$/iu', preg_quote($framework, '/'));
+        $pattern = sprintf('/^%s\s+((?:pour|for)\s+\p{L}.{2,})$/iu', preg_quote($framework, '/'));
 
         return 1 === preg_match($pattern, self::clean($trackTitle), $matches) ? rtrim($matches[1], ' .') : null;
     }

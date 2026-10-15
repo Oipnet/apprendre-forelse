@@ -9,6 +9,7 @@ use App\Repository\ExerciseProgressRepository;
 use App\Repository\TrackAccessRepository;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -23,6 +24,9 @@ use Symfony\Contracts\Service\ResetInterface;
  *   et ceux auxquels il a un accès actif (un parcours acheté hors de la sélection de sa cohorte).
  * - Un chef de cohorte voit en plus ce que proposent les cohortes qu'il encadre (comme TrackAccessChecker).
  * - Sans cohorte (visiteur, inscription libre), rien ne change.
+ *
+ * Les pages des parcours sont dans la langue de la page : sous /en, un parcours n'existe que traduit (findHere()),
+ * et les listes montrent sa traduction quand il en a une, le français sinon (localize()).
  */
 final class TrackVisibility implements ResetInterface
 {
@@ -40,6 +44,7 @@ final class TrackVisibility implements ResetInterface
         private readonly TrackAccessRepository $accesses,
         private readonly CohortRepository $cohorts,
         private readonly ClockInterface $clock,
+        private readonly ?LocaleSwitcher $locale = null,
     ) {
     }
 
@@ -86,6 +91,30 @@ final class TrackVisibility implements ResetInterface
         $track = $this->content->findTrack($trackId);
 
         return null !== $track && $this->isVisible($track) ? $track : null;
+    }
+
+    /** La langue de la page ; une variante régionale (en_GB) compte pour sa langue. */
+    public function locale(): string
+    {
+        return null === $this->locale ? Exercise::LOCALE : explode('_', $this->locale->getLocale())[0];
+    }
+
+    /** Le parcours dans la langue de la page, s'il y est traduit et si l'utilisateur courant peut le voir. */
+    public function findHere(string $trackId): ?Track
+    {
+        return null === $this->find($trackId) ? null : $this->content->findTrack($trackId, $this->locale());
+    }
+
+    /** Le parcours dans la langue de la page s'il y est traduit, tel quel sinon (une liste le montre en français). */
+    public function localize(Track $track): Track
+    {
+        return $this->content->findTrack($track->id, $this->locale()) ?? $track;
+    }
+
+    /** @return array<string, Track> les parcours visibles, chacun dans la langue de la page s'il y est traduit */
+    public function tracksHere(): array
+    {
+        return array_map($this->localize(...), $this->tracks());
     }
 
     public function nextTrack(Track $track): ?Track

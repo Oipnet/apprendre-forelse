@@ -65,6 +65,10 @@ class Purchase
     #[ORM\Column]
     private \DateTimeImmutable $withdrawalWaiverAcceptedAt;
 
+    /** La langue de l'achat (celle de la page d'achat) : celle de la page Stripe et de l'email de confirmation. */
+    #[ORM\Column(length: 5, options: ['default' => 'fr'])]
+    private string $locale;
+
     /** Version des conditions générales de vente acceptées (LegalVersions::TERMS_VERSION) ; null avant leur existence. */
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $termsVersion = null;
@@ -97,7 +101,9 @@ class Purchase
         \DateTimeImmutable $now,
         ?Cohort $cohort = null,
         ?string $termsVersion = null,
+        string $locale = 'fr',
     ) {
+        $this->locale = $locale;
         $this->user = $user;
         $this->termsVersion = $termsVersion;
         $this->termsAcceptedAt = null === $termsVersion ? null : $now;
@@ -105,6 +111,11 @@ class Purchase
         $this->withdrawalWaiverText = $withdrawalWaiverText;
         $this->withdrawalWaiverAcceptedAt = $this->createdAt = $now;
         $this->cohort = $cohort;
+    }
+
+    public function getLocale(): string
+    {
+        return $this->locale;
     }
 
     public function attachCheckoutSession(string $sessionId): void

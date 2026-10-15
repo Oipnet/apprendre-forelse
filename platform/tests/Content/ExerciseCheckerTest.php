@@ -134,6 +134,8 @@ final class ExerciseCheckerTest extends TestCase
         $filesystem = new Filesystem();
         $filesystem->mirror(self::ROOT.'/examples/packs/demo', $this->tmp.'/demo');
         $track = $this->tmp.'/demo/tracks/decouverte';
+        // Un exercice ajouté sans traduction : le parcours anglais n'aurait plus tous ses exercices.
+        $filesystem->remove($track.'/i18n');
         $filesystem->dumpFile($track.'/track.yaml', str_replace('      - 02-bonjour-prenom', "      - 02-bonjour-prenom\n      - 03-mes-tests", (string) file_get_contents($track.'/track.yaml')));
         $test = static fn (string $body) => "<?php\n\nnamespace App\\Tests;\n\nuse Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase;\n\nclass MesTest extends WebTestCase\n{\n    public function testBonjour(): void\n    {\n        \$client = static::createClient();\n{$body}\n    }\n}\n";
         foreach ([

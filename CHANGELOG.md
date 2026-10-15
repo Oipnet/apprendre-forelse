@@ -14,6 +14,27 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   s'édite, s'enregistre et se vérifie dans le même éditeur que l'exercice français. Avec une clé d'API, le modèle
   propose la traduction entière (ou la met à jour), empreinte `source` comprise ; rien n'est enregistré avant
   relecture. Une traduction en retard est signalée dans l'éditeur.
+- **Les pages légales en anglais** : `/en/legal-notice`, `/en/privacy` et `/en/terms`, traductions des mentions
+  légales, de la politique de confidentialité et des CGV. Chacune rappelle que la version française fait foi et y
+  renvoie. Les pages fixes traduites (contact compris) annoncent leurs autres langues aux moteurs (`hreflang`), et
+  le pied de page propose de changer de langue.
+- **Traduire un parcours** (`<parcours>/i18n/en/track.yaml`, fiches de cours dans `i18n/en/chapters/`, et chaque
+  exercice dans son `i18n/en/` comme en Pratique) : le moteur charge la version anglaise d'un parcours entièrement
+  traduit, et `content:check` vérifie chaque exercice traduit, signale une traduction en retard ou incomplète. Le
+  parcours de démo `decouverte` est traduit en exemple.
+- **Les parcours en anglais** : `/en/tracks`, et pour un parcours traduit `/en/tracks/<parcours>`, ses sommaires de
+  chapitre, ses fiches de cours et ses exercices, joués avec les tests anglais (la réussite garde sa langue pour le
+  vérificateur). Le catalogue anglais montre aussi les parcours pas encore traduits, en français ; l'adresse
+  anglaise d'un tel parcours renvoie (302) vers sa page française. Les pages traduites s'annoncent aux moteurs
+  (`hreflang`) et figurent au sitemap, avec des title et descriptions générés en anglais (ceux saisis dans l'admin
+  restent au français).
+- **Environnements par langue** : un exercice traduit tourne dans `<environnement>-<langue>` quand il existe.
+  `symfony-8-app-en` (messages de Symfony en anglais, outils de test commentés en anglais) et
+  `symfony-8-doctrine-en` accueillent les traductions des exercices Symfony.
+- **L'achat en anglais** : un parcours traduit s'achète depuis sa page anglaise (`/en/tracks/<parcours>/buy`). La
+  langue de l'achat est enregistrée (migration `purchase.locale`) : page de paiement Stripe, nom du produit,
+  remerciement et email de confirmation en anglais. La renonciation au droit de rétractation est cochée et conservée
+  dans le texte anglais.
 - **Complétion des fonctions dans l'éditeur** : les fonctions de PHP (`str_contains`, `array_map`, `sprintf`…) et les
   helpers globaux de Laravel (`route`, `view`, `redirect`, `old`…) ou de Symfony (`dump`, `dd`) sont proposés, avec
   l'aide aux paramètres. L'index de complétion de chaque environnement les liste désormais (`functions`).

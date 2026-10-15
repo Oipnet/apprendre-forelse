@@ -1,0 +1,7 @@
+{# Instance pas encore configurée : voir legal/_missing.html.twig. #}
+{% if missing is not empty %}
+    <div class="legal-missing not-prose my-6 rounded-md border border-danger bg-danger-bg px-4 py-3 text-danger" role="alert">
+        <strong>Incomplete legal information.</strong> The operator of this site has not yet provided:
+        {% for variable in missing %}<code>{{ variable }}</code>{{ not loop.last ? ', ' }}{% endfor %}.
+    </div>
+{% endif %}

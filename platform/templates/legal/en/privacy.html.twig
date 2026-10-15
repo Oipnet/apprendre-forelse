@@ -1,0 +1,206 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <main class="legal-page prose prose-theme mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <p class="text-sm text-ink-muted">Your data</p>
+        <h1>Privacy policy</h1>
+        <p class="lead">What {{ siteHost }} records about you, why, for how long, and how to take back control. The short version: an email address, your progress, no trackers.</p>
+
+        {{ include('legal/en/_translation.html.twig', {route: 'app_privacy'}) }}
+        {{ include('legal/en/_missing.html.twig') }}
+
+        <section id="responsable">
+            <h2>Data controller</h2>
+            {% if legal.publisherName %}
+                <p>{{ legal.publisherName }}{% if legal.publisherAddress %}, {{ legal.publisherAddress }}{% endif %}.
+                {% if legal.publisherEmail %}For any question about your data: <a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>.{% endif %}</p>
+            {% endif %}
+            <p>Full contact details are given in the <a href="{{ path('app_legal_notice') }}">legal notice</a>.</p>
+        </section>
+
+        <section id="principes">
+            <h2>What the site does not do</h2>
+            <ul>
+                <li>No advertising trackers, no social media buttons{% if analytics.enabled %}, no third-party tools: audience measurement is hosted on our own servers{% else %}, no audience measurement tool{% endif %}.</li>
+                <li>Your data is never sold or passed on to anyone.</li>
+                <li>No profiling: your progress is there to serve you, not to target you.</li>
+                <li>Your code never runs on our servers: PHP runs in your browser, in a sandbox with no access to the disk or the network.</li>
+            </ul>
+        </section>
+
+        <section id="donnees">
+            <h2>What is collected, and why</h2>
+            <div class="legal-table">
+                <table>
+                    <thead>
+                        <tr><th>When</th><th>What data</th><th>Why</th><th>Legal basis</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>You create an account</td>
+                            <td>Email address, display name, password (stored hashed, never in plain text), creation date, date the address was confirmed{% if inviteOnly %}, invitation cohort{% endif %}.</td>
+                            <td>To identify you, keep your progress, and write to you about your account.</td>
+                            <td>Performance of the contract (the service you asked for).</td>
+                        </tr>
+                        {% for provider in oauth.enabled %}
+                            <tr>
+                                <td>You sign in with {{ provider.label }}</td>
+                                {% if provider.name == 'github' %}
+                                    <td>The ID and username of your GitHub account, the date of the link, and the email addresses GitHub has verified (the primary one becomes your account's address if the account is created this way). GitHub's access token is used for this one read and is not kept; nothing else is read (neither repositories nor organisations).</td>
+                                {% else %}
+                                    <td>The ID of your {{ provider.label }} account, your name, your email address if {{ provider.label }} has verified it (it becomes your account's address if the account is created this way) and the date of the link. {{ provider.label }}'s access token is used for this one read and is not kept; nothing else is read.</td>
+                                {% endif %}
+                                <td>To sign you in without a password, and to find your account even if you change your address at {{ provider.label }}.</td>
+                                <td>Performance of the contract.</td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td>You do the exercises</td>
+                            <td>The code written in each exercise, and the code that passed it, its status (in progress, completed), the hints viewed, the XP earned, the result of the completion check{% if aiEnabled %}, the mentor's code review{% endif %}.</td>
+                            <td>To save your work and pick it up from one device to another; to produce your course notes; to replay the tests on our servers to confirm a completion, in an isolated service that sees neither your account nor the database.</td>
+                            <td>Performance of the contract.</td>
+                        </tr>
+                        <tr>
+                            <td>You choose to appear on the leaderboard</td>
+                            <td>Your display name, your XP and the number of exercises completed become public on the leaderboard page. Nothing else (neither your email address nor your name at GitHub, Google or LinkedIn).</td>
+                            <td>The leaderboard between learners. Off by default; you can leave it at any time from “My account”.</td>
+                            <td>Consent.</td>
+                        </tr>
+                        {% if paymentsEnabled %}
+                            <tr>
+                                <td>You buy a track</td>
+                                <td>The track bought, the price, the date, the account's email address, your acceptance of the <a href="{{ path('app_terms') }}">terms of sale</a> and of the waiver of the right of withdrawal, the payment references, the link to the receipt and the invoice reference. The billing address and, for a business, its company name and VAT number are entered at Stripe, which issues the invoice. Card details are entered at Stripe and never reach us.</td>
+                                <td>To open your access, send you the confirmation, issue refunds, keep the accounts.</td>
+                                <td>Performance of the contract; legal obligation for accounting records.</td>
+                            </tr>
+                        {% endif %}
+                        <tr>
+                            <td>You send feedback on an exercise</td>
+                            <td>Your message, the exercise concerned, the number of hints used and whether the exercise was completed.</td>
+                            <td>To improve the exercises.</td>
+                            <td>Legitimate interest (improving the service), following your voluntary action.</td>
+                        </tr>
+                        <tr>
+                            <td>You write to us (contact page, request from a school or a company)</td>
+                            <td>Your name, your email address, your message and, for a group request, the organisation and the number of learners. The signed-in account, if any.</td>
+                            <td>To reply to you; to prepare a proposal for your group.</td>
+                            <td>Legitimate interest (replying to those who write to us); pre-contractual steps for a quote request.</td>
+                        </tr>
+                        {% if inviteOnly %}
+                            <tr>
+                                <td>You join the waiting list</td>
+                                <td>Your email address and the date.</td>
+                                <td>To let you know when the site opens and, if there are places, invite you to the beta. Nothing else.</td>
+                                <td>Consent: you left your address for this purpose.</td>
+                            </tr>
+                        {% endif %}
+                        {% if aiEnabled %}
+                            <tr>
+                                <td>You ask the mentor for a review or an explanation</td>
+                                <td>The exercise's code, the error message if any, and the exercise's instructions. Neither your name nor your email address.</td>
+                                <td>To review your code or explain an error.</td>
+                                <td>Performance of the contract: the mentor only steps in when you click.</td>
+                            </tr>
+                        {% endif %}
+                        <tr>
+                            <td>You visit a page</td>
+                            <td>Server technical logs: IP address, page requested, date, browser used.</td>
+                            <td>Security, abuse detection, troubleshooting.</td>
+                            <td>Legitimate interest (running the site and protecting it).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>No data is required beyond the above; the fields requested are there to provide the service, nothing more. The first chapter of every track is free once you have an account.</p>
+        </section>
+
+        <section id="cookies">
+            <h2>Cookies and browser storage</h2>
+            <p>The site only uses items that are strictly necessary for it to work, which are exempt from consent. That is why there is no banner to accept.</p>
+            <ul>
+                <li><strong>Session cookie</strong>: keeps you signed in from one page to the next, and protects forms against forged submissions. It disappears when you close the browser or sign out.</li>
+                <li><strong>Local storage (<span class="font-mono">localStorage</span>)</strong>: code written before an account was created, from the time when the first chapter could be played as a visitor, may remain in your browser. On your first sign-in, it is moved to your account and then deleted from the browser.</li>
+                <li><strong>Sandbox</strong>: the preview of your code is displayed from <span class="font-mono">{{ sandboxHost }}</span>, in an isolated page. This domain sets no cookies; it only keeps the technical files needed to run PHP in your browser.</li>
+                {%- if analytics.enabled %}
+                <li><strong>Audience measurement</strong>: to know how many people visit the site and where they come from,
+                    each page view is counted by software we host ourselves
+                    (<a href="https://umami.is" rel="noopener">Umami</a>). It sets no cookie and no visitor identifier:
+                    it records the page, the page you came from, the country, the language and the type of device, as well
+                    as a few actions in an exercise (opening it, running the tests, a completion, a hint or the solution
+                    requested), never the code you write. Your IP address is used for the calculation and then discarded,
+                    without ever being stored. Nothing makes it possible to recognise you from one visit to the next, or to
+                    follow you on another site; these measurements are shared with no one.</li>
+                {%- endif %}
+            </ul>
+        </section>
+
+        <section id="destinataires">
+            <h2>Who has access to your data</h2>
+            <ul>
+                <li><strong>The site's team</strong>, to manage accounts and read the feedback you send.</li>
+                <li><strong>The host</strong>{% if legal.hostName %}, {{ legal.hostName }}{% endif %}, which runs the servers and only accesses data in that capacity.</li>
+                {% if paymentsEnabled %}
+                    <li><strong>Stripe</strong> (Stripe Payments Europe, Ireland), payment service provider, for a purchase: it receives the account's email address, the amount and, directly from you, your payment details and billing address, which it also processes for its own obligations (fraud prevention, financial regulation). Some data may be transferred to the United States, under the European Commission's standard contractual clauses.</li>
+                {% endif %}
+                {% for provider in oauth.enabled %}
+                    {% set who = {github: 'GitHub, Inc., United States', google: 'Google Ireland Limited, Ireland', linkedin: 'LinkedIn Ireland Unlimited Company, Ireland'}[provider.name] ?? '' %}
+                    <li><strong>{{ provider.label }}</strong>{% if who %} ({{ who }}){% endif %}, if you choose to sign in with it: it learns that you are signing in to this site, and sends us the information above. {% if provider.name == 'github' %}This transfer is governed by the European Commission's standard contractual clauses.{% else %}This data may be transferred to the United States, under the European Commission's standard contractual clauses.{% endif %}</li>
+                {% endfor %}
+                {% if aiEnabled %}
+                    <li><strong>Anthropic</strong> (United States), which provides the mentor's model. Only when you ask for it, it receives the exercise's code and any error, without your name or email address. This transfer outside the European Union is governed by the European Commission's standard contractual clauses. Under its API terms, Anthropic does not use these exchanges to train its models and keeps them for a limited time for the security of the service.</li>
+                {% endif %}
+            </ul>
+            <p>No one else. {% if not aiEnabled and not paymentsEnabled and not oauth.enabled %}No data leaves the European Union.{% endif %}</p>
+        </section>
+
+        <section id="conservation">
+            <h2>How long</h2>
+            <dl class="legal-facts">
+                <div><dt>Account and progress</dt><dd>As long as your account exists. You can delete it yourself from the “My account” page: account, code, feedback and XP are erased immediately. A request by email is handled within 30 days.</dd></div>
+                {% if paymentsEnabled %}
+                    <div><dt>Purchases</dt><dd>Ten years from the purchase, the retention period for accounting records. If you delete your account, the purchase is kept without any link to it (only the email address used remains attached).</dd></div>
+                {% endif %}
+                <div><dt>Contact messages</dt><dd>As long as it takes to reply, then at most three years for a quote request that went no further; one year for the others.</dd></div>
+                <div><dt>Feedback on exercises</dt><dd>Until it has been dealt with, then deleted; in any case together with the account.</dd></div>
+                {% if inviteOnly %}
+                    <div><dt>Waiting list</dt><dd>Until the site opens, then the address is deleted; twelve months at most.</dd></div>
+                {% endif %}
+                {% if aiEnabled %}
+                    <div><dt>Exchanges with the mentor</dt><dd>The platform only keeps the code review shown with your exercise, deleted along with it. Nothing else is stored on our side.</dd></div>
+                {% endif %}
+                <div><dt>Server logs</dt><dd>Twelve months at most.</dd></div>
+                <div><dt>Backups</dt><dd>The database is backed up every day; each backup is erased after fourteen days. Deleted data therefore disappears from the backups within two weeks.</dd></div>
+            </dl>
+        </section>
+
+        <section id="droits">
+            <h2>Your rights</h2>
+            <p>You may request access to your data, its rectification or erasure, or the restriction of its processing; object to processing based on legitimate interest; and receive your data in a machine-readable format.</p>
+            <p>Your display name and your email address can be corrected, and your account deleted, directly from the “My account” page.</p>
+            <p>For anything else, write{% if legal.publisherEmail %} to <a href="mailto:{{ legal.publisherEmail }}">{{ legal.publisherEmail }}</a>{% else %} to the contact address given in the legal notice{% endif %}, from your account's email address: that is how we recognise you without asking for proof of identity. We reply within one month.</p>
+            <p>If you believe your rights are not being respected, you may lodge a complaint with the <a href="https://www.cnil.fr/fr/plaintes">CNIL</a>, the French data protection authority.</p>
+        </section>
+
+        <section id="securite">
+            <h2>Security</h2>
+            <ul>
+                <li>Passwords are hashed with a modern algorithm; no one, not even the team, can read them.</li>
+                <li>Exchanges with the site are encrypted (HTTPS).</li>
+                <li>The exercises' code runs in your browser, never on the server, and the preview runs on an isolated domain.</li>
+                <li>Administrative access is restricted and logged, and the server receives its security updates.</li>
+            </ul>
+        </section>
+
+        <section id="mineurs">
+            <h2>Minors</h2>
+            <p>The site is intended for people learning to code, students included. A minor under fifteen may only create an account with the consent of a parent or guardian.</p>
+        </section>
+
+        <section id="evolutions">
+            <h2>Changes</h2>
+            <p>This policy changes when the site changes. The date below is authoritative; you will be notified of any substantial change when you sign in.</p>
+        </section>
+
+        <p class="text-sm text-ink-muted">Last updated: {{ updatedAt|format_date('long') }}.</p>
+    </main>
+{% endblock %}
