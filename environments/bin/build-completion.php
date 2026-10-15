@@ -121,6 +121,8 @@ const NAMESPACES = [
     'Symfony\\Component\\Workflow\\TransitionBlocker',
     'Symfony\\Component\\Workflow\\Attribute\\',
     'Symfony\\Component\\Workflow\\Event\\',
+    'Symfony\\Component\\Workflow\\WorkflowTrait',
+    'Symfony\\Component\\Workflow\\WorkflowType',
     'Symfony\\Component\\PropertyAccess\\PropertyAccess',
     'Symfony\\Component\\PropertyAccess\\PropertyAccessorInterface',
     'Psr\\Clock\\ClockInterface',

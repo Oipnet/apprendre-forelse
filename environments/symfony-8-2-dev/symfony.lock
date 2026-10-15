@@ -149,6 +149,15 @@
             "config/routes/web_profiler.yaml"
         ]
     },
+    "symfony/workflow": {
+        "version": "8.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "8.2",
+            "ref": "46c0212530169ce92351ce7d58336db04f77c2a6"
+        }
+    },
     "twig/extra-bundle": {
         "version": "v3.24.0"
     }
