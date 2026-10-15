@@ -35,6 +35,8 @@ final class PackReader
     private array $versionIntros = [];
     /** @var array<string, array{markdown: string, file: string, packId: string, title: string|null}> */
     private array $conceptIntros = [];
+    /** @var array<string, array<string, array{markdown: string, file: string, packId: string, title: string|null}>> intros des notions traduites, par langue puis par notion */
+    private array $conceptIntroTranslations = [];
     /** @var array<string, list<ConceptTheme>> par framework */
     private array $conceptThemes = [];
     /** @var array<string, string> framework => pack qui en range les notions */
@@ -104,7 +106,7 @@ final class PackReader
         }
         unset($articles);
 
-        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->practiceTranslations, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->conceptThemes, $this->articles, $this->files->watched(), $this->trackTranslations, $this->exerciseTranslations, $this->outdatedTranslations, $this->incompleteTranslations);
+        return new LoadedContent($this->packs, $this->tracks, $this->exercises, $this->practices, $this->practiceTranslations, $this->exerciseReader->deprecations(), $this->versionIntros, $this->conceptIntros, $this->conceptThemes, $this->articles, $this->files->watched(), $this->trackTranslations, $this->exerciseTranslations, $this->outdatedTranslations, $this->incompleteTranslations, $this->conceptIntroTranslations);
     }
 
     private function loadPack(string $directory): void
@@ -143,7 +145,14 @@ final class PackReader
             $this->loadVersionIntro($pack, $file);
         }
         foreach (glob($directory.'/notions/*.md') ?: [] as $file) {
-            $this->loadConceptIntro($pack, $file);
+            $this->loadConceptIntro($pack, $file, Exercise::LOCALE);
+        }
+        // Les intros des notions d'une autre langue, nommées comme l'adresse de la notion dans cette langue.
+        foreach (Exercise::TRANSLATIONS as $locale) {
+            $this->files->watch($directory.'/notions/'.$locale);
+            foreach (glob($directory.'/notions/'.$locale.'/*.md') ?: [] as $file) {
+                $this->loadConceptIntro($pack, $file, $locale);
+            }
         }
         $this->files->watch($directory.'/notions/themes.yaml');
         if (is_file($directory.'/notions/themes.yaml')) {
@@ -285,15 +294,19 @@ final class PackReader
      *
      * Un en-tête YAML facultatif (entre deux lignes « --- ») peut donner `title` : le nom de la page tel qu'on le
      * cherche (« Voter Symfony : contrôler l'accès à un objet »), là où l'étiquette des exercices reste courte (« Voter »).
+     *
+     * Une notion d'une autre langue a son intro dans `<pack>/notions/<langue>/`, nommée comme son adresse dans cette
+     * langue (`notions/en/controller.md` pour /en/concepts/controller), au même format.
      */
-    private function loadConceptIntro(Pack $pack, string $file): void
+    private function loadConceptIntro(Pack $pack, string $file, string $locale): void
     {
         $slug = basename($file, '.md');
         if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug)) {
             throw new ContentException(sprintf('Intro de notion « %s » : le nom du fichier doit être l\'identifiant de la notion dans l\'adresse, en minuscules (« controleur.md »).', $file));
         }
-        if (isset($this->conceptIntros[$slug])) {
-            throw new ContentException(sprintf('Intro de notion « %s » présente deux fois (packs %s et %s).', $slug, $this->conceptIntros[$slug]['packId'], $pack->id));
+        $twin = Exercise::LOCALE === $locale ? $this->conceptIntros[$slug] ?? null : $this->conceptIntroTranslations[$locale][$slug] ?? null;
+        if (null !== $twin) {
+            throw new ContentException(sprintf('Intro de notion « %s » présente deux fois (packs %s et %s).', $slug, $twin['packId'], $pack->id));
         }
         $this->files->watch($file);
         $markdown = (string) file_get_contents($file);
@@ -315,7 +328,12 @@ final class PackReader
             throw new ContentException(sprintf('Intro de notion « %s » vide : retirez le fichier, la page reste alors hors des moteurs de recherche.', $file));
         }
 
-        $this->conceptIntros[$slug] = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id, 'title' => '' === $title ? null : $title];
+        $intro = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id, 'title' => '' === $title ? null : $title];
+        if (Exercise::LOCALE === $locale) {
+            $this->conceptIntros[$slug] = $intro;
+        } else {
+            $this->conceptIntroTranslations[$locale][$slug] = $intro;
+        }
     }
 
     /** Les clés d'un thème de notions : une autre est une faute de frappe, refusée. */

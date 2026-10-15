@@ -190,10 +190,14 @@ final class ContentRepository implements ResetInterface
         return $this->content()->versionIntros;
     }
 
-    /** @return array<string, array{markdown: string, file: string, packId: string, title: string|null}> les intros des pages de notions, par notion */
-    public function conceptIntros(): array
+    /**
+     * Les intros des pages de notions d'une langue, par notion (son slug dans cette langue).
+     *
+     * @return array<string, array{markdown: string, file: string, packId: string, title: string|null}>
+     */
+    public function conceptIntros(string $locale = Exercise::LOCALE): array
     {
-        return $this->content()->conceptIntros;
+        return Exercise::LOCALE === $locale ? $this->content()->conceptIntros : $this->content()->conceptIntroTranslations[$locale] ?? [];
     }
 
     /** @return array<string, list<ConceptTheme>> les thèmes de l'index des notions, par framework */

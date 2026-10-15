@@ -24,6 +24,7 @@ final readonly class LoadedContent
      * @param array<string, array<string, array<string, Exercise>>>               $exerciseTranslations exercices de parcours traduits par langue, puis par parcours
      * @param array<string, list<string>>                                         $outdatedTranslations traductions en retard par langue : « parcours » ou « parcours/exercice »
      * @param array<string, array<string, list<string>>>                          $incompleteTranslations parcours à la traduction incomplète, par langue : ce qui manque
+     * @param array<string, array<string, array{markdown: string, file: string, packId: string, title: string|null}>> $conceptIntroTranslations intros des pages de notions d'une autre langue, par langue puis par notion
      */
     public function __construct(
         public array $packs,
@@ -41,19 +42,20 @@ final readonly class LoadedContent
         public array $exerciseTranslations = [],
         public array $outdatedTranslations = [],
         public array $incompleteTranslations = [],
+        public array $conceptIntroTranslations = [],
     ) {
     }
 
     /**
-     * @param array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, practiceTranslations: array<string, array<string, Practice>>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>, trackTranslations: array<string, array<string, Track>>, exerciseTranslations: array<string, array<string, array<string, Exercise>>>, outdatedTranslations: array<string, list<string>>, incompleteTranslations: array<string, array<string, list<string>>>} $data
+     * @param array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, practiceTranslations: array<string, array<string, Practice>>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>, trackTranslations: array<string, array<string, Track>>, exerciseTranslations: array<string, array<string, array<string, Exercise>>>, outdatedTranslations: array<string, list<string>>, incompleteTranslations: array<string, array<string, list<string>>>, conceptIntroTranslations: array<string, array<string, array{markdown: string, file: string, packId: string, title: string|null}>>} $data
      */
     public static function fromArray(array $data): self
     {
-        return new self($data['packs'], $data['tracks'], $data['exercises'], $data['practices'], $data['practiceTranslations'], $data['deprecations'], $data['versionIntros'], $data['conceptIntros'], $data['conceptThemes'], $data['articles'], $data['watched'], $data['trackTranslations'], $data['exerciseTranslations'], $data['outdatedTranslations'], $data['incompleteTranslations']);
+        return new self($data['packs'], $data['tracks'], $data['exercises'], $data['practices'], $data['practiceTranslations'], $data['deprecations'], $data['versionIntros'], $data['conceptIntros'], $data['conceptThemes'], $data['articles'], $data['watched'], $data['trackTranslations'], $data['exerciseTranslations'], $data['outdatedTranslations'], $data['incompleteTranslations'], $data['conceptIntroTranslations']);
     }
 
     /**
-     * @return array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, practiceTranslations: array<string, array<string, Practice>>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>, trackTranslations: array<string, array<string, Track>>, exerciseTranslations: array<string, array<string, array<string, Exercise>>>, outdatedTranslations: array<string, list<string>>, incompleteTranslations: array<string, array<string, list<string>>>}
+     * @return array{packs: array<string, Pack>, tracks: array<string, Track>, exercises: array<string, array<string, Exercise>>, practices: array<string, Practice>, practiceTranslations: array<string, array<string, Practice>>, deprecations: array<string, string>, versionIntros: array<string, array{markdown: string, file: string, packId: string}>, conceptIntros: array<string, array{markdown: string, file: string, packId: string, title: string|null}>, conceptThemes: array<string, list<ConceptTheme>>, articles: array<string, array<string, Article>>, watched: array<string, string>, trackTranslations: array<string, array<string, Track>>, exerciseTranslations: array<string, array<string, array<string, Exercise>>>, outdatedTranslations: array<string, list<string>>, incompleteTranslations: array<string, array<string, list<string>>>, conceptIntroTranslations: array<string, array<string, array{markdown: string, file: string, packId: string, title: string|null}>>}
      */
     public function toArray(): array
     {
@@ -61,6 +63,7 @@ final readonly class LoadedContent
             'packs' => $this->packs, 'tracks' => $this->tracks, 'exercises' => $this->exercises, 'practices' => $this->practices, 'practiceTranslations' => $this->practiceTranslations,
             'deprecations' => $this->deprecations, 'versionIntros' => $this->versionIntros, 'conceptIntros' => $this->conceptIntros, 'conceptThemes' => $this->conceptThemes, 'articles' => $this->articles, 'watched' => $this->watched,
             'trackTranslations' => $this->trackTranslations, 'exerciseTranslations' => $this->exerciseTranslations, 'outdatedTranslations' => $this->outdatedTranslations, 'incompleteTranslations' => $this->incompleteTranslations,
+            'conceptIntroTranslations' => $this->conceptIntroTranslations,
         ];
     }
 }

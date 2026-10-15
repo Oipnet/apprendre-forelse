@@ -2,6 +2,8 @@
 
 namespace App\Seo\Page;
 
+use App\Content\ConceptIndex;
+use App\Content\Exercise;
 use App\Content\ExerciseStory;
 use App\Content\Practice;
 use App\Theme\Theme;
@@ -10,7 +12,8 @@ use App\Seo\SchemaOrg;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * L'index des notions, et la page d'une notion : le mot que l'on cherche, et ce qui le fait pratiquer.
+ * L'index des notions, et la page d'une notion : le mot que l'on cherche, et ce qui le fait pratiquer. Dans la langue
+ * de la page (/notions, /en/concepts).
  */
 final readonly class ConceptSeo
 {
@@ -20,6 +23,7 @@ final readonly class ConceptSeo
         private Theme $theme,
         private ExerciseStory $stories,
         private TranslatorInterface $translator,
+        private ConceptIndex $concepts,
     ) {
     }
 
@@ -36,13 +40,21 @@ final readonly class ConceptSeo
             ->setDescription($this->trans('notions.description', ['n' => \count($concepts)]))
             ->setCanonical($url)
             ->addStructuredData($this->schema->breadcrumb([[$this->trans('notions.fil_ariane'), $url]]));
+        // L'index existe dans chaque langue qui a des notions (hreflang).
+        foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
+            if ($locale !== $this->seo->getLanguage() && [] !== $this->concepts->all($locale)) {
+                $this->seo->addAlternate($locale, $this->schema->url('app_concepts', ['_locale' => $locale]));
+            }
+        }
     }
 
     /**
      * Une notion : c'est le mot que l'on cherche dans un moteur, et la page qui rassemble ce qui le pratique. La
      * description reprend l'intro écrite quand il y en a une.
      *
-     * @param array{name: string, slug: string, exercises: list<array<string, mixed>>, practices: list<Practice>, intro?: string|null, title?: string|null} $concept
+     * La même notion dans une autre langue, quand ConceptIndex sait la reconnaître, est annoncée (hreflang).
+     *
+     * @param array{name: string, slug: string, exercises: list<array<string, mixed>>, practices: list<Practice>, intro?: string|null, title?: string|null, translations?: array<string, string>} $concept
      */
     public function concept(array $concept): void
     {
@@ -67,6 +79,9 @@ final readonly class ConceptSeo
                 [$this->trans('notions.fil_ariane'), $this->schema->url('app_concepts')],
                 [$concept['name'], $url],
             ]));
+        foreach ($concept['translations'] ?? [] as $locale => $slug) {
+            $this->seo->addAlternate($locale, $this->schema->url('app_concept', ['_locale' => $locale, 'slug' => $slug]));
+        }
     }
 
     /** @param array<string, mixed> $parameters */
