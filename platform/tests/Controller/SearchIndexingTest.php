@@ -93,6 +93,8 @@ final class SearchIndexingTest extends WebTestCase
             'http://localhost/en/practice/exemple-map-request-header',
             // L'index des notions, sans la page de « Contrôleur » : sans intro écrite, elle ne s'indexe pas.
             'http://localhost/notions',
+            // Les notions du contenu traduit : l'index anglais, sans « Controller » (pas d'intro anglaise).
+            'http://localhost/en/concepts',
             'http://localhost/ecoles-et-entreprises',
             'http://localhost/contact',
             'http://localhost/mentions-legales',

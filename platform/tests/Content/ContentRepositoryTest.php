@@ -742,6 +742,18 @@ final class ContentRepositoryTest extends TestCase
         $this->assertSame('mutant:double', $english->exercise->objectives[0]->test);
     }
 
+    public function testUneTraductionViseSesPropresFichiersEnLectureSeule(): void
+    {
+        $this->traduction([
+            'p/practice/x/exercise.yaml' => "id: x\ntitle: X\nenvironment: symfony-8\npublished: 2026-09-01\nsummary: S\neditable: [a.php]\nreadonly: [lang/fr/validation.php]\nobjectives: [{test: testA, label: A}]",
+            'p/practice/x/i18n/en/exercise.yaml' => "title: X en\nsummary: S en\nobjectives: [{test: testA, label: A en}]\nreadonly: [lang/en/validation.php]",
+        ]);
+
+        $repository = $this->repository($this->tmp);
+        $this->assertSame(['lang/en/validation.php'], $repository->findPractice('x', 'en')?->exercise->readonly);
+        $this->assertSame(['lang/fr/validation.php'], $repository->findPractice('x', 'fr')?->exercise->readonly);
+    }
+
     /**
      * @param array<string, string> $files
      */

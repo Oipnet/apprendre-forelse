@@ -1,4 +1,4 @@
-# SEO tags of the pages served in English (home, blog, Practice, tracks): see seo+intl-icu.fr.yaml. Other keys fall back to French.
+# SEO tags of the pages served in English (home, blog, Practice, tracks, concepts): see seo+intl-icu.fr.yaml. Other keys fall back to French.
 
 commun:
     accueil: Home
@@ -41,6 +41,20 @@ parcours:
         beginner: Beginner
         intermediate: Intermediate
         advanced: Advanced
+
+notions:
+    titre: Concepts practised in exercises
+    titre_marque: "Concepts practised in exercises | {marque}"
+    description: "{n} web development concepts, each with the exercises that practise it: you write the code in your browser, and tests tell you whether it is right."
+    fil_ariane: Concepts
+
+# La page d'une notion ; {n} : ses exercices de parcours et de Pratique.
+notion:
+    titre_marque: "{notion}: {n} exercises to practise it | {marque}"
+    titre: "{notion}: {n} exercises to practise it"
+    titre_court: "{notion} in exercises"
+    description: "The {n} exercises that work on {notion}: each one sets a problem to solve by writing code in your browser, checked by tests."
+    complement: "{n} exercises to practise it, in the browser."
 
 contenu:
     notions_framework: "{notions} in {framework} – {libelle}"

@@ -68,7 +68,7 @@ final class PracticeEnglishTest extends WebTestCase
         $this->assertSame('Read a header with #[MapRequestHeader]', $crawler->filter('h1')->text());
         $this->assertStringContainsString('Rewrite VersionController with', $crawler->filter('.exercise-instructions')->text());
         $this->assertSame(['en' => 'http://localhost/en/practice/exemple-map-request-header', 'fr' => 'http://localhost/pratique/exemple-map-request-header', 'x-default' => 'http://localhost/pratique/exemple-map-request-header'], $this->alternates($crawler));
-        $this->assertCount(0, $crawler->filter('.exercise-concepts a'), 'Les pages de notions sont en français.');
+        $this->assertSame(['/en/concepts/controller'], $crawler->filter('.exercise-concepts a')->each(static fn ($a) => $a->attr('href')), 'Les pastilles mènent aux notions anglaises.');
 
         $config = json_decode((string) $crawler->filter('[data-playground]')->attr('data-config'), true);
         $this->assertSame('/en/api/exercises/pratique/exemple-map-request-header', $config['exerciseUrl']);
@@ -83,7 +83,7 @@ final class PracticeEnglishTest extends WebTestCase
         $this->assertStringContainsString('Symfony runs entirely in your browser', $exercise['environment']['framework']['startupNote'] ?? json_encode($exercise['environment']['framework']));
         $this->assertNull($exercise['practice']['versionUrl'], 'Les pages de nouveautés sont en français.');
         $this->assertNull($exercise['practice']['track'], 'Les parcours sont en français.');
-        $this->assertSame([], (array) $exercise['conceptUrls']);
+        $this->assertSame(['Controller' => '/en/concepts/controller'], $exercise['conceptUrls']);
     }
 
     /** La réussite garde la langue de l'exercice : c'est avec ses tests traduits que le verificateur la rejoue. */

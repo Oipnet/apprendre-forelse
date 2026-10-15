@@ -103,9 +103,11 @@ final class ContentCheckCommand
             $io->writeln(sprintf(' <fg=yellow>!</> %s — intro de version sans page publiée (%s)', $slug, $file));
         }
 
-        // Une intro de notion que rien n'affiche : même règle.
-        foreach ($this->concepts->orphanIntros() as $slug => $file) {
-            $io->writeln(sprintf(' <fg=yellow>!</> %s — intro de notion sans page publiée (%s)', $slug, $file));
+        // Une intro de notion que rien n'affiche : même règle, dans chaque langue (notions/en/ : le slug anglais).
+        foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
+            foreach ($this->concepts->orphanIntros($locale) as $slug => $file) {
+                $io->writeln(sprintf(' <fg=yellow>!</> %s — intro de notion sans page publiée (%s)', $slug, $file));
+            }
         }
 
         // Une traduction en retard sur l'exercice français : jouable, mais elle ne dit plus la même chose.

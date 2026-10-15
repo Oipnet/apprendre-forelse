@@ -30,7 +30,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   restent au français).
 - **Environnements par langue** : un exercice traduit tourne dans `<environnement>-<langue>` quand il existe.
   `symfony-8-app-en` (messages de Symfony en anglais, outils de test commentés en anglais) et
-  `symfony-8-doctrine-en` accueillent les traductions des exercices Symfony.
+  `symfony-8-doctrine-en` accueillent les traductions des exercices Symfony, `laravel-13-en`
+  (messages de Laravel et Faker en anglais, page d'accueil et fichiers `lang/en/` livrés) celles des exercices Laravel.
+  Une traduction peut redéfinir `readonly`, pour ouvrir en lecture seule `lang/en/…` au lieu de `lang/fr/…`.
+- **Les notions en anglais** : `/en/concepts` et `/en/concepts/<notion>`, faites du seul contenu traduit (exercices
+  de Pratique traduits, parcours entièrement traduits), sous les libellés anglais des exercices et avec des liens vers
+  leurs pages anglaises. L'intro d'une notion anglaise s'écrit dans `<pack>/notions/en/<notion>.md`, au même format
+  que la française ; sans elle, la page se suit sans s'indexer. Une notion anglaise et la notion française qu'elle
+  traduit (à la même place dans les `concepts` de leurs exercices) s'annoncent l'une l'autre (`hreflang`). Les pastilles
+  des exercices anglais mènent aux notions anglaises, et le sitemap liste l'index anglais et les notions qui ont une
+  intro.
 - **L'achat en anglais** : un parcours traduit s'achète depuis sa page anglaise (`/en/tracks/<parcours>/buy`). La
   langue de l'achat est enregistrée (migration `purchase.locale`) : page de paiement Stripe, nom du produit,
   remerciement et email de confirmation en anglais. La renonciation au droit de rétractation est cochée et conservée

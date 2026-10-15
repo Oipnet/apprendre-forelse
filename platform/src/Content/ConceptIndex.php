@@ -16,11 +16,17 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * réellement dans un moteur, là où « Les prix en pièces d'or » ne répond à aucune requête.
  *
  * N'y entre que ce qu'un visiteur sans compte peut lire : parcours publiés, Pratique publiée et parue.
+ *
+ * Une langue a ses propres notions (/en/concepts), faites de son seul contenu : les exercices de Pratique traduits et
+ * les parcours entièrement traduits, sous les libellés que leur donne la traduction (`concepts` de
+ * `i18n/<langue>/exercise.yaml`). Le slug vient de ce libellé : « Controller » → /en/concepts/controller.
  */
 final class ConceptIndex implements ResetInterface
 {
-    /** @var array<string, array{name: string, exercises: list<array<string, mixed>>, practices: list<Practice>}>|null */
-    private ?array $index = null;
+    /** @var array<string, array<string, array{name: string, exercises: list<array{exercise: Exercise, track: Track, chapter: Chapter, number: int}>, practices: list<Practice>}>> par langue */
+    private array $indexes = [];
+    /** @var array<string, array<string, array<string, string>>>|null par langue : slug => langue => slug de la même notion */
+    private ?array $translations = null;
 
     public function __construct(
         private readonly ContentRepository $content,
@@ -35,10 +41,10 @@ final class ConceptIndex implements ResetInterface
      *
      * @return list<array{name: string, slug: string, exercises: int}>
      */
-    public function all(): array
+    public function all(string $locale = Exercise::LOCALE): array
     {
         $concepts = [];
-        foreach ($this->index() as $slug => $entry) {
+        foreach ($this->index($locale) as $slug => $entry) {
             $concepts[] = ['name' => $entry['name'], 'slug' => $slug, 'exercises' => \count($entry['exercises'])];
         }
         usort($concepts, static fn (array $a, array $b) => $a['name'] <=> $b['name']);
@@ -59,6 +65,9 @@ final class ConceptIndex implements ResetInterface
      * « Autres notions », ou dans une liste sans titre quand le framework n'a pas de thèmes. Le fil rouge, la notion
      * la plus pratiquée, a son encart : rangé dans aucun thème, il n'est pas répété dans « Autres notions ».
      *
+     * Les thèmes nomment les notions par leur libellé français : dans une autre langue, l'index n'a pas de thèmes,
+     * une seule liste par framework.
+     *
      * @return list<array{
      *     id: string,
      *     label: string,
@@ -67,12 +76,13 @@ final class ConceptIndex implements ResetInterface
      *     themes: list<array{id: string, title: string, description: string, concepts: list<array{name: string, slug: string, exercises: int, live: bool}>}>,
      * }>
      */
-    public function catalog(): array
+    public function catalog(string $locale = Exercise::LOCALE): array
     {
         $frameworks = $this->environments->frameworks();
-        $declared = $this->content->conceptThemes();
+        $declared = Exercise::LOCALE === $locale ? $this->content->conceptThemes() : [];
+        $index = $this->index($locale);
         $counts = [];
-        foreach ($this->index() as $slug => $entry) {
+        foreach ($index as $slug => $entry) {
             foreach ($entry['exercises'] as $row) {
                 $framework = $this->environments->has($row['exercise']->environment) ? $this->environments->get($row['exercise']->environment)->framework->id : FrameworkRegistry::DEFAULT;
                 $counts[$framework][$slug] = ($counts[$framework][$slug] ?? 0) + 1;
@@ -88,14 +98,14 @@ final class ConceptIndex implements ResetInterface
             if ([] === $live) {
                 continue;
             }
-            $concept = fn (string $slug) => ['name' => $this->index()[$slug]['name'], 'slug' => $slug, 'exercises' => $live[$slug], 'live' => true];
+            $concept = static fn (string $slug) => ['name' => $index[$slug]['name'], 'slug' => $slug, 'exercises' => $live[$slug], 'live' => true];
 
             $themes = [];
             $placed = [];
             foreach ($declared[$id] ?? [] as $theme) {
                 $concepts = [];
                 foreach ($theme->concepts as $name) {
-                    $slug = self::slug($name);
+                    $slug = self::slug($name, $locale);
                     $placed[$slug] = true;
                     $concepts[] = isset($live[$slug]) ? $concept($slug) : ['name' => $name, 'slug' => $slug, 'exercises' => 0, 'live' => false];
                 }
@@ -105,11 +115,11 @@ final class ConceptIndex implements ResetInterface
             $ranked = $live;
             arsort($ranked);
             $top = array_key_first($ranked);
-            $featured = $ranked[$top] >= self::FEATURED_MINIMUM ? ['name' => $this->index()[$top]['name'], 'slug' => $top, 'exercises' => $ranked[$top]] : null;
+            $featured = $ranked[$top] >= self::FEATURED_MINIMUM ? ['name' => $index[$top]['name'], 'slug' => $top, 'exercises' => $ranked[$top]] : null;
 
             // Les notions qu'aucun thème ne range ; parmi les thèmes, le fil rouge a déjà son encart.
             $others = array_map($concept, array_keys(array_diff_key($live, $placed, null === $featured || [] === $themes ? [] : [$top => true])));
-            $collator = new \Collator('fr_FR');
+            $collator = new \Collator($locale);
             usort($others, static fn (array $a, array $b) => $collator->compare($a['name'], $b['name']));
             if ([] !== $others) {
                 $themes[] = ['id' => 'autres', 'title' => [] === $themes ? '' : $this->translator->trans('concept.index.autres_notions', [], 'apprentissage'), 'description' => '', 'concepts' => $others];
@@ -138,11 +148,12 @@ final class ConceptIndex implements ResetInterface
      *     related: list<array{name: string, slug: string}>,
      *     intro: string|null,
      *     title: string|null,
+     *     translations: array<string, string>,
      * }|null
      */
-    public function find(string $slug): ?array
+    public function find(string $slug, string $locale = Exercise::LOCALE): ?array
     {
-        $index = $this->index();
+        $index = $this->index($locale);
         if (!isset($index[$slug])) {
             return null;
         }
@@ -151,7 +162,7 @@ final class ConceptIndex implements ResetInterface
         $neighbours = [];
         foreach ([...$index[$slug]['exercises'], ...$index[$slug]['practices']] as $row) {
             foreach (($row instanceof Practice ? $row->exercise : $row['exercise'])->concepts as $concept) {
-                $neighbours[self::slug($concept)] = ($neighbours[self::slug($concept)] ?? 0) + 1;
+                $neighbours[self::slug($concept, $locale)] = ($neighbours[self::slug($concept, $locale)] ?? 0) + 1;
             }
         }
         unset($neighbours[$slug]);
@@ -167,16 +178,18 @@ final class ConceptIndex implements ResetInterface
                 \array_slice(array_keys($neighbours), 0, 8),
             ),
             // Écrite dans le pack, ou rien : sans texte, la page n'est qu'une liste de liens et reste hors des moteurs.
-            'intro' => $this->content->conceptIntros()[$slug]['markdown'] ?? null,
+            'intro' => $this->content->conceptIntros($locale)[$slug]['markdown'] ?? null,
             // Le nom de la page tel qu'on le cherche, s'il est écrit dans l'en-tête de l'intro.
-            'title' => $this->content->conceptIntros()[$slug]['title'] ?? null,
+            'title' => $this->content->conceptIntros($locale)[$slug]['title'] ?? null,
+            // La même notion dans les autres langues, quand on sait la reconnaître (voir translations()).
+            'translations' => $this->translations()[$locale][$slug] ?? [],
         ];
     }
 
     /** Le fichier de l'intro écrite d'une notion, ou null : sans intro, sa page ne s'indexe pas et n'entre pas dans le sitemap. */
-    public function introFile(string $slug): ?string
+    public function introFile(string $slug, string $locale = Exercise::LOCALE): ?string
     {
-        return $this->content->conceptIntros()[$slug]['file'] ?? null;
+        return $this->content->conceptIntros($locale)[$slug]['file'] ?? null;
     }
 
     /**
@@ -185,15 +198,16 @@ final class ConceptIndex implements ResetInterface
      *
      * @return array<string, string> notion => fichier
      */
-    public function orphanIntros(): array
+    public function orphanIntros(string $locale = Exercise::LOCALE): array
     {
-        return array_map(static fn (array $intro) => $intro['file'], array_diff_key($this->content->conceptIntros(), $this->index()));
+        return array_map(static fn (array $intro) => $intro['file'], array_diff_key($this->content->conceptIntros($locale), $this->index($locale)));
     }
 
     /** L'index est refait à la demande suivante, et après une écriture dans un pack (voir l'atelier). */
     public function reset(): void
     {
-        $this->index = null;
+        $this->indexes = [];
+        $this->translations = null;
     }
 
     /**
@@ -201,10 +215,10 @@ final class ConceptIndex implements ResetInterface
      *
      * @return array<string, list<string>>
      */
-    public function directories(): array
+    public function directories(string $locale = Exercise::LOCALE): array
     {
         $directories = [];
-        foreach ($this->index() as $slug => $entry) {
+        foreach ($this->index($locale) as $slug => $entry) {
             $directories[$slug] = array_values(array_unique([
                 ...array_map(static fn (array $row) => $row['exercise']->directory, $entry['exercises']),
                 ...array_map(static fn (Practice $practice) => $practice->exercise->directory, $entry['practices']),
@@ -214,15 +228,17 @@ final class ConceptIndex implements ResetInterface
         return $directories;
     }
 
-    /** L'identifiant d'une notion dans une adresse : « Boucle Twig » → « boucle-twig ». */
-    public static function slug(string $concept): string
+    /** L'identifiant d'une notion dans une adresse : « Boucle Twig » → « boucle-twig », dans la langue du libellé. */
+    public static function slug(string $concept, string $locale = Exercise::LOCALE): string
     {
-        return (new AsciiSlugger('fr'))->slug($concept)->lower()->toString();
+        return (new AsciiSlugger($locale))->slug($concept)->lower()->toString();
     }
 
     /**
      * Les notions du contenu publié, par slug. Deux libellés qui donnent le même slug partagent une page, sous
      * le premier libellé rencontré : « Boucle Twig » et « boucle twig » sont une seule notion.
+     *
+     * Dans une autre langue, les parcours qui y sont entièrement traduits et les exercices de Pratique traduits.
      *
      * @return array<string, array{
      *     name: string,
@@ -230,13 +246,17 @@ final class ConceptIndex implements ResetInterface
      *     practices: list<Practice>,
      * }>
      */
-    private function index(): array
+    private function index(string $locale): array
     {
-        if (null !== $this->index) {
-            return $this->index;
+        if (isset($this->indexes[$locale])) {
+            return $this->indexes[$locale];
         }
         $index = [];
-        foreach ($this->published->tracks() as $track) {
+        foreach ($this->published->tracks() as $published) {
+            $track = $this->content->findTrack($published->id, $locale);
+            if (null === $track) {
+                continue;
+            }
             foreach ($this->content->exercisesOf($track) as $exercise) {
                 $chapter = $this->content->chapterOf($exercise);
                 if (null === $chapter) {
@@ -244,19 +264,79 @@ final class ConceptIndex implements ResetInterface
                 }
                 $row = ['exercise' => $exercise, 'track' => $track, 'chapter' => $chapter, 'number' => ChapterOutline::numberOf($track, $chapter)];
                 foreach ($exercise->concepts as $concept) {
-                    $index[self::slug($concept)] ??= ['name' => $concept, 'exercises' => [], 'practices' => []];
-                    $index[self::slug($concept)]['exercises'][] = $row;
+                    $index[self::slug($concept, $locale)] ??= ['name' => $concept, 'exercises' => [], 'practices' => []];
+                    $index[self::slug($concept, $locale)]['exercises'][] = $row;
                 }
             }
         }
-        foreach ($this->published->practices() as $practice) {
+        foreach ($this->published->practices($locale) as $practice) {
             foreach ($practice->exercise->concepts as $concept) {
-                $index[self::slug($concept)] ??= ['name' => $concept, 'exercises' => [], 'practices' => []];
-                $index[self::slug($concept)]['practices'][] = $practice;
+                $index[self::slug($concept, $locale)] ??= ['name' => $concept, 'exercises' => [], 'practices' => []];
+                $index[self::slug($concept, $locale)]['practices'][] = $practice;
             }
         }
 
         // Une notion vue une seule fois ne relie rien : elle reste sur la page de son exercice, sans page à elle.
-        return $this->index = array_filter($index, static fn (array $entry) => \count($entry['exercises']) + \count($entry['practices']) > 1);
+        return $this->indexes[$locale] = array_filter($index, static fn (array $entry) => \count($entry['exercises']) + \count($entry['practices']) > 1);
+    }
+
+    /**
+     * Les notions qui se correspondent d'une langue à l'autre, pour que leurs pages s'annoncent (hreflang).
+     *
+     * Une traduction garde l'ordre des `concepts` de l'exercice français : la n-ième notion traduite est la n-ième
+     * notion française. Une notion traduite correspond à une notion française quand, dans tous ses exercices dont les
+     * deux listes ont la même longueur, elle se trouve à la place de cette même notion, et que chacune a sa page.
+     * Deux notions traduites qui reviennent à la même notion française ne s'annoncent pas : on ne sait pas laquelle
+     * est la bonne.
+     *
+     * @return array<string, array<string, array<string, string>>> par langue : slug => langue => slug de la même notion
+     */
+    private function translations(): array
+    {
+        if (null !== $this->translations) {
+            return $this->translations;
+        }
+        $french = $this->index(Exercise::LOCALE);
+        $translations = [];
+        foreach (Exercise::TRANSLATIONS as $locale) {
+            $pairs = [];
+            foreach ($this->index($locale) as $slug => $entry) {
+                $candidates = [];
+                foreach ([...$entry['exercises'], ...$entry['practices']] as $row) {
+                    $translated = $row instanceof Practice ? $row->exercise : $row['exercise'];
+                    $original = $row instanceof Practice
+                        ? $this->content->findPractice($translated->id)?->exercise
+                        : $this->content->findExercise((string) $translated->trackId, $translated->id);
+                    if (null === $original || \count($original->concepts) !== \count($translated->concepts)) {
+                        continue;
+                    }
+                    foreach ($translated->concepts as $position => $concept) {
+                        if (self::slug($concept, $locale) === (string) $slug) {
+                            $candidates[self::slug($original->concepts[$position])] = true;
+                        }
+                    }
+                }
+                $original = 1 === \count($candidates) ? (string) array_key_first($candidates) : null;
+                if (null !== $original && isset($french[$original])) {
+                    $pairs[$slug] = $original;
+                }
+            }
+            // Une notion française que deux notions traduites revendiquent n'a pas de traduction sûre.
+            $claims = array_count_values($pairs);
+            foreach ($pairs as $slug => $original) {
+                if (1 === $claims[$original]) {
+                    $translations[$locale][$slug][Exercise::LOCALE] = $original;
+                    $translations[Exercise::LOCALE][$original][$locale] = $slug;
+                }
+            }
+        }
+        // Deux traductions d'une même notion se nomment aussi entre elles.
+        foreach ($translations[Exercise::LOCALE] ?? [] as $versions) {
+            foreach ($versions as $locale => $slug) {
+                $translations[$locale][$slug] += array_diff_key($versions, [$locale => true]);
+            }
+        }
+
+        return $this->translations = $translations;
     }
 }

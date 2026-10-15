@@ -120,19 +120,22 @@ final readonly class Sitemap
 
             // Les notions : une page par notion travaillée par plus d'un exercice, datée de son contenu. Seules celles
             // qui ont une intro écrite s'indexent (voir ConceptController) : l'index les liste toutes, le sitemap non.
-            $conceptEntries = $conceptDates = [];
-            foreach ($this->concepts->directories() as $slug => $directories) {
-                $dates = array_map($this->dates->lastModified(...), $directories);
-                if (null !== ($intro = $this->concepts->introFile($slug))) {
-                    // Une intro réécrite change la page, sans qu'aucun exercice bouge.
-                    $dates[] = date('Y-m-d', (int) filemtime($intro));
-                    $conceptEntries[] = $this->entry('app_concept', ['slug' => $slug], max($dates));
+            // Dans chaque langue qui a des notions : /notions, puis /en/concepts.
+            foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
+                $conceptEntries = $conceptDates = [];
+                foreach ($this->concepts->directories($locale) as $slug => $directories) {
+                    $dates = array_map($this->dates->lastModified(...), $directories);
+                    if (null !== ($intro = $this->concepts->introFile((string) $slug, $locale))) {
+                        // Une intro réécrite change la page, sans qu'aucun exercice bouge.
+                        $dates[] = date('Y-m-d', (int) filemtime($intro));
+                        $conceptEntries[] = $this->entry('app_concept', ['_locale' => $locale, 'slug' => (string) $slug], max($dates));
+                    }
+                    $conceptDates[] = max($dates);
                 }
-                $conceptDates[] = max($dates);
-            }
-            if ($conceptDates) {
-                $entries[] = $this->entry('app_concepts', [], max($conceptDates));
-                array_push($entries, ...$conceptEntries);
+                if ($conceptDates) {
+                    $entries[] = $this->entry('app_concepts', ['_locale' => $locale], max($conceptDates));
+                    array_push($entries, ...$conceptEntries);
+                }
             }
 
             // Le blog dans chaque langue où un article a paru : /blog, puis /en/blog.

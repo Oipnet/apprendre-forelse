@@ -66,7 +66,7 @@ final readonly class ExercisePayloadFactory
         // Un exercice de Pratique n'a ni suite ni fiche : il dit d'où vient la fonctionnalité.
         $practice = null === $exercise->trackId ? $this->content->findPractice($exercise->id, $exercise->locale) : null;
         // Après la réussite, la Pratique propose le parcours du même framework, s'il y en a un de visible.
-        // Les parcours, les pages de notions et de nouveautés sont en français : une traduction n'y renvoie pas.
+        // Les parcours et les pages de nouveautés sont en français : une traduction n'y renvoie pas.
         $translated = Exercise::LOCALE !== $exercise->locale;
         $practiceTrack = null === $practice || $translated ? null : $this->practiceTracks->of($practice);
         // Dernier exercice d'un chapitre doté d'une fiche de cours : la réussite la débloque.
@@ -78,8 +78,8 @@ final readonly class ExercisePayloadFactory
             'trackId' => $exercise->trackId,
             'title' => $exercise->title,
             'concepts' => $exercise->concepts,
-            // Les notions qui ont leur page : les pastilles du volet Consignes y mènent (voir ConceptIndex).
-            'conceptUrls' => (object) ($translated ? [] : $this->conceptUrls($exercise->concepts)),
+            // Les notions qui ont leur page, dans la langue de l'exercice : les pastilles du volet Consignes y mènent (voir ConceptIndex).
+            'conceptUrls' => (object) $this->conceptUrls($exercise->concepts, $exercise->locale),
             'xp' => $exercise->xp,
             // « free » : le premier chapitre d'un parcours, gratuit pour tout compte ; « account » : le reste, qui demande un accès.
             'access' => $this->access->isFreeExercise($exercise) ? 'free' : 'account',
@@ -174,13 +174,13 @@ final readonly class ExercisePayloadFactory
      *
      * @return array<string, string> notion => adresse de sa page, pour celles qui en ont une
      */
-    private function conceptUrls(array $concepts): array
+    private function conceptUrls(array $concepts, string $locale): array
     {
-        $pages = array_column($this->concepts->all(), 'slug', 'slug');
+        $pages = array_column($this->concepts->all($locale), 'slug', 'slug');
         $urls = [];
         foreach ($concepts as $concept) {
-            if (isset($pages[$slug = ConceptIndex::slug($concept)])) {
-                $urls[$concept] = $this->urls->generate('app_concept', ['slug' => $slug]);
+            if (isset($pages[$slug = ConceptIndex::slug($concept, $locale)])) {
+                $urls[$concept] = $this->urls->generate('app_concept', ['_locale' => $locale, 'slug' => $slug]);
             }
         }
 

@@ -1,0 +1,9 @@
+# The English version of laravel-13, used by English translations of its exercises (the engine picks
+# <environment>-<language> when it exists): English locale for Laravel's messages and Faker (config/app.php,
+# since laravel-13's .env sets APP_LOCALE=fr).
+# Il prolonge laravel-13 : ne vivent ici que les fichiers qu'il remplace.
+id: laravel-13-en
+extends: laravel-13
+title: Laravel 13 (English) — Blade, Eloquent (SQLite), PHPUnit
+php: '8.4'
+framework: laravel

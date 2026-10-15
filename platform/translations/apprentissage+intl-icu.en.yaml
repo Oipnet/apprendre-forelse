@@ -191,6 +191,30 @@ chapter:
         exercices: The chapter's exercises
         voisins: Neighbouring chapters
 
+concept:
+    index:
+        titre: Concepts covered in the exercises
+        fil: Concepts
+        intro_themes: "Every exercise states what it works on. Here are those concepts, grouped by theme: pick one to see the exercises that practise it."
+        intro: "Every exercise states what it works on. Here are all those concepts, and where to practise them."
+        frameworks: Frameworks
+        fil_rouge: The common thread
+        fil_rouge_texte: "The most practised concept in {framework}: it comes up in {n} exercises, across all themes."
+        voir_exercices: "See the {n} exercises"
+        filtrer: Filter by theme
+        notions: "{n, plural, one {# concept} other {# concepts}}"
+        # Les notions qu'aucun thème du pack ne range.
+        autres_notions: Other concepts
+        aucune: "No concept is practised by more than one exercise yet."
+    show:
+        notion: Concept
+        resume: "{n, plural, one {# exercise works} other {# exercises work}} on this concept, by writing code in the browser."
+        parcours: In the tracks
+        chapitre: "chapter {numero}: {titre}"
+        pratique: In Practice
+        voisines: Related concepts
+        toutes: "← All concepts"
+
 defense:
     mode:
         online: Online
