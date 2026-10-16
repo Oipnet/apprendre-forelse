@@ -200,10 +200,10 @@ final class ContentRepository implements ResetInterface
         return Exercise::LOCALE === $locale ? $this->content()->conceptIntros : $this->content()->conceptIntroTranslations[$locale] ?? [];
     }
 
-    /** @return array<string, list<ConceptTheme>> les thèmes de l'index des notions, par framework */
-    public function conceptThemes(): array
+    /** @return array<string, list<ConceptTheme>> les thèmes de l'index des notions dans une langue, par framework */
+    public function conceptThemes(string $locale = Exercise::LOCALE): array
     {
-        return $this->content()->conceptThemes;
+        return $this->content()->conceptThemes[$locale] ?? [];
     }
 
     /** @return array<string, Article> les articles du blog dans une langue, du plus récent au plus ancien, publiés ou non */

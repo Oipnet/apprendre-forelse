@@ -549,6 +549,21 @@ final class ContentRepositoryTest extends TestCase
         $this->assertSame('', $themes['symfony'][1]->description, 'La description est facultative.');
     }
 
+    public function testChargeLesThemesDeNotionsDUneAutreLangue(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P");
+        $filesystem->dumpFile($this->tmp.'/p/notions/themes.yaml', "symfony:\n  - {title: Sécurité, notions: [Pare-feu]}");
+        $filesystem->dumpFile($this->tmp.'/p/notions/en/themes.yaml', "symfony:\n  - {title: Security, description: Who gets in., notions: [Firewall]}");
+
+        $repository = $this->repository($this->tmp);
+
+        $this->assertSame(['Pare-feu'], $repository->conceptThemes()['symfony'][0]->concepts);
+        $english = $repository->conceptThemes('en')['symfony'][0];
+        $this->assertSame(['security', 'Security', 'Who gets in.', ['Firewall']], [$english->id, $english->title, $english->description, $english->concepts]);
+        $this->assertSame([], $repository->conceptThemes('de'), 'Sans fichier, une langue n\'a pas de thèmes.');
+    }
+
     /** @return iterable<string, array{string, string}> */
     public static function themesDeNotionsRefuses(): iterable
     {

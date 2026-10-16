@@ -14,7 +14,7 @@ use Psr\Cache\CacheItemPoolInterface;
 final readonly class PackLoader
 {
     /** À augmenter quand LoadedContent change de forme : un cache d'avant n'a pas la nouvelle clé. */
-    private const int CACHE_FORMAT = 8;
+    private const int CACHE_FORMAT = 9;
 
     /**
      * @param list<string> $packPaths dossiers de packs, ou dossiers contenant des packs

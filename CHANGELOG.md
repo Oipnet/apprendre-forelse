@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Les notions anglaises rangées par thème** : `<pack>/notions/en/themes.yaml`, au même format que
+  `notions/themes.yaml` mais avec les libellés anglais des notions, range l'index `/en/concepts` comme l'index
+  français. Sans ce fichier, l'index anglais reste une seule liste par framework.
+
 ## 3.13.0 — 2026-10-16
 
 ### Ajouté
