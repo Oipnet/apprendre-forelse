@@ -20,6 +20,14 @@ show:
     # Le lien vers le même article dans une autre langue, écrit dans cette langue.
     version:
         en: "Read this article in English"
+    # L'invitation à faire l'exercice dont part l'article (en tête et en fin), ou les exercices de Pratique.
+    cta:
+        haut: "Cet article part d'un exercice, à faire dans le navigateur :"
+        titre: "À vous de jouer"
+        titre_pratique: "Essayez dans le navigateur"
+        detail: "Un vrai framework, qui tourne dans votre navigateur : rien à installer."
+        bouton: "Faire l'exercice"
+        bouton_pratique: "Voir les exercices de Pratique"
 
 feed:
     description: "Les articles de {site}."

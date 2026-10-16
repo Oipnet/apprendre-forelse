@@ -101,6 +101,7 @@ final class PackReader
             $this->practiceTranslations[$locale] = array_replace(array_intersect_key($this->practices, $translations), $translations);
         }
         $this->checkTranslations();
+        $this->checkArticlePractices();
         foreach ($this->articles as &$articles) {
             uasort($articles, static fn (Article $a, Article $b) => [$b->published, $a->slug] <=> [$a->published, $b->slug]);
         }
@@ -173,7 +174,7 @@ final class PackReader
     }
 
     /** Les clés de l'en-tête d'un article : une autre (« date », « auteur »…) est une faute de frappe, refusée. */
-    private const array ARTICLE_KEYS = ['title', 'description', 'published', 'updated', 'visibility'];
+    private const array ARTICLE_KEYS = ['title', 'description', 'published', 'updated', 'visibility', 'practice'];
     /** Une traduction nomme en plus l'article français qu'elle traduit. */
     private const array TRANSLATION_KEYS = [...self::ARTICLE_KEYS, 'translation_of'];
 
@@ -233,6 +234,7 @@ final class PackReader
             visibility: $visibility,
             locale: $locale,
             translationOf: Article::LOCALE === $locale ? null : $this->files->required($meta, 'translation_of', $file),
+            practice: isset($meta['practice']) ? (string) $meta['practice'] : null,
         );
     }
 
@@ -252,6 +254,18 @@ final class PackReader
                     throw new ContentException(sprintf('L\'article « %s » a deux traductions (%s et %s).', $article->translationOf, $twin, $article->file));
                 }
                 $translated[$article->translationOf] = $article->file;
+            }
+        }
+    }
+
+    /** L'exercice qu'un article invite à faire existe : une faute de frappe donnerait une invitation qui ne mène nulle part. */
+    private function checkArticlePractices(): void
+    {
+        foreach ($this->articles as $articles) {
+            foreach ($articles as $article) {
+                if (null !== $article->practice && !isset($this->practices[$article->practice])) {
+                    throw new ContentException(sprintf('%s : « practice » nomme l\'exercice de Pratique « %s », introuvable.', $article->file, $article->practice));
+                }
             }
         }
     }

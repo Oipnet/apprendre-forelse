@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Les articles invitent à faire leur exercice** : la clé `practice:` d'un article nomme l'exercice de Pratique dont
+  il part. La page y invite sous le titre et dans un encart en fin d'article ; sans la clé, l'encart mène à la
+  Pratique. Les lecteurs venus d'un autre site lisaient l'article puis repartaient. Un moteur antérieur refuse la clé :
+  mettre à jour le moteur avant les packs qui l'emploient.
+
 ## 3.14.0 — 2026-10-16
 
 ### Ajouté

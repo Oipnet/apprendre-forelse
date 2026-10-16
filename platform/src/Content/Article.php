@@ -34,6 +34,11 @@ final readonly class Article
         public string $locale = self::LOCALE,
         /** Une traduction : le slug de l'article français qu'elle traduit. */
         public ?string $translationOf = null,
+        /**
+         * L'exercice de Pratique dont part l'article (clé `practice`, son identifiant) : la page invite à le faire,
+         * en tête et en fin d'article. Une traduction sans cette clé reprend celle de l'article français.
+         */
+        public ?string $practice = null,
     ) {
     }
 

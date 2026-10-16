@@ -20,6 +20,14 @@ show:
     # Link to the same article in another language, written in that language.
     version:
         fr: "Lire cet article en français"
+    # Invitation to do the exercise the article starts from (top and bottom), or the Practice exercises.
+    cta:
+        haut: "This article starts from an exercise you can do in your browser:"
+        titre: "Your turn"
+        titre_pratique: "Try it in your browser"
+        detail: "A real framework, running in your browser: nothing to install."
+        bouton: "Do the exercise"
+        bouton_pratique: "Browse the Practice exercises"
 
 feed:
     description: "Articles from {site}."

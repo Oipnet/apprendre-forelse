@@ -415,6 +415,8 @@ final class ContentRepositoryTest extends TestCase
         $this->assertTrue($repository->findArticle('article-en-preparation')?->isRestricted());
         $this->assertTrue($repository->findArticle('article-programme')?->isScheduled(new \DateTimeImmutable('2026-09-30')));
         $this->assertSame('2026-09-05', $repository->findArticle('les-tests-en-direct')?->modified(), 'Sans révision, la date de parution.');
+        $this->assertSame('nouveaute-recente', $article->practice, 'L\'exercice de Pratique dont part l\'article.');
+        $this->assertNull($repository->findArticle('les-tests-en-direct')?->practice);
     }
 
     /** @return iterable<string, array{string, string, string}> */
@@ -430,6 +432,7 @@ final class ContentRepositoryTest extends TestCase
         yield 'sans texte' => ['a', "---\n$header\n---\n\n", 'article sans texte'];
         yield 'description en HTML' => ['a', "---\ntitle: T\ndescription: <b>D</b>\npublished: 2026-10-06\n---\nTexte", 'sans balise HTML'];
         yield 'visibilité' => ['a', "---\n$header\nvisibility: secret\n---\nTexte", 'visibilité « secret » inconnue'];
+        yield 'exercice inconnu' => ['a', "---\n$header\npractice: inconnu\n---\nTexte", '« practice » nomme l\'exercice de Pratique « inconnu », introuvable'];
     }
 
     #[DataProvider('articlesRefuses')]
