@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.14.0 — 2026-10-16
+
 ### Ajouté
 
 - **Les notions anglaises rangées par thème** : `<pack>/notions/en/themes.yaml`, au même format que
