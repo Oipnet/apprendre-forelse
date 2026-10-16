@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.13.0 — 2026-10-16
+
 ### Ajouté
 
 - **Traduire un exercice de Pratique depuis l'atelier** (`/atelier/pratique/<exercice>/anglais`) : la version anglaise
