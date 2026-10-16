@@ -13,6 +13,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Les notions anglaises rangées par thème** : `<pack>/notions/en/themes.yaml`, au même format que
   `notions/themes.yaml` mais avec les libellés anglais des notions, range l'index `/en/concepts` comme l'index
   français. Sans ce fichier, l'index anglais reste une seule liste par framework.
+- Environnement `symfony-8-2-dev` : le composant Workflow (8.2.x-dev), qui décrit une machine à états ou un workflow
+  dans une classe (`#[AsWorkflow]`, `#[Transition]`, `#[Place]`, `WorkflowTrait`). Les autres paquets ne changent pas.
 
 ## 3.13.0 — 2026-10-16
 
@@ -55,8 +57,6 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Complétion des fonctions dans l'éditeur** : les fonctions de PHP (`str_contains`, `array_map`, `sprintf`…) et les
   helpers globaux de Laravel (`route`, `view`, `redirect`, `old`…) ou de Symfony (`dump`, `dd`) sont proposés, avec
   l'aide aux paramètres. L'index de complétion de chaque environnement les liste désormais (`functions`).
-- Environnement `symfony-8-2-dev` : le composant Workflow (8.2.x-dev), qui décrit une machine à états ou un workflow
-  dans une classe (`#[AsWorkflow]`, `#[Transition]`, `#[Place]`, `WorkflowTrait`). Les autres paquets ne changent pas.
 
 ### Corrigé
 
