@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.15.0 — 2026-10-16
+
 ### Ajouté
 
 - **Les articles invitent à faire leur exercice** : la clé `practice:` d'un article nomme l'exercice de Pratique dont
