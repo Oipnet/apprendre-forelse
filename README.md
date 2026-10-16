@@ -253,6 +253,7 @@ Les résultats s'exportent en CSV.
   published: 2026-10-06                                 # obligatoire ; une date à venir programme l'article
   updated: 2026-10-20                                   # facultative : dernière révision du fond
   visibility: admin                                     # facultative : en préparation
+  practice: laravel-13-26-read-through                  # facultative : l'exercice de Pratique dont part l'article
   ---
   ```
 
@@ -260,6 +261,12 @@ Les résultats s'exportent en CSV.
   n'est ni dans la liste `/blog` ni dans le sitemap ; seuls les administrateurs le lisent à son adresse. Une instance
   dont aucun pack n'a d'article paru n'a pas de blog : `/blog` répond 404 et le pied de page n'y mène pas. Chaque
   article porte ses données structurées (`BlogPosting`) ; sa date dans le sitemap est `updated`, à défaut `published`.
+
+  Chaque article se termine par une invitation à essayer dans le navigateur. Avec `practice:` (l'identifiant d'un
+  exercice de Pratique, qui doit exister), elle mène à cet exercice, et une ligne sous le titre y invite aussi ; sans,
+  elle mène à la liste des exercices de Pratique. Une traduction sans `practice:` reprend celle de l'article
+  français ; si l'exercice n'est pas traduit, elle invite à la Pratique anglaise. Les clics se comptent dans Umami
+  (événements `article-exercice`, avec sa position, et `article-pratique`).
 
   Un article se traduit en anglais dans `<pack>/articles/en/<slug>.md`, publié sur `/en/blog/<slug>` avec sa propre
   adresse (`running-symfony-in-the-browser.md`). Même en-tête, plus `translation_of:`, le nom de l'article français

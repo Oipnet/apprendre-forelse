@@ -13,6 +13,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Les notions anglaises rangées par thème** : `<pack>/notions/en/themes.yaml`, au même format que
   `notions/themes.yaml` mais avec les libellés anglais des notions, range l'index `/en/concepts` comme l'index
   français. Sans ce fichier, l'index anglais reste une seule liste par framework.
+- **Les articles invitent à faire leur exercice** : la clé `practice:` d'un article nomme l'exercice de Pratique dont
+  il part. La page y invite sous le titre et dans un encart en fin d'article ; sans la clé, l'encart mène à la
+  Pratique. Les lecteurs venus d'un autre site lisaient l'article puis repartaient. Un moteur antérieur refuse la clé :
+  mettre à jour le moteur avant les packs qui l'emploient.
 
 ## 3.13.0 — 2026-10-16
 

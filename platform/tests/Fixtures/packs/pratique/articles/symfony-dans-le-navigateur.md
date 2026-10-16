@@ -3,6 +3,7 @@ title: Symfony dans le navigateur, sans serveur
 description: Comment un vrai projet Symfony tourne entièrement dans le navigateur, avec PHP compilé en WebAssembly, ses pages comme ses tests.
 published: 2026-09-20
 updated: 2026-09-25
+practice: nouveaute-recente
 ---
 
 # Symfony dans le navigateur, sans serveur

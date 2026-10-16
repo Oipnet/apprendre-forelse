@@ -86,6 +86,16 @@ final readonly class Blog
         return array_filter($this->content->translationsOf($article), static fn (Article $a) => !$a->isRestricted() && !$a->isScheduled($now));
     }
 
+    /** L'exercice de Pratique dont part l'article : le sien, ou celui de l'article français qu'il traduit. */
+    public function practiceOf(Article $article): ?string
+    {
+        if (null !== $article->practice || null === $article->translationOf) {
+            return $article->practice;
+        }
+
+        return $this->content->findArticle($article->translationOf)?->practice;
+    }
+
     /** La langue de la page demandée, si le blog la parle ; le français sinon. */
     private function locale(): string
     {

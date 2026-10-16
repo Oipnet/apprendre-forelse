@@ -3,7 +3,11 @@
 
 {#
   Un article du blog, rendu depuis le Markdown de son pack (voir App\Content\Article).
-  Variables : article, html, scheduled, translations (le même article dans les autres langues), previous, next.
+  Variables : article, html, scheduled, translations (le même article dans les autres langues), practice (l'exercice
+  dont part l'article, ou null), previous, next.
+
+  L'invitation à faire l'exercice apparaît deux fois : en tête, pour qui veut essayer avant de lire, et en fin d'article,
+  là où le lecteur arrivé d'un autre site repartirait. Sans exercice, elle mène aux exercices de Pratique.
 #}
 {% block title %}{{ article.title }} · {{ theme.name }}{% endblock %}
 
@@ -35,10 +39,26 @@
                 {%- for locale, translation in translations %}
                 <p class="blog-translation mt-2 text-sm"><a href="{{ path('app_article', {_locale: locale, slug: translation.slug}) }}" hreflang="{{ locale }}" lang="{{ locale }}">{{ ('show.version.' ~ locale)|trans }}</a></p>
                 {%- endfor %}
+                {%- if practice %}
+                <p class="blog-cta-top mt-4 text-sm">{{ 'show.cta.haut'|trans }} <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}" data-umami-event="article-exercice" data-umami-event-position="haut">{{ practice.exercise.title }} →</a></p>
+                {%- endif %}
             </header>
 
             <div class="lesson prose prose-theme mt-8 max-w-none">{{ html|raw }}</div>
         </article>
+
+        <aside class="blog-cta mt-10 rounded-md border border-line bg-bg-2 px-5 py-5" aria-labelledby="blog-cta-titre">
+            {% if practice %}
+                <h2 id="blog-cta-titre" class="text-lg font-semibold">{{ 'show.cta.titre'|trans }}</h2>
+                <p class="mt-2"><strong>{{ practice.exercise.title }}</strong> · {{ practice.summary }}</p>
+                <p class="mt-1 text-sm text-ink-muted">{{ 'show.cta.detail'|trans }}</p>
+                <a class="btn btn-primary mt-4" href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}" data-umami-event="article-exercice" data-umami-event-position="fin">{{ 'show.cta.bouton'|trans }} →</a>
+            {% else %}
+                <h2 id="blog-cta-titre" class="text-lg font-semibold">{{ 'show.cta.titre_pratique'|trans }}</h2>
+                <p class="mt-2 text-sm text-ink-muted">{{ 'show.cta.detail'|trans }}</p>
+                <a class="btn btn-primary mt-4" href="{{ path('app_practice') }}" data-umami-event="article-pratique">{{ 'show.cta.bouton_pratique'|trans }} →</a>
+            {% endif %}
+        </aside>
 
         {% if previous or next %}
             <nav class="blog-nav mt-12 flex flex-wrap justify-between gap-4 border-t border-line pt-6" aria-label="{{ 'show.autres'|trans }}">

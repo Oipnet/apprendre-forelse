@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Content\Article;
 use App\Content\Blog;
 use App\Content\LessonRenderer;
+use App\Content\PracticeVisibility;
 use App\Seo\Page\BlogSeo;
 use App\Seo\SchemaOrg;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -73,7 +74,7 @@ final class BlogController extends AbstractController
     }
 
     #[Route(['fr' => '/blog/{slug}', 'en' => '/en/blog/{slug}'], name: 'app_article', requirements: ['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'], methods: ['GET'])]
-    public function show(string $slug, Blog $blog, BlogSeo $seo, LessonRenderer $markdown): Response
+    public function show(string $slug, Blog $blog, BlogSeo $seo, LessonRenderer $markdown, PracticeVisibility $practices): Response
     {
         $article = $blog->find($slug) ?? throw $this->createNotFoundException();
         $translations = $blog->translations($article);
@@ -85,6 +86,9 @@ final class BlogController extends AbstractController
             'html' => $markdown->toHtmlUnderTitle($article->markdown),
             'scheduled' => $blog->isScheduled($article),
             'translations' => $translations,
+            // L'exercice dont part l'article, s'il est visible dans cette langue : la page invite à le faire. Sans lui,
+            // elle invite aux exercices de Pratique en général. Un lecteur arrivé d'ailleurs repart sinon après l'article.
+            'practice' => null !== ($id = $blog->practiceOf($article)) ? $practices->find($id) : null,
             ...$blog->neighbours($article),
         ]);
     }

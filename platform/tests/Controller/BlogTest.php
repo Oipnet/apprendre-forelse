@@ -2,6 +2,8 @@
 
 namespace App\Tests\Controller;
 
+use App\Content\Blog;
+use App\Content\ContentRepository;
 use App\Entity\User;
 use App\Tests\DatabaseTrait;
 use App\Tests\PacksTrait;
@@ -97,6 +99,41 @@ final class BlogTest extends WebTestCase
         $this->assertSame('2026-09-25', $types['BlogPosting']['dateModified']);
         $this->assertSame('http://localhost/blog/symfony-dans-le-navigateur', $types['BlogPosting']['url']);
         $this->assertSame(['Accueil', 'Le blog', 'Symfony dans le navigateur, sans serveur'], array_column($types['BreadcrumbList']['itemListElement'], 'name'));
+    }
+
+    public function testUnArticleInviteAFaireLExerciceDontIlPart(): void
+    {
+        $crawler = $this->client->request('GET', '/blog/symfony-dans-le-navigateur');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('/pratique/nouveaute-recente', $crawler->filter('article header .blog-cta-top a')->attr('href'), 'En tête, pour qui veut essayer avant de lire.');
+        $this->assertSame('Une nouveauté récente →', $crawler->filter('article header .blog-cta-top a')->text());
+        $cta = $crawler->filter('aside.blog-cta');
+        $this->assertSame('/pratique/nouveaute-recente', $cta->filter('a.btn')->attr('href'), 'En fin d\'article, là où le lecteur repartirait.');
+        $this->assertStringContainsString('La fonctionnalité de la dernière version.', $cta->text(), 'Le résumé de l\'exercice.');
+        $this->assertSame('article-exercice', $cta->filter('a.btn')->attr('data-umami-event'), 'Le clic se mesure.');
+    }
+
+    public function testSansExerciceLArticleInviteALaPratique(): void
+    {
+        $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
+
+        $this->assertCount(0, $crawler->filter('.blog-cta-top'));
+        $this->assertSame('/pratique', $crawler->filter('aside.blog-cta a.btn')->attr('href'));
+    }
+
+    public function testUneTraductionReprendLExerciceDeLArticleFrancais(): void
+    {
+        $blog = static::getContainer()->get(Blog::class);
+        $translation = static::getContainer()->get(ContentRepository::class)->findArticle('symfony-in-the-browser', 'en');
+        $this->assertNotNull($translation);
+        $this->assertSame('nouveaute-recente', $blog->practiceOf($translation));
+
+        // L'exercice n'est pas traduit : la page anglaise invite aux exercices de Pratique en anglais.
+        $crawler = $this->client->request('GET', '/en/blog/symfony-in-the-browser');
+        $this->assertCount(0, $crawler->filter('.blog-cta-top'));
+        $this->assertSame('/en/practice', $crawler->filter('aside.blog-cta a.btn')->attr('href'));
+        $this->assertStringContainsString('Browse the Practice exercises', $crawler->filter('aside.blog-cta')->text());
     }
 
     public function testUnArticleNonParuNExistePasPourLesVisiteurs(): void
