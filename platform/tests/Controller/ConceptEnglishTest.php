@@ -87,6 +87,20 @@ final class ConceptEnglishTest extends WebTestCase
         $this->assertStringNotContainsString('<loc>http://localhost/en/concepts/controller</loc>', $sitemap);
     }
 
+    /** Les thèmes anglais (`notions/en/themes.yaml`) rangent l'index anglais par les libellés anglais. */
+    public function testLesThemesAnglaisRangentLIndexAnglais(): void
+    {
+        $this->usePacks(__DIR__.'/../../../examples/packs', __DIR__.'/../Fixtures/packs/pratique');
+        $this->client = $this->restartClient();
+
+        $symfony = $this->client->request('GET', '/en/concepts')->filter('#concepts-symfony');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('Foundations', $symfony->filter('#concepts-symfony-foundations')->text());
+        $this->assertSame(['/en/concepts/controller'], $symfony->filter('.concepts-list a')->each(static fn (Crawler $a) => $a->attr('href')));
+        $this->assertStringContainsString('Routing', $symfony->filterXPath('descendant::li[not(a)]')->text(), 'Une notion rangée sans page s\'annonce, sans lien.');
+    }
+
     /** L'intro anglaise s'écrit dans `notions/en/`, nommée comme l'adresse anglaise de la notion (controller.md). */
     public function testUneIntroAnglaiseOuvreLaPageEtLIndexe(): void
     {

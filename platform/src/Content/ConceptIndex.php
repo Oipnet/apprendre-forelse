@@ -65,8 +65,8 @@ final class ConceptIndex implements ResetInterface
      * « Autres notions », ou dans une liste sans titre quand le framework n'a pas de thèmes. Le fil rouge, la notion
      * la plus pratiquée, a son encart : rangé dans aucun thème, il n'est pas répété dans « Autres notions ».
      *
-     * Les thèmes nomment les notions par leur libellé français : dans une autre langue, l'index n'a pas de thèmes,
-     * une seule liste par framework.
+     * Les thèmes nomment les notions par leur libellé dans la langue de l'index : une autre langue a ses propres
+     * thèmes (`<pack>/notions/<langue>/themes.yaml`), sans lesquels son index est une seule liste par framework.
      *
      * @return list<array{
      *     id: string,
@@ -79,7 +79,7 @@ final class ConceptIndex implements ResetInterface
     public function catalog(string $locale = Exercise::LOCALE): array
     {
         $frameworks = $this->environments->frameworks();
-        $declared = Exercise::LOCALE === $locale ? $this->content->conceptThemes() : [];
+        $declared = $this->content->conceptThemes($locale);
         $index = $this->index($locale);
         $counts = [];
         foreach ($index as $slug => $entry) {

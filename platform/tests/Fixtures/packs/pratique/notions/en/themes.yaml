@@ -1,0 +1,4 @@
+symfony:
+  - title: Foundations
+    description: What makes an application run.
+    notions: [Controller, Routing]
