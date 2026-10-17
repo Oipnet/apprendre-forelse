@@ -1,0 +1,6 @@
+# Environnement d'exécution : symfony-8-2-dev, plus Doctrine ORM (SQLite) et le chiffrement des colonnes du composant
+# KeyManagement (#[Encrypted], #[BlindIndexed]). Il prolonge symfony-8-2-dev : ne vivent ici que les fichiers qu'il
+# ajoute ou remplace. Le composer.lock est le sien : les paquets Symfony 8.2.x-dev y sont plus récents que dans sa base.
+id: symfony-8-2-doctrine-dev
+extends: symfony-8-2-dev
+title: Symfony 8.2 en développement — Doctrine ORM (SQLite), KeyManagement, PHPUnit
