@@ -123,6 +123,9 @@ const NAMESPACES = [
     'Symfony\\Component\\Workflow\\Event\\',
     'Symfony\\Component\\Workflow\\WorkflowTrait',
     'Symfony\\Component\\Workflow\\WorkflowType',
+    // KeyManagement : colonnes chiffrées et index aveugles (symfony-8-2-doctrine-dev)
+    'Symfony\\Component\\KeyManagement\\Bridge\\DoctrineOrm\\Attribute\\',
+    'Symfony\\Component\\KeyManagement\\BlindIndex',
     'Symfony\\Component\\PropertyAccess\\PropertyAccess',
     'Symfony\\Component\\PropertyAccess\\PropertyAccessorInterface',
     'Psr\\Clock\\ClockInterface',

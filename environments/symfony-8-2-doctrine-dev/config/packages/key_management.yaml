@@ -1,0 +1,9 @@
+# Le KMS est local (OpenSSL, AES-256-GCM) : le PHP du navigateur n'a pas l'extension sodium, et un vrai KMS (AWS, Vault…)
+# est hors d'atteinte du bac à sable. En production, KMS_DSN désignerait ce service.
+key_management:
+    clients:
+        default: '%env(KMS_DSN)%'
+    # Les clés de données vivent en base (table key_management_data_keys), chiffrées par la clé maîtresse « app » :
+    # la clé d'un #[Encrypted] n'est alors qu'un nom de portée, et chaque portée reçoit sa propre clé de données.
+    store:
+        key_id: app
