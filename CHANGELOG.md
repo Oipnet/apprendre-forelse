@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Environnement `symfony-8-2-doctrine-dev` : `symfony-8-2-dev`, plus Doctrine ORM (SQLite) et le composant KeyManagement
+  (8.2.x-dev), pour les exercices de Pratique sur les colonnes chiffrées (`#[Encrypted]`) et les index aveugles
+  (`#[BlindIndexed]`). Le KMS est local (OpenSSL), car le PHP du navigateur n'a pas l'extension sodium, et sa clé
+  maîtresse, publique, est dans le `.env`. `symfony-8-2-dev` ne change pas.
+
 ### Modifié
 
 - **Les robots ne sont plus comptés dans la mesure d'audience** : un navigateur piloté par un robot
