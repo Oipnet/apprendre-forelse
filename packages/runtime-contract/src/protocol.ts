@@ -3,7 +3,7 @@ import type { BootProgress, EnvironmentSpec, Runtime } from './runtime.ts';
 /** Méthodes exposées par un worker : exactement celles du Runtime (sauf l'abonnement aux redémarrages, local à la page). */
 export type WorkerMethod = Exclude<keyof Runtime, 'onRestart'>;
 
-/** Les méthodes qu'un runtime peut ne pas avoir (runCommand) : un worker peut ne pas les servir. */
+/** Les méthodes qu'un runtime peut ne pas avoir (runCommand, inspectDatabase) : un worker peut ne pas les servir. */
 export type OptionalWorkerMethod = { [M in WorkerMethod]-?: undefined extends Runtime[M] ? M : never }[WorkerMethod];
 
 /**

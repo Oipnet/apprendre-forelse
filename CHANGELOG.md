@@ -8,6 +8,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Onglet « Base » dans le playground** : à côté de l'aperçu, de la console et des requêtes, il montre les bases SQLite
+  que l'application a créées dans le projet (`var/`, `database/`), table par table, lues sans passer par
+  l'application. Une valeur qui n'est pas du texte (colonne chiffrée, BLOB) s'affiche par sa taille et le début de ses
+  octets en hexadécimal. L'onglet n'apparaît qu'une fois une base créée, et se relit après chaque requête ou commande
+  tant qu'il est ouvert. Le contrat des runtimes gagne la méthode facultative `inspectDatabase()` ; seul le runtime PHP
+  la sert (option `database` de `WorkerRuntime`).
+
 ## 3.16.1 — 2026-10-18
 
 ### Corrigé

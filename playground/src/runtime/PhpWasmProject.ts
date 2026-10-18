@@ -10,16 +10,18 @@
  */
 import { HttpCookieStore, inferMimeType, PHPExecutionFailureError, type PHP, type PHPResponse, type PHPRunOptions } from '@php-wasm/universal';
 import { unzipSync } from 'fflate';
-import type { BootProgress, CommandResult, EnvironmentSpec, FrameworkProfile, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
+import type { BootProgress, CommandResult, DatabaseSnapshot, EnvironmentSpec, FrameworkProfile, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
 import { gradeOwnTests } from '@forelse/runtime-contract';
 import { m } from '../i18n';
 import { defaultPhpFramework, PHP_FRAMEWORKS, type PhpFrameworkAdapter, type PhpPreviewContext } from './php-frameworks';
 import { phpunitSummary } from './phpunit';
+import databaseScript from './database.php?raw';
 import runTestsScript from './run-tests.php?raw';
 
 const APP_DIR = '/app';
 const RUNNER = '/runner/run-tests.php';
 const CONSOLE = '/runner/console.php';
+const DATABASE = '/runner/database.php';
 const CONSOLE_MARKER = '\n@@SORTIE@@';
 const REPORT_MARKER = '\n@@RAPPORT@@\n';
 
@@ -108,6 +110,7 @@ export class PhpWasmProject implements Runtime {
 		php.mkdir('/runner');
 		php.writeFile(RUNNER, runTestsScript);
 		php.writeFile(CONSOLE, this.framework.consoleScript);
+		php.writeFile(DATABASE, databaseScript);
 		for (const [path, content] of Object.entries(this.framework.extraFiles ?? {})) php.writeFile(path, content);
 		return php;
 	}
@@ -380,6 +383,18 @@ export class PhpWasmProject implements Runtime {
 		const exitCode = markerAt === -1 ? 255 : Number(text.slice(markerAt + CONSOLE_MARKER.length)) || 0;
 		const { fichiers, supprimes } = this.propagerLesChangements(avant, this.instantane(this.preview));
 		return { exitCode, output: (markerAt === -1 ? text : text.slice(0, markerAt)).replace(/\s+$/, ''), durationMs: performance.now() - start, fichiers, supprimes };
+	}
+
+	/** Les bases SQLite de l'aperçu, lues sans passer par l'application (voir database.php). */
+	async inspectDatabase(): Promise<DatabaseSnapshot[]> {
+		let text: string;
+		try {
+			text = (await this.preview.run({ scriptPath: DATABASE })).text;
+		} catch (error) {
+			if (!(error instanceof PHPExecutionFailureError)) throw error;
+			throw new Error(error.response.errors || error.response.text);
+		}
+		return JSON.parse(text) as DatabaseSnapshot[];
 	}
 }
 

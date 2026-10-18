@@ -92,6 +92,29 @@ export interface CommandResult {
 	supprimes?: string[];
 }
 
+/**
+ * Une valeur telle que la base la range : texte, nombre ou NULL, ou des octets qui ne sont pas du texte
+ * (une colonne chiffrée, un BLOB), dont on ne montre que la taille et le début en hexadécimal.
+ */
+export type DatabaseValue = string | number | null | { bytes: number; hex: string };
+
+export interface DatabaseTable {
+	name: string;
+	columns: string[];
+	/** Les premières lignes seulement : `count` dit combien la table en a. */
+	rows: DatabaseValue[][];
+	count: number;
+}
+
+/** Une base du projet (un fichier SQLite), telle que l'application l'a laissée. */
+export interface DatabaseSnapshot {
+	/** Relatif au projet (ex. var/data_dev.db). */
+	file: string;
+	tables: DatabaseTable[];
+	/** La base n'a pas pu être lue : ses tables manquent, et ce message dit pourquoi. */
+	error?: string;
+}
+
 export interface BootProgress {
 	step: 'download' | 'unpack' | 'boot';
 	/** Entre 0 et 1, ou null si inconnu. */
@@ -117,6 +140,11 @@ export interface Runtime {
 	 * de commande ni commandes de préparation, plutôt qu'une console qui échoue à chaque fois.
 	 */
 	runCommand?(args: string[]): Promise<CommandResult>;
+	/**
+	 * Facultatif : les bases de l'aperçu (fichiers SQLite du projet), pour l'onglet « Base » de la page. Un runtime
+	 * qui ne sait pas les lire ne la déclare pas, et l'onglet n'apparaît pas.
+	 */
+	inspectDatabase?(): Promise<DatabaseSnapshot[]>;
 	/**
 	 * Facultatif : prévient quand le runtime a dû être relancé parce qu'il ne répondait plus (une boucle
 	 * infinie dans le code de l'apprenant). Les fichiers sont rejoués ; ce qui ne vivait qu'en mémoire

@@ -28,6 +28,7 @@ const METHODS: Record<WorkerMethod, true> = {
 	request: true,
 	runTests: true,
 	runCommand: true,
+	inspectDatabase: true,
 };
 
 export interface ServeOptions {

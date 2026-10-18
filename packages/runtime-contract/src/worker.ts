@@ -1,4 +1,4 @@
-import type { BootProgress, CommandResult, EnvironmentSpec, Grading, HttpRequest, Runtime, RuntimeRestart } from './runtime.ts';
+import type { BootProgress, CommandResult, DatabaseSnapshot, EnvironmentSpec, Grading, HttpRequest, Runtime, RuntimeRestart } from './runtime.ts';
 import { m } from './i18n/index.ts';
 import { PING, type WorkerArgs, type WorkerCall, type WorkerMessage, type WorkerMethod, type WorkerResult } from './protocol.ts';
 
@@ -36,6 +36,8 @@ export interface WorkerRuntimeOptions {
 	spawn?: () => Worker;
 	/** Le worker sert-il la console du projet (runCommand) ? Par défaut, oui. */
 	commands?: boolean;
+	/** Le worker sait-il lire les bases du projet (inspectDatabase) ? Par défaut, non. */
+	database?: boolean;
 }
 
 /**
@@ -85,6 +87,7 @@ export class WorkerRuntime implements Runtime {
 		this.spawn = options.spawn ?? (() => createModuleWorker(workerUrl, workerName));
 		// Sans console, la méthode n'existe pas : la page le voit, au lieu d'essuyer un échec par commande.
 		if (options.commands === false) this.runCommand = undefined;
+		if (!options.database) this.inspectDatabase = undefined;
 		this.worker = this.start();
 	}
 
@@ -273,4 +276,6 @@ export class WorkerRuntime implements Runtime {
 		for (const path of result.supprimes ?? []) this.remember(path, null);
 		return result;
 	};
+
+	inspectDatabase?: () => Promise<DatabaseSnapshot[]> = () => this.call('inspectDatabase');
 }

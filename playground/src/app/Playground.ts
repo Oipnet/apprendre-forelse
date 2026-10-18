@@ -5,6 +5,7 @@ import '../runtime/builtin';
 import { createRuntime, runtimeLabel } from '../runtime/registry';
 import { apresDemarrage } from './attente';
 import { ConsolePanel } from './console';
+import { DatabasePanel } from './database';
 import { cheminsExplicites, estModifiable } from './editable';
 import { Emitter, Mailbox } from './emitter';
 import { FeedbackDialog } from './feedback';
@@ -125,6 +126,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// La console est créée plus bas : les messages de l'aperçu arrivés avant sont gardés en attente.
 	const messagesDeLApercu = new Mailbox<[level: 'warn' | 'error', message: string]>();
 	const versLaConsole = (level: 'warn' | 'error', message: string) => messagesDeLApercu.post([level, message]);
+	// L'onglet « Base », créé plus bas : chaque réponse de l'aperçu peut avoir changé la base.
+	let base: DatabasePanel | null = null;
 	const bridge = new PreviewBridge(runtime, $<HTMLIFrameElement>('#frame'), config.sandboxUrl, {
 		onConsole: versLaConsole,
 		onNavigated: (path) => {
@@ -148,6 +151,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			const path = request.url.slice(bridge.base.length) || '/';
 			$('#requestlog').innerHTML = `<span class="method">${escapeHtml(request.method)}</span> ${escapeHtml(path)} <span class="code c${String(res.status)[0]}">${res.status}</span> · ${Math.round(res.durationMs)} ms`;
 			if (!metrics.firstRequest) mark('firstRequest');
+			base?.changed();
 			// Une réponse en erreur : le mentor peut l'expliquer (si l'apprenant a un compte).
 			mentor.setError('preview', res.status >= 500 ? `${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, res.headers['content-type']?.[0])}` : null);
 		},
@@ -283,6 +287,13 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 
 	// Onglet « Requêtes » : les dernières frappes sont écrites dans PHP avant chaque envoi.
 	new RequestsPanel($('.pane-requests'), exercise.requests, runtime, bridge.base, new URL(config.sandboxUrl).host, async () => (await session.flush()) && reload());
+
+	// Onglet « Base » : seulement si le runtime sait lire les bases du projet, et à partir de la première créée.
+	if (runtime.inspectDatabase) {
+		base = new DatabasePanel($('.pane-database'), $('.pane-tabs button[data-pane="database"]'), () => runtime.inspectDatabase!());
+		commandRan.on(() => base?.changed());
+		base.changed();
+	}
 
 	fetch(exercise.environment.completionIndexUrl)
 		.then((r) => r.json() as Promise<CompletionIndex>)
