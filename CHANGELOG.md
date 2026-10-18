@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.16.1 — 2026-10-18
+
 ### Corrigé
 - Environnement `symfony-8-2-doctrine-dev` : symfony/form remis au niveau de framework-bundle. Sans le mode debug,
   donc dans le navigateur, le conteneur ne se compilait plus (service `form.type_guesser.type_info.cache_warmer`
