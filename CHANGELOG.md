@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.17.0 — 2026-10-18
+
 ### Ajouté
 
 - **Onglet « Base » dans le playground** : à côté de l'aperçu, de la console et des requêtes, il montre les bases SQLite
