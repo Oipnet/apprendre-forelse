@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.16.0 — 2026-10-18
+
 ### Ajouté
 
 - Environnement `symfony-8-2-doctrine-dev` : `symfony-8-2-dev`, plus Doctrine ORM (SQLite) et le composant KeyManagement
