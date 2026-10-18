@@ -2664,12 +2664,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/form.git",
-                "reference": "b7f3017cd9763e62cfdee1de223aab9e16be8878"
+                "reference": "58b28557b70b0db787c311c1d0ef526d3cb06fbf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/form/zipball/b7f3017cd9763e62cfdee1de223aab9e16be8878",
-                "reference": "b7f3017cd9763e62cfdee1de223aab9e16be8878",
+                "url": "https://api.github.com/repos/symfony/form/zipball/58b28557b70b0db787c311c1d0ef526d3cb06fbf",
+                "reference": "58b28557b70b0db787c311c1d0ef526d3cb06fbf",
                 "shasum": ""
             },
             "require": {
@@ -2687,12 +2687,14 @@
                 "symfony/var-exporter": "^8.1"
             },
             "conflict": {
+                "symfony/cache": "<8.2",
                 "symfony/intl": "<7.4",
                 "symfony/translation-contracts": "<2.5",
                 "symfony/validator": "<7.4"
             },
             "require-dev": {
                 "doctrine/collections": "^1.0|^2.0",
+                "symfony/cache": "^7.4|^8.0",
                 "symfony/clock": "^7.4|^8.0",
                 "symfony/config": "^7.4|^8.0",
                 "symfony/console": "^7.4|^8.0",
@@ -2756,7 +2758,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-12T19:09:56+00:00"
+            "time": "2026-10-18T15:00:41+00:00"
         },
         {
             "name": "symfony/framework-bundle",
