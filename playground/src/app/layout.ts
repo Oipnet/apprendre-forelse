@@ -84,6 +84,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 				<button class="active" data-pane="preview">${m.layout.preview}</button>
 				<button data-pane="console">${m.layout.console} <span class="badge" hidden title="${m.layout.commandFailed}">!</span></button>
 				<button data-pane="requests">${m.layout.requests}</button>
+				<button data-pane="database" hidden>${m.layout.database}</button>
 				${foldButtonHtml('preview', foldPreview)}
 			</nav>
 			<div class="pane-preview">
@@ -126,6 +127,10 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 					<details><summary>${m.layout.responseHeaders}</summary><pre id="req-response-headers"></pre></details>
 					<pre class="req-body" id="req-response-body"></pre>
 				</div>
+			</div>
+			<div class="pane-database" hidden>
+				<div class="db-bar"><span>${m.layout.databaseNote}</span><button class="db-refresh ghost small" title="${m.layout.databaseRefresh}" aria-label="${m.layout.databaseRefresh}">⟳</button></div>
+				<div class="db-content"></div>
 			</div>
 		</section>
 	</main>`;

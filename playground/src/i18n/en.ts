@@ -97,6 +97,9 @@ export const en: Messages = {
 		newFile: 'New file',
 		console: 'Console',
 		requests: 'Requests',
+		database: 'Database',
+		databaseNote: 'The preview\'s database, read without going through the application.',
+		databaseRefresh: 'Read the database again',
 		commandFailed: 'A command failed',
 		sandboxTitle: 'The application runs in an isolated sandbox',
 		sandbox: 'preview',
@@ -269,6 +272,17 @@ export const en: Messages = {
 	requests: {
 		emptyBody: '(empty body)',
 		error: 'Error',
+	},
+
+	database: {
+		none: 'No SQLite database in the project yet.',
+		noTables: 'No tables.',
+		unreadable: (error: string) => `Unreadable database: ${error}`,
+		rows: (count: number) => (count === 1 ? '1 row' : `${count} rows`),
+		firstRows: (shown: number, count: number) => `first ${shown} rows of ${count}`,
+		bytes: (count: number) => `${count} bytes`,
+		/** On hover over a value that is not text (encrypted column, BLOB). */
+		bytesTitle: (count: number) => `${count} bytes that are not text (an encrypted or binary value), shown in hexadecimal`,
 	},
 
 	share: {

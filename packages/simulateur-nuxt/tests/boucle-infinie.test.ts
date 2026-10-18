@@ -159,4 +159,10 @@ describe('WorkerRuntime sans console', () => {
 		expect(r.runCommand).toBeUndefined();
 		expect(runtime().r.runCommand).toBeTypeOf('function');
 	});
+
+	it('n\'offre inspectDatabase qu\'au runtime qui le déclare : sans base, pas d\'onglet « Base »', () => {
+		expect(runtime().r.inspectDatabase).toBeUndefined();
+		const r = new WorkerRuntime('inutile', 'test', { database: true, spawn: () => new FauxWorker() as unknown as Worker });
+		expect(r.inspectDatabase).toBeTypeOf('function');
+	});
 });

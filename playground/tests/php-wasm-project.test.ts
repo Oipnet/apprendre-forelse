@@ -262,4 +262,11 @@ describe('PhpWasmProject', () => {
 		const response = await project.request({ method: 'GET', url: '/preview/abc/:8080/menu', headers: {} });
 		expect(decoder.decode(response.body)).toBe('/runner/autre.php /:8080/menu');
 	});
+
+	it('lit les bases de l\'aperçu avec son script', async () => {
+		const bases = [{ file: 'var/data_dev.db', tables: [{ name: 'patient', columns: ['id'], rows: [[1]], count: 1 }] }];
+		const { project, preview } = await demarre((_php, options) => (options.scriptPath === '/runner/database.php' ? JSON.stringify(bases) : ''));
+		expect(preview.text('/runner/database.php')).toContain('sqlite_master');
+		expect(await project.inspectDatabase()).toEqual(bases);
+	});
 });

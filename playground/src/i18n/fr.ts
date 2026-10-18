@@ -100,6 +100,9 @@ export const fr = {
 		newFile: 'Créer un fichier',
 		console: 'Console',
 		requests: 'Requêtes',
+		database: 'Base',
+		databaseNote: 'La base de l\'aperçu, lue sans passer par l\'application.',
+		databaseRefresh: 'Relire la base',
 		commandFailed: 'Une commande a échoué',
 		sandboxTitle: 'L\'application tourne dans un bac à sable isolé',
 		sandbox: 'aperçu',
@@ -272,6 +275,17 @@ export const fr = {
 	requests: {
 		emptyBody: '(corps vide)',
 		error: 'Erreur',
+	},
+
+	database: {
+		none: 'Aucune base SQLite dans le projet pour l\'instant.',
+		noTables: 'Aucune table.',
+		unreadable: (error: string) => `Base illisible : ${error}`,
+		rows: (count: number) => (count > 1 ? `${count} lignes` : `${count} ligne`),
+		firstRows: (shown: number, count: number) => `${shown} premières lignes sur ${count}`,
+		bytes: (count: number) => `${count} octets`,
+		/** Au survol d'une valeur qui n'est pas du texte (colonne chiffrée, BLOB). */
+		bytesTitle: (count: number) => `${count} octets qui ne sont pas du texte (valeur chiffrée ou binaire), montrés en hexadécimal`,
 	},
 
 	share: {

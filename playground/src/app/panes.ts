@@ -2,7 +2,7 @@ import type { BootProgress } from '@forelse/runtime-contract';
 import type { EditorPanel } from '../editor/monaco';
 
 export type Workpane = 'brief' | 'code' | 'preview';
-type Pane = 'preview' | 'console' | 'requests';
+type Pane = 'preview' | 'console' | 'requests' | 'database';
 
 /**
  * Petits écrans : un volet à la fois (consignes, code, aperçu). Rend `revealPane`, qui amène l'apprenant,
@@ -21,13 +21,13 @@ export function bindWorkpanes(root: HTMLElement, narrow: MediaQueryList): (pane:
 	return (pane) => void (narrow.matches && showWorkpane(pane));
 }
 
-/** Les onglets aperçu / console / requêtes. Afficher la console efface son badge et, si elle en a un, donne le focus au champ. */
+/** Les onglets aperçu / console / requêtes / base. Afficher la console efface son badge et, si elle en a un, donne le focus au champ. */
 export function bindPaneTabs(root: HTMLElement, hasConsole: boolean): void {
 	const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
 	const tabs = root.querySelectorAll<HTMLButtonElement>('.pane-tabs button[data-pane]');
 	const showPane = (pane: Pane) => {
 		for (const tab of tabs) tab.classList.toggle('active', tab.dataset.pane === pane);
-		for (const name of ['preview', 'console', 'requests'] as const) $(`.pane-${name}`).hidden = pane !== name;
+		for (const name of ['preview', 'console', 'requests', 'database'] as const) $(`.pane-${name}`).hidden = pane !== name;
 		if (pane === 'console') {
 			$('.pane-tabs .badge').hidden = true;
 			if (hasConsole) $<HTMLInputElement>('#console-cmd').focus();
