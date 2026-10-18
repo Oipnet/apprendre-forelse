@@ -25,12 +25,13 @@ final class AnalyticsTest extends WebTestCase
         $crawler = $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
-        $script = $crawler->filter('script[data-website-id]');
-        $this->assertCount(1, $script);
-        $this->assertSame('/mesure/traceur.js', $script->attr('src'));
-        $this->assertSame('11111111-2222-3333-4444-555555555555', $script->attr('data-website-id'));
-        // Sans « defer », le script bloquerait l'affichage de la page.
-        $this->assertNotNull($script->attr('defer'));
+        $config = $crawler->filter('meta[name="mesure-audience"]');
+        $this->assertCount(1, $config);
+        $this->assertSame('/mesure/traceur.js', $config->attr('data-src'));
+        $this->assertSame('11111111-2222-3333-4444-555555555555', $config->attr('data-website-id'));
+        // Le traceur est posé par l'entrée « mesure » (playground/src/mesure.ts), qui écarte les robots : un module,
+        // donc différé, qui n'empêche pas l'affichage de la page.
+        $this->assertCount(1, $crawler->filter('script[type="module"][src*="/build/"][src*="mesure"]'));
     }
 
     /** L'aperçu du code des apprenants sort d'une autre origine et d'un autre gabarit : il n'est pas mesuré. */

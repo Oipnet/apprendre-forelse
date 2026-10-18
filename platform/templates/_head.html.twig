@@ -52,6 +52,8 @@
 {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}
 {%- if analytics.enabled %}
 {# Mesure d'audience : pages vues et référents, sans cookie ni visiteur identifié (voir /confidentialite).
-   Le script vient du domaine du site, pas d'un tiers. Absent du bac à sable, qui n'hérite pas de ce gabarit. #}
-<script defer src="{{ analytics.scriptUrl }}" data-website-id="{{ analytics.websiteId }}"></script>
+   Le script vient du domaine du site, pas d'un tiers. Absent du bac à sable, qui n'hérite pas de ce gabarit.
+   L'entrée « mesure » pose le traceur décrit ici, sauf pour un navigateur piloté par un robot (playground/src/mesure.ts). #}
+<meta name="mesure-audience" data-src="{{ analytics.scriptUrl }}" data-website-id="{{ analytics.websiteId }}">
+{{ vite_entry_script_tags('mesure') }}
 {%- endif %}
