@@ -97,6 +97,8 @@ export default defineConfig({
 				// La feuille du thème default, seule : base.html.twig la pose, la page d'exercice et l'atelier non.
 				theme: './src/theme-default.css',
 				site: './src/entries/site.ts',
+				// La mesure d'audience, posée par _head.html.twig sur toutes les pages (gabarits du site et des éditeurs).
+				mesure: './src/entries/mesure.ts',
 				playground: './src/entries/playground.ts',
 				sandbox: './src/entries/sandbox.ts',
 				atelier: './src/entries/atelier.ts',

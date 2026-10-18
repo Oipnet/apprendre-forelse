@@ -15,6 +15,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   (`#[BlindIndexed]`). Le KMS est local (OpenSSL), car le PHP du navigateur n'a pas l'extension sodium, et sa clé
   maîtresse, publique, est dans le `.env`. `symfony-8-2-dev` ne change pas.
 
+### Modifié
+
+- **Les robots ne sont plus comptés dans la mesure d'audience** : un navigateur piloté par un robot
+  (`navigator.webdriver`) ne charge plus le traceur d'Umami. Les robots qui ouvrent un lien juste après sa publication
+  sur LinkedIn faisaient des visites et des démarrages de playground ratés qu'aucun visiteur n'a vécus. Le traceur est
+  désormais posé par l'entrée Vite `mesure`, configurée par `<meta name="mesure-audience">` dans `_head.html.twig`.
+
 ## 3.15.0 — 2026-10-16
 
 ### Ajouté
