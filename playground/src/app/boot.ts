@@ -13,6 +13,16 @@ export function firstLoadNote(seenArchiveUrl: string | null, archiveUrl: string)
 	return seenArchiveUrl === archiveUrl ? null : m.boot.firstLoad;
 }
 
+/**
+ * Le navigateur intégré d'une application (LinkedIn, Facebook, Instagram…) : le démarrage y prend 30 s et plus, contre
+ * quelques secondes dans un vrai navigateur, et les visiteurs venus d'un post repartent avant la fin. On le détecte
+ * pour leur conseiller d'ouvrir la page dans leur navigateur. Android : le jeton `; wv)` ; iOS : WebKit sans `Safari/`.
+ */
+export function navigateurIntegre(userAgent: string): boolean {
+	if (/LinkedInApp|FBAN|FBAV|FB_IAB|Instagram|; wv\)/.test(userAgent)) return true;
+	return /iPhone|iPad|iPod/.test(userAgent) && /AppleWebKit/.test(userAgent) && !/Safari\//.test(userAgent);
+}
+
 /** Ce qu'on dit quand l'exercice ne se charge pas, selon la réponse du serveur (null : pas de réponse du tout). */
 export function loadErrorHtml(status: number | null, loginUrl?: string | null): string {
 	const retry = `<button type="button" class="primary" data-retry>${m.boot.retry}</button>`;

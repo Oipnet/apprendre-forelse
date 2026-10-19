@@ -1,12 +1,13 @@
 import { m } from '../i18n';
 import { foldButtonHtml, railHtml } from './folding';
+import { navigateurIntegre } from './boot';
 import { escapeHtml } from './html';
 import { foldShortcutLabel } from './shortcuts';
 import { sanitize } from './markdown';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 
 /** Le squelette HTML de l'environnement d'exercice : consignes, code, aperçu, écran de démarrage. */
-export function layout(exercise: ExercisePayload, config: PlaygroundConfig, platform = navigator.platform): string {
+export function layout(exercise: ExercisePayload, config: PlaygroundConfig, platform = navigator.platform, userAgent = navigator.userAgent): string {
 	const framework = exercise.environment.framework;
 	const consoleName = framework.console;
 	const foldBrief = foldShortcutLabel(platform, 'B');
@@ -37,7 +38,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 			<button id="run" class="primary" disabled aria-keyshortcuts="Control+Enter Meta+Enter">▶ ${m.layout.run((texte) => `<span class="label">${texte}</span>`)}</button>
 		</div>
 	</header>
-	<div class="small-screen-note" role="note"><span>${m.layout.smallScreen}</span><button class="ghost small" aria-label="${m.common.close}">✕</button></div>
+	${screenNoteHtml(navigateurIntegre(userAgent))}
 	<main class="workspace" data-pane="code">
 		<aside class="panel brief" id="pane-brief" aria-label="${m.layout.brief}">
 			${railHtml('brief', '📋', m.layout.brief, foldBrief)}
@@ -184,3 +185,11 @@ export function furtherHtml(exercise: Pick<ExercisePayload, 'practice' | 'enviro
 
 /** Le total d'XP de la barre : l'étoile est décorative, le nombre est lu. */
 export const xpBadge = (xp: number) => `<span aria-hidden="true">⭐</span> ${m.common.xp(xp)}`;
+
+/**
+ * Le bandeau sous la barre du haut. Sur petit écran : un volet à la fois. Dans le navigateur intégré d'une application,
+ * à toutes les largeurs : ouvrir la page dans le vrai navigateur, où l'exercice démarre bien plus vite.
+ */
+export function screenNoteHtml(inApp: boolean): string {
+	return `<div class="small-screen-note${inApp ? ' in-app' : ''}" role="note"><span>${inApp ? m.layout.inAppBrowser : m.layout.smallScreen}</span><button class="ghost small" aria-label="${m.common.close}">✕</button></div>`;
+}

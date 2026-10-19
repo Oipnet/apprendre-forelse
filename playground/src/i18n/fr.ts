@@ -86,6 +86,7 @@ export const fr = {
 		/** Le bouton des tests : `masquable` enrobe ce qui disparaît sur un écran étroit. */
 		run: (masquable: (texte: string) => string) => `${masquable('Lancer les ')}tests`,
 		smallScreen: 'Cet exercice se joue mieux sur un écran large : ici, un volet à la fois.',
+		inAppBrowser: 'Le navigateur de l\'application démarre l\'exercice lentement : ouvrez cette page dans votre navigateur (menu ⋯ › Ouvrir dans le navigateur).',
 		versionTitle: 'Les autres exercices de cette version',
 		objectives: 'Objectifs',
 		docs: 'La doc qui aide',

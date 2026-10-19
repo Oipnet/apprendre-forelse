@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Conseil dans le navigateur intégré des applications** (LinkedIn, Facebook, Instagram, webviews Android et iOS) :
+  un bandeau sous la barre du haut invite à ouvrir la page dans le vrai navigateur. Le playground y démarre en 30 s et
+  plus (contre quelques secondes ailleurs), et des visiteurs venus d'un post repartaient avant la fin.
+
 ## 3.17.0 — 2026-10-18
 
 ### Ajouté
