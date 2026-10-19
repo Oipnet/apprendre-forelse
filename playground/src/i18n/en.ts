@@ -83,6 +83,7 @@ export const en: Messages = {
 		/** The tests button: `masquable` wraps what disappears on a narrow screen. */
 		run: (masquable: (texte: string) => string) => `${masquable('Run ')}tests`,
 		smallScreen: 'This exercise works best on a wide screen: here, one pane at a time.',
+		inAppBrowser: 'The app\'s built-in browser starts the exercise slowly: open this page in your browser (⋯ menu › Open in browser).',
 		versionTitle: 'The other exercises for this version',
 		objectives: 'Objectives',
 		docs: 'Helpful docs',

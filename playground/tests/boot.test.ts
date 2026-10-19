@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bootFailureActionsHtml, firstLoadNote, loadErrorHtml, raisonDeLEchec, suivreDemarrage } from '../src/app/boot.ts';
+import { bootFailureActionsHtml, firstLoadNote, loadErrorHtml, navigateurIntegre, raisonDeLEchec, suivreDemarrage } from '../src/app/boot.ts';
+import { screenNoteHtml } from '../src/app/layout.ts';
 
 describe('firstLoadNote', () => {
 	const archive = 'https://exemple.test/envs/symfony-8.zip?v=2';
@@ -106,5 +107,34 @@ describe('raisonDeLEchec', () => {
 	it('reste courte, et accepte ce qui n\'est pas une Error', () => {
 		expect(raisonDeLEchec('x'.repeat(500))).toHaveLength(200);
 		expect(raisonDeLEchec(42)).toBe('42');
+	});
+});
+
+describe('navigateurIntegre', () => {
+	it('reconnaît les navigateurs intégrés des applications (LinkedIn, Facebook, webviews Android et iOS)', () => {
+		expect(navigateurIntegre('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [LinkedInApp]/9.31.1')).toBe(true);
+		expect(navigateurIntegre('Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP2A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/141.0.0.0 Mobile Safari/537.36')).toBe(true);
+		expect(navigateurIntegre('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/500.0]')).toBe(true);
+		expect(navigateurIntegre('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148')).toBe(true);
+	});
+
+	it('laisse tranquilles les vrais navigateurs, mobiles compris', () => {
+		expect(navigateurIntegre('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1')).toBe(false);
+		expect(navigateurIntegre('Mozilla/5.0 (iPhone; CPU iPhone OS 26_3_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.95 Mobile/15E148 Safari/604.1')).toBe(false);
+		expect(navigateurIntegre('Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36')).toBe(false);
+		expect(navigateurIntegre('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36')).toBe(false);
+	});
+});
+
+describe('screenNoteHtml', () => {
+	it('dans une application, conseille d\'ouvrir la page dans le navigateur, à toutes les largeurs', () => {
+		const html = screenNoteHtml(true);
+		expect(html).toContain('class="small-screen-note in-app"');
+		expect(html).toContain('Ouvrir dans le navigateur');
+	});
+
+	it('sinon, le bandeau des petits écrans', () => {
+		expect(screenNoteHtml(false)).toContain('un volet à la fois');
+		expect(screenNoteHtml(false)).not.toContain('in-app');
 	});
 });
