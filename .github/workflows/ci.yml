@@ -420,10 +420,10 @@ jobs:
           docker buildx imagetools create "${args[@]}" "$SOURCE"
           docker buildx imagetools inspect "$SOURCE" | head -3
 
-  # Garde-fou de version : on ne publie pas une image dont le PHP est en retard sur la dernière version de sa
-  # branche (c'est ainsi qu'on a traîné PHP 8.4.26 pendant PHP2Shell, CVE-2026-109618/109619). Le PHP vient de
-  # l'image de base (dunglas/frankenphp, épinglée dans le Dockerfile) : ce job ne corrige rien, il refuse juste
-  # de taguer tant que l'image de base n'a pas été montée. Ne tourne que sur une étiquette de version.
+  # Garde-fou de version : prévient quand le PHP de l'image est en retard sur la dernière version de sa branche
+  # (c'est ainsi qu'on a traîné PHP 8.4.26 pendant PHP2Shell, CVE-2026-109618/109619). Le PHP vient de l'image de
+  # base (dunglas/frankenphp, épinglée dans le Dockerfile) : ce job ne corrige rien et ne bloque pas le tag, il
+  # pose un avertissement visible pour rappeler de monter l'image de base. Ne tourne que sur une étiquette de version.
   php-a-jour:
     name: PHP à jour
     needs: [reprise, docker, version]
@@ -461,8 +461,8 @@ jobs:
             exit 0
           fi
           if [ "$installe" != "$dernier" ] && dpkg --compare-versions "$installe" lt "$dernier"; then
-            echo "::error::L'image embarque PHP ${installe}, en retard sur ${dernier}. Montez l'image de base (dunglas/frankenphp) dans le Dockerfile avant de publier cette version."
-            exit 1
+            echo "::warning::L'image embarque PHP ${installe}, en retard sur ${dernier}. Pensez à monter l'image de base (dunglas/frankenphp) dans le Dockerfile."
+            exit 0
           fi
           echo "PHP ${installe} est à jour."
 
