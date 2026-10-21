@@ -4,6 +4,7 @@ namespace App\Security;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
+use Uri\WhatWg\Url;
 
 /**
  * Origine « bac à sable » : elle sert uniquement le relais d'aperçu (/sandbox) et son
@@ -39,11 +40,14 @@ final readonly class SandboxOrigin
 
     private static function originOf(string $url): string
     {
-        $parts = parse_url($url);
-        if (!isset($parts['scheme'], $parts['host'])) {
+        // Lue comme un navigateur la lit (WHATWG) : schéma et hôte en minuscules, port par défaut omis, comme
+        // Request::getSchemeAndHttpHost(), à laquelle isSandboxRequest() la compare.
+        $parsed = Url::parse($url);
+        $host = $parsed?->getAsciiHost();
+        if (null === $parsed || null === $host || '' === $host) {
             throw new \InvalidArgumentException(sprintf('URL invalide : « %s ».', $url));
         }
 
-        return $parts['scheme'].'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '');
+        return $parsed->getScheme().'://'.$host.(null !== $parsed->getPort() ? ':'.$parsed->getPort() : '');
     }
 }

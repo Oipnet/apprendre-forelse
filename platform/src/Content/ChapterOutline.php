@@ -52,7 +52,9 @@ final readonly class ChapterOutline
             'chapter' => $chapter,
             'number' => $number,
             'exercises' => $exercises,
-            'concepts' => array_values(array_unique(array_merge([], ...array_map(static fn (array $row) => $row['exercise']->concepts, $exercises)))),
+            'concepts' => array_merge([], ...array_map(static fn (array $row) => $row['exercise']->concepts, $exercises))
+                |> array_unique(...)
+                |> array_values(...),
             'xp' => array_sum(array_map(static fn (array $row) => $row['exercise']->xp, $exercises)),
             'duration' => $this->content->durationOf($track, $chapter),
             'previous' => self::neighbour($track, $number - 2),

@@ -32,7 +32,12 @@ final readonly class PracticeFilter
         $this->tri = self::SORT_TITLE === $tri ? self::SORT_TITLE : self::SORT_RECENT;
     }
 
-    /** @param list<string> $notions */
+    /**
+     * Un nouveau filtre : celui-ci ne change pas. Ignorer le retour serait croire l'avoir modifié (#[\NoDiscard] le signale).
+     *
+     * @param list<string> $notions
+     */
+    #[\NoDiscard]
     public function withNotions(array $notions): self
     {
         return new self($this->framework, $notions, $this->nouveautes, $this->recherche, $this->tri);

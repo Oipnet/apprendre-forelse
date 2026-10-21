@@ -48,7 +48,7 @@ final readonly class HomePage
         // Le bouton principal : pour un visiteur, un exercice de Pratique, qui se joue sans compte (le premier chapitre
         // d'un parcours en demande un) ; pour un compte, le premier exercice du premier parcours ; à défaut, l'inscription.
         $practiceUrl = null === $user ? $this->practiceUrl() : null;
-        $tryUrl = $practiceUrl ?? array_values(array_filter(array_column($tracks, 'tryUrl')))[0] ?? $this->urls->generate('app_register');
+        $tryUrl = $practiceUrl ?? array_first(array_filter(array_column($tracks, 'tryUrl'))) ?? $this->urls->generate('app_register');
 
         return [
             'tracks' => $tracks,

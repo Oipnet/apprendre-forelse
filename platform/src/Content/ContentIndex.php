@@ -153,7 +153,7 @@ final class ContentIndex
         $locales = array_unique(array_map(static fn (Exercise $e) => $e->locale, $exercises));
         $ids = array_map(static fn (Exercise $e) => $e->trackId.'/'.$e->id, $exercises);
         $chapters = [];
-        foreach ($this->tracks(1 === \count($locales) ? (string) reset($locales) : Exercise::LOCALE) as $track) {
+        foreach ($this->tracks(1 === \count($locales) ? (string) array_first($locales) : Exercise::LOCALE) as $track) {
             foreach ($track->chapters as $chapter) {
                 foreach ($chapter->exerciseIds as $exerciseId) {
                     if (\in_array($track->id.'/'.$exerciseId, $ids, true)) {

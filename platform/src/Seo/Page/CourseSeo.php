@@ -184,11 +184,14 @@ final readonly class CourseSeo
      */
     public function catalogue(array $tracks): void
     {
-        $frameworks = array_values(array_unique(array_map(fn (Track $track) => $this->framework($track->environment), $tracks)));
+        $frameworks = array_map(fn (Track $track) => $this->framework($track->environment), $tracks)
+            |> array_unique(...)
+            |> array_values(...);
         $subject = match (\count($frameworks)) {
             0 => $this->trans('catalogue.sujet_par_defaut'),
             1 => $frameworks[0],
-            default => $this->trans('commun.liste', ['debut' => implode(', ', \array_slice($frameworks, 0, -1)), 'dernier' => end($frameworks)]),
+            // « Symfony, Laravel et Nuxt », « Symfony, Laravel, and Nuxt » : la ponctuation de chaque langue, par ICU.
+            default => new \IntlListFormatter($this->translator->getLocale())->format($frameworks),
         };
         $this->seo
             ->setTitle(

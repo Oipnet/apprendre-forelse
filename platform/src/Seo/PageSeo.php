@@ -54,7 +54,7 @@ final class PageSeo implements ResetInterface
                 return $this;
             }
         }
-        $this->title = self::shorten((string) end($candidates), self::TITLE_MAX);
+        $this->title = self::shorten((string) array_last($candidates), self::TITLE_MAX);
 
         return $this;
     }

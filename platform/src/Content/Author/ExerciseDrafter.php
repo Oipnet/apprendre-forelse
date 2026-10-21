@@ -202,7 +202,7 @@ final class ExerciseDrafter
     private function exempleDExercice(Track $track): string
     {
         $exercices = $this->content->exercisesOf($track);
-        $modele = end($exercices);
+        $modele = array_last($exercices);
 
         return $modele instanceof Exercise
             ? "Un exercice existant, à prendre pour modèle de style et de format :\n\n".PromptFiles::render($this->fichiers->read($modele->directory))

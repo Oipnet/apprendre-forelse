@@ -14,6 +14,17 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   un bandeau sous la barre du haut invite à ouvrir la page dans le vrai navigateur. Le playground y démarre en 30 s et
   plus (contre quelques secondes ailleurs), et des visiteurs venus d'un post repartaient avant la fin.
 
+### Modifié
+
+- **PHP 8.5 côté serveur** : l'image part de `dunglas/frankenphp:1.13.2-php8.5`, épinglée (Dependabot propose les
+  suivantes). FrankenPHP 1.13.2 embarque PHP 8.5.12, qui corrige PHP2Shell (CVE-2026-109618 et CVE-2026-109619, exécution
+  de code à distance sans authentification), ainsi que des failles de FrankenPHP lui-même (GHSA-fq24-r53r-xcx3,
+  GHSA-ccgp-ch9h-533f, GHSA-4gfw-9v29-gp9h). La plateforme demande désormais PHP 8.5 (`composer.json`) et emploie ses
+  nouveautés : opérateur `|>`, `array_first()`/`array_last()`, extension URI (lecture WHATWG des origines de la CSP et
+  du bac à sable, où un port par défaut écrit en clair, `https://…:443`, ne fait plus rater la comparaison),
+  `#[\NoDiscard]`, `IntlListFormatter` (la liste des frameworks des titres suit la ponctuation de chaque langue).
+  Les environnements d'exercice ne changent pas : le playground exécute toujours PHP 8.4 dans le navigateur.
+
 ## 3.17.0 — 2026-10-18
 
 ### Ajouté

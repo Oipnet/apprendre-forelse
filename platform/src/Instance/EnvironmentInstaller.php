@@ -130,7 +130,10 @@ final readonly class EnvironmentInstaller
         if (!\is_string($host) || '' === $host) {
             throw new ContentException(sprintf('Adresse de dépôt illisible : %s', $url));
         }
-        $allowed = array_values(array_filter(array_map('trim', explode(',', $this->allowlist))));
+        $allowed = explode(',', $this->allowlist)
+            |> (static fn (array $hosts): array => array_map(trim(...), $hosts))
+            |> array_filter(...)
+            |> array_values(...);
         if ([] !== $allowed && !\in_array($host, $allowed, true)) {
             throw new ContentException(sprintf('Hôte « %s » non autorisé (ENVIRONMENT_SOURCES_ALLOWLIST : %s).', $host, implode(', ', $allowed)));
         }
