@@ -26,7 +26,7 @@ concurrency:
 
 env:
   # Xdebug ferait planter le serveur interne de PHP et ralentirait PHPUnit.
-  PHP_VERSION: '8.4'
+  PHP_VERSION: '8.5'
 
 # Image des machines d'exécution nommée plutôt que « ubuntu-latest » : comme pour les actions épinglées, la
 # bascule vers la version suivante d'Ubuntu se fait dans une PR où la CI tourne dessus, pas un matin sans prévenir.

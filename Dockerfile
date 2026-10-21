@@ -32,7 +32,7 @@ RUN node precompresser.ts /src/platform/public/build
 
 
 # --- 2. Base PHP commune ----------------------------------------------------------------
-FROM dunglas/frankenphp:1-php8.4 AS php_base
+FROM dunglas/frankenphp:1-php8.5 AS php_base
 
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 WORKDIR /app
