@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.18.0 — 2026-10-21
+
 ### Ajouté
 
 - **Conseil dans le navigateur intégré des applications** (LinkedIn, Facebook, Instagram, webviews Android et iOS) :
