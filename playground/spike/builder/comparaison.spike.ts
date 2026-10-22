@@ -1,49 +1,12 @@
 /**
  * Essai php-wasm-builder : les mêmes scénarios (aperçu, PHPUnit, console) sur @php-wasm et sur un PHP
  * compilé par lyrixx/php-wasm-builder, à travers PhpWasmProject, comme le playground s'en sert.
- *
- * BUILDER_MJS : le php-node.mjs du build ; ENVS : le dossier des archives (environments/bin/build-env.sh).
  * Les temps vont dans $GITHUB_STEP_SUMMARY quand il existe.
  */
-import { appendFileSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { appendFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
-import { PHP } from '@php-wasm/universal';
-import { loadNodeRuntime } from '@php-wasm/node';
-import { createSpawnHandler } from '@php-wasm/util';
-import type { EnvironmentSpec, FrameworkProfile } from '@forelse/runtime-contract';
-import { PhpWasmProject, type PhpInstance } from '../../src/runtime/PhpWasmProject.ts';
-import { BuilderPhp, type BuilderModule } from '../../src/runtime/builder/BuilderPhp.ts';
-
-const BUILDER_MJS = process.env.BUILDER_MJS ?? '';
-const ENVS = process.env.ENVS ?? '';
-
-type Runtime = 'php-wasm' | 'builder';
-const runtimes: Record<Runtime, () => Promise<PhpInstance>> = {
-	'php-wasm': async () => {
-		const php = new PHP(await loadNodeRuntime('8.4'));
-		await php.setSpawnHandler(createSpawnHandler((_command, processApi) => processApi.exit(0)));
-		return php;
-	},
-	builder: async () => {
-		const createPhp = (await import(pathToFileURL(BUILDER_MJS).href)).default as () => Promise<BuilderModule>;
-		return new BuilderPhp(await createPhp());
-	},
-};
-
-const base = {
-	console: '', consoleExample: '', bootNote: '', unpackLabel: '', testRunner: 'phpunit', testRunnerLabel: 'PHPUnit',
-	runtime: 'php-wasm', snippets: [], consoleAliases: {}, rawCommands: [], namespaceRoots: {},
-};
-const symfony = {
-	...base, id: 'symfony', label: 'Symfony',
-	projectDirs: ['src', 'migrations', 'templates', 'config', 'tests', 'translations'], testCaches: ['var/cache/test'], hidden: ['vendor', 'var'],
-} as unknown as FrameworkProfile;
-const laravel = {
-	...base, id: 'laravel', label: 'Laravel',
-	projectDirs: ['app', 'config', 'database', 'resources', 'routes', 'tests'], testCaches: ['storage/framework/views'], hidden: ['vendor', 'storage', 'bootstrap/cache'],
-} as unknown as FrameworkProfile;
+import type { FrameworkProfile } from '@forelse/runtime-contract';
+import { laravel, projet as nouveauProjet, type Runtime, spec, symfony } from './commun.ts';
 
 const mesures: string[] = [];
 afterAll(() => {
@@ -65,9 +28,8 @@ async function mesurer<T>(runtime: Runtime, env: string, etape: string, action: 
 }
 
 async function demarrer(runtime: Runtime, env: string, framework: FrameworkProfile) {
-	const projet = new PhpWasmProject({ loadPhp: runtimes[runtime], download: async () => new Uint8Array(readFileSync(join(ENVS, `${env}.zip`))) });
-	const spec: EnvironmentSpec = { id: env, framework, options: { phpVersion: '8.4' }, archiveUrl: env, previewBasePath: '/preview', previewSecure: false };
-	await mesurer(runtime, env, 'démarrage', () => projet.boot(spec), () => 'ok');
+	const projet = nouveauProjet(runtime);
+	await mesurer(runtime, env, 'démarrage', () => projet.boot(spec(env, framework)), () => 'ok');
 	return projet;
 }
 
