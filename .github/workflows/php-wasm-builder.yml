@@ -1,0 +1,64 @@
+name: Essai php-wasm-builder
+
+# Essai (branche de travail, pas pour main) : compile PHP en WebAssembly avec lyrixx/php-wasm-builder et les
+# extensions dont les parcours ont besoin, puis compare la taille du binaire avec celui de @php-wasm.
+
+on:
+  push:
+    branches: [claude/project-thread-w6d8el]
+    paths: [.github/workflows/php-wasm-builder.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # PR #14 de lyrixx/php-wasm-builder : iconv, openssl et session.
+  BUILDER_REF: 234aa3c207506fffdf1c41ae7dab519da3cd5f6a
+  EXTENSIONS: ctype dom filter iconv mbstring openssl pdo_sqlite session simplexml tokenizer xml xmlreader xmlwriter
+  PHP_VERSION: 8.5.12
+  MEMORY: 256mb
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: lyrixx/php-wasm-builder
+          ref: ${{ env.BUILDER_REF }}
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Compiler PHP
+        run: |
+          docker buildx bake \
+            --set "default.args.PHP_VERSION=$PHP_VERSION" \
+            --set "default.args.EXTENSIONS=$EXTENSIONS" \
+            --set "default.args.MEMORY=$MEMORY" \
+            --set "default.output=type=local,dest=./build/forelse"
+
+      - name: Vérifier la version et les extensions
+        run: |
+          node node/run.mjs --build build/forelse/php-node.mjs -r 'echo PHP_VERSION, "\n", implode(" ", get_loaded_extensions()), "\n";'
+          node node/run.mjs --build build/forelse/php-web.mjs -r 'session_start(); var_dump(session_status() === PHP_SESSION_ACTIVE, iconv("UTF-8", "ASCII//TRANSLIT", "é"), strlen(openssl_encrypt("x", "aes-256-cbc", str_repeat("k", 32), 0, str_repeat("i", 16))) > 0);'
+
+      - name: Comparer les tailles
+        run: |
+          command -v brotli > /dev/null || sudo apt-get install -y brotli > /dev/null
+          taille() { printf '| %s | %s | %s | %s |\n' "$1" "$(stat -c %s "$2" | numfmt --to=si)" "$(gzip -9c "$2" | wc -c | numfmt --to=si)" "$(brotli -q 11 -c "$2" | wc -c | numfmt --to=si)"; }
+          mkdir -p /tmp/php-wasm && cd /tmp/php-wasm
+          npm pack --silent @php-wasm/web-8-4@3.1.57 > /dev/null
+          tar -xzf php-wasm-web-8-4-*.tgz
+          {
+            echo '| Binaire | Brut | gzip | brotli |'
+            echo '|---|---|---|---|'
+            taille 'php-wasm-builder (web)' "$GITHUB_WORKSPACE/build/forelse/php-web.wasm"
+            for wasm in $(find package -name '*.wasm'); do taille "@php-wasm 8.4 ${wasm#package/}" "$wasm"; done
+          } | tee -a "$GITHUB_STEP_SUMMARY"
