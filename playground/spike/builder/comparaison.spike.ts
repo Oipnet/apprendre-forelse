@@ -139,7 +139,7 @@ describe.each(['php-wasm', 'builder'] as Runtime[])('%s', (runtime) => {
 		const formulaire = await mesurer(runtime, 'symfony-8', 'POST formulaire', () => projet.request({ method: 'POST', url: '/preview/commande', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new TextEncoder().encode('plat=tourte') }), (r) => `${r.status} ${texte(r.body)}`);
 		expect.soft(texte(formulaire.body)).toContain('"plat":"tourte"');
 		const json = await mesurer(runtime, 'symfony-8', 'POST JSON', () => projet.request({ method: 'POST', url: '/preview/commande', headers: { 'content-type': 'application/json' }, body: new TextEncoder().encode('{"plat":"tourte"}') }), (r) => `${r.status} ${texte(r.body)}`);
-		expect.soft(texte(json.body)).toContain('\\"plat\\":\\"tourte\\"');
+		expect.soft(JSON.parse(texte(json.body)).corps).toBe('{"plat":"tourte"}');
 		const tests = await mesurer(runtime, 'symfony-8', 'PHPUnit', () => projet.runTests(), bilan);
 		expect.soft(tests.cases.filter((c) => c.status === 'passed')).toHaveLength(2);
 		await mesurer(runtime, 'symfony-8', 'PHPUnit (2e run)', () => projet.runTests(), bilan);

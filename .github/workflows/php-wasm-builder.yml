@@ -48,8 +48,13 @@ jobs:
           extensions: ctype, iconv, intl, zip
           coverage: none
 
+      # Sans processus dans le navigateur, posix_spawnp manque : exec() et popen() arrêtaient tout le module
+      # (« Aborted(missing function: posix_spawnp) »). Il échoue désormais comme un appel système absent (ENOSYS).
       - name: Compiler PHP
         run: |
+          echo 'addToLibrary({ posix_spawn: () => 52, posix_spawnp: () => 52 });' > docker/spawn.js
+          sed -i 's/^COPY run.c api.js /COPY run.c api.js spawn.js /; s/--pre-js api.js \\/--pre-js api.js --js-library spawn.js \\/' docker/Dockerfile
+          grep -n 'spawn.js' docker/Dockerfile
           docker buildx bake \
             --set "default.args.PHP_VERSION=$PHP_VERSION" \
             --set "default.args.EXTENSIONS=$EXTENSIONS" \
