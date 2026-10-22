@@ -9,6 +9,13 @@
 			num {$FRANKENPHP_WORKERS:0}
 		}
 	}
+	# Derrière un reverse proxy, l'adresse du visiteur arrive dans X-Forwarded-For. Sans confiance, Caddy ne voit que
+	# le proxy : une seule IP dans les journaux d'accès, et transmise telle quelle à Umami (pays vides, visiteurs au
+	# même navigateur confondus). derriere-front.yaml passe CADDY_TRUSTED_PROXIES=private_ranges ; par défaut, la
+	# boucle locale seulement, c'est-à-dire personne en pratique.
+	servers {
+		trusted_proxies static {$CADDY_TRUSTED_PROXIES:127.0.0.1/32}
+	}
 }
 
 # Deux origines, une seule application : la plateforme (APP_URL) et le bac à sable (SANDBOX_URL),
