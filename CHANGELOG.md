@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.18.1 — 2026-10-22
+
 ### Modifié
 
 - **La plateforme demande PHP 8.5** (`composer.json`) et emploie ses nouveautés : opérateur `|>`,
