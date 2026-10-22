@@ -1,12 +1,13 @@
 name: Essai php-wasm-builder
 
 # Essai (branche de travail, pas pour main) : compile PHP en WebAssembly avec lyrixx/php-wasm-builder et les
-# extensions dont les parcours ont besoin, puis compare la taille du binaire avec celui de @php-wasm.
+# extensions dont les parcours ont besoin, compare la taille du binaire avec celui de @php-wasm, puis joue les mêmes
+# scénarios Symfony et Laravel sur les deux (playground/spike/builder).
 
 on:
   push:
     branches: [claude/project-thread-w6d8el]
-    paths: [.github/workflows/php-wasm-builder.yml]
+    paths: [.github/workflows/php-wasm-builder.yml, playground/spike/builder/**, playground/src/runtime/**]
   workflow_dispatch:
 
 permissions:
@@ -30,11 +31,22 @@ jobs:
           ref: ${{ env.BUILDER_REF }}
           persist-credentials: false
 
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: moteur
+          persist-credentials: false
+
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.5'
+          extensions: ctype, iconv, intl, zip
+          coverage: none
 
       - name: Compiler PHP
         run: |
@@ -62,3 +74,17 @@ jobs:
             taille 'php-wasm-builder (web)' "$GITHUB_WORKSPACE/build/forelse/php-web.wasm"
             for wasm in $(find package -name '*.wasm'); do taille "@php-wasm 8.4 ${wasm#package/}" "$wasm"; done
           } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Environnements
+        run: for env in symfony-8 symfony-8-doctrine laravel-13; do moteur/environments/bin/build-env.sh "$env" "$RUNNER_TEMP/envs"; done
+
+      - name: Dépendances du playground
+        run: npm ci
+        working-directory: moteur/playground
+
+      - name: Scénarios sur les deux runtimes
+        working-directory: moteur/playground
+        env:
+          BUILDER_MJS: ${{ github.workspace }}/build/forelse/php-node.mjs
+          ENVS: ${{ runner.temp }}/envs
+        run: npx vitest run --config spike/builder/vitest.config.ts
