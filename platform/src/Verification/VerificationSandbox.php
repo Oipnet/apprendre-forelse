@@ -105,8 +105,7 @@ final readonly class VerificationSandbox
     /** La dernière ligne JSON de la sortie, si elle porte sur cette demande. */
     private function parse(string $output, VerificationRequest $request): ?VerificationResult
     {
-        $lines = array_reverse(array_filter(array_map('trim', explode("\n", $output))));
-        $data = json_decode((string) ($lines[0] ?? ''), true);
+        $data = json_decode((string) array_last(array_filter(array_map(trim(...), explode("\n", $output)))), true);
         $result = \is_array($data) ? VerificationResult::fromArray($data) : null;
 
         return null !== $result && $result->progressId === $request->progressId ? $result : null;

@@ -2,7 +2,6 @@
 
 commun:
     accueil: Home
-    liste: "{debut} and {dernier}"
 
 blog:
     titre: Blog

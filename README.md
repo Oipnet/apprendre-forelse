@@ -48,7 +48,7 @@ Le code de l'apprenant n'est **jamais exécuté sur le serveur** : PHP tourne da
 
 ## Démarrer en local
 
-Prérequis : PHP 8.4 (avec `pdo_pgsql`), Composer, Node.js 22+, PostgreSQL 15+.
+Prérequis : PHP 8.5 (avec `pdo_pgsql`), Composer, Node.js 22+, PostgreSQL 15+.
 
 Créez une fois le rôle attendu par `platform/.env` (ou adaptez `DATABASE_URL` dans `platform/.env.local`) :
 

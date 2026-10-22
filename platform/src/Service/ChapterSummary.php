@@ -29,7 +29,9 @@ final readonly class ChapterSummary
         return [
             'chapter' => $chapter,
             'number' => $position + 1,
-            'concepts' => array_values(array_unique(array_merge([], ...array_map(static fn (Exercise $e) => $e->concepts, $exercises)))),
+            'concepts' => array_merge([], ...array_map(static fn (Exercise $e) => $e->concepts, $exercises))
+                |> array_unique(...)
+                |> array_values(...),
             'xp' => array_sum(array_map(static fn (Exercise $e) => isset($progress[$e->id]) ? $progress[$e->id]->getXpEarned() : 0, $exercises)),
         ];
     }

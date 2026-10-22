@@ -36,11 +36,14 @@ final readonly class PracticeSeo
     /** @param list<Practice> $practices ceux que la liste montre sans filtre */
     public function index(array $practices): void
     {
-        $frameworks = array_values(array_unique(array_map(fn (Practice $p) => $this->frameworks->labelOf($p->framework), $practices)));
+        $frameworks = array_map(fn (Practice $p) => $this->frameworks->labelOf($p->framework), $practices)
+            |> array_unique(...)
+            |> array_values(...);
         $subject = match (\count($frameworks)) {
             0 => $this->trans('pratique.sujet_par_defaut'),
             1 => $frameworks[0],
-            default => $this->trans('commun.liste', ['debut' => implode(', ', \array_slice($frameworks, 0, -1)), 'dernier' => end($frameworks)]),
+            // « Symfony, Laravel et Nuxt », « Symfony, Laravel, and Nuxt » : la ponctuation de chaque langue, par ICU.
+            default => new \IntlListFormatter($this->translator->getLocale())->format($frameworks),
         };
 
         $this->seo

@@ -6,8 +6,6 @@
 commun:
     # Le premier maillon de tout fil d'Ariane (SchemaOrg::breadcrumb).
     accueil: Accueil
-    # Le dernier séparateur d'une liste de frameworks : « Symfony, Laravel et Nuxt ».
-    liste: "{debut} et {dernier}"
 
 # Les pages fixes déclarées par #[Seo] (voir App\Seo\Seo).
 auto_hebergement:

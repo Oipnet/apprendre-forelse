@@ -47,8 +47,8 @@ final class EnvironmentRegistry implements ResetInterface
         #[Autowire(env: 'csv:resolve:CONTENT_PACKS_PATHS')]
         array|string $packPaths = [],
     ) {
-        $this->directories = array_values(array_filter(array_map('trim', (array) $directories)));
-        $this->packPaths = array_values(array_filter(array_map('trim', (array) $packPaths)));
+        $this->directories = self::paths($directories);
+        $this->packPaths = self::paths($packPaths);
         $this->frameworks = $frameworks ?? new FrameworkRegistry();
     }
 
@@ -187,7 +187,7 @@ final class EnvironmentRegistry implements ResetInterface
         return new Environment(
             id: $id,
             // Le titre ne s'hérite pas : deux environnements ne se présentent pas sous le même nom.
-            title: $chain[array_key_last($chain)]['meta']['title'] ?? $id,
+            title: array_last($chain)['meta']['title'] ?? $id,
             // Un environnement sans PHP (Nuxt, joué par le simulateur du navigateur) n'a pas de version à déclarer.
             phpVersion: (string) ($meta['php'] ?? ($framework->runsPhpunit() ? throw new ContentException(sprintf('Environnement « %s » : clé « php » manquante.', $id)) : '')),
             directories: $directories,
@@ -213,7 +213,7 @@ final class EnvironmentRegistry implements ResetInterface
         if (!$this->has($id)) {
             $origine = [] === $seen
                 ? sprintf('introuvable dans %s', implode(', ', $this->roots()))
-                : sprintf('introuvable, prolongé par « %s »', end($seen));
+                : sprintf('introuvable, prolongé par « %s »', array_last($seen));
             throw new ContentException(sprintf('Environnement « %s » %s.', $id, $origine));
         }
 
@@ -231,5 +231,20 @@ final class EnvironmentRegistry implements ResetInterface
         }
 
         return [...$this->chain($parent, [...$seen, $id]), $entry];
+    }
+
+    /**
+     * Une liste de dossiers venue de la configuration (tableau, ou chaîne déjà découpée par « csv: »), sans blancs ni vides.
+     *
+     * @param list<string>|string $paths
+     *
+     * @return list<string>
+     */
+    private static function paths(array|string $paths): array
+    {
+        return (array) $paths
+            |> (static fn (array $items): array => array_map(trim(...), $items))
+            |> array_filter(...)
+            |> array_values(...);
     }
 }

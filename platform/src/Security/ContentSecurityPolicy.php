@@ -7,6 +7,7 @@ use Pentatrion\ViteBundle\Service\EntrypointsLookupCollection;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Uri\WhatWg\Url;
 
 /**
  * Politique de sécurité du contenu des pages : d'où peuvent venir les scripts. Filet en cas de faille XSS —
@@ -71,11 +72,13 @@ final class ContentSecurityPolicy
 
     private static function originOf(string $url): ?string
     {
-        $parts = parse_url($url);
-        if (!isset($parts['scheme'], $parts['host'])) {
+        // Lue comme un navigateur la lit (WHATWG) : schéma et hôte en minuscules, port par défaut omis.
+        $parsed = Url::parse($url);
+        $host = $parsed?->getAsciiHost();
+        if (null === $parsed || null === $host || '' === $host) {
             return null;
         }
 
-        return $parts['scheme'].'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '');
+        return $parsed->getScheme().'://'.$host.(null !== $parsed->getPort() ? ':'.$parsed->getPort() : '');
     }
 }
