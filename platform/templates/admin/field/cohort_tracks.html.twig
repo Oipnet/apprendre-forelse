@@ -2,5 +2,5 @@
 {% if entity.instance.hasTrackSelection %}
     {{ include('@EasyAdmin/crud/field/choice.html.twig') }}
 {% else %}
-    <span class="badge badge-secondary">Tous</span>
+    <twig:ea:Badge color="secondary">Tous</twig:ea:Badge>
 {% endif %}

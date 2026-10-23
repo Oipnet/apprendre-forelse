@@ -10,14 +10,14 @@
             <p class="text-muted" style="margin-bottom: 1rem">
                 {{ learner.completedExercises }} exercice{{ learner.completedExercises > 1 ? 's' }} réussi{{ learner.completedExercises > 1 ? 's' }} ·
                 {{ learner.feedbacks }} retour{{ learner.feedbacks > 1 ? 's' }}{% if learner.unhandledFeedbacks %}, dont {{ learner.unhandledFeedbacks }} à traiter{% endif %}.
-                Pastilles : <span class="badge badge-success">✓</span> réussi, <span class="badge badge-warning">…</span> en cours, <span class="badge badge-light">·</span> jamais ouvert ; le chiffre est le nombre d'indices consultés.
+                Pastilles : <twig:ea:Badge color="success">✓</twig:ea:Badge> réussi, <twig:ea:Badge color="warning">…</twig:ea:Badge> en cours, <twig:ea:Badge color="light">·</twig:ea:Badge> jamais ouvert ; le chiffre est le nombre d'indices consultés.
             </p>
             {% set user = entity.instance %}
             {% for track in learner.tracks %}
                 <div class="beta-panel">
                     <div class="beta-panel-header">
                         <h3>{{ track.title }}</h3>
-                        <span class="badge badge-secondary">{{ track.completedBy(user.id) }} / {{ track.exerciseCount }}</span>
+                        <twig:ea:Badge color="secondary">{{ track.completedBy(user.id) }} / {{ track.exerciseCount }}</twig:ea:Badge>
                     </div>
                     <div class="beta-panel-body">
                         {% for chapter in track.chapters %}
@@ -30,11 +30,13 @@
                                     {% for exerciseId in chapter.exerciseIds %}
                                         {% set p = track.progressOf(user.id, exerciseId) %}
                                         {% set state = p ? (p.completed ? 'completed' : 'in_progress') : 'todo' %}
-                                        <span class="badge exercise-chip {{ state == 'completed' ? 'badge-success' : state == 'in_progress' ? 'badge-warning' : 'badge-light' }}"
+                                        {% set titre = track.titles[exerciseId] ~ (p ? ' · ' ~ (p.completed ? 'réussi le ' ~ p.completedAt|date('d/m/Y H:i') : 'en cours depuis le ' ~ p.startedAt|date('d/m/Y H:i')) ~ (p.hintsUsed ? ' · ' ~ p.hintsUsed ~ ' indice' ~ (p.hintsUsed > 1 ? 's') : '')) %}
+                                        <twig:ea:Badge :color="state == 'completed' ? 'success' : state == 'in_progress' ? 'warning' : 'light'"
+                                              class="exercise-chip"
                                               data-state="{{ state }}"
-                                              title="{{ track.titles[exerciseId] }}{% if p %} · {{ p.completed ? 'réussi le ' ~ p.completedAt|date('d/m/Y H:i') : 'en cours depuis le ' ~ p.startedAt|date('d/m/Y H:i') }}{% if p.hintsUsed %} · {{ p.hintsUsed }} indice{{ p.hintsUsed > 1 ? 's' }}{% endif %}{% endif %}">
+                                              :title="titre">
                                             {{ loop.index }} {{ state == 'completed' ? '✓' : state == 'in_progress' ? '…' : '·' }}{{ p and p.hintsUsed ? ' ' ~ p.hintsUsed }}
-                                        </span>
+                                        </twig:ea:Badge>
                                     {% endfor %}
                                 </div>
                             </div>

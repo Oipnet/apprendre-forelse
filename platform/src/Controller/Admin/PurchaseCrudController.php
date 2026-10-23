@@ -25,6 +25,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\UrlField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -53,6 +54,8 @@ final class PurchaseCrudController extends AbstractCrudController
             ->setEntityLabelInPlural('Achats')
             ->setSearchFields(['customerEmail', 'trackId', 'stripeSessionId', 'stripePaymentIntentId'])
             ->setDefaultSort(['createdAt' => 'DESC'])
+            // Statuts en pastille : la couleur suffit, la liste reste lisible même chargée.
+            ->setBadgeVariant('dot')
             ->setHelp(Crud::PAGE_INDEX, '« En attente » : session Stripe ouverte, jamais confirmée par le webhook (paiement abandonné, ou webhook à vérifier).');
     }
 
@@ -82,6 +85,7 @@ final class PurchaseCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
+            ->add(TextFilter::new('customerEmail', 'Email'))
             ->add(ChoiceFilter::new('status', 'Statut')->setChoices(PurchaseStatus::valueChoices()))
             ->add(ChoiceFilter::new('trackId', 'Parcours')->setChoices($this->tracks->choices()))
             ->add(ChoiceFilter::new('priceKind', 'Prix appliqué')->setChoices(PriceKind::valueChoices()))

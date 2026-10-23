@@ -197,6 +197,28 @@ final class AdminTest extends WebTestCase
         $this->assertFalse($container->get(FeedbackRepository::class)->find($feedback->getId())->isHandled());
     }
 
+    public function testFiltrerLaProgressionParCohorte(): void
+    {
+        $container = static::getContainer();
+        $this->loginAsAdmin();
+        $ada = $this->createUser('ada@example.test', 'Ada', 'iut-2026');
+        $bob = $this->createUser('bob@example.test', 'Bob', 'lycee-2026');
+        $exercise = $container->get(ContentRepository::class)->findExercise('decouverte', '01-bonjour');
+        $container->get(ProgressService::class)->saveDraft($ada, $exercise, [], 0);
+        $container->get(ProgressService::class)->saveDraft($bob, $exercise, [], 0);
+
+        $crawler = $this->client->request('GET', '/admin/progression', ['filters' => ['user:cohort' => ['comparison' => '=', 'value' => $ada->getCohort()->getId()]]]);
+        $this->assertResponseIsSuccessful();
+        $this->assertStringContainsString('Ada', $crawler->filter('tbody')->text());
+        $this->assertStringNotContainsString('Bob', $crawler->filter('tbody')->text(), 'Seule la cohorte choisie reste.');
+        $this->assertGreaterThan(0, $crawler->filter('tbody .badge-dot')->count(), 'Les statuts s\'affichent en pastille.');
+
+        foreach (['/admin/progression', '/admin/retours', '/admin/certificats', '/admin/achats', '/admin/acces'] as $url) {
+            $this->client->request('GET', $url.'/render-filters');
+            $this->assertResponseIsSuccessful($url.' : les filtres sur l\'apprenant (cohorte, email) se rendent.');
+        }
+    }
+
     public function testSupprimerUnApprenantEmporteSaProgressionEtSesRetours(): void
     {
         $container = static::getContainer();

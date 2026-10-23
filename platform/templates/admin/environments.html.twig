@@ -12,7 +12,7 @@
                 <tbody>
                     {% for ligne in disponibles %}
                         <tr>
-                            <td><code>{{ ligne.id }}</code>{% if ligne.compose %} <span class="badge bg-secondary" title="Prolonge un autre environnement">composé</span>{% endif %}</td>
+                            <td><code>{{ ligne.id }}</code>{% if ligne.compose %} <twig:ea:Badge color="secondary" title="Prolonge un autre environnement">composé</twig:ea:Badge>{% endif %}</td>
                             <td>{{ ligne.title }}</td>
                             <td>{{ ligne.framework }}</td>
                             <td>
