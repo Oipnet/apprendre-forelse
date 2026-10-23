@@ -189,7 +189,11 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 				{
 					id: exercise.environment.id,
 					framework,
-					options: { phpVersion: exercise.environment.phpVersion },
+					options: {
+						phpVersion: exercise.environment.phpVersion,
+						// Les options d'un runtime sont des chaînes : la liste voyage séparée par des virgules.
+						...(exercise.environment.phpExtensions?.length ? { phpExtensions: exercise.environment.phpExtensions.join(',') } : {}),
+					},
 					// URL absolue : le worker peut tourner depuis une URL blob: (dev), sans base relative.
 					archiveUrl,
 					previewBasePath: bridge.base,

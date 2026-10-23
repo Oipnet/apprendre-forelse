@@ -24,6 +24,9 @@ use Symfony\Contracts\Service\ResetInterface;
  */
 final class EnvironmentRegistry implements ResetInterface
 {
+    /** Les extensions que le PHP du navigateur sait charger à la demande (`extensions:` dans environment.yaml). */
+    public const array PHP_EXTENSIONS = ['intl'];
+
     /** @var array<string, Environment> */
     private array $environments = [];
     /** @var array<string, string>|null identifiant => dossier, tous dossiers confondus */
@@ -195,7 +198,29 @@ final class EnvironmentRegistry implements ResetInterface
             // Symfony compile son container dans var/cache, Laravel ses vues Blade : le profil le sait,
             // et « cache: » dans environment.yaml a le dernier mot pour un projet arrangé autrement.
             cacheDirs: array_values(array_map('strval', (array) ($meta['cache'] ?? $framework->cacheDirs))),
+            phpExtensions: $this->phpExtensions($id, $meta['extensions'] ?? []),
         );
+    }
+
+    /**
+     * Les extensions PHP qu'un environnement demande en plus de celles du PHP du navigateur. Seules celles que
+     * php-wasm sait charger à part sont acceptées : aujourd'hui intl, et ses 13 Mo de données ICU, que les autres
+     * environnements ne téléchargent donc pas.
+     *
+     * @return list<string>
+     */
+    private function phpExtensions(string $id, mixed $extensions): array
+    {
+        if (!\is_array($extensions) || !array_is_list($extensions)) {
+            throw new ContentException(sprintf('Environnement « %s » : « extensions » doit être une liste.', $id));
+        }
+        foreach ($extensions as $extension) {
+            if (!\in_array($extension, self::PHP_EXTENSIONS, true)) {
+                throw new ContentException(sprintf('Environnement « %s » : extension « %s » inconnue (%s).', $id, \is_scalar($extension) ? $extension : get_debug_type($extension), implode(', ', self::PHP_EXTENSIONS)));
+            }
+        }
+
+        return array_values(array_unique($extensions));
     }
 
     /**

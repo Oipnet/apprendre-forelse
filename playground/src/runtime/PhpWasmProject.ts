@@ -29,8 +29,11 @@ const REPORT_MARKER = '\n@@RAPPORT@@\n';
 export type PhpInstance = Pick<PHP, 'mkdir' | 'writeFile' | 'fileExists' | 'unlink' | 'isFile' | 'isDir' | 'readFileAsText' | 'readFileAsBuffer' | 'listFiles' | 'rmdir' | 'run'>;
 
 export interface PhpWasmProjectDeps {
-	/** Une instance PHP neuve, de cette version (le binaire n'est téléchargé et compilé qu'une fois). */
-	loadPhp(version: string): Promise<PhpInstance>;
+	/**
+	 * Une instance PHP neuve, de cette version (le binaire n'est téléchargé et compilé qu'une fois), avec ces
+	 * extensions en plus (intl).
+	 */
+	loadPhp(version: string, extensions: string[]): Promise<PhpInstance>;
 	/** L'archive du projet, en signalant la progression du téléchargement. */
 	download(url: string, onProgress: (progress: BootProgress) => void): Promise<Uint8Array>;
 	/** Les frameworks PHP connus, par identifiant de profil (PHP_FRAMEWORKS par défaut). */
@@ -76,6 +79,11 @@ export class PhpWasmProject implements Runtime {
 		return this.env.options?.phpVersion || '8.4';
 	}
 
+	/** Les extensions que l'environnement demande en plus (option « phpExtensions », séparée par des virgules). */
+	private phpExtensions(): string[] {
+		return (this.env.options?.phpExtensions ?? '').split(',').map((extension) => extension.trim()).filter(Boolean);
+	}
+
 	/**
 	 * Lance la création de l'instance de tests. Elle applique l'overlay à la fin de sa création, sans rien
 	 * attendre ensuite : aucune écriture ne peut s'intercaler entre ce moment et celui où elle devient
@@ -101,7 +109,7 @@ export class PhpWasmProject implements Runtime {
 	 * l'apprenant travaille déjà ; sa copie du projet rend la main au worker entre deux tranches.
 	 */
 	private async createPhp(background = false, loading?: Promise<PhpInstance>): Promise<PhpInstance> {
-		const php = await (loading ?? this.deps.loadPhp(this.phpVersion()));
+		const php = await (loading ?? this.deps.loadPhp(this.phpVersion(), this.phpExtensions()));
 		php.mkdir(APP_DIR);
 		if (background) await writeTreeInSlices(php, this.baseFiles);
 		else writeTree(php, this.baseFiles);
@@ -247,7 +255,7 @@ export class PhpWasmProject implements Runtime {
 		this.framework = (Object.hasOwn(frameworks, spec.framework.id) ? frameworks[spec.framework.id] : defaultPhpFramework)();
 		// PHP (le binaire WebAssembly, compilé pendant son téléchargement) et l'archive du projet arrivent en même temps :
 		// PHP attendait la fin de l'archive pour seulement commencer à se télécharger.
-		const php = this.deps.loadPhp(this.phpVersion());
+		const php = this.deps.loadPhp(this.phpVersion(), this.phpExtensions());
 		php.catch(() => {}); // attendu plus bas : son échec éventuel s'y lève
 		const archive = await this.deps.download(spec.archiveUrl, progress);
 		progress({ step: 'unpack', ratio: null, label: spec.framework.unpackLabel });
