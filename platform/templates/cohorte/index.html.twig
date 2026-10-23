@@ -23,11 +23,11 @@
                                     {% if cohort.hasTrackSelection %}
                                         <span class="beta-chips">
                                             {% for trackId in cohort.availableTrackIds %}
-                                                <span class="badge badge-info">{{ tracks[trackId].title ?? trackId }}</span>
+                                                <twig:ea:Badge color="info">{{ tracks[trackId].title ?? trackId }}</twig:ea:Badge>
                                             {% endfor %}
                                         </span>
                                     {% else %}
-                                        <span class="badge badge-secondary">Tous</span>
+                                        <twig:ea:Badge color="secondary">Tous</twig:ea:Badge>
                                     {% endif %}
                                 </td>
                             </tr>

@@ -16,7 +16,7 @@
     <section class="beta-panel" id="financement">
         <div class="beta-panel-header">
             <h2>Financement</h2>
-            <span class="badge badge-info">{{ cohort.cohort.fundingMode.label }}</span>
+            <twig:ea:Badge color="info">{{ cohort.cohort.fundingMode.label }}</twig:ea:Badge>
         </div>
         <div class="beta-panel-body">
             {{ include('cohorte/_financing.html.twig', {cohort: cohort.cohort, quote: quote, headcountForm: canManage ? headcountForm : null}) }}
@@ -27,9 +27,9 @@
         <div class="beta-panel-header">
             <h2>Parcours disponibles</h2>
             {% if cohort.cohort.hasTrackSelection %}
-                <span class="badge badge-info">{{ cohort.cohort.availableTrackIds|length }} sur {{ tracks|length }}</span>
+                <twig:ea:Badge color="info">{{ cohort.cohort.availableTrackIds|length }} sur {{ tracks|length }}</twig:ea:Badge>
             {% else %}
-                <span class="badge badge-secondary">Tous</span>
+                <twig:ea:Badge color="secondary">Tous</twig:ea:Badge>
             {% endif %}
         </div>
         <div class="beta-panel-body">
@@ -56,13 +56,13 @@
                                 <td>
                                     <label for="{{ choice.vars.id }}">{{ track.title }}</label>
                                     {% if track.restricted %}
-                                        <span class="badge badge-secondary" title="{{ is_granted('ROLE_ADMIN') ? 'Le cocher l\'ouvre aux apprenants de cette cohorte.' : 'Seul un administrateur peut l\'ouvrir à la cohorte.' }}">en préparation</span>
+                                        <twig:ea:Badge color="secondary" title="{{ is_granted('ROLE_ADMIN') ? 'Le cocher l\'ouvre aux apprenants de cette cohorte.' : 'Seul un administrateur peut l\'ouvrir à la cohorte.' }}">en préparation</twig:ea:Badge>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% set count = inProgress[track.id] ?? 0 %}
                                     {% if count %}
-                                        <span class="badge badge-warning" title="Ont commencé ce parcours sans le terminer">{{ count }} apprenant{{ count > 1 ? 's' }} en cours</span>
+                                        <twig:ea:Badge color="warning" title="Ont commencé ce parcours sans le terminer">{{ count }} apprenant{{ count > 1 ? 's' }} en cours</twig:ea:Badge>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -80,7 +80,7 @@
         <div class="beta-panel-header">
             <h2>Soutenances</h2>
             {% set booked = defenses|filter(d => d.booked)|length %}
-            <span class="badge badge-info">{{ defenses|length }} créneau{{ defenses|length > 1 ? 'x' }} · {{ booked }} réservé{{ booked > 1 ? 's' }}</span>
+            <twig:ea:Badge color="info">{{ defenses|length }} créneau{{ defenses|length > 1 ? 'x' }} · {{ booked }} réservé{{ booked > 1 ? 's' }}</twig:ea:Badge>
         </div>
         <div class="beta-panel-body">
             <p class="text-muted">
@@ -99,8 +99,8 @@
                                 <td>{{ defense.startsAt|date('d/m/Y à H:i') }}<br><span class="text-muted">{{ defense.durationMinutes }} min</span></td>
                                 <td>{{ (tracks[defense.trackId] ?? null) ? tracks[defense.trackId].title : defense.trackId }}</td>
                                 <td>{{ defense.mode.label }}<br><span class="text-muted">{{ defense.place }}</span></td>
-                                <td>{{ defense.learner ? defense.learner.displayName : (defense.booked ? 'Compte supprimé' : '') }}{% if not defense.booked %}<span class="badge badge-secondary">libre</span>{% endif %}</td>
-                                <td>{% if defense.outcome %}<span class="badge badge-{{ defense.outcome.badge }}">{{ defense.outcome.label }}</span>{% endif %}</td>
+                                <td>{{ defense.learner ? defense.learner.displayName : (defense.booked ? 'Compte supprimé' : '') }}{% if not defense.booked %}<twig:ea:Badge color="secondary">libre</twig:ea:Badge>{% endif %}</td>
+                                <td>{% if defense.outcome %}<twig:ea:Badge :color="defense.outcome.badge">{{ defense.outcome.label }}</twig:ea:Badge>{% endif %}</td>
                                 <td>
                                     {% if defense.booked %}
                                         <a class="btn btn-sm btn-secondary" href="{{ path('chef_cohort_defense', {id: cohort.cohort.id, defenseId: defense.id}) }}">{{ defense.outcome or not canManage ? 'Dossier' : 'Dossier et évaluation' }}</a>
@@ -135,7 +135,7 @@
     <section class="beta-panel">
         <div class="beta-panel-header">
             <h2>Avancement</h2>
-            <span class="badge badge-success">{{ cohort.completedExercises }} exercice{{ cohort.completedExercises > 1 ? 's' }} réussi{{ cohort.completedExercises > 1 ? 's' }}</span>
+            <twig:ea:Badge color="success">{{ cohort.completedExercises }} exercice{{ cohort.completedExercises > 1 ? 's' }} réussi{{ cohort.completedExercises > 1 ? 's' }}</twig:ea:Badge>
         </div>
         <div class="beta-panel-body">
             {% if cohort.users is empty %}

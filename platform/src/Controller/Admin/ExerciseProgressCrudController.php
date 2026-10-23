@@ -39,7 +39,9 @@ final class ExerciseProgressCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('Progression')
             ->setEntityLabelInPlural('Progression')
             ->setSearchFields(['exerciseId', 'trackId', 'user.displayName', 'user.email'])
-            ->setDefaultSort(['updatedAt' => 'DESC']);
+            ->setDefaultSort(['updatedAt' => 'DESC'])
+            // Statuts en pastille : la couleur suffit, la liste reste lisible même chargée.
+            ->setBadgeVariant('dot');
     }
 
     public function configureFields(string $pageName): iterable
@@ -65,6 +67,7 @@ final class ExerciseProgressCrudController extends AbstractCrudController
     {
         return $filters
             ->add(EntityFilter::new('user', 'Apprenant'))
+            ->add(EntityFilter::new('user.cohort', 'Cohorte'))
             ->add(ChoiceFilter::new('status', 'Statut')->setChoices(ProgressStatus::valueChoices()))
             ->add(ChoiceFilter::new('verification', 'Vérification')->setChoices(VerificationStatus::valueChoices()))
             ->add(TextFilter::new('trackId', 'Parcours'))
