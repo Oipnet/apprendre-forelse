@@ -30,12 +30,13 @@
                                     {% for exerciseId in chapter.exerciseIds %}
                                         {% set p = track.progressOf(user.id, exerciseId) %}
                                         {% set state = p ? (p.completed ? 'completed' : 'in_progress') : 'todo' %}
+                                        {% set numero = loop.index %}
                                         {% set titre = track.titles[exerciseId] ~ (p ? ' · ' ~ (p.completed ? 'réussi le ' ~ p.completedAt|date('d/m/Y H:i') : 'en cours depuis le ' ~ p.startedAt|date('d/m/Y H:i')) ~ (p.hintsUsed ? ' · ' ~ p.hintsUsed ~ ' indice' ~ (p.hintsUsed > 1 ? 's') : '')) %}
                                         <twig:ea:Badge :color="state == 'completed' ? 'success' : state == 'in_progress' ? 'warning' : 'light'"
                                               class="exercise-chip"
                                               data-state="{{ state }}"
                                               :title="titre">
-                                            {{ loop.index }} {{ state == 'completed' ? '✓' : state == 'in_progress' ? '…' : '·' }}{{ p and p.hintsUsed ? ' ' ~ p.hintsUsed }}
+                                            {{ numero }} {{ state == 'completed' ? '✓' : state == 'in_progress' ? '…' : '·' }}{{ p and p.hintsUsed ? ' ' ~ p.hintsUsed }}
                                         </twig:ea:Badge>
                                     {% endfor %}
                                 </div>

@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Api\FeedbackInput;
 use App\Content\ContentRepository;
+use App\Entity\FundingMode;
 use App\Entity\TrackAccess;
 use App\Entity\User;
 use App\Repository\CohortRepository;
@@ -206,6 +207,9 @@ final class AdminTest extends WebTestCase
         $exercise = $container->get(ContentRepository::class)->findExercise('decouverte', '01-bonjour');
         $container->get(ProgressService::class)->saveDraft($ada, $exercise, [], 0);
         $container->get(ProgressService::class)->saveDraft($bob, $exercise, [], 0);
+        // EasyAdmin valide la cohorte choisie dans le filtre : elle doit être une cohorte valide (financée ici par les apprenants).
+        $ada->getCohort()->setFundingMode(FundingMode::Learners);
+        $container->get('doctrine')->getManager()->flush();
 
         $crawler = $this->client->request('GET', '/admin/progression', ['filters' => ['user:cohort' => ['comparison' => '=', 'value' => $ada->getCohort()->getId()]]]);
         $this->assertResponseIsSuccessful();
