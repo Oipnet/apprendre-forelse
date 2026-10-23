@@ -18,7 +18,7 @@
 		"@php-wasm/util": "^3.1.57",
 		"@php-wasm/web": "^3.1.57",
 		"buffer": "6.0.3",
-		"dompurify": "^3.4.16",
+		"dompurify": "^3.4.17",
 		"fflate": "^0.8.3",
 		"happy-dom": "20.14.5",
 		"marked": "^18.1.0",
@@ -36,6 +36,9 @@
 		"vitest": "^5.0.1"
 	},
 	"overrides": {
+		"monaco-editor": {
+			"dompurify": "$dompurify"
+		},
 		"@php-wasm/web-5-2": "file:./stubs/php-wasm-unused",
 		"@php-wasm/node-5-2": "file:./stubs/php-wasm-unused",
 		"@php-wasm/web-7-4": "file:./stubs/php-wasm-unused",
