@@ -45,7 +45,13 @@ php: '8.4'          # obligatoire, sauf pour un environnement sans PHP (Nuxt)
 framework: symfony  # symfony (défaut), laravel, docker, nuxt
 cache: [var/cache]  # facultatif : les caches à vider entre deux runs, si ceux du framework ne conviennent pas
 extends: <id>       # facultatif : prolonge un autre environnement (voir « Fusionner »)
+extensions: [intl]  # facultatif : extensions que le PHP du navigateur charge en plus (aujourd'hui intl seulement)
 ```
+
+`extensions:` existe parce qu'intl pèse lourd : l'extension et ses données ICU, environ 13,5 Mo compressés, ne se
+téléchargent que pour les environnements qui la demandent (`symfony-8-easyadmin`, dont les champs de date et de montant
+en ont besoin). Le moteur refuse une extension que php-wasm ne sait pas charger à part. Côté serveur (vérification des
+réussites, intégration continue), le PHP natif a déjà intl.
 
 `framework:` choisit le **runtime**, c'est-à-dire ce que le moteur sait faire tourner : la console du
 projet, l'organisation de ses dossiers, ses caches, son lanceur de tests. Chaque runtime est déclaré
@@ -71,7 +77,7 @@ Les règles, toutes vérifiables dans `EnvironmentAssemblerTest` :
 - **les fichiers se superposent** — à chemin égal, celui du plus particulier l'emporte, quelles que
   soient les dates (un dépôt fraîchement cloné a des dates toutes voisines : s'y fier serait un tirage
   au sort) ;
-- **les clés d'`environment.yaml` s'héritent** (`php`, `framework`, `cache`), sauf `title`, qu'un
+- **les clés d'`environment.yaml` s'héritent** (`php`, `framework`, `cache`, `extensions`), sauf `title`, qu'un
   environnement ne partage avec personne ;
 - **`vendor/` ne se superpose pas** : il vient du seul dossier de la chaîne qui déclare un
   `composer.json`, le plus particulier. Un environnement qui n'ajoute aucune dépendance hérite donc du

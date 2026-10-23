@@ -38,6 +38,8 @@ export interface ExercisePayload {
 	environment: {
 		id: string;
 		phpVersion: '8.4' | '';
+		/** Extensions que le PHP du navigateur charge en plus (intl). Absent d'un moteur antérieur. */
+		phpExtensions?: string[];
 		/** Ce que le moteur sait de ce framework (voir App\Content\Framework\FrameworkProfile). */
 		framework: FrameworkProfile;
 		archiveUrl: string;

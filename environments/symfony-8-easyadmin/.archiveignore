@@ -1,0 +1,11 @@
+vendor/easycorp/easyadmin-bundle/tests/*
+vendor/easycorp/easyadmin-bundle/doc/*
+vendor/easycorp/easyadmin-bundle/assets/*
+vendor/easycorp/easyadmin-bundle/public/*
+vendor/symfony/intl/Resources/data/*/[a-dg-ln-qs-z]*
+vendor/symfony/intl/Resources/data/*/e[!n]*
+vendor/symfony/intl/Resources/data/*/f[!r]*
+vendor/symfony/intl/Resources/data/*/m[!e]*
+vendor/symfony/intl/Resources/data/*/me[!t]*
+vendor/symfony/intl/Resources/data/*/r[!o]*
+vendor/symfony/intl/Resources/data/*/ro[!o]*
