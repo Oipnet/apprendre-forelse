@@ -18,6 +18,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   compressés) pour les seuls environnements qui la demandent. EasyAdmin en a besoin pour ses champs de date, de nombre et
   de montant. L'éditeur complète aussi les classes d'EasyAdmin.
 
+### Corrigé
+
+- Le PHP du navigateur suit le fuseau horaire de l'apprenant : il tournait en UTC, si bien que `date()` affichait dans
+  l'aperçu une heure décalée (09:06 au lieu de 11:06 à Paris).
+
 ## 3.18.1 — 2026-10-22
 
 ### Modifié
