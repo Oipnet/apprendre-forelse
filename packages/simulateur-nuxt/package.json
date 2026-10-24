@@ -34,7 +34,7 @@
 		"es-module-lexer": "^2.3.2",
 		"fflate": "^0.8.3",
 		"fnv1a-64": "0.1.2",
-		"happy-dom": "20.14.5",
+		"happy-dom": "21.0.4",
 		"hookable": "6.1.1",
 		"klona": "2.0.6",
 		"object-identity": "0.2.3",
