@@ -3,7 +3,7 @@
  * Worker PHP : sert un PhpWasmProject (deux instances php-wasm, aperçu et tests) à la page.
  * Ce fichier ne garde que ce qui tient au navigateur : télécharger l'archive, compiler et charger PHP.
  */
-import { PHP } from '@php-wasm/universal';
+import { PHP, setPhpIniEntries } from '@php-wasm/universal';
 import { createSpawnHandler } from '@php-wasm/util';
 import { getPHPLoaderModule, loadWebRuntime } from '@php-wasm/web';
 import type { BootProgress } from '@forelse/runtime-contract';
@@ -77,6 +77,8 @@ async function loadPhp(requested: string, extensions: string[]): Promise<PHP> {
 	// Pas de processus dans le navigateur : une commande externe (le php-cs-fixer que lance MakerBundle
 	// après make:entity, par exemple) se termine sans rien faire, au lieu de faire échouer la commande.
 	await php.setSpawnHandler(createSpawnHandler((_command, processApi) => processApi.exit(0)));
+	// php-wasm démarre en UTC : date() afficherait 09:06 à un apprenant pour qui il est 11:06. PHP suit le fuseau du navigateur.
+	await setPhpIniEntries(php, { 'date.timezone': Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' });
 	return php;
 }
 
