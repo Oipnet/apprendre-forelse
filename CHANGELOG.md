@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.18.2 — 2026-10-24
+
 ### Ajouté
 
 - Environnement `symfony-8-easyadmin` : Symfony 8.1, Doctrine ORM (SQLite) et EasyAdmin 5.8, avec sa variante anglaise
