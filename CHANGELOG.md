@@ -23,6 +23,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - Le PHP du navigateur suit le fuseau horaire de l'apprenant : il tournait en UTC, si bien que `date()` affichait dans
   l'aperçu une heure décalée (09:06 au lieu de 11:06 à Paris).
 
+### Sécurité
+
+- happy-dom passe de 20.14.5 à 21.0.4 (simulateur Nuxt et playground) : l'avis GHSA-834v-8h66-3h79 (alias d'import non
+  assaini, exécution de code) touche les versions 17.0.0 à 21.0.3 et faisait échouer `npm audit` en CI.
+
 ## 3.18.1 — 2026-10-22
 
 ### Modifié
