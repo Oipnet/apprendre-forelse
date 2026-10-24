@@ -110,6 +110,9 @@ final readonly class ExercisePayloadFactory
             'environment' => [
                 'id' => $environment->id,
                 'phpVersion' => $environment->phpVersion,
+                // Extensions chargées en plus par le PHP du navigateur (intl, pour EasyAdmin) : les autres environnements
+                // n'en téléchargent pas les données.
+                'phpExtensions' => $environment->phpExtensions,
                 // Ce que le navigateur sait du framework vient d'ici : console, dossiers du projet,
                 // caches, namespaces… Il ne redéclare plus rien de son côté (voir FrameworkProfile). Ses textes
                 // (note de démarrage, étapes) sont traduits dans la langue de la page.

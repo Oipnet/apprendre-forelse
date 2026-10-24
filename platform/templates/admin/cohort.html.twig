@@ -16,7 +16,7 @@
     <p>
         {{ cohort.users|length }} apprenant{{ cohort.users|length > 1 ? 's' }} ·
         {{ cohort.feedbacks }} retour{{ cohort.feedbacks > 1 ? 's' }}, dont {{ cohort.unhandledFeedbacks }} à traiter.
-        Chaque cellule : <span class="badge badge-success">✓</span> réussi, <span class="badge badge-warning">…</span> en cours, vide jamais ouvert ; le chiffre est le nombre d'indices consultés.
+        Chaque cellule : <twig:ea:Badge color="success">✓</twig:ea:Badge> réussi, <twig:ea:Badge color="warning">…</twig:ea:Badge> en cours, vide jamais ouvert ; le chiffre est le nombre d'indices consultés.
     </p>
     {% for track in cohort.tracks %}
         <section class="beta-panel">
@@ -44,7 +44,7 @@
                                         {% set p = track.progressOf(user.id, exerciseId) %}
                                         <td class="beta-center" title="{{ track.titles[exerciseId] }}{% if p %} · {{ p.completed ? 'réussi le ' ~ p.completedAt|date('d/m H:i') : 'en cours depuis le ' ~ p.startedAt|date('d/m H:i') }}{% endif %}">
                                             {% if p %}
-                                                <span class="badge {{ p.completed ? 'badge-success' : 'badge-warning' }}">{{ p.completed ? '✓' : '…' }}{{ p.hintsUsed ? ' ' ~ p.hintsUsed }}</span>
+                                                <twig:ea:Badge :color="p.completed ? 'success' : 'warning'">{{ p.completed ? '✓' : '…' }}{{ p.hintsUsed ? ' ' ~ p.hintsUsed }}</twig:ea:Badge>
                                             {% endif %}
                                         </td>
                                     {% endfor %}

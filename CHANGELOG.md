@@ -8,6 +8,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Environnement `symfony-8-easyadmin` : Symfony 8.1, Doctrine ORM (SQLite) et EasyAdmin 5.8, avec sa variante anglaise
+  `symfony-8-easyadmin-en`, pour les exercices de Pratique sur EasyAdmin et le futur parcours. Les fichiers publics
+  d'EasyAdmin sont servis depuis `public/bundles/easyadmin`, et l'archive ne garde que le français et l'anglais des
+  données de `symfony/intl`.
+- Clé `extensions:` dans `environment.yaml` : le PHP du navigateur charge intl (extension et données ICU, environ 13,5 Mo
+  compressés) pour les seuls environnements qui la demandent. EasyAdmin en a besoin pour ses champs de date, de nombre et
+  de montant. L'éditeur complète aussi les classes d'EasyAdmin.
+
 ## 3.18.1 — 2026-10-22
 
 ### Modifié

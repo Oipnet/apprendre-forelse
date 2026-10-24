@@ -14,11 +14,11 @@
         <section class="beta-panel">
             <div class="beta-panel-header">
                 <h2><a href="{{ path('admin_cohort', {cohort: cohort.key}) }}">{{ cohort.label }}</a></h2>
-                <span class="badge badge-secondary">{{ cohort.users|length }} apprenant{{ cohort.users|length > 1 ? 's' }}</span>
-                <span class="badge badge-success">{{ cohort.completedExercises }} exercice{{ cohort.completedExercises > 1 ? 's' }} réussi{{ cohort.completedExercises > 1 ? 's' }}</span>
-                <span class="badge {{ cohort.unhandledFeedbacks ? 'badge-warning' : 'badge-secondary' }}">{{ cohort.unhandledFeedbacks }} retour{{ cohort.unhandledFeedbacks > 1 ? 's' }} à traiter / {{ cohort.feedbacks }}</span>
+                <twig:ea:Badge color="secondary">{{ cohort.users|length }} apprenant{{ cohort.users|length > 1 ? 's' }}</twig:ea:Badge>
+                <twig:ea:Badge color="success">{{ cohort.completedExercises }} exercice{{ cohort.completedExercises > 1 ? 's' }} réussi{{ cohort.completedExercises > 1 ? 's' }}</twig:ea:Badge>
+                <twig:ea:Badge :color="cohort.unhandledFeedbacks ? 'warning' : 'secondary'">{{ cohort.unhandledFeedbacks }} retour{{ cohort.unhandledFeedbacks > 1 ? 's' }} à traiter / {{ cohort.feedbacks }}</twig:ea:Badge>
                 {% if cohort.cohort %}
-                    <span class="badge {{ cohort.cohort.active ? 'badge-info' : 'badge-secondary' }}" title="Code d'invitation">{{ cohort.cohort.active ? 'code' : 'fermée ·' }} {{ cohort.cohort.code }}</span>
+                    <twig:ea:Badge :color="cohort.cohort.active ? 'info' : 'secondary'" title="Code d'invitation">{{ cohort.cohort.active ? 'code' : 'fermée ·' }} {{ cohort.cohort.code }}</twig:ea:Badge>
                 {% endif %}
             </div>
             <div class="beta-panel-body">

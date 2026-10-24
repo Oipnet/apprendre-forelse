@@ -84,9 +84,11 @@ const rapport = (cases: object[], output = '') => `sortie PHPUnit\n@@RAPPORT@@\n
 function projet(script: Script = () => '', frameworks?: Record<string, () => PhpFrameworkAdapter>) {
 	const instances: FauxPhp[] = [];
 	const versions: string[] = [];
+	const extensions: string[][] = [];
 	const project = new PhpWasmProject({
-		async loadPhp(version) {
+		async loadPhp(version, demandees) {
 			versions.push(version);
+			extensions.push(demandees);
 			const php = new FauxPhp(script);
 			instances.push(php);
 			return php;
@@ -97,7 +99,7 @@ function projet(script: Script = () => '', frameworks?: Record<string, () => Php
 		},
 		frameworks,
 	});
-	return { project, instances, versions };
+	return { project, instances, versions, extensions };
 }
 
 /** Le projet démarré, instance de tests prête. */
@@ -121,6 +123,16 @@ describe('PhpWasmProject', () => {
 			expect(php.isFile('/runner/run-tests.php')).toBe(true);
 			expect(php.isFile('/runner/en-plus.php')).toBe(true);
 		}
+	});
+
+	it('ne demande aucune extension par défaut, et celles de l\'environnement sinon', async () => {
+		const sans = await demarre();
+		expect(sans.extensions).toEqual([[], []]);
+
+		const p = projet();
+		await p.project.boot({ ...env(), options: { phpVersion: '8.4', phpExtensions: 'intl' } });
+		await p.project.runTests().catch(() => {});
+		expect(p.extensions).toEqual([['intl'], ['intl']]);
 	});
 
 	it('charge PHP pendant le téléchargement de l\'archive, pas après', async () => {

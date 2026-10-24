@@ -150,6 +150,15 @@ const NAMESPACES = [
     'Symfony\\Component\\Console\\Tester\\CommandTester',
     'Symfony\\Component\\Console\\Tester\\ApplicationTester',
     'Symfony\\Bundle\\FrameworkBundle\\Console\\Application',
+    // EasyAdmin (symfony-8-easyadmin ; absent ailleurs, simplement ignoré)
+    'EasyCorp\\Bundle\\EasyAdminBundle\\Attribute\\',
+    'EasyCorp\\Bundle\\EasyAdminBundle\\Config\\',
+    'EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\',
+    'EasyCorp\\Bundle\\EasyAdminBundle\\Field\\',
+    'EasyCorp\\Bundle\\EasyAdminBundle\\Filter\\',
+    'EasyCorp\\Bundle\\EasyAdminBundle\\Router\\AdminUrlGenerator',
+    'EasyCorp\\Bundle\\EasyAdminBundle\\Event\\',
+    'EasyCorp\\Bundle\\EasyAdminBundle\\Context\\AdminContext',
     // Laravel (environnements laravel-* ; absents ailleurs, simplement ignorés)
     'Illuminate\\Http\\Request',
     'Illuminate\\Http\\Response',

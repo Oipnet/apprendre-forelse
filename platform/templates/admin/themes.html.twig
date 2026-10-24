@@ -34,8 +34,8 @@
                         <tr>
                             <td>
                                 <code>{{ ligne.id }}</code>
-                                {% if ligne.id == actif %}<span class="badge bg-success">actif</span>{% endif %}
-                                {% if ligne.id == apercu %}<span class="badge bg-info">aperçu</span>{% endif %}
+                                {% if ligne.id == actif %}<twig:ea:Badge color="success">actif</twig:ea:Badge>{% endif %}
+                                {% if ligne.id == apercu %}<twig:ea:Badge color="info">aperçu</twig:ea:Badge>{% endif %}
                                 <div class="text-muted">{{ ligne.id == 'default' ? 'livré avec le moteur' : ligne.directory }}</div>
                             </td>
                             <td>
