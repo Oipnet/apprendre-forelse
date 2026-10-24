@@ -420,6 +420,52 @@ jobs:
           docker buildx imagetools create "${args[@]}" "$SOURCE"
           docker buildx imagetools inspect "$SOURCE" | head -3
 
+  # Garde-fou de version : prévient quand le PHP de l'image est en retard sur la dernière version de sa branche
+  # (c'est ainsi qu'on a traîné PHP 8.4.26 pendant PHP2Shell, CVE-2026-109618/109619). Le PHP vient de l'image de
+  # base (dunglas/frankenphp, épinglée dans le Dockerfile) : ce job ne corrige rien et ne bloque pas le tag, il
+  # pose un avertissement visible pour rappeler de monter l'image de base. Ne tourne que sur une étiquette de version.
+  php-a-jour:
+    name: PHP à jour
+    needs: [reprise, docker, version]
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Connexion au registre
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comparer le PHP de l'image à la dernière version publiée
+        env:
+          # L'image qu'on s'apprête à publier : reprise si l'image de main a été reprise, sinon celle que « docker » vient de construire.
+          IMAGE: ${{ needs.reprise.outputs.image || needs.docker.outputs.image }}
+        run: |
+          set -euo pipefail
+          if [ -z "$IMAGE" ]; then
+            echo "::error::Aucune image à vérifier (les jobs « reprise » et « docker » n'ont rien produit)."
+            exit 1
+          fi
+          # FrankenPHP a « frankenphp » comme point d'entrée : on force « php » pour lire la version embarquée.
+          installe=$(docker run --rm --entrypoint php "$IMAGE" -r 'echo PHP_VERSION;')
+          branche=${installe%.*}
+          dernier=$(curl -fsS "https://www.php.net/releases/?json&version=${branche}&max=1" | jq -r 'keys_unsorted[0] // empty')
+          echo "Image : PHP ${installe} — dernière ${branche} publiée : ${dernier:-inconnue}"
+          if [ -z "$dernier" ] || [ "$dernier" = "null" ]; then
+            echo "::warning::Impossible de lire la dernière version de PHP sur php.net ; vérification ignorée."
+            exit 0
+          fi
+          if [ "$installe" != "$dernier" ] && dpkg --compare-versions "$installe" lt "$dernier"; then
+            echo "::warning::L'image embarque PHP ${installe}, en retard sur ${dernier}. Pensez à monter l'image de base (dunglas/frankenphp) dans le Dockerfile."
+            exit 0
+          fi
+          echo "PHP ${installe} est à jour."
+
   # Les exercices vivent dans un autre dépôt : on lui demande de les revérifier contre ce moteur
   # (workflow « Contenu », déclencheur repository_dispatch). Variable CONTENU_DEPOT (propriétaire/nom)
   # et secret CONTENU_TOKEN (jeton fine-grained : Contents → Read and write sur le dépôt de contenu).
