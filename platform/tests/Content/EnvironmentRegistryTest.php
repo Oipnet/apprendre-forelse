@@ -139,6 +139,25 @@ final class EnvironmentRegistryTest extends TestCase
         (new EnvironmentRegistry($this->tmp))->get('enfant');
     }
 
+    /** intl ne se télécharge que pour les environnements qui la demandent ; leurs enfants en héritent. */
+    public function testLesExtensionsPhpSontDeclareesEtSHeritent(): void
+    {
+        $environnements = new EnvironmentRegistry(self::ROOT.'/environments');
+
+        $this->assertSame([], $environnements->get('symfony-8')->phpExtensions);
+        $this->assertSame(['intl'], $environnements->get('symfony-8-easyadmin')->phpExtensions);
+        $this->assertSame(['intl'], $environnements->get('symfony-8-easyadmin-en')->phpExtensions, 'La clé « extensions » s\'hérite.');
+    }
+
+    public function testUneExtensionPhpInconnueEstRefusee(): void
+    {
+        $this->tmp = $this->environnements(['maison' => "id: maison\nphp: '8.4'\nextensions: [gd]\n"]);
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage('extension « gd » inconnue (intl)');
+        (new EnvironmentRegistry($this->tmp))->get('maison');
+    }
+
     /**
      * @param array<string, string> $fichiers « <env> » pour son environment.yaml, « <env>/chemin » pour un fichier
      */

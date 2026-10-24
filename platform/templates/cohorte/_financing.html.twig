@@ -33,7 +33,7 @@
         <dd>
             {{ cohort.quoteAmount is not null ? cohort.quoteAmount|euros ~ ' TTC' : 'pas encore établi' }}
             {% if quote.differsFrom(cohort.quoteAmount) %}
-                <span class="badge badge-warning">devis à revoir : l'estimation a changé</span>
+                <twig:ea:Badge color="warning">devis à revoir : l'estimation a changé</twig:ea:Badge>
             {% endif %}
         </dd>
     {% endif %}

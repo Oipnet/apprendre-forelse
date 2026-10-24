@@ -21,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -81,6 +82,7 @@ final class TrackAccessCrudController extends AbstractCrudController
     {
         return $filters
             ->add(EntityFilter::new('user', 'Apprenant'))
+            ->add(TextFilter::new('user.email', 'Email'))
             ->add(ChoiceFilter::new('source', 'Source')->setChoices(AccessSource::valueChoices()))
             ->add(EntityFilter::new('cohort', 'Cohorte'));
     }

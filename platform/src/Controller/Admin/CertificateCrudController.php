@@ -18,6 +18,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NullFilter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
@@ -69,7 +70,8 @@ final class CertificateCrudController extends AbstractCrudController
     {
         return $filters
             ->add(NullFilter::new('revokedAt', 'Révoqué')->setChoiceLabels('Valide', 'Révoqué'))
-            ->add(DateTimeFilter::new('issuedAt', 'Délivré le'));
+            ->add(DateTimeFilter::new('issuedAt', 'Délivré le'))
+            ->add(EntityFilter::new('user.cohort', 'Cohorte'));
     }
 
     public function configureActions(Actions $actions): Actions

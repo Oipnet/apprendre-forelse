@@ -74,6 +74,7 @@ final class FeedbackCrudController extends AbstractCrudController
             ->add(BooleanFilter::new('handled', 'Traité'))
             ->add(ChoiceFilter::new('kind', 'Type')->setChoices(FeedbackKind::valueChoices()))
             ->add(EntityFilter::new('user', 'Apprenant'))
+            ->add(EntityFilter::new('user.cohort', 'Cohorte'))
             ->add(TextFilter::new('exerciseId', 'Exercice'))
             ->add(BooleanFilter::new('completed', 'Réussi'));
     }

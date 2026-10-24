@@ -20,6 +20,7 @@ final readonly class Environment
      *                                      un fichier du dernier l'emporte sur le même fichier du premier
      * @param FrameworkProfile $framework   ce que le moteur sait de ce framework (voir FrameworkRegistry)
      * @param list<string>     $cacheDirs   dossiers de cache à vider entre deux runs de tests
+     * @param list<string>     $phpExtensions extensions PHP à charger en plus dans le navigateur (intl)
      */
     public function __construct(
         public string $id,
@@ -29,6 +30,7 @@ final readonly class Environment
         public array $directories,
         public FrameworkProfile $framework,
         public array $cacheDirs,
+        public array $phpExtensions = [],
     ) {
     }
 

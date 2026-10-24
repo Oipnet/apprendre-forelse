@@ -1,0 +1,7 @@
+# The English version of symfony-8-easyadmin, used by English translations of its exercises (the engine picks
+# <environment>-<language> when it exists): English test helpers, and EasyAdmin speaks English.
+# Il prolonge symfony-8-easyadmin : ne vivent ici que les fichiers qu'il remplace.
+id: symfony-8-easyadmin-en
+extends: symfony-8-easyadmin
+title: Symfony 8.1 (English) — Twig, Doctrine ORM (SQLite), EasyAdmin 5, PHPUnit
+php: '8.4'

@@ -55,7 +55,7 @@ function compilePhpWasm(version: '8.4'): Promise<WebAssembly.Module> {
 }
 
 let nextProcessId = 1;
-async function loadPhp(requested: string): Promise<PHP> {
+async function loadPhp(requested: string, extensions: string[]): Promise<PHP> {
 	const version = requested as '8.4';
 	const wasm = await compilePhpWasm(version);
 	// Emscripten n'offre pas de voie d'échec à instantiateWasm : sans elle, une instanciation refusée (mémoire Wasm
@@ -69,7 +69,11 @@ async function loadPhp(requested: string): Promise<PHP> {
 			return {};
 		},
 	};
-	const php = new PHP(await Promise.race([loadWebRuntime(version, { emscriptenOptions: emscriptenOptions as never }), failure]));
+	const php = new PHP(await Promise.race([loadWebRuntime(version, {
+		emscriptenOptions: emscriptenOptions as never,
+		// intl : php-wasm télécharge l'extension et ses données ICU (≈ 13 Mo compressés) seulement si l'environnement la demande.
+		extensions: extensions as never,
+	}), failure]));
 	// Pas de processus dans le navigateur : une commande externe (le php-cs-fixer que lance MakerBundle
 	// après make:entity, par exemple) se termine sans rien faire, au lieu de faire échouer la commande.
 	await php.setSpawnHandler(createSpawnHandler((_command, processApi) => processApi.exit(0)));

@@ -1,0 +1,10 @@
+# Environnement d'exécution : Symfony 8.1 avec Doctrine ORM (SQLite) et EasyAdmin 5. Il prolonge symfony-8 : ne vivent
+# ici que les fichiers qu'il ajoute ou remplace. Les fichiers publics d'EasyAdmin (CSS, JS, polices) sont servis depuis
+# public/bundles/easyadmin, un lien vers vendor/ que l'empaquetage remplace par les fichiers eux-mêmes. EasyAdmin met en
+# forme dates, nombres et montants avec l'extension intl : le PHP du navigateur la charge pour cet environnement seulement.
+# .archiveignore ne garde que le français et l'anglais des données de symfony/intl (noms de pays, de langues, de devises).
+id: symfony-8-easyadmin
+extends: symfony-8
+title: Symfony 8.1 — Twig, Doctrine ORM (SQLite), EasyAdmin 5, PHPUnit
+php: '8.4'
+extensions: [intl]

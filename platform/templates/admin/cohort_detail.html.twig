@@ -8,7 +8,7 @@
         <section class="beta-panel" style="margin-top: 1.5rem">
             <div class="beta-panel-header">
                 <h2>Financement</h2>
-                <span class="badge badge-info">{{ entity.instance.fundingMode.label }}</span>
+                <twig:ea:Badge color="info">{{ entity.instance.fundingMode.label }}</twig:ea:Badge>
             </div>
             <div class="beta-panel-body">
                 {{ include('cohorte/_financing.html.twig', {cohort: entity.instance, quote: quote}) }}

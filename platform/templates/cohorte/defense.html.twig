@@ -14,8 +14,8 @@
     <section class="beta-panel" id="dossier">
         <div class="beta-panel-header">
             <h2>Dossier</h2>
-            <span class="badge badge-{{ dossier.complete ? 'success' : 'warning' }}">{{ dossier.completed }} / {{ dossier.total }} exercices réussis</span>
-            {% if dossier.solutions %}<span class="badge badge-warning">{{ dossier.solutions }} solution{{ dossier.solutions > 1 ? 's' }} consultée{{ dossier.solutions > 1 ? 's' }}</span>{% endif %}
+            <twig:ea:Badge :color="dossier.complete ? 'success' : 'warning'">{{ dossier.completed }} / {{ dossier.total }} exercices réussis</twig:ea:Badge>
+            {% if dossier.solutions %}<twig:ea:Badge color="warning">{{ dossier.solutions }} solution{{ dossier.solutions > 1 ? 's' }} consultée{{ dossier.solutions > 1 ? 's' }}</twig:ea:Badge>{% endif %}
         </div>
         <div class="beta-panel-body">
             <p class="text-muted">
@@ -59,7 +59,7 @@
                                 </td>
                                 <td>{{ p and p.completedAt ? p.completedAt|date('d/m/Y') : (p ? 'en cours' : 'pas commencé') }}</td>
                                 <td>{{ exercise.hints ? (p ? p.hintsUsed : 0) ~ ' / ' ~ exercise.hints : '' }}</td>
-                                <td>{% if p and p.solutionRevealed %}<span class="badge badge-warning">consultée</span>{% endif %}</td>
+                                <td>{% if p and p.solutionRevealed %}<twig:ea:Badge color="warning">consultée</twig:ea:Badge>{% endif %}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -71,7 +71,7 @@
     <section class="beta-panel" id="evaluation">
         <div class="beta-panel-header">
             <h2>Évaluation</h2>
-            {% if defense.outcome %}<span class="badge badge-{{ defense.outcome.badge }}">{{ defense.outcome.label }}</span>{% endif %}
+            {% if defense.outcome %}<twig:ea:Badge :color="defense.outcome.badge">{{ defense.outcome.label }}</twig:ea:Badge>{% endif %}
         </div>
         <div class="beta-panel-body">
             {% if defense.evaluatedAt %}
