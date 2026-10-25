@@ -80,6 +80,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     resource_tags?: TagsType,
  *     decorates?: string,
  *     decorates_tag?: string,
+ *     decoration_within?: string|list<string>,
+ *     decoration_around?: string|list<string>,
  *     decoration_inner_name?: string,
  *     decoration_priority?: int,
  *     decoration_on_invalid?: 'exception'|'ignore'|null,
@@ -122,6 +124,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     deprecated?: DeprecationType,
  *     decorates?: string,
  *     decorates_tag?: string,
+ *     decoration_within?: string|list<string>,
+ *     decoration_around?: string|list<string>,
  *     decoration_inner_name?: string,
  *     decoration_priority?: int,
  *     decoration_on_invalid?: 'exception'|'ignore'|null,
@@ -131,7 +135,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     _instanceof?: array<class-string, InstanceofType>,
  *     ...<string, DefinitionType|AliasType|PrototypeType|StackType|ArgumentsType|null>
  * }
- * @psalm-type ExtensionType = array<string, mixed>
+ * @psalm-type ExtensionType = array<mixed>|scalar|\UnitEnum|Param|null
  * @psalm-type RouterConfig = bool|array{
  *     enabled?: bool|Param, // Default: false
  *     resource?: scalar|Param|null, // Default: null
@@ -139,9 +143,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     default_uri?: scalar|Param|null, // The default URI used to generate URLs in a non-HTTP context. // Default: null
  *     http_port?: scalar|Param|null, // Default: 80
  *     https_port?: scalar|Param|null, // Default: 443
- *     strict_requirements?: scalar|Param|null, // set to true to throw an exception when a parameter does not match the requirements set to false to disable exceptions when a parameter does not match the requirements (and return null instead) set to null to disable parameter checks against requirements 'true' is the preferred configuration in development mode, while 'false' or 'null' might be preferred in production // Default: true
+ *     strict_requirements?: scalar|Param|null, // Set to true to throw an exception when a parameter does not match the requirements. Set to false to disable exceptions when a parameter does not match the requirements (and return null instead). Set to null to disable parameter checks against requirements. Defaults to true in debug mode and to null otherwise.
  *     utf8?: bool|Param, // Default: true
- *     ...<string, mixed>
  * }
  * @psalm-type CacheConfig = array{
  *     prefix_seed?: scalar|Param|null, // Used to namespace cache keys when using several apps with the same shared backend. // Default: "_%kernel.project_dir%.%kernel.container_class%"
@@ -213,13 +216,83 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         paths?: list<scalar|Param|null>,
  *     },
  *     not_compromised_password?: bool|array{
- *         enabled?: bool|Param, // When disabled, compromised passwords will be accepted as valid. // Default: true
+ *         enabled?: bool|Param|null, // When disabled, compromised passwords will be accepted as valid. Defaults to false when "framework.test" is enabled, to true otherwise. // Default: null
  *         endpoint?: scalar|Param|null, // API endpoint for the NotCompromisedPassword Validator. // Default: null
  *     },
  *     disable_translation?: bool|Param, // Default: false
  *     property_metadata_existence_check?: bool|Param, // When enabled, validateProperty() and validatePropertyValue() throw an exception if no metadata is found for the given property. // Default: false
  *     auto_mapping?: array<string, array{ // Default: []
  *         services?: list<scalar|Param|null>,
+ *     }>,
+ * }
+ * @psalm-type TranslationConfig = bool|array{
+ *     enabled?: bool|Param, // Default: true
+ *     fallbacks?: Param|string|list<scalar|Param|null>,
+ *     logging?: bool|Param, // Default: false
+ *     formatter?: scalar|Param|null, // Default: "translator.formatter.default"
+ *     cache_dir?: scalar|Param|null, // Default: "%kernel.cache_dir%/translations"
+ *     default_path?: scalar|Param|null, // The default path used to load translations. // Default: "%kernel.project_dir%/translations"
+ *     paths?: list<scalar|Param|null>,
+ *     pseudo_localization?: bool|array{
+ *         enabled?: bool|Param, // Default: false
+ *         accents?: bool|Param, // Default: true
+ *         expansion_factor?: float|Param, // Default: 1.0
+ *         brackets?: bool|Param, // Default: true
+ *         parse_html?: bool|Param, // Default: false
+ *         localizable_html_attributes?: list<scalar|Param|null>,
+ *     },
+ *     providers?: array<string, array{ // Default: []
+ *         dsn?: scalar|Param|null,
+ *         domains?: array<string, scalar|Param|null>,
+ *         locales?: list<scalar|Param|null>,
+ *     }>,
+ *     globals?: array<string, Param|string|array{ // Default: []
+ *         value?: mixed,
+ *         message?: string|Param,
+ *         parameters?: array<string, scalar|Param|null>,
+ *         domain?: string|Param,
+ *     }>,
+ * }
+ * @psalm-type LockConfig = Param|bool|string|array{
+ *     enabled?: bool|Param, // Default: true
+ *     resources?: Param|string|array<string, Param|string|list<mixed>>,
+ * }
+ * @psalm-type WorkflowConfig = bool|array{
+ *     enabled?: bool|Param, // Default: true
+ *     workflows?: array<string, array{ // Default: []
+ *         audit_trail?: bool|array{
+ *             enabled?: bool|Param, // Default: false
+ *         },
+ *         type?: "workflow"|"state_machine"|Param, // Default: "state_machine"
+ *         marking_store?: array{
+ *             type?: "method"|Param,
+ *             property?: scalar|Param|null,
+ *             service?: scalar|Param|null,
+ *         },
+ *         supports?: Param|string|list<scalar|Param|null>,
+ *         definition_validators?: list<scalar|Param|null>,
+ *         support_strategy?: scalar|Param|null,
+ *         initial_marking?: \BackedEnum|Param|string|list<scalar|Param|null>,
+ *         events_to_dispatch?: null|list<string|Param>,
+ *         places?: Param|string|list<Param|string|array{ // Default: []
+ *             name?: scalar|Param|null,
+ *             metadata?: array<string, mixed>,
+ *         }>,
+ *         transitions?: list<array{ // Default: []
+ *             name?: string|Param,
+ *             guard?: string|Param, // An expression to block the transition.
+ *             from?: \BackedEnum|Param|string|list<Param|string|array{ // Default: []
+ *                 place?: string|Param,
+ *                 weight?: int|Param, // Default: 1
+ *             }>,
+ *             to?: \BackedEnum|Param|string|list<Param|string|array{ // Default: []
+ *                 place?: string|Param,
+ *                 weight?: int|Param, // Default: 1
+ *             }>,
+ *             weight?: int|Param, // Default: 1
+ *             metadata?: array<string, mixed>,
+ *         }>,
+ *         metadata?: array<string, mixed>,
  *     }>,
  * }
  * @psalm-type TypeInfoConfig = bool|array{
@@ -240,11 +313,11 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     with_constructor_extractor?: bool|Param, // Registers the constructor extractor. // Default: true
  * }
  * @psalm-type FrameworkConfig = array{
- *     secret?: scalar|Param|null,
+ *     secret?: scalar|Param|null, // A secret that must not change. The options that sign data default to it and take a list of secrets to rotate theirs.
  *     http_method_override?: bool|Param, // Set true to enable support for the '_method' request parameter to determine the intended HTTP method on POST requests. // Default: false
  *     allowed_http_method_override?: null|list<string|Param>,
  *     trust_x_sendfile_type_header?: scalar|Param|null, // Set true to enable support for xsendfile in binary file responses. // Default: "%env(bool:default::SYMFONY_TRUST_X_SENDFILE_TYPE_HEADER)%"
- *     ide?: scalar|Param|null, // Deprecated: Setting the "framework.ide.ide" configuration option is deprecated, use the "SYMFONY_IDE" env var instead. // Default: "%env(default::SYMFONY_IDE)%"
+ *     ide?: scalar|Param|null, // Deprecated: Setting the "framework.ide.ide" configuration option is deprecated, use the "SYMFONY_IDE" env var instead. // Default: null
  *     test?: bool|Param,
  *     default_locale?: scalar|Param|null, // Default: "en"
  *     set_locale_from_accept_language?: bool|Param, // Whether to use the Accept-Language HTTP header to set the Request locale (only when the "_locale" request attribute is not passed). // Default: false
@@ -297,6 +370,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         path?: scalar|Param|null, // Default: "/_fragment"
  *     },
  *     uri_signer?: array{ // URI signer configuration
+ *         secret?: Param|string|list<scalar|Param|null>,
  *         expiration?: int|Param, // Default expiration of signed URIs, in seconds. // Default: null
  *     },
  *     profiler?: bool|array{ // Profiler configuration
@@ -310,11 +384,11 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         dsn?: scalar|Param|null, // Default: "file:%kernel.cache_dir%/profiler"
  *         collect_serializer_data?: true|Param, // Deprecated: Setting the "framework.profiler.collect_serializer_data.collect_serializer_data" configuration option is deprecated. It will be removed in version 9.0. // Default: true
  *     },
- *     workflows?: mixed,
+ *     workflows?: WorkflowConfig,
  *     router?: RouterConfig,
  *     assets?: AssetConfig,
  *     asset_mapper?: mixed,
- *     translator?: mixed,
+ *     translator?: TranslationConfig,
  *     validation?: ValidationConfig,
  *     serializer?: SerializerConfig,
  *     property_access?: PropertyAccessConfig,
@@ -322,7 +396,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     property_info?: PropertyInfoConfig,
  *     cache?: CacheConfig,
  *     web_link?: mixed,
- *     lock?: mixed,
+ *     lock?: LockConfig,
  *     semaphore?: mixed,
  *     messenger?: mixed,
  *     scheduler?: mixed,
@@ -337,7 +411,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     json_streamer?: mixed,
  *     session?: bool|array{ // Session configuration
  *         enabled?: bool|Param, // Default: false
- *         storage_factory_id?: scalar|Param|null, // Default: "session.storage.factory.native"
+ *         storage_factory_id?: scalar|Param|null, // Defaults to "session.storage.factory.mock_file" when "framework.test" is true, to "session.storage.factory.native" otherwise. // Default: null
  *         handler_id?: scalar|Param|null, // Defaults to using the native session handler, or to the native *file* session handler if "save_path" is not null.
  *         name?: scalar|Param|null,
  *         cookie_lifetime?: scalar|Param|null,
@@ -352,21 +426,26 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         gc_maxlifetime?: scalar|Param|null,
  *         save_path?: scalar|Param|null, // Defaults to "%kernel.cache_dir%/sessions" if the "handler_id" option is not null.
  *         metadata_update_threshold?: int|Param, // Seconds to wait between 2 session metadata updates. // Default: 0
+ *         isolate_attributes?: bool|Param, // Whether to deep-clone the values read from and passed to session attributes, so that only values passed to set() are saved. // Default: false
  *     },
  *     request?: bool|array{ // Request configuration
  *         enabled?: bool|Param, // Default: false
  *         formats?: array<string, Param|string|list<scalar|Param|null>>,
+ *         serializer?: scalar|Param|null, // Service id of the serializer that maps request payloads and query strings to controller arguments with #[MapRequestPayload] and #[MapQueryString], e.g. "serializer.api" for the named serializer "api". // Default: null
+ *     },
+ *     response?: array{ // Response configuration
+ *         serializer?: scalar|Param|null, // Service id of the serializer that serializes the values returned by controllers with #[Serialize], e.g. "serializer.api" for the named serializer "api". // Default: null
  *     },
  *     php_errors?: array{ // PHP errors handling configuration
  *         log?: mixed, // Use the application logger instead of the PHP logger for logging PHP errors. // Default: true
- *         throw?: bool|Param, // Throw PHP errors as \ErrorException instances. // Default: true
+ *         throw?: bool|Param|null, // Throw PHP errors as \ErrorException instances. Enabled by default when debug is enabled. // Default: null
  *     },
  *     exceptions?: array<string, array{ // Default: []
  *         log_level?: scalar|Param|null, // The level of log message. Null to let Symfony decide. // Default: null
  *         status_code?: scalar|Param|null, // The status code of the response. Null or 0 to let Symfony decide. // Default: null
  *         log_channel?: scalar|Param|null, // The channel of log message. Null to let Symfony decide. // Default: null
  *     }>,
- *     disallow_search_engine_index?: bool|Param, // Enabled by default when debug is enabled. // Default: true
+ *     disallow_search_engine_index?: bool|Param|null, // Enabled by default when debug is enabled. // Default: null
  *     secrets?: bool|array{
  *         enabled?: bool|Param, // Default: true
  *         vault_directory?: scalar|Param|null, // Default: "%kernel.project_dir%/config/secrets/%kernel.runtime_environment%"
@@ -476,9 +555,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         ignore_case?: bool|Param, // Default: false
  *         encode_as_base64?: bool|Param, // Default: true
  *         iterations?: scalar|Param|null, // Default: 5000
- *         cost?: int|Param, // Default: null
- *         memory_cost?: scalar|Param|null, // Default: null
- *         time_cost?: scalar|Param|null, // Default: null
+ *         cost?: int|Param, // Defaults to the lowest value bcrypt accepts when "framework.test" is enabled. // Default: null
+ *         memory_cost?: scalar|Param|null, // Defaults to the lowest value argon2 accepts when "framework.test" is enabled. // Default: null
+ *         time_cost?: scalar|Param|null, // Defaults to the lowest value argon2 accepts when "framework.test" is enabled. // Default: null
  *         id?: scalar|Param|null,
  *     }>,
  *     providers?: array<string, array{ // Default: []
@@ -520,7 +599,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         access_denied_url?: scalar|Param|null,
  *         access_denied_handler?: scalar|Param|null,
  *         entry_point?: scalar|Param|null, // An enabled authenticator name or a service id that implements "Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface".
- *         re_authentication_entry_point?: scalar|Param|null, // Service id implementing "Symfony\Component\Security\Http\EntryPoint\ReAuthenticationEntryPointInterface", asking an already authenticated user to prove possession of their credentials again when IS_AUTHENTICATED_RECENTLY or IS_AUTHENTICATED_VERY_RECENTLY is denied. Defaults to the firewall entry point when that one implements it.
+ *         entry_point_path?: scalar|Param|null, // A path, an absolute URL or a route name to redirect anonymous users to when they need to authenticate.
+ *         re_authentication_entry_point?: scalar|Param|null, // An enabled authenticator name or a service id implementing "Symfony\Component\Security\Http\EntryPoint\ReAuthenticationEntryPointInterface", started when the vote denying access asks for a re-authentication. Defaults to the firewall entry point when it implements this interface.
  *         provider?: scalar|Param|null,
  *         stateless?: bool|Param, // Default: false
  *         lazy?: bool|Param, // Default: false
@@ -583,7 +663,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             success_handler?: scalar|Param|null, // A service id that implements Symfony\Component\Security\Http\Authentication\AuthenticationSuccessHandlerInterface.
  *             failure_handler?: scalar|Param|null, // A service id that implements Symfony\Component\Security\Http\Authentication\AuthenticationFailureHandlerInterface.
  *             provider?: scalar|Param|null, // The user provider to load users from.
- *             secret?: scalar|Param|null, // Default: "%kernel.secret%"
+ *             secret?: Param|string|list<scalar|Param|null>,
  *             always_use_default_target_path?: bool|Param, // Default: false
  *             default_target_path?: scalar|Param|null, // Default: "/"
  *             login_path?: scalar|Param|null, // Default: "/login"
@@ -598,7 +678,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             remember_me?: bool|Param, // Deprecated: Setting the "security.firewalls..oidc_login.remember_me.remember_me" configuration option has no effect and is deprecated. It will be removed in Symfony 9.0. // Default: true
  *             success_handler?: scalar|Param|null,
  *             failure_handler?: scalar|Param|null,
- *             check_path?: scalar|Param|null, // The firewall path where the OIDC provider redirects after authentication. Must match a redirect URI registered with the provider. A route is declared for this path by the "security.authenticator.oidc_login.route_loader" service, which the application must import (see the OIDC login documentation), as it does for the logout routes. A route name is accepted too, in which case no route is declared for it. // Default: "/oidc/callback"
+ *             check_path?: scalar|Param|null, // The firewall path where the OIDC provider redirects after authentication. Must match a redirect URI registered with the provider. A route is declared for this path by the "security.route_loader" service, which the application must import. A route name is accepted too, in which case no route is declared for it. // Default: "/oidc/callback"
  *             use_forward?: bool|Param, // Default: false
  *             login_path?: scalar|Param|null, // Default: "/login"
  *             always_use_default_target_path?: bool|Param, // Default: false
@@ -608,9 +688,15 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             failure_path?: scalar|Param|null, // Default: null
  *             failure_forward?: bool|Param, // Default: false
  *             failure_path_parameter?: scalar|Param|null, // Default: "_failure_path"
- *             provider_uri?: scalar|Param|null, // The OIDC Issuer URL (e.g. "https://accounts.example.com"). Used for .well-known/openid-configuration discovery.
- *             http_client?: scalar|Param|null, // The id of the HttpClient service every call to the provider is made with: discovery, JWKS, token and UserInfo endpoints. Defaults to "http_client". A scoped client must scope every host the provider announces, not only the issuer. // Default: null
+ *             provider_uri?: scalar|Param|null, // The OIDC Issuer URL (e.g. "https://accounts.example.com"). Used for .well-known/openid-configuration discovery unless "discovery_uri" is set.
+ *             discovery_uri?: scalar|Param|null, // Absolute URL of the discovery document. The "issuer" it announces is still checked against "provider_uri". // Default: null
+ *             http_client?: scalar|Param|null, // The id of the HttpClient service every call to the provider is made with: discovery, JWKS, token and UserInfo endpoints. Defaults to "http_client". A scoped client must scope the discovery host and every host the provider announces. // Default: null
  *             client_id?: scalar|Param|null, // The OIDC client identifier.
+ *             client_certificate?: Param|string|array{ // The TLS client certificate presented to the token and UserInfo endpoints.
+ *                 certificate?: scalar|Param|null, // Path to the PEM file of the certificate.
+ *                 key?: scalar|Param|null, // Path to the PEM file of the private key, when not in the certificate file. // Default: null
+ *                 passphrase?: scalar|Param|null, // Passphrase of the private key. // Default: null
+ *             },
  *             client_authentication?: Param|string|array{ // How the client authenticates at the token endpoint, which RFC 7591, Section 2 names in its "token_endpoint_auth_method" metadata. Set the method Symfony ships with its parameters, or the id of a service implementing "Symfony\Component\Security\Http\OAuth2\ClientAuthentication\ClientAuthenticationInterface" for a scheme it does not. Exactly one of them.
  *                 client_secret_basic?: scalar|Param|null, // Send the client secret as HTTP Basic credentials, the "client_secret_basic" method of RFC 6749, Section 2.3.1, which the RFC recommends. Takes the client secret.
  *                 client_secret_post?: scalar|Param|null, // Send the client secret in the body of the token request, the "client_secret_post" method of RFC 6749, Section 2.3.1. Takes the client secret. Use it for the providers that support nothing else.
@@ -619,13 +705,21 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     secret?: scalar|Param|null, // The client secret, whose octets key the HMAC. It must be at least as long as the digest the algorithm produces, which RFC 7518, Section 3.2 requires and the algorithm itself checks: 32 bytes for "HS256", 48 for "HS384", 64 for "HS512".
  *                     algorithm?: "HS256"|"HS384"|"HS512"|Param, // The MAC algorithm the assertion is signed with, which must be one your provider announces in "token_endpoint_auth_signing_alg_values_supported". // Default: "HS256"
  *                     lifetime?: int|Param, // How long an assertion is valid, in seconds. It is built for one request and sent right away, so keep it short: it is the window a provider that does not track the "jti" would accept a captured assertion in. // Default: 60
+ *                     audience?: "issuer"|"token_endpoint"|Param, // The audience of the assertion: the issuer of the provider, or its token endpoint for a provider that refuses the issuer. // Default: "issuer"
  *                 },
  *                 private_key_jwt?: Param|string|array{ // Authenticate with a JWT assertion signed with the private key of the client, the "private_key_jwt" method of OIDC Core 1.0, Section 9, and the one FAPI 2.0 asks for. The provider only holds the public half, registered as the client "jwks" or fetched from its "jwks_uri", so it learns nothing it could authenticate as the client with.
  *                     key?: scalar|Param|null, // JSON-encoded JWK of the private key the assertion is signed with. Give it a "kid" when the client publishes several keys, so that the provider knows which one verifies the signature without trying them all.
  *                     algorithm?: "RS256"|"RS384"|"RS512"|"ES256"|"ES384"|"ES512"|"PS256"|"PS384"|"PS512"|Param, // The signature algorithm the assertion is signed with, which must be one your provider announces in "token_endpoint_auth_signing_alg_values_supported". FAPI 2.0 asks for "PS256" or "ES256". // Default: "RS256"
  *                     lifetime?: int|Param, // How long an assertion is valid, in seconds. It is built for one request and sent right away, so keep it short: it is the window a provider that does not track the "jti" would accept a captured assertion in. // Default: 60
+ *                     audience?: "issuer"|"token_endpoint"|Param, // The audience of the assertion: the issuer of the provider, or its token endpoint for a provider that refuses the issuer. // Default: "issuer"
  *                 },
- *                 id?: scalar|Param|null, // The id of a service implementing "ClientAuthenticationInterface", for a scheme Symfony does not ship, such as the "tls_client_auth" of RFC 8705, Section 2. The method it reports is only known once it is built, so the rules a public client cannot bend are then checked on the first request to this firewall instead of while the container compiles.
+ *                 tls_client_auth?: bool|Param, // Authenticate with "client_certificate", issued by a certificate authority.
+ *                 self_signed_tls_client_auth?: bool|Param, // Authenticate with "client_certificate", self-signed.
+ *                 id?: scalar|Param|null, // The id of a service implementing "ClientAuthenticationInterface", for a scheme Symfony does not ship. The method it reports is only known once it is built, so the rules a public client cannot bend are then checked when a login starts on this firewall instead of while the container compiles.
+ *             },
+ *             dpop?: Param|string|array{ // Binds the tokens the provider issues to a key held by this client (DPoP); a token the provider did not bind is refused.
+ *                 key?: scalar|Param|null, // The private key the proofs are signed with, as a JSON-encoded JWK.
+ *                 algorithm?: "ES256"|"ES384"|"ES512"|"PS256"|"PS384"|"PS512"|"RS256"|"RS384"|"RS512"|Param, // The algorithm the proofs are signed with, among the "dpop_signing_alg_values_supported" of the provider. // Default: "ES256"
  *             },
  *             scope?: list<scalar|Param|null>,
  *             start_path?: scalar|Param|null, // The path where the route loader declares a route that starts the flow by redirecting to the provider; link to it e.g. from the login page of a firewall offering several ways to log in. A route name is accepted too, in which case no route is declared for it. // Default: "/oidc/start"
@@ -650,6 +744,12 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             },
  *             enable_end_session?: bool|Param, // Enable RP-Initiated Logout via the OIDC end_session_endpoint. // Default: false
  *             post_logout_redirect_path?: scalar|Param|null, // Path or route to redirect to after OIDC logout. // Default: "/"
+ *             backchannel_logout?: bool|array{ // Accept the logout tokens the OIDC provider posts when one of its sessions ends.
+ *                 enabled?: bool|Param, // Default: false
+ *                 path?: scalar|Param|null, // Path where the OIDC provider posts its logout tokens. // Default: "/oidc/backchannel-logout"
+ *                 cache?: scalar|Param|null, // Id of the cache pool remembering the ended provider sessions, shared by every server of the application. // Default: "cache.security"
+ *                 lifetime?: int|Param, // How long an ended provider session is remembered, in seconds; at least how long a session can stay idle. // Default: 86400
+ *             },
  *         },
  *         form_login?: array{
  *             provider?: scalar|Param|null,
@@ -741,10 +841,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             token_handler?: Param|string|array{
  *                 id?: scalar|Param|null,
  *                 oidc_user_info?: Param|string|array{
- *                     base_uri?: scalar|Param|null, // Base URI of the userinfo endpoint on the OIDC server, or the OIDC server URI to use the discovery (require "discovery" to be configured).
+ *                     base_uri?: scalar|Param|null, // Base URI of the userinfo endpoint on the OIDC server, or the OIDC server URI to use the discovery (require "discovery" to be configured). The latter must end with a slash when it has a path, as the discovery path is resolved against it as a relative URL.
  *                     discovery?: array{ // Enable the OIDC discovery.
  *                         cache?: array{
- *                             id?: scalar|Param|null, // Cache service id to use to cache the OIDC discovery configuration.
+ *                             id?: scalar|Param|null, // Cache service id to use to cache the OIDC discovery configuration. // Default: "cache.security.discovery"
  *                         },
  *                     },
  *                     claim?: scalar|Param|null, // Claim which contains the user identifier (e.g. sub, email, etc.). // Default: "sub"
@@ -754,9 +854,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     discovery?: array{ // Enable the OIDC discovery.
  *                         base_uri?: Param|string|list<scalar|Param|null>,
  *                         cache?: array{
- *                             id?: scalar|Param|null, // Cache service id to use to cache the OIDC discovery configuration.
+ *                             id?: scalar|Param|null, // Cache service id to use to cache the OIDC discovery configuration. // Default: "cache.security.discovery"
  *                         },
  *                         enforce_key_usage_verification?: bool|Param, // When enabled (default), only keys explicitly designated for signature (via "use":"sig" or a "key_ops" entry containing "sign"/"verify") are accepted. When disabled, keys without any usage designation are also accepted; keys explicitly restricted to encryption are still rejected. // Default: true
+ *                         check_issuer?: bool|null|array<string, string|Param>,
  *                     },
  *                     claim?: scalar|Param|null, // Claim which contains the user identifier (e.g.: sub, email..). // Default: "sub"
  *                     audience?: Param|string|list<scalar|Param|null>,
@@ -794,14 +895,14 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                         discovery?: bool|array{ // Read the keys the introspection response is verified against from the RFC 8414 metadata of the authorization server, whose URL is derived from the "issuer" this handler already declares. Only the "jwks_uri" is read from it: which algorithms are accepted stays declared here, so that an authorization server cannot widen it by announcing more.
  *                             enabled?: bool|Param, // Default: false
  *                             cache?: array{
- *                                 id?: scalar|Param|null, // Cache service id the metadata document and the keys it points at are stored in. // Default: "cache.app"
+ *                                 id?: scalar|Param|null, // Cache service id the metadata document and the keys it points at are stored in. // Default: "cache.security.discovery"
  *                             },
  *                         },
  *                         keyset?: scalar|Param|null, // JSON-encoded JWKSet holding the public keys of your authorization server, the ones it announces at its "jwks_uri", which the introspection response is verified against. // Default: null
  *                     },
  *                 },
  *             },
- *             resource_metadata?: array{ // Declaring this node serves the RFC 9728 protected resource metadata document of the firewall at "/.well-known/oauth-protected-resource" and advertises its URL in the "resource_metadata" parameter of the "WWW-Authenticate" header, which is how a client discovers where to get a token this firewall accepts. The route is declared by the "security.authenticator.access_token.route_loader" service, which the application must import as it does for the logout routes; make sure it is reachable without a token.
+ *             resource_metadata?: array{ // Declaring this node serves the RFC 9728 protected resource metadata document of the firewall at "/.well-known/oauth-protected-resource" and advertises its URL in the "resource_metadata" parameter of the "WWW-Authenticate" header, which is how a client discovers where to get a token this firewall accepts. The route is declared by the "security.route_loader" service, which the application must import. Make sure the route is reachable without a token.
  *                 resource?: scalar|Param|null, // The resource identifier of this firewall: an HTTPS URL, without a fragment (e.g. "https://api.example.com" or "https://example.com/api"). Its path component is inserted after the well-known path, as RFC 9728, Section 3.1 prescribes, so that one host can serve the metadata of several protected resources. Defaults to the origin the document is served from, which is what a firewall covering a whole application wants. // Default: null
  *                 authorization_servers?: Param|string|list<scalar|Param|null>,
  *                 jwks_uri?: scalar|Param|null, // URL of the JWK Set holding the keys this resource signs its own responses with. Unrelated to the keys the access tokens are verified against, which belong to the authorization server. // Default: null
@@ -811,6 +912,13 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                 resource_documentation?: scalar|Param|null, // URL of the developer documentation of this resource. // Default: null
  *                 resource_policy_uri?: scalar|Param|null, // URL of the policy telling how the client may use the data this resource exposes. // Default: null
  *                 resource_tos_uri?: scalar|Param|null, // URL of the terms of service of this resource. // Default: null
+ *             },
+ *             dpop?: bool|array{ // Accepts only the access tokens bound to a key the request proves it holds (DPoP), presented under the "DPoP" scheme.
+ *                 enabled?: bool|Param, // Default: false
+ *                 algorithms?: list<scalar|Param|null>,
+ *                 cache?: scalar|Param|null, // The cache pool proofs are remembered in to refuse a replay, shared by all the instances of the application. // Default: "cache.security"
+ *                 proof_lifetime?: int|Param, // How long a proof is accepted after its "iat", in seconds. // Default: 60
+ *                 allowed_time_drift?: int|Param, // Allowed time drift in seconds for the "iat" of a proof, both ways. // Default: 5
  *             },
  *         },
  *         http_basic?: array{
@@ -828,7 +936,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             ldap_users_only?: bool|Param, // Only bind users of class "Symfony\Component\Ldap\Security\LdapUser" against the LDAP server, and leave any other user to the regular password checker. // Default: false
  *         },
  *         remember_me?: array{
- *             secret?: scalar|Param|null, // Default: "%kernel.secret%"
+ *             secret?: Param|string|list<scalar|Param|null>,
  *             service?: scalar|Param|null,
  *             user_providers?: Param|string|list<scalar|Param|null>,
  *             catch_exceptions?: bool|Param, // Default: true
@@ -884,6 +992,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     asset?: AssetConfig,
  *     serializer?: SerializerConfig,
  *     validation?: ValidationConfig,
+ *     translation?: TranslationConfig,
+ *     lock?: LockConfig,
+ *     workflow?: WorkflowConfig,
  *     type_info?: TypeInfoConfig,
  *     property_access?: PropertyAccessConfig,
  *     property_info?: PropertyInfoConfig,
@@ -900,6 +1011,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         asset?: AssetConfig,
  *         serializer?: SerializerConfig,
  *         validation?: ValidationConfig,
+ *         translation?: TranslationConfig,
+ *         lock?: LockConfig,
+ *         workflow?: WorkflowConfig,
  *         type_info?: TypeInfoConfig,
  *         property_access?: PropertyAccessConfig,
  *         property_info?: PropertyInfoConfig,
@@ -918,6 +1032,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         asset?: AssetConfig,
  *         serializer?: SerializerConfig,
  *         validation?: ValidationConfig,
+ *         translation?: TranslationConfig,
+ *         lock?: LockConfig,
+ *         workflow?: WorkflowConfig,
  *         type_info?: TypeInfoConfig,
  *         property_access?: PropertyAccessConfig,
  *         property_info?: PropertyInfoConfig,
@@ -935,6 +1052,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         asset?: AssetConfig,
  *         serializer?: SerializerConfig,
  *         validation?: ValidationConfig,
+ *         translation?: TranslationConfig,
+ *         lock?: LockConfig,
+ *         workflow?: WorkflowConfig,
  *         type_info?: TypeInfoConfig,
  *         property_access?: PropertyAccessConfig,
  *         property_info?: PropertyInfoConfig,
@@ -989,6 +1109,9 @@ namespace Symfony\Component\Routing\Loader\Configurator;
  * @psalm-type RouteConfig = array{
  *     path: string|array<string,string>,
  *     controller?: string,
+ *     template?: string,
+ *     redirect_to_route?: string,
+ *     redirect_to?: string,
  *     methods?: string|list<string>,
  *     requirements?: array<string,string>,
  *     defaults?: array<string,mixed>,
