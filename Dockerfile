@@ -33,9 +33,9 @@ RUN node precompresser.ts /src/platform/public/build
 
 # --- 2. Base PHP commune ----------------------------------------------------------------
 # Version épinglée, et non le tag flottant 1-php8.5 : une image reconstruite garde la base vérifiée, et Dependabot
-# propose chaque nouvelle version (.github/dependabot.yml). 1.13.2 embarque PHP 8.5.12, qui corrige PHP2Shell
-# (CVE-2026-109618 et 109619), et les failles FrankenPHP de la même version.
-FROM dunglas/frankenphp:1.13.2-php8.5 AS php_base
+# propose chaque nouvelle version (.github/dependabot.yml). PHP 8.5.12 depuis 1.13.2 (correctif PHP2Shell,
+# CVE-2026-109618 et 109619) ; 1.13.4 corrige en plus les failles du mode worker et Brotli (Node2Shell, CVE-2026-111497).
+FROM dunglas/frankenphp:1.13.4-php8.5 AS php_base
 
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 WORKDIR /app
