@@ -19,8 +19,10 @@ final class CohortVoter extends Voter
 {
     /** Voir la cohorte : effectif, lien d'invitation, avancement. */
     public const string VIEW = 'COHORT_VIEW';
-    /** Choisir les parcours que la cohorte propose. */
+    /** Choisir les parcours que la cohorte propose, son effectif, ses soutenances : pas pour une classe gratuite. */
     public const string MANAGE_PARCOURS = 'COHORT_MANAGE_PARCOURS';
+    /** Choisir les exercices de la Pratique d'une classe gratuite. */
+    public const string MANAGE_PRACTICE = 'COHORT_MANAGE_PRACTICE';
 
     public function __construct(private readonly AccessDecisionManagerInterface $accessDecisionManager)
     {
@@ -28,11 +30,22 @@ final class CohortVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return \in_array($attribute, [self::VIEW, self::MANAGE_PARCOURS], true) && $subject instanceof Cohort;
+        return \in_array($attribute, [self::VIEW, self::MANAGE_PARCOURS, self::MANAGE_PRACTICE], true) && $subject instanceof Cohort;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
     {
+        // Une classe gratuite suit des exercices de la Pratique, rien d'autre ; une cohorte classique, des parcours.
+        if (self::MANAGE_PARCOURS === $attribute && $subject->isFreeClass()) {
+            $vote?->addReason('Une classe gratuite ne propose pas de parcours.');
+
+            return false;
+        }
+        if (self::MANAGE_PRACTICE === $attribute && !$subject->isFreeClass()) {
+            $vote?->addReason('Seule une classe gratuite suit des exercices de la Pratique.');
+
+            return false;
+        }
         if ($this->accessDecisionManager->decide($token, [User::ROLE_ADMIN])) {
             return true;
         }

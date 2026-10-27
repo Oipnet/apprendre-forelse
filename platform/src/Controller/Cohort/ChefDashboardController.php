@@ -6,6 +6,7 @@ use App\Admin\BetaStats;
 use App\Cohort\CohortManagement;
 use App\Cohort\CohortQuoteEstimator;
 use App\Cohort\CohortRuleViolation;
+use App\Cohort\FreeClasses;
 use App\Defense\DefenseManagement;
 use App\Content\ContentRepository;
 use App\Entity\Cohort;
@@ -13,9 +14,12 @@ use App\Entity\User;
 use App\Form\CohortHeadcountType;
 use App\Form\CohortTracksType;
 use App\Form\DefenseSlotType;
+use App\Form\FreeClassType;
 use App\Theme\Theme;
 use App\Repository\CohortRepository;
 use App\Repository\DefenseRepository;
+use App\Repository\ExerciseProgressRepository;
+use App\Repository\UserRepository;
 use App\Security\CohortVoter;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
@@ -47,6 +51,9 @@ final class ChefDashboardController extends AbstractDashboardController
         private readonly Theme $theme,
         private readonly DefenseRepository $defenses,
         private readonly DefenseManagement $defenseManagement,
+        private readonly FreeClasses $freeClasses,
+        private readonly UserRepository $users,
+        private readonly ExerciseProgressRepository $progress,
     ) {
     }
 
@@ -67,6 +74,10 @@ final class ChefDashboardController extends AbstractDashboardController
     #[IsGranted(CohortVoter::VIEW, subject: 'cohort')]
     public function cohort(#[MapEntity(id: 'id')] Cohort $cohort): Response
     {
+        if ($cohort->isFreeClass()) {
+            return $this->freeClass($cohort);
+        }
+
         return $this->render('cohorte/show.html.twig', [
             'cohort' => $this->stats->of($cohort),
             'form' => $this->tracksForm($cohort),
@@ -116,6 +127,29 @@ final class ChefDashboardController extends AbstractDashboardController
         return $this->redirectToRoute('chef_cohort', ['id' => $cohort->getId()]);
     }
 
+    /** Les exercices de la Pratique que suit une classe gratuite. */
+    #[AdminRoute('/{id}/exercices', name: 'cohort_practices', options: ['requirements' => ['id' => '\d+'], 'methods' => ['POST']], allowedDashboards: [self::class])]
+    #[IsGranted(CohortVoter::MANAGE_PRACTICE, subject: 'cohort')]
+    public function practices(#[MapEntity(id: 'id')] Cohort $cohort, Request $request): Response
+    {
+        $form = $this->practicesForm($cohort);
+        $form->handleRequest($request);
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            $this->addFlash('danger', 'Les exercices n\'ont pas été enregistrés : cochez-en au moins un.');
+
+            return $this->redirectToRoute('chef_cohort', ['id' => $cohort->getId(), '_fragment' => 'exercices']);
+        }
+
+        try {
+            $this->freeClasses->choosePractices($cohort, $form->get('practiceIds')->getData());
+            $this->addFlash('success', sprintf('Exercices de « %s » enregistrés : %d.', $cohort->getName(), \count($cohort->getPracticeIds())));
+        } catch (CohortRuleViolation $e) {
+            $this->addFlash('danger', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('chef_cohort', ['id' => $cohort->getId(), '_fragment' => 'exercices']);
+    }
+
     /** L'effectif prévu, base de l'estimation du devis : seul champ du financement ouvert au chef. */
     #[AdminRoute('/{id}/effectif', name: 'cohort_headcount', options: ['requirements' => ['id' => '\d+'], 'methods' => ['POST']], allowedDashboards: [self::class])]
     #[IsGranted(CohortVoter::MANAGE_PARCOURS, subject: 'cohort')]
@@ -163,6 +197,31 @@ final class ChefDashboardController extends AbstractDashboardController
             'action' => $this->generateUrl('chef_cohort_tracks', ['id' => $cohort->getId()]),
             'tracks' => $this->content->tracks(),
             'locked' => $this->management->lockedTrackIds($this->isGranted(User::ROLE_ADMIN)),
+        ]);
+    }
+
+    /** Une classe gratuite : son lien d'invitation, ses exercices, et un tableau élèves × exercices. */
+    private function freeClass(Cohort $cohort): Response
+    {
+        $learners = $this->users->findByCohort($cohort->getCode());
+
+        return $this->render('cohorte/free_class.html.twig', [
+            'cohort' => $cohort,
+            'learners' => $learners,
+            'practices' => $this->freeClasses->practicesOf($cohort),
+            'statuses' => $this->progress->practiceStatusesByUsers($learners, $cohort->getPracticeIds()),
+            'form' => $this->practicesForm($cohort),
+            'canManage' => $this->isGranted(CohortVoter::MANAGE_PRACTICE, $cohort),
+        ]);
+    }
+
+    /** @return FormInterface<array{practiceIds: list<string>}> */
+    private function practicesForm(Cohort $cohort): FormInterface
+    {
+        return $this->createForm(FreeClassType::class, ['practiceIds' => $cohort->getPracticeIds()], [
+            'action' => $this->generateUrl('chef_cohort_practices', ['id' => $cohort->getId()]),
+            'practices' => $this->freeClasses->choices(),
+            'with_name' => false,
         ]);
     }
 

@@ -1,0 +1,98 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ cohort.name }}{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-secondary" href="{{ path('chef') }}">← Mes cohortes</a>
+{% endblock %}
+
+{% block main %}
+    <p>
+        <twig:ea:Badge color="success">Classe gratuite</twig:ea:Badge>
+        Code d'invitation <code>{{ cohort.code }}</code>{% if not cohort.active %} · <strong>inscriptions fermées</strong>{% endif %}
+        · {{ learners|length }} élève{{ learners|length > 1 ? 's' }}
+    </p>
+    <p class="text-muted">Envoyez ce lien à vos élèves : ils créent leur compte avec, et retrouvent les exercices de la classe en haut de la Pratique.</p>
+    <p>{{ include('cohorte/_invitation.html.twig') }}</p>
+
+    <section class="beta-panel" id="suivi">
+        <div class="beta-panel-header">
+            <h2>Suivi</h2>
+            {% set completed = 0 %}
+            {% for byExercise in statuses %}{% set completed = completed + byExercise|filter(s => s.value == 'completed')|length %}{% endfor %}
+            <twig:ea:Badge color="success">{{ completed }} réussite{{ completed > 1 ? 's' }}</twig:ea:Badge>
+        </div>
+        <div class="beta-panel-body beta-scroll">
+            {% if learners is empty %}
+                <p class="text-muted">Personne ne s'est encore inscrit : envoyez le lien d'invitation.</p>
+            {% elseif practices is empty %}
+                <p class="text-muted">Aucun exercice de la classe n'est disponible : choisissez-en ci-dessous.</p>
+            {% else %}
+                <table class="beta-table beta-compact free-class-progress">
+                    <thead>
+                        <tr>
+                            <th>Élève</th>
+                            {% for practice in practices %}
+                                <th class="beta-center"><a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}" target="_blank" rel="noopener" title="{{ practice.exercise.title }}">{{ loop.index }}</a></th>
+                            {% endfor %}
+                            <th class="beta-center">Réussis</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for learner in learners %}
+                            {% set done = (statuses[learner.id] ?? [])|filter(s => s.value == 'completed')|length %}
+                            <tr>
+                                <td>{{ learner.displayName }}</td>
+                                {% for practice in practices %}
+                                    {% set status = statuses[learner.id][practice.exercise.id] ?? null %}
+                                    <td class="beta-center">
+                                        {% if status %}
+                                            <twig:ea:Badge :color="status.badge">{{ status.label }}</twig:ea:Badge>
+                                        {% else %}
+                                            <span class="text-muted" title="Pas commencé">·</span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                                <td class="beta-center">{{ done }} / {{ practices|length }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <ol class="free-class-legend text-muted">
+                    {% for practice in practices %}
+                        <li>{{ practice.exercise.title }}</li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="beta-panel" id="exercices">
+        <div class="beta-panel-header">
+            <h2>Exercices de la classe</h2>
+            <twig:ea:Badge color="info">{{ cohort.practiceIds|length }}</twig:ea:Badge>
+        </div>
+        <div class="beta-panel-body">
+            <p class="text-muted">Retirer un exercice ne supprime aucune progression : il disparaît seulement du suivi.</p>
+            {{ form_start(form) }}
+                {{ include('cohorte/_practice_choices.html.twig', {field: form.practiceIds}) }}
+                {% if canManage %}
+                    <p><button class="btn btn-primary" type="submit">Enregistrer les exercices</button></p>
+                {% endif %}
+            {{ form_end(form) }}
+        </div>
+    </section>
+
+    <section class="beta-panel">
+        <div class="beta-panel-header">
+            <h2>Aller plus loin</h2>
+        </div>
+        <div class="beta-panel-body">
+            <p>
+                Les parcours reprennent un framework de bout en bout, chapitre par chapitre, avec un suivi par chapitre et
+                des soutenances. Le premier chapitre de chaque parcours est gratuit pour vos élèves. Pour leur ouvrir les
+                parcours complets, <a href="{{ path('app_organizations') }}#demande">demandez un devis</a>.
+            </p>
+        </div>
+    </section>
+{% endblock %}

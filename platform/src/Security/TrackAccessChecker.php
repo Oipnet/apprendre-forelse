@@ -7,6 +7,7 @@ use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Content\Track;
 use App\Content\TrackVisibility;
+use App\Entity\Cohort;
 use App\Entity\User;
 use App\Repository\CohortRepository;
 use App\Repository\TrackAccessRepository;
@@ -128,6 +129,9 @@ final class TrackAccessChecker implements ResetInterface
             return false;
         }
 
-        return TrackVisibility::isOfferedBy($this->cohorts->findByChef($user), $track);
+        // Une classe gratuite n'ouvre aucun parcours, pas même à son formateur : sans sélection, elle les « proposerait » tous.
+        $paidFor = array_filter($this->cohorts->findByChef($user), static fn (Cohort $cohort) => !$cohort->isFreeClass());
+
+        return TrackVisibility::isOfferedBy($paidFor, $track);
     }
 }

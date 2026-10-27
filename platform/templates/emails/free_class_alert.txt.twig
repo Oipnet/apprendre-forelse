@@ -1,0 +1,8 @@
+Un formateur a créé une classe gratuite sur {{ theme.name }} :
+
+Classe     : {{ cohort.name }} ({{ cohort.code }})
+Formateur  : {{ chef.displayName }} <{{ chef.email }}>
+Exercices  : {{ cohort.practiceIds|length }}
+Créée le   : {{ cohort.createdAt|date('d/m/Y à H:i') }}
+
+Son suivi : {{ cohortUrl }}

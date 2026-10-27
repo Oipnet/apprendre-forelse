@@ -134,4 +134,13 @@ final class TrackAccessCheckerTest extends TestCase
         $this->assertFalse($this->checker(chefCohorts: [$autre])->canAccess(self::user(User::ROLE_CHEF_COHORTE), $track, $complet));
         $this->assertFalse($this->checker(chefCohorts: [$sienne])->canAccess(self::user(), $track, $complet), 'Sans le rôle, la cohorte ne compte pas.');
     }
+
+    /** Une classe gratuite ne propose aucun parcours en particulier, donc tous : son formateur n'y gagne pourtant rien. */
+    public function testUneClasseGratuiteNOuvreAucunParcoursASonFormateur(): void
+    {
+        [$track, , $complet] = $this->payant();
+        $classe = (new Cohort())->setName('bts')->setCode('bts')->markAsFreeClass()->setPracticeIds(['point-precis']);
+
+        $this->assertFalse($this->checker(chefCohorts: [$classe])->canAccess(self::user(User::ROLE_CHEF_COHORTE), $track, $complet));
+    }
 }

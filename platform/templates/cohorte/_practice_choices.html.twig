@@ -1,0 +1,19 @@
+{# Les cases des exercices d'une classe gratuite (FreeClassType), groupées par framework. Création et espace des chefs. #}
+{# Les cases sont nommées par leur rang, pas par leur valeur : on les retrouve par valeur. #}
+{% set boxes = {} %}
+{% for child in field %}{% set boxes = boxes|merge({(child.vars.value): child}) %}{% endfor %}
+{% for group in field.vars.choices %}
+    <fieldset class="free-class-group mt-4">
+        <legend class="font-semibold">{{ group.label }}</legend>
+        <ul class="free-class-choices mt-2 grid gap-1 sm:grid-cols-2">
+            {% for choice in group.choices %}
+                {% set box = boxes[choice.value] %}
+                <li class="flex items-start gap-2">
+                    {{ form_widget(box, {label: false}) }}
+                    <label for="{{ box.vars.id }}">{{ choice.label }}</label>
+                </li>
+            {% endfor %}
+        </ul>
+    </fieldset>
+{% endfor %}
+{% do field.setRendered() %}

@@ -30,6 +30,20 @@
                 </ul>
             </div>
 
+            {% if class and classItems %}
+                {% set done = classItems|filter(i => i.state == 'completed')|length %}
+                <section class="pr-class mt-8 rounded-lg border border-accent p-4" aria-labelledby="pr-class-title">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <h2 class="text-lg font-semibold" id="pr-class-title">{{ 'practice.index.classe.titre'|trans({classe: class.name}) }}</h2>
+                        <span class="ml-auto text-sm text-ink-muted">{{ 'practice.index.classe.reussis'|trans({n: done, total: classItems|length}) }}</span>
+                    </div>
+                    <p class="mt-1 text-sm text-ink-muted">{{ 'practice.index.classe.intro'|trans }}</p>
+                    <ol class="practice-list mt-3 space-y-3">
+                        {% for item in classItems %}{{ ui.card(item, frameworks) }}{% endfor %}
+                    </ol>
+                </section>
+            {% endif %}
+
             {% if total %}
                 <div class="pr-layout mt-8 grid gap-8 md:grid-cols-[16rem_1fr]">
                     {# Les filtres sont un formulaire GET : sans JavaScript, le bouton « Appliquer » les envoie ;

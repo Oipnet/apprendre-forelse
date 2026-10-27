@@ -106,6 +106,38 @@ class ExerciseProgressRepository extends ServiceEntityRepository
         ), $rows);
     }
 
+    /**
+     * L'état des exercices de Pratique d'un groupe d'apprenants (suivi d'une classe gratuite). Requête partielle, comme
+     * summariesByUsers : ni brouillons ni revue du mentor.
+     *
+     * @param list<User>   $users
+     * @param list<string> $exerciseIds
+     *
+     * @return array<int, array<string, ProgressStatus>> par identifiant d'apprenant, puis d'exercice (absent : pas commencé)
+     */
+    public function practiceStatusesByUsers(array $users, array $exerciseIds): array
+    {
+        if (!$users || !$exerciseIds) {
+            return [];
+        }
+        $rows = $this->createQueryBuilder('p')
+            ->select('IDENTITY(p.user) AS userId', 'p.exerciseId', 'p.status')
+            ->andWhere('p.user IN (:users)')
+            ->andWhere('p.trackId IS NULL')
+            ->andWhere('p.exerciseId IN (:exercises)')
+            ->setParameter('users', $users)
+            ->setParameter('exercises', $exerciseIds)
+            ->getQuery()
+            ->getArrayResult();
+
+        $statuses = [];
+        foreach ($rows as $row) {
+            $statuses[(int) $row['userId']][$row['exerciseId']] = $row['status'] instanceof ProgressStatus ? $row['status'] : ProgressStatus::from($row['status']);
+        }
+
+        return $statuses;
+    }
+
     /** @return array<string, ExerciseProgress> progression par identifiant d'exercice (null : la Pratique) */
     public function findByTrack(User $user, ?string $trackId): array
     {

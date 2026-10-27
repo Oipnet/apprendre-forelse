@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Api\PlaygroundConfigFactory;
+use App\Cohort\FreeClasses;
 use App\Content\Exercise;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\LessonRenderer;
@@ -51,11 +52,15 @@ final class PracticeController extends AbstractController
         PracticeVersionIndex $versions,
         PracticeCatalog $catalog,
         PracticeSeo $seo,
+        FreeClasses $freeClasses,
         #[MapQueryString(mapWhenEmpty: true)] PracticeFilter $filter,
     ): Response {
         $user = $this->getUser();
-        $listing = $catalog->search($filter, $user instanceof User ? $progressRepository->findPractice($user) : []);
+        $progress = $user instanceof User ? $progressRepository->findPractice($user) : [];
+        $listing = $catalog->search($filter, $progress);
         $seo->index($listing->all);
+        // L'élève d'une classe gratuite retrouve en tête les exercices que son formateur a choisis.
+        $class = $user instanceof User && $user->getCohort()?->isFreeClass() ? $user->getCohort() : null;
 
         return $this->render('practice/index.html.twig', [
             'groups' => $listing->groups,
@@ -69,6 +74,8 @@ final class PracticeController extends AbstractController
             'newCount' => $listing->newCount,
             'completedCount' => $listing->completedCount,
             'inviteOnly' => $this->inviteOnly,
+            'class' => $class,
+            'classItems' => array_map(static fn (Practice $p) => ['practice' => $p, 'state' => TrackProgress::stateFrom($progress[$p->exercise->id] ?? null)], null !== $class ? $freeClasses->practicesOf($class) : []),
         ]);
     }
 
