@@ -8,6 +8,18 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- Environnement `symfony-8-2-dev` : paquets Symfony 8.2.x-dev du 25 octobre, avec les composants Lock (`#[Lock]` sur un
+  contrôleur), Translation (filtre `trans_html`, `HtmlTranslator`), JsonSchema (`SchemaGeneratorInterface`,
+  `#[JsonSchemaConstraint]`, son bundle est activé) et `dragonmantank/cron-expression` (contrainte `Cron`). L'éditeur
+  complète leurs classes. Les routes de sécurité passent par `security.route_loader`, l'ancien chargeur
+  `security.authenticator.oidc_login.route_loader` ayant disparu de la 8.2 ; `symfony-8-2-doctrine-dev`, qui garde son
+  propre `composer.lock`, conserve l'ancien fichier.
+- Environnement `laravel-13` : Laravel 13.38 (`PreventStaleDatabaseReads`, `DB::usingWritePdo()`,
+  `#[DeleteWhenMissingModels]` sur les mailables, constructeurs `Rule::` pour toutes les règles). L'éditeur complète
+  `HasDefaultAttributes`, `PreventStaleDatabaseReads`, `Schedule` et les attributs des commandes.
+
 ### Sécurité
 
 - **FrankenPHP 1.13.4** (image `dunglas/frankenphp:1.13.4-php8.5`, toujours PHP 8.5.12) : corrige un plantage du
