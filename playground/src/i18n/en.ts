@@ -402,6 +402,17 @@ export const en: Messages = {
 		mutants: 'Mutants (broken versions of the application):',
 	},
 
+	scratch: {
+		run: (masquable: (texte: string) => string) => `Run${masquable('')}`,
+		runTitle: (mod: string) => `Reload the preview with your code (${mod} + Enter)`,
+		ran: 'Preview reloaded',
+		shareTitle: 'Share your code',
+		sharedStatus: 'Shared code: read it before running it',
+		sharedTitle: 'This link contains code written by someone else.',
+		sharedDetail: 'Read it in the editor before running it. It runs isolated from this site, but the page it shows can imitate anything: never type a password into it.',
+		sharedRun: 'Run this code',
+	},
+
 	site: {
 		expandAll: 'Expand all',
 		collapseAll: 'Collapse all',

@@ -16,6 +16,7 @@
         <nav class="flex flex-1 flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm" aria-label="{{ 'header.navigation'|trans }}">
             <a href="{{ path('app_tracks') }}">{{ 'header.parcours'|trans }}</a>
             <a href="{{ path('app_practice') }}">{{ 'header.pratique'|trans }}</a>
+            <a href="{{ path('app_scratch') }}">{{ 'header.bac_a_sable'|trans }}</a>
             {% if blog.open %}<a href="{{ path('app_blog') }}">{{ 'header.blog'|trans }}</a>{% endif %}
             <a href="{{ path('app_leaderboard') }}">{{ 'header.classement'|trans }}</a>
             {% if app.user %}

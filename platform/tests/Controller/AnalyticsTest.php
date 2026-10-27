@@ -29,6 +29,8 @@ final class AnalyticsTest extends WebTestCase
         $this->assertCount(1, $config);
         $this->assertSame('/mesure/traceur.js', $config->attr('data-src'));
         $this->assertSame('11111111-2222-3333-4444-555555555555', $config->attr('data-website-id'));
+        // Le fragment d'une adresse du bac à sable porte le code du visiteur : le traceur ne l'envoie pas.
+        $this->assertSame('true', $config->attr('data-exclude-hash'));
         // Le traceur est posé par l'entrée « mesure » (playground/src/mesure.ts), qui écarte les robots : un module,
         // donc différé, qui n'empêche pas l'affichage de la page.
         $this->assertCount(1, $crawler->filter('script[type="module"][src*="/build/"][src*="mesure"]'));

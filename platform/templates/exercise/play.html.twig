@@ -19,7 +19,7 @@
     <div class="playground" data-playground data-config="{{ config|json_encode }}">
         {# Remplacé par le playground dès l'exercice chargé : en attendant (ou sans JavaScript), la consigne se lit. #}
         <main class="page playground-intro">
-            {{ include(practice is defined and practice ? 'practice/_intro.html.twig' : 'exercise/_intro.html.twig') }}
+            {{ include(intro_template ?? (practice is defined and practice ? 'practice/_intro.html.twig' : 'exercise/_intro.html.twig')) }}
         </main>
     </div>
 {% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
+
+{% block body %}
+    <main class="scratch">
+        <div class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
+            <p class="text-sm font-medium text-ink-muted">{{ 'bac_a_sable.retour'|trans }}</p>
+            <h1 class="mt-1 text-3xl font-semibold">{{ 'bac_a_sable.index.titre'|trans }}</h1>
+            <p class="lead mt-3 text-lg text-ink-muted">{{ 'bac_a_sable.index.intro'|trans }}</p>
+
+            <ul class="scratch-frameworks mt-8 grid gap-4 sm:grid-cols-2">
+                {% for framework in frameworks %}
+                    <li class="rounded-lg border border-line bg-surface p-6">
+                        <h2 class="text-xl font-semibold">{{ 'bac_a_sable.projet.titre'|trans({framework: framework.label}) }}</h2>
+                        <p class="mt-2 text-ink-muted">{{ ('bac_a_sable.index.' ~ framework.value)|trans }}</p>
+                        <p class="mt-4"><a class="btn btn-primary" href="{{ path('app_scratch_' ~ framework.value) }}">{{ 'bac_a_sable.index.ouvrir'|trans({framework: framework.label}) }} <span aria-hidden="true">→</span></a></p>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <h2 class="mt-12 text-2xl font-semibold">{{ 'bac_a_sable.index.comment'|trans }}</h2>
+            <ul class="mt-4 grid gap-4 sm:grid-cols-3">
+                <li><strong>{{ 'bac_a_sable.index.rien_a_installer'|trans }}</strong> {{ 'bac_a_sable.index.rien_a_installer_detail'|trans }}</li>
+                <li><strong>{{ 'bac_a_sable.index.partager'|trans }}</strong> {{ 'bac_a_sable.index.partager_detail'|trans }}</li>
+                <li><strong>{{ 'bac_a_sable.index.prive'|trans }}</strong> {{ 'bac_a_sable.index.prive_detail'|trans }}</li>
+            </ul>
+
+            <section class="mt-12" id="questions">
+                <h2 class="text-2xl font-semibold">{{ 'bac_a_sable.faq.titre'|trans }}</h2>
+                {# Les mêmes réponses que les données structurées (ScratchSeo::index). #}
+                <div class="mt-6 divide-y divide-line border-y border-line">
+                    {% for item in faq %}
+                        <details class="py-3"{% if loop.first %} open{% endif %}>
+                            <summary class="cursor-pointer font-medium">{{ item.question }}</summary>
+                            <p class="mt-2 text-ink-muted">{{ item.answer }}</p>
+                        </details>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <p class="mt-10 text-ink-muted">{{ 'bac_a_sable.index.pratique'|trans({url: path('app_practice')|e})|raw }}</p>
+        </div>
+    </main>
+{% endblock %}

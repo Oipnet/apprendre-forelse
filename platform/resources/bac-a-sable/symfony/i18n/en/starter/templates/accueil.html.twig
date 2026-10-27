@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ titre }}{% endblock %}
+
+{% block body %}
+    <h1>{{ titre }}</h1>
+    <p>Symfony {{ version }}, in your browser.</p>
+
+    <h2>Things to try</h2>
+    <ul>
+        {% for idee in idees %}
+            <li>{{ idee }}</li>
+        {% endfor %}
+    </ul>
+
+    <p><a href="{{ path('bonjour', {prenom: 'Ada'}) }}">A JSON response</a></p>
+{% endblock %}

@@ -95,3 +95,17 @@ pratique:
         titre: "{framework} : {fonctionnalite} – exercice"
         titre_court: "{framework} : {fonctionnalite}"
         complement: "Un exercice court de la Pratique {framework}, à faire dans le navigateur."
+
+bac_a_sable:
+    index:
+        titre: "Bac à sable PHP en ligne : Symfony et Laravel"
+        description: "Écrivez du code Symfony ou Laravel dans votre navigateur, sans rien installer ni créer de compte, et partagez-le par un simple lien."
+        fil_ariane: Bac à sable
+    symfony:
+        titre: "Bac à sable Symfony en ligne"
+        description: "Un projet Symfony 8 complet dans votre navigateur : contrôleurs, Twig, console. Testez une idée et partagez votre code par un lien, sans compte."
+        fil_ariane: Bac à sable Symfony
+    laravel:
+        titre: "Bac à sable Laravel en ligne"
+        description: "Un projet Laravel 13 complet dans votre navigateur : routes, Blade, artisan. Testez une idée et partagez votre code par un lien, sans compte."
+        fil_ariane: Bac à sable Laravel

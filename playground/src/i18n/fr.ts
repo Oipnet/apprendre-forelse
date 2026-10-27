@@ -405,6 +405,20 @@ export const fr = {
 		mutants: 'Mutants (versions cassées de l\'application) :',
 	},
 
+	/** Le bac à sable : sans tests, « Exécuter » recharge l'aperçu ; le code se partage par l'adresse. */
+	scratch: {
+		/** Le bouton de la barre : `masquable` enrobe ce qui disparaît sur un écran étroit. */
+		run: (masquable: (texte: string) => string) => `Exécuter${masquable('')}`,
+		/** `mod` : « Ctrl » ou « ⌘ ». */
+		runTitle: (mod: string) => `Recharger l'aperçu avec votre code (${mod} + Entrée)`,
+		ran: 'Aperçu rechargé',
+		shareTitle: 'Partager votre code',
+		sharedStatus: 'Code partagé : lisez-le avant de l\'exécuter',
+		sharedTitle: 'Ce lien contient du code écrit par quelqu\'un d\'autre.',
+		sharedDetail: 'Lisez-le dans l\'éditeur avant de l\'exécuter. Il tourne isolé de ce site, mais la page qu\'il affiche peut imiter n\'importe quoi : n\'y saisissez jamais un mot de passe.',
+		sharedRun: 'Exécuter ce code',
+	},
+
 	site: {
 		expandAll: 'Tout ouvrir',
 		collapseAll: 'Tout fermer',

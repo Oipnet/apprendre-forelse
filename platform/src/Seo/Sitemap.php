@@ -11,6 +11,7 @@ use App\Content\PracticeVersionIndex;
 use App\Content\PublishedContent;
 use App\Instance\SelfHostingPage;
 use App\Legal\LegalVersions;
+use App\Scratch\ScratchFramework;
 use App\Theme\Theme;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -29,6 +30,9 @@ final readonly class Sitemap
 {
     /** Dernière révision des pages Contact, Écoles et entreprises et Auto-hébergement (textes du moteur). */
     public const string PAGES_UPDATED_AT = '2026-09-17';
+
+    /** Dernière révision des pages du bac à sable (textes et projets de départ du moteur). */
+    public const string SCRATCH_UPDATED_AT = '2026-10-27';
 
     public function __construct(
         private ContentRepository $content,
@@ -144,6 +148,14 @@ final readonly class Sitemap
                 if ($articleEntries) {
                     $entries[] = $this->entry('app_blog', ['_locale' => $locale], max(array_column($articleEntries, 'lastmod')));
                     array_push($entries, ...$articleEntries);
+                }
+            }
+
+            // Le bac à sable, en français et en anglais : le choix du framework, puis un projet par framework.
+            foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
+                $entries[] = $this->entry('app_scratch', ['_locale' => $locale], self::SCRATCH_UPDATED_AT);
+                foreach (ScratchFramework::cases() as $framework) {
+                    $entries[] = $this->entry('app_scratch_'.$framework->value, ['_locale' => $locale], self::SCRATCH_UPDATED_AT);
                 }
             }
 
