@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.19.0 — 2026-10-27
+
 ### Ajouté
 
 - Environnement `symfony-8-2-dev` : paquets Symfony 8.2.x-dev du 25 octobre, avec les composants Lock (`#[Lock]` sur un
