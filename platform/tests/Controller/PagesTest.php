@@ -51,7 +51,7 @@ final class PagesTest extends WebTestCase
         static::getContainer()->get('doctrine')->getManager()->flush();
         $client->loginUser($admin);
         $crawler = $client->request('GET', '/pratique');
-        $this->assertSame(['Parcours', 'Pratique', 'Classement'], $crawler->filter('.site-header nav > a')->each(fn ($a) => $a->text()), 'Au premier niveau, la navigation du site seulement.');
+        $this->assertSame(['Parcours', 'Pratique', 'Bac à sable', 'Classement'], $crawler->filter('.site-header nav > a')->each(fn ($a) => $a->text()), 'Au premier niveau, la navigation du site seulement.');
         $this->assertSame(['Mon compte', 'Atelier', 'Mes cohortes', 'Administration', 'Déconnexion'], $crawler->filter('.account-menu a')->each(fn ($a) => $a->text()));
     }
 
