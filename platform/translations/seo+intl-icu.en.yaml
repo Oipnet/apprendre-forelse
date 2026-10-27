@@ -67,3 +67,17 @@ exercice:
     libelle: "exercise: {exercice}"
     titre: "{exercice} – {framework} exercise"
     complement: "An exercise from the “{chapitre}” chapter, {parcours} track."
+
+bac_a_sable:
+    index:
+        titre: "Online PHP playground: Symfony and Laravel"
+        description: "Write Symfony or Laravel code in your browser, with nothing to install and no account, and share it with a simple link."
+        fil_ariane: Playground
+    symfony:
+        titre: "Online Symfony playground"
+        description: "A full Symfony 8 project in your browser: controllers, Twig, console. Try an idea and share your code with a link, no account needed."
+        fil_ariane: Symfony playground
+    laravel:
+        titre: "Online Laravel playground"
+        description: "A full Laravel 13 project in your browser: routes, Blade, artisan. Try an idea and share your code with a link, no account needed."
+        fil_ariane: Laravel playground

@@ -87,8 +87,8 @@ export interface PlaygroundConfig {
 	sandboxUrl: string;
 	/** L'identité de l'instance, pour la barre du haut (voir App\Theme\Theme). */
 	brand: { name: string; chip: string; title: string; logoUrl: string | null };
-	/** Exercice d'un parcours, ou de la Pratique (sans suite, sans XP, sans fiche de cours). */
-	context: 'track' | 'practice';
+	/** Exercice d'un parcours, de la Pratique (sans suite, sans XP, sans fiche de cours), ou bac à sable (sans objectif). */
+	context: 'track' | 'practice' | 'scratch';
 	/** Le lien de retour de la barre : le parcours, ou la liste de la Pratique. */
 	back: { title: string; url: string };
 	progress: { mode: 'api'; url: string } | { mode: 'local' };
@@ -105,4 +105,6 @@ export interface PlaygroundConfig {
 	mentor?: { reviewUrl: string; explainUrl: string } | null;
 	/** Pratique : les liens de partage, pour inviter à faire l'exercice ou annoncer sa réussite (App\Share\PracticeShare). */
 	share?: { invite: ShareLinks; success: ShareLinks } | null;
+	/** Bac à sable : où aller ensuite (l'autre framework, la Pratique), sous la consigne. */
+	scratch?: { links: { title: string; url: string }[] } | null;
 }

@@ -8,6 +8,18 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Bac à sable** (`/bac-a-sable`, `/en/playground`) : un projet Symfony 8 ou Laravel 13 vierge dans le navigateur,
+  sans compte, sans objectif ni test. « Exécuter » recharge l'aperçu, la console et l'explorateur restent ceux des
+  exercices. « Partager » crée un lien qui porte le code modifié, compressé, après `#code=` : le serveur ne le reçoit
+  pas et ne stocke rien. Un code arrivé par un lien ne s'exécute qu'après l'accord du visiteur (bandeau sur l'aperçu).
+  Le brouillon reste dans le navigateur (`forelse:bac-a-sable:<projet>`). Pages dans le sitemap, en français et en
+  anglais, avec leurs données structurées (`WebApplication`, FAQ), et liens dans l'en-tête et le pied de page du thème
+  par défaut. Projets de départ : `platform/resources/bac-a-sable/`. Nuxt n'y est pas proposé : son code s'exécute en
+  partie sur l'origine de la plateforme.
+- Mesure d'audience : le traceur n'envoie plus le fragment des adresses (`data-exclude-hash`).
+
 ## 3.19.0 — 2026-10-27
 
 ### Ajouté
