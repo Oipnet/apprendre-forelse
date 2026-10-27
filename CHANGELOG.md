@@ -20,6 +20,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   `#[DeleteWhenMissingModels]` sur les mailables, constructeurs `Rule::` pour toutes les règles). L'éditeur complète
   `HasDefaultAttributes`, `PreventStaleDatabaseReads`, `Schedule` et les attributs des commandes.
 
+### Sécurité
+
+- **FrankenPHP 1.13.4** (image `dunglas/frankenphp:1.13.4-php8.5`, toujours PHP 8.5.12) : corrige un plantage du
+  processus entier provoqué à distance par un client en mode worker (GHSA-5f4m-ff4w-g458, gravité haute, 1.13.2 touché),
+  des fuites de données d'une requête à la suivante en mode worker (variables d'environnement par requête, en-têtes de
+  réponse amont : GHSA-8386-64gm-3m8q, GHSA-pmvg-8483-mw84), deux use-after-free (GHSA-rgpj-f2qx-xwhf,
+  GHSA-cm3q-jw2q-9rh5) et la faille de la bibliothèque Brotli embarquée dans l'image (Node2Shell, CVE-2026-111497).
+
 ## 3.18.2 — 2026-10-24
 
 ### Ajouté
