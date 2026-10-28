@@ -150,6 +150,42 @@ final class BlogTest extends WebTestCase
         $this->assertSame(['Accueil', 'Le blog', 'Symfony dans le navigateur, sans serveur'], array_column($types['BreadcrumbList']['itemListElement'], 'name'));
     }
 
+    public function testUnArticleAnnonceSonImage(): void
+    {
+        $crawler = $this->client->request('GET', '/blog/symfony-dans-le-navigateur');
+
+        $image = (string) $crawler->filter('meta[property="og:image"]')->attr('content');
+        $this->assertMatchesRegularExpression('#^http://localhost/blog/symfony-dans-le-navigateur/image-de-partage\?v=[0-9a-f]{16}$#', $image);
+        $this->assertSame('1200', $crawler->filter('meta[property="og:image:width"]')->attr('content'));
+        $this->assertSame('Blog · Symfony : Symfony dans le navigateur, sans serveur', $crawler->filter('meta[property="og:image:alt"]')->attr('content'), 'Le surtitre nomme le premier sujet.');
+        $this->assertSame('summary_large_image', $crawler->filter('meta[name="twitter:card"]')->attr('content'));
+
+        $posting = array_values(array_filter(
+            array_map(static fn (string $json) => json_decode($json, true), $crawler->filter('script[type="application/ld+json"]')->extract(['_text'])),
+            static fn (mixed $data) => \is_array($data) && 'BlogPosting' === ($data['@type'] ?? null),
+        ));
+        $this->assertSame($image, $posting[0]['image'] ?? null, 'Les données structurées montrent la même image.');
+
+        $this->client->request('GET', $image);
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('Content-Type', 'image/png');
+        $this->assertStringContainsString('immutable', (string) $this->client->getResponse()->headers->get('Cache-Control'));
+        $this->assertSame([1200, 630], \array_slice((array) getimagesize($this->client->getResponse()->getFile()->getPathname()), 0, 2));
+
+        // Une traduction sans sujet : « Blog » seul, en anglais, sous l'adresse anglaise.
+        $crawler = $this->client->request('GET', '/en/blog/symfony-in-the-browser');
+        $this->assertStringStartsWith('http://localhost/en/blog/symfony-in-the-browser/share-image?v=', (string) $crawler->filter('meta[property="og:image"]')->attr('content'));
+        $this->assertSame('Blog: Symfony in the browser, without a server', $crawler->filter('meta[property="og:image:alt"]')->attr('content'));
+    }
+
+    public function testPasDImagePourUnArticleNonParu(): void
+    {
+        foreach (['/blog/article-programme/image-de-partage', '/blog/inconnu/image-de-partage'] as $path) {
+            $this->client->request('GET', $path);
+            $this->assertResponseStatusCodeSame(404, $path);
+        }
+    }
+
     public function testUnArticleInviteAFaireLExerciceDontIlPart(): void
     {
         $crawler = $this->client->request('GET', '/blog/symfony-dans-le-navigateur');
@@ -250,6 +286,15 @@ final class BlogTest extends WebTestCase
         $this->assertStringContainsString('href="http://localhost/pratique?utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=symfony-dans-le-navigateur"', $html, 'Les liens du site deviennent absolus, et marqués pour la mesure d\'audience.');
         $this->assertStringNotContainsString('<h1', $html);
         $this->assertStringNotContainsString('<script>alert', $html);
+
+        $this->assertSame(['Symfony', 'Coulisses'], array_map('strval', iterator_to_array($items[0]->category, false)), 'Les sujets de l\'article : dev.to en fait les tags d\'un article importé.');
+
+        // L'image de l'article, celle de sa page : les lecteurs de flux en font la vignette.
+        $image = (string) $items[0]->enclosure['url'];
+        $this->assertMatchesRegularExpression('#^http://localhost/blog/symfony-dans-le-navigateur/image-de-partage\\?v=[0-9a-f]{16}$#', $image);
+        $this->assertSame('image/png', (string) $items[0]->enclosure['type']);
+        $this->assertGreaterThan(1000, (int) $items[0]->enclosure['length']);
+        $this->assertSame($image, (string) $items[0]->children('http://search.yahoo.com/mrss/')->content->attributes()['url']);
     }
 
     public function testLeBlogEnAnglaisNeMontreQueLesTraductionsParues(): void

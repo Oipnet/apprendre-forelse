@@ -10,6 +10,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Image de chaque article du blog**, dessinée par le moteur comme celles de la Pratique (« Blog · Sécurité », le
+  titre, le site), sur `/blog/<slug>/image-de-partage` (`/en/blog/<slug>/share-image`) : aperçu sur les réseaux
+  (`og:image`), image du `BlogPosting`, et vignette du flux RSS (`enclosure`, `media:content`). Les articles n'ont
+  rien à fournir.
+- **Sujets des articles dans le flux RSS** (`<category>`) : dev.to en fait les tags des articles qu'il importe.
 - **Bac à sable PHP** (`/bac-a-sable/php`, `/en/playground/php`) : un projet PHP 8.4 sans framework, à côté de Symfony et
   Laravel. `public/index.php` route les requêtes, les classes de `src/` sont chargées par Composer, les vues sont des
   fichiers PHP. Nouveau profil de framework `php` et environnement `php-8` (aucune dépendance) ; sa console lance un

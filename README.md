@@ -268,7 +268,13 @@ Les résultats s'exportent en CSV.
   devant. L'heure ne fait qu'ordonner, l'article paraît dès le matin de son jour. Les sujets (`tags:`, des libellés
   courts, tels qu'ils s'affichent) donnent les filtres de la liste, du plus fourni au moins fourni :
   `/blog?sujet=securite` ne montre que les articles « Sécurité » (page suivie, non indexée). Une traduction écrit ses
-  propres sujets, dans sa langue.
+  propres sujets, dans sa langue. Dans le flux RSS, les sujets deviennent des `<category>` : dev.to, qui importe le
+  flux, en fait les tags de l'article (quatre au plus, sans espace ni accent).
+
+  Chaque article a son image, dessinée par le moteur comme celles de la Pratique (`share_card` du thème) : « Blog ·
+  <premier sujet> », le titre et le site, en 1200 × 630 sur `/blog/<slug>/image-de-partage`. Elle sert d'aperçu sur
+  les réseaux, d'image des données structurées et de vignette dans le flux RSS (`enclosure` et `media:content`).
+  dev.to ignore les images du flux : collez l'adresse de l'image dans « Cover image » avant de publier le brouillon.
 
   Chaque article se termine par une invitation à essayer dans le navigateur. Avec `practice:` (l'identifiant d'un
   exercice de Pratique, qui doit exister), elle mène à cet exercice, et une ligne sous le titre y invite aussi ; sans,
@@ -440,7 +446,8 @@ accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas
   `email_logo` (facultatif) est le logo des emails, en PNG, JPEG ou GIF, quand celui du site est dans un format que
   les clients mail lisent mal (webp, svg).
 - `share_card` habille les **images de partage que le moteur dessine** pour chaque exercice de la Pratique (le
-  titre de l'exercice, son framework et le site, en 1200 × 630, sur `/pratique/<exercice>/image-de-partage`). À
+  titre de l'exercice, son framework et le site, en 1200 × 630, sur `/pratique/<exercice>/image-de-partage`) et pour
+  chaque article du blog (`/blog/<slug>/image-de-partage`). À
   droite, un éditeur de code stylisé prend les couleurs de l'éditeur du thème (`editor`, ci-dessus) ; en pied, le
   logo des emails (`email_logo`, ou `logo` en PNG, JPEG ou GIF) et le nom du thème.
   Tout y est facultatif : `image` (un fond PNG ou JPEG de ce dossier, mis à l'échelle et rogné, qui remplace

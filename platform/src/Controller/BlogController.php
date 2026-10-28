@@ -8,7 +8,11 @@ use App\Content\LessonRenderer;
 use App\Content\PracticeVisibility;
 use App\Seo\Page\BlogSeo;
 use App\Seo\SchemaOrg;
+use App\Share\ArticleShare;
+use App\Share\ShareImage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
@@ -58,10 +62,11 @@ final class BlogController extends AbstractController
      * ailleurs (dev.to, Hashnode importent un flux et renvoient vers l'article d'origine). Les liens du texte, relatifs
      * au site, deviennent absolus : lus hors du site, ils mèneraient nulle part. Ils portent aussi des paramètres utm :
      * les copies masquent souvent leur referrer, et sans eux leurs visites se fondraient dans le trafic direct. Le lien de
-     * l'article lui-même (<link>, <guid>) reste nu, puisque les copies en font leur URL canonique.
+     * l'article lui-même (<link>, <guid>) reste nu, puisque les copies en font leur URL canonique. Les sujets de
+     * l'article deviennent des <category> (dev.to en fait ses tags), son image une enclosure (voir ArticleShare).
      */
     #[Route(['fr' => '/blog/rss.xml', 'en' => '/en/blog/rss.xml'], name: 'app_blog_feed', methods: ['GET'])]
-    public function feed(Blog $blog, LessonRenderer $markdown, SchemaOrg $schema): Response
+    public function feed(Blog $blog, LessonRenderer $markdown, SchemaOrg $schema, ArticleShare $share): Response
     {
         if (!$blog->isOpen()) {
             throw $this->createNotFoundException();
@@ -70,6 +75,8 @@ final class BlogController extends AbstractController
         $items = array_map(fn (Article $article): array => [
             'article' => $article,
             'url' => $schema->url('app_article', ['slug' => $article->slug]),
+            // L'image de l'article, en enclosure et en media:content : les lecteurs de flux en font la vignette.
+            'image' => ['url' => $share->imageUrl($article), 'length' => $share->imageSize($article)],
             'html' => $this->tagged(
                 preg_replace('/\b(href|src)="\/(?!\/)/', '$1="'.$site.'/', $markdown->toHtmlUnderTitle($article->markdown)),
                 $site,
@@ -93,6 +100,18 @@ final class BlogController extends AbstractController
             fn (array $m): string => 'href="'.$m[1].(str_contains($m[1], '?') ? '&amp;' : '?').$utm.($m[2] ?? '').'"',
             $html,
         );
+    }
+
+    /**
+     * L'image d'un article, dessinée par le moteur au premier appel (voir ArticleShare). L'adresse que donnent la page
+     * et le flux porte sa version : sous cette adresse, l'image ne change plus.
+     */
+    #[Route(['fr' => '/blog/{slug}/image-de-partage', 'en' => '/en/blog/{slug}/share-image'], name: 'app_article_image', requirements: ['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'], methods: ['GET'])]
+    public function image(string $slug, Request $request, Blog $blog, ArticleShare $share, ShareImage $images): BinaryFileResponse
+    {
+        $article = $blog->find($slug) ?? throw $this->createNotFoundException();
+
+        return $images->response($share->card($article), $request);
     }
 
     #[Route(['fr' => '/blog/{slug}', 'en' => '/en/blog/{slug}'], name: 'app_article', requirements: ['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'], methods: ['GET'])]
