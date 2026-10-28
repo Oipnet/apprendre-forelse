@@ -28,7 +28,7 @@ final class SymfonyProfile implements FrameworkProfileProvider
             hidden: ['vendor', 'var', '.git', 'node_modules', '.phpunit.cache'],
             namespaceRoots: ['src' => 'App', 'tests' => 'App\\Tests', 'migrations' => 'DoctrineMigrations'],
             lessonLanguages: '```php, ```twig, ```yaml, ```bash',
-            drafting: <<<'TEXTE'
+            drafting: PhpWasm::DRAFTING.<<<'TEXTE'
                 Conventions de ce projet (Symfony 8.1), à respecter même si tu connais d'autres façons de faire :
                 - Attributs PHP, autowiring, services ; pas de YAML de routage.
                 - Les commandes console sont **invocables** : une classe `final` avec `#[AsCommand]` et une

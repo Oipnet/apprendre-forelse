@@ -64,6 +64,7 @@ final readonly class ExerciseChecker
             return $result;
         }
 
+        $runnerLabel = $environment->framework->testRunnerLabel();
         $workdir = $this->workdirs->create();
         try {
             $this->assembler->assemble($environment, $workdir);
@@ -71,7 +72,7 @@ final readonly class ExerciseChecker
 
             $before = $this->grade($exercise, $context, $workdir);
             if (null === $before->results) {
-                $result->error('État de départ : PHPUnit n\'a produit aucun rapport. '.$before->failure(RunReport::GLOBAL, '(erreur fatale ?)'));
+                $result->error('État de départ : '.$runnerLabel.' n\'a produit aucun rapport. '.$before->failure(RunReport::GLOBAL, '(erreur fatale ?)'));
             } elseif (!\in_array(false, $before->results, true)) {
                 $result->error('État de départ : tous les tests passent déjà, l\'exercice n\'a rien à faire.');
             }
@@ -80,7 +81,7 @@ final readonly class ExerciseChecker
             $this->workdirs->clearCaches($workdir, $environment->cacheDirs);
             $after = $this->grade($exercise, $context, $workdir);
             if (null === $after->results) {
-                $result->error('Solution : PHPUnit n\'a produit aucun rapport. '.$after->failure(RunReport::GLOBAL, '(erreur fatale ?)'));
+                $result->error('Solution : '.$runnerLabel.' n\'a produit aucun rapport. '.$after->failure(RunReport::GLOBAL, '(erreur fatale ?)'));
 
                 return $result;
             }

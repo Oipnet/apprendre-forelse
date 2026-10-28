@@ -216,20 +216,20 @@ final class ExerciseDrafter
         $conventions = $framework->drafting
             ?? throw new ContentException(sprintf('L\'atelier ne sait pas rédiger d\'exercice pour « %s » : ce profil ne déclare pas de conventions.', $framework->label));
 
-        return str_replace(['{framework}', '{conventions}'], [$framework->label, $conventions], <<<'TEXTE'
-            Tu écris un exercice pour une formation {framework} où l'apprenant code dans son navigateur
-            (PHP 8.4 compilé en WebAssembly). Tu réponds uniquement en appelant l'outil ecrire_exercice.
+        return str_replace(['{framework}', '{runner}', '{conventions}'], [$framework->label, $framework->testRunnerLabel(), $conventions], <<<'TEXTE'
+            Tu écris un exercice pour une formation {framework} où l'apprenant code dans son navigateur.
+            Tu réponds uniquement en appelant l'outil ecrire_exercice.
 
             Les fichiers d'un exercice :
             - exercise.yaml : id, title, concepts, xp, base, open, preview, setup, editable, readonly,
               objectives (une entrée par méthode de test : {test, label}), hints (3 indices gradués :
               le premier oriente, le dernier donne la réponse), docs ({title, url} vers la documentation
-              officielle de {framework} ou le manuel PHP — uniquement des pages qui existent),
+              officielle de {framework} — uniquement des pages qui existent),
               et, si l'exercice fait écrire des tests à l'apprenant, mutants ({id, label, changes}).
             - instructions.md : les consignes, en français, dans le fil rouge de la formation.
             - starter/ : les fichiers de départ, avec des TODO.
             - solution/ : la solution de référence, qui ne contient que les fichiers modifiés.
-            - tests/ : les tests PHPUnit cachés, une méthode par objectif.
+            - tests/ : les tests {runner} cachés, une méthode par objectif.
 
             Règles impératives :
             - Les tests doivent échouer sur l'état de départ et passer avec la solution. Aucun objectif
@@ -237,8 +237,6 @@ final class ExerciseDrafter
             - Les messages d'échec des tests s'adressent à l'apprenant : ils expliquent ce qui est attendu.
             - Tout est en français : consignes, labels, commentaires, messages. Le code suit les bonnes
               pratiques de {framework}.
-            - php-wasm n'a pas l'extension intl : évite ce qui en dépend (MoneyType, NumberType sans
-              html5, dates localisées).
             - Reste dans l'univers du parcours et dans la continuité des exercices précédents : mêmes
               entités, mêmes routes, même ton.
             - N'invente pas d'API {framework} : si tu hésites, reste sur ce qu'utilisent déjà les exercices

@@ -202,8 +202,9 @@ final class EnvironmentRegistry implements ResetInterface
             id: $id,
             // Le titre ne s'hérite pas : deux environnements ne se présentent pas sous le même nom.
             title: array_last($chain)['meta']['title'] ?? $id,
-            // Un environnement sans PHP (Nuxt, joué par le simulateur du navigateur) n'a pas de version à déclarer.
-            phpVersion: (string) ($meta['php'] ?? ($framework->runsPhpunit() ? throw new ContentException(sprintf('Environnement « %s » : clé « php » manquante.', $id)) : '')),
+            // Un environnement sans PHP (Nuxt, joué par le simulateur du navigateur) n'a pas de version à déclarer :
+            // c'est le runtime qui demande PHP, pas le lanceur de tests.
+            phpVersion: (string) ($meta['php'] ?? (FrameworkProfile::PHP_WASM === $framework->runtime ? throw new ContentException(sprintf('Environnement « %s » : clé « php » manquante.', $id)) : '')),
             directories: $directories,
             framework: $framework,
             // Symfony compile son container dans var/cache, Laravel ses vues Blade : le profil le sait,
