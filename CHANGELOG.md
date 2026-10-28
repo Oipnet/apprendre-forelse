@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.21.0 — 2026-10-28
+
 ### Ajouté
 
 - **Sujets des articles** : clé `tags:` dans l'en-tête d'un article (`tags: [Symfony, Sécurité]`). La liste du blog
