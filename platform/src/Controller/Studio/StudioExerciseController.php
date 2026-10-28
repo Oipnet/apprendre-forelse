@@ -13,8 +13,7 @@ use App\Content\Author\ExerciseTranslator;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
-use App\Content\Pack;
-use App\Content\Track;
+use App\Content\ExerciseOwner;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -45,15 +44,15 @@ final class StudioExerciseController extends AbstractController
 
         return $this->render('studio/edit.html.twig', [
             // Le fil d'Ariane : le parcours, ou la Pratique.
-            'contexte' => $owner instanceof Track ? $owner->title : 'Pratique',
+            'contexte' => $owner->holdsPractice() ? 'Pratique' : $owner->title,
             'exercise' => $exercise,
             // Seule la Pratique se traduit : l'auteur passe de l'exercice français à sa version anglaise.
-            'anglaisEnRetard' => $owner instanceof Pack && true === $this->studio->traduction($exercise, ExerciseTranslator::LANGUE)?->outdated,
+            'anglaisEnRetard' => $owner->holdsPractice() && true === $this->studio->traduction($exercise, ExerciseTranslator::LANGUE)?->outdated,
             'config' => [
                 'fichiers' => $this->studio->lire($exercise),
                 'modifiable' => $this->studio->modifiable($owner),
                 'ia' => $this->drafter->disponible(),
-                'pratique' => $owner instanceof Pack,
+                'pratique' => $owner->holdsPractice(),
                 'urls' => [
                     'enregistrer' => $urls->generate('app_studio_save', $exercise),
                     'verifier' => $urls->generate('app_studio_check', $exercise),
@@ -61,8 +60,8 @@ final class StudioExerciseController extends AbstractController
                     'supprimer' => $urls->generate('app_studio_delete', $exercise),
                     'jouer' => $urls->generate('app_exercise', $exercise),
                     // Un exercice de Pratique a une page publique : c'est le seul qui se partage.
-                    'post' => $owner instanceof Pack ? $this->generateUrl('app_studio_post_pratique', ['exerciseId' => $exercise->id]) : null,
-                    ...($owner instanceof Pack ? ['anglais' => $this->generateUrl('app_studio_translation', ['exerciseId' => $exercise->id])] : []),
+                    'post' => $owner->holdsPractice() ? $this->generateUrl('app_studio_post_pratique', ['exerciseId' => $exercise->id]) : null,
+                    ...($owner->holdsPractice() ? ['anglais' => $this->generateUrl('app_studio_translation', ['exerciseId' => $exercise->id])] : []),
                     'atelier' => $this->generateUrl('app_studio'),
                 ],
             ],
@@ -178,7 +177,7 @@ final class StudioExerciseController extends AbstractController
         return $this->json($correction);
     }
 
-    /** @return array{Track|Pack, Exercise} */
+    /** @return array{ExerciseOwner, Exercise} */
     private function trouver(?string $trackId, string $exerciseId): array
     {
         return $this->studio->trouver($trackId, $exerciseId) ?? throw $this->createNotFoundException();

@@ -5,7 +5,7 @@ namespace App\Content\Author;
 use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
-use App\Content\Pack;
+use App\Content\ExerciseOwner;
 use App\Content\Track;
 
 /**
@@ -47,7 +47,7 @@ final readonly class ExerciseAssistant
      *
      * @throws ContentException exercice déjà conforme, ou réponse du modèle inutilisable
      */
-    public function proposerCorrection(Track|Pack $owner, Exercise $exercise): array
+    public function proposerCorrection(ExerciseOwner $owner, Exercise $exercise): array
     {
         $verdict = $this->studio->verifier($exercise);
         if ($verdict->isOk()) {
