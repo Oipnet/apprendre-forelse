@@ -17,6 +17,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   les compose de production et d'auto-hébergement posent maintenant `DEFAULT_URI` et `SANDBOX_ORIGIN` (d'après
   `APP_URL` et `SANDBOX_URL`), que seul le script de démarrage de l'image fixait. IndexNow refuse d'envoyer des
   adresses locales, et `app:seo:indexnow` affiche la raison d'un refus (code HTTP et réponse d'IndexNow).
+  Le cache du sitemap est séparé par adresse de site : une commande lancée sur localhost ne remplit plus le
+  `/sitemap.xml` public d'adresses locales.
 
 ## 3.21.0 — 2026-10-28
 
