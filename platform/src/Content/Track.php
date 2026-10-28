@@ -58,7 +58,7 @@ final readonly class Track
     /** L'environnement d'un chapitre : le sien s'il en déclare un, sinon celui du parcours. */
     public function environmentFor(?Chapter $chapter): string
     {
-        return $chapter?->environment ?? $this->environment;
+        return $chapter->environment ?? $this->environment;
     }
 
     /** @return list<string> tous les exercices, dans l'ordre du parcours */
