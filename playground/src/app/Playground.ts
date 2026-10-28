@@ -28,7 +28,9 @@ import { changedFiles, decodeFragment, encodeFragment, NEW_PROJECT, withFragment
 import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
-import { spokenSummary, TestResultsView } from './TestResultsView';
+import { TestResultsView } from './TestResultsView';
+import { bindRunButton } from './run';
+import { statusBar } from './status';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 
 /** Monte l'environnement d'exercice complet dans `root`. */
@@ -86,22 +88,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		const share = config.share.invite;
 		$<HTMLButtonElement>('#share').addEventListener('click', () => shareDialog(root, share, m.layout.shareTitle, mesure));
 	}
-	/** La barre de statut est annoncée (role="status") : `spoken` remplace, pour un lecteur d'écran, un texte trop abrégé. */
-	const status = (text: string, kind: 'idle' | 'busy' | 'ok' | 'ko' = 'idle', spoken?: string) => {
-		const el = $('.status');
-		if (spoken) {
-			const visible = document.createElement('span');
-			visible.setAttribute('aria-hidden', 'true');
-			visible.textContent = text;
-			const said = document.createElement('span');
-			said.className = 'sr-only';
-			said.textContent = spoken;
-			el.replaceChildren(visible, said);
-		} else {
-			el.textContent = text;
-		}
-		el.dataset.kind = kind;
-	};
+	const status = statusBar($('.status'));
 
 	// --- Petits écrans : un volet à la fois, explorateur replié, éditeur compact -------------
 	const narrow = window.matchMedia('(max-width: 800px)');
@@ -351,42 +338,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	});
 	const results = new TestResultsView(root, mentor);
 	const runButton = $<HTMLButtonElement>('#run');
-	// Le bac à sable n'a pas de tests : « Exécuter » envoie les dernières frappes et recharge l'aperçu.
-	if (scratch) runButton.addEventListener('click', async () => {
-		await session.flush().catch(() => false);
-		reload();
-		mesurer('bac-a-sable-execute', mesure);
-		status(m.scratch.ran, 'ok');
-	});
-	else runButton.addEventListener('click', async () => {
-		runButton.disabled = true;
-		runButton.setAttribute('aria-busy', 'true');
-		mesurer('tests-lances', mesure);
-		status(m.playground.testsRunning, 'busy');
-		try {
-			// Les dernières frappes doivent être testées, pas perdues.
-			if (await session.flush()) reload();
-			const result = await runtime.runTests({ ownTests: exercise.ownTests, mutants: exercise.mutants });
-			metrics[metrics.firstTestRun ? 'lastTestRun' : 'firstTestRun'] = Math.round(result.durationMs);
-			const passed = results.show(result);
-			const total = exercise.objectives.length;
-			status(m.playground.testsDone(passed, total, Math.round(result.durationMs)), passed === total ? 'ok' : 'ko', spokenSummary(passed, total));
-			// Petit écran : les consignes, où s'affichent les objectifs. Volet replié : il ne se rouvre qu'à la
-			// réussite, pour ne pas reprendre la place pendant que l'apprenant corrige ; sa rail porte le résultat.
-			showWorkpane('brief');
-			folding.showResult(passed, total);
-			if (passed === total) {
-				folding.open('brief');
-				void success.show();
-			} else success.hide();
-		} catch (error) {
-			status(m.playground.testsError, 'ko');
-			results.showError(error);
-		} finally {
-			runButton.disabled = false;
-			runButton.removeAttribute('aria-busy');
-		}
-	});
+	bindRunButton(runButton, { exercise, scratch, runtime, session, results, success, folding, status, reload, showWorkpane, metrics, mesure });
 
 	// --- Indices et solution -------------------------------------------------------------
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });
