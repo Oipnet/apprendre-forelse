@@ -105,6 +105,21 @@ class Cohort implements \Stringable
     #[Assert\PositiveOrZero]
     private ?int $quoteAmount = null;
 
+    /**
+     * Classe gratuite : créée par un formateur lui-même (FreeClassCreation), sur des exercices de la Pratique, sans
+     * parcours ouvert ni devis. Ses apprenants achètent les parcours au prix courant, comme sans cohorte.
+     */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $freeClass = false;
+
+    /**
+     * Exercices de la Pratique que la classe suit, par identifiant, dans l'ordre choisi par le formateur.
+     *
+     * @var list<string>
+     */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    private array $practiceIds = [];
+
     /** $today : début des accès par défaut, selon l'horloge de l'appelant. */
     public function __construct(?\DateTimeImmutable $today = null)
     {
@@ -343,6 +358,37 @@ class Cohort implements \Stringable
     public function setQuoteAmount(?int $quoteAmount): static
     {
         $this->quoteAmount = $quoteAmount;
+
+        return $this;
+    }
+
+    public function isFreeClass(): bool
+    {
+        return $this->freeClass;
+    }
+
+    /** Une classe gratuite n'ouvre aucun parcours : chaque apprenant paie le sien, au prix courant. */
+    public function markAsFreeClass(): static
+    {
+        $this->freeClass = true;
+        $this->fundingMode = FundingMode::Learners;
+        $this->availableTrackIds = [];
+        $this->learnerPrice = null;
+        $this->quoteAmount = null;
+
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function getPracticeIds(): array
+    {
+        return $this->practiceIds;
+    }
+
+    /** @param iterable<string> $practiceIds */
+    public function setPracticeIds(iterable $practiceIds): static
+    {
+        $this->practiceIds = array_values(array_unique([...$practiceIds]));
 
         return $this;
     }

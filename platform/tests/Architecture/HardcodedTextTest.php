@@ -30,9 +30,11 @@ final class HardcodedTextTest extends TestCase
         'studio/',
         'cohorte/',
         'contact/organizations.html.twig',
+        'contact/free_class.html.twig',
         '_theme_preview.html.twig',
         'emails/registration_alert.txt.twig',
         'emails/contact_message.txt.twig',
+        'emails/free_class_alert.txt.twig',
     ];
 
     /** Attributs qu'un humain lit ou entend : leur valeur se traduit. */

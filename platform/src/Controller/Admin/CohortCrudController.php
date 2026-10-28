@@ -161,6 +161,8 @@ final class CohortCrudController extends AbstractCrudController implements Reset
                     ->orderBy('entity.displayName', 'ASC'))
                 ->setHelp('Comptes ayant le rôle « Chef de cohorte » (fiche apprenant) : ils suivent la cohorte et choisissent ses parcours.');
         }
+        yield BooleanField::new('freeClass', 'Classe gratuite')->renderAsSwitch(false)->hideOnForm()
+            ->setHelp('Créée par un formateur sur des exercices de la Pratique : aucun parcours ouvert, aucun devis.');
         yield TextareaField::new('note', 'Note')->hideOnIndex()->setHelp('Contact, contexte, dates du pilote…');
         yield FormField::addFieldset('Financement et accès')->onlyOnForms();
         // Sans setChoices() : EasyAdmin tire les choix de l'enum (EnumType) et leurs libellés de trans(). Des choix passés

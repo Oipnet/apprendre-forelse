@@ -91,6 +91,10 @@ practice:
         inscription_invitation: "Cette plateforme est réservée à ses membres : <a rel=\"nofollow\" href=\"{inscription}\">créez votre compte</a> avec votre code d'invitation, ou <a href=\"{connexion}\">connectez-vous</a>."
         inscription: "Ces exercices s'écrivent sans compte : l'éditeur s'ouvre tout de suite. Le compte garde votre progression, ouvre le mentor et les retours — <a rel=\"nofollow\" href=\"{inscription}\">créez le vôtre</a> ou <a href=\"{connexion}\">connectez-vous</a>."
         vide: "Pas encore d'exercice ici : revenez bientôt."
+        classe:
+            titre: "Votre classe : {classe}"
+            intro: "Les exercices choisis pour votre classe : votre formateur ou formatrice voit lesquels vous avez réussis."
+            reussis: "{n, plural, one {# réussi sur {total}} other {# réussis sur {total}}}"
     show:
         partager: Partager cet exercice
         a_vous: "À vous d'écrire le code"

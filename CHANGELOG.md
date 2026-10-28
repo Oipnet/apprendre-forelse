@@ -20,6 +20,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   partie sur l'origine de la plateforme.
   Deux volets seulement, le code et l'aperçu : pas de volet des consignes.
 - Mesure d'audience : le traceur n'envoie plus le fragment des adresses (`data-exclude-hash`).
+- **Classe gratuite** (`/ecoles-et-entreprises/classe-gratuite`) : un formateur crée lui-même sa classe sur des
+  exercices de la Pratique, sans devis. Il en devient chef de cohorte, reçoit le lien d'invitation et suit dans `/cohorte`
+  un tableau élèves × exercices (réussi, en cours, pas commencé). Ses élèves retrouvent ces exercices en tête de la
+  Pratique. Aucun parcours n'est ouvert, ni aux élèves ni au formateur ; trois classes gratuites par compte au plus.
+  L'équipe reçoit un email à chaque classe créée (`REGISTRATION_ALERT_EMAIL`). La page des écoles et entreprises
+  propose cet essai. Migration : `cohort.free_class` et `cohort.practice_ids`.
 
 ## 3.19.0 — 2026-10-27
 

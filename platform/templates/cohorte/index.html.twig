@@ -4,7 +4,7 @@
 
 {% block main %}
     {% if cohorts is empty %}
-        <p>Vous ne suivez encore aucune cohorte. Un administrateur peut vous en confier une.</p>
+        <p>Vous ne suivez encore aucune cohorte. Un administrateur peut vous en confier une, ou <a href="{{ path('app_free_class') }}">créez une classe gratuite</a> sur les exercices de la Pratique.</p>
     {% else %}
         <section class="beta-panel">
             <div class="beta-panel-body beta-scroll">
@@ -20,7 +20,9 @@
                                 <td>{{ include('cohorte/_invitation.html.twig') }}</td>
                                 <td>{{ learners[cohort.id] ?? 0 }}</td>
                                 <td>
-                                    {% if cohort.hasTrackSelection %}
+                                    {% if cohort.freeClass %}
+                                        <twig:ea:Badge color="success">Classe gratuite · {{ cohort.practiceIds|length }} exercice{{ cohort.practiceIds|length > 1 ? 's' }}</twig:ea:Badge>
+                                    {% elseif cohort.hasTrackSelection %}
                                         <span class="beta-chips">
                                             {% for trackId in cohort.availableTrackIds %}
                                                 <twig:ea:Badge color="info">{{ tracks[trackId].title ?? trackId }}</twig:ea:Badge>

@@ -174,3 +174,29 @@
 .defense-evaluation-form {
     max-inline-size: 40rem;
 }
+
+/* Classe gratuite : exercices de la Pratique cochés, groupés par framework. */
+.free-class-group {
+    margin-block-end: var(--ea-sp-4);
+}
+.free-class-group legend {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+}
+.free-class-choices {
+    display: grid;
+    gap: var(--ea-sp-1) var(--ea-sp-4);
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.free-class-choices li {
+    align-items: baseline;
+    display: flex;
+    gap: var(--ea-sp-2);
+}
+.free-class-legend {
+    font-size: var(--font-size-sm);
+    margin-block-start: var(--ea-sp-3);
+}

@@ -11,6 +11,7 @@
                 <p class="mt-3 text-lg text-ink-muted">Vos apprenants suivent les parcours dans leur navigateur, sans rien installer : pas de poste à préparer, pas d'environnement à dépanner en début de séance. Vous suivez leur progression, exercice par exercice.</p>
                 <div class="mt-6 flex flex-wrap items-center gap-3">
                     <a class="btn btn-primary" href="#demande">Parler de votre projet <span>→</span></a>
+                    <a class="btn" href="#classe-gratuite">Essayer gratuitement avec votre classe</a>
                     <a class="btn" href="{{ path('app_tracks') }}">Voir les parcours</a>
                 </div>
             </div>
@@ -31,13 +32,22 @@
             </div>
         </section>
 
+        <section class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 border-t border-line" id="classe-gratuite">
+            <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+                <span class="text-sm font-medium text-ink-muted">Gratuit, sans engagement</span>
+                <h2 class="text-2xl font-semibold mb-6">Essayez dès demain avec votre classe.</h2>
+                <p class="text-lg text-ink-muted">Créez vous-même une classe sur les exercices de la Pratique : de courts exercices sur une fonctionnalité de Symfony ou de Laravel, corrigés par des tests. Vous recevez un lien d'invitation pour vos élèves et un tableau de suivi, élève par élève. Pas de devis, pas de carte bancaire.</p>
+                <p class="mt-6"><a class="btn btn-primary" href="{{ path('app_free_class') }}">Créer ma classe gratuite <span>→</span></a></p>
+            </div>
+        </section>
+
         <section class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
             <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
                 <span class="text-sm font-medium text-ink-muted">Comment ça se passe</span>
                 <h2 class="text-2xl font-semibold mb-6">De la première question au premier exercice.</h2>
                 <ol class="mt-6 grid gap-4 sm:grid-cols-2">
                     <li><h3>Vous nous écrivez</h3><p>Le public, l'effectif, la période, les parcours qui vous intéressent. Le formulaire ci-dessous suffit.</p></li>
-                    <li><h3>Vous essayez</h3><p>Le premier chapitre de chaque parcours est gratuit : créez un compte et testez-le, seul ou avec quelques apprenants.</p></li>
+                    <li><h3>Vous essayez</h3><p>Créez une <a href="{{ path('app_free_class') }}">classe gratuite</a> sur les exercices de la Pratique, et testez le premier chapitre de chaque parcours, gratuit lui aussi.</p></li>
                     <li><h3>On chiffre</h3><p>Un devis selon le nombre d'apprenants, de parcours et la durée d'accès, avec un tarif dégressif pour les grands groupes.</p></li>
                     <li><h3>Votre groupe code</h3><p>Nous créons la cohorte ; vous recevez le lien d'invitation et l'accès au suivi de la progression.</p></li>
                 </ol>

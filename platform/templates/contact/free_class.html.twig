@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une classe gratuite{% endblock %}
+{% block body_class %}site-page organizations{% endblock %}
+
+{% block body %}
+    <main>
+        <section class="border-b border-line bg-bg-2">
+            <div class="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
+                <span class="text-sm font-medium text-ink-muted">Écoles et formateurs · gratuit</span>
+                <h1 class="mt-1 text-3xl font-semibold">Créez votre classe, <em>en deux minutes</em>.</h1>
+                <p class="mt-3 text-lg text-ink-muted">Choisissez des exercices de la Pratique, envoyez le lien d'invitation à vos élèves, et suivez qui a réussi quoi. Rien à payer, rien à installer : un navigateur suffit.</p>
+            </div>
+        </section>
+
+        <section class="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
+            {% if classes is not empty %}
+                <p class="mb-6">
+                    Vos classes :
+                    {% for cohort in classes %}
+                        <a href="{{ path('chef_cohort', {id: cohort.id}) }}">{{ cohort.name }}</a>{{ not loop.last ? ', ' }}
+                    {% endfor %}
+                </p>
+            {% endif %}
+
+            {% if remaining %}
+                <div class="site-form free-class-form">
+                    {{ form_start(form) }}
+                        {{ form_errors(form) }}
+                        {{ form_row(form.name) }}
+                        <div class="mt-6">
+                            <span class="block font-medium">Exercices de la classe</span>
+                            <p class="text-sm text-ink-muted">Des exercices courts, corrigés par des tests automatisés. Vous pourrez en ajouter ou en retirer ensuite.</p>
+                            {{ form_errors(form.practiceIds) }}
+                            {{ include('cohorte/_practice_choices.html.twig', {field: form.practiceIds}) }}
+                        </div>
+                        <button class="btn btn-primary mt-6" type="submit">Créer ma classe</button>
+                    {{ form_end(form) }}
+                </div>
+            {% else %}
+                <p>Vous avez déjà ouvert vos classes gratuites. Pour une autre classe, ou pour ouvrir les parcours complets à vos élèves, <a href="{{ path('app_organizations') }}#demande">écrivez-nous</a>.</p>
+            {% endif %}
+
+            <h2 class="mt-10 text-xl font-semibold">Et ensuite ?</h2>
+            <ul class="mt-3 list-disc pl-6 text-ink-muted">
+                <li>Vos élèves créent leur compte avec le lien d'invitation : ils retrouvent les exercices de la classe en haut de la Pratique.</li>
+                <li>Votre tableau de suivi montre, élève par élève, les exercices réussis, en cours ou pas commencés.</li>
+                <li>Les parcours complets (un projet de bout en bout, chapitre par chapitre) restent payants : <a href="{{ path('app_organizations') }}#demande">parlons-en</a> quand votre classe sera prête.</li>
+            </ul>
+        </section>
+    </main>
+{% endblock %}

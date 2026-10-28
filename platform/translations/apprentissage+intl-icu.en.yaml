@@ -72,6 +72,10 @@ practice:
         inscription_invitation: "This platform is for its members only: <a rel=\"nofollow\" href=\"{inscription}\">create your account</a> with your invitation code, or <a href=\"{connexion}\">log in</a>."
         inscription: "No account needed for these exercises: the editor opens right away. An account keeps your progress and unlocks the mentor and feedback. <a rel=\"nofollow\" href=\"{inscription}\">Create yours</a> or <a href=\"{connexion}\">log in</a>."
         vide: "No exercise here yet: come back soon."
+        classe:
+            titre: "Your class: {classe}"
+            intro: "The exercises your teacher picked. They can see which ones you have completed."
+            reussis: "{n} of {total} completed"
     show:
         partager: Share this exercise
         a_vous: Your turn to write the code
