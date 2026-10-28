@@ -35,7 +35,7 @@ final class ShareImageRenderer
     private const int FOOTER_SIZE = 24;
 
     /**
-     * @param array{image: string|null, logo?: string|null, name?: string, font: string|null, text_font: string|null, background: string, ink: string, accent: string, muted: string, editor?: array<string, string>} $style voir Theme::shareCard()
+     * @param array{image: string|null, logo?: string|null, name?: string, font: string|null, text_font: string|null, background: string, ink: string, accent: string, muted: string, editor?: array<string, string>} $style voir ShareCardStyle::style()
      *
      * @return string le PNG
      */
