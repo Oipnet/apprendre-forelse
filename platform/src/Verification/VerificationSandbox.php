@@ -19,6 +19,10 @@ use Symfony\Component\Process\Process;
  * laissé dans /tmp supprimé : la demande suivante repart d'un conteneur propre. Le conteneur, lui, n'a ni réseau, ni base,
  * ni secrets.
  *
+ * Avec VERIFICATION_RUNNER_UID en plus, les tests eux-mêmes tournent sous un second utilisateur (voir
+ * ProcessEnvironment) : le processus rejoué garde pour cela le seul droit de changer d'utilisateur. Le code de l'apprenant
+ * ne partage alors plus l'utilisateur de celui qui lit le rapport et écrit le verdict.
+ *
  * Sans VERIFICATION_SANDBOX_UID (développement), le processus tourne sous l'utilisateur courant : à réserver à du code
  * de confiance, comme `content:check`.
  */
@@ -37,6 +41,9 @@ final readonly class VerificationSandbox
          */
         #[Autowire(env: 'VERIFICATION_WORK_DIR')]
         private string $workDir = '',
+        /** L'utilisateur des tests, distinct de celui qui note (voir ProcessEnvironment). */
+        #[Autowire(env: 'default::int:VERIFICATION_RUNNER_UID')]
+        private ?int $runnerUid = null,
         private Filesystem $filesystem = new Filesystem(),
     ) {
     }
@@ -53,6 +60,9 @@ final readonly class VerificationSandbox
         if (0 === $this->sandboxUid) {
             return 'VERIFICATION_SANDBOX_UID ne peut pas valoir 0 (root).';
         }
+        if (0 === $this->runnerUid || $this->runnerUid === $this->sandboxUid) {
+            return 'VERIFICATION_RUNNER_UID ne peut valoir ni 0 (root), ni VERIFICATION_SANDBOX_UID : les tests doivent tourner sous un autre utilisateur que celui qui note.';
+        }
 
         return null;
     }
@@ -60,15 +70,18 @@ final readonly class VerificationSandbox
     public function run(VerificationRequest $request): VerificationResult
     {
         $run = $this->workDir().'/verification-'.bin2hex(random_bytes(6));
-        $this->filesystem->mkdir([$run.'/tmp', $run.'/cache', $run.'/share']);
+        $this->filesystem->mkdir($run.'/tmp');
         // Le processus rejoué, sous un autre utilisateur, écrit là et nulle part ailleurs (hors /tmp, nettoyé après lui).
-        $this->filesystem->chmod([$run, $run.'/tmp', $run.'/cache', $run.'/share'], 0o777);
+        // Collant (comme /tmp) : l'utilisateur des tests y écrit aussi, sans pouvoir renommer ni supprimer ce que celui
+        // qui note y a créé.
+        $this->filesystem->chmod([$run, $run.'/tmp'], 0o1777);
 
         $process = new Process(
             [...$this->prefix(), ...$this->console->of('app:verification:rejouer', ['--no-interaction'])],
             $this->console->projectDir,
-            // Son propre cache Symfony, vide : rien de ce qu'a laissé une demande précédente ne sert à la suivante.
-            ['TMPDIR' => $run.'/tmp', 'APP_CACHE_DIR' => $run.'/cache', 'APP_SHARE_DIR' => $run.'/share', 'HOME' => $run.'/tmp'],
+            // Son propre cache Symfony, vide : rien de ce qu'a laissé une demande précédente ne sert à la suivante. Créé
+            // par le processus rejoué lui-même, donc à lui : l'utilisateur des tests ne peut pas y écrire.
+            ['TMPDIR' => $run.'/tmp', 'APP_CACHE_DIR' => $run.'/cache', 'APP_SHARE_DIR' => $run.'/cache/share', 'HOME' => $run.'/tmp'],
             json_encode($request->toArray(), \JSON_THROW_ON_ERROR),
             $this->timeout,
         );
@@ -97,9 +110,13 @@ final readonly class VerificationSandbox
     /** @return list<string> */
     private function prefix(): array
     {
-        return null === $this->sandboxUid
-            ? []
-            : ['setpriv', '--reuid='.$this->sandboxUid, '--regid='.$this->sandboxUid, '--clear-groups', '--no-new-privs'];
+        if (null === $this->sandboxUid) {
+            return [];
+        }
+        // Le droit de changer d'utilisateur, et lui seul, survit au changement : de quoi lancer les tests sous l'autre.
+        $capabilities = null === $this->runnerUid ? [] : ['--inh-caps=-all,+setuid,+setgid', '--ambient-caps=-all,+setuid,+setgid'];
+
+        return ['setpriv', '--reuid='.$this->sandboxUid, '--regid='.$this->sandboxUid, '--clear-groups', ...$capabilities, '--no-new-privs'];
     }
 
     /** La dernière ligne JSON de la sortie, si elle porte sur cette demande. */
@@ -114,15 +131,16 @@ final readonly class VerificationSandbox
     private function cleanUp(string $run): void
     {
         if (null !== $this->sandboxUid) {
+            $users = array_filter([$this->sandboxUid, $this->runnerUid], static fn (?int $uid) => null !== $uid);
             // Un processus lancé en arrière-plan par le code rejoué ne survit pas à sa demande.
             foreach (glob('/proc/[0-9]*/status') ?: [] as $status) {
-                if (1 === preg_match('/^Uid:\s+\d+\s+(\d+)/m', (string) @file_get_contents($status), $match) && (int) $match[1] === $this->sandboxUid) {
+                if (1 === preg_match('/^Uid:\s+\d+\s+(\d+)/m', (string) @file_get_contents($status), $match) && \in_array((int) $match[1], $users, true)) {
                     @posix_kill((int) basename(\dirname($status)), 9);
                 }
             }
             foreach (array_unique([$this->workDir(), sys_get_temp_dir(), '/var/tmp', '/dev/shm']) as $directory) {
                 foreach (glob($directory.'/{,.}[!.]*', \GLOB_BRACE) ?: [] as $path) {
-                    if (@fileowner($path) === $this->sandboxUid) {
+                    if (\in_array(@fileowner($path), $users, true)) {
                         $this->filesystem->remove($path);
                     }
                 }

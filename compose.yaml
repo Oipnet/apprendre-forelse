@@ -119,8 +119,8 @@ services:
   # platform/src/Verification). C'est du code d'inconnus : il tourne ici, sans réseau (network_mode: none), sans base
   # ni secrets, avec le système de fichiers en lecture seule. Le service démarre en root, privé de toutes les capacités
   # sauf celles qu'il faut pour changer d'utilisateur, lire le dossier partagé et tuer ce qui traîne : chaque
-  # vérification tourne sous l'utilisateur VERIFICATION_SANDBOX_UID (nobody), qui ne peut ni lire les autres
-  # demandes ni écrire un verdict. Il n'a jamais le socket Docker.
+  # vérification tourne sous l'utilisateur VERIFICATION_SANDBOX_UID (nobody) et ses tests sous VERIFICATION_RUNNER_UID :
+  # ni l'un ni l'autre ne peut lire les autres demandes ni écrire un verdict. Il n'a jamais le socket Docker.
   verificateur:
     image: apprendre-forelse
     restart: unless-stopped
@@ -149,6 +149,9 @@ services:
       INSTALLED_ENVIRONMENTS_DIR: ${INSTALLED_ENVIRONMENTS_DIR:-/environnements}
       VERIFICATIONS_DIR: /verifications
       VERIFICATION_SANDBOX_UID: "65534"
+      # Les tests, donc le code de l'apprenant, sous un second utilisateur : il ne peut ni réécrire son rapport ni
+      # toucher au processus qui note (voir platform/src/Content/Check/ProcessEnvironment.php).
+      VERIFICATION_RUNNER_UID: "65533"
       VERIFICATION_TIMEOUT: ${VERIFICATION_TIMEOUT:-600}
       # Système de fichiers en lecture seule : le cache de Symfony va dans /tmp, les projets reconstitués sur disque.
       APP_CACHE_DIR: /tmp/symfony-cache

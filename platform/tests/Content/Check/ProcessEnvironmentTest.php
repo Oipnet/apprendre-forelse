@@ -19,4 +19,16 @@ final class ProcessEnvironmentTest extends TestCase
         $this->assertFalse($env['ANTHROPIC_API_KEY']);
         $this->assertFalse($env['INJECTEE'], 'Injectée par le Dotenv de la plateforme.');
     }
+
+    public function testLesTestsTournentSousLeurPropreUtilisateur(): void
+    {
+        $this->assertSame(['php', 'x'], (new ProcessEnvironment())->command(['php', 'x']), 'Sans VERIFICATION_RUNNER_UID, rien ne change.');
+
+        $command = (new ProcessEnvironment(runnerUid: 65533))->command(['php', 'x']);
+
+        $this->assertSame('setpriv', $command[0]);
+        $this->assertContains('--reuid=65533', $command);
+        $this->assertContains('--ambient-caps=-all', $command, 'Le droit de changer d\'utilisateur ne passe pas aux tests.');
+        $this->assertSame(['php', 'x'], \array_slice($command, -2));
+    }
 }

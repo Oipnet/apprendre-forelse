@@ -5,17 +5,15 @@ namespace App\Content\Check;
 use App\Content\Environment;
 use App\Content\Framework\FrameworkProfile;
 use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Exception\ProcessSignaledException;
 use Symfony\Component\Process\Process;
 
-/** PHPUnit, avec le PHP natif et le vendor/ de l'environnement ; le rapport est lu dans son JUnit. */
+/** PHPUnit, avec le PHP natif et le vendor/ de l'environnement ; le rapport est lu dans son JUnit, sur la sortie d'erreur. */
 #[AsTaggedItem(FrameworkProfile::PHPUNIT)]
 final readonly class PhpunitRunner implements TestRunner
 {
     public function __construct(
         private ProcessEnvironment $processEnvironment,
-        private Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -38,26 +36,60 @@ final readonly class PhpunitRunner implements TestRunner
 
     public function run(Environment $environment, string $workdir, array $paths = []): RunReport
     {
-        $junit = $workdir.'/var/junit.xml';
-        $this->filesystem->remove($junit);
+        // Le rapport JUnit passe par la sortie d'erreur, pas par un fichier du projet : le code testé ne peut plus le
+        // réécrire après PHPUnit (une fonction d'arrêt qui remplace var/junit.xml suffisait à tout réussir). Un second
+        // rapport dans la même sortie rend le verdict nul.
         // Xdebug désactivé : inutile ici, plus lent, et il a déjà fait planter PHP sur des pages d'erreur.
         // 512 Mo : un exercice qui manipule beaucoup de fichiers (parcours Docker) dépasse les 128 Mo par défaut.
-        $process = new Process([\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'memory_limit=512M', 'vendor/bin/phpunit', '--colors=never', '--do-not-cache-result', '--log-junit', $junit, ...$paths], $workdir, $this->processEnvironment->isolated(), timeout: 120);
+        $command = [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'memory_limit=512M', 'vendor/bin/phpunit', '--colors=never', '--do-not-cache-result', '--log-junit', 'php://stderr', ...$paths];
+        $this->processEnvironment->open($workdir);
+        $process = new Process($this->processEnvironment->command($command), $workdir, $this->processEnvironment->isolated(), timeout: 120);
         try {
             $process->run();
         } catch (ProcessSignaledException $e) {
             // Crash de PHP (ex. récursion infinie) : signalé comme une absence de rapport.
             return RunReport::none(sprintf('PHP a planté (signal %d).', $e->getSignal()));
+        } finally {
+            $this->processEnvironment->close();
+        }
+        [$junit, $errors] = self::extract($process->getErrorOutput());
+        if (null === $junit) {
+            return RunReport::none('Plusieurs rapports de tests : le verdict a été falsifié.');
         }
         // Pas de rapport, ou un rapport vide (erreur fatale au chargement ou en cours de route, comme une méthode de
         // test qui en masque une de PHPUnit) : la fin de la sortie dit pourquoi.
-        if (!is_file($junit) || '' === trim((string) file_get_contents($junit))) {
-            $sortie = trim($process->getErrorOutput()."\n".$process->getOutput());
+        if ('' === $junit) {
+            $sortie = trim($errors."\n".$process->getOutput());
 
             return RunReport::none('' !== $sortie ? implode("\n", \array_slice(explode("\n", $sortie), -5)) : '(erreur fatale ?)');
         }
 
-        return self::parse((string) file_get_contents($junit));
+        return self::parse($junit);
+    }
+
+    /**
+     * Le rapport JUnit dans la sortie d'erreur, et le reste de cette sortie. Rapport vide s'il n'y en a pas, null s'il y
+     * en a plusieurs : PHPUnit n'en écrit qu'un, le second vient du code testé.
+     *
+     * @return array{0: ?string, 1: string}
+     */
+    public static function extract(string $stderr): array
+    {
+        $count = substr_count($stderr, '<testsuites');
+        if (0 === $count) {
+            return ['', $stderr];
+        }
+        $start = (int) strpos($stderr, '<testsuites');
+        $end = strrpos($stderr, '</testsuites>');
+        if (1 !== $count || false === $end || $end < $start) {
+            return [null, $stderr];
+        }
+        $end += \strlen('</testsuites>');
+        // La déclaration XML qui précède, si elle y est, n'est pas du « reste ».
+        $declaration = strrpos(substr($stderr, 0, $start), '<?xml');
+        $before = false !== $declaration ? substr($stderr, 0, $declaration) : substr($stderr, 0, $start);
+
+        return [substr($stderr, $start, $end - $start), $before.substr($stderr, $end)];
     }
 
     /** Le rapport JUnit de PHPUnit, par nom de test. */
