@@ -51,6 +51,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?string $password = null;
 
+    /**
+     * Signe le cookie « Rester connecté » avec le mot de passe (security.yaml, signature_properties) : la changer annule
+     * tous les cookies déjà donnés, y compris pour un compte sans mot de passe (GitHub, Google, LinkedIn).
+     */
+    #[ORM\Column(length: 32)]
+    private string $rememberKey;
+
     #[ORM\Column(length: 40)]
     #[Assert\NotBlank(message: 'compte.pseudo.vide')]
     #[Assert\Length(max: 40)]
@@ -104,10 +111,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
+        $this->rememberKey = bin2hex(random_bytes(16));
         $this->createdAt = new \DateTimeImmutable();
         $this->progress = new ArrayCollection();
         $this->feedbacks = new ArrayCollection();
         $this->accesses = new ArrayCollection();
+    }
+
+    public function getRememberKey(): string
+    {
+        return $this->rememberKey;
+    }
+
+    /** « Se déconnecter des autres appareils » : plus aucun cookie « Rester connecté » déjà donné ne vaut. */
+    public function forgetRememberedDevices(): void
+    {
+        $this->rememberKey = bin2hex(random_bytes(16));
     }
 
     public function getDisplayName(): ?string

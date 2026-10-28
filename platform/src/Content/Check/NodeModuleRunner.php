@@ -68,8 +68,13 @@ final readonly class NodeModuleRunner implements TestRunner
             return RunReport::none(sprintf('Module de test « %s » introuvable : installez le paquet qui le fournit (npm install, dans playground/).', $module));
         }
 
-        $process = new Process([(string) $this->nodeBinary(), '--experimental-transform-types', '--no-warnings', $script, $workdir, ...$paths], $workdir, $this->environment(), timeout: 120);
-        $process->run();
+        $this->processEnvironment->open($workdir);
+        $process = new Process($this->processEnvironment->command([(string) $this->nodeBinary(), '--experimental-transform-types', '--no-warnings', $script, $workdir, ...$paths]), $workdir, $this->environment(), timeout: 120);
+        try {
+            $process->run();
+        } finally {
+            $this->processEnvironment->close();
+        }
         $report = json_decode($process->getOutput(), true);
         if (!\is_array($report) || !\is_array($report['cases'] ?? null)) {
             return RunReport::none(trim($process->getErrorOutput()) ?: sprintf('« %s » n\'a rien rapporté.', $module));

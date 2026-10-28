@@ -42,9 +42,6 @@ final class RunReportTest extends TestCase
         $filesystem = new Filesystem();
         $filesystem->dumpFile($workdir.'/vendor/bin/phpunit', <<<'PHP'
             <?php
-            $junit = $argv[array_search('--log-junit', $argv, true) + 1];
-            @mkdir(dirname($junit), 0777, true);
-            touch($junit);
             fwrite(STDERR, "PHP Fatal error:  Cannot make static method runCommand() non static\n");
             exit(255);
             PHP);
@@ -85,5 +82,28 @@ final class RunReportTest extends TestCase
 
         $this->assertSame(['testA' => true, 'testB' => false, 'testC' => false], $report->passed());
         $this->assertSame(['testB' => 'Failed asserting that false is true. Le détail.'], $report->failures);
+    }
+
+    public function testLeRapportEstPrisDansLaSortieDErreur(): void
+    {
+        [$junit, $reste] = PhpunitRunner::extract("PHP Deprecated:  avant\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuites>\n  <testsuite name=\"t\"><testcase name=\"testA\"/></testsuite>\n</testsuites>\napres\n");
+
+        $this->assertSame(['testA' => true], PhpunitRunner::parse((string) $junit)->passed());
+        $this->assertSame("PHP Deprecated:  avant\n\napres\n", $reste);
+    }
+
+    public function testSansRapportLaSortieDErreurResteEntiere(): void
+    {
+        $this->assertSame(['', "PHP Fatal error:  boum\n"], PhpunitRunner::extract("PHP Fatal error:  boum\n"));
+    }
+
+    /** Le code testé écrit son propre rapport (avant PHPUnit, ou après lui dans une fonction d'arrêt) : verdict nul. */
+    public function testUnSecondRapportEstUneFalsification(): void
+    {
+        $vrai = '<testsuites><testsuite name="t"><testcase name="testA"><failure>non</failure></testcase></testsuite></testsuites>';
+        $faux = '<testsuites><testsuite name="t"><testcase name="testA"/></testsuite></testsuites>';
+
+        $this->assertNull(PhpunitRunner::extract($vrai."\n".$faux)[0]);
+        $this->assertNull(PhpunitRunner::extract($faux."\n".$vrai)[0]);
     }
 }

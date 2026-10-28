@@ -77,13 +77,31 @@ fi
 # shellcheck disable=SC2086 # $AUTH : une ou deux options, découpées à dessein.
 nas() { smbclient "//$NAS_IP/$NAS_PARTAGE" $AUTH -c "$1" < /dev/null; }
 
+# Chiffrées avant de partir (age, clé publique SAUVEGARDE_AGE_DESTINATAIRE) : data.tar.gz porte APP_SECRET et les clés
+# TLS, base.dump les empreintes des mots de passe, et qui lit le partage du NAS lirait tout. La clé privée n'est pas sur
+# le serveur : un serveur compromis ne relit pas les anciennes sauvegardes.
+SOURCE=/sauvegarde
+FICHIERS="base.dump data.tar.gz"
+if [ -n "${SAUVEGARDE_AGE_DESTINATAIRE:-}" ]; then
+    SOURCE=/tmp/chiffre
+    mkdir -p "$SOURCE"
+    for f in base.dump data.tar.gz; do
+        age -r "$SAUVEGARDE_AGE_DESTINATAIRE" -o "$SOURCE/$f.age" "/sauvegarde/$f"
+    done
+    FICHIERS="base.dump.age data.tar.gz.age"
+else
+    echo "ATTENTION : SAUVEGARDE_AGE_DESTINATAIRE vide, la sauvegarde part en clair sur le NAS (voir deploy/README.md)." >&2
+fi
+
 nas "mkdir $CIBLE" > /dev/null 2>&1 || true # déjà là si la sauvegarde du jour est relancée
-nas "cd $CIBLE; lcd /sauvegarde; put base.dump; put data.tar.gz"
+put=""
+for f in $FICHIERS; do put="$put; put $f"; done
+nas "cd $CIBLE; lcd $SOURCE$put"
 
 # Relecture : chaque fichier doit être arrivé entier.
 nas "ls $CIBLE/*" > /tmp/liste
-for f in base.dump data.tar.gz; do
-    attendu="$(stat -c %s "/sauvegarde/$f")"
+for f in $FICHIERS; do
+    attendu="$(stat -c %s "$SOURCE/$f")"
     recu="$(awk -v f="$f" '$1 == f { print $3 }' /tmp/liste)"
     [ "$recu" = "$attendu" ] || { echo "$f : $recu octets sur le NAS, $attendu attendus." >&2; exit 1; }
 done

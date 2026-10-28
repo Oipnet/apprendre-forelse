@@ -4,9 +4,17 @@ namespace App\Content\Check;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\Process\Process;
 
 /**
- * L'environnement des processus qui lancent les tests d'un projet : sans les variables de la plateforme.
+ * L'environnement des processus qui lancent les tests d'un projet : sans les variables de la plateforme et, dans le
+ * service « verificateur », sous un autre utilisateur que celui qui note.
+ *
+ * Avec VERIFICATION_RUNNER_UID, les tests (donc le code de l'apprenant) tournent sous cet utilisateur, et le processus
+ * qui lit leur rapport et rend le verdict (`app:verification:rejouer`, voir VerificationSandbox) sous un autre. Le code
+ * testé ne peut alors ni écrire dans la sortie de celui qui note, ni le tuer, ni toucher à son cache. Il reste maître
+ * de son propre processus : un code qui vise le framework de test peut toujours tricher, mais plus en réécrivant un
+ * fichier après coup.
  */
 final readonly class ProcessEnvironment
 {
@@ -14,7 +22,52 @@ final readonly class ProcessEnvironment
         /** Dossier de la plateforme : son .env déclare les variables à cacher au projet testé. */
         #[Autowire('%kernel.project_dir%')]
         private string $platformDir = __DIR__.'/../../..',
+        #[Autowire(env: 'default::int:VERIFICATION_RUNNER_UID')]
+        private ?int $runnerUid = null,
     ) {
+    }
+
+    /**
+     * La commande des tests, sous l'utilisateur des tests s'il y en a un.
+     *
+     * @param list<string> $command
+     *
+     * @return list<string>
+     */
+    public function command(array $command): array
+    {
+        return null === $this->runnerUid
+            ? $command
+            : ['setpriv', '--reuid='.$this->runnerUid, '--regid='.$this->runnerUid, '--clear-groups', '--inh-caps=-all', '--ambient-caps=-all', '--no-new-privs', ...$command];
+    }
+
+    /**
+     * Avant chaque lancement : le projet, écrit par l'utilisateur qui note, ouvert en écriture à celui des tests (caches,
+     * var/…). Les liens symboliques sont laissés tels quels : un chmod les suivrait hors du projet.
+     */
+    public function open(string $workdir): void
+    {
+        if (null === $this->runnerUid) {
+            return;
+        }
+        $paths = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($workdir, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
+        foreach ([new \SplFileInfo($workdir), ...$paths] as $path) {
+            if (!$path->isLink()) {
+                @chmod($path->getPathname(), $path->isDir() ? 0o777 : ($path->getPerms() & 0o777) | 0o666);
+            }
+        }
+    }
+
+    /**
+     * Après chaque lancement : plus aucun processus de l'utilisateur des tests. Ce qu'il aurait laissé en arrière-plan ne
+     * peut pas modifier le projet pendant que celui qui note y lit ou y écrit (mutants, rapport).
+     */
+    public function close(): void
+    {
+        if (null !== $this->runnerUid) {
+            // kill(-1) : tous les processus que l'appelant peut tuer, donc ceux de son utilisateur, sauf lui-même.
+            (new Process($this->command([\PHP_BINARY, '-r', 'posix_kill(-1, 9);']), timeout: 30))->run();
+        }
     }
 
     /**

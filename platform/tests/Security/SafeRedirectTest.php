@@ -21,6 +21,7 @@ final class SafeRedirectTest extends TestCase
         yield 'tabulation, que le navigateur retire' => ["/\t/evil.test", null];
         yield 'retour à la ligne' => ["/\n/evil.test", null];
         yield 'espace' => ['/ /evil.test', null];
+        yield 'saut de ligne final' => ["/parcours\n", null];
         yield 'adresse complète' => ['https://evil.test/', null];
     }
 

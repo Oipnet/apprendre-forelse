@@ -252,7 +252,7 @@ api:
         email_a_confirmer: "Confirm your email address to ask the mentor: the link is in the email you received when you signed up, and can be resent from your account."
         trop_d_appels: "The mentor has been working hard: try again a little later."
         budget_epuise: "The mentor has reached its daily limit on this platform: it will be back tomorrow."
-        sans_reponse: "The mentor could not answer: {raison}"
+        sans_reponse: "The mentor could not answer. Please try again in a few minutes."
 
 # The texts the server sends to the playground (PlaygroundConfigFactory, ExercisePayloadFactory).
 playground:

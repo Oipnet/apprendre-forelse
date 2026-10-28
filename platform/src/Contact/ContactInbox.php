@@ -4,6 +4,7 @@ namespace App\Contact;
 
 use App\Entity\ContactMessage;
 use App\Mail\Sender;
+use App\Security\ClientKey;
 use App\Security\QuotaExceeded;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -48,7 +49,7 @@ final readonly class ContactInbox
     /** @throws QuotaExceeded trop de messages depuis cette adresse IP : rien n'est enregistré */
     public function receive(ContactMessage $message, string $senderIp): void
     {
-        if (!$this->limiter->create($senderIp)->consume()->isAccepted()) {
+        if (!$this->limiter->create(ClientKey::of($senderIp))->consume()->isAccepted()) {
             throw new QuotaExceeded('Beaucoup de messages en peu de temps depuis votre connexion : réessayez dans une heure, ou écrivez-nous directement par email.', t('contact.quota', [], 'compte'));
         }
         $this->entityManager->persist($message);

@@ -98,6 +98,20 @@ final class AccountController extends AbstractController
         return $this->renderPage(password: $form);
     }
 
+    /** Annule les cookies « Rester connecté » de tous les appareils, celui-ci compris ; la session en cours continue. */
+    #[Route(['fr' => '/compte/appareils', 'en' => '/en/account/devices'], name: 'app_account_forget_devices', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function forgetDevices(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('submit', $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+        $this->account->forgetRememberedDevices($this->user());
+        $this->addFlash('success', t('flash.appareils_oublies', [], 'compte'));
+
+        return $this->redirectToRoute('app_account', ['_fragment' => 'appareils'], Response::HTTP_SEE_OTHER);
+    }
+
     #[Route(['fr' => '/compte/confirmation', 'en' => '/en/account/confirmation'], name: 'app_account_resend_confirmation', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function resendConfirmation(Request $request): Response

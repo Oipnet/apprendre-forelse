@@ -156,25 +156,37 @@ production ; son `sauvegarde.env` reste.
 Mise en place, une fois :
 
 1. Freebox Pro (espace client → Ma Freebox Pro → VPN) : serveur VPN activé, un utilisateur réservé au serveur
-   (`vps-sauvegarde`). Sur le NAS, un partage réservé aux sauvegardes (`saveForelse`), ouvert en invité depuis le
-   réseau de la Freebox.
-2. Sur le serveur, `/srv/forelse/sauvegarde/sauvegarde.env` à partir de `sauvegarde.env.example`, puis
+   (`vps-sauvegarde`). Sur le NAS, un partage réservé aux sauvegardes (`saveForelse`), avec un compte réservé au
+   serveur plutôt que l'accès invité (`NAS_UTILISATEUR`, `NAS_MOT_DE_PASSE`).
+2. Une paire de clés [age](https://age-encryption.org), **sur votre poste** : `age-keygen -o forelse-sauvegarde.key`.
+   La clé privée (le fichier) se range hors du serveur (gestionnaire de mots de passe, clé USB) : sans elle, aucune
+   sauvegarde ne se restaure. La clé publique affichée (`age1…`) va dans `SAUVEGARDE_AGE_DESTINATAIRE`.
+3. Sur le serveur, `/srv/forelse/sauvegarde/sauvegarde.env` à partir de `sauvegarde.env.example`, puis
    `chmod 600 sauvegarde.env` : il porte les mots de passe du VPN et du NAS.
-3. Un premier essai, à la main : `sh /srv/forelse/sauvegarde/sauvegarder.sh`. Le dossier `forelse-AAAA-MM-JJ` doit
-   apparaître sur le NAS avec `base.dump` et `data.tar.gz`.
-4. La programmation, `crontab -e` avec l'utilisateur `deploy` :
+4. Un premier essai, à la main : `sh /srv/forelse/sauvegarde/sauvegarder.sh`. Le dossier `forelse-AAAA-MM-JJ` doit
+   apparaître sur le NAS avec `base.dump.age` et `data.tar.gz.age`.
+5. La programmation, `crontab -e` avec l'utilisateur `deploy` :
    `17 3 * * * sh /srv/forelse/sauvegarde/sauvegarder.sh >> /srv/forelse/sauvegardes/sauvegarde.log 2>&1`
-5. Conseillé : une adresse de surveillance (`SAUVEGARDE_PING_URL`, healthchecks.io ou équivalent) qui prévient si la
+6. Conseillé : une adresse de surveillance (`SAUVEGARDE_PING_URL`, healthchecks.io ou équivalent) qui prévient si la
    sauvegarde n'est pas passée. Sans elle, un échec ne se voit que dans `sauvegardes/sauvegarde.log`.
 
-Le serveur détient les identifiants du VPN, et le NAS s'ouvre en invité à qui est sur ce réseau : un serveur
-compromis pourrait écraser les sauvegardes. La gestion des versions du NAS (30 jours) les garde récupérables. La base
+Les fichiers partent chiffrés : qui lit le partage ne lit ni la base ni `APP_SECRET`, et le serveur, qui n'a que la clé
+publique, ne relit pas les anciennes sauvegardes. Les copies locales (`sauvegardes/quotidiennes/`) restent en clair,
+lisibles par `deploy` seul. Le serveur détient en revanche les identifiants du VPN et du NAS : un serveur compromis
+pourrait écraser les sauvegardes. La gestion des versions du NAS (30 jours) les garde récupérables. La base
 d'Umami (statistiques de visite) n'est pas sauvegardée.
 
 ### Restaurer
 
-Récupérer `base.dump` et `data.tar.gz` du jour voulu (sur le NAS, ou dans `sauvegardes/quotidiennes/` pour les 7
-derniers jours), puis dans `/srv/forelse` :
+Récupérer `base.dump` et `data.tar.gz` du jour voulu : dans `sauvegardes/quotidiennes/` pour les 7 derniers jours, ou
+sur le NAS, à déchiffrer sur votre poste avec la clé privée avant de les copier sur le serveur :
+
+```sh
+age -d -i forelse-sauvegarde.key -o base.dump base.dump.age
+age -d -i forelse-sauvegarde.key -o data.tar.gz data.tar.gz.age
+```
+
+Puis dans `/srv/forelse` :
 
 ```sh
 docker compose stop app worker

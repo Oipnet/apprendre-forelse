@@ -12,6 +12,28 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- Durcissements : `nosniff` et HSTS aussi sur les fichiers servis par Caddy ; un chemin soumis avec un segment `.` ou
+  `..` n'est jamais éditable (un joker `*` l'acceptait) ; `SafeRedirect` refuse un saut de ligne final ; le mentor
+  n'affiche plus le message brut de l'API du modèle (il part dans les journaux).
+- « Rester connecté » révocable, y compris pour un compte sans mot de passe (GitHub, Google, LinkedIn) : le cookie est
+  signé aussi par une clé du compte (`user.remember_key`), que le bouton « Oublier tous mes appareils » du compte
+  renouvelle. **À la mise à jour, les cookies « Rester connecté » déjà donnés cessent de valoir une fois** : chacun se
+  reconnecte. `/admin` et `/atelier` demandent une vraie connexion, pas seulement le cookie.
+- Images de partage (Pratique, certificat) : le site écrit dessus vient de `DEFAULT_URI` et non plus de l'en-tête
+  `Host`. Sur une instance qui accepte tous les noms d'hôte (`SERVER_NAME=:80`), chaque Host inventé faisait dessiner
+  et écrire une nouvelle image.
+- Limiteurs de débit : une adresse IPv6 compte pour son bloc /64 (contact, inscription, codes d'invitation, mentor,
+  rapports CSP, connexion), sinon changer d'adresse dans son bloc remettait les compteurs à zéro. La connexion passe
+  pour cela par son propre limiteur (`App\Security\LoginRateLimiter`, mêmes limites qu'avant). La liste d'attente
+  est limitée à 5 inscriptions par heure et par adresse IP.
+- Sauvegarde quotidienne : les fichiers sont chiffrés avec age avant l'envoi sur le NAS (`SAUVEGARDE_AGE_DESTINATAIRE`,
+  la clé privée reste hors du serveur ; vide, l'envoi se fait en clair avec un avertissement). Copies locales en
+  `umask 077`, et l'exemple de configuration recommande un compte réservé sur le partage plutôt que l'accès invité.
+- Vérification des réussites : les tests rejoués (donc le code de l'apprenant) tournent sous un second utilisateur,
+  `VERIFICATION_RUNNER_UID`, distinct de celui qui lit le rapport et rend le verdict. Le rapport JUnit passe par la
+  sortie d'erreur de PHPUnit et non plus par un fichier du projet, et le projet ne s'écrit plus à travers un lien
+  symbolique posé par les tests. Instances auto-hébergées : reprendre `VERIFICATION_RUNNER_UID: "65533"` du service
+  `verificateur` dans `auto-hebergement/compose.yaml` (sans lui, les tests tournent sous le même utilisateur qu'avant).
 - Référencement (rapport de Bing, « description manquante ») : la connexion, l'inscription, le mot de passe oublié
   et le classement ont une meta description, en français et en anglais (elles restent en noindex). robots.txt
   interdit les adresses `?suite=` : le lien « Connexion » de chaque page en créait une par page du site.

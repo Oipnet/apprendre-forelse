@@ -5,6 +5,7 @@ namespace App\Api;
 use App\Ai\Mentor;
 use App\Content\Exercise;
 use App\Entity\User;
+use App\Security\ClientKey;
 use App\Service\ProgressService;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -67,7 +68,7 @@ final readonly class MentorGate
 
     private function consumeQuota(User $user): void
     {
-        $ip = $this->requests->getMainRequest()?->getClientIp() ?? 'inconnue';
+        $ip = ClientKey::of($this->requests->getMainRequest()?->getClientIp());
         foreach ([$this->mentorLimiter->create((string) $user->getId()), $this->ipLimiter->create($ip)] as $limiter) {
             $limit = $limiter->consume();
             if (!$limit->isAccepted()) {

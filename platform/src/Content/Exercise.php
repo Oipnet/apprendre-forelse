@@ -89,6 +89,10 @@ final readonly class Exercise
      */
     public function isEditable(string $path): bool
     {
+        // Un joker de fnmatch accepte « .. » comme segment : un chemin soumis n'a jamais de segment « . » ni « .. ».
+        if (array_intersect(explode('/', $path), ['.', '..'])) {
+            return false;
+        }
         foreach ($this->editable as $entry) {
             if ($entry === $path || (str_contains($entry, '*') && fnmatch($entry, $path, \FNM_PATHNAME))) {
                 return true;

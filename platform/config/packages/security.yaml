@@ -30,12 +30,12 @@ security:
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 2592000 # 30 jours
-                signature_properties: [password]
+                signature_properties: [password, rememberKey]
             # Contre la force brute et les mots de passe fuités : 5 échecs par compte et par adresse IP en 15 minutes
-            # (et 25 par adresse IP, tous comptes confondus), puis la connexion attend.
+            # (et 25 par adresse IP, tous comptes confondus), puis la connexion attend. Limites dans
+            # config/packages/rate_limiter.yaml (login_account, login_ip) ; une adresse IPv6 compte pour son /64.
             login_throttling:
-                max_attempts: 5
-                interval: '15 minutes'
+                limiter: App\Security\LoginRateLimiter
             logout:
                 path: app_logout
                 target: app_home
@@ -55,7 +55,8 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        # L'atelier écrit dans les packs et exécute leur PHP : réservé aux auteurs.
+        # L'atelier écrit dans les packs et exécute leur PHP : réservé aux auteurs. Comme /admin, il demande en plus une vraie
+        # connexion, pas seulement le cookie « Rester connecté » (voir FullyAuthenticatedAreas).
         - { path: ^/atelier, roles: ROLE_AUTEUR }
         # Tableau de bord EasyAdmin : comptes, progression, retours.
         - { path: ^/admin, roles: ROLE_ADMIN }

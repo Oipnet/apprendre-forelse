@@ -286,7 +286,7 @@ api:
         trop_d_appels: "Le mentor a beaucoup travaillé : réessayez un peu plus tard."
         budget_epuise: "Le mentor a atteint sa limite du jour sur cette plateforme : il revient demain."
         # {raison} : l'explication de l'incident, écrite par le client du modèle.
-        sans_reponse: "Le mentor n'a pas pu répondre : {raison}"
+        sans_reponse: "Le mentor n'a pas pu répondre. Réessayez dans quelques minutes."
 
 # Les textes que le serveur envoie au playground dans sa configuration (PlaygroundConfigFactory) et dans les données
 # de l'exercice (ExercisePayloadFactory) : le playground les affiche tels quels.

@@ -275,7 +275,7 @@ final class ContentRepositoryTest extends TestCase
     {
         $exercice = new \App\Content\Exercise(
             id: 'e', trackId: 't', title: 'E', concepts: [], xp: 0, environment: 'symfony-8',
-            base: null, open: 'src/A.php', preview: '/', editable: ['src/A.php', 'migrations/*.php'], readonly: [],
+            base: null, open: 'src/A.php', preview: '/', editable: ['src/A.php', 'migrations/*.php', 'lib/*/C.php'], readonly: [],
             objectives: [], hints: [], instructions: '', directory: '/tmp',
         );
 
@@ -283,6 +283,9 @@ final class ContentRepositoryTest extends TestCase
         $this->assertTrue($exercice->isEditable('migrations/Version20260915120000.php'), 'Un fichier généré par la console est couvert par le motif.');
         $this->assertFalse($exercice->isEditable('migrations/archives/Version1.php'), '* ne franchit pas un dossier.');
         $this->assertFalse($exercice->isEditable('src/B.php'));
+        $this->assertTrue($exercice->isEditable('lib/x/C.php'));
+        $this->assertFalse($exercice->isEditable('lib/../C.php'), 'Un joker n\'accepte pas « .. » comme segment.');
+        $this->assertFalse($exercice->isEditable('lib/./C.php'));
         $this->assertSame(['src/A.php'], $exercice->editablePaths());
     }
 

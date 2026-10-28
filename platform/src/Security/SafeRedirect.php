@@ -11,7 +11,7 @@ final class SafeRedirect
      */
     public static function localPath(?string $target): ?string
     {
-        return null !== $target && 1 === preg_match('#^/(?![/\\\\])[^\s\x00-\x1f\x7f]*$#', $target) ? $target : null;
+        return null !== $target && 1 === preg_match('#^/(?![/\\\\])[^\s\x00-\x1f\x7f]*\z#', $target) ? $target : null;
     }
 
     /** L'adresse (un referer, par exemple) si elle est sur l'origine donnée (« https://hote »), sinon null. */

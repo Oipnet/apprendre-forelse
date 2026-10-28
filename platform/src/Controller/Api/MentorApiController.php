@@ -11,6 +11,7 @@ use App\Content\ContentException;
 use App\Content\Exercise;
 use App\Entity\User;
 use App\Service\ProgressService;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,6 +32,7 @@ final class MentorApiController extends AbstractController
         private readonly MentorGate $gate,
         private readonly ProgressService $progress,
         private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -67,11 +69,14 @@ final class MentorApiController extends AbstractController
         try {
             return $appel();
         } catch (ModelUnavailableException $e) {
-            // Le modèle est injoignable ou en panne : ce n'est pas la faute de l'apprenant, et c'est passager.
-            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, $this->translator->trans('api.mentor.sans_reponse', ['raison' => $e->getMessage()], 'apprentissage'), $e);
+            // Le modèle est injoignable ou en panne : ce n'est pas la faute de l'apprenant, et c'est passager. Le détail
+            // (message brut de l'API) va dans les journaux, pas chez l'apprenant.
+            $this->logger->error('Mentor : {message}', ['message' => $e->getMessage()]);
+            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE, $this->translator->trans('api.mentor.sans_reponse', [], 'apprentissage'), $e);
         } catch (ContentException $e) {
             // Le modèle a répondu de travers : ce n'est pas la faute de l'apprenant.
-            throw new HttpException(Response::HTTP_BAD_GATEWAY, $this->translator->trans('api.mentor.sans_reponse', ['raison' => $e->getMessage()], 'apprentissage'), $e);
+            $this->logger->error('Mentor, réponse inutilisable : {message}', ['message' => $e->getMessage()]);
+            throw new HttpException(Response::HTTP_BAD_GATEWAY, $this->translator->trans('api.mentor.sans_reponse', [], 'apprentissage'), $e);
         }
     }
 

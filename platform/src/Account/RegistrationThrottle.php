@@ -2,6 +2,7 @@
 
 namespace App\Account;
 
+use App\Security\ClientKey;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
@@ -24,22 +25,22 @@ final readonly class RegistrationThrottle
     /** Trop d'inscriptions refusées pour email déjà pris : plus aucune n'aboutit. */
     public function isBlocked(?string $ip): bool
     {
-        return 0 === $this->duplicates->create($ip ?? 'inconnu')->consume(0)->getRemainingTokens();
+        return 0 === $this->duplicates->create(ClientKey::of($ip))->consume(0)->getRemainingTokens();
     }
 
     /** Trop de codes d'invitation inconnus essayés. */
     public function tooManyCodes(?string $ip): bool
     {
-        return 0 === $this->invitationCodes->create($ip ?? 'inconnu')->consume(0)->getRemainingTokens();
+        return 0 === $this->invitationCodes->create(ClientKey::of($ip))->consume(0)->getRemainingTokens();
     }
 
     public function recordUnknownCode(?string $ip): void
     {
-        $this->invitationCodes->create($ip ?? 'inconnu')->consume();
+        $this->invitationCodes->create(ClientKey::of($ip))->consume();
     }
 
     public function recordDuplicate(?string $ip): void
     {
-        $this->duplicates->create($ip ?? 'inconnu')->consume();
+        $this->duplicates->create(ClientKey::of($ip))->consume();
     }
 }
