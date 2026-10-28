@@ -417,6 +417,16 @@ export const fr = {
 		sharedTitle: 'Ce lien contient du code écrit par quelqu\'un d\'autre.',
 		sharedDetail: 'Lisez-le dans l\'éditeur avant de l\'exécuter. Il tourne isolé de ce site, mais la page qu\'il affiche peut imiter n\'importe quoi : n\'y saisissez jamais un mot de passe.',
 		sharedRun: 'Exécuter ce code',
+		/** Le bouton « Réinitialiser » du bac à sable, et le projet vierge ouvert depuis /bac-a-sable. */
+		newProject: {
+			resetTitle: 'Repartir d\'un projet vierge ?',
+			resetMessage: 'Votre code sera remplacé par le projet de départ. Vous pourrez annuler juste après. Un lien déjà partagé garde son code.',
+			reset: 'Nouveau projet',
+			buttonTitle: 'Repartir d\'un projet vierge',
+			resetDone: 'Nouveau projet.',
+		},
+		newProjectDone: 'Nouveau projet vierge.',
+		resumeDraft: 'Reprendre mon brouillon',
 	},
 
 	site: {

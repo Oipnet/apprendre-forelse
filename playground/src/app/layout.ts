@@ -35,7 +35,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 			${config.share ? `<button id="share" class="ghost" title="${m.layout.shareTitle}"><span class="icon" aria-hidden="true">🔗</span><span class="label"> ${m.layout.share}</span></button>` : ''}
 			${config.feedbackUrl ? `<button id="feedback" class="ghost" title="${m.layout.feedbackTitle}"><span class="icon" aria-hidden="true">💬</span><span class="label"> ${m.layout.feedback}</span></button>` : ''}
 			<button id="solution" class="ghost" hidden><span class="icon" aria-hidden="true">📖</span><span class="label">${m.layout.solution}</span></button>
-			<button id="reset" class="ghost" title="${m.layout.resetTitle}"><span class="icon" aria-hidden="true">⟲</span><span class="label">${m.layout.reset}</span></button>
+			<button id="reset" class="ghost" title="${noBrief ? m.scratch.newProject.buttonTitle : m.layout.resetTitle}"><span class="icon" aria-hidden="true">${noBrief ? '＋' : '⟲'}</span><span class="label">${noBrief ? m.scratch.newProject.reset : m.layout.reset}</span></button>
 			<button id="shortcuts" class="ghost" title="${m.layout.shortcuts}" aria-label="${m.layout.shortcuts}" aria-haspopup="dialog"><span aria-hidden="true">⌨</span></button>
 			<button id="run" class="primary" disabled aria-keyshortcuts="Control+Enter Meta+Enter">▶ ${(config.context === 'scratch' ? m.scratch.run : m.layout.run)((texte) => `<span class="label">${texte}</span>`)}</button>
 		</div>

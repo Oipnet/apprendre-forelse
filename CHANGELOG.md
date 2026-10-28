@@ -19,6 +19,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   par défaut. Projets de départ : `platform/resources/bac-a-sable/`. Nuxt n'y est pas proposé : son code s'exécute en
   partie sur l'origine de la plateforme.
   Deux volets seulement, le code et l'aperçu : pas de volet des consignes.
+  « Nouveau projet » (à la place de « Réinitialiser ») repart du projet de départ ; les cartes de `/bac-a-sable`
+  ouvrent un projet vierge (`#nouveau`), le brouillon restant repris en un clic.
 - Mesure d'audience : le traceur n'envoie plus le fragment des adresses (`data-exclude-hash`).
 - **Classe gratuite** (`/ecoles-et-entreprises/classe-gratuite`) : un formateur crée lui-même sa classe sur des
   exercices de la Pratique, sans devis. Il en devient chef de cohorte, reçoit le lien d'invitation et suit dans `/cohorte`

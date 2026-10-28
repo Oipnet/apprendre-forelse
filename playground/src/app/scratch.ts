@@ -9,6 +9,8 @@ import { deflateSync, Inflate, strFromU8, strToU8 } from 'fflate';
 import type { ShareLinks } from './share';
 
 const PREFIX = 'code=';
+/** Le fragment qui demande un projet vierge (liens de la page /bac-a-sable). */
+export const NEW_PROJECT = 'nouveau';
 /** Un fragment plus long n'est pas lu : rien de ce qu'on tape à la main n'en approche. */
 const MAX_FRAGMENT = 200_000;
 /** Le code décompressé, au plus : une adresse piégée ne fait pas gonfler la mémoire de la page. */

@@ -13,7 +13,7 @@
                     <li class="rounded-lg border border-line bg-surface p-6">
                         <h2 class="text-xl font-semibold">{{ 'bac_a_sable.projet.titre'|trans({framework: framework.label}) }}</h2>
                         <p class="mt-2 text-ink-muted">{{ ('bac_a_sable.index.' ~ framework.value)|trans }}</p>
-                        <p class="mt-4"><a class="btn btn-primary" href="{{ path('app_scratch_' ~ framework.value) }}">{{ 'bac_a_sable.index.ouvrir'|trans({framework: framework.label}) }} <span aria-hidden="true">→</span></a></p>
+                        <p class="mt-4"><a class="btn btn-primary" href="{{ path('app_scratch_' ~ framework.value) }}#nouveau">{{ 'bac_a_sable.index.ouvrir'|trans({framework: framework.label}) }} <span aria-hidden="true">→</span></a></p>
                     </li>
                 {% endfor %}
             </ul>

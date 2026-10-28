@@ -17,7 +17,7 @@ final class ScratchTest extends WebTestCase
         $crawler = $client->request('GET', '/bac-a-sable');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSame(['/bac-a-sable/symfony', '/bac-a-sable/laravel'], $crawler->filter('.scratch-frameworks a')->extract(['href']));
+        $this->assertSame(['/bac-a-sable/symfony#nouveau', '/bac-a-sable/laravel#nouveau'], $crawler->filter('.scratch-frameworks a')->extract(['href']));
         $this->assertSelectorExists('header nav a[href="/bac-a-sable"]', 'Le bac à sable est dans le menu.');
         $this->assertSelectorExists('.site-footer a[href="/bac-a-sable"]');
     }
