@@ -8,8 +8,6 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
-## 3.21.1 — 2026-10-28
-
 ### Corrigé
 
 - Durcissements : `nosniff` et HSTS aussi sur les fichiers servis par Caddy ; un chemin soumis avec un segment `.` ou
@@ -34,6 +32,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   sortie d'erreur de PHPUnit et non plus par un fichier du projet, et le projet ne s'écrit plus à travers un lien
   symbolique posé par les tests. Instances auto-hébergées : reprendre `VERIFICATION_RUNNER_UID: "65533"` du service
   `verificateur` dans `auto-hebergement/compose.yaml` (sans lui, les tests tournent sous le même utilisateur qu'avant).
+
+## 3.21.1 — 2026-10-28
+
+### Corrigé
+
 - Référencement (rapport de Bing, « description manquante ») : la connexion, l'inscription, le mot de passe oublié
   et le classement ont une meta description, en français et en anglais (elles restent en noindex). robots.txt
   interdit les adresses `?suite=` : le lien « Connexion » de chaque page en créait une par page du site.
