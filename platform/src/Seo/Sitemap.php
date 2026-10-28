@@ -57,7 +57,12 @@ final readonly class Sitemap
         // L'accueil dans chaque langue que le thème parle : changer de thème change la liste.
         $homes = array_values(array_filter($this->locales, $this->theme->speaks(...)));
 
-        return $this->cache->get('sitemap.'.implode('-', $homes), function (ItemInterface $item) use ($homes): array {
+        // L'adresse du site aussi : une commande lancée sans DEFAULT_URI (docker compose exec) génère des adresses
+        // locales, qui ne doivent pas se retrouver dans le sitemap public (vu le 28/10/2026).
+        $context = $this->urls->getContext();
+        $site = $context->getScheme().'://'.$context->getHost().':'.('https' === $context->getScheme() ? $context->getHttpsPort() : $context->getHttpPort()).$context->getBaseUrl();
+
+        return $this->cache->get('sitemap.'.implode('-', $homes).'.'.hash('xxh3', $site), function (ItemInterface $item) use ($homes): array {
             $entries = [];
             $latest = LegalVersions::UPDATED_AT;
 

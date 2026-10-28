@@ -44,6 +44,10 @@ services:
       CSP_REPORT_ONLY: ${CSP_REPORT_ONLY:-1}
       APP_URL: ${APP_URL:?APP_URL manquant dans .env}
       SANDBOX_URL: ${SANDBOX_URL:?SANDBOX_URL manquant dans .env}
+      # Ce que docker-entrypoint.sh en déduit, posé ici aussi : `docker compose exec app php bin/console …` ne passe pas
+      # par lui, et une commande générait sinon des adresses en http://localhost:8000 (sitemap, IndexNow, emails).
+      DEFAULT_URI: ${APP_URL}
+      SANDBOX_ORIGIN: ${SANDBOX_URL}
       APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
       DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/formation?serverVersion=17&charset=utf8
       REGISTRATION_INVITE_ONLY: ${REGISTRATION_INVITE_ONLY:-1}
