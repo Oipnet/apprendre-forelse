@@ -33,7 +33,7 @@ foi dans `App\Theme\TemplateContract::POINTS`.
 | `home/_showcase.html.twig`, `home/_author.html.twig` | le fil rouge et « qui est derrière » (`home.showcase`, `home.author`) |
 | `home/_tracks.html.twig`, `home/_track_card.html.twig` | les parcours ; la fiche sert aussi au catalogue `/parcours` |
 | `home/_signup.html.twig`, `home/_faq.html.twig` | l'inscription ou la liste d'attente, les questions fréquentes |
-| `blog/_article_card.html.twig` | un article dans la liste du blog |
+| `blog/_article_card.html.twig` | un article dans la liste du blog, sous l'intertitre de son mois (pas celui à la une) |
 | `bundles/TwigBundle/Exception/error.html.twig` | les pages d'erreur (404, 403, 500…) |
 
 **Versionnage.** Retirer ou renommer une variable d'un point de surcharge, ou le point lui-même, est un changement

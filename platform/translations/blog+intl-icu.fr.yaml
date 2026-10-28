@@ -8,8 +8,21 @@ commun:
     lecture: "{minutes} min de lecture"
 
 index:
-    intro: "Des articles qui partent d'un exercice pour aller plus loin : ce que fait vraiment le framework, où il s'arrête, et comment s'en servir en production. Et les coulisses de la plateforme."
+    intro: "Ce que fait vraiment le framework, où il s'arrête, et comment s'en servir en production. Et les coulisses de la plateforme."
     flux: "S'abonner au flux RSS"
+    # Le lien vers le blog dans une autre langue, écrit dans cette langue.
+    version:
+        en: "Read the blog in English"
+    a_la_une: "Dernier article"
+    lire: "Lire l'article"
+    tous: "Tous les articles"
+    tous_sujets: "Tous"
+    filtrer: "Filtrer par sujet"
+    nombre: "{n, plural, one {# article} other {# articles}}"
+    auteur: "L'auteur"
+    contact: "Me contacter"
+    suivre: "Suivre le blog"
+    suivre_detail: "Les nouveaux articles dans votre lecteur de flux, dès leur parution."
 
 show:
     en_preparation: "En préparation : cet article n'est visible que des administrateurs."

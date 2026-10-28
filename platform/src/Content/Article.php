@@ -39,6 +39,13 @@ final readonly class Article
          * en tête et en fin d'article. Une traduction sans cette clé reprend celle de l'article français.
          */
         public ?string $practice = null,
+        /**
+         * Les sujets de l'article (clé `tags`), tels qu'ils s'affichent : la liste du blog se filtre par sujet (voir
+         * Blog::topics()). Chaque langue écrit les siens : une traduction ne reprend pas ceux de l'article français.
+         *
+         * @var list<string>
+         */
+        public array $tags = [],
     ) {
     }
 
@@ -57,6 +64,16 @@ final readonly class Article
     public function modified(): string
     {
         return ($this->updated ?? $this->published)->format('Y-m-d');
+    }
+
+    /**
+     * Les sujets de l'article, par leur filtre dans l'adresse (voir Blog::topic()).
+     *
+     * @return array<string, string>
+     */
+    public function topics(): array
+    {
+        return array_combine(array_map(Blog::topic(...), $this->tags), $this->tags);
     }
 
     /** Minutes de lecture, à 200 mots par minute, code compris : au moins une. */

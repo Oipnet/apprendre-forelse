@@ -43,21 +43,70 @@ final class BlogTest extends WebTestCase
         $this->client->loginUser($admin);
     }
 
-    public function testLaListeMontreLesArticlesParusDuPlusRecentAuPlusAncien(): void
+    public function testLaListeMetEnAvantLePlusRecentPuisRangeLesAutresParMois(): void
     {
         $crawler = $this->client->request('GET', '/blog');
 
         $this->assertResponseIsSuccessful();
+        $this->assertSame('Symfony dans le navigateur, sans serveur', $crawler->filter('.blog-featured h2')->text(), 'Le plus récent, à la une.');
+        $this->assertSame('/blog/symfony-dans-le-navigateur', $crawler->filter('.blog-featured h2 a')->attr('href'));
+        $this->assertStringContainsString('20 septembre 2026', $crawler->filter('.blog-featured .meta')->text());
         $this->assertSame(
-            ['Symfony dans le navigateur, sans serveur', 'Des tests PHPUnit en direct'],
-            $crawler->filter('.blog-list h2')->extract(['_text']),
-            'Ni l\'article programmé, ni celui en préparation.',
+            ['Des tests PHPUnit en direct'],
+            $crawler->filter('.blog-list h4')->extract(['_text']),
+            'Les autres, sans l\'article à la une, ni l\'article programmé, ni celui en préparation.',
         );
-        $this->assertSame('/blog/symfony-dans-le-navigateur', $crawler->filter('.blog-list h2 a')->first()->attr('href'));
-        $this->assertStringContainsString('20 septembre 2026', $crawler->filter('.blog-list .meta')->first()->text());
+        $this->assertSame('septembre 2026', $crawler->filter('.blog-month h3')->text(), 'Sous l\'intertitre de leur mois.');
+        $this->assertStringContainsString('5 septembre 2026', $crawler->filter('.blog-list .meta')->first()->text());
+        $this->assertSame('2 articles', $crawler->filter('#blog-tous + span')->text());
         $this->assertSelectorExists('.site-footer a[href="/blog"]', 'Le pied de page mène au blog.');
         $this->assertSelectorExists('header nav a[href="/blog"]', 'Le menu principal aussi.');
         $this->assertSelectorExists('.blog-feed a[href="/blog/rss.xml"]', 'La liste propose de s\'abonner au flux.');
+        $this->assertSame('/en/blog', $crawler->filter('.blog-language a')->attr('href'), 'Et le blog dans l\'autre langue.');
+    }
+
+    public function testLaListeSeFiltreParSujet(): void
+    {
+        $crawler = $this->client->request('GET', '/blog');
+        $this->assertSame(
+            ['Tous 2', 'Coulisses 2', 'Symfony 1'],
+            array_map(static fn (string $t) => preg_replace('/\s+/u', ' ', trim($t)), $crawler->filter('.blog-topics a')->extract(['_text'])),
+            'Les sujets, du plus fourni au moins fourni.',
+        );
+        $this->assertSame('/blog?sujet=symfony', $crawler->filter('.blog-featured .blog-tags a')->first()->attr('href'));
+
+        $crawler = $this->client->request('GET', '/blog?sujet=coulisses');
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(0, $crawler->filter('.blog-featured'), 'Filtrée, la liste n\'a pas d\'article à la une.');
+        $this->assertSame(
+            ['Symfony dans le navigateur, sans serveur', 'Des tests PHPUnit en direct'],
+            $crawler->filter('.blog-list h4')->extract(['_text']),
+        );
+        $this->assertStringStartsWith('Coulisses', trim($crawler->filter('.blog-topics a[aria-current="page"]')->text()));
+        $this->assertSame('Coulisses', $crawler->filter('#blog-tous')->text());
+        $this->assertSame('noindex, follow', $this->client->getResponse()->headers->get('X-Robots-Tag'), 'La page filtrée se suit, mais ne s\'indexe pas.');
+        $this->assertSame('http://localhost/blog', $crawler->filter('link[rel="canonical"]')->attr('href'));
+
+        $crawler = $this->client->request('GET', '/blog?sujet=symfony');
+        $this->assertSame(['Symfony dans le navigateur, sans serveur'], $crawler->filter('.blog-list h4')->extract(['_text']));
+        $this->assertSame('1 article', $crawler->filter('#blog-tous + span')->text());
+
+        $this->client->request('GET', '/blog?sujet=inconnu');
+        $this->assertResponseStatusCodeSame(404, 'Un sujet qu\'aucun article ne porte n\'a pas de page.');
+    }
+
+    public function testLAuteurDuThemeSePresente(): void
+    {
+        $crawler = $this->client->request('GET', '/blog');
+
+        $person = static::getContainer()->get(\App\Theme\Theme::class)->person();
+        if (null === $person) {
+            $this->assertCount(0, $crawler->filter('.blog-author'), 'Un thème sans personne n\'a pas d\'encart auteur.');
+
+            return;
+        }
+        $this->assertStringContainsString($person['name'], $crawler->filter('.blog-author')->text());
+        $this->assertSame('/contact', $crawler->filter('.blog-author a')->attr('href'));
     }
 
     public function testUnArticle(): void
@@ -158,7 +207,8 @@ final class BlogTest extends WebTestCase
         $this->assertSelectorTextContains('.blog-notice', 'En préparation');
 
         $crawler = $this->client->request('GET', '/blog');
-        $this->assertCount(2, $crawler->filter('.blog-list li'), 'La liste reste celle des visiteurs.');
+        $this->assertCount(1, $crawler->filter('.blog-featured'), 'La liste reste celle des visiteurs.');
+        $this->assertCount(1, $crawler->filter('.blog-list li'));
     }
 
     public function testLeSitemapListeLesArticlesParus(): void
@@ -208,9 +258,13 @@ final class BlogTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSame('en', $crawler->filter('html')->attr('lang'));
-        $this->assertSame(['Symfony in the browser, without a server'], $crawler->filter('.blog-list h2')->extract(['_text']), 'Pas la traduction programmée.');
-        $this->assertSame('/en/blog/symfony-in-the-browser', $crawler->filter('.blog-list h2 a')->attr('href'));
-        $this->assertStringContainsString('September 20, 2026', $crawler->filter('.blog-list .meta')->text());
+        $this->assertSame('Symfony in the browser, without a server', $crawler->filter('.blog-featured h2')->text());
+        $this->assertCount(0, $crawler->filter('.blog-list li'), 'Pas la traduction programmée.');
+        $this->assertSame('/en/blog/symfony-in-the-browser', $crawler->filter('.blog-featured h2 a')->attr('href'));
+        $this->assertStringContainsString('September 20, 2026', $crawler->filter('.blog-featured .meta')->text());
+        $this->assertCount(0, $crawler->filter('.blog-topics'), 'Une traduction sans sujets : pas de filtres.');
+        $this->assertSame('/blog', $crawler->filter('.blog-language a')->attr('href'));
+        $this->assertSame('Lire le blog en français', $crawler->filter('.blog-language a')->text());
         $this->assertSame('Blog', $crawler->filter('h1')->text());
         $this->assertSelectorExists('header nav a[href="/en/blog"]', 'Le menu mène au blog de la langue de la page.');
         $this->assertSame('http://localhost/en/blog/rss.xml', $crawler->filter('link[rel="alternate"][type="application/rss+xml"]')->attr('href'));

@@ -254,6 +254,7 @@ Les résultats s'exportent en CSV.
   updated: 2026-10-20                                   # facultative : dernière révision du fond
   visibility: admin                                     # facultative : en préparation
   practice: laravel-13-26-read-through                  # facultative : l'exercice de Pratique dont part l'article
+  tags: [Symfony, Sécurité]                             # facultative : les sujets, filtres de la liste
   ---
   ```
 
@@ -261,6 +262,13 @@ Les résultats s'exportent en CSV.
   n'est ni dans la liste `/blog` ni dans le sitemap ; seuls les administrateurs le lisent à son adresse. Une instance
   dont aucun pack n'a d'article paru n'a pas de blog : `/blog` répond 404 et le pied de page n'y mène pas. Chaque
   article porte ses données structurées (`BlogPosting`) ; sa date dans le sitemap est `updated`, à défaut `published`.
+
+  La liste met l'article le plus récent à la une, puis range les autres par mois. Deux articles du même jour se
+  départagent par une heure (`published: 2026-10-28 14:00:00`, en UTC ; sans heure, minuit) : le plus tardif passe
+  devant. L'heure ne fait qu'ordonner, l'article paraît dès le matin de son jour. Les sujets (`tags:`, des libellés
+  courts, tels qu'ils s'affichent) donnent les filtres de la liste, du plus fourni au moins fourni :
+  `/blog?sujet=securite` ne montre que les articles « Sécurité » (page suivie, non indexée). Une traduction écrit ses
+  propres sujets, dans sa langue.
 
   Chaque article se termine par une invitation à essayer dans le navigateur. Avec `practice:` (l'identifiant d'un
   exercice de Pratique, qui doit exister), elle mène à cet exercice, et une ligne sous le titre y invite aussi ; sans,

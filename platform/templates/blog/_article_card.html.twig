@@ -1,11 +1,22 @@
 {#
-  @theme Point de surcharge : un article dans la liste du blog (/blog).
-  Variables : article (App\Content\Article : slug, title, description, published, readingMinutes).
+  @theme Point de surcharge : un article dans la liste du blog (/blog), sous l'intertitre de son mois.
+  Variables : article (App\Content\Article : slug, title, description, published, readingMinutes, tags, topics).
   Obligatoire : le lien vers l'article (app_article, {slug: article.slug}).
 #}
 {% trans_default_domain 'blog' %}
-<article>
-    <h2 class="text-xl font-semibold"><a href="{{ path('app_article', {slug: article.slug}) }}">{{ article.title }}</a></h2>
-    <p class="meta mt-1 text-sm text-ink-muted"><time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time> · {{ 'commun.lecture'|trans({minutes: article.readingMinutes}) }}</p>
-    <p class="mt-2">{{ article.description }}</p>
+<article class="flex gap-5 sm:gap-6">
+    <p class="w-12 shrink-0 pt-1 text-center" aria-hidden="true">
+        <span class="block font-serif text-3xl leading-none">{{ article.published|date_motif('d') }}</span>
+        <span class="mt-1 block font-mono text-xs tracking-wider text-ink-muted uppercase">{{ article.published|date_motif('MMM') }}</span>
+    </p>
+    <div class="min-w-0 flex-1">
+        {% if article.tags %}
+            <p class="blog-tags font-mono text-xs tracking-wider uppercase">
+                {%- for id, tag in article.topics %}{% if not loop.first %} · {% endif %}<a class="text-accent no-underline hover:underline" href="{{ path('app_blog', {sujet: id}) }}">{{ tag }}</a>{% endfor -%}
+            </p>
+        {% endif %}
+        <h4 class="mt-1 text-xl leading-snug font-semibold sm:text-2xl"><a class="text-ink no-underline hover:text-accent" href="{{ path('app_article', {slug: article.slug}) }}">{{ article.title }}</a></h4>
+        <p class="mt-2 line-clamp-3 text-ink-muted">{{ article.description }}</p>
+        <p class="meta mt-2 text-sm text-ink-muted"><time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time> · {{ 'commun.lecture'|trans({minutes: article.readingMinutes}) }}</p>
+    </div>
 </article>

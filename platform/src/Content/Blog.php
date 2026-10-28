@@ -6,6 +6,7 @@ use App\Entity\User;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 /**
  * Le blog : les articles des packs (voir Article). La liste ne montre que les articles parus ; un article
@@ -31,6 +32,65 @@ final readonly class Blog
     public function articles(?string $locale = null): array
     {
         return $this->published->articles($locale ?? $this->locale());
+    }
+
+    /**
+     * Les sujets des articles parus (clé `tags`), du plus fourni au moins fourni : les filtres de la liste. La clé est
+     * le filtre de l'adresse (?sujet=securite), la valeur le libellé tel que l'écrit le premier article qui le porte.
+     *
+     * @return array<string, array{label: string, count: int}>
+     */
+    public function topics(?string $locale = null): array
+    {
+        $topics = [];
+        foreach ($this->articles($locale) as $article) {
+            foreach ($article->tags as $tag) {
+                $topics[self::topic($tag)] ??= ['label' => $tag, 'count' => 0];
+                ++$topics[self::topic($tag)]['count'];
+            }
+        }
+        // uasort est stable : à nombre égal, l'ordre d'apparition (le sujet le plus récent d'abord).
+        uasort($topics, static fn (array $a, array $b) => $b['count'] <=> $a['count']);
+
+        return $topics;
+    }
+
+    /**
+     * Les articles parus d'un sujet (voir topics()), du plus récent au plus ancien.
+     *
+     * @return list<Article>
+     */
+    public function articlesAbout(string $topic, ?string $locale = null): array
+    {
+        return array_values(array_filter(
+            $this->articles($locale),
+            static fn (Article $a) => \in_array($topic, array_map(self::topic(...), $a->tags), true),
+        ));
+    }
+
+    /**
+     * Des articles rangés par mois de parution, dans l'ordre reçu : les intertitres de la liste.
+     *
+     * @param list<Article> $articles
+     *
+     * @return list<array{month: \DateTimeImmutable, articles: list<Article>}>
+     */
+    public static function byMonth(array $articles): array
+    {
+        $months = [];
+        foreach ($articles as $article) {
+            $month = $article->published->format('Y-m');
+            $months[$month] ??= ['month' => $article->published->modify('first day of this month')->setTime(0, 0), 'articles' => []];
+            $months[$month]['articles'][] = $article;
+        }
+
+        return array_values($months);
+    }
+
+    /** Le filtre d'un sujet dans l'adresse : « Sécurité » donne « securite ». */
+    public static function topic(string $tag): string
+    {
+        return (new AsciiSlugger('fr'))->slug($tag)->lower()->toString();
     }
 
     /** Au moins un article paru : le blog a une page, et un lien. */
@@ -97,7 +157,7 @@ final readonly class Blog
     }
 
     /** La langue de la page demandée, si le blog la parle ; le français sinon. */
-    private function locale(): string
+    public function locale(): string
     {
         $locale = $this->requests->getCurrentRequest()?->getLocale();
 

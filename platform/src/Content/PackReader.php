@@ -174,7 +174,7 @@ final class PackReader
     }
 
     /** Les clés de l'en-tête d'un article : une autre (« date », « auteur »…) est une faute de frappe, refusée. */
-    private const array ARTICLE_KEYS = ['title', 'description', 'published', 'updated', 'visibility', 'practice'];
+    private const array ARTICLE_KEYS = ['title', 'description', 'published', 'updated', 'visibility', 'practice', 'tags'];
     /** Une traduction nomme en plus l'article français qu'elle traduit. */
     private const array TRANSLATION_KEYS = [...self::ARTICLE_KEYS, 'translation_of'];
 
@@ -235,7 +235,34 @@ final class PackReader
             locale: $locale,
             translationOf: Article::LOCALE === $locale ? null : $this->files->required($meta, 'translation_of', $file),
             practice: isset($meta['practice']) ? (string) $meta['practice'] : null,
+            tags: self::tags($meta['tags'] ?? [], $file),
         );
+    }
+
+    /**
+     * Les sujets d'un article : une liste de libellés courts (`tags: [Symfony, Sécurité]`), sans doublon. Un libellé
+     * est aussi le filtre de la liste (?sujet=securite) : deux libellés qui donnent le même filtre sont refusés.
+     *
+     * @return list<string>
+     */
+    private static function tags(mixed $value, string $file): array
+    {
+        if (!\is_array($value) || !array_is_list($value)) {
+            throw new ContentException(sprintf('%s : « tags » est une liste de sujets (tags: [Symfony, Sécurité]).', $file));
+        }
+        $tags = [];
+        foreach ($value as $tag) {
+            $tag = \is_string($tag) ? trim($tag) : '';
+            if ('' === $tag || '' === Blog::topic($tag)) {
+                throw new ContentException(sprintf('%s : chaque sujet de « tags » est un texte court (tags: [Symfony, Sécurité]).', $file));
+            }
+            if (isset($tags[Blog::topic($tag)])) {
+                throw new ContentException(sprintf('%s : sujet « %s » donné deux fois dans « tags ».', $file, $tag));
+            }
+            $tags[Blog::topic($tag)] = $tag;
+        }
+
+        return array_values($tags);
     }
 
     /**

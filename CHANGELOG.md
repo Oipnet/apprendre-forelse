@@ -8,6 +8,20 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Sujets des articles** : clé `tags:` dans l'en-tête d'un article (`tags: [Symfony, Sécurité]`). La liste du blog
+  propose un filtre par sujet (`/blog?sujet=securite`, suivi mais non indexé ; un sujet inconnu répond 404).
+
+### Modifié
+
+- **Page du blog** redessinée : l'article le plus récent à la une, les autres rangés par mois (jour et mois en
+  marge, sujets au-dessus du titre), un encart sur l'auteur (la personne du thème, et un lien vers le contact), le
+  flux RSS et le blog dans l'autre langue. L'intro ne présente plus le blog comme parti des exercices. Le point de
+  surcharge `blog/_article_card.html.twig` garde sa variable ; son titre passe en `h4`.
+- **Ordre des articles du même jour** : une heure dans `published` (`2026-10-28 14:00:00`) les départage, le plus
+  tardif devant ; avant, ils se rangeaient par nom de fichier.
+
 ## 3.20.1 — 2026-10-28
 
 ### Ajouté

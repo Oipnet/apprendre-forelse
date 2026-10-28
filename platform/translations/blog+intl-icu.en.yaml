@@ -8,8 +8,21 @@ commun:
     lecture: "{minutes} min read"
 
 index:
-    intro: "Articles that start from an exercise and go further: what the framework really does, where it stops, and how to use it in production. Plus behind the scenes of the platform."
+    intro: "What the framework really does, where it stops, and how to use it in production. Plus behind the scenes of the platform."
     flux: "Subscribe to the RSS feed"
+    # Link to the blog in another language, written in that language.
+    version:
+        fr: "Lire le blog en français"
+    a_la_une: "Latest article"
+    lire: "Read the article"
+    tous: "All articles"
+    tous_sujets: "All"
+    filtrer: "Filter by topic"
+    nombre: "{n, plural, one {# article} other {# articles}}"
+    auteur: "The author"
+    contact: "Get in touch"
+    suivre: "Follow the blog"
+    suivre_detail: "New articles in your feed reader, as soon as they are published."
 
 show:
     en_preparation: "Draft: only administrators can see this article."
