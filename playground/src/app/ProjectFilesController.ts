@@ -7,6 +7,8 @@ import { FileTree } from './filetree';
 import type { ExerciseSession } from './session';
 import type { ExercisePayload } from './types';
 
+type ResetTexts = Pick<typeof m.files, 'resetTitle' | 'resetMessage' | 'reset' | 'resetDone'>;
+
 type Editor = Pick<EditorPanel, 'addFile' | 'has' | 'open' | 'setContent' | 'removeFile' | 'currentPath'>;
 
 /**
@@ -29,6 +31,8 @@ export class ProjectFilesController {
 		private readonly session: ExerciseSession,
 		/** Fenêtre étroite : l'explorateur prendrait la place du code, il démarre replié. */
 		compact: boolean,
+		/** Les textes de la réinitialisation (le bac à sable parle de « nouveau projet »). */
+		texts: ResetTexts = m.files,
 	) {
 		this.hiddenTests = new Set(Object.keys(exercise.tests));
 		this.bindNewFile();
@@ -47,14 +51,14 @@ export class ProjectFilesController {
 		montrer(compact ? false : lireExplorateur());
 		this.$('#reset').addEventListener('click', async () => {
 			const ok = await confirmDialog(this.root, {
-				title: m.files.resetTitle,
-				message: m.files.resetMessage,
-				confirm: m.files.reset,
+				title: texts.resetTitle,
+				message: texts.resetMessage,
+				confirm: texts.reset,
 			});
 			if (!ok) return;
 			const avant = { ...this.session.current };
 			this.reset();
-			undoToast(this.root, m.files.resetDone, m.common.cancel, () => this.restore(avant));
+			undoToast(this.root, texts.resetDone, m.common.cancel, () => this.restore(avant));
 		});
 	}
 

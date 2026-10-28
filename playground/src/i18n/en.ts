@@ -411,6 +411,15 @@ export const en: Messages = {
 		sharedTitle: 'This link contains code written by someone else.',
 		sharedDetail: 'Read it in the editor before running it. It runs isolated from this site, but the page it shows can imitate anything: never type a password into it.',
 		sharedRun: 'Run this code',
+		newProject: {
+			resetTitle: 'Start from a blank project?',
+			resetMessage: 'Your code will be replaced by the starter project. You can undo right after. A link you already shared keeps its code.',
+			reset: 'New project',
+			buttonTitle: 'Start from a blank project',
+			resetDone: 'New project.',
+		},
+		newProjectDone: 'New blank project.',
+		resumeDraft: 'Resume my draft',
 	},
 
 	site: {

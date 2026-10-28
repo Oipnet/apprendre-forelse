@@ -36,3 +36,13 @@ describe('les volets', () => {
 		expect(html).toContain('<button data-pane="brief">');
 	});
 });
+
+describe('le bouton de réinitialisation', () => {
+	it('au bac à sable, ouvre un nouveau projet', () => {
+		expect(layout(exercise, config('scratch'), 'Linux', 'Mozilla/5.0')).toContain('<span class="label">Nouveau projet</span>');
+	});
+
+	it('dans un exercice, revient au code de départ', () => {
+		expect(layout(exercise, config('track'), 'Linux', 'Mozilla/5.0')).toContain('<span class="label">Réinitialiser</span>');
+	});
+});

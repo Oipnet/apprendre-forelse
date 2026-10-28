@@ -8,6 +8,7 @@ import { ConsolePanel } from './console';
 import { DatabasePanel } from './database';
 import { cheminsExplicites, estModifiable } from './editable';
 import { Emitter, Mailbox } from './emitter';
+import { undoToast } from './dialogs';
 import { FeedbackDialog } from './feedback';
 import { PaneFolding, type Foldable } from './folding';
 import { shareDialog } from './share';
@@ -23,7 +24,7 @@ import { bindPaneTabs, bindWorkpanes, bootProgress, fitEditor } from './panes';
 import { ApiProgressStore, LocalProgressStore, type ProgressStore, type SavedProgress } from './progress';
 import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
-import { changedFiles, decodeFragment, encodeFragment, withFragment } from './scratch';
+import { changedFiles, decodeFragment, encodeFragment, NEW_PROJECT, withFragment } from './scratch';
 import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
@@ -62,6 +63,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			: new LocalProgressStore(scratch ? `forelse:bac-a-sable:${exercise.id}` : `formation:${exercise.trackId}/${exercise.id}`, exercise.xp);
 	/** Le code arrivé par un lien partagé : il remplace le brouillon, et l'aperçu attend qu'on accepte de l'exécuter. */
 	const shared = scratch ? decodeFragment(location.hash) : null;
+	/** « #nouveau » (les cartes de /bac-a-sable) : un projet vierge, le brouillon reste repris en un clic. */
+	const fresh = scratch && !shared && location.hash === `#${NEW_PROJECT}`;
 	/** Ce qui identifie l'exercice dans la mesure d'audience : du contenu public, rien de l'apprenant. */
 	const mesure = { exercice: exercise.id, parcours: scratch ? 'bac-a-sable' : (exercise.trackId ?? 'pratique') };
 
@@ -183,11 +186,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// Le brouillon d'une session précédente se charge pendant le téléchargement : il fait partie du projet de départ.
 	const depart = (shared ? Promise.resolve<SavedProgress | null>({ files: shared, hintsUsed: 0, completed: false }) : progress.load())
 		.catch(() => null)
-		.then((saved) => {
+		.then((loaded) => {
+			const saved = fresh ? null : loaded;
 			const initial: Record<string, string> = { ...exercise.files };
 			// Les motifs (migrations/*.php) couvrent les fichiers générés lors d'une session précédente.
 			for (const [path, content] of Object.entries(saved?.files ?? {})) if (estModifiable(path, exercise.editable)) initial[path] = content;
-			return { saved, initial };
+			return { saved, initial, draft: fresh ? (loaded?.files ?? null) : null };
 		});
 	const suivreProgression = bootProgress(root);
 	demarrer(
@@ -224,7 +228,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		})(),
 	);
 
-	const { saved, initial } = await depart;
+	const { saved, initial, draft } = await depart;
 	const editables = [...new Set([...cheminsExplicites(exercise.editable), ...Object.keys(initial).filter((path) => estModifiable(path, exercise.editable))])];
 
 	/** Recharge l'aperçu ; pendant le démarrage, rien : il s'ouvrira de lui-même à la fin. */
@@ -282,6 +286,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		onDraftError: (error) => status(m.playground.draftNotSaved(error.message), 'ko'),
 	});
 	window.addEventListener('pagehide', () => session.saveOnExit());
+	if (fresh) history.replaceState(history.state, '', location.pathname + location.search);
 	if (shared) {
 		// Le code partagé devient le brouillon, et l'adresse le perd : recharger la page ne l'imposera plus aux
 		// modifications faites depuis.
@@ -299,13 +304,15 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const [{ EditorPanel, monaco }, { registerCompletion }, { BeforeAfterDialog }] = await editeur;
 	mark('editorLoaded');
 	const editor = new EditorPanel($('#tabs'), $('#editor'), (path, content) => session.edit(path, content));
-	const files = new ProjectFilesController(root, editor, runtime, exercise, session, compact.matches);
+	const files = new ProjectFilesController(root, editor, runtime, exercise, session, compact.matches, scratch ? m.scratch.newProject : m.files);
 	// Les fichiers modifiables arrivent tout de suite ; ceux à lire seulement, quand PHP peut les lire.
 	const fichiersALire = files.addInitialFiles(initial, editables);
 	// Explorateur : tout le projet, sauf les tests cachés de l'exercice (ils donneraient la solution).
 	files.load();
 	commandRan.on((result) => files.synchronise(result));
 	fitEditor(editor, narrow);
+	// Projet vierge demandé alors qu'un brouillon existait : il ne sera remplacé qu'à la première frappe.
+	if (draft && Object.keys(changedFiles(draft, exercise.files)).length) undoToast(root, m.scratch.newProjectDone, m.scratch.resumeDraft, () => files.restore(draft));
 	if (editor.has(exercise.open)) files.openStart();
 	else void fichiersALire.then(() => files.openStart(), () => {});
 	mark('editorShown');
