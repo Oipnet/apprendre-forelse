@@ -10,6 +10,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- Durcissements : `nosniff` et HSTS aussi sur les fichiers servis par Caddy ; un chemin soumis avec un segment `.` ou
+  `..` n'est jamais éditable (un joker `*` l'acceptait) ; `SafeRedirect` refuse un saut de ligne final ; le mentor
+  n'affiche plus le message brut de l'API du modèle (il part dans les journaux).
 - « Rester connecté » révocable, y compris pour un compte sans mot de passe (GitHub, Google, LinkedIn) : le cookie est
   signé aussi par une clé du compte (`user.remember_key`), que le bouton « Oublier tous mes appareils » du compte
   renouvelle. **À la mise à jour, les cookies « Rester connecté » déjà donnés cessent de valoir une fois** : chacun se

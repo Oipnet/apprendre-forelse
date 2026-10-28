@@ -44,6 +44,15 @@
 		}
 	}
 
+	# Les fichiers servis par Caddy lui-même (build, images, /preview-sw.js…) reçoivent les mêmes en-têtes que les pages
+	# de Symfony (OriginIsolationListener) : pas de devinette du type, et HSTS en HTTPS, jamais pour une adresse locale.
+	header X-Content-Type-Options nosniff
+	@hsts {
+		protocol https
+		not host localhost *.localhost
+	}
+	header @hsts Strict-Transport-Security "max-age=31536000"
+
 	# Assets Vite (noms hashés) et archives d'environnement : cache long.
 	@immutable path /build/assets/*
 	header @immutable Cache-Control "public, max-age=31536000, immutable"
