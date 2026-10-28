@@ -160,6 +160,14 @@
                                 <p class="text-sm text-ink-muted">{{ 'account.index.mot_de_passe.sans'|trans({fournisseurs: _self.or_list(identities|keys|map(name => oauth.label(name)|e)) ~ '', lien: path('app_forgot_password_request'), email: user.email|e})|raw }}</p>
                             {% endif %}
                         </div>
+                        <div class="rounded-lg border border-line bg-surface p-4" id="appareils">
+                            <div class="mb-2 font-semibold">{{ 'account.index.appareils.titre'|trans }}</div>
+                            <p class="mb-3 text-sm text-ink-muted">{{ 'account.index.appareils.texte'|trans }}</p>
+                            <form method="post" action="{{ path('app_account_forget_devices') }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                                <button class="btn text-sm" type="submit">{{ 'account.index.appareils.oublier'|trans }}</button>
+                            </form>
+                        </div>
                         {# Un fournisseur activé, ou retiré de la configuration mais encore lié : on peut toujours le délier. #}
                         {% set shown = oauthProviders|map(provider => provider.name)|merge(identities|keys)|reduce((names, name) => name in names ? names : names|merge([name]), []) %}
                         {% for name in shown %}

@@ -54,6 +54,10 @@ account:
             changer: "Changer le mot de passe"
             # HTML : rendu avec |raw, les paramètres échappés.
             sans: "Vous vous connectez avec {fournisseurs}. Pour pouvoir aussi vous connecter avec votre adresse, choisissez un mot de passe avec <a href=\"{lien}\">« Mot de passe oublié ? »</a> : le lien part à {email}."
+        appareils:
+            titre: "Appareils mémorisés"
+            texte: "« Rester connecté » vous garde connecté·e 30 jours sur un appareil. Un appareil perdu, un ordinateur partagé : vous pouvez annuler cela partout, sur cet appareil compris. Chacun vous redemandera de vous connecter."
+            oublier: "Oublier tous mes appareils"
         fournisseur:
             # HTML : rendu avec |raw, les paramètres échappés.
             lie: "Lié au compte {fournisseur} <strong>{identifiant}</strong> depuis le {date} : vous pouvez vous connecter avec."
@@ -274,6 +278,7 @@ flash:
     adresse_prise: "Cette adresse est déjà utilisée par un autre compte."
     adresse_confirmee: "Adresse confirmée, merci."
     adresse_changee: "Adresse confirmée : votre compte utilise désormais {email}."
+    appareils_oublies: "C'est fait : aucun appareil ne reste connecté sans vous redemander de vous connecter, une fois sa session terminée."
     mot_de_passe_change: "Mot de passe changé. Vos autres appareils devront se reconnecter."
     facture_indisponible: "La facture n'est pas disponible pour le moment. Réessayez plus tard, ou écrivez-nous."
     compte_supprime: "Votre compte a été supprimé, avec votre progression. Merci d'être passé."

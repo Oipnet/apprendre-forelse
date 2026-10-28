@@ -54,6 +54,10 @@ account:
             changer: "Change password"
             # HTML: rendered with |raw, the parameters escaped.
             sans: "You log in with {fournisseurs}. To also log in with your email address, choose a password via <a href=\"{lien}\">“Forgot your password?”</a>: the link will be sent to {email}."
+        appareils:
+            titre: "Remembered devices"
+            texte: "“Stay logged in” keeps you logged in for 30 days on a device. A lost device, a shared computer: you can cancel this everywhere, this device included. Each one will ask you to log in again."
+            oublier: "Forget all my devices"
         fournisseur:
             # HTML: rendered with |raw, the parameters escaped.
             lie: "Linked to the {fournisseur} account <strong>{identifiant}</strong> since {date}: you can log in with it."
@@ -269,6 +273,7 @@ flash:
     adresse_prise: "This address is already used by another account."
     adresse_confirmee: "Address confirmed, thank you."
     adresse_changee: "Address confirmed: your account now uses {email}."
+    appareils_oublies: "Done: once their current session ends, no device stays logged in without asking you to log in again."
     mot_de_passe_change: "Password changed. Your other devices will need to log in again."
     facture_indisponible: "The invoice isn't available right now. Try again later, or contact us."
     compte_supprime: "Your account has been deleted, along with your progress. Thanks for stopping by."

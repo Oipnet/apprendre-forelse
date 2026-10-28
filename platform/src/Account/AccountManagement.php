@@ -11,8 +11,8 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * Les écritures du compte par son titulaire : le mot de passe (depuis le compte ou le lien « mot de passe oublié ») et
- * la suppression. La session reste l'affaire du contrôleur : c'est lui qui reconnecte ou déconnecte.
+ * Les écritures du compte par son titulaire : le mot de passe (depuis le compte ou le lien « mot de passe oublié »), les
+ * appareils mémorisés et la suppression. La session reste l'affaire du contrôleur : c'est lui qui reconnecte ou déconnecte.
  */
 final readonly class AccountManagement
 {
@@ -28,6 +28,12 @@ final readonly class AccountManagement
     public function changePassword(User $user, string $plainPassword): void
     {
         $user->setPassword($this->hasher->hashPassword($user, $plainPassword));
+        $this->entityManager->flush();
+    }
+
+    public function forgetRememberedDevices(User $user): void
+    {
+        $user->forgetRememberedDevices();
         $this->entityManager->flush();
     }
 

@@ -80,6 +80,34 @@ final class LoginReturnTest extends WebTestCase
         $this->assertNotNull($this->client->getCookieJar()->get('REMEMBERME'));
     }
 
+    /** « Oublier tous mes appareils » : un cookie « Rester connecté » déjà donné ne reconnecte plus personne. */
+    public function testOublierSesAppareilsAnnuleLeCookie(): void
+    {
+        $this->client->request('GET', '/connexion');
+        $this->submit(self::PASSWORD, remember: true);
+        $cookie = $this->client->getCookieJar()->get('REMEMBERME');
+        $this->assertNotNull($cookie);
+
+        $this->revisit($cookie);
+        $this->client->request('GET', '/compte');
+        $this->assertResponseIsSuccessful('Une autre visite, reconnue par le cookie.');
+
+        $crawler = $this->client->request('GET', '/compte');
+        $this->client->submit($crawler->filter('#appareils form')->form(), serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
+        $this->assertResponseRedirects('/compte#appareils');
+
+        $this->revisit($cookie);
+        $this->client->request('GET', '/compte');
+        $this->assertResponseRedirects('/connexion', message: 'Le cookie d\'avant ne vaut plus.');
+    }
+
+    /** Une autre visite, sans session : le seul cookie « Rester connecté » donné. */
+    private function revisit(\Symfony\Component\BrowserKit\Cookie $cookie): void
+    {
+        $this->client->getCookieJar()->clear();
+        $this->client->getCookieJar()->set($cookie);
+    }
+
     private function submit(string $password, bool $remember = false): void
     {
         $form = $this->client->getCrawler()->selectButton('Se connecter')->form(['email' => 'ada@example.test', 'password' => $password]);

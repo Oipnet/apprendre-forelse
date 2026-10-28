@@ -10,6 +10,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- « Rester connecté » révocable, y compris pour un compte sans mot de passe (GitHub, Google, LinkedIn) : le cookie est
+  signé aussi par une clé du compte (`user.remember_key`), que le bouton « Oublier tous mes appareils » du compte
+  renouvelle. **À la mise à jour, les cookies « Rester connecté » déjà donnés cessent de valoir une fois** : chacun se
+  reconnecte. `/admin` et `/atelier` demandent une vraie connexion, pas seulement le cookie.
 - Images de partage (Pratique, certificat) : le site écrit dessus vient de `DEFAULT_URI` et non plus de l'en-tête
   `Host`. Sur une instance qui accepte tous les noms d'hôte (`SERVER_NAME=:80`), chaque Host inventé faisait dessiner
   et écrire une nouvelle image.
