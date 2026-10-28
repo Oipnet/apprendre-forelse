@@ -396,6 +396,7 @@ export const fr = {
 		downloading: (megabytes: number) => `Téléchargement de l'environnement (${megabytes.toFixed(1)} Mo)`,
 		phpBinaryMissing: (file: string, status: number) => `Binaire PHP introuvable : ${file} (${status})`,
 		notBooted: 'Environnement non démarré.',
+		unknownPhpFramework: (id: string, console: string, known: string[]) => `Framework PHP « ${id} » inconnu de ce playground (connus : ${known.join(', ')}) : sa console « ${console} » n'a pas de script (voir src/runtime/php-frameworks.ts).`,
 		wrongRuntime: (runtime: string) => `Un environnement « ${runtime} » ne se joue pas avec PHP (voir src/runtime/registry.ts).`,
 		booting: (version: string) => `Démarrage de PHP ${version}`,
 		badUrl: '400 Bad Request : URL mal encodée.',

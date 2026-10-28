@@ -13,7 +13,7 @@ import { unzipSync } from 'fflate';
 import type { BootProgress, CommandResult, DatabaseSnapshot, EnvironmentSpec, FrameworkProfile, Grading, HttpRequest, HttpResponse, Runtime, TestRunResult } from '@forelse/runtime-contract';
 import { gradeOwnTests } from '@forelse/runtime-contract';
 import { m } from '../i18n';
-import { defaultPhpFramework, PHP_FRAMEWORKS, type PhpFrameworkAdapter, type PhpPreviewContext } from './php-frameworks';
+import { defaultPhpFramework, PHP_FRAMEWORKS, phpFramework, type PhpFrameworkAdapter, type PhpPreviewContext } from './php-frameworks';
 import { phpunitSummary } from './phpunit';
 import databaseScript from './database.php?raw';
 import runTestsScript from './run-tests.php?raw';
@@ -252,7 +252,7 @@ export class PhpWasmProject implements Runtime {
 		}
 		this.profile = spec.framework;
 		const frameworks = this.deps.frameworks ?? PHP_FRAMEWORKS;
-		this.framework = (Object.hasOwn(frameworks, spec.framework.id) ? frameworks[spec.framework.id] : defaultPhpFramework)();
+		this.framework = phpFramework(frameworks, spec.framework)();
 		// PHP (le binaire WebAssembly, compilé pendant son téléchargement) et l'archive du projet arrivent en même temps :
 		// PHP attendait la fin de l'archive pour seulement commencer à se télécharger.
 		const php = this.deps.loadPhp(this.phpVersion(), this.phpExtensions());

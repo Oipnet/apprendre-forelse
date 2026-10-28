@@ -3,10 +3,13 @@
  * des scripts en plus, une autre façon de servir l'aperçu. Le reste — dossiers, caches, masquage,
  * libellés — est déclaré par le moteur (App\Content\Framework\FrameworkProfile) et arrive dans la spec.
  *
- * Ajouter un framework PHP, c'est ajouter une entrée à PHP_FRAMEWORKS, sans toucher au runtime.
+ * Ajouter un framework PHP, c'est ajouter une entrée à PHP_FRAMEWORKS, sans toucher au runtime. Un profil que la
+ * table ne connaît pas joue la console de Symfony : seulement si sa console est bin/console, sinon le démarrage
+ * le dit (phpFramework), plutôt que de faire tourner en silence un script qui ne lui correspond pas.
  */
 import type { PHPRunOptions } from '@php-wasm/universal';
-import type { HttpRequest, HttpResponse } from '@forelse/runtime-contract';
+import type { FrameworkProfile, HttpRequest, HttpResponse } from '@forelse/runtime-contract';
+import { m } from '../i18n';
 import consoleScript from './console.php?raw';
 import artisanScript from './artisan.php?raw';
 import dockerScript from './docker.php?raw';
@@ -77,3 +80,16 @@ export const PHP_FRAMEWORKS: Record<string, () => PhpFrameworkAdapter> = {
 	laravel: () => ({ consoleScript: artisanScript }),
 	docker: dockerAdapter,
 };
+
+/**
+ * L'adaptateur d'un profil : celui de la table, ou la console de Symfony pour un framework PHP qu'elle ne connaît pas
+ * mais dont la console est bin/console. Un autre (« artisan », « bin/cake ») échoue au démarrage avec son nom.
+ */
+export function phpFramework(
+	frameworks: Record<string, () => PhpFrameworkAdapter>,
+	profile: Pick<FrameworkProfile, 'id' | 'console'>,
+): () => PhpFrameworkAdapter {
+	if (Object.hasOwn(frameworks, profile.id)) return frameworks[profile.id];
+	if ('bin/console' === profile.console) return defaultPhpFramework;
+	throw new Error(m.runtime.unknownPhpFramework(profile.id, profile.console, Object.keys(frameworks)));
+}
