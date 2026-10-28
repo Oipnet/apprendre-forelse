@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Security\ClientKey;
 use App\Security\ContentSecurityPolicy;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -27,7 +28,7 @@ final class CspReportController
     #[Route(ContentSecurityPolicy::REPORT_PATH, name: 'app_csp_report', methods: ['POST'])]
     public function __invoke(Request $request): Response
     {
-        if ($this->limiter->create($request->getClientIp() ?? 'inconnu')->consume()->isAccepted()) {
+        if ($this->limiter->create(ClientKey::of($request->getClientIp()))->consume()->isAccepted()) {
             $report = json_decode(substr($request->getContent(), 0, 8192), true)['csp-report'] ?? null;
             if (\is_array($report)) {
                 $this->logger->warning('CSP : {directive} a bloqué {blocked} sur {page}', [

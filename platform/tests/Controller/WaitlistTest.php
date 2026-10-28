@@ -80,6 +80,24 @@ final class WaitlistTest extends WebTestCase
         $this->assertCount(0, static::getContainer()->get(EntityManagerInterface::class)->getRepository(WaitlistEntry::class)->findAll(), '… mais rien n\'est enregistré.');
     }
 
+    public function testTropDInscriptionsDepuisLaMemeAdresse(): void
+    {
+        $client = static::createClient();
+        // Compteurs en mémoire, vidés quand le kernel redémarre : le même kernel pour toutes les requêtes (page, envoi,
+        // redirection), et le quota épuisé avant.
+        $client->disableReboot();
+        $this->resetDatabase();
+        $limiter = static::getContainer()->get('limiter.waitlist')->create('127.0.0.1');
+        for ($i = 1; $i <= 5; ++$i) {
+            $limiter->consume();
+        }
+
+        $this->submit($client, 'script@example.test');
+
+        $this->assertSelectorTextContains('#liste-attente .waitlist-notice.ok', 'C\'est noté', 'Le script ne sait pas qu\'il est freiné…');
+        $this->assertCount(0, static::getContainer()->get(EntityManagerInterface::class)->getRepository(WaitlistEntry::class)->findAll(), '… et rien n\'est enregistré.');
+    }
+
     public function testSansJetonCsrf(): void
     {
         $client = static::createClient();

@@ -21,8 +21,23 @@ framework:
             policy: fixed_window
             limit: '%env(int:MENTOR_DAILY_LIMIT)%'
             interval: '1 day'
+        # Connexion (voir App\Security\LoginRateLimiter) : 5 échecs par compte et par adresse IP en 15 minutes…
+        login_account:
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'
+        # … et 25 par adresse IP, tous comptes confondus.
+        login_ip:
+            policy: fixed_window
+            limit: 25
+            interval: '15 minutes'
         # Formulaire de contact et demandes des écoles : par adresse IP.
         contact:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+        # Liste d'attente de la bêta fermée, par adresse IP : de quoi s'inscrire à plusieurs, pas de quoi y verser une liste.
+        waitlist:
             policy: sliding_window
             limit: 5
             interval: '1 hour'

@@ -3,10 +3,13 @@
 namespace App\Controller;
 
 use App\Account\Waitlist;
+use App\Security\ClientKey;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -17,15 +20,20 @@ use Symfony\Component\Routing\Attribute\Route;
 final class WaitlistController extends AbstractController
 {
     #[Route('/liste-d-attente', name: 'app_waitlist', methods: ['POST'])]
-    public function join(Request $request, Waitlist $waitlist): Response
-    {
+    public function join(
+        Request $request,
+        Waitlist $waitlist,
+        #[Autowire(service: 'limiter.waitlist')]
+        RateLimiterFactoryInterface $limiter,
+    ): Response {
         // 403 direct : l'exception « accès refusé » de la sécurité enverrait l'invité vers la page de connexion.
         if (!$this->isCsrfTokenValid('submit', $request->request->getString('_token'))) {
             throw new AccessDeniedHttpException('Jeton CSRF invalide.');
         }
 
-        // Champ caché que seuls les robots remplissent : on fait comme si tout allait bien, sans rien enregistrer.
-        if ('' !== $request->request->getString('site')) {
+        // Champ caché que seuls les robots remplissent : on fait comme si tout allait bien, sans rien enregistrer. De même
+        // au-delà de la limite par adresse IP (config/packages/rate_limiter.yaml) : un script n'apprend pas qu'il est freiné.
+        if ('' !== $request->request->getString('site') || !$limiter->create(ClientKey::of($request->getClientIp()))->consume()->isAccepted()) {
             return $this->backToForm('ok');
         }
 

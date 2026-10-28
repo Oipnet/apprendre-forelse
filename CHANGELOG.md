@@ -10,6 +10,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- Limiteurs de débit : une adresse IPv6 compte pour son bloc /64 (contact, inscription, codes d'invitation, mentor,
+  rapports CSP, connexion), sinon changer d'adresse dans son bloc remettait les compteurs à zéro. La connexion passe
+  pour cela par son propre limiteur (`App\Security\LoginRateLimiter`, mêmes limites qu'avant). La liste d'attente
+  est limitée à 5 inscriptions par heure et par adresse IP.
 - Sauvegarde quotidienne : les fichiers sont chiffrés avec age avant l'envoi sur le NAS (`SAUVEGARDE_AGE_DESTINATAIRE`,
   la clé privée reste hors du serveur ; vide, l'envoi se fait en clair avec un avertissement). Copies locales en
   `umask 077`, et l'exemple de configuration recommande un compte réservé sur le partage plutôt que l'accès invité.
