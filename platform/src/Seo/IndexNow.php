@@ -65,7 +65,11 @@ final readonly class IndexNow
         return $this->submit();
     }
 
-    /** Les adresses du sitemap pas encore envoyées à cette date. @return list<string> */
+    /**
+     * Les adresses du sitemap pas encore envoyées à cette date.
+     *
+     * @return list<string>
+     */
     public function pending(): array
     {
         return self::changed(array_column($this->sitemap->entries(), 'lastmod', 'loc'), $this->sent());
