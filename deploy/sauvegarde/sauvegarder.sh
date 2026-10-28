@@ -14,6 +14,8 @@
 # Une copie reste aussi sur le serveur (SAUVEGARDE_GARDER_LOCAL jours) : elle ne protège pas d'une perte du serveur,
 # mais évite d'aller chercher la dernière sur le NAS pour une restauration courante.
 set -eu
+# Les copies locales (base, APP_SECRET, clés TLS) lisibles par deploy seul.
+umask 077
 
 ICI="$(cd "$(dirname "$0")" && pwd)"
 cd "$ICI/.."

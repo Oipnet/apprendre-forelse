@@ -10,6 +10,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- Sauvegarde quotidienne : les fichiers sont chiffrés avec age avant l'envoi sur le NAS (`SAUVEGARDE_AGE_DESTINATAIRE`,
+  la clé privée reste hors du serveur ; vide, l'envoi se fait en clair avec un avertissement). Copies locales en
+  `umask 077`, et l'exemple de configuration recommande un compte réservé sur le partage plutôt que l'accès invité.
 - Vérification des réussites : les tests rejoués (donc le code de l'apprenant) tournent sous un second utilisateur,
   `VERIFICATION_RUNNER_UID`, distinct de celui qui lit le rapport et rend le verdict. Le rapport JUnit passe par la
   sortie d'erreur de PHPUnit et non plus par un fichier du projet, et le projet ne s'écrit plus à travers un lien
