@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Bac à sable PHP** (`/bac-a-sable/php`, `/en/playground/php`) : un projet PHP 8.4 sans framework, à côté de Symfony et
+  Laravel. `public/index.php` route les requêtes, les classes de `src/` sont chargées par Composer, les vues sont des
+  fichiers PHP. Nouveau profil de framework `php` et environnement `php-8` (aucune dépendance) ; sa console lance un
+  script comme un terminal (`php bin/bonjour.php Ada`, `$argv` compris, voir `playground/src/runtime/php-cli.php`).
+
 ### Corrigé
 
 - Sécurité : symfony/mime 8.1.10 (CVE-2026-45070, injection d'en-tête dans les emails par un nom de paramètre MIME).

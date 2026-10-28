@@ -98,8 +98,8 @@ pratique:
 
 bac_a_sable:
     index:
-        titre: "Bac à sable PHP en ligne : Symfony et Laravel"
-        description: "Écrivez du code Symfony ou Laravel dans votre navigateur, sans rien installer ni créer de compte, et partagez-le par un simple lien."
+        titre: "Bac à sable PHP en ligne : PHP pur, Symfony et Laravel"
+        description: "Écrivez du code PHP, Symfony ou Laravel dans votre navigateur, sans rien installer ni créer de compte, et partagez-le par un simple lien."
         fil_ariane: Bac à sable
     symfony:
         titre: "Bac à sable Symfony en ligne"
@@ -109,6 +109,10 @@ bac_a_sable:
         titre: "Bac à sable Laravel en ligne"
         description: "Un projet Laravel 13 complet dans votre navigateur : routes, Blade, artisan. Testez une idée et partagez votre code par un lien, sans compte."
         fil_ariane: Bac à sable Laravel
+    php:
+        titre: "Bac à sable PHP en ligne, sans framework"
+        description: "Un projet PHP 8.4 dans votre navigateur, sans framework : index.php, classes autoloadées, scripts en console. Testez du code PHP et partagez-le par un lien, sans compte."
+        fil_ariane: Bac à sable PHP
 
 # Pages hors index (noindex) que les moteurs lisent quand même : une description évite l'erreur « description
 # manquante » de Bing. Le title reste celui du gabarit.

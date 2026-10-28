@@ -1,0 +1,6 @@
+# Environnement d'exécution : un projet PHP sans framework (autoload Composer, aucune dépendance),
+# empaqueté par environments/bin/build-env.sh. Il sert au bac à sable « PHP ».
+id: php-8
+title: PHP 8.4 — sans framework
+php: '8.4'
+framework: php

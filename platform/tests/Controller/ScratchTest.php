@@ -6,18 +6,18 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * Le bac à sable : un projet Symfony ou Laravel vierge, servi au playground comme un exercice sans objectif, ouvert à
+ * Le bac à sable : un projet Symfony, Laravel ou PHP sans framework vierge, servi au playground comme un exercice sans objectif, ouvert à
  * tout visiteur. Le code partagé voyage dans le fragment de l'adresse : rien ici ne le reçoit.
  */
 final class ScratchTest extends WebTestCase
 {
-    public function testLaPageDAccueilProposeSymfonyEtLaravel(): void
+    public function testLaPageDAccueilProposeSymfonyLaravelEtPhp(): void
     {
         $client = static::createClient();
         $crawler = $client->request('GET', '/bac-a-sable');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSame(['/bac-a-sable/symfony#nouveau', '/bac-a-sable/laravel#nouveau'], $crawler->filter('.scratch-frameworks a')->extract(['href']));
+        $this->assertSame(['/bac-a-sable/symfony#nouveau', '/bac-a-sable/laravel#nouveau', '/bac-a-sable/php#nouveau'], $crawler->filter('.scratch-frameworks a')->extract(['href']));
         $this->assertSelectorExists('header nav a[href="/bac-a-sable"]', 'Le bac à sable est dans le menu.');
         $this->assertSelectorExists('.site-footer a[href="/bac-a-sable"]');
     }
@@ -38,7 +38,7 @@ final class ScratchTest extends WebTestCase
         $this->assertSame('/bac-a-sable', $config['back']['url']);
         $this->assertStringStartsWith('http://localhost/bac-a-sable/laravel?', $config['share']['invite']['lien']);
         $this->assertStringContainsString('utm_campaign=bac-a-sable', $config['share']['invite']['lien']);
-        $this->assertSame(['/bac-a-sable/symfony', '/pratique'], array_column($config['scratch']['links'], 'url'), 'Ensuite : l\'autre framework, puis la Pratique.');
+        $this->assertSame(['/bac-a-sable/symfony', '/bac-a-sable/php', '/pratique'], array_column($config['scratch']['links'], 'url'), 'Ensuite : les autres bacs à sable, puis la Pratique.');
     }
 
     public function testLeProjetEstUnExerciceSansObjectifNiTest(): void
@@ -56,6 +56,26 @@ final class ScratchTest extends WebTestCase
         $this->assertSame([], $payload['hints']);
         $this->assertNotContains('config/packages/*.yaml', $payload['editable'], 'Un lien partagé ne touche pas à la configuration du framework.');
         $this->assertStringNotContainsString('<h1', $payload['instructionsHtml']);
+    }
+
+    public function testLeProjetPhpNAAucunFramework(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/bac-a-sable/php');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'Bac à sable PHP');
+
+        $payload = $this->json($client, '/api/bac-a-sable/php');
+        $this->assertSame('php-8', $payload['environment']['id']);
+        $this->assertSame('php', $payload['environment']['framework']['id']);
+        $this->assertSame('php', $payload['environment']['framework']['console']);
+        $this->assertSame('public/index.php', $payload['open']);
+        $this->assertEqualsCanonicalizing(['bin/bonjour.php', 'public/index.php', 'src/Salutation.php', 'src/Vue.php', 'templates/accueil.php', 'templates/introuvable.php'], array_keys($payload['files']));
+        $this->assertStringContainsString("require __DIR__.'/../vendor/autoload.php';", $payload['files']['public/index.php']);
+        $this->assertContains('src/*.php', $payload['editable']);
+
+        $payload = $this->json($client, '/en/api/bac-a-sable/php');
+        $this->assertStringContainsString("'Hello PHP!'", $payload['files']['public/index.php']);
     }
 
     public function testEnAnglaisLeProjetEtLaConsigneSontTraduits(): void

@@ -32,7 +32,7 @@ final readonly class Sitemap
     public const string PAGES_UPDATED_AT = '2026-09-17';
 
     /** Dernière révision des pages du bac à sable (textes et projets de départ du moteur). */
-    public const string SCRATCH_UPDATED_AT = '2026-10-27';
+    public const string SCRATCH_UPDATED_AT = '2026-10-28';
 
     public function __construct(
         private ContentRepository $content,
