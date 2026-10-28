@@ -8,6 +8,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **IndexNow** (Bing, Yandex, Seznam…) : avec `INDEXNOW_KEY` posée, le worker envoie toutes les heures les pages du
+  sitemap nouvelles ou modifiées depuis le dernier envoi (`scheduler_indexnow`), et la clé est servie par
+  `/indexnow.txt`. Le premier passage envoie tout le sitemap. Les dates envoyées sont gardées dans la base (table
+  `cache_items`) ; un envoi refusé repart au passage suivant. `bin/console app:seo:indexnow` envoie tout de suite
+  (`--liste` : seulement montrer ce qui partirait). Éteint sans clé ou avec `SEARCH_INDEXING=0`. Mise à jour d'une
+  instance auto-hébergée : reprendre la commande du service `worker` de `compose.yaml` (planificateur ajouté).
+
 ## 3.20.0 — 2026-10-28
 
 ### Ajouté

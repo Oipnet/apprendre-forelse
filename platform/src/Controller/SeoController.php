@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Seo\IndexNow;
 use App\Seo\SearchIndexing;
 use App\Seo\Sitemap;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -10,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-/** robots.txt et sitemap.xml, servis par l'application : ils dépendent de l'origine et de l'instance. */
+/** robots.txt, sitemap.xml et la clé IndexNow, servis par l'application : ils dépendent de l'origine et de l'instance. */
 final class SeoController extends AbstractController
 {
     /**
@@ -54,6 +55,15 @@ final class SeoController extends AbstractController
         $response->headers->set('Content-Type', 'application/xml; charset=UTF-8');
 
         return $this->cached($response);
+    }
+
+    /** La clé IndexNow (voir IndexNow) : Bing la relit ici pour s'assurer que les envois viennent bien du site. */
+    #[Route('/indexnow.txt', name: 'app_indexnow_key', methods: ['GET'], format: 'txt')]
+    public function indexNowKey(IndexNow $indexNow): Response
+    {
+        $key = $indexNow->key() ?? throw $this->createNotFoundException();
+
+        return $this->cached(new Response($key, headers: ['Content-Type' => 'text/plain; charset=UTF-8']));
     }
 
     /** Identiques pour tous les visiteurs : une heure de cache partagé. */

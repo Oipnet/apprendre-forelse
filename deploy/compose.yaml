@@ -49,6 +49,8 @@ services:
       REGISTRATION_INVITE_ONLY: ${REGISTRATION_INVITE_ONLY:-1}
       SEARCH_INDEXING: ${SEARCH_INDEXING:-1}
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
+      # IndexNow (Bing, Yandex…) : clé servie par /indexnow.txt, voir platform/.env. Vide : rien n'est envoyé.
+      INDEXNOW_KEY: ${INDEXNOW_KEY:-}
       # Mesure d'audience. Le traceur est servi par le site lui-même (docker/Caddyfile) ; l'identifiant
       # vient du site créé dans le tableau de bord d'Umami. Vide : aucune balise, rien n'est mesuré.
       ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
@@ -149,7 +151,8 @@ services:
   # envoie. Un serveur SMTP lent ou en panne ne bloque plus l'inscription, et l'email part à son retour
   # (nouvelles tentatives pendant deux heures, puis `bin/console messenger:failed:retry` dans ce conteneur).
   # Même image, mêmes réglages que « app » ; il redémarre de lui-même toutes les heures pour rester léger.
-  # Il fait aussi tourner le planificateur de la vérification des réussites (scheduler_verification, voir « verificateur »).
+  # Il fait aussi tourner le planificateur de la vérification des réussites (scheduler_verification, voir « verificateur »)
+  # et celui d'IndexNow (scheduler_indexnow : les pages nouvelles ou modifiées signalées à Bing, si INDEXNOW_KEY est posée).
   worker:
     image: ${APP_IMAGE:-ghcr.io/oipnet/apprendre-forelse:${IMAGE_TAG:-edge}}
     logging: *logging
@@ -165,7 +168,7 @@ services:
     # pcntl (chargée pour cette commande seulement) lui fait entendre le SIGTERM d'un arrêt : il finit le message en
     # cours et s'arrête, au lieu d'être tué au bout de 10 s. init : un vrai processus n°1, qui relaie les signaux.
     init: true
-    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "scheduler_verification", "--time-limit=3600", "--memory-limit=128M"]
+    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "scheduler_verification", "scheduler_indexnow", "--time-limit=3600", "--memory-limit=128M"]
     # Le contrôle de santé de l'image interroge Caddy, qui ne tourne pas ici.
     healthcheck:
       disable: true
