@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.20.0 — 2026-10-28
+
 ### Ajouté
 
 - **Bac à sable** (`/bac-a-sable`, `/en/playground`) : un projet Symfony 8 ou Laravel 13 vierge dans le navigateur,
