@@ -22,6 +22,9 @@ framework:
             sitemap.cache:
                 adapter: cache.app
                 default_lifetime: 3600
+            # Pages déjà envoyées à IndexNow et leur date (voir IndexNow) : dans la base, pour survivre aux déploiements.
+            indexnow.cache:
+                adapter: cache.adapter.doctrine_dbal
             # Packs de contenu chargés (ContentRepository), périmés fichier par fichier : pas de durée de vie. Cache
             # système (fichiers PHP servis par opcache), recréé par le cache:clear de chaque démarrage.
             content.cache:
@@ -34,4 +37,6 @@ when@test:
                 sitemap.cache:
                     adapter: cache.adapter.array
                 content.cache:
+                    adapter: cache.adapter.array
+                indexnow.cache:
                     adapter: cache.adapter.array
