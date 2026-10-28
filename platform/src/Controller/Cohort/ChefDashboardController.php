@@ -215,7 +215,7 @@ final class ChefDashboardController extends AbstractDashboardController
         ]);
     }
 
-    /** @return FormInterface<array{practiceIds: list<string>}> */
+    /** @return FormInterface<array{name?: string, practiceIds: list<string>}> */
     private function practicesForm(Cohort $cohort): FormInterface
     {
         return $this->createForm(FreeClassType::class, ['practiceIds' => $cohort->getPracticeIds()], [
