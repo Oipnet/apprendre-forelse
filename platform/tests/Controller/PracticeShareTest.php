@@ -63,6 +63,18 @@ final class PracticeShareTest extends WebTestCase
         $this->assertStringNotContainsString('immutable', (string) $this->client->getResponse()->headers->get('Cache-Control'));
     }
 
+    /** Un en-tête Host inventé ne fait pas dessiner une nouvelle image : le site écrit dessus vient de DEFAULT_URI. */
+    public function testLaVersionDeLImageNeDependPasDeLEnTeteHost(): void
+    {
+        $version = fn (string $host) => (string) $this->client->request('GET', '/pratique/nouveaute-recente', server: ['HTTP_HOST' => $host])
+            ->filter('meta[property="og:image"]')->attr('content');
+
+        $this->assertSame(
+            preg_replace('#^http://[^/]+#', '', $version('localhost')),
+            preg_replace('#^http://[^/]+#', '', $version('x1.example')),
+        );
+    }
+
     public function testPasDImagePourUnExerciceInconnuOuPasEncorePublie(): void
     {
         $this->client->request('GET', '/pratique/inconnu/image-de-partage');

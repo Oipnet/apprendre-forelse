@@ -20,12 +20,13 @@ final readonly class PracticeShare
         private UrlGeneratorInterface $urls,
         private ShareImage $images,
         private TranslatorInterface $translator,
+        private SiteHost $site,
     ) {
     }
 
     public function card(Practice $practice): ShareCard
     {
-        return new ShareCard($this->translator->trans('share.carte.pratique', ['framework' => $this->framework($practice)]), $practice->exercise->title, $this->host());
+        return new ShareCard($this->translator->trans('share.carte.pratique', ['framework' => $this->framework($practice)]), $practice->exercise->title, $this->site->name());
     }
 
     /** L'adresse absolue de l'image, versionnée : elle change avec ce qu'elle écrit. */
@@ -59,13 +60,5 @@ final readonly class PracticeShare
     private function framework(Practice $practice): string
     {
         return trim($this->frameworks->labelOf($practice->framework).' '.$practice->version);
-    }
-
-    /** Le site, tel qu'on l'écrit : « apprendre.forelse.fr ». */
-    private function host(): string
-    {
-        $host = (string) parse_url($this->urls->generate('app_home', [], UrlGeneratorInterface::ABSOLUTE_URL), \PHP_URL_HOST);
-
-        return preg_replace('/^www\./', '', $host) ?? $host;
     }
 }

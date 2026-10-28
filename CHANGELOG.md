@@ -10,6 +10,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- Images de partage (Pratique, certificat) : le site écrit dessus vient de `DEFAULT_URI` et non plus de l'en-tête
+  `Host`. Sur une instance qui accepte tous les noms d'hôte (`SERVER_NAME=:80`), chaque Host inventé faisait dessiner
+  et écrire une nouvelle image.
 - Limiteurs de débit : une adresse IPv6 compte pour son bloc /64 (contact, inscription, codes d'invitation, mentor,
   rapports CSP, connexion), sinon changer d'adresse dans son bloc remettait les compteurs à zéro. La connexion passe
   pour cela par son propre limiteur (`App\Security\LoginRateLimiter`, mêmes limites qu'avant). La liste d'attente

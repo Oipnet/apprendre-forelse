@@ -18,12 +18,13 @@ final readonly class CertificateShare
         private UrlGeneratorInterface $urls,
         private ShareImage $images,
         private TranslatorInterface $translator,
+        private SiteHost $site,
     ) {
     }
 
     public function card(Certificate $certificate): ShareCard
     {
-        return new ShareCard($this->translator->trans('share.carte.certificat', ['nom' => $certificate->getHolderName()]), $certificate->getTrackTitle(), $this->host());
+        return new ShareCard($this->translator->trans('share.carte.certificat', ['nom' => $certificate->getHolderName()]), $certificate->getTrackTitle(), $this->site->name());
     }
 
     /** L'adresse absolue de l'image, versionnée : elle change avec ce qu'elle écrit. */
@@ -42,16 +43,8 @@ final readonly class CertificateShare
 
         return ShareLinks::of(
             $this->urls->generate('app_certificate', ['code' => $certificate->getCode()], UrlGeneratorInterface::ABSOLUTE_URL),
-            $this->translator->trans('share.texte.certificat', ['parcours' => $certificate->getTrackTitle(), 'site' => $this->host(), 'n' => max(1, $count)]),
+            $this->translator->trans('share.texte.certificat', ['parcours' => $certificate->getTrackTitle(), 'site' => $this->site->name(), 'n' => max(1, $count)]),
             self::CAMPAIGN,
         );
-    }
-
-    /** Le site, tel qu'on l'écrit : « apprendre.forelse.fr ». */
-    private function host(): string
-    {
-        $host = (string) parse_url($this->urls->generate('app_home', [], UrlGeneratorInterface::ABSOLUTE_URL), \PHP_URL_HOST);
-
-        return preg_replace('/^www\./', '', $host) ?? $host;
     }
 }
