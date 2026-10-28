@@ -4,8 +4,6 @@ namespace App\Content;
 
 use App\Version;
 use Composer\Semver\Semver;
-use Symfony\Component\Yaml\Exception\ParseException;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * Un passage de lecture des packs (CONTENT_PACKS_PATHS) : packs, parcours, exercices de Pratique, intros de
@@ -45,6 +43,8 @@ final class PackReader
     private array $articles = [];
     private readonly PackFiles $files;
     private readonly ExerciseReader $exerciseReader;
+    private readonly ArticleReader $articleReader;
+    private readonly ConceptReader $conceptReader;
 
     /**
      * @param list<string> $packPaths dossiers de packs, ou dossiers contenant des packs
@@ -56,6 +56,8 @@ final class PackReader
     ) {
         $this->files = new PackFiles();
         $this->exerciseReader = new ExerciseReader($this->files, $environments);
+        $this->articleReader = new ArticleReader($this->files);
+        $this->conceptReader = new ConceptReader($this->files, $environments->frameworks());
     }
 
     public function read(): LoadedContent
@@ -173,96 +175,40 @@ final class PackReader
         }
     }
 
-    /** Les clés de l'en-tête d'un article : une autre (« date », « auteur »…) est une faute de frappe, refusée. */
-    private const array ARTICLE_KEYS = ['title', 'description', 'published', 'updated', 'visibility', 'practice', 'tags'];
-    /** Une traduction nomme en plus l'article français qu'elle traduit. */
-    private const array TRANSLATION_KEYS = [...self::ARTICLE_KEYS, 'translation_of'];
-
-    /**
-     * Un article du blog : `<pack>/articles/<slug>.md`, un en-tête YAML entre deux lignes « --- », puis le
-     * Markdown. Le nom du fichier est l'adresse de l'article : le changer casse les liens qui y mènent.
-     */
     private function loadArticle(Pack $pack, string $file, string $locale): void
     {
         $slug = basename($file, '.md');
-        if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug)) {
-            throw new ContentException(sprintf('Article « %s » : le nom du fichier est son adresse, en minuscules et sans accent (« symfony-dans-le-navigateur.md »).', $file));
-        }
         if (null !== ($twin = $this->articles[$locale][$slug] ?? null)) {
             throw new ContentException(sprintf('Article « %s » présent deux fois (packs %s et %s).', $slug, $twin->packId, $pack->id));
         }
-        $this->files->watch($file);
-        if (!preg_match('/\A---\r?\n(.*?)\r?\n---\r?\n(.*)\z/s', (string) file_get_contents($file), $parts)) {
-            throw new ContentException(sprintf('%s : un article commence par son en-tête YAML, entre deux lignes « --- ».', $file));
-        }
-        try {
-            $meta = Yaml::parse($parts[1]);
-        } catch (ParseException $e) {
-            throw new ContentException(sprintf('%s : en-tête YAML invalide, %s', $file, lcfirst($e->getMessage())), previous: $e);
-        }
-        if (!\is_array($meta)) {
-            throw new ContentException(sprintf('%s : en-tête YAML invalide.', $file));
-        }
-        $keys = Article::LOCALE === $locale ? self::ARTICLE_KEYS : self::TRANSLATION_KEYS;
-        if ([] !== ($unknown = array_diff(array_keys($meta), $keys))) {
-            throw new ContentException(sprintf('%s : clé « %s » inconnue (clés possibles : %s).', $file, implode(' », « ', $unknown), implode(', ', $keys)));
-        }
-        $markdown = trim($parts[2]);
-        if ('' === $markdown) {
-            throw new ContentException(sprintf('%s : article sans texte.', $file));
-        }
-
-        $published = self::date($meta['published'] ?? null, $file, 'published');
-        $updated = isset($meta['updated']) ? self::date($meta['updated'], $file, 'updated') : null;
-        if (null !== $updated && $updated < $published) {
-            throw new ContentException(sprintf('%s : « updated » précède « published ».', $file));
-        }
-        $visibility = (string) ($meta['visibility'] ?? Track::VISIBILITY_PUBLIC);
-        if (!\in_array($visibility, Track::VISIBILITIES, true)) {
-            throw new ContentException(sprintf('%s : visibilité « %s » inconnue (%s).', $file, $visibility, implode(', ', Track::VISIBILITIES)));
-        }
-
-        $this->articles[$locale][$slug] = new Article(
-            slug: $slug,
-            packId: $pack->id,
-            title: (string) $this->optionalText($this->files->required($meta, 'title', $file), $file.' : « title »'),
-            description: (string) $this->optionalText($this->files->required($meta, 'description', $file), $file.' : « description »'),
-            published: $published,
-            markdown: $markdown,
-            file: $file,
-            updated: $updated,
-            visibility: $visibility,
-            locale: $locale,
-            translationOf: Article::LOCALE === $locale ? null : $this->files->required($meta, 'translation_of', $file),
-            practice: isset($meta['practice']) ? (string) $meta['practice'] : null,
-            tags: self::tags($meta['tags'] ?? [], $file),
-        );
+        $this->articles[$locale][$slug] = $this->articleReader->read($file, $locale, $pack->id);
     }
 
-    /**
-     * Les sujets d'un article : une liste de libellés courts (`tags: [Symfony, Sécurité]`), sans doublon. Un libellé
-     * est aussi le filtre de la liste (?sujet=securite) : deux libellés qui donnent le même filtre sont refusés.
-     *
-     * @return list<string>
-     */
-    private static function tags(mixed $value, string $file): array
+    private function loadConceptIntro(Pack $pack, string $file, string $locale): void
     {
-        if (!\is_array($value) || !array_is_list($value)) {
-            throw new ContentException(sprintf('%s : « tags » est une liste de sujets (tags: [Symfony, Sécurité]).', $file));
+        $slug = basename($file, '.md');
+        $twin = Exercise::LOCALE === $locale ? $this->conceptIntros[$slug] ?? null : $this->conceptIntroTranslations[$locale][$slug] ?? null;
+        if (null !== $twin) {
+            throw new ContentException(sprintf('Intro de notion « %s » présente deux fois (packs %s et %s).', $slug, $twin['packId'], $pack->id));
         }
-        $tags = [];
-        foreach ($value as $tag) {
-            $tag = \is_string($tag) ? trim($tag) : '';
-            if ('' === $tag || '' === Blog::topic($tag)) {
-                throw new ContentException(sprintf('%s : chaque sujet de « tags » est un texte court (tags: [Symfony, Sécurité]).', $file));
-            }
-            if (isset($tags[Blog::topic($tag)])) {
-                throw new ContentException(sprintf('%s : sujet « %s » donné deux fois dans « tags ».', $file, $tag));
-            }
-            $tags[Blog::topic($tag)] = $tag;
+        $intro = $this->conceptReader->intro($file, $pack->id);
+        if (Exercise::LOCALE === $locale) {
+            $this->conceptIntros[$slug] = $intro;
+        } else {
+            $this->conceptIntroTranslations[$locale][$slug] = $intro;
         }
+    }
 
-        return array_values($tags);
+    /** Un seul pack range les notions d'un framework, dans une langue donnée. */
+    private function loadConceptThemes(Pack $pack, string $file, string $locale): void
+    {
+        foreach ($this->conceptReader->themes($file, $locale) as $framework => $themes) {
+            if (isset($this->conceptThemesPacks[$locale][$framework])) {
+                throw new ContentException(sprintf('%s : les notions %s sont déjà rangées par le pack « %s ».', $file, $this->environments->frameworks()->labelOf($framework), $this->conceptThemesPacks[$locale][$framework]));
+            }
+            $this->conceptThemes[$locale][$framework] = $themes;
+            $this->conceptThemesPacks[$locale][$framework] = $pack->id;
+        }
     }
 
     /**
@@ -297,16 +243,6 @@ final class PackReader
         }
     }
 
-    /** Une date AAAA-MM-JJ. YAML lit une date sans guillemets (2026-10-06) comme un horodatage. */
-    private static function date(mixed $value, string $file, string $key): \DateTimeImmutable
-    {
-        return match (true) {
-            \is_int($value) => new \DateTimeImmutable('@'.$value),
-            \is_string($value) && false !== ($date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value)) => $date,
-            default => throw new ContentException(sprintf('%s : « %s » doit être une date (AAAA-MM-JJ).', $file, $key)),
-        };
-    }
-
     /**
      * L'intro d'une page de nouveautés : `<pack>/versions/symfony-8-2.md`, du Markdown sans titre (la page
      * affiche le sien). Le nom du fichier est l'identifiant de la version dans l'adresse, tel qu'il s'écrit
@@ -329,117 +265,6 @@ final class PackReader
         }
 
         $this->versionIntros[$slug] = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id];
-    }
-
-    /**
-     * L'intro d'une page de notion : `<pack>/notions/controleur.md`, du Markdown sans titre. Le nom du fichier est
-     * l'identifiant de la notion dans l'adresse (voir ConceptIndex::slug). Même règles que l'intro d'une version :
-     * une faute de frappe dans le nom est refusée, et content:check signale une intro que rien n'affiche.
-     *
-     * Un en-tête YAML facultatif (entre deux lignes « --- ») peut donner `title` : le nom de la page tel qu'on le
-     * cherche (« Voter Symfony : contrôler l'accès à un objet »), là où l'étiquette des exercices reste courte (« Voter »).
-     *
-     * Une notion d'une autre langue a son intro dans `<pack>/notions/<langue>/`, nommée comme son adresse dans cette
-     * langue (`notions/en/controller.md` pour /en/concepts/controller), au même format.
-     */
-    private function loadConceptIntro(Pack $pack, string $file, string $locale): void
-    {
-        $slug = basename($file, '.md');
-        if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug)) {
-            throw new ContentException(sprintf('Intro de notion « %s » : le nom du fichier doit être l\'identifiant de la notion dans l\'adresse, en minuscules (« controleur.md »).', $file));
-        }
-        $twin = Exercise::LOCALE === $locale ? $this->conceptIntros[$slug] ?? null : $this->conceptIntroTranslations[$locale][$slug] ?? null;
-        if (null !== $twin) {
-            throw new ContentException(sprintf('Intro de notion « %s » présente deux fois (packs %s et %s).', $slug, $twin['packId'], $pack->id));
-        }
-        $this->files->watch($file);
-        $markdown = (string) file_get_contents($file);
-        $title = null;
-        if (preg_match('/\A---\r?\n(.*?)\r?\n---\r?\n(.*)\z/s', $markdown, $parts)) {
-            try {
-                $meta = Yaml::parse($parts[1]);
-            } catch (ParseException $e) {
-                throw new ContentException(sprintf('%s : en-tête YAML invalide, %s', $file, lcfirst($e->getMessage())), previous: $e);
-            }
-            if (!\is_array($meta) || [] !== array_diff(array_keys($meta), ['title']) || !\is_string($meta['title'] ?? '')) {
-                throw new ContentException(sprintf('%s : l\'en-tête d\'une intro de notion ne connaît que « title », un texte.', $file));
-            }
-            $title = isset($meta['title']) ? trim($meta['title']) : null;
-            $markdown = $parts[2];
-        }
-        $markdown = trim($markdown);
-        if ('' === $markdown) {
-            throw new ContentException(sprintf('Intro de notion « %s » vide : retirez le fichier, la page reste alors hors des moteurs de recherche.', $file));
-        }
-
-        $intro = ['markdown' => $markdown, 'file' => $file, 'packId' => $pack->id, 'title' => '' === $title ? null : $title];
-        if (Exercise::LOCALE === $locale) {
-            $this->conceptIntros[$slug] = $intro;
-        } else {
-            $this->conceptIntroTranslations[$locale][$slug] = $intro;
-        }
-    }
-
-    /** Les clés d'un thème de notions : une autre est une faute de frappe, refusée. */
-    private const array CONCEPT_THEME_KEYS = ['title', 'description', 'notions'];
-
-    /**
-     * Le rangement de l'index des notions : `<pack>/notions/themes.yaml`, une liste de thèmes par framework. Chaque
-     * thème a un titre, une phrase qui dit ce qu'il couvre et ses notions, par le libellé que leur donnent les
-     * exercices (`concepts:`). Une notion qu'aucun exercice publié ne pratique encore s'annonce « bientôt » ; une
-     * notion qu'aucun thème ne range tombe dans « Autres notions ». Un seul pack range les notions d'un framework.
-     *
-     * Dans une autre langue, `<pack>/notions/<langue>/themes.yaml` range les notions par leur libellé dans cette
-     * langue, celui des exercices traduits. Sans ce fichier, l'index de cette langue est une seule liste.
-     */
-    private function loadConceptThemes(Pack $pack, string $file, string $locale): void
-    {
-        $frameworks = $this->environments->frameworks();
-        foreach ($this->files->parse($file) as $framework => $themes) {
-            $framework = (string) $framework;
-            if (!$frameworks->has($framework)) {
-                throw new ContentException(sprintf('%s : framework « %s » inconnu (%s).', $file, $framework, implode(', ', $frameworks->ids())));
-            }
-            if (isset($this->conceptThemesPacks[$locale][$framework])) {
-                throw new ContentException(sprintf('%s : les notions %s sont déjà rangées par le pack « %s ».', $file, $frameworks->labelOf($framework), $this->conceptThemesPacks[$locale][$framework]));
-            }
-            if (!\is_array($themes) || !array_is_list($themes) || [] === $themes) {
-                throw new ContentException(sprintf('%s : « %s » est une liste de thèmes (title, description, notions).', $file, $framework));
-            }
-            $list = [];
-            $placed = [];
-            foreach ($themes as $i => $theme) {
-                $where = sprintf('%s : %s, thème n° %d', $file, $framework, $i + 1);
-                if (!\is_array($theme)) {
-                    throw new ContentException(sprintf('%s : un thème a un titre, une description et des notions (title, description, notions).', $where));
-                }
-                if ([] !== $unknown = array_diff(array_keys($theme), self::CONCEPT_THEME_KEYS)) {
-                    throw new ContentException(sprintf('%s : clé « %s » inconnue (un thème ne connaît que title, description et notions).', $where, implode(' », « ', $unknown)));
-                }
-                $title = trim($this->files->required($theme, 'title', $where));
-                $id = ConceptIndex::slug($title, $locale);
-                if (isset($list[$id])) {
-                    throw new ContentException(sprintf('%s : thème « %s » déclaré deux fois.', $where, $title));
-                }
-                $concepts = $theme['notions'] ?? null;
-                if (!\is_array($concepts) || !array_is_list($concepts) || [] === $concepts) {
-                    throw new ContentException(sprintf('%s : « notions » est la liste des notions du thème, par leur libellé.', $where));
-                }
-                foreach ($concepts as $concept) {
-                    if (!\is_string($concept) || '' === trim($concept)) {
-                        throw new ContentException(sprintf('%s : une notion est un libellé, comme dans les « concepts » des exercices.', $where));
-                    }
-                    $slug = ConceptIndex::slug($concept, $locale);
-                    if (isset($placed[$slug])) {
-                        throw new ContentException(sprintf('%s : la notion « %s » est déjà rangée dans « %s ».', $where, $concept, $placed[$slug]));
-                    }
-                    $placed[$slug] = $title;
-                }
-                $list[$id] = new ConceptTheme($id, $title, trim((string) ($theme['description'] ?? '')), array_map('trim', $concepts));
-            }
-            $this->conceptThemes[$locale][$framework] = array_values($list);
-            $this->conceptThemesPacks[$locale][$framework] = $pack->id;
-        }
     }
 
     /**
@@ -505,17 +330,14 @@ final class PackReader
                 exerciseIds: $chapter['exercises'] ?? [],
                 environment: $chapter['environment'] ?? null,
                 lesson: is_file($lesson) ? (string) file_get_contents($lesson) : null,
-                description: $this->optionalText($chapter['description'] ?? null, sprintf('%s : chapitre « %s », « description »', $file, $chapterId)),
+                description: ContentFields::optionalText($chapter['description'] ?? null, sprintf('%s : chapitre « %s », « description »', $file, $chapterId)),
             );
         }
         if (!$chapters) {
             throw new ContentException(sprintf('%s : au moins un chapitre est requis (clé « chapters »).', $file));
         }
 
-        $visibility = (string) ($meta['visibility'] ?? Track::VISIBILITY_PUBLIC);
-        if (!\in_array($visibility, Track::VISIBILITIES, true)) {
-            throw new ContentException(sprintf('%s : visibilité « %s » inconnue (%s).', $file, $visibility, implode(', ', Track::VISIBILITIES)));
-        }
+        $visibility = ContentFields::visibility($meta, $file);
 
         $order = $meta['order'] ?? null;
         if (null !== $order && !\is_int($order)) {
@@ -569,7 +391,7 @@ final class PackReader
                 $this->files->watch($exercise->directory.'/i18n');
                 foreach ($this->overlays($exercise->directory) as $locale) {
                     $french = $this->files->parse($exercise->directory.'/exercise.yaml');
-                    [$translated, $translatedMeta] = $this->exerciseReader->translate($exercise->directory, $french, $locale, $track->id, $chapter->environment ?? $track->environment);
+                    [$translated, $translatedMeta] = $this->exerciseReader->translate($exercise->directory, $french, $locale, $track->id, $track->environmentFor($chapter));
                     $this->exerciseTranslations[$locale][$track->id][$exerciseId] = $translated;
                     if ($this->source($translatedMeta, $exercise->directory.'/i18n/'.$locale.'/exercise.yaml') !== ExerciseReader::fingerprint($exercise->directory)) {
                         $this->outdatedTranslations[$locale][] = $track->id.'/'.$exerciseId;
@@ -623,7 +445,7 @@ final class PackReader
                     exerciseIds: $chapter->exerciseIds,
                     environment: $chapter->environment,
                     lesson: $chapter->hasLesson() && is_file($lesson) ? (string) file_get_contents($lesson) : null,
-                    description: $this->optionalText($chapterTexts['description'] ?? null, $where.', « description »'),
+                    description: ContentFields::optionalText($chapterTexts['description'] ?? null, $where.', « description »'),
                 );
             }
             foreach (array_diff(array_keys($texts), array_map(static fn (Chapter $c) => $c->id, $track->chapters)) as $gone) {
@@ -688,7 +510,7 @@ final class PackReader
 
     private function loadChapterExercise(Track $track, Chapter $chapter, string $directory): Exercise
     {
-        $exercise = $this->exerciseReader->read($directory, $track->id, $chapter->environment ?? $track->environment);
+        $exercise = $this->exerciseReader->read($directory, $track->id, $track->environmentFor($chapter));
         // `base` doit désigner un exercice précédent : pas de cycle possible.
         if (null !== $exercise->base && !isset($this->exercises[$track->id][$exercise->base])) {
             throw new ContentException(sprintf('Exercice « %s » : la base « %s » doit être un exercice précédent du parcours.', $exercise->id, $exercise->base));
@@ -716,13 +538,7 @@ final class PackReader
             throw new ContentException(sprintf('Exercice de Pratique « %s » présent deux fois (packs %s et %s).', $exercise->id, $this->practices[$exercise->id]->packId, $pack->id));
         }
 
-        $published = $meta['published'] ?? null;
-        // YAML lit une date sans guillemets (2026-09-20) comme un horodatage.
-        $published = match (true) {
-            \is_int($published) => new \DateTimeImmutable('@'.$published),
-            \is_string($published) && false !== ($date = \DateTimeImmutable::createFromFormat('!Y-m-d', $published)) => $date,
-            default => throw new ContentException(sprintf('%s : « published » doit être une date (AAAA-MM-JJ).', $file)),
-        };
+        $published = ContentFields::date($meta['published'] ?? null, $file, 'published');
 
         $version = $meta['version'] ?? null;
         if (null !== $version && (!\is_string($version) || !preg_match('/^\d+(\.\d+){0,2}$/', $version))) {
@@ -734,10 +550,7 @@ final class PackReader
             throw new ContentException(sprintf('%s : « pull_request » doit être une URL https.', $file));
         }
 
-        $visibility = (string) ($meta['visibility'] ?? Track::VISIBILITY_PUBLIC);
-        if (!\in_array($visibility, Track::VISIBILITIES, true)) {
-            throw new ContentException(sprintf('%s : visibilité « %s » inconnue (%s).', $file, $visibility, implode(', ', Track::VISIBILITIES)));
-        }
+        $visibility = ContentFields::visibility($meta, $file);
 
         $practice = $this->practices[$exercise->id] = new Practice(
             exercise: $exercise,
@@ -808,18 +621,5 @@ final class PackReader
         }
 
         return $path;
-    }
-
-    /** Un texte facultatif d'une ligne : une chaîne non vide, sans balise (il finit en meta description). */
-    private function optionalText(mixed $value, string $where): ?string
-    {
-        if (null === $value) {
-            return null;
-        }
-        if (!\is_string($value) || '' === trim($value) || $value !== strip_tags($value)) {
-            throw new ContentException(sprintf('%s est un texte, sans balise HTML.', $where));
-        }
-
-        return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
     }
 }

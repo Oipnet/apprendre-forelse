@@ -55,6 +55,12 @@ final readonly class Track
         return !$this->isRestricted() && ($this->chapters[0] ?? null)?->id === $chapter->id;
     }
 
+    /** L'environnement d'un chapitre : le sien s'il en déclare un, sinon celui du parcours. */
+    public function environmentFor(?Chapter $chapter): string
+    {
+        return $chapter->environment ?? $this->environment;
+    }
+
     /** @return list<string> tous les exercices, dans l'ordre du parcours */
     public function exerciseIds(): array
     {

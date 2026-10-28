@@ -156,7 +156,7 @@ final class ExerciseStudio
             throw new ContentException(sprintf('La base « %s » n\'est pas un exercice de ce parcours.', $base));
         }
 
-        $fichiers = $brouillon ?? $this->scaffolders->get($this->environments->get($this->content->findChapter($track, $chapitreId)->environment ?? $track->environment)->framework)
+        $fichiers = $brouillon ?? $this->scaffolders->get($this->environments->get($track->environmentFor($this->content->findChapter($track, $chapitreId)))->framework)
             ->files($this->entete($id, $titre, $base, null), $titre, false);
 
         // Un échec, à l'écriture comme à la relecture, ne laisse ni dossier ni ligne dans track.yaml : un nouvel essai

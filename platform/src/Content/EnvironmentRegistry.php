@@ -2,6 +2,7 @@
 
 namespace App\Content;
 
+use App\Content\Framework\FrameworkProfile;
 use App\Content\Framework\FrameworkRegistry;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Yaml\Yaml;
@@ -167,6 +168,16 @@ final class EnvironmentRegistry implements ResetInterface
         return $this->frameworks;
     }
 
+    /**
+     * Le framework d'un environnement, et celui par défaut s'il n'est pas installé (pack copié sans son
+     * environnement, environnement retiré) : la seule règle de retombée, pour que le catalogue, les notions,
+     * le référencement et la Pratique classent un contenu de la même façon.
+     */
+    public function frameworkOf(string $id): FrameworkProfile
+    {
+        return $this->has($id) ? $this->get($id)->framework : $this->frameworks->default();
+    }
+
     public function get(string $id): Environment
     {
         return $this->environments[$id] ??= $this->load($id);
@@ -191,8 +202,9 @@ final class EnvironmentRegistry implements ResetInterface
             id: $id,
             // Le titre ne s'hérite pas : deux environnements ne se présentent pas sous le même nom.
             title: array_last($chain)['meta']['title'] ?? $id,
-            // Un environnement sans PHP (Nuxt, joué par le simulateur du navigateur) n'a pas de version à déclarer.
-            phpVersion: (string) ($meta['php'] ?? ($framework->runsPhpunit() ? throw new ContentException(sprintf('Environnement « %s » : clé « php » manquante.', $id)) : '')),
+            // Un environnement sans PHP (Nuxt, joué par le simulateur du navigateur) n'a pas de version à déclarer :
+            // c'est le runtime qui demande PHP, pas le lanceur de tests.
+            phpVersion: (string) ($meta['php'] ?? (FrameworkProfile::PHP_WASM === $framework->runtime ? throw new ContentException(sprintf('Environnement « %s » : clé « php » manquante.', $id)) : '')),
             directories: $directories,
             framework: $framework,
             // Symfony compile son container dans var/cache, Laravel ses vues Blade : le profil le sait,

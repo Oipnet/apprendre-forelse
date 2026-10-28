@@ -58,6 +58,7 @@ final class LessonDrafterTest extends TestCase
 
         $this->assertStringStartsWith("## Ce que vous avez appris\n\n- **Route** <!-- e1 -->\n- **Contrôleur** <!-- e1, e2 -->\n- **Twig** <!-- e2 -->\n", $squelette);
         $this->assertStringContainsString("## Contrôleur\n\n<!-- Vu dans : e1, e2.", $squelette, 'Une section par concept, avec les exercices qui l\'abordent.');
+        $this->assertStringContainsString('(bloc ```php)', $squelette, 'Le bloc de code suggéré est le premier langage des fiches du framework.');
         $this->assertStringContainsString("## Rappels vus dans les exercices\n", $squelette);
         $this->assertStringContainsString("### La route\n\nUn contrôleur est une simple classe PHP.\n`AbstractController` offre `render()`.", $squelette, 'La section « Rappel » des consignes est recopiée…');
         $this->assertStringNotContainsString('Votre mission', $squelette, '… sans le reste des consignes.');

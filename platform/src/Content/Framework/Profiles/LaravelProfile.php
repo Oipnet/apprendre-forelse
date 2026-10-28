@@ -29,7 +29,7 @@ final class LaravelProfile implements FrameworkProfileProvider
             hidden: ['vendor', 'storage', 'bootstrap/cache', 'database/database.sqlite', '.git', 'node_modules', '.phpunit.cache'],
             namespaceRoots: ['app' => 'App', 'tests' => 'Tests', 'database' => 'Database'],
             lessonLanguages: '```php, ```blade, ```bash',
-            drafting: <<<'TEXTE'
+            drafting: PhpWasm::DRAFTING.<<<'TEXTE'
                 Conventions de ce projet (Laravel 13), à respecter même si tu connais d'autres façons de faire :
                 - Routes dans `routes/web.php` (`Route::get('/x', [XController::class, 'index'])->name('x.index')`),
                   contrôleurs dans `app/Http/Controllers`, vues Blade dans `resources/views`, modèles Eloquent

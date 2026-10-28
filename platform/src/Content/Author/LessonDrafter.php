@@ -52,6 +52,8 @@ final class LessonDrafter
             }
         }
 
+        // Le premier langage des fiches du framework : ```php pour Symfony, ```vue pour Nuxt, ```dockerfile pour Docker.
+        $langage = explode(', ', $this->environments->get($track->environmentFor($chapter))->framework->lessonLanguages)[0];
         $lignes = ['## Ce que vous avez appris', ''];
         foreach ($parConcept as $concept => $ids) {
             $lignes[] = sprintf('- **%s** <!-- %s -->', $concept, implode(', ', $ids));
@@ -60,7 +62,7 @@ final class LessonDrafter
             $lignes[] = '';
             $lignes[] = sprintf('## %s', $concept);
             $lignes[] = '';
-            $lignes[] = sprintf('<!-- Vu dans : %s. L\'idée en deux phrases, puis l\'extrait de code clé (bloc ```php). -->', implode(', ', $ids));
+            $lignes[] = sprintf('<!-- Vu dans : %s. L\'idée en deux phrases, puis l\'extrait de code clé (bloc %s). -->', implode(', ', $ids), $langage);
         }
 
         $rappels = [];
@@ -105,7 +107,7 @@ final class LessonDrafter
     public function brouillon(Track $track, Chapter $chapter): string
     {
         $exercises = $this->content->exercisesOfChapter($track, $chapter);
-        $framework = $this->environments->get($chapter->environment ?? $track->environment)->framework;
+        $framework = $this->environments->get($track->environmentFor($chapter))->framework;
         $blocs = [sprintf("Parcours « %s » : %s\n\nChapitre « %s » (%d exercices).", $track->title, trim($track->description), $chapter->title, \count($exercises))];
         foreach ($exercises as $exercise) {
             $solution = array_filter(

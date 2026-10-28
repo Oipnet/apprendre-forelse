@@ -33,7 +33,7 @@ final class DockerProfile implements FrameworkProfileProvider
             hidden: ['vendor', '.git', 'node_modules', '.phpunit.cache'],
             namespaceRoots: ['src' => 'App', 'tests' => 'App\\Tests'],
             lessonLanguages: '```dockerfile, ```yaml, ```bash, ```nginx, ```php',
-            drafting: <<<'TEXTE'
+            drafting: PhpWasm::DRAFTING.<<<'TEXTE'
                 Conventions de ce projet (Docker simulé), à respecter même si tu connais d'autres façons de faire :
                 - Docker ne tourne pas vraiment : un simulateur en PHP (Forelse\DockerSim) construit les images,
                   lance les conteneurs et exécute pour de vrai le PHP qu'ils servent (Apache, nginx + php-fpm,

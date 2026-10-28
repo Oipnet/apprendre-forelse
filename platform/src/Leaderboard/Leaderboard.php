@@ -2,6 +2,7 @@
 
 namespace App\Leaderboard;
 
+use App\Content\ContentRepository;
 use App\Content\TrackVisibility;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
@@ -23,7 +24,7 @@ final readonly class Leaderboard
     public const int TOP = 50;
 
     /** Le filtre « Pratique » : les réussites hors parcours. */
-    public const string PRACTICE = 'pratique';
+    public const string PRACTICE = ContentRepository::PRACTICE;
 
     public function __construct(
         private ExerciseProgressRepository $progress,
@@ -54,27 +55,15 @@ final readonly class Leaderboard
     {
         $now = $this->clock->now();
         $since = $period->since($now);
-        $listed = [];
-        $own = null;
-        foreach ($this->rows($since, null, $track, $viewer) as $row) {
-            if (null !== $viewer && $row['userId'] === $viewer->getId() && !$viewer->isLeaderboardOptIn()) {
-                $own = $row;
-            } else {
-                $listed[] = $row;
-            }
-        }
-
         // L'évolution du mois : le rang à la fin du mois précédent, sur le même filtre.
-        $previousRanks = null;
-        if (LeaderboardPeriod::Month === $period) {
-            $previousRanks = [];
-            foreach (self::ranked($this->rows($since->modify('-1 month'), $since, $track)) as [$rank, $row]) {
-                $previousRanks[$row['userId']] = $rank;
-            }
-        }
+        $ranking = new LeaderboardRanking(
+            $this->rows($since, null, $track, $viewer),
+            $viewer?->getId(),
+            $viewer?->isLeaderboardOptIn() ?? true,
+            LeaderboardPeriod::Month === $period ? $this->rows($since->modify('-1 month'), $since, $track) : null,
+        );
 
-        $ranked = self::ranked($listed);
-        $shown = \array_slice($ranked, 0, self::TOP);
+        $shown = \array_slice($ranking->ranked, 0, self::TOP);
         $userIds = array_map(static fn (array $item) => $item[1]['userId'], $shown);
         if (null !== $viewer?->getId()) {
             $userIds[] = $viewer->getId();
@@ -89,36 +78,12 @@ final readonly class Leaderboard
             $row['exercises'],
             $listed,
             $tracksByUser[$row['userId']] ?? [],
-            null === $previousRanks || !isset($previousRanks[$row['userId']]) ? null : $previousRanks[$row['userId']] - $rank,
-            null !== $previousRanks && !isset($previousRanks[$row['userId']]),
+            $ranking->change($row['userId'], $rank),
+            $ranking->isNew($row['userId']),
         );
         $entries = array_map(static fn (array $item) => $entry($item[0], $item[1]), $shown);
-
-        $viewerEntry = null;
-        $ahead = null;
-        if (null !== $viewer) {
-            $mine = null;
-            if (null !== $own) {
-                $better = array_filter($listed, static fn (array $row) => $row['xp'] > $own['xp']);
-                $mine = [\count($better) + 1, $own, false];
-            } else {
-                foreach ($ranked as [$rank, $row]) {
-                    if ($row['userId'] === $viewer->getId()) {
-                        $mine = [$rank, $row, true];
-                        break;
-                    }
-                }
-            }
-            if (null !== $mine) {
-                $viewerEntry = $entry(...$mine);
-                // Celui qu'il dépassera en premier : le dernier, dans l'ordre, à avoir plus d'XP que lui.
-                foreach ($ranked as [$rank, $row]) {
-                    if ($row['xp'] > $viewerEntry->xp && $row['userId'] !== $viewer->getId()) {
-                        $ahead = $entry($rank, $row);
-                    }
-                }
-            }
-        }
+        $viewerEntry = null === $ranking->viewer ? null : $entry(...$ranking->viewer);
+        $ahead = null === $ranking->ahead ? null : $entry(...$ranking->ahead);
 
         // Ce que l'apprenant a gagné ce mois-ci : de l'XP au classement de toujours, des places à celui du mois.
         $monthXp = null;
@@ -131,7 +96,7 @@ final readonly class Leaderboard
             }
         }
 
-        return new LeaderboardView($period, $track, $since, $entries, \count($listed), $viewerEntry, $ahead, $monthXp, $this->periodNote($period, $since), $this->monthName(($since ?? $now)->modify('-1 month')));
+        return new LeaderboardView($period, $track, $since, $entries, \count($ranking->ranked), $viewerEntry, $ahead, $monthXp, $this->periodNote($period, $since), $this->monthName(($since ?? $now)->modify('-1 month')));
     }
 
     /** Ce que couvre le classement, sous le tableau : « Classement d'octobre : il repart à zéro le 1er novembre… ». */
@@ -176,24 +141,6 @@ final readonly class Leaderboard
         usort($rows, static fn (array $a, array $b) => [$b['xp'], $b['exercises'], $a['displayName'], $a['userId']] <=> [$a['xp'], $a['exercises'], $b['displayName'], $b['userId']]);
 
         return $rows;
-    }
-
-    /**
-     * Classement « sportif » : un ex aequo partage le rang, le suivant prend le rang de sa position.
-     *
-     * @param list<array{userId: int, displayName: string, xp: int, exercises: int}> $rows
-     *
-     * @return list<array{int, array{userId: int, displayName: string, xp: int, exercises: int}}>
-     */
-    private static function ranked(array $rows): array
-    {
-        $ranked = [];
-        foreach ($rows as $index => $row) {
-            $previous = $ranked[$index - 1] ?? null;
-            $ranked[] = [null !== $previous && $previous[1]['xp'] === $row['xp'] ? $previous[0] : $index + 1, $row];
-        }
-
-        return $ranked;
     }
 
     /**

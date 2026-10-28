@@ -2,9 +2,6 @@
 
 namespace App\Service;
 
-use App\Api\ExerciseAccessGuard;
-use App\Api\ExerciseLocator;
-use App\Api\GuestProgressInput;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Entity\ExerciseProgress;
@@ -22,8 +19,6 @@ final readonly class ProgressService
         private EntityManagerInterface $entityManager,
         private XpCalculator $xpCalculator,
         private ContentRepository $content,
-        private ExerciseLocator $exercises,
-        private ExerciseAccessGuard $guard,
         private TrackBonuses $trackBonuses,
         private ClockInterface $clock,
     ) {
@@ -99,32 +94,6 @@ final readonly class ProgressService
     {
         $this->findOrCreate($user, $exercise)->setReview($review, $this->clock->now());
         $this->entityManager->flush();
-    }
-
-    /**
-     * Reprend la progression laissée dans le navigateur par un invité, sans écraser celle du compte : la Pratique (qui se
-     * joue sans compte), et les exercices de parcours des versions où le premier chapitre se jouait sans compte.
-     *
-     * @param list<GuestProgressInput> $items
-     */
-    public function importGuestProgress(User $user, array $items): int
-    {
-        $imported = 0;
-        foreach ($items as $item) {
-            // On ne reprend que ce que le compte peut ouvrir, dans un parcours visible : une progression importée dans
-            // un parcours en préparation le ferait apparaître (hasStarted). Un exercice de Pratique en préparation reste fermé.
-            $exercise = $this->exercises->find($item->trackId, $item->exerciseId);
-            if (!$exercise || !$this->guard->allows($user, $exercise) || $this->find($user, $exercise)) {
-                continue;
-            }
-            $this->saveDraft($user, $exercise, $item->files, $item->hintsUsed);
-            if ($item->completed) {
-                $this->complete($user, $exercise, $item->hintsUsed);
-            }
-            ++$imported;
-        }
-
-        return $imported;
     }
 
     /** Créée par une insertion qui ne peut pas échouer sur une création simultanée (voir le dépôt). */

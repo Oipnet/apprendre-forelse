@@ -4,6 +4,7 @@ namespace App\Account\Oauth;
 
 use App\Entity\ExternalIdentity;
 use App\Entity\User;
+use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -14,6 +15,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *
  * Facultative : sans GITHUB_CLIENT_ID ni GITHUB_CLIENT_SECRET, le bouton n'apparaît nulle part.
  */
+#[AsTaggedItem(priority: 30)]
 final readonly class GithubClient implements OauthProvider
 {
     private const string AUTHORIZE_URL = 'https://github.com/login/oauth/authorize';

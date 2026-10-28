@@ -393,6 +393,7 @@ export const en: Messages = {
 		downloading: (megabytes: number) => `Downloading the environment (${megabytes.toFixed(1)} MB)`,
 		phpBinaryMissing: (file: string, status: number) => `PHP binary not found: ${file} (${status})`,
 		notBooted: 'Environment not started.',
+		unknownPhpFramework: (id: string, console: string, known: string[]) => `PHP framework “${id}” is unknown to this playground (known: ${known.join(', ')}): its console “${console}” has no script (see src/runtime/php-frameworks.ts).`,
 		wrongRuntime: (runtime: string) => `A “${runtime}” environment does not run with PHP (see src/runtime/registry.ts).`,
 		booting: (version: string) => `Starting PHP ${version}`,
 		badUrl: '400 Bad Request: malformed URL encoding.',

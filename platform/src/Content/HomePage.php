@@ -2,8 +2,6 @@
 
 namespace App\Content;
 
-use App\Content\Framework\FrameworkProfile;
-use App\Content\Framework\FrameworkRegistry;
 use App\Entity\User;
 use App\Payment\TrackOfferFactory;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -21,7 +19,6 @@ final readonly class HomePage
         private TrackVisibility $visibility,
         private PracticeVisibility $practices,
         private EnvironmentRegistry $environments,
-        private FrameworkRegistry $frameworks,
         private TrackOfferFactory $offers,
         private UrlGeneratorInterface $urls,
         private TranslatorInterface $translator,
@@ -70,12 +67,12 @@ final readonly class HomePage
         $published = array_values($this->visibility->tracksHere());
         $frameworks = [];
         foreach ($published as $track) {
-            $profile = $this->frameworkOf($track);
+            $profile = $this->environments->frameworkOf($track->environment);
             $frameworks[$profile->id] ??= $profile->label;
         }
         // Un framework inconnu (lien ancien, faute de frappe) montre tout, plutôt qu'une page vide.
         $framework = null !== $framework && isset($frameworks[$framework]) ? $framework : null;
-        $shown = null === $framework ? $published : array_values(array_filter($published, fn (Track $track) => $this->frameworkOf($track)->id === $framework));
+        $shown = null === $framework ? $published : array_values(array_filter($published, fn (Track $track) => $this->environments->frameworkOf($track->environment)->id === $framework));
 
         return [
             'tracks' => array_map(fn (Track $track) => $this->card($track, $user), $shown),
@@ -83,11 +80,6 @@ final readonly class HomePage
             'frameworks' => $frameworks,
             'framework' => $framework,
         ];
-    }
-
-    private function frameworkOf(Track $track): FrameworkProfile
-    {
-        return $this->environments->has($track->environment) ? $this->environments->get($track->environment)->framework : $this->frameworks->default();
     }
 
     /** Le plus récent des exercices de Pratique publiés, sauf sur une instance sur invitation. */

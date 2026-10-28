@@ -18,7 +18,7 @@ final readonly class PracticeTrack
     public function of(Practice $practice): ?Track
     {
         foreach ($this->tracks->tracks() as $track) {
-            if ($this->environments->has($track->environment) && $this->environments->get($track->environment)->framework->id === $practice->framework) {
+            if ($this->environments->frameworkOf($track->environment)->id === $practice->framework) {
                 return $track;
             }
         }

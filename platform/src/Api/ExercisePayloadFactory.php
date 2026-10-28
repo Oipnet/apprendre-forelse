@@ -2,18 +2,13 @@
 
 namespace App\Api;
 
-use App\Content\ChapterOutline;
 use App\Content\ConceptIndex;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\LessonRenderer;
 use App\Content\Exercise;
-use App\Content\PracticeTrack;
 use App\Content\PracticeVersionIndex;
-use App\Content\TrackVisibility;
-use App\Instance\EnvironmentArtifacts;
 use App\Security\TrackAccessChecker;
-use Symfony\Component\Asset\Packages;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -27,20 +22,16 @@ final readonly class ExercisePayloadFactory
 {
     public function __construct(
         private ContentRepository $content,
-        private TrackVisibility $visibility,
         private EnvironmentRegistry $environments,
-        private Packages $packages,
-        private UrlGeneratorInterface $urls,
-        private ExerciseUrls $exerciseUrls,
+        private ExerciseNavigation $navigation,
+        private EnvironmentAssetUrls $assets,
         private PracticeVersionIndex $versions,
-        private PracticeTrack $practiceTracks,
         private TrackAccessChecker $access,
-        private EnvironmentArtifacts $artifacts,
         private LessonRenderer $markdown,
         private ConceptIndex $concepts,
+        private UrlGeneratorInterface $urls,
         private TranslatorInterface $translator,
         #[Autowire('%kernel.environment%')] private string $kernelEnvironment,
-        #[Autowire('%kernel.project_dir%/public')] private string $publicDir = __DIR__.'/../../public',
     ) {
     }
 
@@ -48,30 +39,10 @@ final readonly class ExercisePayloadFactory
     public function create(Exercise $exercise, Request $request): array
     {
         $environment = $this->environments->get($exercise->environment);
-        $absolute = fn (string $path) => $request->getSchemeAndHttpHost().$this->packages->getUrl($path);
-        // Les archives et index des environnements gardent la même URL d'une version à l'autre, et le navigateur
-        // les garde un jour en cache : leur date de construction les distingue.
-        $versioned = function (string $path) use ($absolute): string {
-            // L'archive est soit dans public/envs, soit dans les environnements installés : sa date
-            // vient de là où elle est réellement, sinon une archive installée n'aurait pas de version.
-            $built = @filemtime($this->artifacts->path(basename($path)) ?? $this->publicDir.'/'.$path);
-
-            return $absolute($path).(false === $built ? '' : '?v='.$built);
-        };
-        $next = $this->content->next($exercise);
-        $previous = $this->content->previous($exercise);
-        // Dernier exercice du parcours : on conseille le parcours suivant, s'il y en a un.
-        $track = null === $exercise->trackId ? null : $this->content->findTrack($exercise->trackId, $exercise->locale);
-        $nextTrack = null === $next && null !== $track ? $this->visibility->nextTrack($track) : null;
         // Un exercice de Pratique n'a ni suite ni fiche : il dit d'où vient la fonctionnalité.
         $practice = null === $exercise->trackId ? $this->content->findPractice($exercise->id, $exercise->locale) : null;
-        // Après la réussite, la Pratique propose le parcours du même framework, s'il y en a un de visible.
-        // Les parcours et les pages de nouveautés sont en français : une traduction n'y renvoie pas.
+        // Les pages de nouveautés sont en français : une traduction n'y renvoie pas.
         $translated = Exercise::LOCALE !== $exercise->locale;
-        $practiceTrack = null === $practice || $translated ? null : $this->practiceTracks->of($practice);
-        // Dernier exercice d'un chapitre doté d'une fiche de cours : la réussite la débloque.
-        $inChapter = null === $track ? null : $this->content->chapterOf($exercise);
-        $lesson = $inChapter?->hasLesson() && $this->content->closesChapter($exercise) ? $inChapter : null;
 
         $payload = [
             'id' => $exercise->id,
@@ -117,37 +88,10 @@ final readonly class ExercisePayloadFactory
                 // caches, namespaces… Il ne redéclare plus rien de son côté (voir FrameworkProfile). Ses textes
                 // (note de démarrage, étapes) sont traduits dans la langue de la page.
                 'framework' => $environment->framework->forBrowser($this->translator),
-                'archiveUrl' => $versioned($environment->archivePath()),
-                'completionIndexUrl' => $versioned($environment->completionIndexPath()),
+                'archiveUrl' => $this->assets->url($environment->archivePath(), $request),
+                'completionIndexUrl' => $this->assets->url($environment->completionIndexPath(), $request),
             ],
-            // Où l'on est dans le parcours : le fil d'Ariane du playground (chapitre, « exercice n sur N »).
-            'chapter' => null !== $track && null !== $inChapter ? [
-                'title' => $inChapter->title,
-                'number' => ChapterOutline::numberOf($track, $inChapter),
-                'position' => (int) array_search($exercise->id, $inChapter->exerciseIds, true) + 1,
-                'total' => \count($inChapter->exerciseIds),
-                'url' => $this->urls->generate('app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $inChapter->id]),
-            ] : null,
-            'previous' => $previous ? [
-                'id' => $previous->id,
-                'title' => $previous->title,
-                'url' => $this->exerciseUrls->generate('app_exercise', $previous),
-            ] : null,
-            'next' => $next ? [
-                'id' => $next->id,
-                'title' => $next->title,
-                'url' => $this->exerciseUrls->generate('app_exercise', $next),
-            ] : null,
-            'lesson' => $lesson ? [
-                'title' => $lesson->title,
-                'url' => $this->urls->generate('app_chapter', ['trackId' => $exercise->trackId, 'chapterId' => $lesson->id]),
-            ] : null,
-            'nextTrack' => $nextTrack ? [
-                'id' => $nextTrack->id,
-                'title' => $nextTrack->title,
-                'description' => $nextTrack->description,
-                'url' => $this->urls->generate('app_track', ['trackId' => $nextTrack->id]),
-            ] : null,
+            ...$this->navigation->of($exercise),
             'practice' => $practice ? [
                 'framework' => $practice->framework,
                 'version' => $practice->version,
@@ -157,12 +101,7 @@ final readonly class ExercisePayloadFactory
                 'versionUrl' => $translated || null === ($slug = $this->versions->slugOf($practice)) ? null : $this->urls->generate('app_practice_version', ['slug' => $slug]),
                 'pullRequest' => $practice->pullRequest,
                 'published' => $practice->published->format('Y-m-d'),
-                'track' => $practiceTrack ? [
-                    'id' => $practiceTrack->id,
-                    'title' => $practiceTrack->title,
-                    'description' => $practiceTrack->description,
-                    'url' => $this->urls->generate('app_track', ['trackId' => $practiceTrack->id]),
-                ] : null,
+                'track' => $this->navigation->practiceTrack($practice, $exercise->locale),
             ] : null,
         ];
         if ('dev' === $this->kernelEnvironment) {

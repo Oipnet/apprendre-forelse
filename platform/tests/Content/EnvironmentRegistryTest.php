@@ -34,6 +34,16 @@ final class EnvironmentRegistryTest extends TestCase
         $this->assertSame('envs/nuxt-4.zip', $environment->archivePath());
     }
 
+    /** Un environnement absent (pack copié sans le sien) se range sous le framework par défaut, partout pareil. */
+    public function testLeFrameworkDUnEnvironnementAbsentEstCeluiParDefaut(): void
+    {
+        $environments = new EnvironmentRegistry(self::ROOT.'/environments');
+
+        $this->assertSame('laravel', $environments->frameworkOf('laravel-13')->id);
+        $this->assertSame('nuxt', $environments->frameworkOf('nuxt-4')->id);
+        $this->assertSame($environments->frameworks()->default(), $environments->frameworkOf('introuvable'));
+    }
+
     /** Les caches par défaut viennent du profil ; « cache: » dans environment.yaml a le dernier mot. */
     public function testLesCachesViennentDuProfilSaufMentionContraire(): void
     {

@@ -3,11 +3,11 @@
 namespace App\Repository;
 
 use App\Admin\ProgressSummary;
+use App\Content\ContentRepository;
 use App\Entity\ExerciseProgress;
 use App\Entity\ProgressStatus;
 use App\Entity\User;
 use App\Entity\VerificationStatus;
-use App\Leaderboard\Leaderboard;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
@@ -168,7 +168,7 @@ class ExerciseProgressRepository extends ServiceEntityRepository
      *
      * @param \DateTimeImmutable|null $since réussites depuis cette date seulement (le classement du mois)
      * @param \DateTimeImmutable|null $until et avant celle-ci (le classement du mois précédent)
-     * @param string|null             $track un seul parcours, ou Leaderboard::PRACTICE pour la Pratique
+     * @param string|null             $track un seul parcours, ou ContentRepository::PRACTICE pour la Pratique
      *
      * @return list<array{userId: int, displayName: string, xp: int, exercises: int}>
      */
@@ -199,7 +199,7 @@ class ExerciseProgressRepository extends ServiceEntityRepository
         if (null !== $until) {
             $builder->andWhere('p.completedAt < :until')->setParameter('until', $until);
         }
-        if (Leaderboard::PRACTICE === $track) {
+        if (ContentRepository::PRACTICE === $track) {
             $builder->andWhere('p.trackId IS NULL');
         } elseif (null !== $track) {
             $builder->andWhere('p.trackId = :track')->setParameter('track', $track);

@@ -3,6 +3,7 @@
 namespace App\Account\Oauth;
 
 use App\Entity\ExternalIdentity;
+use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -12,6 +13,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *
  * Facultative : sans LINKEDIN_CLIENT_ID ni LINKEDIN_CLIENT_SECRET, le bouton n'apparaît nulle part.
  */
+#[AsTaggedItem(priority: 10)]
 final readonly class LinkedinClient extends OpenIdConnectClient
 {
     public function __construct(
