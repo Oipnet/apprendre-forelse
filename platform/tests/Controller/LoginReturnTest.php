@@ -101,6 +101,22 @@ final class LoginReturnTest extends WebTestCase
         $this->assertResponseRedirects('/connexion', message: 'Le cookie d\'avant ne vaut plus.');
     }
 
+    /** /admin demande une vraie connexion : le cookie « Rester connecté » d'un admin ne suffit pas. */
+    public function testLAdministrationDemandeUneVraieConnexion(): void
+    {
+        $manager = static::getContainer()->get('doctrine')->getManager();
+        $manager->getRepository(\App\Entity\User::class)->findOneBy(['email' => 'ada@example.test'])->setRoles(['ROLE_ADMIN']);
+        $manager->flush();
+        $this->client->request('GET', '/connexion');
+        $this->submit(self::PASSWORD, remember: true);
+        $cookie = $this->client->getCookieJar()->get('REMEMBERME');
+        $this->assertNotNull($cookie);
+
+        $this->revisit($cookie);
+        $this->client->request('GET', '/admin');
+        $this->assertResponseRedirects('/connexion', message: 'Reconnue par le cookie seulement : connexion demandée.');
+    }
+
     /** Une autre visite, sans session : le seul cookie « Rester connecté » donné. */
     private function revisit(\Symfony\Component\BrowserKit\Cookie $cookie): void
     {

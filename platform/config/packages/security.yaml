@@ -55,11 +55,11 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        # L'atelier écrit dans les packs et exécute leur PHP : réservé aux auteurs, connectés pour de bon (pas seulement
-        # reconnus par le cookie « Rester connecté »).
-        - { path: ^/atelier, allow_if: "is_granted('ROLE_AUTEUR') and is_fully_authenticated()" }
-        # Tableau de bord EasyAdmin : comptes, progression, retours. Même exigence.
-        - { path: ^/admin, allow_if: "is_granted('ROLE_ADMIN') and is_fully_authenticated()" }
+        # L'atelier écrit dans les packs et exécute leur PHP : réservé aux auteurs. Comme /admin, il demande en plus une vraie
+        # connexion, pas seulement le cookie « Rester connecté » (voir FullyAuthenticatedAreas).
+        - { path: ^/atelier, roles: ROLE_AUTEUR }
+        # Tableau de bord EasyAdmin : comptes, progression, retours.
+        - { path: ^/admin, roles: ROLE_ADMIN }
         # Espace des chefs de cohorte ; chaque cohorte est en plus vérifiée par CohortVoter.
         - { path: ^/cohorte, roles: ROLE_CHEF_COHORTE }
 
