@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.20.1 — 2026-10-28
+
 ### Ajouté
 
 - **IndexNow** (Bing, Yandex, Seznam…) : avec `INDEXNOW_KEY` posée, le worker envoie toutes les heures les pages du
