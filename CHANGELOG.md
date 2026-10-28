@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.21.1 — 2026-10-28
+
 ### Corrigé
 
 - Référencement (rapport de Bing, « description manquante ») : la connexion, l'inscription, le mot de passe oublié
