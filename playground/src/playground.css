@@ -1519,3 +1519,18 @@ dialog.confirm p {
 		animation: none;
 	}
 }
+
+/* Bac à sable : pas de consignes, le code et l'aperçu se partagent la largeur. Un repli des consignes retenu
+   ailleurs n'y change rien. Sur petit écran, un volet à la fois, comme partout. */
+.panel.brief[hidden] {
+	display: none;
+}
+@media (min-width: 801px) {
+	.playground:not(.studio) .workspace[data-no-brief] {
+		grid-template-columns: 1fr minmax(320px, 42%);
+		grid-template-rows: minmax(0, 1fr);
+	}
+	.playground:not(.studio) .workspace[data-no-brief][data-preview-folded] {
+		grid-template-columns: 1fr var(--rail);
+	}
+}

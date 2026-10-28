@@ -18,6 +18,7 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   anglais, avec leurs données structurées (`WebApplication`, FAQ), et liens dans l'en-tête et le pied de page du thème
   par défaut. Projets de départ : `platform/resources/bac-a-sable/`. Nuxt n'y est pas proposé : son code s'exécute en
   partie sur l'origine de la plateforme.
+  Deux volets seulement, le code et l'aperçu : pas de volet des consignes.
 - Mesure d'audience : le traceur n'envoie plus le fragment des adresses (`data-exclude-hash`).
 
 ## 3.19.0 — 2026-10-27
