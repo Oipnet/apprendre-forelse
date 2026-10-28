@@ -397,7 +397,9 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	};
 	const act = (shortcut: Shortcut) => {
 		if (shortcut === 'save') void saveNow();
-		else if (shortcut === 'fold-brief') folding.toggle('brief');
+		else if (shortcut === 'fold-brief') {
+			if (!scratch) folding.toggle('brief');
+		}
 		else if (shortcut === 'fold-preview') folding.toggle('preview');
 		else if (!runButton.disabled) runButton.click();
 	};

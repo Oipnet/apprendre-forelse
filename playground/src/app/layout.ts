@@ -12,6 +12,8 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 	const consoleName = framework.console;
 	const foldBrief = foldShortcutLabel(platform, 'B');
 	const foldPreview = foldShortcutLabel(platform, 'P');
+	// Le bac à sable n'a ni consigne ni objectif : deux volets, le code et l'aperçu.
+	const noBrief = config.context === 'scratch';
 	return `
 	<header class="topbar">
 		<div class="crumbs">
@@ -19,7 +21,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 			<span class="sep">›</span><a class="crumb-track" href="${escapeHtml(config.back.url)}">${escapeHtml(config.back.title)}</a><span class="sep crumb-track">›</span>${crumbs(exercise)}<span class="done-chip" id="done-chip" hidden title="${m.layout.doneChipTitle}"><span aria-hidden="true">✓</span> ${m.layout.doneChip}</span>
 		</div>
 		<nav class="pane-switch" aria-label="${m.layout.paneSwitch}">
-			<button data-pane="brief">${m.layout.brief}</button>
+			<button data-pane="brief"${noBrief ? ' hidden' : ''}>${m.layout.brief}</button>
 			<button data-pane="code" class="active">${m.layout.code}</button>
 			<button data-pane="preview">${m.layout.preview}</button>
 		</nav>
@@ -39,8 +41,8 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 		</div>
 	</header>
 	${screenNoteHtml(navigateurIntegre(userAgent))}
-	<main class="workspace" data-pane="code">
-		<aside class="panel brief" id="pane-brief" aria-label="${m.layout.brief}">
+	<main class="workspace" data-pane="code"${noBrief ? ' data-no-brief' : ''}>
+		<aside class="panel brief" id="pane-brief" aria-label="${m.layout.brief}"${noBrief ? ' hidden' : ''}>
 			${railHtml('brief', '📋', m.layout.brief, foldBrief)}
 			${foldButtonHtml('brief', foldBrief)}
 			<div class="already-done" id="already-done" hidden></div>
