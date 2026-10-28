@@ -7,7 +7,6 @@ use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
 use App\Content\ExerciseStory;
-use App\Content\Framework\FrameworkRegistry;
 use App\Content\Track;
 use App\Theme\Theme;
 use App\Payment\TrackOfferFactory;
@@ -28,7 +27,6 @@ final readonly class CourseSeo
         private PageSeo $seo,
         private SchemaOrg $schema,
         private EnvironmentRegistry $environments,
-        private FrameworkRegistry $frameworks,
         private TrackOfferFactory $offers,
         private TrackSeoText $trackText,
         private ContentRepository $content,
@@ -96,7 +94,7 @@ final readonly class CourseSeo
      */
     public function chapter(Track $track, Chapter $chapter, int $number, array $concepts): void
     {
-        $framework = $this->framework($chapter->environment ?? $track->environment);
+        $framework = $this->framework($track->environmentFor($chapter));
         $count = \count($chapter->exerciseIds);
         $this->seo
             ->setTitle(
@@ -247,9 +245,7 @@ final readonly class CourseSeo
     /** « Symfony », « Laravel »… d'après l'environnement d'exécution. */
     public function framework(string $environmentId): string
     {
-        return $this->environments->has($environmentId)
-            ? $this->environments->get($environmentId)->framework->label
-            : $this->frameworks->default()->label;
+        return $this->environments->frameworkOf($environmentId)->label;
     }
 
     /**

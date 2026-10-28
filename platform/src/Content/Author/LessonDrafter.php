@@ -105,7 +105,7 @@ final class LessonDrafter
     public function brouillon(Track $track, Chapter $chapter): string
     {
         $exercises = $this->content->exercisesOfChapter($track, $chapter);
-        $framework = $this->environments->get($chapter->environment ?? $track->environment)->framework;
+        $framework = $this->environments->get($track->environmentFor($chapter))->framework;
         $blocs = [sprintf("Parcours « %s » : %s\n\nChapitre « %s » (%d exercices).", $track->title, trim($track->description), $chapter->title, \count($exercises))];
         foreach ($exercises as $exercise) {
             $solution = array_filter(

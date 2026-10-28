@@ -569,7 +569,7 @@ final class PackReader
                 $this->files->watch($exercise->directory.'/i18n');
                 foreach ($this->overlays($exercise->directory) as $locale) {
                     $french = $this->files->parse($exercise->directory.'/exercise.yaml');
-                    [$translated, $translatedMeta] = $this->exerciseReader->translate($exercise->directory, $french, $locale, $track->id, $chapter->environment ?? $track->environment);
+                    [$translated, $translatedMeta] = $this->exerciseReader->translate($exercise->directory, $french, $locale, $track->id, $track->environmentFor($chapter));
                     $this->exerciseTranslations[$locale][$track->id][$exerciseId] = $translated;
                     if ($this->source($translatedMeta, $exercise->directory.'/i18n/'.$locale.'/exercise.yaml') !== ExerciseReader::fingerprint($exercise->directory)) {
                         $this->outdatedTranslations[$locale][] = $track->id.'/'.$exerciseId;
@@ -688,7 +688,7 @@ final class PackReader
 
     private function loadChapterExercise(Track $track, Chapter $chapter, string $directory): Exercise
     {
-        $exercise = $this->exerciseReader->read($directory, $track->id, $chapter->environment ?? $track->environment);
+        $exercise = $this->exerciseReader->read($directory, $track->id, $track->environmentFor($chapter));
         // `base` doit désigner un exercice précédent : pas de cycle possible.
         if (null !== $exercise->base && !isset($this->exercises[$track->id][$exercise->base])) {
             throw new ContentException(sprintf('Exercice « %s » : la base « %s » doit être un exercice précédent du parcours.', $exercise->id, $exercise->base));

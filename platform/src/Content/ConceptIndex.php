@@ -2,7 +2,6 @@
 
 namespace App\Content;
 
-use App\Content\Framework\FrameworkRegistry;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 use Symfony\Contracts\Service\ResetInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -84,7 +83,7 @@ final class ConceptIndex implements ResetInterface
         $counts = [];
         foreach ($index as $slug => $entry) {
             foreach ($entry['exercises'] as $row) {
-                $framework = $this->environments->has($row['exercise']->environment) ? $this->environments->get($row['exercise']->environment)->framework->id : FrameworkRegistry::DEFAULT;
+                $framework = $this->environments->frameworkOf($row['exercise']->environment)->id;
                 $counts[$framework][$slug] = ($counts[$framework][$slug] ?? 0) + 1;
             }
             foreach ($entry['practices'] as $practice) {
