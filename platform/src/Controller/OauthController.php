@@ -49,8 +49,11 @@ final class OauthController extends AbstractController
     private const string PENDING = 'oauth.pending';
     /** Se connecter ; lier le fournisseur au compte connecté ; confirmer son identité (compte sans mot de passe). */
     private const array MODES = ['connexion', 'lier', 'confirmer'];
-    /** Les fournisseurs connus : la route ne capture pas d'autres adresses (/connexion/…, /inscription/…). */
-    private const string PROVIDERS = 'github|google|linkedin';
+    /**
+     * Un nom de fournisseur : un nouveau fournisseur n'a pas à être ajouté ici, et un nom inconnu (ou sans
+     * identifiants) répond 404 dans provider().
+     */
+    private const string PROVIDERS = '[a-z]+';
 
     public function __construct(
         private readonly OauthProviders $providers,

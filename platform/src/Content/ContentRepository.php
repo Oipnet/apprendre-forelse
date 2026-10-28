@@ -42,7 +42,7 @@ final class ContentRepository implements ResetInterface
     /** Identifiant réservé : un exercice de parcours ne peut pas s'appeler ainsi (voir /parcours/{parcours}/acheter). */
     public const string PURCHASE = 'acheter';
 
-    private readonly PackLoader $loader;
+    private readonly ContentSource $loader;
     private ?LoadedContent $content = null;
     private ?ContentIndex $index = null;
     private ?ExerciseSources $sources = null;
@@ -58,8 +58,10 @@ final class ContentRepository implements ResetInterface
         /** Sans pool (tests, outils), le contenu est relu à chaque instance. */
         #[Autowire(service: 'content.cache')]
         ?CacheItemPoolInterface $cache = null,
+        /** D'où vient le contenu ; sans elle, les packs de $packPaths (dans l'application : PackLoader, même réglage). */
+        ?ContentSource $source = null,
     ) {
-        $this->loader = new PackLoader($packPaths, $environments, $version, $cache);
+        $this->loader = $source ?? new PackLoader($packPaths, $environments, $version, $cache);
     }
 
     /** Oublie ce qui a été lu, cache compris : à appeler après avoir écrit dans un pack (voir l'atelier). */

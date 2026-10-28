@@ -5,7 +5,8 @@ namespace App\Account\Oauth;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
 /**
- * Les fournisseurs d'identité connus, dans l'ordre des boutons. Exposé aux gabarits (global Twig « oauth ») : un
+ * Les fournisseurs d'identité connus, dans l'ordre des boutons : celui de la priorité de leur service
+ * (`#[AsTaggedItem(priority: …)]`, GitHub d'abord, c'est celui que les développeurs attendent). Exposé aux gabarits (global Twig « oauth ») : un
  * fournisseur sans identifiants n'y apparaît pas, ni bouton, ni mention dans la politique de confidentialité.
  */
 final readonly class OauthProviders
@@ -22,8 +23,6 @@ final readonly class OauthProviders
         foreach ($providers as $provider) {
             $byName[$provider->name()] = $provider;
         }
-        // GitHub d'abord : c'est celui que les développeurs attendent.
-        uksort($byName, static fn (string $a, string $b) => array_search($a, ['github', 'google', 'linkedin'], true) <=> array_search($b, ['github', 'google', 'linkedin'], true));
         $this->providers = $byName;
     }
 

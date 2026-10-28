@@ -3,6 +3,7 @@
 namespace App\Account\Oauth;
 
 use App\Entity\ExternalIdentity;
+use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -11,6 +12,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *
  * Facultative : sans GOOGLE_CLIENT_ID ni GOOGLE_CLIENT_SECRET, le bouton n'apparaît nulle part.
  */
+#[AsTaggedItem(priority: 20)]
 final readonly class GoogleClient extends OpenIdConnectClient
 {
     public function __construct(

@@ -5,6 +5,7 @@ namespace App\Controller\Api;
 use App\Api\CompletionInput;
 use App\Api\DraftInput;
 use App\Api\ExerciseAccessGuard;
+use App\Api\GuestProgressImporter;
 use App\Api\GuestProgressInput;
 use App\Api\ExerciseLocator;
 use App\Content\Exercise;
@@ -84,14 +85,14 @@ final class ProgressApiController extends AbstractController
      * @param list<GuestProgressInput> $items
      */
     #[Route('/import', name: 'api_progress_import', methods: ['POST'], priority: 10)]
-    public function import(#[MapRequestPayload(type: GuestProgressInput::class)] array $items): JsonResponse
+    public function import(#[MapRequestPayload(type: GuestProgressInput::class)] array $items, GuestProgressImporter $importer): JsonResponse
     {
         // Largement plus que les exercices qu'un invité peut jouer ; chaque entrée coûte des écritures en base.
         if (\count($items) > self::MAX_IMPORT) {
             throw new HttpException(Response::HTTP_UNPROCESSABLE_ENTITY, $this->translator->trans('api.import_trop_grand', ['max' => self::MAX_IMPORT], 'apprentissage'));
         }
 
-        return $this->json(['imported' => $this->progress->importGuestProgress($this->user(), $items)]);
+        return $this->json(['imported' => $importer->import($this->user(), $items)]);
     }
 
     /** @return array{User, Exercise} */

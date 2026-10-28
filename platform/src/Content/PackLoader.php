@@ -4,6 +4,7 @@ namespace App\Content;
 
 use App\Version;
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Charge les packs (PackReader), en passant par le cache (pool content.cache) : sans lui, chaque page relisait et
@@ -11,7 +12,7 @@ use Psr\Cache\CacheItemPoolInterface;
  * date et sa taille (voir PackFiles::watch()) : un pack déposé, modifié ou retiré se voit à la requête suivante, sans
  * redémarrage.
  */
-final readonly class PackLoader
+final readonly class PackLoader implements ContentSource
 {
     /** À augmenter quand LoadedContent change de forme : un cache d'avant n'a pas la nouvelle clé. */
     private const int CACHE_FORMAT = 9;
@@ -20,10 +21,12 @@ final readonly class PackLoader
      * @param list<string> $packPaths dossiers de packs, ou dossiers contenant des packs
      */
     public function __construct(
+        #[Autowire(env: 'csv:resolve:CONTENT_PACKS_PATHS')]
         private array $packPaths,
         private EnvironmentRegistry $environments,
         private Version $version,
         /** Sans pool (tests, outils), le contenu est relu à chaque chargement. */
+        #[Autowire(service: 'content.cache')]
         private ?CacheItemPoolInterface $cache = null,
     ) {
     }
