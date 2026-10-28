@@ -3,7 +3,7 @@
 namespace App\Scratch;
 
 /**
- * Les frameworks du bac à sable : un projet vierge, sans consigne ni test, où l'on essaie du code et dont on partage
+ * Les frameworks du bac à sable (et PHP sans framework) : un projet vierge, sans consigne ni test, où l'on essaie du code et dont on partage
  * un lien. Chacun tourne sur un environnement d'exécution existant (environments/).
  *
  * Pas de Nuxt : le code d'un projet Nuxt s'exécute en partie sur l'origine de la plateforme (worker du simulateur),
@@ -14,6 +14,7 @@ enum ScratchFramework: string
 {
     case Symfony = 'symfony';
     case Laravel = 'laravel';
+    case Php = 'php';
 
     /** L'environnement d'exécution du projet (environments/<id>). */
     public function environment(): string
@@ -21,6 +22,7 @@ enum ScratchFramework: string
         return match ($this) {
             self::Symfony => 'symfony-8',
             self::Laravel => 'laravel-13',
+            self::Php => 'php-8',
         };
     }
 
@@ -30,6 +32,7 @@ enum ScratchFramework: string
         return match ($this) {
             self::Symfony => 'src/Controller/AccueilController.php',
             self::Laravel => 'routes/web.php',
+            self::Php => 'public/index.php',
         };
     }
 
@@ -57,6 +60,16 @@ enum ScratchFramework: string
                 'resources/views/*.blade.php',
                 'resources/views/*/*.blade.php',
             ],
+            self::Php => [
+                'public/index.php',
+                'templates/accueil.php',
+                'public/*.php',
+                'src/*.php',
+                'src/*/*.php',
+                'templates/*.php',
+                'templates/*/*.php',
+                'bin/*.php',
+            ],
         };
     }
 
@@ -66,6 +79,7 @@ enum ScratchFramework: string
         return match ($this) {
             self::Symfony => 'Symfony',
             self::Laravel => 'Laravel',
+            self::Php => 'PHP',
         };
     }
 }

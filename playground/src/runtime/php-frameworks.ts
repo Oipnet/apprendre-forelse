@@ -14,6 +14,7 @@ import consoleScript from './console.php?raw';
 import artisanScript from './artisan.php?raw';
 import dockerScript from './docker.php?raw';
 import dockerHttpScript from './docker-http.php?raw';
+import phpCliScript from './php-cli.php?raw';
 
 /** Ce que le runtime prête à un framework pour servir l'aperçu. */
 export interface PhpPreviewContext {
@@ -79,6 +80,8 @@ export const PHP_FRAMEWORKS: Record<string, () => PhpFrameworkAdapter> = {
 	symfony: defaultPhpFramework,
 	laravel: () => ({ consoleScript: artisanScript }),
 	docker: dockerAdapter,
+	// PHP sans framework : la console lance un script (« php bin/bonjour.php »), l'aperçu passe par public/index.php.
+	php: () => ({ consoleScript: phpCliScript }),
 };
 
 /**

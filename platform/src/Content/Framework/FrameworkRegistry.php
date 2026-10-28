@@ -6,6 +6,7 @@ use App\Content\ContentException;
 use App\Content\Framework\Profiles\DockerProfile;
 use App\Content\Framework\Profiles\LaravelProfile;
 use App\Content\Framework\Profiles\NuxtProfile;
+use App\Content\Framework\Profiles\PhpProfile;
 use App\Content\Framework\Profiles\SymfonyProfile;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
@@ -14,7 +15,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
  * « app.framework » : ajouter un framework, c'est ajouter un FrameworkProfileProvider, pas retoucher
  * une énumération et neuf `match`.
  *
- * Hors conteneur (tests unitaires), le registre retombe sur les quatre profils livrés.
+ * Hors conteneur (tests unitaires), le registre retombe sur les profils livrés.
  */
 final class FrameworkRegistry
 {
@@ -88,6 +89,6 @@ final class FrameworkRegistry
     /** @return list<FrameworkProfileProvider> */
     private static function builtin(): array
     {
-        return [new SymfonyProfile(), new LaravelProfile(), new DockerProfile(), new NuxtProfile()];
+        return [new SymfonyProfile(), new LaravelProfile(), new DockerProfile(), new NuxtProfile(), new PhpProfile()];
     }
 }

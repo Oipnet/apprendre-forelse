@@ -70,8 +70,8 @@ exercice:
 
 bac_a_sable:
     index:
-        titre: "Online PHP playground: Symfony and Laravel"
-        description: "Write Symfony or Laravel code in your browser, with nothing to install and no account, and share it with a simple link."
+        titre: "Online PHP playground: plain PHP, Symfony and Laravel"
+        description: "Write PHP, Symfony or Laravel code in your browser, with nothing to install and no account, and share it with a simple link."
         fil_ariane: Playground
     symfony:
         titre: "Online Symfony playground"
@@ -81,6 +81,10 @@ bac_a_sable:
         titre: "Online Laravel playground"
         description: "A full Laravel 13 project in your browser: routes, Blade, artisan. Try an idea and share your code with a link, no account needed."
         fil_ariane: Laravel playground
+    php:
+        titre: "Online PHP playground, no framework"
+        description: "A PHP 8.4 project in your browser, with no framework: index.php, autoloaded classes, console scripts. Test PHP code and share it with a link, no account needed."
+        fil_ariane: PHP playground
 
 compte:
     connexion: "Log in to pick up your tracks where you left off, and find your completed exercises and your place on the leaderboard."

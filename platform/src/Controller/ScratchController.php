@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Le bac à sable : un projet Symfony ou Laravel vierge, dans le navigateur, sans compte. On y essaie du code et on en
+ * Le bac à sable : un projet Symfony, Laravel ou PHP sans framework vierge, dans le navigateur, sans compte. On y essaie du code et on en
  * partage le lien : le code voyage dans l'adresse (après le #), le serveur ne le voit ni ne le garde.
  */
 final class ScratchController extends AbstractController
@@ -54,6 +54,13 @@ final class ScratchController extends AbstractController
     public function laravel(Request $request, ScratchProjects $projects, PlaygroundConfigFactory $configs, LessonRenderer $markdown): Response
     {
         return $this->play(ScratchFramework::Laravel, $request, $projects, $configs, $markdown);
+    }
+
+    #[Route(['fr' => '/bac-a-sable/php', 'en' => '/en/playground/php'], name: 'app_scratch_php', methods: ['GET'])]
+    #[Seo('bac_a_sable.php.titre', 'bac_a_sable.php.description', breadcrumb: 'bac_a_sable.php.fil_ariane', domain: 'seo')]
+    public function php(Request $request, ScratchProjects $projects, PlaygroundConfigFactory $configs, LessonRenderer $markdown): Response
+    {
+        return $this->play(ScratchFramework::Php, $request, $projects, $configs, $markdown);
     }
 
     /** Le projet de départ, au format d'un exercice (contrat : playground/src/app/types.ts, ExercisePayload). */

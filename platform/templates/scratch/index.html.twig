@@ -8,7 +8,7 @@
             <h1 class="mt-1 text-3xl font-semibold">{{ 'bac_a_sable.index.titre'|trans }}</h1>
             <p class="lead mt-3 text-lg text-ink-muted">{{ 'bac_a_sable.index.intro'|trans }}</p>
 
-            <ul class="scratch-frameworks mt-8 grid gap-4 sm:grid-cols-2">
+            <ul class="scratch-frameworks mt-8 grid gap-4 sm:grid-cols-3">
                 {% for framework in frameworks %}
                     <li class="rounded-lg border border-line bg-surface p-6">
                         <h2 class="text-xl font-semibold">{{ 'bac_a_sable.projet.titre'|trans({framework: framework.label}) }}</h2>

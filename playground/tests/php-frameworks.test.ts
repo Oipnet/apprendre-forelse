@@ -10,6 +10,10 @@ describe('phpFramework', () => {
 		expect(phpFramework(PHP_FRAMEWORKS, { id: 'laravel', console: 'artisan' })).toBe(PHP_FRAMEWORKS.laravel);
 	});
 
+	it('lance un script PHP pour un projet sans framework', () => {
+		expect(phpFramework(PHP_FRAMEWORKS, { id: 'php', console: 'php' })().consoleScript).toContain('Could not open input file');
+	});
+
 	it('joue la console de Symfony pour un profil inconnu dont la console est bin/console', () => {
 		expect(phpFramework(PHP_FRAMEWORKS, { id: 'sylius', console: 'bin/console' })).toBe(defaultPhpFramework);
 	});
