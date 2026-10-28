@@ -10,6 +10,7 @@ use App\Seo\Page\BlogSeo;
 use App\Seo\SchemaOrg;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -18,17 +19,38 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 final class BlogController extends AbstractController
 {
-    /** Sans article paru, pas de blog : une page vide ne servirait personne, et ne doit pas s'indexer. */
+    /**
+     * Sans article paru, pas de blog : une page vide ne servirait personne, et ne doit pas s'indexer.
+     *
+     * Le plus récent est mis en avant, les autres sont rangés par mois. ?sujet= filtre la liste sur un sujet (voir
+     * Blog::topics()) : la page filtrée se suit mais ne s'indexe pas (SearchIndexing), et un sujet inconnu répond 404.
+     */
     #[Route(['fr' => '/blog', 'en' => '/en/blog'], name: 'app_blog', methods: ['GET'])]
-    public function index(Blog $blog, BlogSeo $seo): Response
+    public function index(Blog $blog, BlogSeo $seo, #[MapQueryParameter] ?string $sujet = null): Response
     {
         if (!$blog->isOpen()) {
             throw $this->createNotFoundException();
         }
+        $topics = $blog->topics();
+        if (null !== $sujet && !isset($topics[$sujet])) {
+            throw $this->createNotFoundException();
+        }
         $articles = $blog->articles();
         $seo->index($articles);
+        $listed = null === $sujet ? \array_slice($articles, 1) : $blog->articlesAbout($sujet);
 
-        return $this->render('blog/index.html.twig', ['articles' => $articles]);
+        return $this->render('blog/index.html.twig', [
+            'articles' => $articles,
+            'featured' => null === $sujet ? $articles[0] : null,
+            'months' => Blog::byMonth($listed),
+            'topics' => $topics,
+            'topic' => $sujet,
+            'count' => null === $sujet ? \count($articles) : \count($listed),
+            'languages' => array_values(array_filter(
+                [Article::LOCALE, ...Article::TRANSLATIONS],
+                static fn (string $locale) => $locale !== $blog->locale() && $blog->isOpen($locale),
+            )),
+        ]);
     }
 
     /**

@@ -48,6 +48,9 @@ final readonly class SearchIndexing
     /** Filtre du catalogue des parcours : même règle. */
     public const array TRACK_FILTERS = ['framework'];
 
+    /** Filtre du blog par sujet : même règle. */
+    public const array BLOG_FILTERS = ['sujet'];
+
     /** Attribut de requête posé par markThin() : une page publique trop mince pour être proposée aux moteurs. */
     private const string THIN = '_seo_thin';
 
@@ -97,6 +100,7 @@ final readonly class SearchIndexing
         $filters = match (self::route($request)) {
             'app_practice' => self::PRACTICE_FILTERS,
             'app_tracks' => self::TRACK_FILTERS,
+            'app_blog' => self::BLOG_FILTERS,
             default => [],
         };
         if ($request->attributes->getBoolean(self::THIN) || array_intersect($filters, array_keys($request->query->all()))) {

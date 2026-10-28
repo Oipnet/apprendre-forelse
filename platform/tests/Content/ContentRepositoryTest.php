@@ -417,6 +417,22 @@ final class ContentRepositoryTest extends TestCase
         $this->assertSame('2026-09-05', $repository->findArticle('les-tests-en-direct')?->modified(), 'Sans révision, la date de parution.');
         $this->assertSame('nouveaute-recente', $article->practice, 'L\'exercice de Pratique dont part l\'article.');
         $this->assertNull($repository->findArticle('les-tests-en-direct')?->practice);
+        $this->assertSame(['Symfony', 'Coulisses'], $article->tags, 'Les sujets, tels qu\'ils s\'affichent.');
+        $this->assertSame(['symfony' => 'Symfony', 'coulisses' => 'Coulisses'], $article->topics(), 'Et leur filtre dans l\'adresse.');
+    }
+
+    public function testUneHeureOrdonneLesArticlesDuMemeJour(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P");
+        $filesystem->dumpFile($this->tmp.'/p/articles/a-le-matin.md', "---\ntitle: T\ndescription: D\npublished: 2026-10-28 07:00:00\n---\nTexte");
+        $filesystem->dumpFile($this->tmp.'/p/articles/b-sans-heure.md', "---\ntitle: T\ndescription: D\npublished: 2026-10-28\n---\nTexte");
+        $filesystem->dumpFile($this->tmp.'/p/articles/c-l-apres-midi.md', "---\ntitle: T\ndescription: D\npublished: 2026-10-28 14:00:00\n---\nTexte");
+
+        $articles = $this->repository($this->tmp)->articles();
+
+        $this->assertSame(['c-l-apres-midi', 'a-le-matin', 'b-sans-heure'], array_keys($articles), 'Sans heure, un article est du matin (minuit).');
+        $this->assertFalse($articles['c-l-apres-midi']->isScheduled(new \DateTimeImmutable('2026-10-28 08:00:00')), 'L\'heure ordonne, elle ne programme pas.');
     }
 
     /** @return iterable<string, array{string, string, string}> */
@@ -432,6 +448,9 @@ final class ContentRepositoryTest extends TestCase
         yield 'sans texte' => ['a', "---\n$header\n---\n\n", 'article sans texte'];
         yield 'description en HTML' => ['a', "---\ntitle: T\ndescription: <b>D</b>\npublished: 2026-10-06\n---\nTexte", 'sans balise HTML'];
         yield 'visibilité' => ['a', "---\n$header\nvisibility: secret\n---\nTexte", 'visibilité « secret » inconnue'];
+        yield 'sujets en texte' => ['a', "---\n$header\ntags: Symfony\n---\nTexte", '« tags » est une liste de sujets'];
+        yield 'sujet vide' => ['a', "---\n$header\ntags: [Symfony, '']\n---\nTexte", 'chaque sujet de « tags » est un texte court'];
+        yield 'sujet en double' => ['a', "---\n$header\ntags: [Sécurité, securite]\n---\nTexte", 'sujet « securite » donné deux fois'];
         yield 'exercice inconnu' => ['a', "---\n$header\npractice: inconnu\n---\nTexte", '« practice » nomme l\'exercice de Pratique « inconnu », introuvable'];
     }
 

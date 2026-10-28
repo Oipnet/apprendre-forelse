@@ -4,6 +4,7 @@ description: Comment un vrai projet Symfony tourne entièrement dans le navigate
 published: 2026-09-20
 updated: 2026-09-25
 practice: nouveaute-recente
+tags: [Symfony, Coulisses]
 ---
 
 # Symfony dans le navigateur, sans serveur
