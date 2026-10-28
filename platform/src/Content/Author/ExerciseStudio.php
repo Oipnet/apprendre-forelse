@@ -11,6 +11,7 @@ use App\Content\ContentException;
 use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\Exercise;
+use App\Content\ExerciseOwner;
 use App\Content\Pack;
 use App\Content\Practice;
 use App\Content\Track;
@@ -44,7 +45,7 @@ final class ExerciseStudio
      * Sans le filtre de PracticeVisibility (ExerciseLocator) : l'atelier sert à écrire les exercices en préparation
      * ou programmés, qu'un auteur doit donc trouver même s'il n'est pas administrateur.
      *
-     * @return array{Track|Pack, Exercise}|null
+     * @return array{ExerciseOwner, Exercise}|null
      */
     public function trouver(?string $trackId, string $exerciseId): ?array
     {
@@ -112,7 +113,7 @@ final class ExerciseStudio
     }
 
     /** Le dossier du parcours, ou du pack pour un exercice de Pratique, accepte-t-il l'écriture ? */
-    public function modifiable(Track|Pack $owner): bool
+    public function modifiable(ExerciseOwner $owner): bool
     {
         return $this->writability->writable($owner);
     }
@@ -126,7 +127,7 @@ final class ExerciseStudio
      *
      * @return string|null le message d'erreur du format (rien n'a été enregistré), ou null si tout est bon
      */
-    public function enregistrer(Track|Pack $owner, Exercise $exercise, array $fichiers): ?string
+    public function enregistrer(ExerciseOwner $owner, Exercise $exercise, array $fichiers): ?string
     {
         $this->writability->assert($owner);
         $avant = $this->fichiers->read($exercise->directory);
@@ -224,10 +225,10 @@ final class ExerciseStudio
      *
      * Un exercice qui sert de base à un autre ne peut pas partir : le fil rouge se casserait.
      */
-    public function supprimer(Track|Pack $owner, Exercise $exercise): void
+    public function supprimer(ExerciseOwner $owner, Exercise $exercise): void
     {
         $this->writability->assert($owner);
-        if ($owner instanceof Pack) {
+        if (!$owner instanceof Track) {
             (new Filesystem())->remove($exercise->directory);
             $this->content->forget();
 

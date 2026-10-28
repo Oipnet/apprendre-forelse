@@ -3,8 +3,7 @@
 namespace App\Content\Author;
 
 use App\Content\ContentException;
-use App\Content\Pack;
-use App\Content\Track;
+use App\Content\ExerciseOwner;
 
 /**
  * Un pack monté en lecture seule (la production) ne s'écrit pas : la règle, commune à tout l'atelier.
@@ -23,15 +22,15 @@ final readonly class PackWritability
         $this->isWritable = $isWritable ?? is_writable(...);
     }
 
-    public function writable(Track|Pack $owner): bool
+    public function writable(ExerciseOwner $owner): bool
     {
         return ($this->isWritable)($owner->directory);
     }
 
-    public function assert(Track|Pack $owner): void
+    public function assert(ExerciseOwner $owner): void
     {
         if (!$this->writable($owner)) {
-            throw new ContentException(sprintf('%s « %s » n\'est pas modifiable (dossier en lecture seule).', $owner instanceof Pack ? 'Le pack' : 'Le parcours', $owner->id));
+            throw new ContentException(sprintf('%s « %s » n\'est pas modifiable (dossier en lecture seule).', $owner->holdsPractice() ? 'Le pack' : 'Le parcours', $owner->id));
         }
     }
 }

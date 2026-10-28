@@ -2,7 +2,7 @@
 
 namespace App\Content;
 
-final readonly class Track
+final readonly class Track implements ExerciseOwner
 {
     /**
      * @param list<Chapter> $chapters
@@ -42,6 +42,11 @@ final readonly class Track
     public const string VISIBILITY_PUBLIC = 'public';
     public const string VISIBILITY_ADMIN = 'admin';
     public const array VISIBILITIES = [self::VISIBILITY_PUBLIC, self::VISIBILITY_ADMIN];
+
+    public function holdsPractice(): bool
+    {
+        return false;
+    }
 
     /** Réservé aux administrateurs (et aux cohortes qui l'ont choisi) : absent des listes et introuvable pour les autres. */
     public function isRestricted(): bool

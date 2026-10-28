@@ -2,7 +2,7 @@
 
 namespace App\Content;
 
-final readonly class Pack
+final readonly class Pack implements ExerciseOwner
 {
     /**
      * @param list<string> $trackIds
@@ -21,5 +21,10 @@ final readonly class Pack
         /** @var list<string> exercices de Pratique (dossiers de practice/) */
         public array $practiceIds = [],
     ) {
+    }
+
+    public function holdsPractice(): bool
+    {
+        return true;
     }
 }

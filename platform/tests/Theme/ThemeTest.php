@@ -2,8 +2,10 @@
 
 namespace App\Tests\Theme;
 
+use App\Share\ShareCardStyle;
 use App\Share\ShareImageRenderer;
 use App\Theme\Theme;
+use App\Theme\ThemeColors;
 use App\Theme\ThemeLoader;
 use App\Tests\ThemeTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -519,14 +521,14 @@ final class ThemeTest extends TestCase
 
     public function testLesImagesDePartageSuiventLeThemeSansRienDeclarer(): void
     {
-        $card = self::theme()->shareCard();
+        $card = (new ShareCardStyle(self::theme()))->style();
         $this->assertSame(['image' => null, 'font' => null, 'text_font' => null], array_intersect_key($card, ['image' => 1, 'font' => 1, 'text_font' => 1]), 'Le moteur : ses polices (ShareImageRenderer).');
-        $this->assertSame(Theme::EMAIL_COLORS['accent'], $card['accent']);
+        $this->assertSame(ThemeColors::EMAIL['accent'], $card['accent']);
 
         $this->assertSame(ShareImageRenderer::EDITOR, $card['editor'], 'L\'éditeur stylisé : celui du moteur.');
 
         $this->write("name: A\ncolors:\n  accent: '#9a3412'\n  background: '#faf7f2'\neditor:\n  accent-text: '#9186f5'\n  background: '#16171d'\n");
-        $card = self::theme($this->tmp)->shareCard();
+        $card = (new ShareCardStyle(self::theme($this->tmp)))->style();
         $this->assertSame('#9a3412', $card['accent'], 'Les couleurs déclarées du site.');
         $this->assertSame('#faf7f2', $card['background']);
         $this->assertSame(['background' => '#16171d', 'accent' => '#9186f5'], array_intersect_key($card['editor'], ['background' => 1, 'accent' => 1]), 'Les couleurs de l\'éditeur du thème.');
@@ -539,7 +541,7 @@ final class ThemeTest extends TestCase
         touch($this->tmp.'/polices/titres.ttf');
         touch($this->tmp.'/fond.png');
         $this->write("name: A\nshare_card:\n  image: fond.png\n  font: polices/titres.ttf\n  ink: '#111111'\n");
-        $card = self::theme($this->tmp)->shareCard();
+        $card = (new ShareCardStyle(self::theme($this->tmp)))->style();
 
         $this->assertSame($this->tmp.'/fond.png', $card['image']);
         $this->assertSame($this->tmp.'/polices/titres.ttf', $card['font']);
@@ -549,15 +551,15 @@ final class ThemeTest extends TestCase
 
     public function testLImageDePartagePrendLeLogoDesEmails(): void
     {
-        $this->assertNull(self::theme()->shareCard()['logo'], 'Le moteur n\'a pas de logo.');
+        $this->assertNull((new ShareCardStyle(self::theme()))->style()['logo'], 'Le moteur n\'a pas de logo.');
 
         touch($this->tmp.'/logo.webp');
         touch($this->tmp.'/logo.png');
         $this->write("name: Forelse\nlogo: logo.webp\n");
-        $this->assertNull(self::theme($this->tmp)->shareCard()['logo'], 'Un webp seul : pas de logo (comme dans les emails).');
+        $this->assertNull((new ShareCardStyle(self::theme($this->tmp)))->style()['logo'], 'Un webp seul : pas de logo (comme dans les emails).');
 
         $this->write("name: Forelse\nlogo: logo.webp\nemail_logo: logo.png\n");
-        $card = self::theme($this->tmp)->shareCard();
+        $card = (new ShareCardStyle(self::theme($this->tmp)))->style();
         $this->assertSame([$this->tmp.'/logo.png', 'Forelse'], [$card['logo'], $card['name']]);
     }
 
@@ -582,7 +584,7 @@ final class ThemeTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage($message);
-        self::theme($this->tmp)->shareCard();
+        (new ShareCardStyle(self::theme($this->tmp)))->style();
     }
 
     private function write(string $yaml, string $file = 'theme.yaml'): void

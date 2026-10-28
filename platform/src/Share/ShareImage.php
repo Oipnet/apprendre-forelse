@@ -2,7 +2,6 @@
 
 namespace App\Share;
 
-use App\Theme\Theme;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -21,7 +20,7 @@ final readonly class ShareImage
     private const int DRAWING = 3;
 
     public function __construct(
-        private Theme $theme,
+        private ShareCardStyle $style,
         private ShareImageRenderer $renderer,
         #[Autowire('%kernel.cache_dir%/partage')]
         private string $directory,
@@ -32,7 +31,7 @@ final readonly class ShareImage
     /** L'empreinte courte de l'image, pour l'adresse (« ?v=… »). */
     public function version(ShareCard $card): string
     {
-        $style = $this->theme->shareCard();
+        $style = $this->style->style();
         $files = array_filter([$style['image'], $style['logo'], $style['font'], $style['text_font']]);
 
         return substr(hash('xxh128', serialize([
@@ -50,7 +49,7 @@ final readonly class ShareImage
         $path = $this->directory.'/'.$this->version($card).'.png';
         if (!is_file($path)) {
             // Écrite à côté puis renommée : deux requêtes simultanées ne servent jamais une image à moitié écrite.
-            $this->filesystem->dumpFile($path, $this->renderer->render($card, $this->theme->shareCard()));
+            $this->filesystem->dumpFile($path, $this->renderer->render($card, $this->style->style()));
         }
 
         return $path;
