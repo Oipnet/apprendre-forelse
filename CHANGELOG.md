@@ -13,6 +13,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - Référencement (rapport de Bing, « description manquante ») : la connexion, l'inscription, le mot de passe oublié
   et le classement ont une meta description, en français et en anglais (elles restent en noindex). robots.txt
   interdit les adresses `?suite=` : le lien « Connexion » de chaque page en créait une par page du site.
+- `docker compose exec app php bin/console …` générait des adresses en `http://localhost:8000` (sitemap, IndexNow) :
+  les compose de production et d'auto-hébergement posent maintenant `DEFAULT_URI` et `SANDBOX_ORIGIN` (d'après
+  `APP_URL` et `SANDBOX_URL`), que seul le script de démarrage de l'image fixait. IndexNow refuse d'envoyer des
+  adresses locales, et `app:seo:indexnow` affiche la raison d'un refus (code HTTP et réponse d'IndexNow).
 
 ## 3.21.0 — 2026-10-28
 

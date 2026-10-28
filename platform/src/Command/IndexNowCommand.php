@@ -44,13 +44,16 @@ final readonly class IndexNowCommand
 
             return Command::SUCCESS;
         }
-        $submitted = $this->indexNow->submit();
-        if (0 === $submitted) {
-            $io->error('Envoi refusé ou impossible : voir les journaux (« IndexNow »).');
+        $submission = $this->indexNow->submit();
+        if (null !== $submission->error) {
+            if ($submission->submitted > 0) {
+                $io->writeln(sprintf('%d page(s) envoyée(s) avant l\'échec.', $submission->submitted));
+            }
+            $io->error($submission->error);
 
             return Command::FAILURE;
         }
-        $io->success(sprintf('%d page(s) envoyée(s) à IndexNow.', $submitted));
+        $io->success(sprintf('%d page(s) envoyée(s) à IndexNow.', $submission->submitted));
 
         return Command::SUCCESS;
     }

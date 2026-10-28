@@ -3,6 +3,7 @@
 namespace App\Tests\Seo;
 
 use App\Seo\IndexNow;
+use App\Seo\IndexNowSubmission;
 use App\Seo\Sitemap;
 use App\Tests\DatabaseTrait;
 use Psr\Log\NullLogger;
@@ -36,54 +37,72 @@ final class IndexNowTest extends WebTestCase
         $http = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
             $this->requests[] = ['url' => $url, 'body' => json_decode($options['body'], true)];
 
-            return new MockResponse('', ['http_code' => $this->status]);
+            return new MockResponse(429 === $this->status ? 'Trop de requêtes' : '', ['http_code' => $this->status]);
         });
 
         return new IndexNow($container->get(Sitemap::class), $http, $this->cache, $container->get(UrlGeneratorInterface::class), new NullLogger(), $key, $indexing);
     }
 
-    public function testTheFirstRunSubmitsTheWholeSitemapThenOnlyChanges(): void
+    /** Le noyau, avec l'adresse publique d'un vrai site : IndexNow refuse les adresses en localhost. */
+    private function boot(string $host = 'apprendre.example'): void
     {
         self::bootKernel();
         $this->resetDatabase();
+        static::getContainer()->get(UrlGeneratorInterface::class)->getContext()->setHost($host);
+    }
+
+    public function testTheFirstRunSubmitsTheWholeSitemapThenOnlyChanges(): void
+    {
+        $this->boot();
         $sitemap = array_column(static::getContainer()->get(Sitemap::class)->entries(), 'loc');
         $indexNow = $this->indexNow();
 
-        $this->assertSame(\count($sitemap), $indexNow->submit());
+        $this->assertSame(\count($sitemap), $indexNow->submit()->submitted);
         $this->assertCount(1, $this->requests);
         $this->assertSame(IndexNow::ENDPOINT, $this->requests[0]['url']);
-        $this->assertSame(['host' => 'localhost', 'key' => self::KEY, 'keyLocation' => 'http://localhost/indexnow.txt', 'urlList' => $sitemap], $this->requests[0]['body']);
+        $this->assertSame(['host' => 'apprendre.example', 'key' => self::KEY, 'keyLocation' => 'http://apprendre.example/indexnow.txt', 'urlList' => $sitemap], $this->requests[0]['body']);
 
         // Rien n'a changé : personne n'est contacté.
         $this->assertSame([], $indexNow->pending());
-        $this->assertSame(0, $indexNow->submit());
+        $this->assertEquals(new IndexNowSubmission(0), $indexNow->submit());
         $this->assertCount(1, $this->requests);
     }
 
     public function testARefusedSubmissionIsRetriedOnTheNextRun(): void
     {
-        self::bootKernel();
-        $this->resetDatabase();
+        $this->boot();
         $indexNow = $this->indexNow();
 
         $this->status = 429;
-        $this->assertSame(0, $indexNow->submit());
+        $submission = $indexNow->submit();
+        $this->assertSame(0, $submission->submitted);
+        $this->assertStringContainsString('HTTP 429', (string) $submission->error);
+        $this->assertStringContainsString('Trop de requêtes', (string) $submission->error, 'Le corps de la réponse dit pourquoi.');
         $this->assertNotSame([], $indexNow->pending());
 
         $this->status = 202;
-        $this->assertGreaterThan(0, $indexNow->submit());
+        $this->assertGreaterThan(0, $indexNow->submit()->submitted);
         $this->assertSame([], $indexNow->pending());
+    }
+
+    public function testLocalAddressesAreNotSent(): void
+    {
+        $this->boot('localhost');
+
+        $submission = $this->indexNow()->submit();
+        $this->assertSame(0, $submission->submitted);
+        $this->assertStringContainsString('DEFAULT_URI', (string) $submission->error);
+        $this->assertSame([], $this->requests);
     }
 
     public function testNothingIsSentWithoutAValidKeyOrWhenIndexingIsOff(): void
     {
-        self::bootKernel();
-        $this->resetDatabase();
+        $this->boot();
 
         foreach ([$this->indexNow(''), $this->indexNow('trop'), $this->indexNow('cle/invalide!'), $this->indexNow(self::KEY, false)] as $indexNow) {
             $this->assertFalse($indexNow->isEnabled());
             $this->assertNull($indexNow->key());
-            $this->assertSame(0, $indexNow->submit());
+            $this->assertEquals(new IndexNowSubmission(0), $indexNow->submit());
         }
         $this->assertSame([], $this->requests);
     }

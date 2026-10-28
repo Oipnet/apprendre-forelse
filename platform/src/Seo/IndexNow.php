@@ -62,7 +62,7 @@ final readonly class IndexNow
     #[AsMessageHandler]
     public function onSchedule(SubmitToIndexNow $message): int
     {
-        return $this->submit();
+        return $this->submit()->submitted;
     }
 
     /**
@@ -75,20 +75,26 @@ final readonly class IndexNow
         return self::changed(array_column($this->sitemap->entries(), 'lastmod', 'loc'), $this->sent());
     }
 
-    /** @return int adresses envoyées (0 si rien n'a changé, si l'envoi a échoué ou si IndexNow est éteint) */
-    public function submit(): int
+    /** Les adresses envoyées (aucune si rien n'a changé ou si IndexNow est éteint), et la raison d'un échec. */
+    public function submit(): IndexNowSubmission
     {
         if (!$this->isEnabled()) {
-            return 0;
+            return new IndexNowSubmission(0);
         }
         $entries = array_column($this->sitemap->entries(), 'lastmod', 'loc');
         $sent = $this->sent();
         $pending = self::changed($entries, $sent);
 
         $keyLocation = $this->urls->generate('app_indexnow_key', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        // Une commande lancée hors du démarrage de l'image (docker compose exec) sans DEFAULT_URI génère des adresses
+        // locales : IndexNow les refuserait, mieux vaut le dire.
+        if ([] !== $pending && \in_array(parse_url($keyLocation, \PHP_URL_HOST), ['localhost', '127.0.0.1'], true)) {
+            return new IndexNowSubmission(0, sprintf('Adresses locales (%s) : DEFAULT_URI doit valoir l\'adresse publique du site (APP_URL).', $keyLocation));
+        }
         $submitted = 0;
+        $error = null;
         foreach (array_chunk($pending, self::BATCH) as $urls) {
-            if (!$this->post($keyLocation, $urls)) {
+            if (null !== ($error = $this->post($keyLocation, $urls))) {
                 break;
             }
             foreach ($urls as $url) {
@@ -102,33 +108,42 @@ final readonly class IndexNow
             $this->logger->info('IndexNow : {count} adresse(s) envoyée(s).', ['count' => $submitted]);
         }
 
-        return $submitted;
+        return new IndexNowSubmission($submitted, $error);
     }
 
-    /** @param list<string> $urls */
-    private function post(string $keyLocation, array $urls): bool
+    /**
+     * @param list<string> $urls
+     *
+     * @return string|null la raison du refus, null si IndexNow a reçu les adresses
+     */
+    private function post(string $keyLocation, array $urls): ?string
     {
         try {
-            $status = $this->httpClient->request('POST', self::ENDPOINT, ['json' => [
+            $response = $this->httpClient->request('POST', self::ENDPOINT, ['json' => [
                 'host' => parse_url($keyLocation, \PHP_URL_HOST),
                 'key' => $this->key,
                 'keyLocation' => $keyLocation,
                 'urlList' => $urls,
-            ], 'timeout' => 30])->getStatusCode();
+            ], 'timeout' => 30]);
+            $status = $response->getStatusCode();
+            // Le corps d'un refus dit ce qui ne va pas (« key not valid », « url not allowed »…) : lu sans lever d'exception.
+            $body = 200 === $status || 202 === $status ? '' : mb_substr(trim($response->getContent(false)), 0, 300);
         } catch (ExceptionInterface $exception) {
-            $this->logger->warning('IndexNow injoignable : {message}. Nouvel essai au prochain passage.', ['message' => $exception->getMessage()]);
+            $error = sprintf('IndexNow injoignable : %s', $exception->getMessage());
+            $this->logger->warning($error.'. Nouvel essai au prochain passage.');
 
-            return false;
+            return $error;
         }
         // 200 : reçu ; 202 : reçu, clé pas encore vérifiée (premier envoi). 403 : clé introuvable sur le site ; 422 :
         // adresses d'un autre hôte ; 429 : trop d'envois.
         if (200 !== $status && 202 !== $status) {
-            $this->logger->warning('IndexNow a refusé l\'envoi (HTTP {status}). Nouvel essai au prochain passage.', ['status' => $status]);
+            $error = sprintf('IndexNow a refusé l\'envoi (HTTP %d, hôte %s, clé à %s)%s', $status, parse_url($keyLocation, \PHP_URL_HOST), $keyLocation, '' === $body ? '' : ' : '.$body);
+            $this->logger->warning($error.'. Nouvel essai au prochain passage.');
 
-            return false;
+            return $error;
         }
 
-        return true;
+        return null;
     }
 
     /**
