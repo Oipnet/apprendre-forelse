@@ -10,6 +10,7 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- Sécurité : symfony/mime 8.1.10 (CVE-2026-45070, injection d'en-tête dans les emails par un nom de paramètre MIME).
 - Durcissements : `nosniff` et HSTS aussi sur les fichiers servis par Caddy ; un chemin soumis avec un segment `.` ou
   `..` n'est jamais éditable (un joker `*` l'acceptait) ; `SafeRedirect` refuse un saut de ligne final ; le mentor
   n'affiche plus le message brut de l'API du modèle (il part dans les journaux).
