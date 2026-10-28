@@ -6,6 +6,8 @@ use App\Ai\Mentor;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Entity\User;
+use App\Scratch\ScratchFramework;
+use App\Share\ShareLinks;
 use App\Theme\Theme;
 use App\Security\SandboxOrigin;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -46,12 +48,7 @@ final readonly class PlaygroundConfigFactory
             'exerciseUrl' => $this->exerciseUrls->generate('api_exercise', $exercise),
             'sandboxUrl' => $this->sandbox->relayUrl(),
             // La marque, comme dans l'en-tête du site (la page n'a pas cet en-tête : le playground dessine sa barre).
-            'brand' => [
-                'name' => $this->theme->name(),
-                'chip' => $this->theme->chip(),
-                'title' => $this->theme->title(),
-                'logoUrl' => $this->theme->logoLargeUrl(),
-            ],
+            'brand' => $this->brand(),
             // Le lien de retour de la barre : le parcours, ou la liste de la Pratique.
             'back' => null === $track
                 ? ['title' => $this->translator->trans('playground.retour_pratique', [], 'apprentissage'), 'url' => $this->urls->generate('app_practice')]
@@ -73,6 +70,61 @@ final readonly class PlaygroundConfigFactory
             ] : []),
             // Bêta fermée : l'invité sans code d'invitation est orienté vers la liste d'attente plutôt que vers un formulaire qu'il ne peut pas remplir.
             'waitlistUrl' => !$user && $this->inviteOnly ? $this->urls->generate('app_home').'#liste-attente' : null,
+        ];
+    }
+
+    /**
+     * Le bac à sable : un projet sans objectif, gardé dans le navigateur, pour tout visiteur. Ni mentor, ni avis, ni
+     * inscription proposée : on y essaie du code, et on le partage (le code voyage dans l'adresse, voir scratch.ts).
+     *
+     * @return array<string, mixed>
+     */
+    public function scratch(ScratchFramework $framework): array
+    {
+        $user = $this->security->getUser();
+        $page = $this->urls->generate('app_scratch_'.$framework->value);
+        $share = ShareLinks::of(
+            $this->urls->generate('app_scratch_'.$framework->value, [], UrlGeneratorInterface::ABSOLUTE_URL),
+            $this->translator->trans('bac_a_sable.partage.texte', ['framework' => $framework->label()], 'apprentissage'),
+            'bac-a-sable',
+        );
+
+        return [
+            'context' => 'scratch',
+            'exerciseUrl' => $this->urls->generate('api_scratch', ['framework' => $framework->value]),
+            'sandboxUrl' => $this->sandbox->relayUrl(),
+            'brand' => $this->brand(),
+            // Le retour mène au choix du framework.
+            'back' => ['title' => $this->translator->trans('bac_a_sable.retour', [], 'apprentissage'), 'url' => $this->urls->generate('app_scratch')],
+            'progress' => ['mode' => 'local'],
+            'user' => $user instanceof User ? ['name' => $user->getDisplayName(), 'xp' => $user->getXp()] : null,
+            'loginUrl' => $user ? null : $this->urls->generate('app_login', ['suite' => $page]),
+            'registerUrl' => null,
+            'waitlistUrl' => null,
+            'feedbackUrl' => null,
+            'mentor' => null,
+            'share' => ['invite' => $share, 'success' => $share],
+            // Pour aller plus loin, sous la consigne : l'autre framework, et les exercices guidés de la Pratique.
+            'scratch' => [
+                'links' => [
+                    ...array_map(fn (ScratchFramework $other) => [
+                        'title' => $this->translator->trans('bac_a_sable.autre', ['framework' => $other->label()], 'apprentissage'),
+                        'url' => $this->urls->generate('app_scratch_'.$other->value),
+                    ], array_values(array_filter(ScratchFramework::cases(), static fn (ScratchFramework $f) => $f !== $framework))),
+                    ['title' => $this->translator->trans('bac_a_sable.pratique', [], 'apprentissage'), 'url' => $this->urls->generate('app_practice')],
+                ],
+            ],
+        ];
+    }
+
+    /** @return array{name: string, chip: string, title: string, logoUrl: ?string} */
+    private function brand(): array
+    {
+        return [
+            'name' => $this->theme->name(),
+            'chip' => $this->theme->chip(),
+            'title' => $this->theme->title(),
+            'logoUrl' => $this->theme->logoLargeUrl(),
         ];
     }
 }

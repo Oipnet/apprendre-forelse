@@ -20,9 +20,10 @@ import { MentorPanel } from './MentorPanel';
 import { m } from '../i18n';
 import { mesurer } from '../mesure';
 import { bindPaneTabs, bindWorkpanes, bootProgress, fitEditor } from './panes';
-import { ApiProgressStore, LocalProgressStore, type ProgressStore } from './progress';
+import { ApiProgressStore, LocalProgressStore, type ProgressStore, type SavedProgress } from './progress';
 import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
+import { changedFiles, decodeFragment, encodeFragment, withFragment } from './scratch';
 import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
@@ -50,12 +51,19 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const framework = exercise.environment.framework;
 	/** La console du projet, telle qu'un développeur la tape dans son terminal. */
 	const consoleName = framework.console;
-	// Un invité joue la Pratique (sans parcours : clé `formation:null/<id>`, reprise telle quelle par entries/site.ts).
-	const progress: ProgressStore =
-		config.progress.mode === 'api' ? new ApiProgressStore(config.progress.url) : new LocalProgressStore(`formation:${exercise.trackId}/${exercise.id}`, exercise.xp);
 	const practice = config.context === 'practice';
+	/** Le bac à sable : ni objectif ni test, un brouillon dans le navigateur, et le code partagé par l'adresse (scratch.ts). */
+	const scratch = config.context === 'scratch';
+	// Un invité joue la Pratique (sans parcours : clé `formation:null/<id>`, reprise telle quelle par entries/site.ts).
+	// Le brouillon du bac à sable a sa propre clé : il n'a rien à remonter sur un compte.
+	const progress: ProgressStore =
+		config.progress.mode === 'api'
+			? new ApiProgressStore(config.progress.url)
+			: new LocalProgressStore(scratch ? `forelse:bac-a-sable:${exercise.id}` : `formation:${exercise.trackId}/${exercise.id}`, exercise.xp);
+	/** Le code arrivé par un lien partagé : il remplace le brouillon, et l'aperçu attend qu'on accepte de l'exécuter. */
+	const shared = scratch ? decodeFragment(location.hash) : null;
 	/** Ce qui identifie l'exercice dans la mesure d'audience : du contenu public, rien de l'apprenant. */
-	const mesure = { exercice: exercise.id, parcours: exercise.trackId ?? 'pratique' };
+	const mesure = { exercice: exercise.id, parcours: scratch ? 'bac-a-sable' : (exercise.trackId ?? 'pratique') };
 
 	root.innerHTML = layout(exercise, config);
 	const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
@@ -71,7 +79,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	$('#shortcuts').addEventListener('click', () => help.showModal());
 	// Partager l'exercice : comme l'aide, utilisable même si le démarrage échoue. La boîte propose aussi le partage du
 	// système quand le navigateur en a un.
-	if (config.share) {
+	if (config.share && !scratch) {
 		const share = config.share.invite;
 		$<HTMLButtonElement>('#share').addEventListener('click', () => shareDialog(root, share, m.layout.shareTitle, mesure));
 	}
@@ -173,8 +181,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	if (note) $('#boot-first').textContent = note;
 	const demarrage = suivreDemarrage(mesure, note !== null, t0);
 	// Le brouillon d'une session précédente se charge pendant le téléchargement : il fait partie du projet de départ.
-	const depart = progress
-		.load()
+	const depart = (shared ? Promise.resolve<SavedProgress | null>({ files: shared, hintsUsed: 0, completed: false }) : progress.load())
 		.catch(() => null)
 		.then((saved) => {
 			const initial: Record<string, string> = { ...exercise.files };
@@ -275,6 +282,20 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		onDraftError: (error) => status(m.playground.draftNotSaved(error.message), 'ko'),
 	});
 	window.addEventListener('pagehide', () => session.saveOnExit());
+	if (shared) {
+		// Le code partagé devient le brouillon, et l'adresse le perd : recharger la page ne l'imposera plus aux
+		// modifications faites depuis.
+		void session.saveDraft();
+		history.replaceState(history.state, '', location.pathname + location.search);
+	}
+	// Partager le bac à sable : le lien porte les fichiers modifiés, les dernières frappes comprises.
+	if (config.share && scratch) {
+		const share = config.share.invite;
+		$<HTMLButtonElement>('#share').addEventListener('click', async () => {
+			await session.flush().catch(() => false);
+			shareDialog(root, withFragment(share, encodeFragment(changedFiles(session.current, exercise.files))), m.scratch.shareTitle, mesure);
+		});
+	}
 	const [{ EditorPanel, monaco }, { registerCompletion }, { BeforeAfterDialog }] = await editeur;
 	mark('editorLoaded');
 	const editor = new EditorPanel($('#tabs'), $('#editor'), (path, content) => session.edit(path, content));
@@ -323,7 +344,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	});
 	const results = new TestResultsView(root, mentor);
 	const runButton = $<HTMLButtonElement>('#run');
-	runButton.addEventListener('click', async () => {
+	// Le bac à sable n'a pas de tests : « Exécuter » envoie les dernières frappes et recharge l'aperçu.
+	if (scratch) runButton.addEventListener('click', async () => {
+		await session.flush().catch(() => false);
+		reload();
+		mesurer('bac-a-sable-execute', mesure);
+		status(m.scratch.ran, 'ok');
+	});
+	else runButton.addEventListener('click', async () => {
 		runButton.disabled = true;
 		runButton.setAttribute('aria-busy', 'true');
 		mesurer('tests-lances', mesure);
@@ -357,7 +385,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });
 
 	// --- Raccourcis clavier : Monaco les reçoit quand il a le focus, le document ailleurs --------
-	runButton.title = m.playground.runTitle(mod);
+	runButton.title = scratch ? m.scratch.runTitle(mod) : m.playground.runTitle(mod);
 	const saveNow = async () => {
 		try {
 			if (await session.flush()) reload();
@@ -421,6 +449,15 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			folding.showPreviewAlert(m.playground.setupFailedSpoken);
 		}
 	}
+	// Un lien partagé porte le code de quelqu'un d'autre : il se lit dans l'éditeur, mais ne s'exécute qu'avec l'accord
+	// du visiteur. L'aperçu (autre origine, sans cookie) en limite la portée ; une fausse page ou une boucle restent possibles.
+	if (shared) {
+		status(m.scratch.sharedStatus, 'idle');
+		const boot = $('.boot');
+		boot.innerHTML = `<p role="status"><strong>${m.scratch.sharedTitle}</strong></p><p>${m.scratch.sharedDetail}</p><p class="boot-actions"><button type="button" class="primary" data-run-shared>▶ ${m.scratch.sharedRun}</button></p>`;
+		await new Promise<void>((resolve) => boot.querySelector('[data-run-shared]')!.addEventListener('click', () => resolve(), { once: true }));
+		mesurer('bac-a-sable-code-partage-execute', mesure);
+	}
 	apercuPret = true;
 	// Les frappes faites pendant le chargement sont dans PHP avant que l'aperçu ne s'ouvre.
 	await session.flush().catch(() => false);
@@ -434,7 +471,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	overlay.inert = true;
 	overlay.setAttribute('aria-hidden', 'true');
 	mark('ready');
-	demarrage.pret({ compte: config.progress.mode === 'api' });
+	demarrage.pret({ compte: config.progress.mode === 'api', ...(scratch ? { partage: shared !== null } : {}) });
 	status(m.playground.ready(metrics.ready / 1000), 'ok');
 	Object.assign(window, { playground: { metrics, runtime, editor: editor.instance, monaco } }); // debug / mesures
 }

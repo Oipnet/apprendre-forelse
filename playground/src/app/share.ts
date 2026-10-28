@@ -24,12 +24,15 @@ const NETWORKS = [
 	['bluesky', 'Bluesky'],
 ] as const;
 
-/** Les boutons, dans les classes du playground. Le bouton du téléphone reste caché tant que mountShare ne l'a pas vu possible. */
+/**
+ * Les boutons, dans les classes du playground. Le bouton du téléphone reste caché tant que mountShare ne l'a pas vu possible.
+ * Un réseau sans lien (chaîne vide : l'adresse ne tient pas dans son post, voir scratch.ts) n'a pas de bouton.
+ */
 export function shareHtml(links: ShareLinks, title: string): string {
 	return `<div class="share" data-share>
 		<span class="share-title">${m.share.heading(escapeHtml(title))}</span>
 		<button type="button" class="ghost small" data-share-native hidden>${m.share.native}</button>
-		${NETWORKS.map(([key, label]) => `<a class="button ghost small" href="${escapeHtml(links[key])}" target="_blank" rel="noopener noreferrer" data-share-network="${key}">${label}</a>`).join('')}
+		${NETWORKS.filter(([key]) => links[key] !== '').map(([key, label]) => `<a class="button ghost small" href="${escapeHtml(links[key])}" target="_blank" rel="noopener noreferrer" data-share-network="${key}">${label}</a>`).join('')}
 		<button type="button" class="ghost small" data-share-copy>${m.share.copy}</button>
 		<span class="share-status" role="status"></span>
 	</div>`;

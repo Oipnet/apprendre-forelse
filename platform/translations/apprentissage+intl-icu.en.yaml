@@ -270,3 +270,48 @@ playground:
         nuxt:
             demarrage: "Nuxt is simulated in your browser: your pages are rendered on the server, then hydrated, just like with nuxi dev."
             decompression: Unpacking the project
+
+# The playground (scratch/, App\Scratch): a blank project, with no objective, shared by a link.
+bac_a_sable:
+    retour: Playground
+    projet:
+        titre: "{framework} playground"
+    partage:
+        texte: "My {framework} code, to open and edit right in the browser."
+    autre: "Open the {framework} playground"
+    pratique: "Guided exercises, checked by tests: Practice"
+    index:
+        titre: A Symfony or Laravel project, in your browser
+        intro: "Try an idea, reproduce a bug, show code to a colleague: the project runs in the browser, with nothing to install and no account. A link is all it takes to share it."
+        symfony: "Controllers with #[Route], Twig templates and bin/console, on Symfony 8."
+        laravel: "Routes, Blade views and php artisan, on Laravel 13."
+        ouvrir: "Open the {framework} playground"
+        comment: How it works
+        rien_a_installer: Nothing to install.
+        rien_a_installer_detail: "PHP runs in your browser, compiled to WebAssembly. The preview updates as you type."
+        partager: A link to share.
+        partager_detail: "The Share button creates an address that contains your code. Whoever opens it gets the project as it is."
+        prive: Your code stays with you.
+        prive_detail: "It travels in the link, after the #, which the server never receives. Your draft stays in this browser."
+        pratique: "Want some guidance? The <a href=\"{url}\">Practice exercises</a> walk you through what's new in Symfony and Laravel, checked by tests."
+    faq:
+        titre: Frequently asked questions
+        tester:
+            question: "How can I test PHP code online, with nothing to install?"
+            reponse: "Open the Symfony or Laravel playground: PHP 8.4 runs in your browser, compiled to WebAssembly. You edit the code and the preview updates, with no server, no Docker and no Composer."
+        compte:
+            question: "Do I need an account?"
+            reponse: "No. The playground is free and open to everyone. Your draft is kept in your browser: you get it back when you return to the page."
+        partager:
+            question: "How do I share my Symfony or Laravel code?"
+            reponse: "The Share button creates a link that contains your code. Whoever opens it gets the project as it is, can edit it and send you back their version: handy to show a bug, an idea or a solution."
+        confidentialite:
+            question: "Is my code sent to a server?"
+            reponse: "No. The code runs in your browser, and a shared link carries it after the #, a part of the address the browser never sends to the server. Nothing is stored on our side."
+        versions:
+            question: "Which versions of Symfony and Laravel?"
+            reponse: "Symfony 8, with Twig and bin/console, and Laravel 13, with Blade and php artisan, on PHP 8.4. Both projects are full applications: controllers, routes, views, services."
+    symfony:
+        texte: "A real Symfony 8 project runs here, in your browser: write a controller with #[Route], a Twig template or a service, run bin/console, and see the result right away. Ideal to try a feature, reproduce a bug or show code to a colleague, without installing PHP or creating an account."
+    laravel:
+        texte: "A real Laravel 13 project runs here, in your browser: declare routes, write a Blade view or a controller, run php artisan, and see the result right away. Ideal to try a feature, reproduce a bug or show code to a colleague, without installing PHP or creating an account."

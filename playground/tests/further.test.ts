@@ -34,4 +34,11 @@ describe('furtherHtml', () => {
 	it('dans un parcours, n\'ajoute rien', () => {
 		expect(furtherHtml({ practice: null, environment }, { back })).toBe('');
 	});
+
+	it('au bac à sable, mène aux liens donnés par la plateforme, échappés', () => {
+		const html = furtherHtml({ practice: null, environment }, { back, scratch: { links: [{ title: 'Le bac à sable <Laravel>', url: '/bac-a-sable/laravel' }] } });
+
+		expect(html).toContain('<a href="/bac-a-sable/laravel">Le bac à sable &lt;Laravel&gt;</a>');
+		expect(html).not.toContain('/pratique');
+	});
 });

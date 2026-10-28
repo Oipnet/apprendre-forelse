@@ -35,7 +35,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 			<button id="solution" class="ghost" hidden><span class="icon" aria-hidden="true">📖</span><span class="label">${m.layout.solution}</span></button>
 			<button id="reset" class="ghost" title="${m.layout.resetTitle}"><span class="icon" aria-hidden="true">⟲</span><span class="label">${m.layout.reset}</span></button>
 			<button id="shortcuts" class="ghost" title="${m.layout.shortcuts}" aria-label="${m.layout.shortcuts}" aria-haspopup="dialog"><span aria-hidden="true">⌨</span></button>
-			<button id="run" class="primary" disabled aria-keyshortcuts="Control+Enter Meta+Enter">▶ ${m.layout.run((texte) => `<span class="label">${texte}</span>`)}</button>
+			<button id="run" class="primary" disabled aria-keyshortcuts="Control+Enter Meta+Enter">▶ ${(config.context === 'scratch' ? m.scratch.run : m.layout.run)((texte) => `<span class="label">${texte}</span>`)}</button>
 		</div>
 	</header>
 	${screenNoteHtml(navigateurIntegre(userAgent))}
@@ -47,7 +47,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 			${exercise.practice ? `<p class="lead">${escapeHtml(exercise.practice.summary)}</p>` : ''}
 			<div class="xp">${exercise.concepts.map((c) => conceptChip(c, exercise.conceptUrls[c])).join('')}${exercise.xp > 0 ? `<span class="chip gold">${m.common.xp(exercise.xp)}</span>` : ''}${exercise.practice?.version ? (exercise.practice.versionUrl ? `<a class="chip gold" href="${escapeHtml(exercise.practice.versionUrl)}" title="${m.layout.versionTitle}">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</a>` : `<span class="chip gold">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</span>`) : ''}</div>
 			<article class="instructions">${sanitize(exercise.instructionsHtml)}</article>
-			<h3>${m.layout.objectives}</h3>
+			<h3${exercise.objectives.length ? '' : ' hidden'}>${m.layout.objectives}</h3>
 			<ul class="objectives">
 				${exercise.objectives.map((o) => `<li data-test="${escapeHtml(o.test)}"><span class="dot" aria-hidden="true"></span><span class="sr-only objective-state"></span><span>${escapeHtml(o.label)}</span></li>`).join('')}
 			</ul>
@@ -169,7 +169,12 @@ function conceptChip(concept: string, url: string | undefined): string {
  * Visibles dès l'arrivée, pas seulement après la réussite : un visiteur venu d'un lien partagé (et un moteur de
  * recherche) trouve où continuer.
  */
-export function furtherHtml(exercise: Pick<ExercisePayload, 'practice' | 'environment'>, config: Pick<PlaygroundConfig, 'back'>): string {
+export function furtherHtml(exercise: Pick<ExercisePayload, 'practice' | 'environment'>, config: Pick<PlaygroundConfig, 'back' | 'scratch'>): string {
+	// Le bac à sable : l'autre framework et la Pratique, liens donnés par la plateforme.
+	if (config.scratch?.links.length) {
+		return `<h3>${m.layout.furtherTitle}</h3>
+			<ul class="further">${config.scratch.links.map((link) => `<li><a href="${escapeHtml(link.url)}">${escapeHtml(link.title)}</a></li>`).join('')}</ul>`;
+	}
 	const practice = exercise.practice;
 	if (!practice) {
 		return '';

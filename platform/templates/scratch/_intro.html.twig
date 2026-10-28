@@ -1,0 +1,15 @@
+{#
+  Ce que la page du bac à sable dit avant que le playground ne la remplace (et sans JavaScript) : le framework, ce
+  qu'on y fait, la consigne de départ. Variables : exercise, framework, instructions.
+#}
+{% trans_default_domain 'apprentissage' %}
+<nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
+    <ol>
+        <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
+        <li><a href="{{ path('app_scratch') }}">{{ 'bac_a_sable.retour'|trans }}</a></li>
+        <li aria-current="page">{{ exercise.title }}</li>
+    </ol>
+</nav>
+<h1 class="mt-3 text-3xl font-semibold">{{ exercise.title }}</h1>
+<p class="lead mt-3 text-lg text-ink-muted">{{ ('bac_a_sable.' ~ framework.value ~ '.texte')|trans }}</p>
+<article class="lesson exercise-instructions prose prose-theme mt-6 max-w-none">{{ instructions|raw }}</article>
