@@ -40,6 +40,10 @@ final class SeoController extends AbstractController
                 // Liens d'invitation : un code de cohorte ne doit pas circuler par un moteur de recherche.
                 'Disallow: /*?code=',
                 'Disallow: /*&code=',
+                // La connexion et l'inscription reçoivent la page d'origine (?suite=) : une adresse par page du site,
+                // toutes en noindex. /connexion et /inscription seules restent lisibles, avec leur noindex.
+                'Disallow: /*?suite=',
+                'Disallow: /*&suite=',
                 '',
                 'Sitemap: '.$this->generateUrl('app_sitemap', [], UrlGeneratorInterface::ABSOLUTE_URL),
             );

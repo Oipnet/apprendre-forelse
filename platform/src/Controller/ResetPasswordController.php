@@ -7,6 +7,7 @@ use App\Account\PasswordResetRequested;
 use App\Entity\User;
 use App\Form\ChangePasswordFormType;
 use App\Form\ResetPasswordRequestFormType;
+use App\Seo\PageSeo;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,6 +18,7 @@ use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ExpiredResetPasswordTokenException;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function Symfony\Component\Translation\t;
 
@@ -40,7 +42,7 @@ final class ResetPasswordController extends AbstractController
     }
 
     #[Route(['fr' => '', 'en' => ''], name: 'app_forgot_password_request')]
-    public function request(Request $request, MessageBusInterface $bus): Response
+    public function request(Request $request, MessageBusInterface $bus, PageSeo $seo, TranslatorInterface $translator): Response
     {
         if ($this->getUser()) {
             return $this->redirectToRoute('app_home');
@@ -54,6 +56,8 @@ final class ResetPasswordController extends AbstractController
 
             return $this->redirectToRoute('app_check_email');
         }
+
+        $seo->setDescription($translator->trans('compte.mot_de_passe_oublie', [], 'seo'));
 
         return $this->render('security/reset_password/request.html.twig', ['form' => $form]);
     }

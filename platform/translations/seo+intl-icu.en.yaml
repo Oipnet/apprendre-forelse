@@ -81,3 +81,9 @@ bac_a_sable:
         titre: "Online Laravel playground"
         description: "A full Laravel 13 project in your browser: routes, Blade, artisan. Try an idea and share your code with a link, no account needed."
         fil_ariane: Laravel playground
+
+compte:
+    connexion: "Log in to pick up your tracks where you left off, and find your completed exercises and your place on the leaderboard."
+    inscription: "Create your account to keep your progress, follow the tracks and join the leaderboard. Exercises run in your browser, nothing to install."
+    mot_de_passe_oublie: "Forgot your password? Enter your email address and you will receive a link to choose a new one."
+    classement: "The learners' leaderboard: XP earned by passing the exercises of the tracks and of Practice, this month or since the beginning."
