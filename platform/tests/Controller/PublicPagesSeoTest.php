@@ -172,4 +172,16 @@ final class PublicPagesSeoTest extends WebTestCase
         $this->assertCount(1, $theme, 'La feuille du thème default : '.implode(', ', $feuilles));
         $this->assertFileExists(__DIR__.'/../../public'.$theme[0]);
     }
+
+    /** Hors index, mais lues par les moteurs (une adresse par page d'origine, ?suite=) : chacune a sa description. */
+    public function testLesPagesDeCompteOntUneDescription(): void
+    {
+        foreach (['/connexion?suite=/pratique', '/inscription', '/mot-de-passe-oublie', '/classement', '/en/login', '/en/leaderboard'] as $url) {
+            $crawler = $this->client->request('GET', $url);
+            $this->assertResponseIsSuccessful($url);
+            $description = (string) $crawler->filter('meta[name="description"]')->attr('content');
+            $this->assertGreaterThanOrEqual(50, mb_strlen($description), $url);
+            $this->assertLessThanOrEqual(PageSeo::DESCRIPTION_MAX, mb_strlen($description), $url);
+        }
+    }
 }

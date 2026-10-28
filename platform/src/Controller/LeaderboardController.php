@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Leaderboard\Leaderboard;
 use App\Leaderboard\LeaderboardPeriod;
 use App\Leaderboard\XpScale;
+use App\Seo\PageSeo;
 use App\Share\ShareLinks;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -27,12 +28,13 @@ final class LeaderboardController extends AbstractController
     }
 
     #[Route(['fr' => '/classement', 'en' => '/en/leaderboard'], name: 'app_leaderboard', methods: ['GET'])]
-    public function index(Request $request, XpScale $scale, TranslatorInterface $translator): Response
+    public function index(Request $request, XpScale $scale, TranslatorInterface $translator, PageSeo $seo): Response
     {
         $period = LeaderboardPeriod::tryFrom($request->query->getString('periode')) ?? LeaderboardPeriod::Month;
         $filters = $this->leaderboard->trackFilters();
         $track = $request->query->getString('parcours');
         $user = $this->getUser();
+        $seo->setDescription($translator->trans('compte.classement', [], 'seo'));
 
         return $this->render('leaderboard/index.html.twig', [
             'board' => $this->leaderboard->of($period, $user instanceof User ? $user : null, isset($filters[$track]) ? $track : null),

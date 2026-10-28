@@ -109,3 +109,11 @@ bac_a_sable:
         titre: "Bac à sable Laravel en ligne"
         description: "Un projet Laravel 13 complet dans votre navigateur : routes, Blade, artisan. Testez une idée et partagez votre code par un lien, sans compte."
         fil_ariane: Bac à sable Laravel
+
+# Pages hors index (noindex) que les moteurs lisent quand même : une description évite l'erreur « description
+# manquante » de Bing. Le title reste celui du gabarit.
+compte:
+    connexion: "Connectez-vous pour reprendre vos parcours où vous les aviez laissés, retrouver vos exercices réussis et votre place au classement."
+    inscription: "Créez votre compte pour garder votre progression et entrer au classement. Les exercices se font dans le navigateur, sans rien installer."
+    mot_de_passe_oublie: "Mot de passe oublié : indiquez votre adresse email, vous recevrez un lien pour en choisir un nouveau."
+    classement: "Le classement des apprenants : l'XP gagnée en réussissant les exercices des parcours et de la Pratique, ce mois-ci ou depuis le début."

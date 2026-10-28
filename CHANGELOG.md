@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Corrigé
+
+- Référencement (rapport de Bing, « description manquante ») : la connexion, l'inscription, le mot de passe oublié
+  et le classement ont une meta description, en français et en anglais (elles restent en noindex). robots.txt
+  interdit les adresses `?suite=` : le lien « Connexion » de chaque page en créait une par page du site.
+
 ## 3.21.0 — 2026-10-28
 
 ### Ajouté

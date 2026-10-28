@@ -7,6 +7,7 @@ use App\Account\UserRegistration;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
 use App\Security\SafeRedirect;
+use App\Seo\PageSeo;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -37,7 +38,7 @@ final class RegistrationController extends AbstractController
     }
 
     #[Route(['fr' => '/inscription', 'en' => '/en/signup'], name: 'app_register')]
-    public function register(Request $request, Security $security): Response
+    public function register(Request $request, Security $security, PageSeo $seo): Response
     {
         if ($this->getUser()) {
             return $this->redirectToRoute('app_home');
@@ -84,6 +85,8 @@ final class RegistrationController extends AbstractController
             // Chemin local uniquement : pas de redirection ouverte.
             return $this->redirect(SafeRedirect::localPath(\is_string($target) ? $target : null) ?? $this->generateUrl('app_home'));
         }
+
+        $seo->setDescription($this->translator->trans('compte.inscription', [], 'seo'));
 
         return $this->render('security/register.html.twig', ['form' => $form, 'inviteOnly' => $this->inviteOnly]);
     }
