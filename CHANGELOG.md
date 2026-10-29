@@ -17,11 +17,20 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   `environments/php-8/.forelse/composer.php`, sert le navigateur comme le vérificateur : avant PHPUnit, celui-ci pose
   les paquets demandés par `composer.json` depuis le catalogue et régénère l'autoload. Le catalogue gagne
   `nikic/fast-route`, et le payload d'un exercice donne son adresse (`environment.packagesUrl`).
+- **Environnement `php-8-gazette`** pour le parcours « Apprendre PHP 8 » (pack la-gazette) : `php-8` avec PHPUnit et
+  DomCrawler en `require-dev`, et un socle de tests (`Tests\GazetteTestCase`) qui exécute `public/index.php` comme une
+  requête, sous le préfixe `/apercu` de l'aperçu, et lit la page par sélecteurs CSS avec son code HTTP.
 - **Présentation d'un parcours** (`<parcours>/about.md`, facultative, traduite dans `i18n/<langue>/about.md`) : un texte
   en Markdown sous la liste des chapitres de la page du parcours (ce qu'on y apprend, pour qui, les prérequis). Les
   titres d'histoire des chapitres ne disent pas le sujet aux moteurs de recherche ; ce texte, si.
 - La `description` d'un chapitre s'affiche aussi sous son titre sur la carte du parcours (chapitre replié compris) et
   dans les données structurées du cours (`syllabusSections`).
+
+### Corrigé
+
+- Le `vendor/autoload.php` écrit par le petit Composer se charge une seule fois : requis une seconde fois, il rend le
+  chargeur déjà enregistré au lieu d'en ajouter un. Avec deux chargeurs, un fichier déplacé sans changer d'espace de
+  noms était inclus deux fois et PHP s'arrêtait sur « Cannot redeclare ».
 
 ## 3.22.0 — 2026-10-29
 
