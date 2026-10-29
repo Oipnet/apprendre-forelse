@@ -8,7 +8,7 @@
     {% set bossEveryChapter = chapters|length > 0 and chapters|filter(c => c.items is not empty and (c.items|last).boss)|length == chapters|length %}
     {% set hasLessons = chapters|filter(c => c.lesson)|length > 0 %}
     {# Repères sans style, lus par les tests et le script du moteur : tr-chapter (« Tout ouvrir »), tr-chapter-meta, track-done,
-       track-certificate, track-duration, next-track, exercises, lesson-link. #}
+       track-certificate, track-duration, next-track, track-about, tr-chapter-description, exercises, lesson-link. #}
     <main class="track mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
         <section class="flex flex-col gap-6 border-b border-line pb-8 md:flex-row md:justify-between">
             <div class="md:max-w-2xl">
@@ -100,6 +100,7 @@
                                         {%- if chapterDuration %} · ≈ {{ chapterDuration|duree }}{% endif %}
                                         {%- if item.lesson %} · {{ 'track.show.fiche_de_cours'|trans }}{% endif -%}
                                     </span>
+                                    {% if item.chapter.description %}<span class="tr-chapter-description mt-1 block text-sm">{{ item.chapter.description }}</span>{% endif %}
                                 </span>
                                 <span class="text-ink-muted transition group-open:rotate-180" aria-hidden="true">▾</span>
                             </summary>
@@ -143,6 +144,11 @@
                         <p class="mt-1 text-right text-sm"><a href="{{ path('app_chapter_summary', {trackId: track.id, chapterId: item.chapter.id}) }}">{{ 'track.show.sommaire_chapitre'|trans({numero: item.number}) }}</a></p>
                     </section>
                 {% endfor %}
+
+                {% if aboutHtml %}
+                    {# La présentation du parcours (about.md) : ce qu'on y apprend, pour qui, avec quels prérequis. #}
+                    <section class="track-about prose prose-theme mt-8 max-w-none">{{ aboutHtml|raw }}</section>
+                {% endif %}
 
                 {% if nextTrack and not done %}
                     <section class="next-track mt-8 rounded-lg border border-line bg-bg-2 p-5">

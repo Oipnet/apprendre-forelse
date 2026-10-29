@@ -74,7 +74,11 @@ final readonly class CourseSeo
                     ...(null === $duration ? [] : ['courseWorkload' => $duration]),
                 ],
                 ...(null === $duration ? [] : ['timeRequired' => $duration]),
-                'syllabusSections' => array_map(static fn (Chapter $chapter) => ['@type' => 'Syllabus', 'name' => $chapter->title], $track->chapters),
+                'syllabusSections' => array_map(static fn (Chapter $chapter) => [
+                    '@type' => 'Syllabus',
+                    'name' => $chapter->title,
+                    ...(null === $chapter->description ? [] : ['description' => $chapter->description]),
+                ], $track->chapters),
                 'offers' => [
                     '@type' => 'Offer',
                     'category' => $offer->quote->isFree() ? 'Free' : 'Paid',
