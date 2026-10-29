@@ -545,6 +545,11 @@ if (!class_exists('ForelseComposer', false)) {
             $code = "<?php\n\n"
                 ."// @generated par composer dump-autoload (voir .forelse/composer.php) : relancez-le après avoir changé l'autoload de composer.json.\n\n"
                 ."require_once __DIR__.'/composer/ClassLoader.php';\n\n"
+                // Une fois par processus, comme le vrai Composer : un second chargeur, enregistré par un second require
+                // (les tests puis public/index.php), inclurait deux fois un fichier qui ne déclare pas la classe attendue.
+                ."if (isset(\\Composer\\Autoload\\ClassLoader::getRegisteredLoaders()[__DIR__])) {\n"
+                ."    return \\Composer\\Autoload\\ClassLoader::getRegisteredLoaders()[__DIR__];\n"
+                ."}\n\n"
                 ."return (static function (): \\Composer\\Autoload\\ClassLoader {\n"
                 ."    \$racine = dirname(__DIR__);\n"
                 .'    $chemins = static fn (array $relatifs) => array_map(static fn (string $c) => $racine.\'/\'.$c, $relatifs);'."\n"

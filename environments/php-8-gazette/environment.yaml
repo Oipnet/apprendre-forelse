@@ -1,0 +1,6 @@
+# Environnement d'exécution du parcours « Apprendre PHP 8 » (pack la-gazette, dépôt de contenu) : le projet sans
+# framework de php-8, plus PHPUnit et DomCrawler pour les tests cachés des exercices. Il prolonge php-8 : la console,
+# le petit Composer (.forelse/composer.php) et le catalogue des paquets (paquets.json) en viennent.
+id: php-8-gazette
+extends: php-8
+title: PHP 8.4 — sans framework, PHPUnit

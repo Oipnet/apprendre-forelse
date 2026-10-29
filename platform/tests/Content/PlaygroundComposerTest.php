@@ -54,6 +54,18 @@ final class PlaygroundComposerTest extends TestCase
         self::assertSame('oui', $this->charge('Outil\Marteau'));
     }
 
+    public function testRequerirDeuxFoisLAutoloadNEnregistreQuUnChargeur(): void
+    {
+        self::assertSame(0, $this->composer('dump-autoload')[0]);
+        // Un fichier déplacé dont l'espace de noms n'a pas suivi : chaque chargeur l'inclut sans y trouver la classe
+        // demandée, et un second chargeur ferait planter PHP (« Cannot redeclare »).
+        (new Filesystem())->dumpFile($this->projet.'/src/Contenu/Publication.php', "<?php\n\nnamespace Gazette;\n\ninterface Publication {}\n");
+
+        $sortie = $this->php('$autre = require "vendor/autoload.php"; echo interface_exists("Gazette\\Contenu\\Publication") ? "oui" : "non", " ", count(Composer\\Autoload\\ClassLoader::getRegisteredLoaders()), " ", count(spl_autoload_functions());');
+
+        self::assertSame('non 1 1', $sortie);
+    }
+
     public function testUnPrefixePsr4SansAntislashEstRefuseCommeParComposer(): void
     {
         $this->composerJson(['autoload' => ['psr-4' => ['Gazette' => 'src/']]]);
