@@ -12,6 +12,7 @@ décrites plus bas.
 environments/
   bin/build-env.sh          empaquette un environnement (archive + index de complétion)
   bin/build-completion.php  l'index de complétion, par Reflection
+  bin/build-paquets.php     les paquets Composer à ajouter, quand l'environnement a un paquets.json
   <id>/environment.yaml     un environnement, un dossier
   <id>/…                    le projet lui-même (composer.json, src/, config/…)
 ```
@@ -26,6 +27,13 @@ environments/bin/build-env.sh symfony-8        # un seul
 environments/bin/build-env.sh                  # tous
 environments/bin/build-env.sh symfony-8 /tmp/envs   # ailleurs que dans le moteur
 ```
+
+Un environnement qui a un `paquets.json` (aujourd'hui `php-8`, le bac à sable sans framework) propose
+aussi des paquets Composer à ajouter depuis le navigateur (bouton « Paquets »). `build-env.sh` les
+empaquette avec `bin/build-paquets.php` : tous se résolvent ensemble pour la version de PHP du
+navigateur, puis chacun donne une archive avec ses dépendances (`<id>.paquet.<paquet>.<empreinte>.zip`)
+et le catalogue `<id>.paquets.json`. Ajouter un paquet au catalogue, c'est une ligne dans
+`paquets.json` (nom, contrainte de version, description en français et en anglais).
 
 La sortie est, dans l'ordre : le second argument, la variable `ENVIRONMENTS_OUT`, ou
 `platform/public/envs` — le dossier public du moteur, tant que les deux vivent dans le même dépôt.

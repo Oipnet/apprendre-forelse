@@ -423,6 +423,23 @@ export const en: Messages = {
 		resumeDraft: 'Resume my draft',
 	},
 
+	packages: {
+		button: 'Packages',
+		buttonTitle: 'Add Composer packages to the project',
+		title: 'Composer packages',
+		intro: 'Tick a package: it is added to the project with its dependencies, and require \'vendor/autoload.php\' loads it, just like after a composer require. The shared link keeps your packages.',
+		adding: (name: string) => `Adding ${name}…`,
+		added: (name: string) => `${name} added.`,
+		removing: (name: string) => `Removing ${name}…`,
+		removed: (name: string) => `${name} removed.`,
+		failed: (name: string, reason: string) => `${name} could not be added: ${reason}`,
+		downloadFailed: (name: string, status: number) => `download of ${name} refused (HTTP ${status})`,
+		request: 'Missing a package? Let us know',
+		unavailable: 'The package catalogue is unavailable right now.',
+		kilobytes: (n: string) => `${n} KB`,
+		megabytes: (n: string) => `${n} MB`,
+	},
+
 	site: {
 		expandAll: 'Expand all',
 		collapseAll: 'Collapse all',

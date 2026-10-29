@@ -15,7 +15,15 @@ describe('le code dans l’adresse', () => {
 		const fragment = encodeFragment(files);
 
 		expect(fragment).toMatch(/^code=[A-Za-z0-9_-]+$/);
-		expect(decodeFragment(`#${fragment}`)).toEqual(files);
+		expect(decodeFragment(`#${fragment}`)).toEqual({ files, packages: [] });
+	});
+
+	it('porte aussi les paquets ajoutés, et un lien sans paquet reste celui d’avant', () => {
+		const files = { 'public/index.php': '<?php echo 1;' };
+
+		expect(decodeFragment(encodeFragment(files, ['nesbot/carbon']))).toEqual({ files, packages: ['nesbot/carbon'] });
+		expect(encodeFragment(files, [])).toBe(encodeFragment(files));
+		expect(decodeFragment(fragmentOf({ v: 1, files, packages: ['a/b', 42] }))?.packages).toEqual(['a/b']);
 	});
 
 	it('ne garde que les fichiers modifiés ou créés depuis le départ', () => {
@@ -32,7 +40,7 @@ describe('le code dans l’adresse', () => {
 	it('écarte les chemins qui sortent du projet et les contenus qui ne sont pas du texte', () => {
 		const fragment = fragmentOf({ v: 1, files: { '../etc/passwd': 'x', '/racine.php': 'x', 'src/../Kernel.php': 'x', 'src/A.php': 42, 'src/B.php': 'ok' } });
 
-		expect(decodeFragment(fragment)).toEqual({ 'src/B.php': 'ok' });
+		expect(decodeFragment(fragment)?.files).toEqual({ 'src/B.php': 'ok' });
 	});
 
 	it('refuse un code qui gonfle trop une fois décompressé', () => {

@@ -30,4 +30,10 @@ final readonly class EnvironmentAssetUrls
 
         return $request->getSchemeAndHttpHost().$this->packages->getUrl($path).(false === $built ? '' : '?v='.$built);
     }
+
+    /** L'adresse d'un fichier construit dans public/ (catalogue des paquets du bac à sable), ou null s'il n'existe pas. */
+    public function builtUrl(string $path, Request $request): ?string
+    {
+        return is_file($this->publicDir.'/'.$path) ? $this->url($path, $request) : null;
+    }
 }

@@ -12,6 +12,7 @@ use App\Theme\Theme;
 use App\Security\SandboxOrigin;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -30,6 +31,7 @@ final readonly class PlaygroundConfigFactory
         private Theme $theme,
         private Security $security,
         private TranslatorInterface $translator,
+        private EnvironmentAssetUrls $assets,
         /** Bêta fermée : l'inscription exige un code de cohorte, l'invité sans code est orienté vers la liste d'attente. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private bool $inviteOnly,
@@ -79,7 +81,7 @@ final readonly class PlaygroundConfigFactory
      *
      * @return array<string, mixed>
      */
-    public function scratch(ScratchFramework $framework): array
+    public function scratch(ScratchFramework $framework, Request $request): array
     {
         $user = $this->security->getUser();
         $page = $this->urls->generate('app_scratch_'.$framework->value);
@@ -112,6 +114,12 @@ final readonly class PlaygroundConfigFactory
                         'url' => $this->urls->generate('app_scratch_'.$other->value),
                     ], array_values(array_filter(ScratchFramework::cases(), static fn (ScratchFramework $f) => $f !== $framework))),
                     ['title' => $this->translator->trans('bac_a_sable.pratique', [], 'apprentissage'), 'url' => $this->urls->generate('app_practice')],
+                ],
+                // Les paquets Composer à ajouter (PHP sans framework), tant que leur catalogue a été construit
+                // (environments/bin/build-paquets.php) ; un paquet qui manque se demande par la page de contact.
+                'packages' => null === ($catalogue = $framework->packageCatalog()) || null === ($url = $this->assets->builtUrl($catalogue, $request)) ? null : [
+                    'url' => $url,
+                    'requestUrl' => $this->urls->generate('app_contact'),
                 ],
             ],
         ];

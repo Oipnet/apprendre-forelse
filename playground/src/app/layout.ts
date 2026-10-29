@@ -32,6 +32,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 				: `<div class="who guest" title="${m.layout.guestTitle}"><span>${m.layout.guest}</span>${config.loginUrl ? `<a href="${escapeHtml(config.loginUrl)}">${m.layout.login}</a>` : ''}</div>`
 		}
 		<div class="actions">
+			${config.scratch?.packages ? `<button id="packages" class="ghost" title="${m.packages.buttonTitle}" disabled><span class="icon" aria-hidden="true">📦</span><span class="label"> ${m.packages.button}</span></button>` : ''}
 			${config.share ? `<button id="share" class="ghost" title="${m.layout.shareTitle}"><span class="icon" aria-hidden="true">🔗</span><span class="label"> ${m.layout.share}</span></button>` : ''}
 			${config.feedbackUrl ? `<button id="feedback" class="ghost" title="${m.layout.feedbackTitle}"><span class="icon" aria-hidden="true">💬</span><span class="label"> ${m.layout.feedback}</span></button>` : ''}
 			<button id="solution" class="ghost" hidden><span class="icon" aria-hidden="true">📖</span><span class="label">${m.layout.solution}</span></button>

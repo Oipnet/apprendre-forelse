@@ -39,6 +39,29 @@ final class ScratchTest extends WebTestCase
         $this->assertStringStartsWith('http://localhost/bac-a-sable/laravel?', $config['share']['invite']['lien']);
         $this->assertStringContainsString('utm_campaign=bac-a-sable', $config['share']['invite']['lien']);
         $this->assertSame(['/bac-a-sable/symfony', '/bac-a-sable/php', '/pratique'], array_column($config['scratch']['links'], 'url'), 'Ensuite : les autres bacs à sable, puis la Pratique.');
+        $this->assertNull($config['scratch']['packages'], 'Laravel arrive avec ses paquets : pas de bouton « Paquets ».');
+    }
+
+    public function testLeProjetPhpProposeLesPaquetsDuCatalogueConstruit(): void
+    {
+        $client = static::createClient();
+        // Construit par environments/bin/build-env.sh ; une copie vide suffit quand il ne l'a pas été.
+        $catalogue = static::getContainer()->getParameter('kernel.project_dir').'/public/envs/php-8.paquets.json';
+        $present = is_file($catalogue);
+        try {
+            if (!$present) {
+                @mkdir(dirname($catalogue), recursive: true);
+                file_put_contents($catalogue, '{"paquets":[]}');
+            }
+            $crawler = $client->request('GET', '/bac-a-sable/php');
+            $config = json_decode((string) $crawler->filter('[data-playground]')->attr('data-config'), true, flags: \JSON_THROW_ON_ERROR);
+            $this->assertStringStartsWith('http://localhost/envs/php-8.paquets.json?v=', $config['scratch']['packages']['url']);
+            $this->assertSame('/contact', $config['scratch']['packages']['requestUrl'], 'Un paquet qui manque se demande par la page de contact.');
+        } finally {
+            if (!$present) {
+                unlink($catalogue);
+            }
+        }
     }
 
     public function testLeProjetEstUnExerciceSansObjectifNiTest(): void

@@ -22,19 +22,26 @@ export function changedFiles(current: Record<string, string>, starting: Record<s
 	return Object.fromEntries(Object.entries(current).filter(([path, content]) => starting[path] !== content));
 }
 
-/** Le fragment d'adresse (sans « # ») qui porte ces fichiers. */
-export function encodeFragment(files: Record<string, string>): string {
-	const bytes = deflateSync(strToU8(JSON.stringify({ v: 1, files })), { level: 9 });
+/** Ce qu'un lien partagé porte : les fichiers modifiés, et les paquets ajoutés (bac à sable PHP, voir packages.ts). */
+export interface SharedProject {
+	files: Record<string, string>;
+	packages: string[];
+}
+
+/** Le fragment d'adresse (sans « # ») qui porte ces fichiers, et ces paquets s'il y en a. */
+export function encodeFragment(files: Record<string, string>, packages: string[] = []): string {
+	const bytes = deflateSync(strToU8(JSON.stringify(packages.length ? { v: 1, files, packages } : { v: 1, files })), { level: 9 });
 	let binary = '';
 	for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
 	return PREFIX + btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**
- * Les fichiers portés par un fragment (`location.hash`, avec ou sans « # ») ; null s'il n'en porte pas, ou s'il est
+ * Le projet porté par un fragment (`location.hash`, avec ou sans « # ») ; null s'il n'en porte pas, ou s'il est
  * illisible. Un chemin qui remonte (`..`) ou part de la racine est écarté : le projet ne s'écrit que sous lui-même.
+ * Les paquets ne sont que des noms : seuls ceux du catalogue s'installeront (knownPackages).
  */
-export function decodeFragment(hash: string): Record<string, string> | null {
+export function decodeFragment(hash: string): SharedProject | null {
 	const fragment = hash.replace(/^#/, '');
 	if (!fragment.startsWith(PREFIX) || fragment.length > MAX_FRAGMENT) return null;
 	try {
@@ -54,14 +61,15 @@ export function decodeFragment(hash: string): Record<string, string> | null {
 			all.set(chunk, offset);
 			offset += chunk.length;
 		}
-		const data = JSON.parse(strFromU8(all)) as { v?: unknown; files?: unknown };
+		const data = JSON.parse(strFromU8(all)) as { v?: unknown; files?: unknown; packages?: unknown };
 		if (data.v !== 1 || typeof data.files !== 'object' || data.files === null) return null;
 		const files: Record<string, string> = {};
 		for (const [path, content] of Object.entries(data.files).slice(0, MAX_FILES)) {
 			if (typeof content !== 'string' || path.startsWith('/') || path.split('/').some((part) => part === '..' || part === '')) continue;
 			files[path] = content;
 		}
-		return files;
+		const packages = Array.isArray(data.packages) ? data.packages.filter((name): name is string => typeof name === 'string').slice(0, MAX_FILES) : [];
+		return { files, packages };
 	} catch {
 		return null;
 	}

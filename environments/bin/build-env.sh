@@ -136,7 +136,7 @@ rm -f "$OUT"
 if [ -z "$INSTALL_DIR" ]; then
     EXCLUDES=(-x 'node_modules/*' '.nuxt/*' '.output/*' '.git/*' 'environment.yaml' '.forelse.json' '*.DS_Store' '*/.gitkeep')
 else
-    EXCLUDES=(-x 'var/*' '.phpunit.cache/*' '.git/*' 'CLAUDE.md' 'AGENTS.md' 'environment.yaml' '.forelse.json' '.archiveignore' '.editorconfig' '*.DS_Store')
+    EXCLUDES=(-x 'var/*' '.phpunit.cache/*' '.git/*' 'CLAUDE.md' 'AGENTS.md' 'environment.yaml' '.forelse.json' '.archiveignore' '.editorconfig' 'paquets.json' '*.DS_Store')
 fi
 # .archiveignore : motifs zip supplémentaires, un par ligne (ex. traductions de vendor/ inutiles à l'apprenant).
 [ -f "$SOURCE/.archiveignore" ] && EXCLUDES+=("-x@$SOURCE/.archiveignore")
@@ -147,6 +147,9 @@ if [ -z "$INSTALL_DIR" ]; then
 else
     php "$BIN/build-completion.php" "$INSTALL_DIR" "$OUT_DIR/$ENV_NAME.completion.json"
 fi
+
+# paquets.json : les paquets Composer que l'apprenant peut ajouter (bac à sable PHP), empaquetés à part.
+[ -f "$ENV_DIR/paquets.json" ] && php "$BIN/build-paquets.php" "$ENV_DIR" "$OUT_DIR"
 
 echo "$(du -h "$OUT" | cut -f1)  $OUT"
 echo "$(du -h "$OUT_DIR/$ENV_NAME.completion.json" | cut -f1)  $OUT_DIR/$ENV_NAME.completion.json"
