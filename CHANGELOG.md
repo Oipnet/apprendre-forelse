@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.23.0 — 2026-10-29
+
 ### Ajouté
 
 - **Composer dans la console du projet sans framework** (exercices comme bac à sable) : `composer dump-autoload` relit
