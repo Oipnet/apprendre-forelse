@@ -89,6 +89,8 @@ share:
         bluesky: "Bluesky"
     carte:
         pratique: "Practice · {framework}"
+        blog: "Blog"
+        blog_sujet: "Blog · {sujet}"
         certificat: "Certificate of completion · {nom}"
         alt: "{surtitre}: {titre}"
     texte:

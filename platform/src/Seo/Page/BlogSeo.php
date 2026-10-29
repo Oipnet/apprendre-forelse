@@ -7,6 +7,8 @@ use App\Content\Blog;
 use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
+use App\Share\ArticleShare;
+use App\Share\ShareImageRenderer;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -21,6 +23,7 @@ final readonly class BlogSeo
         private Theme $theme,
         private TranslatorInterface $translator,
         private Blog $blog,
+        private ArticleShare $share,
     ) {
     }
 
@@ -51,6 +54,8 @@ final readonly class BlogSeo
             ->setDescription($article->description)
             ->setCanonical($url = $this->schema->url('app_article', ['slug' => $article->slug]))
             ->setType('article')
+            // L'image de l'article, dessinée par le moteur : son titre et son premier sujet, sur l'habillage du thème.
+            ->setImage($image = $this->share->imageUrl($article), $this->share->card($article)->alt($this->translator), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT)
             ->addStructuredData([
                 '@type' => 'BlogPosting',
                 'headline' => PageSeo::shorten($article->title, 110),
@@ -58,7 +63,7 @@ final readonly class BlogSeo
                 'url' => $url,
                 'mainEntityOfPage' => $url,
                 'inLanguage' => $this->seo->getLanguage(),
-                ...(null === ($image = $this->theme->shareUrl()) ? [] : ['image' => $this->schema->absolute($image)]),
+                'image' => $image,
                 'datePublished' => $article->published->format('Y-m-d'),
                 'dateModified' => $article->modified(),
                 'author' => $this->schema->author(),

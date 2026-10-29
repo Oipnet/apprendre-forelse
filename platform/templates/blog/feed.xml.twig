@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 {% trans_default_domain 'blog' %}
 {# Le flux du blog (voir BlogController::feed) : le texte complet, échappé plutôt qu'en CDATA, pour qu'aucun article ne le casse. #}
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/">
     <channel>
         <title>{{ 'commun.blog_de'|trans({site: theme.name}) }}</title>
         <link>{{ blog_url }}</link>
@@ -18,7 +18,12 @@
             <guid isPermaLink="true">{{ item.url }}</guid>
             <pubDate>{{ item.article.published|date('r') }}</pubDate>
             <description>{{ item.article.description }}</description>
+{% for tag in item.article.tags %}
+            <category>{{ tag }}</category>
+{% endfor %}
             <content:encoded>{{ item.html }}</content:encoded>
+            <enclosure url="{{ item.image.url }}" length="{{ item.image.length }}" type="image/png"/>
+            <media:content url="{{ item.image.url }}" medium="image" type="image/png" width="{{ constant('App\\Share\\ShareImageRenderer::WIDTH') }}" height="{{ constant('App\\Share\\ShareImageRenderer::HEIGHT') }}"/>
         </item>
 {% endfor %}
     </channel>
