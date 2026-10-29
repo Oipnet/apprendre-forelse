@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.22.0 — 2026-10-29
+
 ### Ajouté
 
 - **Bac à sable PHP** (`/bac-a-sable/php`, `/en/playground/php`) : un projet PHP 8.4 sans framework, à côté de Symfony et
