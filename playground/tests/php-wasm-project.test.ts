@@ -250,6 +250,22 @@ describe('PhpWasmProject', () => {
 		expect(tests.isFile('/app/src/Menu.php')).toBe(false);
 	});
 
+	it('suit ce que composer change hors du projet : composer.json montré, autoload et paquets seulement reportés', async () => {
+		const { project, tests } = await demarre((php, options) => {
+			if (options.scriptPath !== '/runner/console.php') return '';
+			php.writeFile('/app/composer.json', '{"require": {"nikic/fast-route": "^1.3"}}');
+			php.writeFile('/app/vendor/autoload.php', '<?php // régénéré');
+			php.unlink('/app/vendor/forelse-paquets/ramsey--uuid.php');
+			return 'Generating autoload files\n@@SORTIE@@0';
+		});
+		await project.writeFile('vendor/forelse-paquets/ramsey--uuid.php', '<?php return [];');
+		const result = await project.runCommand(['composer', 'require', 'nikic/fast-route']);
+		expect(result.fichiers).toEqual({ 'composer.json': '{"require": {"nikic/fast-route": "^1.3"}}' });
+		expect(result.supprimes).toEqual([]);
+		expect(tests.text('/app/vendor/autoload.php')).toBe('<?php // régénéré');
+		expect(tests.isFile('/app/vendor/forelse-paquets/ramsey--uuid.php')).toBe(false);
+	});
+
 	it('sert les fichiers statiques sans PHP, et garde les redirections sous le préfixe de l\'aperçu', async () => {
 		const scripts: PHPRunOptions[] = [];
 		const { project } = await demarre((_php, options) => {

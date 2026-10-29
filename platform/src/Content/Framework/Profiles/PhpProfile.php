@@ -8,7 +8,8 @@ use Symfony\Component\Translation\TranslatableMessage;
 
 /**
  * PHP sans framework : public/index.php sert l'aperçu, la console lance un script comme « php script.php »
- * dans un terminal (voir playground/src/runtime/php-cli.php), et Composer ne fait que charger les classes.
+ * dans un terminal (voir playground/src/runtime/php-cli.php), et « composer » y lance un petit Composer sans réseau
+ * (environments/php-8/.forelse/composer.php : dump-autoload, require et remove depuis le catalogue des paquets).
  */
 final class PhpProfile implements FrameworkProfileProvider
 {
@@ -44,6 +45,8 @@ final class PhpProfile implements FrameworkProfileProvider
             snippets: ['php'],
             // « php bin/bonjour.php » et « bin/bonjour.php » mènent au même script.
             consoleAliases: ['php' => ''],
+            // « composer dump-autoload » s'affiche tel quel, pas comme « php composer … ».
+            rawCommands: ['composer'],
         );
     }
 }

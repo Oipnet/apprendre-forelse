@@ -23,6 +23,12 @@ const RUNNER = '/runner/run-tests.php';
 const CONSOLE = '/runner/console.php';
 const DATABASE = '/runner/database.php';
 const CONSOLE_MARKER = '\n@@SORTIE@@';
+/**
+ * Ce qu'une commande Composer change hors des dossiers du projet (`composer require`, `dump-autoload`, voir
+ * environments/php-8/.forelse/composer.php) : suivi comme eux, pour que l'instance de tests et l'éditeur le voient.
+ */
+const COMPOSER_FILES = ['composer.json', 'composer.lock', 'vendor/autoload.php'];
+const COMPOSER_DIRS = ['vendor/forelse-paquets'];
 const REPORT_MARKER = '\n@@RAPPORT@@\n';
 
 /** Ce que le projet demande d'une instance PHP. */
@@ -210,6 +216,8 @@ export class PhpWasmProject implements Runtime {
 			}
 		};
 		for (const dossier of this.frameworkProfile().projectDirs) if (php.isDir(`${APP_DIR}/${dossier}`)) parcourir(`${APP_DIR}/${dossier}`);
+		for (const dossier of COMPOSER_DIRS) if (php.isDir(`${APP_DIR}/${dossier}`)) parcourir(`${APP_DIR}/${dossier}`);
+		for (const fichier of COMPOSER_FILES) if (php.isFile(`${APP_DIR}/${fichier}`)) fichiers.set(fichier, php.readFileAsText(`${APP_DIR}/${fichier}`));
 		return fichiers;
 	}
 
@@ -239,7 +247,13 @@ export class PhpWasmProject implements Runtime {
 			if (instanceDeTests?.fileExists(`${APP_DIR}/${chemin}`)) instanceDeTests.unlink(`${APP_DIR}/${chemin}`);
 		}
 		this.testsDirty = true;
-		return { fichiers, supprimes };
+		// L'autoload régénéré et les paquets suivent sur l'instance de tests, mais l'éditeur ne voit que le projet.
+		const hidden = this.frameworkProfile().hidden;
+		const visible = (chemin: string) => !hidden.some((dossier) => chemin === dossier || chemin.startsWith(`${dossier}/`));
+		return {
+			fichiers: Object.fromEntries(Object.entries(fichiers).filter(([chemin]) => visible(chemin))),
+			supprimes: supprimes.filter(visible),
+		};
 	}
 
 	async boot(spec: EnvironmentSpec, onProgress?: (p: BootProgress) => void) {

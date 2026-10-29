@@ -34,6 +34,15 @@ final class EnvironmentRegistryTest extends TestCase
         $this->assertSame('envs/nuxt-4.zip', $environment->archivePath());
     }
 
+    /** Le catalogue des paquets (composer require) : celui du projet sans framework, aucun pour Symfony. */
+    public function testSeulLeProjetSansFrameworkAUnCatalogueDePaquets(): void
+    {
+        $environments = new EnvironmentRegistry(self::ROOT.'/environments');
+
+        $this->assertSame('envs/php-8.paquets.json', $environments->get('php-8')->packageCatalogPath());
+        $this->assertNull($environments->get('symfony-8')->packageCatalogPath());
+    }
+
     /** Un environnement absent (pack copié sans le sien) se range sous le framework par défaut, partout pareil. */
     public function testLeFrameworkDUnEnvironnementAbsentEstCeluiParDefaut(): void
     {

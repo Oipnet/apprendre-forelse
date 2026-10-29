@@ -94,7 +94,7 @@ export class ConsolePanel {
 	constructor(
 		private readonly output: HTMLElement,
 		private readonly input: HTMLInputElement,
-		private readonly runtime: Runtime,
+		private readonly runtime: Pick<Runtime, 'runCommand'>,
 		private readonly onCommandRan: (result: CommandResult) => void,
 		/** Nom de la console, tel qu'on la tape dans un terminal. */
 		private readonly consoleName = 'bin/console',

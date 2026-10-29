@@ -33,6 +33,7 @@ final class ExerciseApiTest extends WebTestCase
         if (is_file(__DIR__.'/../../public/envs/symfony-8.completion.json')) {
             $this->assertStringContainsString('?v='.filemtime(__DIR__.'/../../public/envs/symfony-8.completion.json'), $payload['environment']['completionIndexUrl'], 'Un index reconstruit change d\'URL : le cache du navigateur ne le masque pas.');
         }
+        $this->assertNull($payload['environment']['packagesUrl'], 'Symfony n\'a pas de catalogue de paquets : composer require reste celui du projet.');
         $this->assertSame('/parcours/decouverte/02-bonjour-prenom', $payload['next']['url']);
         $this->assertNull($payload['previous'], 'Premier exercice du parcours : rien avant.');
     }

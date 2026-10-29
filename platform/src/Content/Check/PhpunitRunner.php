@@ -5,6 +5,7 @@ namespace App\Content\Check;
 use App\Content\Environment;
 use App\Content\Framework\FrameworkProfile;
 use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Process\Exception\ProcessSignaledException;
 use Symfony\Component\Process\Process;
 
@@ -14,6 +15,9 @@ final readonly class PhpunitRunner implements TestRunner
 {
     public function __construct(
         private ProcessEnvironment $processEnvironment,
+        /** Où build-env.sh écrit les catalogues de paquets et leurs archives (voir composerInstall). */
+        #[Autowire('%kernel.project_dir%/public')]
+        private string $publicDir = __DIR__.'/../../../public',
     ) {
     }
 
@@ -45,6 +49,9 @@ final readonly class PhpunitRunner implements TestRunner
         $this->processEnvironment->open($workdir);
         $process = new Process($this->processEnvironment->command($command), $workdir, $this->processEnvironment->isolated(), timeout: 120);
         try {
+            if (null !== ($echec = $this->composerInstall($environment, $workdir))) {
+                return RunReport::none($echec);
+            }
             $process->run();
         } catch (ProcessSignaledException $e) {
             // Crash de PHP (ex. récursion infinie) : signalé comme une absence de rapport.
@@ -65,6 +72,29 @@ final readonly class PhpunitRunner implements TestRunner
         }
 
         return self::parse($junit);
+    }
+
+    /**
+     * Projet sans framework (environments/php-8/.forelse/composer.php) : son composer.json a pu changer d'autoload ou
+     * demander des paquets du catalogue (`composer require` dans le navigateur). On les pose et on régénère l'autoload,
+     * comme un `composer install`, sinon les tests tourneraient sur le vendor/ figé de l'environnement.
+     *
+     * @return ?string la raison d'un échec, null si tout est en place
+     */
+    private function composerInstall(Environment $environment, string $workdir): ?string
+    {
+        if (!is_file($workdir.'/.forelse/composer.php') || !is_file($workdir.'/composer.json')) {
+            return null;
+        }
+        $env = $this->processEnvironment->isolated();
+        $catalogue = $environment->packageCatalogPath();
+        if (null !== $catalogue && is_file($this->publicDir.'/'.$catalogue)) {
+            $env['FORELSE_PAQUETS'] = $this->publicDir.'/'.$catalogue;
+        }
+        $install = new Process($this->processEnvironment->command([\PHP_BINARY, '.forelse/composer.php', 'install', '--quiet']), $workdir, $env, timeout: 60);
+        $install->run();
+
+        return $install->isSuccessful() ? null : 'composer install : '.trim($install->getOutput()."\n".$install->getErrorOutput());
     }
 
     /**
