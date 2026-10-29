@@ -117,6 +117,20 @@ final class TrackVisibility implements ResetInterface
         return array_map($this->localize(...), $this->tracks());
     }
 
+    /**
+     * Les parcours en préparation que l'utilisateur courant ne voit pas : ils s'annoncent (« bientôt »), sans lien,
+     * leur page n'existe pas pour lui. Dans l'ordre du catalogue (order, puis titre).
+     *
+     * @return list<Track>
+     */
+    public function upcoming(): array
+    {
+        $upcoming = array_values(array_filter($this->content->tracks(), fn (Track $track) => $track->isRestricted() && !$this->isVisible($track)));
+        usort($upcoming, static fn (Track $a, Track $b) => [$a->order ?? \PHP_INT_MAX, $a->title] <=> [$b->order ?? \PHP_INT_MAX, $b->title]);
+
+        return $upcoming;
+    }
+
     public function nextTrack(Track $track): ?Track
     {
         $next = $this->content->nextTrack($track);

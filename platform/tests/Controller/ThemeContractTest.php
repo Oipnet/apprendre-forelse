@@ -150,7 +150,7 @@ final class ThemeContractTest extends WebTestCase
         $this->theme([
             'base.html.twig' => $base,
             'home.html.twig' => $home,
-            '_header.html.twig' => '<header class="lp-header" data-surcharge="_header">{{ theme.name }} {{ brand_chip }} {{ login_suite ?? "" }}{% if blog.open %} blog{% endif %}{% if app.user %} {{ app.user.displayName }}{% endif %}</header>',
+            '_header.html.twig' => '<header class="lp-header" data-surcharge="_header">{{ theme.name }} {{ brand_chip }} {{ login_suite ?? "" }}{% if blog.open %} blog{% endif %}{% if app.user %} {{ app.user.displayName }}{% endif %} {{ current_route }} {{ header_tracks().tracks|length }} {{ header_tracks().upcoming|length }}</header>',
             '_footer.html.twig' => '<footer class="site-footer" data-surcharge="_footer">{{ theme.name }}{% if moteur_version %} moteur{% endif %}</footer>',
             'home/_hero.html.twig' => '<section data-surcharge="home/_hero">{{ tryUrl }} {{ tryPractice ? "pratique" : "parcours" }}{% if theme.home.demo %}{{ include("home/_demo.html.twig", {demo: theme.home.demo}) }}{% endif %}</section>',
             'home/_demo.html.twig' => '<figure data-surcharge="home/_demo">{{ demo.files|join(", ") }}</figure>',
