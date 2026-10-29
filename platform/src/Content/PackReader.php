@@ -356,7 +356,10 @@ final class PackReader
 
         $image = isset($meta['image']) ? $this->shareImage($meta['image'], $directory, $file) : null;
 
-        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads, $image, FormerIds::parse($meta['former_ids'] ?? null, $file), $level);
+        $about = $directory.'/about.md';
+        $this->files->watch($about);
+
+        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads, $image, FormerIds::parse($meta['former_ids'] ?? null, $file), $level, about: self::markdown($about));
         $this->tracks[$id] = $track;
         $this->exercises[$id] = [];
 
@@ -454,16 +457,29 @@ final class PackReader
             if (!isset($translated['description']) && '' !== ($meta['description'] ?? '')) {
                 $missing[] = 'description du parcours non traduite';
             }
+            $about = $overlay.'/about.md';
+            $this->files->watch($about);
+            if (null !== $track->about && !is_file($about)) {
+                $missing[] = sprintf('présentation du parcours non traduite (i18n/%s/about.md)', $locale);
+            }
             $title = $this->files->required($translated, 'title', $file);
             if ($missing) {
                 $this->incompleteTranslations[$locale][$track->id] = $missing;
                 continue;
             }
-            $this->trackTranslations[$locale][$track->id] = new Track($track->id, $track->packId, $title, (string) ($translated['description'] ?? ''), $track->environment, $chapters, $track->directory, $track->next, $track->visibility, $track->order, $track->downloads, $track->image, $track->formerIds, $track->level, $locale);
+            $this->trackTranslations[$locale][$track->id] = new Track($track->id, $track->packId, $title, (string) ($translated['description'] ?? ''), $track->environment, $chapters, $track->directory, $track->next, $track->visibility, $track->order, $track->downloads, $track->image, $track->formerIds, $track->level, $locale, null === $track->about ? null : self::markdown($about));
             if ($this->source($translated, $file) !== self::trackFingerprint($track)) {
                 $this->outdatedTranslations[$locale][] = $track->id;
             }
         }
+    }
+
+    /** Le Markdown d'un fichier facultatif : null s'il manque ou ne contient que des blancs. */
+    private static function markdown(string $file): ?string
+    {
+        $text = is_file($file) ? (string) file_get_contents($file) : '';
+
+        return '' === trim($text) ? null : $text;
     }
 
     /** @return list<string> les langues traduites dans `<dossier>/i18n/` */
@@ -499,6 +515,9 @@ final class PackReader
     public static function trackFingerprint(Track $track): string
     {
         $files = ['track.yaml' => (string) @file_get_contents($track->directory.'/track.yaml')];
+        if (null !== $track->about) {
+            $files['about.md'] = $track->about;
+        }
         foreach ($track->chapters as $chapter) {
             if (null !== $chapter->lesson) {
                 $files['chapters/'.$chapter->id.'/lesson.md'] = $chapter->lesson;

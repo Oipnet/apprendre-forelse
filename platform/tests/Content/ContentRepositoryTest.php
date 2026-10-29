@@ -941,6 +941,19 @@ final class ContentRepositoryTest extends TestCase
         yield 'un chapitre ajouté' => [['p/tracks/t/i18n/en/track.yaml' => 'title: T en'], 'chapitre « c » sans titre traduit'];
         yield 'un chapitre retiré' => [['p/tracks/t/i18n/en/track.yaml' => "title: T en\nchapters: {c: {title: C en}, d: {title: D en}}"], 'chapitre « d » traduit, mais absent du parcours français'];
         yield 'une fiche de cours non traduite' => [['p/tracks/t/chapters/c/lesson.md' => 'Fiche'], 'fiche de cours du chapitre « c » non traduite'];
+        yield 'une présentation non traduite' => [['p/tracks/t/about.md' => 'Présentation'], 'présentation du parcours non traduite (i18n/en/about.md)'];
+    }
+
+    public function testLaPresentationDUnParcoursSeLitDansSaLangue(): void
+    {
+        $this->parcoursTraduit(['p/tracks/t/about.md' => "## Ce que vous apprendrez\n", 'p/tracks/t/i18n/en/about.md' => "## What you will learn\n"]);
+        $repository = $this->repository($this->tmp);
+
+        $this->assertSame("## Ce que vous apprendrez\n", $repository->findTrack('t')?->about);
+        $this->assertSame("## What you will learn\n", $repository->findTrack('t', 'en')?->about);
+
+        $this->parcoursTraduit(['p/tracks/t/about.md' => "  \n"]);
+        $this->assertNull($this->repository($this->tmp)->findTrack('t')?->about, 'Un fichier vide ne présente rien.');
     }
 
     /**

@@ -17,6 +17,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   `environments/php-8/.forelse/composer.php`, sert le navigateur comme le vérificateur : avant PHPUnit, celui-ci pose
   les paquets demandés par `composer.json` depuis le catalogue et régénère l'autoload. Le catalogue gagne
   `nikic/fast-route`, et le payload d'un exercice donne son adresse (`environment.packagesUrl`).
+- **Présentation d'un parcours** (`<parcours>/about.md`, facultative, traduite dans `i18n/<langue>/about.md`) : un texte
+  en Markdown sous la liste des chapitres de la page du parcours (ce qu'on y apprend, pour qui, les prérequis). Les
+  titres d'histoire des chapitres ne disent pas le sujet aux moteurs de recherche ; ce texte, si.
+- La `description` d'un chapitre s'affiche aussi sous son titre sur la carte du parcours (chapitre replié compris) et
+  dans les données structurées du cours (`syllabusSections`).
 
 ## 3.22.0 — 2026-10-29
 
