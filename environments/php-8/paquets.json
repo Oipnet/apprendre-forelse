@@ -8,6 +8,7 @@
         {"nom": "symfony/console", "version": "^8.0", "fr": "Écrire des commandes en ligne avec arguments, options et mise en forme.", "en": "Write command-line tools with arguments, options and styling."},
         {"nom": "symfony/validator", "version": "^8.0", "fr": "Valider des objets avec des attributs (#[Assert\\NotBlank]…).", "en": "Validate objects with attributes (#[Assert\\NotBlank]…)."},
         {"nom": "twig/twig", "version": "^3.21", "fr": "Le moteur de gabarits de Symfony, à utiliser seul.", "en": "Symfony's template engine, on its own."},
+        {"nom": "nikic/fast-route", "version": "^1.3", "fr": "Un routeur rapide et simple : des routes avec paramètres, sans framework.", "en": "A fast, simple router: routes with parameters, no framework."},
         {"nom": "league/commonmark", "version": "^2.7", "fr": "Convertir du Markdown en HTML.", "en": "Convert Markdown to HTML."},
         {"nom": "fakerphp/faker", "version": "^1.24", "fr": "Des données factices réalistes : noms, adresses, textes.", "en": "Realistic fake data: names, addresses, text."},
         {"nom": "phpunit/phpunit", "version": "^12.4", "fr": "Écrire et lancer des tests : php vendor/phpunit/phpunit/phpunit tests.", "en": "Write and run tests: php vendor/phpunit/phpunit/phpunit tests."}

@@ -1,6 +1,6 @@
 import type { CompletionIndex } from '../editor/completion';
 import { PreviewBridge } from '../preview/bridge';
-import type { CommandResult } from '@forelse/runtime-contract';
+import type { CommandResult, Runtime } from '@forelse/runtime-contract';
 import '../runtime/builtin';
 import { createRuntime, runtimeLabel } from '../runtime/registry';
 import { apresDemarrage } from './attente';
@@ -25,7 +25,7 @@ import { ApiProgressStore, LocalProgressStore, type ProgressStore, type SavedPro
 import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
 import { changedFiles, decodeFragment, encodeFragment, NEW_PROJECT, withFragment } from './scratch';
-import { knownPackages, Packages, packagesDialog, parseCatalog, readSelection, writeSelection } from './packages';
+import { composerRequest, knownPackages, Packages, packagesDialog, parseCatalog, readSelection, requiredPackages, writeSelection } from './packages';
 import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
@@ -130,10 +130,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		}
 	})();
 	const catalogue = scratch ? (config.scratch?.packages ?? null) : null;
-	const paquets: Promise<Packages | null> = catalogue
-		? fetch(catalogue.url)
+	// Le même catalogue sert `composer require` dans la console, bac à sable comme exercices (environnement sans framework).
+	const catalogueUrl = catalogue?.url ?? exercise.environment.packagesUrl ?? null;
+	const paquets: Promise<Packages | null> = catalogueUrl
+		? fetch(catalogueUrl)
 				.then((response) => (response.ok ? response.json() : null))
-				.then((data: unknown) => new Packages(parseCatalog(data), new URL(catalogue.url, location.href), moteur))
+				.then((data: unknown) => new Packages(parseCatalog(data), new URL(catalogueUrl, location.href), moteur))
 				.catch(() => null)
 		: Promise.resolve(null);
 	const urlInput = $<HTMLInputElement>('#url');
@@ -229,12 +231,21 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			await moteur.writeFiles({ ...(await depart).initial, ...exercise.tests });
 			mark('filesWritten');
 			const projetPaquets = await paquets;
+			// Comme un `composer install` : les paquets du composer.json de départ (ou du brouillon) sont posés.
+			const composerJson = projetPaquets ? await moteur.readFile('composer.json') : null;
 			if (projetPaquets) {
-				for (const nom of knownPackages(shared ? shared.packages : readSelection(stockage, exercise.id), projetPaquets.catalog)) {
+				const choisis = scratch ? (shared ? shared.packages : readSelection(stockage, exercise.id)) : [];
+				for (const nom of knownPackages([...choisis, ...requiredPackages(composerJson)], projetPaquets.catalog)) {
 					status(m.packages.adding(nom), 'busy');
 					await projetPaquets.add(nom).catch((error: unknown) => versLaConsole('error', m.packages.failed(nom, error instanceof Error ? error.message : String(error))));
 				}
 				if (shared) writeSelection(stockage, exercise.id, projetPaquets.names);
+			}
+			// Un composer.json apporté par l'exercice ou le brouillon (autre namespace, paquets) : l'autoload de
+			// l'archive ne le connaît pas, il est régénéré comme après un `composer install`.
+			if ('composer.json' in (await depart).initial && moteur.runCommand && framework.rawCommands?.includes('composer')) {
+				const installation = await moteur.runCommand(['composer', 'install', '--quiet']);
+				if (installation.exitCode !== 0) versLaConsole('error', installation.output);
 			}
 		})(),
 	);
@@ -254,7 +265,20 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	bindPaneTabs(root, Boolean(runtime.runCommand));
 	// Une commande peut créer ou modifier des fichiers (doctrine:migrations:diff…) : l'éditeur s'y abonne plus bas.
 	const commandRan = new Emitter<CommandResult>();
-	const consolePanel = new ConsolePanel($('#console-output'), $<HTMLInputElement>('#console-cmd'), runtime, (result) => {
+	// `composer require` : le paquet du catalogue est téléchargé et posé avant que PHP mette composer.json à jour.
+	const commandesComposer: Pick<Runtime, 'runCommand'> = {
+		runCommand: runtime.runCommand && (async (args: string[]) => {
+			const demande = composerRequest(args);
+			const projetPaquets = demande ? await paquets : null;
+			const noms = projetPaquets && demande ? knownPackages(demande.names, projetPaquets.catalog) : [];
+			if (demande?.action === 'require') for (const nom of noms) await projetPaquets!.add(nom);
+			const result = await runtime.runCommand!(args);
+			if (demande?.action === 'remove' && result.exitCode === 0) for (const nom of noms) projetPaquets!.forget(nom);
+			if (scratch && projetPaquets && noms.length) writeSelection(stockage, exercise.id, projetPaquets.names);
+			return result;
+		}),
+	};
+	const consolePanel = new ConsolePanel($('#console-output'), $<HTMLInputElement>('#console-cmd'), commandesComposer, (result) => {
 		commandRan.emit(result);
 		mentor.setError('console', result.exitCode === 0 ? null : stripAnsi(result.output));
 		reload();

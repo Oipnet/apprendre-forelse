@@ -142,6 +142,11 @@ foreach ($catalogue['paquets'] as $entree) {
         }
     }
     $table = [
+        // Le nom et les versions : `composer require` (environments/php-8/.forelse/composer.php) les reporte dans
+        // composer.json et composer.lock.
+        'nom' => $nom,
+        'version' => $paquets[$nom]['version'],
+        'paquets' => array_map(static fn (array $p) => $p['version'], $paquets),
         'classes' => array_filter($classes, $dans),
         'fichiers' => array_filter($fichiers, $dans),
     ];

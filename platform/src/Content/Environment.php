@@ -94,6 +94,18 @@ final readonly class Environment
         return null === $composer ? null : \dirname($composer);
     }
 
+    /**
+     * Le catalogue des paquets Composer qu'on peut poser dans ce projet (`composer require`, bouton « Paquets »), dans
+     * public/ : celui du plus particulier de la chaîne qui a un paquets.json (voir environments/bin/build-paquets.php).
+     * Null pour un environnement sans catalogue.
+     */
+    public function packageCatalogPath(): ?string
+    {
+        $catalogue = $this->file('paquets.json');
+
+        return null === $catalogue ? null : 'envs/'.basename(\dirname($catalogue)).'.paquets.json';
+    }
+
     /** Archive servie au navigateur, produite par environments/bin/build-env.sh. */
     public function archivePath(): string
     {

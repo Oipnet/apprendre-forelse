@@ -78,6 +78,32 @@ export function archiveFiles(zip: Uint8Array): Record<string, string> {
 	return files;
 }
 
+/**
+ * Ce qu'une commande de la console demande au catalogue : `composer require` pose des paquets avant que PHP ne mette
+ * composer.json à jour, `composer remove` les oublie après. Les noms seuls, sans contrainte de version (« :^1.3 »).
+ */
+export function composerRequest(args: readonly string[]): { action: 'require' | 'remove'; names: string[] } | null {
+	if (args[0] !== 'composer') return null;
+	const action = ({ require: 'require', req: 'require', r: 'require', remove: 'remove', rm: 'remove', uninstall: 'remove' } as const)[args[1] ?? ''];
+	if (!action) return null;
+	const names = args
+		.slice(2)
+		.filter((arg) => !arg.startsWith('-'))
+		.map((arg) => arg.split(/[:=]/)[0]!.toLowerCase())
+		.filter((name) => NAME.test(name));
+	return { action, names };
+}
+
+/** Les paquets que demande un composer.json (require et require-dev), tel que l'apprenant l'a laissé. */
+export function requiredPackages(composerJson: string | null): string[] {
+	try {
+		const data = JSON.parse(composerJson ?? '') as { require?: unknown; 'require-dev'?: unknown };
+		return [data.require, data['require-dev']].flatMap((section) => (section && typeof section === 'object' ? Object.keys(section) : [])).map((name) => name.toLowerCase()).filter((name) => NAME.test(name));
+	} catch {
+		return [];
+	}
+}
+
 /** Le poids d'une archive, tel qu'on l'affiche (« 412 Ko », « 1,8 Mo »). */
 export function formatSize(bytes: number, locale: string): string {
 	const ko = bytes / 1024;
@@ -113,6 +139,11 @@ export class Packages {
 		if (!entry || this.installed.has(name)) return;
 		await this.runtime.writeFiles(await this.download(entry));
 		this.installed.add(name);
+	}
+
+	/** Un paquet que `composer remove` a déjà retiré du projet (sa table effacée par PHP) : il pourra revenir. */
+	forget(name: string): void {
+		this.installed.delete(name);
 	}
 
 	async remove(name: string): Promise<void> {

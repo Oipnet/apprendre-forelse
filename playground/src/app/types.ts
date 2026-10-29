@@ -44,6 +44,8 @@ export interface ExercisePayload {
 		framework: FrameworkProfile;
 		archiveUrl: string;
 		completionIndexUrl: string;
+		/** Le catalogue des paquets Composer que `composer require` sait poser (packages.ts) ; absent sans catalogue. */
+		packagesUrl?: string | null;
 	};
 	/** Exercice de parcours : son chapitre et sa place (« exercice 2 sur 5 »), pour le fil d'Ariane. Null en Pratique. */
 	chapter: { title: string; number: number; position: number; total: number; url: string } | null;
