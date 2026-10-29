@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Les parcours pour l'en-tête d'un thème** : la fonction Twig `header_tracks()` donne les parcours ouverts au
+  visiteur (`tracks`) et ceux en préparation (`upcoming`, annoncés sans lien), dans la langue de la page. Le thème
+  forelse s'en sert pour son menu « Parcours ». `current_route` est désormais documentée parmi les variables de
+  `_header`.
+
 ## 3.23.0 — 2026-10-29
 
 ### Ajouté

@@ -1,7 +1,9 @@
 {#
   @theme Point de surcharge : l'en-tête des pages du site (marque, navigation, menu du compte).
   Variables : theme (App\Theme\Theme), brand_chip (la puce, déjà rendue : « atelier » dans l'atelier), login_suite
-  (string|null : la page où revenir après connexion), blog (App\Content\Blog), app.user (App\Entity\User|null).
+  (string|null : la page où revenir après connexion), blog (App\Content\Blog), app.user (App\Entity\User|null),
+  current_route (string|null : la route de la page, pour marquer le lien actif).
+  Fonction : header_tracks() (voir App\Twig\NavigationExtension) pour un menu des parcours.
   Obligatoire : les liens de connexion et d'inscription pour un visiteur, le menu du compte et la déconnexion pour un
   apprenant. Le menu du compte garde [data-account-menu] : le script du moteur le referme d'un clic ailleurs.
   Les classes site-*, account-* ne portent aucun style : ce sont des repères pour les tests et les thèmes.

@@ -25,7 +25,7 @@ foi dans `App\Theme\TemplateContract::POINTS`.
 | Gabarit | Ce qu'il habille |
 | --- | --- |
 | `base.html.twig` | la page de base (blocs `title`, `robots`, `font_preloads`, `stylesheets`, `javascripts`, `body_class`, `header`, `brand_chip`, `body`, `footer`). Mieux vaut surcharger `_header` et `_footer` que la remplacer : elle pose le référencement, la CSP, les fichiers du moteur et du thème. |
-| `_header.html.twig` | l'en-tête : marque, navigation, menu du compte |
+| `_header.html.twig` | l'en-tête : marque, navigation, menu du compte ; `header_tracks()` lui donne les parcours ouverts (`tracks`) et en préparation (`upcoming`, sans lien) pour un menu des parcours |
 | `_footer.html.twig` | le pied de page (la version et la licence du moteur y restent obligatoires) |
 | `home.html.twig` | l'accueil, fait des sections ci-dessous ; le remplacer change leur ordre ou en retire |
 | `home/_hero.html.twig`, `home/_demo.html.twig` | le bandeau et son illustration (`home.demo`) |

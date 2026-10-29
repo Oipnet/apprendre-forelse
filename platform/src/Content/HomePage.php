@@ -41,7 +41,7 @@ final readonly class HomePage
     {
         $published = array_values($this->visibility->tracksHere());
         $tracks = array_map(fn (Track $track) => $this->card($track, $user), $published);
-        $upcoming = $this->upcoming();
+        $upcoming = $this->visibility->upcoming();
         // Le bouton principal : pour un visiteur, un exercice de Pratique, qui se joue sans compte (le premier chapitre
         // d'un parcours en demande un) ; pour un compte, le premier exercice du premier parcours ; à défaut, l'inscription.
         $practiceUrl = null === $user ? $this->practiceUrl() : null;
@@ -76,7 +76,7 @@ final readonly class HomePage
 
         return [
             'tracks' => array_map(fn (Track $track) => $this->card($track, $user), $shown),
-            'upcoming' => null === $framework ? $this->upcoming() : [],
+            'upcoming' => null === $framework ? $this->visibility->upcoming() : [],
             'frameworks' => $frameworks,
             'framework' => $framework,
         ];
@@ -111,19 +111,6 @@ final readonly class HomePage
             // Sur une page dans une autre langue, la fiche dit que le parcours, lui, n'y est pas traduit.
             'language' => $this->visibility->locale() === $track->locale ? null : $track->locale,
         ];
-    }
-
-    /**
-     * Les parcours en préparation s'annoncent (« bientôt »), sans lien : leur page n'existe pas pour le visiteur.
-     *
-     * @return list<Track>
-     */
-    private function upcoming(): array
-    {
-        $upcoming = array_values(array_filter($this->content->tracks(), fn (Track $track) => $track->isRestricted() && !$this->visibility->isVisible($track)));
-        usort($upcoming, static fn (Track $a, Track $b) => [$a->order ?? \PHP_INT_MAX, $a->title] <=> [$b->order ?? \PHP_INT_MAX, $b->title]);
-
-        return $upcoming;
     }
 
     /**
