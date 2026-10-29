@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Content\Chapter;
 use App\Content\ContentRepository;
 use App\Content\HomePage;
+use App\Content\LessonRenderer;
 use App\Content\TrackVisibility;
 use App\Entity\User;
 use App\Export\LessonPdf;
@@ -69,13 +70,16 @@ final class TrackController extends AbstractController
     }
 
     #[Route(['fr' => '/parcours/{trackId}', 'en' => '/en/tracks/{trackId}'], name: 'app_track', methods: ['GET'])]
-    public function show(string $trackId, TrackVisibility $visibility, TrackOverview $overview, CourseSeo $seo): Response
+    public function show(string $trackId, TrackVisibility $visibility, TrackOverview $overview, CourseSeo $seo, LessonRenderer $markdown): Response
     {
         $track = $visibility->findHere($trackId) ?? throw $this->createNotFoundException();
         $seo->track($track);
         $user = $this->getUser();
 
-        return $this->render('track/show.html.twig', $overview->of($track, $user instanceof User ? $user : null, $this->isGranted(User::ROLE_AUTEUR)));
+        return $this->render('track/show.html.twig', [
+            ...$overview->of($track, $user instanceof User ? $user : null, $this->isGranted(User::ROLE_AUTEUR)),
+            'aboutHtml' => null === $track->about ? null : $markdown->toHtml($track->about),
+        ]);
     }
 
     /**

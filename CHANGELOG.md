@@ -8,6 +8,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Présentation d'un parcours** (`<parcours>/about.md`, facultative, traduite dans `i18n/<langue>/about.md`) : un texte
+  en Markdown sous la liste des chapitres de la page du parcours (ce qu'on y apprend, pour qui, les prérequis). Les
+  titres d'histoire des chapitres ne disent pas le sujet aux moteurs de recherche ; ce texte, si.
+- La `description` d'un chapitre s'affiche aussi sous son titre sur la carte du parcours (chapitre replié compris) et
+  dans les données structurées du cours (`syllabusSections`).
+
 ## 3.22.0 — 2026-10-29
 
 ### Ajouté

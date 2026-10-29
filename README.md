@@ -161,6 +161,7 @@ Les résultats s'exportent en CSV.
 ```
 <pack>/pack.yaml                       id, titre, version, licence, moteur attendu, parcours
 <pack>/tracks/<parcours>/track.yaml    environnement, chapitres → exercices
+<pack>/tracks/<parcours>/about.md      présentation du parcours (Markdown, facultative) : ce qu'on y apprend, pour qui
 <pack>/tracks/<parcours>/chapters/<chapitre>/
     lesson.md         fiche de cours de fin de chapitre (Markdown, facultative)
 <pack>/tracks/<parcours>/exercises/<exercice>/
@@ -232,8 +233,9 @@ Les résultats s'exportent en CSV.
   `summary`), et le parcours lui-même dans `<parcours>/i18n/en/` :
   - `track.yaml`, avec `title`, `description` et `chapters`, qui associe à l'id de chaque chapitre son `title`
     (et sa `description` si le chapitre français en a une) ; `source` recopie l'empreinte du parcours français
-    (track.yaml et fiches de cours) ;
-  - `chapters/<chapitre>/lesson.md`, la fiche de cours traduite de chaque chapitre qui en a une.
+    (track.yaml, fiches de cours et présentation) ;
+  - `chapters/<chapitre>/lesson.md`, la fiche de cours traduite de chaque chapitre qui en a une ;
+  - `about.md`, la présentation traduite, si le parcours français en a une.
 
   Un parcours ne paraît en anglais qu'entièrement traduit : il ne fait pas passer l'apprenant d'une langue à
   l'autre. Ses exercices peuvent se traduire avant lui, un par un : `content:check` les vérifie déjà. Une
@@ -362,7 +364,8 @@ Les résultats s'exportent en CSV.
 - `image: <fichier>` (dans `track.yaml`) donne au parcours son image de partage : un PNG, JPEG ou WebP du dossier du parcours, d'au moins 1200 × 630 et au format 1,91:1 des aperçus de liens (entre 1,8:1 et 2:1). Elle s'affiche quand on partage la page du parcours, ses sommaires de chapitre ou ses exercices (LinkedIn, Slack, X…), à la place de l'image de la marque. Le chargement du pack, et donc `content:check`, refuse une image absente, hors du dossier ou mal dimensionnée. Un moteur antérieur à la 2.4 ignore la clé.
 - `former_ids: [<ancien id>, …]` (dans `track.yaml`, ou dans l'`exercise.yaml` d'un exercice de parcours ou de Pratique) garde les adresses d'un parcours ou d'un exercice renommé : une page introuvable sous un ancien identifiant redirige (301) vers la même page sous l'identifiant actuel, requête comprise. Liens partagés, favoris et moteurs de recherche suivent. Le chargement du pack refuse un ancien identifiant qui est celui d'un autre parcours (ou exercice du même parcours) actuel, ou que deux déclarent. La progression enregistrée sous l'ancien identifiant, elle, n'est pas reprise. Un moteur antérieur à la 2.4 ignore la clé.
 - `level: beginner|intermediate|advanced` (dans `track.yaml`) donne le niveau visé par le parcours. Il est repris en `educationalLevel` (« Débutant », « Intermédiaire », « Avancé ») dans les données structurées du parcours et de ses exercices. Un moteur antérieur à la 2.4 ignore la clé.
-- `description: <texte>` (sur un chapitre de `track.yaml`) dit en une ou deux phrases ce que le chapitre fait apprendre, sans HTML. Elle s'affiche sous le titre du sommaire du chapitre et en devient la meta description, à la place du texte généré à partir des notions. Un moteur antérieur à la 2.4 l'ignore.
+- `description: <texte>` (sur un chapitre de `track.yaml`) dit en une ou deux phrases ce que le chapitre fait apprendre, sans HTML. Elle s'affiche sous le titre du chapitre, sur la carte du parcours (même replié) comme dans son sommaire, dont elle devient la meta description à la place du texte généré à partir des notions ; les données structurées du cours la reprennent (`syllabusSections`). Un moteur antérieur à la 2.4 l'ignore, un moteur antérieur à la 3.23 ne l'affiche pas sur la carte du parcours.
+- `about.md` (à côté de `track.yaml`, facultatif) présente le parcours en Markdown : ce qu'on y apprend, pour qui, avec quels prérequis. Il s'affiche sous la liste des chapitres de la page du parcours, et donne aux moteurs de recherche un texte où les titres d'histoire des chapitres ne disent pas le sujet. Commencez par un titre `##` : la page a déjà son `h1`. Un parcours traduit attend sa traduction dans `i18n/<langue>/about.md`. Un moteur antérieur à la 3.23 l'ignore.
 - `next: <parcours>` (dans `track.yaml`) conseille un parcours à suivre ensuite : proposé à la fin du dernier exercice et sur la carte du parcours. Il peut vivre dans un autre pack ; s'il n'est pas installé, il est ignoré.
 - `environment:` choisit l'environnement d'exécution, au niveau du parcours, d'un chapitre ou d'un exercice (`symfony-8`, `symfony-8-doctrine`, `symfony-8-app`…). `symfony-8-2-dev` suit Symfony 8.2 en développement (8.2.x-dev, figé par son `composer.lock`), avec la console, PropertyAccess, Serializer et Validator : il sert aux exercices de Pratique sur les nouveautés annoncées avant la sortie, et disparaîtra quand `symfony-8` passera en 8.2. `symfony-8-2-doctrine-dev` le prolonge avec Doctrine ORM (SQLite) et le composant KeyManagement (colonnes chiffrées, index aveugles), sur un KMS local OpenSSL dont la clé, publique, est dans son `.env`. `symfony-8-easyadmin` (Symfony 8.1, Doctrine, EasyAdmin 5) sert aux exercices sur EasyAdmin ; il déclare `extensions: [intl]`, si bien que le PHP du navigateur charge intl (≈ 13,5 Mo de plus au premier passage) pour lui seul.
 - `base: <exercice>` fait partir un exercice de l'état final d'un exercice précédent : un fil rouge s'enchaîne sans dupliquer de fichiers.

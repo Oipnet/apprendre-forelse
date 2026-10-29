@@ -33,6 +33,8 @@ final readonly class Track implements ExerciseOwner
         public ?string $level = null,
         /** La langue du parcours : celle des packs, ou celle de sa traduction (`i18n/<langue>/track.yaml`). */
         public string $locale = Exercise::LOCALE,
+        /** La présentation du parcours (Markdown de `about.md`, à côté de track.yaml) : ce qu'on y apprend, pour qui. Null sans fichier. */
+        public ?string $about = null,
     ) {
     }
 

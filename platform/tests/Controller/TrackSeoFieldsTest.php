@@ -7,7 +7,7 @@ use App\Tests\PacksTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
-/** Les champs SEO d'un parcours : son niveau (« level ») et la description de ses chapitres. */
+/** Les champs SEO d'un parcours : son niveau (« level »), la description de ses chapitres et sa présentation (about.md). */
 final class TrackSeoFieldsTest extends WebTestCase
 {
     use DatabaseTrait;
@@ -27,6 +27,7 @@ final class TrackSeoFieldsTest extends WebTestCase
         $yaml = preg_replace('/(  - id: bonjour\n    title: Bonjour Symfony\n)/', '$1    description: "'.self::DESCRIPTION.'"'."\n", $yaml, 1, $count);
         $this->assertSame(1, $count, 'Le chapitre « bonjour » du pack de démo a changé de forme.');
         $filesystem->dumpFile($trackYaml, "level: beginner\n".$yaml);
+        $filesystem->dumpFile($this->tmp.'/demo/tracks/decouverte/about.md', "## Ce que vous apprendrez\n\nLes routes et les contrôleurs de Symfony.\n");
         $this->usePacks($this->tmp);
     }
 
@@ -44,6 +45,10 @@ final class TrackSeoFieldsTest extends WebTestCase
         $crawler = $client->request('GET', '/parcours/decouverte');
         $course = $this->jsonLd($crawler, 'Course');
         $this->assertSame('Débutant', $course['educationalLevel']);
+        $this->assertSame([['@type' => 'Syllabus', 'name' => 'Bonjour Symfony', 'description' => self::DESCRIPTION]], $course['syllabusSections']);
+        $this->assertSelectorTextSame('#chapitre-1 .tr-chapter-description', self::DESCRIPTION, 'Sur la carte du parcours, chapitre replié compris.');
+        $this->assertSelectorTextSame('.track-about h2', 'Ce que vous apprendrez');
+        $this->assertSelectorTextContains('.track-about p', 'Les routes et les contrôleurs de Symfony.');
 
         $crawler = $client->request('GET', '/parcours/decouverte/chapitre/bonjour/sommaire');
         $this->assertResponseIsSuccessful();
