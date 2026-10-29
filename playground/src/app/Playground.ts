@@ -25,6 +25,7 @@ import { ApiProgressStore, LocalProgressStore, type ProgressStore, type SavedPro
 import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
 import { changedFiles, decodeFragment, encodeFragment, NEW_PROJECT, withFragment } from './scratch';
+import { knownPackages, Packages, packagesDialog, parseCatalog, readSelection, writeSelection } from './packages';
 import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
@@ -120,6 +121,21 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const demarre = new Promise<void>((resolve) => (demarrer = resolve));
 	demarre.catch(() => {}); // l'échec s'affiche plus bas, dans l'écran de démarrage
 	const runtime = apresDemarrage(moteur, demarre);
+	// Bac à sable PHP : les paquets Composer du catalogue (packages.ts), ceux du lien partagé ou ceux laissés la dernière fois.
+	const stockage = (() => {
+		try {
+			return localStorage;
+		} catch {
+			return null;
+		}
+	})();
+	const catalogue = scratch ? (config.scratch?.packages ?? null) : null;
+	const paquets: Promise<Packages | null> = catalogue
+		? fetch(catalogue.url)
+				.then((response) => (response.ok ? response.json() : null))
+				.then((data: unknown) => new Packages(parseCatalog(data), new URL(catalogue.url, location.href), moteur))
+				.catch(() => null)
+		: Promise.resolve(null);
 	const urlInput = $<HTMLInputElement>('#url');
 	// La console est créée plus bas : les messages de l'aperçu arrivés avant sont gardés en attente.
 	const messagesDeLApercu = new Mailbox<[level: 'warn' | 'error', message: string]>();
@@ -171,7 +187,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	if (note) $('#boot-first').textContent = note;
 	const demarrage = suivreDemarrage(mesure, note !== null, t0);
 	// Le brouillon d'une session précédente se charge pendant le téléchargement : il fait partie du projet de départ.
-	const depart = (shared ? Promise.resolve<SavedProgress | null>({ files: shared, hintsUsed: 0, completed: false }) : progress.load())
+	const depart = (shared ? Promise.resolve<SavedProgress | null>({ files: shared.files, hintsUsed: 0, completed: false }) : progress.load())
 		.catch(() => null)
 		.then((loaded) => {
 			const saved = fresh ? null : loaded;
@@ -212,6 +228,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			// Un seul message pour tout le projet de départ, au lieu d'un aller-retour par fichier.
 			await moteur.writeFiles({ ...(await depart).initial, ...exercise.tests });
 			mark('filesWritten');
+			const projetPaquets = await paquets;
+			if (projetPaquets) {
+				for (const nom of knownPackages(shared ? shared.packages : readSelection(stockage, exercise.id), projetPaquets.catalog)) {
+					status(m.packages.adding(nom), 'busy');
+					await projetPaquets.add(nom).catch((error: unknown) => versLaConsole('error', m.packages.failed(nom, error instanceof Error ? error.message : String(error))));
+				}
+				if (shared) writeSelection(stockage, exercise.id, projetPaquets.names);
+			}
 		})(),
 	);
 
@@ -285,7 +309,25 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		const share = config.share.invite;
 		$<HTMLButtonElement>('#share').addEventListener('click', async () => {
 			await session.flush().catch(() => false);
-			shareDialog(root, withFragment(share, encodeFragment(changedFiles(session.current, exercise.files))), m.scratch.shareTitle, mesure);
+			shareDialog(root, withFragment(share, encodeFragment(changedFiles(session.current, exercise.files), (await paquets)?.names ?? [])), m.scratch.shareTitle, mesure);
+		});
+	}
+	if (catalogue) {
+		$<HTMLButtonElement>('#packages').addEventListener('click', async () => {
+			const projetPaquets = await paquets;
+			if (!projetPaquets?.catalog.length) {
+				status(m.packages.unavailable, 'ko');
+				return;
+			}
+			packagesDialog(root, projetPaquets, {
+				lang: document.documentElement.lang || 'fr',
+				requestUrl: catalogue.requestUrl,
+				onChange: (paquet, ajoute) => {
+					writeSelection(stockage, exercise.id, projetPaquets.names);
+					mesurer('bac-a-sable-paquet', { ...mesure, paquet, ajoute });
+					reload();
+				},
+			});
 		});
 	}
 	const [{ EditorPanel, monaco }, { registerCompletion }, { BeforeAfterDialog }] = await editeur;
@@ -398,6 +440,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		demarrage.echec(error);
 		throw error;
 	}
+	// Les paquets s'écrivent dans PHP : le bouton attend qu'il ait démarré.
+	if (catalogue) $<HTMLButtonElement>('#packages').disabled = false;
 	await relais;
 	mark('relayReady');
 	// Commandes de préparation (ex. schéma de la base de l'aperçu, qui vit en mémoire).

@@ -14,6 +14,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   Laravel. `public/index.php` route les requêtes, les classes de `src/` sont chargées par Composer, les vues sont des
   fichiers PHP. Nouveau profil de framework `php` et environnement `php-8` (aucune dépendance) ; sa console lance un
   script comme un terminal (`php bin/bonjour.php Ada`, `$argv` compris, voir `playground/src/runtime/php-cli.php`).
+- **Paquets Composer dans le bac à sable PHP** : un bouton « Paquets » ajoute ou retire des paquets d'un catalogue
+  préparé sur le serveur (Carbon, ramsey/uuid, Monolog, VarDumper, Console, Validator, Twig, CommonMark, Faker,
+  PHPUnit). `require 'vendor/autoload.php'` suffit, et un lien partagé emporte les noms des paquets choisis. Le
+  catalogue est `environments/php-8/paquets.json` ; `build-env.sh` l'empaquette avec le nouveau
+  `environments/bin/build-paquets.php` (une archive par paquet, dépendances comprises, servie depuis `/envs` : PHP
+  n'a toujours pas de réseau). Un lien « Il manque un paquet ? » mène à la page de contact.
 
 ### Corrigé
 

@@ -79,7 +79,7 @@ final class ScratchController extends AbstractController
             'exercise' => $exercise,
             'instructions' => $markdown->toHtmlUnderTitle($exercise->instructions),
             'framework' => $framework,
-            'config' => $configs->scratch($framework),
+            'config' => $configs->scratch($framework, $request),
             'intro_template' => 'scratch/_intro.html.twig',
         ]);
     }

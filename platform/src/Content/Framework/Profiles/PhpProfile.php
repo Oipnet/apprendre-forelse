@@ -29,7 +29,8 @@ final class PhpProfile implements FrameworkProfileProvider
             codeDirs: ['public/', 'src/', 'bin/', 'templates/'],
             cacheDirs: [],
             testCaches: [],
-            hidden: ['vendor', '.git', 'node_modules', '.phpunit.cache'],
+            // .forelse/ : le chargeur des paquets ajoutés (bouton « Paquets »), pas du code de l'apprenant.
+            hidden: ['vendor', '.git', 'node_modules', '.phpunit.cache', '.forelse'],
             namespaceRoots: ['src' => 'App', 'tests' => 'App\\Tests'],
             lessonLanguages: '```php, ```bash',
             drafting: PhpWasm::DRAFTING.<<<'TEXTE'

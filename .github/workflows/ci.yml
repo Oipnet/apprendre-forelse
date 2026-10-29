@@ -214,7 +214,7 @@ jobs:
           path: |
             environments/*/vendor
             platform/public/envs
-          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'environments/bin/**', 'packages/simulateur-docker/composer.json', 'packages/simulateur-docker/src/**', 'packages/simulateur-docker/bin/**', 'environments/nuxt-*/**') }}
+          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'environments/*/paquets.json', 'environments/bin/**', 'packages/simulateur-docker/composer.json', 'packages/simulateur-docker/src/**', 'packages/simulateur-docker/bin/**', 'environments/nuxt-*/**') }}
 
       - name: Construire les environnements
         if: steps.cache-environnements.outputs.cache-hit != 'true'

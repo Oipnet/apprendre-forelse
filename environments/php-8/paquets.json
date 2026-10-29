@@ -1,0 +1,15 @@
+{
+    "_commentaire": "Les paquets que le bac à sable PHP propose d'ajouter (bouton « Paquets »). Empaquetés par environments/bin/build-paquets.php ; un paquet ajouté ici doit tourner dans le PHP du navigateur (pas d'intl, pas de réseau).",
+    "paquets": [
+        {"nom": "nesbot/carbon", "version": "^3.10", "fr": "Dates et durées, faciles à manipuler et à afficher.", "en": "Dates and durations, easy to handle and display."},
+        {"nom": "ramsey/uuid", "version": "^4.9", "fr": "Générer et lire des UUID.", "en": "Generate and parse UUIDs."},
+        {"nom": "monolog/monolog", "version": "^3.9", "fr": "Journaliser des messages, vers des fichiers ou la sortie.", "en": "Log messages to files or the output."},
+        {"nom": "symfony/var-dumper", "version": "^8.0", "fr": "dump() et dd() : afficher n'importe quelle variable, lisiblement.", "en": "dump() and dd(): display any variable, readably."},
+        {"nom": "symfony/console", "version": "^8.0", "fr": "Écrire des commandes en ligne avec arguments, options et mise en forme.", "en": "Write command-line tools with arguments, options and styling."},
+        {"nom": "symfony/validator", "version": "^8.0", "fr": "Valider des objets avec des attributs (#[Assert\\NotBlank]…).", "en": "Validate objects with attributes (#[Assert\\NotBlank]…)."},
+        {"nom": "twig/twig", "version": "^3.21", "fr": "Le moteur de gabarits de Symfony, à utiliser seul.", "en": "Symfony's template engine, on its own."},
+        {"nom": "league/commonmark", "version": "^2.7", "fr": "Convertir du Markdown en HTML.", "en": "Convert Markdown to HTML."},
+        {"nom": "fakerphp/faker", "version": "^1.24", "fr": "Des données factices réalistes : noms, adresses, textes.", "en": "Realistic fake data: names, addresses, text."},
+        {"nom": "phpunit/phpunit", "version": "^12.4", "fr": "Écrire et lancer des tests : php vendor/phpunit/phpunit/phpunit tests.", "en": "Write and run tests: php vendor/phpunit/phpunit/phpunit tests."}
+    ]
+}

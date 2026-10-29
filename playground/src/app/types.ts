@@ -106,5 +106,6 @@ export interface PlaygroundConfig {
 	/** Pratique : les liens de partage, pour inviter à faire l'exercice ou annoncer sa réussite (App\Share\PracticeShare). */
 	share?: { invite: ShareLinks; success: ShareLinks } | null;
 	/** Bac à sable : où aller ensuite (l'autre framework, la Pratique), sous la consigne. */
-	scratch?: { links: { title: string; url: string }[] } | null;
+	/** Le bac à sable : les liens d'après, et le catalogue des paquets Composer (projet sans framework, packages.ts). */
+	scratch?: { links: { title: string; url: string }[]; packages?: { url: string; requestUrl: string | null } | null } | null;
 }

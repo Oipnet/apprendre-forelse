@@ -430,6 +430,24 @@ export const fr = {
 		resumeDraft: 'Reprendre mon brouillon',
 	},
 
+	/** Les paquets Composer du bac à sable PHP (packages.ts). */
+	packages: {
+		button: 'Paquets',
+		buttonTitle: 'Ajouter des paquets Composer au projet',
+		title: 'Paquets Composer',
+		intro: 'Cochez un paquet : il s\'ajoute au projet avec ses dépendances, et require \'vendor/autoload.php\' le charge, comme après un composer require. Le lien partagé garde vos paquets.',
+		adding: (name: string) => `Ajout de ${name}…`,
+		added: (name: string) => `${name} est ajouté.`,
+		removing: (name: string) => `Retrait de ${name}…`,
+		removed: (name: string) => `${name} est retiré.`,
+		failed: (name: string, reason: string) => `${name} n'a pas pu être ajouté : ${reason}`,
+		downloadFailed: (name: string, status: number) => `téléchargement de ${name} refusé (HTTP ${status})`,
+		request: 'Il manque un paquet ? Dites-le-nous',
+		unavailable: 'Le catalogue des paquets est indisponible pour le moment.',
+		kilobytes: (n: string) => `${n} Ko`,
+		megabytes: (n: string) => `${n} Mo`,
+	},
+
 	site: {
 		expandAll: 'Tout ouvrir',
 		collapseAll: 'Tout fermer',
