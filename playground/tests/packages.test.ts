@@ -1,6 +1,6 @@
 import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it, vi } from 'vitest';
-import { archiveFiles, type CatalogEntry, knownPackages, Packages, parseCatalog, readSelection, tablePath, writeSelection } from '../src/app/packages.ts';
+import { archiveFiles, type CatalogEntry, composerRequest, knownPackages, Packages, parseCatalog, readSelection, requiredPackages, tablePath, writeSelection } from '../src/app/packages.ts';
 
 const carbon: CatalogEntry = {
 	nom: 'nesbot/carbon',
@@ -81,5 +81,25 @@ describe('Packages', () => {
 		const refuse = new Packages([carbon], new URL('https://forelse.test/envs/'), runtime, (async () => new Response('', { status: 404 })) as unknown as typeof fetch);
 		await expect(refuse.add('nesbot/carbon')).rejects.toThrow(/404/);
 		expect(refuse.names).toEqual([]);
+	});
+});
+
+describe('composer dans la console', () => {
+	it('repère les paquets que composer require ou remove demande, sans leur contrainte', () => {
+		expect(composerRequest(['composer', 'require', 'nikic/fast-route'])).toEqual({ action: 'require', names: ['nikic/fast-route'] });
+		expect(composerRequest(['composer', 'req', '--dev', 'Nikic/Fast-Route:^1.3', 'ramsey/uuid', '^4.9'])).toEqual({ action: 'require', names: ['nikic/fast-route', 'ramsey/uuid'] });
+		expect(composerRequest(['composer', 'remove', 'nikic/fast-route'])).toEqual({ action: 'remove', names: ['nikic/fast-route'] });
+	});
+
+	it("laisse passer les autres commandes : PHP s'en occupe", () => {
+		expect(composerRequest(['composer', 'dump-autoload'])).toBeNull();
+		expect(composerRequest(['composer'])).toBeNull();
+		expect(composerRequest(['bin/bonjour.php', 'require'])).toBeNull();
+	});
+
+	it('lit les paquets demandés par un composer.json, et rien dans un JSON cassé', () => {
+		expect(requiredPackages('{"require": {"php": ">=8.4", "nikic/fast-route": "^1.3"}, "require-dev": {"phpunit/phpunit": "^12"}}')).toEqual(['nikic/fast-route', 'phpunit/phpunit']);
+		expect(requiredPackages('{"require": {},}')).toEqual([]);
+		expect(requiredPackages(null)).toEqual([]);
 	});
 });

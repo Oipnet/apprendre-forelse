@@ -8,6 +8,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Composer dans la console du projet sans framework** (exercices comme bac à sable) : `composer dump-autoload` relit
+  `composer.json` (psr-4, psr-0, classmap, files, `-o` avec les avertissements PSR-4 de Composer) et réécrit
+  `vendor/autoload.php` ; `composer require` pose un paquet du catalogue et met à jour `composer.json` et
+  `composer.lock`, `composer remove` le retire. Un petit Composer sans réseau,
+  `environments/php-8/.forelse/composer.php`, sert le navigateur comme le vérificateur : avant PHPUnit, celui-ci pose
+  les paquets demandés par `composer.json` depuis le catalogue et régénère l'autoload. Le catalogue gagne
+  `nikic/fast-route`, et le payload d'un exercice donne son adresse (`environment.packagesUrl`).
+
 ## 3.22.0 — 2026-10-29
 
 ### Ajouté

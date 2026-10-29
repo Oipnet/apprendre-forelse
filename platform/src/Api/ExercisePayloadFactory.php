@@ -90,6 +90,8 @@ final readonly class ExercisePayloadFactory
                 'framework' => $environment->framework->forBrowser($this->translator),
                 'archiveUrl' => $this->assets->url($environment->archivePath(), $request),
                 'completionIndexUrl' => $this->assets->url($environment->completionIndexPath(), $request),
+                // Les paquets que `composer require` sait poser dans la console (projet sans framework), s'ils ont été construits.
+                'packagesUrl' => null === ($catalogue = $environment->packageCatalogPath()) ? null : $this->assets->builtUrl($catalogue, $request),
             ],
             ...$this->navigation->of($exercise),
             'practice' => $practice ? [

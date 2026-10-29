@@ -35,6 +35,11 @@ navigateur, puis chacun donne une archive avec ses dépendances (`<id>.paquet.<p
 et le catalogue `<id>.paquets.json`. Ajouter un paquet au catalogue, c'est une ligne dans
 `paquets.json` (nom, contrainte de version, description en français et en anglais).
 
+Le même catalogue sert la console : `composer require <paquet>` et `composer remove` (exercices comme bac à sable),
+avec `composer dump-autoload` qui relit `composer.json`. C'est un petit Composer sans réseau,
+`php-8/.forelse/composer.php`, que le vérificateur lance aussi (`install`) avant PHPUnit : il ne réécrit que
+`vendor/autoload.php`, les tables du vrai Composer dans `vendor/composer/` restent celles de l'empaquetage.
+
 La sortie est, dans l'ordre : le second argument, la variable `ENVIRONMENTS_OUT`, ou
 `platform/public/envs` — le dossier public du moteur, tant que les deux vivent dans le même dépôt.
 Le script produit deux fichiers par environnement :

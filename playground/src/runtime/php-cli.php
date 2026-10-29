@@ -25,6 +25,16 @@ if (null === $script) {
 
     return;
 }
+// « composer … » : le petit Composer de l'environnement (sans réseau), qui rend son code de sortie.
+if ('composer' === $script && is_file('/app/.forelse/composer.php')) {
+    $argv = ['composer', ...$arguments];
+    $_SERVER['argv'] = $argv;
+    $resultat = require '/app/.forelse/composer.php';
+    echo MARKER, is_int($resultat) ? $resultat : 0;
+
+    return;
+}
+
 $path = realpath($script);
 if (false === $path || !is_file($path) || !str_starts_with($path, '/app/')) {
     echo 'Could not open input file: ', $script, MARKER, 1;
