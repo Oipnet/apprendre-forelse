@@ -31,6 +31,12 @@ export function poserTraceur(doc: Document = document, nav: Navigator = navigato
 	script.defer = true;
 	script.src = src;
 	Object.assign(script.dataset, attributs);
+	// Les événements annoncés par le serveur (balises `<meta name="mesure-evenement">`, ex. « compte-cree » juste
+	// après l'inscription) partent une fois le traceur chargé : avant, window.umami n'existe pas.
+	const evenements = [...doc.querySelectorAll<HTMLMetaElement>('meta[name="mesure-evenement"]')].map((meta) => meta.content).filter(Boolean);
+	if (evenements.length) {
+		script.addEventListener('load', () => evenements.forEach((evenement) => mesurer(evenement)), { once: true });
+	}
 	doc.head.append(script);
 	return script;
 }

@@ -50,11 +50,15 @@
 <link rel="icon" href="data:,">
 {%- endif %}
 {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}
+{#- Les événements de mesure annoncés par le serveur (flash « mesure », ex. « compte-cree » après l'inscription) :
+   toujours consommés ici, avant la liste des messages de base.html.twig, qui les afficherait. #}
+{%- set mesures = app.flashes('mesure') %}
 {%- if analytics.enabled %}
 {# Mesure d'audience : pages vues et référents, sans cookie ni visiteur identifié (voir /confidentialite).
    Le script vient du domaine du site, pas d'un tiers. Absent du bac à sable, qui n'hérite pas de ce gabarit.
    L'entrée « mesure » pose le traceur décrit ici, sauf pour un navigateur piloté par un robot (playground/src/mesure.ts).
    Sans le fragment (#…) des adresses : celui du bac à sable porte le code du visiteur, qui n'a rien à faire dans la mesure. #}
 <meta name="mesure-audience" data-src="{{ analytics.scriptUrl }}" data-website-id="{{ analytics.websiteId }}" data-exclude-hash="true">
+{% for evenement in mesures %}<meta name="mesure-evenement" content="{{ evenement }}">{% endfor %}
 {{ vite_entry_script_tags('mesure') }}
 {%- endif %}
