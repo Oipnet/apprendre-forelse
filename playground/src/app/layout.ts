@@ -92,6 +92,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 				${foldButtonHtml('preview', foldPreview)}
 			</nav>
 			<div class="pane-preview">
+				<div class="pagetab" id="pagetab" title="${escapeHtml(m.layout.pageTitleHint)}" hidden><span aria-hidden="true">📄</span> <span id="pagetab-title"></span></div>
 				<div class="urlbar">
 					<span class="origin" title="${m.layout.sandboxTitle}"><span aria-hidden="true">🔒</span> ${m.layout.sandbox}</span>
 					<input id="url" value="${escapeHtml(exercise.preview)}" spellcheck="false" aria-label="${m.layout.previewPath}" />

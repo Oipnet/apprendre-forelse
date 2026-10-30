@@ -150,6 +150,10 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			urlInput.value = path || '/';
 			$('#preview-frozen').hidden = true;
 		},
+		onTitle: (title) => {
+			$('#pagetab-title').textContent = title;
+			$('#pagetab').hidden = !title;
+		},
 		// Une boucle infinie dans le code de la page (onMounted, watch, clic…) gèle l'aperçu : le relais est
 		// recréé, mais la page n'est pas rechargée, elle retomberait dans la boucle. La prochaine modification,
 		// ou ⟳, la recharge.

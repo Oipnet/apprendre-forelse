@@ -4,6 +4,8 @@ import type { HttpRequest } from '@forelse/runtime-contract';
 export type RelayToHost =
 	| { type: 'ready'; base: string }
 	| { type: 'navigated'; path: string }
+	/** Le titre de la page de l'aperçu (`<title>`), au chargement puis à chaque changement (Nuxt, useHead…). */
+	| { type: 'title'; title: string }
 	| { type: 'preview-request'; request: HttpRequest }
 	/** Avertissement ou erreur affiché dans la console de la page de l'aperçu (hydratation, [Vue warn]…). */
 	| { type: 'preview-console'; level: 'warn' | 'error'; message: string }

@@ -15,7 +15,7 @@ class Scene {
 	readonly relay = { postMessage: vi.fn() };
 	readonly frame = { src: '', contentWindow: this.relay } as unknown as HTMLIFrameElement;
 	readonly request = vi.fn<(request: HttpRequest) => Promise<HttpResponse>>(async () => RESPONSE);
-	readonly bridge = new PreviewBridge({ request: this.request } as unknown as Runtime, this.frame, `${SANDBOX}/relais.html`, { onResponse: vi.fn(), onNavigated: vi.fn(), onConsole: vi.fn() });
+	readonly bridge = new PreviewBridge({ request: this.request } as unknown as Runtime, this.frame, `${SANDBOX}/relais.html`, { onResponse: vi.fn(), onNavigated: vi.fn(), onTitle: vi.fn(), onConsole: vi.fn() });
 
 	/** Un message reçu par la fenêtre de la plateforme. */
 	receive(data: unknown, { origin = SANDBOX, source = this.relay as unknown, ports = [] as unknown[] } = {}): void {
@@ -58,6 +58,17 @@ describe('PreviewBridge', () => {
 
 		scene.receive({ type: 'ready', base: scene.bridge.base });
 		await expect(started).resolves.toBeUndefined();
+	});
+
+	it('transmet le titre de la page de l\'aperçu, pour l\'afficher hors de l\'iframe', async () => {
+		const scene = new Scene();
+		await scene.started();
+
+		scene.receive({ type: 'title', title: 'La Gazette de Saint-Glinglin' });
+		scene.receive({ type: 'title', title: 'Pirate' }, { origin: 'https://ailleurs.example' });
+
+		const callbacks = (scene.bridge as unknown as { callbacks: { onTitle: ReturnType<typeof vi.fn> } }).callbacks;
+		expect(callbacks.onTitle.mock.calls).toEqual([['La Gazette de Saint-Glinglin']]);
 	});
 
 	it('sert une requête sous son préfixe et transmet la réponse', async () => {

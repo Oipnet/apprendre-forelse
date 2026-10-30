@@ -531,6 +531,18 @@ a.chip:hover {
 }
 
 /* Aperçu */
+.pagetab {
+	padding: 0.3rem 0.7rem 0;
+	background: var(--panel);
+	color: var(--text);
+	font-size: 13px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.pagetab[hidden] {
+	display: none;
+}
 .urlbar {
 	display: flex;
 	align-items: center;
