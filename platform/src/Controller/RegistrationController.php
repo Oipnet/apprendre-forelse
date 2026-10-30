@@ -82,6 +82,9 @@ final class RegistrationController extends AbstractController
                 'compte',
             ));
 
+            // Mesure d'audience : l'inscription redirige, la page suivante envoie l'événement (voir _head.html.twig).
+            $this->addFlash('mesure', 'compte-cree');
+
             // Chemin local uniquement : pas de redirection ouverte.
             return $this->redirect(SafeRedirect::localPath(\is_string($target) ? $target : null) ?? $this->generateUrl('app_home'));
         }

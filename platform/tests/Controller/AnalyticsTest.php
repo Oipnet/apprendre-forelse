@@ -36,6 +36,43 @@ final class AnalyticsTest extends WebTestCase
         $this->assertCount(1, $crawler->filter('script[type="module"][src*="/build/"][src*="mesure"]'));
     }
 
+    /** L'inscription redirige : c'est la page suivante qui annonce « compte-cree », une seule fois. */
+    public function testLInscriptionEnvoieUnEvenement(): void
+    {
+        $client = self::clientAvecMesure();
+        $this->resetDatabase();
+        $this->inscrire($client);
+
+        $crawler = $client->followRedirect();
+        $this->assertSame(['compte-cree'], $crawler->filter('meta[name="mesure-evenement"]')->each(static fn ($meta) => $meta->attr('content')));
+        $this->assertSelectorNotExists('.flash-mesure', 'Ce n\'est pas un message pour l\'apprenant.');
+
+        $crawler = $client->request('GET', '/');
+        $this->assertCount(0, $crawler->filter('meta[name="mesure-evenement"]'), 'Envoyé une fois, pas à chaque page.');
+    }
+
+    public function testSansMesureLEvenementNeSAfficheJamais(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->inscrire($client);
+
+        $client->followRedirect();
+        $this->assertSelectorNotExists('.flash-mesure');
+        $this->assertStringNotContainsString('compte-cree', (string) $client->getResponse()->getContent());
+    }
+
+    private function inscrire(\Symfony\Bundle\FrameworkBundle\KernelBrowser $client): void
+    {
+        $client->request('GET', '/inscription');
+        $client->submitForm('Créer mon compte', [
+            'registration_form[displayName]' => 'Gorm',
+            'registration_form[email]' => 'gorm@example.test',
+            'registration_form[plainPassword]' => 'une-longue-phrase',
+        ], serverParameters: ['HTTP_ORIGIN' => 'http://localhost']);
+        $this->assertResponseRedirects();
+    }
+
     /** L'aperçu du code des apprenants sort d'une autre origine et d'un autre gabarit : il n'est pas mesuré. */
     public function testLeBacASableNEstPasMesure(): void
     {

@@ -10,6 +10,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Mesure de l'inscription** : un événement Umami `compte-cree`, envoyé par la page où l'inscription redirige
+  (flash `mesure`, lu par `_head.html.twig` en `<meta name="mesure-evenement">`, envoyé par `playground/src/mesure.ts`
+  une fois le traceur chargé). Il ne porte rien sur la personne.
+
+### Ajouté
+
 - **Le titre de la page dans l'aperçu** : le `<title>` de la page affichée apparaît au-dessus de la barre d'adresse
   de l'aperçu, et suit ses changements (Nuxt, `useHead`). Une iframe ne le montre nulle part : un apprenant qui
   modifiait son `<title>` ne voyait pas le résultat.

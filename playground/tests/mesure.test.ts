@@ -25,6 +25,17 @@ describe('poserTraceur', () => {
 		expect(document.head.querySelector('script')).toBeNull();
 	});
 
+	it('envoie les événements annoncés par la page une fois le traceur chargé', () => {
+		const envoyes: string[] = [];
+		document.head.innerHTML = '<meta name="mesure-audience" data-src="/mesure/traceur.js" data-website-id="abc"><meta name="mesure-evenement" content="compte-cree">';
+		const script = poserTraceur(document, navigateur(false))!;
+		expect(envoyes).toEqual([]);
+		(window as { umami?: unknown }).umami = { track: (nom: string) => envoyes.push(nom) };
+		script.dispatchEvent(new Event('load'));
+		expect(envoyes).toEqual(['compte-cree']);
+		delete (window as { umami?: unknown }).umami;
+	});
+
 	it('ne fait rien sans mesure d\'audience configurée', () => {
 		expect(poserTraceur(document, navigateur(false))).toBeNull();
 		expect(document.head.querySelector('script')).toBeNull();
