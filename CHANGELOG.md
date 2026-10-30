@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.24.0 — 2026-10-30
+
 ### Ajouté
 
 - **Les parcours pour l'en-tête d'un thème** : la fonction Twig `header_tracks()` donne les parcours ouverts au
