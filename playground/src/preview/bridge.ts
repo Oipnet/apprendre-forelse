@@ -47,6 +47,7 @@ export class PreviewBridge {
 		private readonly sandboxUrl: string,
 		private readonly callbacks: {
 			onNavigated?: (path: string) => void;
+			onTitle?: (title: string) => void;
 			onResponse?: (request: HttpRequest, response: HttpResponse) => void;
 			onConsole?: (level: 'warn' | 'error', message: string) => void;
 			/** Le relais ne répond plus (boucle infinie dans le code de la page ?) : il va être recréé. */
@@ -115,6 +116,9 @@ export class PreviewBridge {
 					break;
 				case 'navigated':
 					this.callbacks.onNavigated?.(String(message.path));
+					break;
+				case 'title':
+					this.callbacks.onTitle?.(String(message.title).slice(0, 200));
 					break;
 				case 'preview-console':
 					this.callbacks.onConsole?.(message.level === 'error' ? 'error' : 'warn', String(message.message));

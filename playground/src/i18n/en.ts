@@ -105,6 +105,7 @@ export const en: Messages = {
 		sandboxTitle: 'The application runs in an isolated sandbox',
 		sandbox: 'preview',
 		previewPath: 'Preview path',
+		pageTitleHint: 'Tab title: the page <title>',
 		reloadTitle: 'Reload',
 		reload: 'Reload the preview',
 		previewFrozen: 'The page stopped responding: infinite loop in its code, or a dialog left open? The preview was restarted without reloading it. Fix the loop, then reload (⟳).',

@@ -108,6 +108,7 @@ export const fr = {
 		sandboxTitle: 'L\'application tourne dans un bac à sable isolé',
 		sandbox: 'aperçu',
 		previewPath: 'Chemin de l\'aperçu',
+		pageTitleHint: 'Titre de l\'onglet : le <title> de la page',
 		reloadTitle: 'Recharger',
 		reload: 'Recharger l\'aperçu',
 		previewFrozen: 'La page ne répondait plus : boucle infinie dans son code, ou boîte de dialogue restée ouverte ? L\'aperçu a été relancé sans la recharger. Corrigez la boucle, puis rechargez (⟳).',

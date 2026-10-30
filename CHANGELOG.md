@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Le titre de la page dans l'aperçu** : le `<title>` de la page affichée apparaît au-dessus de la barre d'adresse
+  de l'aperçu, et suit ses changements (Nuxt, `useHead`). Une iframe ne le montre nulle part : un apprenant qui
+  modifiait son `<title>` ne voyait pas le résultat.
+
 ## 3.24.0 — 2026-10-30
 
 ### Ajouté

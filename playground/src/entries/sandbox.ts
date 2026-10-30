@@ -51,12 +51,24 @@ async function start() {
 		else if (event.data.type === 'ping') toHost({ type: 'pong', seq: Number(event.data.seq) });
 	});
 
+	// Le titre de l'onglet (<title>) ne se voit nulle part dans une iframe : on le transmet pour l'afficher.
+	let titleObserver: MutationObserver | undefined;
 	frame.addEventListener('load', () => {
+		titleObserver?.disconnect();
 		try {
 			const location = frame.contentWindow!.location;
 			if (location.pathname.startsWith(base)) toHost({ type: 'navigated', path: location.pathname.slice(base.length) + location.search });
+			const page = frame.contentDocument!;
+			let sent: string | undefined;
+			const sendTitle = () => {
+				if (page.title !== sent) toHost({ type: 'title', title: (sent = page.title) });
+			};
+			sendTitle();
+			titleObserver = new MutationObserver(sendTitle);
+			titleObserver.observe(page.head ?? page.documentElement, { childList: true, subtree: true, characterData: true });
 		} catch {
 			// Page d'une autre origine (lien externe) : rien à signaler.
+			toHost({ type: 'title', title: '' });
 		}
 	});
 
