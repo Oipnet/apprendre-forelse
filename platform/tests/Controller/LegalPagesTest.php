@@ -148,7 +148,8 @@ final class LegalPagesTest extends WebTestCase
         $this->assertStringContainsString("Contact: mailto:contact@example.test\n", $body);
         $this->assertMatchesRegularExpression('/^Expires: (\d{4}-\d{2}-\d{2})T00:00:00Z$/m', $body);
         preg_match('/^Expires: (\S+)$/m', $body, $expires);
-        $this->assertGreaterThan(new \DateTimeImmutable('+11 months'), new \DateTimeImmutable($expires[1]), 'Toujours valable près d\'un an.');
+        // Compté depuis le début du mois, comme l'expiration : « +11 months » un 31 tombe déjà au mois suivant (31/10 → 01/10).
+        $this->assertGreaterThan(new \DateTimeImmutable('first day of this month midnight +11 months', new \DateTimeZone('UTC')), new \DateTimeImmutable($expires[1]), 'Toujours valable près d\'un an.');
         $this->assertStringContainsString('Canonical: http://localhost/.well-known/security.txt', $body);
     }
 

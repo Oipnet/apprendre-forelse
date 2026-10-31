@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Environnement `php-8-gazette-en`** pour la traduction anglaise du parcours « Apprendre PHP 8 » : le socle des
+  tests de la Gazette (`Tests\GazetteTestCase`, `Tests\Page`) avec ses messages et commentaires en anglais, mêmes noms
+  de méthodes, site servi sous `/preview` au lieu de `/apercu`.
+
 ## 3.25.0 — 2026-10-31
 
 ### Ajouté
