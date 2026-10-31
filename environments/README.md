@@ -108,7 +108,7 @@ Un exercice traduit tourne dans **`<environnement>-<langue>`** quand ce dossier 
 anglaise d'un exercice de `symfony-8-app` tourne dans `symfony-8-app-en`. La variante prolonge
 l'environnement français et ne remplace que ce qui parle à l'apprenant : la langue des messages de Symfony
 (`default_locale`), les commentaires et les messages des outils de test (`tests/Formation/`, mêmes noms de
-méthodes). Pour Laravel, `laravel-13-en` ne remplace que `config/app.php` (langue et Faker en anglais, au lieu du `APP_LOCALE=fr` de `.env`). Sans variante, la traduction tourne dans l'environnement français.
+méthodes). Pour Laravel, `laravel-13-en` ne remplace que `config/app.php` (langue et Faker en anglais, au lieu du `APP_LOCALE=fr` de `.env`). Pour la Gazette, `php-8-gazette-en` ne remplace que le socle des tests (`tests/GazetteTestCase.php`, `tests/Page.php`). Sans variante, la traduction tourne dans l'environnement français.
 
 C'est le mécanisme qui rendra un décor de pack abordable : « le Symfony complet, plus mes trois
 entités » se dira en quelques fichiers au lieu d'une copie de tout un squelette.

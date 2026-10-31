@@ -10,6 +10,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Environnement `php-8-gazette-en`** pour la traduction anglaise du parcours « Apprendre PHP 8 » : le socle des
+  tests de la Gazette (`Tests\GazetteTestCase`, `Tests\Page`) avec ses messages et commentaires en anglais, mêmes noms
+  de méthodes, site servi sous `/preview` au lieu de `/apercu`.
 - **Mesure de l'inscription** : un événement Umami `compte-cree`, envoyé par la page où l'inscription redirige
   (flash `mesure`, lu par `_head.html.twig` en `<meta name="mesure-evenement">`, envoyé par `playground/src/mesure.ts`
   une fois le traceur chargé). Il ne porte rien sur la personne.
