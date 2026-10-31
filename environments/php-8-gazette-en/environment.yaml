@@ -1,0 +1,6 @@
+# The English version of php-8-gazette, used by English translations of the "Learn PHP 8" exercises (the engine
+# picks <environment>-<language> when it exists): the test base speaks English and serves the site under /preview.
+# Il prolonge php-8-gazette : ne vivent ici que les fichiers qu'il remplace.
+id: php-8-gazette-en
+extends: php-8-gazette
+title: PHP 8.4 (English) — no framework, PHPUnit
