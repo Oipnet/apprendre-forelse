@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.25.0 — 2026-10-31
+
 ### Ajouté
 
 - **Mesure de l'inscription** : un événement Umami `compte-cree`, envoyé par la page où l'inscription redirige
