@@ -166,6 +166,16 @@ final readonly class Blog
         return $this->content->findArticle($article->translationOf)?->course;
     }
 
+    /** L'auteur de l'article (son identifiant) : le sien, celui de l'article français qu'il traduit, ou null (l'auteur par défaut). */
+    public function authorOf(Article $article): ?string
+    {
+        if (null !== $article->author || null === $article->translationOf) {
+            return $article->author;
+        }
+
+        return $this->content->findArticle($article->translationOf)?->author;
+    }
+
     /** La langue de la page demandée, si le blog la parle ; le français sinon. */
     public function locale(): string
     {

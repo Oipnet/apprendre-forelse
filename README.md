@@ -257,6 +257,7 @@ Les résultats s'exportent en CSV.
   visibility: admin                                     # facultative : en préparation
   practice: laravel-13-26-read-through                  # facultative : l'exercice de Pratique dont part l'article
   course: symfony-pour-dev-php                          # facultative : le parcours proposé en fin d'article
+  author: grace-hopper                                  # facultative : un des « authors » du thème (sinon « person »)
   tags: [Symfony, Sécurité]                             # facultative : les sujets, filtres de la liste
   ---
   ```
@@ -448,8 +449,12 @@ accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas
   structurées. `chip` est la petite puce à côté, `tagline` l'accroche, `title` le `<title>` de l'accueil, `url` le
   site de la marque, `person` (`name`, `jobTitle`) l'auteur des parcours et des articles dans les données
   structurées. Avec `bio` (deux ou trois phrases) ou `links` (`malt`, `linkedin`, `github`, `site`, en https), un
-  encart « Écrit par » suit chaque article ; `portrait` (une image du dossier du thème, carrée) y met une photo, et
-  `locales.<langue>.person` traduit `jobTitle` et `bio`.
+  encart « Écrit par » suit chaque article ; `portrait` (une image carrée de `assets/`) y met une photo, `about` (du
+  Markdown) remplit sa page `/auteurs/<nom>`, et `locales.<langue>.person` traduit `jobTitle`, `bio` et `about`.
+  D'autres auteurs se déclarent sous `authors:`, par identifiant (`grace-hopper: {name, jobTitle, bio…}`, même forme,
+  traduits sous `locales.<langue>.authors`) ; un article nomme le sien avec `author: grace-hopper`, sinon c'est
+  `person`. Chaque auteur qui a une présentation a sa page (`/auteurs/grace-hopper`, `/en/authors/…`) : photo,
+  présentation, profils, ses articles, et une `ProfilePage` dans les données structurées.
 - `colors` et `fonts` redéfinissent les jetons du thème default (`--color-accent`, `--color-bg`, `--font-serif`…,
   voir [docs/themes.md](docs/themes.md)) : les pages du site et les emails les suivent. Hexadécimal seulement ; une
   valeur mal écrite **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire

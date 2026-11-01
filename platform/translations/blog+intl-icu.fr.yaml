@@ -59,3 +59,9 @@ show:
 
 feed:
     description: "Les articles de {site}."
+
+# La page d'un auteur (/auteurs/<nom>).
+auteur:
+    fil_ariane: "Auteur"
+    parcours: "Ses parcours"
+    articles: "Ses derniers articles"

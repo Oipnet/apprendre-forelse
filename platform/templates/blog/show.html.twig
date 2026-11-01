@@ -4,7 +4,7 @@
 {#
   Un article du blog, rendu depuis le Markdown de son pack (voir App\Content\Article).
   Variables : article, html, sommaire (les intertitres ancrés, vide pour un article court), scheduled, translations (le même article dans les autres langues), practice (l'exercice
-  dont part l'article, ou null), course (le parcours qui le prolonge, ou null), previous, next, related (les contenus
+  dont part l'article, ou null), course (le parcours qui le prolonge, ou null), author (Theme::author(), ou null), previous, next, related (les contenus
   proches, voir search/_related.html.twig).
 
   Les contenus proches restent en vue pendant la lecture : colonne collante à droite sur un écran large, trois liens
@@ -67,17 +67,16 @@
             <div class="lesson prose prose-theme mt-8 max-w-none">{{ html|raw }}</div>
         </article>
 
-        {%- set person = theme.person %}
-        {% if person and (person.bio is defined or person.links is defined) %}
+        {% if author and (author.bio is defined or author.links is defined) %}
             {# L'auteur, juste après le texte : le lecteur qui a aimé l'article sait qui l'a écrit et comment le joindre. #}
             <aside class="blog-author mt-10 flex gap-4 border-t border-line pt-6" aria-label="{{ 'show.auteur.titre'|trans }}">
-                {%- if theme.portraitUrl %}<img class="h-16 w-16 shrink-0 rounded-full object-cover" src="{{ theme.portraitUrl }}" alt="" width="64" height="64" loading="lazy">{% endif %}
+                {%- if author.portraitUrl %}<img class="h-16 w-16 shrink-0 rounded-full object-cover" src="{{ author.portraitUrl }}" alt="" width="64" height="64" loading="lazy">{% endif %}
                 <div class="min-w-0">
                     <p class="text-sm text-ink-muted">{{ 'show.auteur.titre'|trans }}</p>
-                    <p class="font-semibold">{{ person.name }} <span class="font-normal text-ink-muted">· {{ person.jobTitle }}</span></p>
-                    {%- if person.bio is defined %}<p class="mt-1">{{ person.bio }}</p>{% endif %}
+                    <p class="font-semibold">{% if author.hasPage %}<a href="{{ path('app_author', {slug: author.id}) }}" rel="author">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %} <span class="font-normal text-ink-muted">· {{ author.jobTitle }}</span></p>
+                    {%- if author.bio is defined %}<p class="mt-1">{{ author.bio }}</p>{% endif %}
                     <p class="blog-author-links mt-3 flex flex-wrap gap-2">
-                        {%- for key, url in person.links|default({}) %}
+                        {%- for key, url in author.links|default({}) %}
                         <a class="btn" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="article-auteur" data-umami-event-lien="{{ key }}">{{ ('show.auteur.lien.' ~ key)|trans }}</a>
                         {%- endfor %}
                         <a class="btn" href="{{ path('app_contact') }}" data-umami-event="article-auteur" data-umami-event-lien="contact">{{ 'show.auteur.contact'|trans }}</a>

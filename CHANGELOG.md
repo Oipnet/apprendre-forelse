@@ -14,10 +14,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   parcours nommé par la nouvelle clé `course:` de l'article, ou à défaut celui du framework de son exercice de
   Pratique. Le parcours doit exister (`content:check`) ; il n'apparaît que s'il est visible et traduit dans la langue
   de la page. Clics comptés dans Umami (`article-parcours`).
-- **L'auteur sous chaque article** : « Écrit par », avec la présentation, les profils et le contact, quand la
-  personne du thème déclare `bio` ou `links` (`malt`, `linkedin`, `github`, `site`, en https). `portrait:` (image
-  du dossier du thème) y ajoute une photo ; `locales.<langue>.person` traduit `jobTitle` et `bio`. Les profils
-  passent aussi dans les données structurées (`sameAs`). Clics comptés dans Umami (`article-auteur`).
+- **Les auteurs** : la personne du thème accepte `bio`, `about` (Markdown), `links` (`malt`, `linkedin`, `github`,
+  `site`, en https) et `portrait` (image de `assets/`) ; `authors:` déclare d'autres auteurs par identifiant, et un
+  article nomme le sien (`author:`). Sous chaque article, l'encart « Écrit par » (présentation, profils, contact) ;
+  pour chaque auteur présenté, une page `/auteurs/<identifiant>` (`/en/authors/…`) avec ses articles, une
+  `ProfilePage` et le sitemap. Les profils passent dans les données structurées (`sameAs`). Clics comptés dans Umami
+  (`article-auteur`, `auteur-lien`).
 - **Sommaire des articles** : chaque intertitre reçoit une ancre, et un article d'au moins trois intertitres affiche
   son sommaire en tête.
 - **Copier un bloc de code** d'un article en un clic (événement Umami `code-copie`).

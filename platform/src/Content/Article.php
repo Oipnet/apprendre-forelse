@@ -46,6 +46,11 @@ final readonly class Article
          */
         public ?string $course = null,
         /**
+         * L'auteur de l'article (clé `author`) : l'identifiant d'un des « authors » du thème. Sans cette clé, l'auteur par
+         * défaut (« person »). Une traduction sans cette clé reprend celle de l'article français.
+         */
+        public ?string $author = null,
+        /**
          * Les sujets de l'article (clé `tags`), tels qu'ils s'affichent : la liste du blog se filtre par sujet (voir
          * Blog::topics()). Chaque langue écrit les siens : une traduction ne reprend pas ceux de l'article français.
          *

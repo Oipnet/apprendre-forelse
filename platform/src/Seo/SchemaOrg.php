@@ -55,19 +55,24 @@ final readonly class SchemaOrg
 
     /**
      * L'auteur des parcours et des exercices : la personne que déclare le thème actif (« person » de theme.yaml).
-     * Une autre instance publie son organisation.
+     * Une autre instance publie son organisation. Un article peut nommer un autre auteur du thème (Theme::author()).
+     *
+     * @param array<string, mixed>|null $author un auteur de Theme::author(), null pour l'auteur par défaut
      *
      * @return array<string, mixed>
      */
-    public function author(): array
+    public function author(?array $author = null): array
     {
-        if (null === ($person = $this->theme->person())) {
+        $person = $author ?? $this->theme->person();
+        if (null === $person) {
             return ['@id' => $this->site().'/#organisation'];
         }
+        // L'auteur par défaut garde son @id historique ; un autre auteur a le sien.
+        $isDefault = null === $author || ($author['isDefault'] ?? true);
 
         return [
             '@type' => 'Person',
-            '@id' => $this->site().'/#auteur',
+            '@id' => $this->site().'/#auteur'.($isDefault ? '' : '-'.$author['id']),
             'name' => $person['name'],
             'jobTitle' => $person['jobTitle'],
             'worksFor' => ['@id' => $this->site().'/#organisation'],

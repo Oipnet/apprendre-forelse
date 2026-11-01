@@ -24,7 +24,9 @@ tagline: Apprendre à développer en codant dans le navigateur, avec les outils 
 
 # La personne derrière les parcours et les articles, publiée dans les données structurées (auteur). Absente : aucune.
 # Avec « bio » ou « links », un encart « Écrit par » suit chaque article : la présentation, les profils (malt, linkedin,
-# github, site, en https://) et le lien vers le contact. « portrait » (plus haut, avec les images) y ajoute une photo.
+# github, site, en https://) et le lien vers le contact ; « portrait » (une image de assets/) y ajoute une photo, et
+# « about » (Markdown) remplit sa page /auteurs/gaston-bigorneau. D'autres auteurs se déclarent sous « authors: »,
+# par identifiant, et un article nomme le sien avec « author: ».
 # person:
 #   name: Gaston Bigorneau
 #   jobTitle: Formateur
@@ -32,6 +34,9 @@ tagline: Apprendre à développer en codant dans le navigateur, avec les outils 
 #   links:
 #     malt: https://www.malt.fr/profile/gastonbigorneau
 #     linkedin: https://www.linkedin.com/in/gastonbigorneau
+#   portrait: assets/auteurs/gaston.webp
+# authors:
+#   lucie-bigorneau: {name: Lucie Bigorneau, jobTitle: Formatrice, bio: "Je forme aux tests et à la qualité."}
 # Une langue traduit le titre et la présentation : locales.en.person: {jobTitle: Trainer, bio: "…"}
 
 # Le site de la marque, publié dans les données structurées. Absent : la plateforme parle d'elle-même.

@@ -239,10 +239,12 @@ final class BlogTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
         $this->assertCount(0, $crawler->filter('.blog-author'), 'Le thème du moteur ne présente personne.');
+        $this->client->request('GET', '/auteurs/ada-lovelace');
+        $this->assertResponseStatusCodeSame(404, 'Ni n\'a de page auteur.');
 
         $themes = sys_get_temp_dir().'/themes-'.bin2hex(random_bytes(4));
         mkdir($themes.'/auteur', 0o777, true);
-        file_put_contents($themes.'/auteur/theme.yaml', "name: Auteur\nperson:\n  name: Ada Lovelace\n  jobTitle: Formatrice\n  bio: 'Je forme des devs PHP.'\n  links: {malt: 'https://www.malt.fr/profile/ada', linkedin: 'https://www.linkedin.com/in/ada'}\n");
+        file_put_contents($themes.'/auteur/theme.yaml', "name: Auteur\nperson:\n  name: Ada Lovelace\n  jobTitle: Formatrice\n  bio: 'Je forme des devs PHP.'\n  links: {malt: 'https://www.malt.fr/profile/ada', linkedin: 'https://www.linkedin.com/in/ada'}\nauthors:\n  grace-hopper: {name: Grace Hopper, jobTitle: Amirale, bio: 'Compilatrice.'}\n");
         $before = [$_SERVER['THEMES_DIR'] ?? null, $_SERVER['THEME'] ?? null];
         $_SERVER['THEMES_DIR'] = $_ENV['THEMES_DIR'] = $themes;
         $_SERVER['THEME'] = $_ENV['THEME'] = 'auteur';
@@ -258,6 +260,25 @@ final class BlogTest extends WebTestCase
             $this->assertSame(['malt', 'linkedin', 'contact'], $author->filter('a')->each(static fn ($a) => $a->attr('data-umami-event-lien')), 'Les profils, puis le contact.');
             $this->assertSame('https://www.malt.fr/profile/ada', $author->filter('a')->first()->attr('href'));
             $this->assertSame('/contact', $author->filter('a')->last()->attr('href'));
+            $this->assertSame('/auteurs/ada-lovelace', $author->filter('a[rel="author"]')->attr('href'), 'Le nom mène à la page de l\'auteur.');
+
+            // La page de l'auteur : sa présentation (la bio, faute de « about »), ses profils, ses articles.
+            $crawler = $this->client->request('GET', '/auteurs/ada-lovelace');
+            $this->assertResponseIsSuccessful();
+            $this->assertSame('Ada Lovelace', $crawler->filter('h1')->text());
+            $this->assertStringContainsString('Je forme des devs PHP.', $crawler->filter('.author-page')->text());
+            $this->assertSame('https://www.malt.fr/profile/ada', $crawler->filter('.author-links a')->first()->attr('href'));
+            $this->assertGreaterThan(0, $crawler->filter('.author-page a[href="/blog/les-tests-en-direct"]')->count(), 'Ses articles.');
+            $this->assertStringContainsString('"ProfilePage"', (string) $this->client->getResponse()->getContent());
+            $this->client->request('GET', '/auteurs/quelqu-un-d-autre');
+            $this->assertResponseStatusCodeSame(404);
+
+            // Un autre auteur du thème a sa page ; les articles qui ne le nomment pas (clé « author ») n'y sont pas.
+            $crawler = $this->client->request('GET', '/auteurs/grace-hopper');
+            $this->assertResponseIsSuccessful();
+            $this->assertSame('Grace Hopper', $crawler->filter('h1')->text());
+            $this->assertCount(0, $crawler->filter('.author-page a[href="/blog/les-tests-en-direct"]'));
+            $this->assertStringContainsString('#auteur-grace-hopper', (string) $this->client->getResponse()->getContent(), 'Son propre @id dans les données structurées.');
         } finally {
             foreach (['THEMES_DIR' => $before[0], 'THEME' => $before[1]] as $name => $value) {
                 if (null === $value) {

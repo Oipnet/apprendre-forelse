@@ -155,7 +155,7 @@ final class ThemeTest extends TestCase
     {
         yield 'liste' => ["locales: [en]\n", '« locales » associe une langue'];
         yield 'langue mal écrite' => ["locales:\n  English: {tagline: Learn.}\n", '« locales.English » : une langue s\'écrit en deux lettres'];
-        yield 'clé non traduisible' => ["locales:\n  en: {colors: {accent: '#000000'}}\n", 'locales.en, clé « colors » inconnue (acceptées : chip, title, tagline, home, person)'];
+        yield 'clé non traduisible' => ["locales:\n  en: {colors: {accent: '#000000'}}\n", 'locales.en, clé « colors » inconnue (acceptées : chip, title, tagline, home, person, authors)'];
         yield 'section incomplète' => ["locales:\n  en:\n    home:\n      author: {title: Us}\n", 'locales.en, « home.author.lead » est obligatoire'];
         yield 'texte qui n\'en est pas un' => ["locales:\n  en: {tagline: [Learn]}\n", 'locales.en, « tagline » doit être du texte'];
     }
@@ -236,6 +236,29 @@ final class ThemeTest extends TestCase
 
         $this->assertSame(['name' => 'Ada Lovelace', 'jobTitle' => 'Formatrice', 'bio' => 'Je forme des devs PHP.', 'links' => ['malt' => 'https://www.malt.fr/profile/ada', 'linkedin' => 'https://www.linkedin.com/in/ada']], $config->person);
         $this->assertSame(['jobTitle' => 'Trainer', 'bio' => 'I train PHP developers.'], $config->locales['en']['person']);
+    }
+
+    public function testLesAutresAuteursSontDeclaresParIdentifiant(): void
+    {
+        $this->write("name: A\nperson: {name: Ada, jobTitle: F}\nauthors:\n  grace-hopper: {name: Grace Hopper, jobTitle: Amirale, bio: Compilatrice}\nlocales:\n  en:\n    authors:\n      grace-hopper: {jobTitle: Rear admiral}\n");
+        $config = (new ThemeLoader())->load($this->tmp);
+
+        $this->assertSame(['grace-hopper' => ['name' => 'Grace Hopper', 'jobTitle' => 'Amirale', 'bio' => 'Compilatrice']], $config->authors);
+        $this->assertSame(['jobTitle' => 'Rear admiral'], $config->locales['en']['authors']['grace-hopper']);
+
+        $this->write("name: A\nauthors:\n  Grace: {name: G, jobTitle: F}\n");
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« authors.Grace » : l\'identifiant d\'un auteur s\'écrit en minuscules');
+        (new ThemeLoader())->load($this->tmp);
+    }
+
+    public function testUnPortraitHorsDeAssetsEstRefuse(): void
+    {
+        $this->write("name: A\nperson: {name: Ada, jobTitle: F, portrait: ada.webp}\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« person.portrait » doit être une image du dossier assets/');
+        (new ThemeLoader())->load($this->tmp);
     }
 
     public function testUnProfilSansHttpsEstRefuse(): void
