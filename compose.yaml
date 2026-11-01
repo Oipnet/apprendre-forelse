@@ -31,6 +31,10 @@ services:
       # Mesure d'audience : rien tant que le profil « mesure » n'est pas démarré (voir plus bas).
       ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
       ANALYTICS_WEBSITE_ID: ${ANALYTICS_WEBSITE_ID:-}
+      # Recherche du site : le service « recherche » ci-dessous. MEILISEARCH_URL vide (dans .env) l'éteint.
+      MEILISEARCH_URL: ${MEILISEARCH_URL-http://recherche:7700}
+      MEILISEARCH_KEY: ${MEILISEARCH_KEY:-cle-maitresse-par-defaut-a-remplacer}
+      MEILISEARCH_INDEX: ${MEILISEARCH_INDEX:-site}
     volumes: &app-volumes
       - data:/data
       - config:/config
@@ -71,7 +75,7 @@ services:
     # pcntl (chargée pour cette commande seulement) lui fait entendre le SIGTERM d'un arrêt : il finit le message en
     # cours et s'arrête, au lieu d'être tué au bout de 10 s. init : un vrai processus n°1, qui relaie les signaux.
     init: true
-    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "scheduler_verification", "scheduler_indexnow", "--time-limit=3600", "--memory-limit=128M"]
+    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "scheduler_verification", "scheduler_indexnow", "scheduler_search", "--time-limit=3600", "--memory-limit=128M"]
     # Le contrôle de santé de l'image interroge Caddy, qui ne tourne pas ici.
     healthcheck:
       disable: true
@@ -172,6 +176,29 @@ services:
     pids_limit: 256
     cpus: 1
 
+  # Recherche du site (/recherche, voir platform/src/Search) : Meilisearch, joint par l'application et le worker
+  # seulement, sur le réseau interne (aucun port publié). Le worker y envoie le contenu publié toutes les dix minutes ;
+  # l'index se reconstruit seul s'il est perdu. MEILISEARCH_KEY (.env, `openssl rand -hex 32`) : la clé maîtresse,
+  # que l'application reçoit aussi. Sans elle, une clé par défaut : le service reste fermé à tout ce qui n'est pas
+  # sur ce réseau, mais mieux vaut la poser.
+  recherche:
+    image: getmeili/meilisearch:v1.55.0
+    restart: unless-stopped
+    environment:
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-cle-maitresse-par-defaut-a-remplacer}
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MAX_INDEXING_MEMORY: 256Mb
+    volumes:
+      - recherche:/meili_data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: ${RECHERCHE_MEM_LIMIT:-512m}
+    pids_limit: 128
+
   db:
     image: postgres:17-alpine
     restart: unless-stopped
@@ -224,6 +251,7 @@ services:
 
 volumes:
   data:
+  recherche:
   environnements:
   verifications:
   verifications-travail:

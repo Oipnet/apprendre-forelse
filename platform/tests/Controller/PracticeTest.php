@@ -308,7 +308,7 @@ final class PracticeTest extends WebTestCase
             'title' => 'Découverte',
             'description' => 'Un avant-goût de Symfony en deux exercices.',
             'url' => '/parcours/decouverte',
-        ]], $exercise['practice'], 'Après la réussite, le parcours du même framework est proposé.');
+        ], 'related' => []], $exercise['practice'], 'Après la réussite, le parcours du même framework est proposé ; sans recherche du site, aucun contenu proche.');
     }
 
     /** Pas de parcours visible pour ce framework : rien n'est proposé, ni après la réussite ni sur la page publique. */

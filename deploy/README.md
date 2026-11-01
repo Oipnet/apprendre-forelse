@@ -219,3 +219,22 @@ sudo systemctl restart systemd-journald
 `Storage=persistent` garde le journal après un redémarrage du serveur ; `SystemMaxUse` borne sa taille, et
 `MaxRetentionSec` efface ce qui a plus de douze mois. Le changement de pilote vaut pour les conteneurs créés ensuite,
 donc au déploiement suivant. Le proxy commun (`front/`) garde ses fichiers en rotation.
+
+## 7. Recherche du site
+
+La page `/recherche` (et le champ de l'en-tête) s'appuie sur Meilisearch, le service `recherche` de `compose.yaml`,
+démarré avec les autres par le déploiement. Il n'a aucun port publié : seuls l'application et le worker le joignent. Le
+worker lui envoie le contenu publié toutes les dix minutes (exercices de Pratique parus, articles, notions, parcours,
+en français et en anglais) : rien à faire après un déploiement du contenu.
+
+Une fois, dans le `.env` de chaque instance (production et préproduction), une clé maîtresse à elle, puis
+`docker compose up -d` :
+
+```sh
+echo "MEILISEARCH_KEY=$(openssl rand -hex 32)" >> .env
+docker compose up -d
+```
+
+Sans elle, une clé par défaut, écrite dans `compose.yaml` : le service reste injoignable de l'extérieur, mais la clé
+n'a alors rien de secret. Pour remplir l'index tout de suite plutôt qu'au prochain passage du worker :
+`docker compose exec app php bin/console app:recherche:indexer`. `MEILISEARCH_URL=` (vide) dans `.env` éteint la recherche.

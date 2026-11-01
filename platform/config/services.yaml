@@ -25,6 +25,10 @@ when@test:
             class: App\Tests\Payment\FakePaymentGateway
         # Réponses de Have I Been Pwned pour la contrainte NotCompromisedPassword (voir config/packages/validator.yaml).
         App\Tests\PwnedPasswordsMock: ~
+        # Meilisearch n'est jamais appelé par les tests : ils le remplacent par un client simulé (voir tests/Search).
+        App\Search\Meilisearch:
+            autowire: true
+            public: true
         # Requêtes SQL jouées (profilage de Doctrine, actif en debug) : pour vérifier qu'un traitement ne fait pas une
         # requête par ligne.
         test.doctrine.debug_data_holder:

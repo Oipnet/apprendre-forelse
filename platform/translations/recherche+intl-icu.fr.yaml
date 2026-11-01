@@ -1,0 +1,30 @@
+# La page de recherche du site (templates/search/), voir App\Search.
+index:
+    titre: "Rechercher"
+    titre_requete: "« {q} » : recherche"
+    intro: "Exercices de Pratique, articles, notions et parcours : tout le contenu du site."
+    champ: "Mots à chercher"
+    exemple: "ex. validation, Livewire, voter…"
+    bouton: "Rechercher"
+    tous: "Tout"
+    resultats: "{n, plural, =0 {Aucun résultat} one {# résultat} other {# résultats}} pour « {q} »"
+    aucun: "Rien ne correspond à « {q} ». Essayez un autre mot, ou parcourez les notions."
+    aucun_lien: "Voir toutes les notions"
+    indisponible: "La recherche est momentanément indisponible. Réessayez dans quelques minutes."
+    onglets: "Types de résultats"
+type:
+    pratique: "Pratique"
+    article: "Article"
+    notion: "Notion"
+    parcours: "Parcours"
+    chapitre: "Chapitre"
+    exercice: "Exercice de parcours"
+onglet:
+    pratique: "Pratique"
+    article: "Articles"
+    notion: "Notions"
+    parcours: "Parcours"
+    chapitre: "Chapitres"
+    exercice: "Exercices de parcours"
+related:
+    titre: "Ça pourrait vous intéresser"

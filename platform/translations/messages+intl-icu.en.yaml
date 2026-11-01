@@ -29,6 +29,8 @@ header:
     deconnexion: "Log out"
     connexion: "Log in"
     creer_compte: "Sign up"
+    rechercher: "Search"
+    rechercher_exemple: "Search an exercise, a concept…"
 
 footer:
     navigation: "Footer"

@@ -8,6 +8,8 @@ use App\Content\EnvironmentRegistry;
 use App\Content\LessonRenderer;
 use App\Content\Exercise;
 use App\Content\PracticeVersionIndex;
+use App\Search\RelatedContent;
+use App\Search\RelatedLink;
 use App\Security\TrackAccessChecker;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,6 +33,7 @@ final readonly class ExercisePayloadFactory
         private ConceptIndex $concepts,
         private UrlGeneratorInterface $urls,
         private TranslatorInterface $translator,
+        private RelatedContent $related,
         #[Autowire('%kernel.environment%')] private string $kernelEnvironment,
     ) {
     }
@@ -104,6 +107,8 @@ final readonly class ExercisePayloadFactory
                 'pullRequest' => $practice->pullRequest,
                 'published' => $practice->published->format('Y-m-d'),
                 'track' => $this->navigation->practiceTrack($practice, $exercise->locale),
+                // Ça pourrait vous intéresser : les contenus proches, d'après la recherche du site (vide sans elle).
+                'related' => array_map(static fn (RelatedLink $link) => ['type' => $link->type, 'title' => $link->title, 'url' => $link->url], $this->related->forPractice($practice)),
             ] : null,
         ];
         if ('dev' === $this->kernelEnvironment) {

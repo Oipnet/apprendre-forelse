@@ -4,7 +4,10 @@
 {#
   Un article du blog, rendu depuis le Markdown de son pack (voir App\Content\Article).
   Variables : article, html, scheduled, translations (le même article dans les autres langues), practice (l'exercice
-  dont part l'article, ou null), previous, next.
+  dont part l'article, ou null), previous, next, related (les contenus proches, voir search/_related.html.twig).
+
+  Les contenus proches restent en vue pendant la lecture : colonne collante à droite sur un écran large, trois liens
+  sous le titre sur un téléphone (un lecteur qui s'arrête en route ne verrait pas un bloc de fin d'article).
 
   L'invitation à faire l'exercice apparaît deux fois : en tête, pour qui veut essayer avant de lire, et en fin d'article,
   là où le lecteur arrivé d'un autre site repartirait. Sans exercice, elle mène aux exercices de Pratique.
@@ -12,7 +15,9 @@
 {% block title %}{{ article.title }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="blog-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+    <main class="blog-page mx-auto w-full {{ related ? 'max-w-6xl' : 'max-w-3xl' }} px-4 py-10 sm:px-6">
+        <div class="{{ related ? 'lg:grid lg:grid-cols-[minmax(0,48rem)_15rem] lg:justify-between lg:gap-12' }}">
+        <div class="min-w-0">
         <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
             <ol>
                 <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
@@ -42,6 +47,7 @@
                 {%- if practice %}
                 <p class="blog-cta-top mt-4 text-sm">{{ 'show.cta.haut'|trans }} <a href="{{ path('app_exercise_pratique', {exerciseId: practice.exercise.id}) }}" data-umami-event="article-exercice" data-umami-event-position="haut">{{ practice.exercise.title }} →</a></p>
                 {%- endif %}
+                {{ include('search/_related.html.twig', {depuis: 'article', compact: true}) }}
             </header>
 
             <div class="lesson prose prose-theme mt-8 max-w-none">{{ html|raw }}</div>
@@ -67,5 +73,12 @@
             </nav>
         {% endif %}
         <p class="blog-back mt-6 text-sm"><a href="{{ path('app_blog') }}">{{ 'show.tous'|trans }}</a></p>
+        </div>
+        {% if related %}
+            <div class="hidden lg:block">
+                <div class="sticky top-24">{{ include('search/_related.html.twig', {depuis: 'article'}) }}</div>
+            </div>
+        {% endif %}
+        </div>
     </main>
 {% endblock %}

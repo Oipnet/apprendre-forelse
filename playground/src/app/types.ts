@@ -66,6 +66,8 @@ export interface ExercisePayload {
 		published: string;
 		/** Le parcours du même framework, proposé après la réussite (null : aucun de visible). */
 		track: { id: string; title: string; description: string; url: string } | null;
+		/** Les contenus proches (exercices, articles, notions), d'après la recherche du site ; vide sans elle. */
+		related?: { type: string; title: string; url: string }[];
 	} | null;
 	/** Présent uniquement en environnement de développement de la plateforme. */
 	solution?: Record<string, string>;

@@ -6,6 +6,8 @@ use App\Content\Article;
 use App\Content\Blog;
 use App\Content\LessonRenderer;
 use App\Content\PracticeVisibility;
+use App\Search\RelatedContent;
+use App\Search\SearchDocument;
 use App\Seo\Page\BlogSeo;
 use App\Seo\SchemaOrg;
 use App\Share\ArticleShare;
@@ -115,11 +117,12 @@ final class BlogController extends AbstractController
     }
 
     #[Route(['fr' => '/blog/{slug}', 'en' => '/en/blog/{slug}'], name: 'app_article', requirements: ['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'], methods: ['GET'])]
-    public function show(string $slug, Blog $blog, BlogSeo $seo, LessonRenderer $markdown, PracticeVisibility $practices): Response
+    public function show(string $slug, Blog $blog, BlogSeo $seo, LessonRenderer $markdown, PracticeVisibility $practices, RelatedContent $related): Response
     {
         $article = $blog->find($slug) ?? throw $this->createNotFoundException();
         $translations = $blog->translations($article);
         $seo->article($article, $translations);
+        $practice = null !== ($id = $blog->practiceOf($article)) ? $practices->find($id) : null;
 
         return $this->render('blog/show.html.twig', [
             'article' => $article,
@@ -129,7 +132,9 @@ final class BlogController extends AbstractController
             'translations' => $translations,
             // L'exercice dont part l'article, s'il est visible dans cette langue : la page invite à le faire. Sans lui,
             // elle invite aux exercices de Pratique en général. Un lecteur arrivé d'ailleurs repart sinon après l'article.
-            'practice' => null !== ($id = $blog->practiceOf($article)) ? $practices->find($id) : null,
+            'practice' => $practice,
+            // Ça pourrait vous intéresser : les contenus proches (voir App\Search\RelatedContent), sans l'exercice déjà proposé.
+            'related' => $related->forArticle($article, null !== $practice ? [SearchDocument::idOf(SearchDocument::PRACTICE, $practice->exercise->id)] : []),
             ...$blog->neighbours($article),
         ]);
     }

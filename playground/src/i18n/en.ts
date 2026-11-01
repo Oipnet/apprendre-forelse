@@ -132,6 +132,7 @@ export const en: Messages = {
 		furtherVersion: (framework: string, version: string) => `The other new features in ${framework} ${version}`,
 		furtherTrack: (track: string) => `The ${track} track`,
 		furtherPractice: 'All Practice exercises',
+		relatedTitle: 'You might also like',
 	},
 
 	hints: {
