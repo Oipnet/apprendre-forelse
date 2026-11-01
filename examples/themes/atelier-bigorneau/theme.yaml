@@ -23,9 +23,16 @@ title: Atelier Bigorneau · apprendre à coder en ligne
 tagline: Apprendre à développer en codant dans le navigateur, avec les outils de l'atelier.
 
 # La personne derrière les parcours et les articles, publiée dans les données structurées (auteur). Absente : aucune.
+# Avec « bio » ou « links », un encart « Écrit par » suit chaque article : la présentation, les profils (malt, linkedin,
+# github, site, en https://) et le lien vers le contact. « portrait » (plus haut, avec les images) y ajoute une photo.
 # person:
 #   name: Gaston Bigorneau
 #   jobTitle: Formateur
+#   bio: "Je forme des équipes PHP, et je suis disponible pour des missions Symfony."
+#   links:
+#     malt: https://www.malt.fr/profile/gastonbigorneau
+#     linkedin: https://www.linkedin.com/in/gastonbigorneau
+# Une langue traduit le titre et la présentation : locales.en.person: {jobTitle: Trainer, bio: "…"}
 
 # Le site de la marque, publié dans les données structurées. Absent : la plateforme parle d'elle-même.
 url: https://atelier-bigorneau.example

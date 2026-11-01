@@ -25,6 +25,7 @@ index:
     suivre_detail: "Les nouveaux articles dans votre lecteur de flux, dès leur parution."
 
 show:
+    sommaire: "Sommaire"
     en_preparation: "En préparation : cet article n'est visible que des administrateurs."
     programme: "Programmé : cet article paraîtra le {date}. D'ici là, seuls les administrateurs le voient."
     mis_a_jour: 'mis à jour le <time datetime="{datetime}">{date}</time>'
@@ -46,6 +47,15 @@ show:
         titre: "Aller plus loin"
         detail: "Un parcours complet, exercice après exercice, dans le navigateur. Le premier chapitre est gratuit."
         bouton: "Découvrir le parcours"
+    # L'auteur, sous l'article (« person » du thème) : ses profils et le contact.
+    auteur:
+        titre: "Écrit par"
+        contact: "Me contacter"
+        lien:
+            malt: "Mon profil Malt"
+            linkedin: "LinkedIn"
+            github: "GitHub"
+            site: "Mon site"
 
 feed:
     description: "Les articles de {site}."

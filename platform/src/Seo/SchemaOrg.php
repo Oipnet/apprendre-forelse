@@ -72,6 +72,8 @@ final readonly class SchemaOrg
             'jobTitle' => $person['jobTitle'],
             'worksFor' => ['@id' => $this->site().'/#organisation'],
             'url' => $this->theme->url(),
+            // Les profils de l'auteur (Malt, LinkedIn…) : les moteurs de recherche relient la personne à ses comptes.
+            ...(isset($person['links']) ? ['sameAs' => array_values($person['links'])] : []),
         ];
     }
 

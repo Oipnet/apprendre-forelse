@@ -30,7 +30,7 @@ final readonly class ThemeLoader
      * Ce qu'une langue peut traduire, sous « locales: <langue>: » : les textes de la marque et les sections de
      * l'accueil. Le reste (couleurs, images, polices) ne dépend pas de la langue.
      */
-    public const array LOCALE_KEYS = ['chip', 'title', 'tagline', 'home'];
+    public const array LOCALE_KEYS = ['chip', 'title', 'tagline', 'home', 'person'];
 
     /** Le sous-dossier du thème servi tel quel sur /theme/<thème>/<version>/assets/… (voir ThemeController). */
     public const string ASSETS = 'assets';
@@ -50,7 +50,7 @@ final readonly class ThemeLoader
     ];
 
     /** Les images que l'instance peut fournir, et la route qui les sert (voir ThemeController). */
-    public const array IMAGES = ['logo', 'email_logo', 'icon', 'share'];
+    public const array IMAGES = ['logo', 'email_logo', 'icon', 'share', 'portrait'];
 
     /**
      * La forme attendue de chaque section de « home: » : clé => type, un « * » marquant l'obligatoire.
@@ -84,7 +84,18 @@ final readonly class ThemeLoader
     /** La personne derrière les contenus, pour les données structurées (auteur des parcours et des articles). */
     private const array NO_SHARE_CARD = ['image' => null, 'font' => null, 'text_font' => null, 'colors' => []];
 
-    private const array PERSON_SHAPE = ['name' => 'texte*', 'jobTitle' => 'texte*'];
+    /** Les profils qu'un auteur peut lier (encart des articles, sameAs des données structurées), dans cet ordre. */
+    public const array PERSON_LINKS = ['malt', 'linkedin', 'github', 'site'];
+
+    private const array PERSON_SHAPE = [
+        'name' => 'texte*',
+        'jobTitle' => 'texte*',
+        // Deux ou trois phrases sur soi, sous les articles : ce qu'on fait, pour qui, si l'on est disponible.
+        'bio' => 'texte',
+        'links' => ['malt' => 'texte', 'linkedin' => 'texte', 'github' => 'texte', 'site' => 'texte'],
+    ];
+    /** Ce qu'une langue traduit de la personne : le reste (nom, liens) ne change pas. */
+    private const array PERSON_LOCALE_SHAPE = ['jobTitle' => 'texte', 'bio' => 'texte'];
 
     public function __construct(
         /** Le thème du moteur : son accueil, sa Person. */
@@ -433,6 +444,13 @@ final readonly class ThemeLoader
                     $translated[$key] = self::text($texts, $key, '', $localeError);
                 }
             }
+            if (isset($texts['person'])) {
+                if (!\is_array($texts['person'])) {
+                    throw $localeError(sprintf('« person » doit décrire une sous-section (%s).', implode(', ', array_keys(self::PERSON_LOCALE_SHAPE))));
+                }
+                self::checkShape($texts['person'], self::PERSON_LOCALE_SHAPE, 'person', $localeError);
+                $translated['person'] = array_map(static fn ($text) => trim((string) $text), $texts['person']);
+            }
             $result[$locale] = $translated;
         }
 
@@ -471,8 +489,26 @@ final readonly class ThemeLoader
             throw $error(sprintf('« person » doit décrire une sous-section (%s).', implode(', ', array_keys(self::PERSON_SHAPE))));
         }
         self::checkShape($person, self::PERSON_SHAPE, 'person', $error);
+        $result = ['name' => (string) $person['name'], 'jobTitle' => (string) $person['jobTitle']];
+        if (isset($person['bio']) && '' !== trim((string) $person['bio'])) {
+            $result['bio'] = trim((string) $person['bio']);
+        }
+        $links = [];
+        foreach (self::PERSON_LINKS as $key) {
+            $url = trim((string) ($person['links'][$key] ?? ''));
+            if ('' === $url) {
+                continue;
+            }
+            if (!str_starts_with($url, 'https://') || false === filter_var($url, \FILTER_VALIDATE_URL)) {
+                throw $error(sprintf('« person.links.%s » doit être une adresse en https:// (%s).', $key, $url));
+            }
+            $links[$key] = $url;
+        }
+        if ([] !== $links) {
+            $result['links'] = $links;
+        }
 
-        return ['name' => (string) $person['name'], 'jobTitle' => (string) $person['jobTitle']];
+        return $result;
     }
 
     /**

@@ -3,7 +3,7 @@
 
 {#
   Un article du blog, rendu depuis le Markdown de son pack (voir App\Content\Article).
-  Variables : article, html, scheduled, translations (le même article dans les autres langues), practice (l'exercice
+  Variables : article, html, sommaire (les intertitres ancrés, vide pour un article court), scheduled, translations (le même article dans les autres langues), practice (l'exercice
   dont part l'article, ou null), course (le parcours qui le prolonge, ou null), previous, next, related (les contenus
   proches, voir search/_related.html.twig).
 
@@ -54,8 +54,37 @@
                 {{ include('search/_related.html.twig', {depuis: 'article', compact: true}) }}
             </header>
 
+            {%- if sommaire %}
+            <nav class="blog-toc mt-8 rounded-md border border-line px-5 py-4 text-sm" aria-labelledby="blog-toc-titre">
+                <p id="blog-toc-titre" class="font-semibold">{{ 'show.sommaire'|trans }}</p>
+                <ol class="mt-2 list-decimal space-y-1 pl-5">
+                    {%- for section in sommaire %}
+                    <li><a href="#{{ section.id }}">{{ section.title }}</a></li>
+                    {%- endfor %}
+                </ol>
+            </nav>
+            {%- endif %}
             <div class="lesson prose prose-theme mt-8 max-w-none">{{ html|raw }}</div>
         </article>
+
+        {%- set person = theme.person %}
+        {% if person and (person.bio is defined or person.links is defined) %}
+            {# L'auteur, juste après le texte : le lecteur qui a aimé l'article sait qui l'a écrit et comment le joindre. #}
+            <aside class="blog-author mt-10 flex gap-4 border-t border-line pt-6" aria-label="{{ 'show.auteur.titre'|trans }}">
+                {%- if theme.portraitUrl %}<img class="h-16 w-16 shrink-0 rounded-full object-cover" src="{{ theme.portraitUrl }}" alt="" width="64" height="64" loading="lazy">{% endif %}
+                <div class="min-w-0">
+                    <p class="text-sm text-ink-muted">{{ 'show.auteur.titre'|trans }}</p>
+                    <p class="font-semibold">{{ person.name }} <span class="font-normal text-ink-muted">· {{ person.jobTitle }}</span></p>
+                    {%- if person.bio is defined %}<p class="mt-1">{{ person.bio }}</p>{% endif %}
+                    <p class="blog-author-links mt-3 flex flex-wrap gap-2">
+                        {%- for key, url in person.links|default({}) %}
+                        <a class="btn" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="article-auteur" data-umami-event-lien="{{ key }}">{{ ('show.auteur.lien.' ~ key)|trans }}</a>
+                        {%- endfor %}
+                        <a class="btn" href="{{ path('app_contact') }}" data-umami-event="article-auteur" data-umami-event-lien="contact">{{ 'show.auteur.contact'|trans }}</a>
+                    </p>
+                </div>
+            </aside>
+        {% endif %}
 
         <aside class="blog-cta mt-10 rounded-md border border-line bg-bg-2 px-5 py-5" aria-labelledby="blog-cta-titre">
             {% if practice %}

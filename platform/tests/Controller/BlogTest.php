@@ -235,6 +235,41 @@ final class BlogTest extends WebTestCase
         $this->assertNull($blog->courseOf($translation));
     }
 
+    public function testLAuteurSePresenteSousLArticle(): void
+    {
+        $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
+        $this->assertCount(0, $crawler->filter('.blog-author'), 'Le thème du moteur ne présente personne.');
+
+        $themes = sys_get_temp_dir().'/themes-'.bin2hex(random_bytes(4));
+        mkdir($themes.'/auteur', 0o777, true);
+        file_put_contents($themes.'/auteur/theme.yaml', "name: Auteur\nperson:\n  name: Ada Lovelace\n  jobTitle: Formatrice\n  bio: 'Je forme des devs PHP.'\n  links: {malt: 'https://www.malt.fr/profile/ada', linkedin: 'https://www.linkedin.com/in/ada'}\n");
+        $before = [$_SERVER['THEMES_DIR'] ?? null, $_SERVER['THEME'] ?? null];
+        $_SERVER['THEMES_DIR'] = $_ENV['THEMES_DIR'] = $themes;
+        $_SERVER['THEME'] = $_ENV['THEME'] = 'auteur';
+        try {
+            static::ensureKernelShutdown();
+            $this->client = static::createClient();
+            $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
+
+            $this->assertResponseIsSuccessful();
+            $author = $crawler->filter('aside.blog-author');
+            $this->assertStringContainsString('Ada Lovelace', $author->text());
+            $this->assertStringContainsString('Je forme des devs PHP.', $author->text());
+            $this->assertSame(['malt', 'linkedin', 'contact'], $author->filter('a')->each(static fn ($a) => $a->attr('data-umami-event-lien')), 'Les profils, puis le contact.');
+            $this->assertSame('https://www.malt.fr/profile/ada', $author->filter('a')->first()->attr('href'));
+            $this->assertSame('/contact', $author->filter('a')->last()->attr('href'));
+        } finally {
+            foreach (['THEMES_DIR' => $before[0], 'THEME' => $before[1]] as $name => $value) {
+                if (null === $value) {
+                    unset($_SERVER[$name], $_ENV[$name]);
+                } else {
+                    $_SERVER[$name] = $_ENV[$name] = $value;
+                }
+            }
+            (new \Symfony\Component\Filesystem\Filesystem())->remove($themes);
+        }
+    }
+
     public function testSansParcoursNiExercicePasDEncart(): void
     {
         $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');

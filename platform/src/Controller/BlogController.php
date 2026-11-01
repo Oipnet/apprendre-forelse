@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Content\Article;
+use App\Content\ArticleOutline;
 use App\Content\Blog;
 use App\Content\LessonRenderer;
 use App\Content\PracticeTrack;
@@ -130,8 +131,9 @@ final class BlogController extends AbstractController
 
         return $this->render('blog/show.html.twig', [
             'article' => $article,
-            // Le titre de tête du Markdown, s'il y en a un, répète celui de la page : il disparaît.
-            'html' => $markdown->toHtmlUnderTitle($article->markdown),
+            // Le titre de tête du Markdown, s'il y en a un, répète celui de la page : il disparaît. Les intertitres
+            // reçoivent une ancre, et le sommaire en tête d'un article assez long.
+            ...$this->outline($markdown->toHtmlUnderTitle($article->markdown)),
             'scheduled' => $blog->isScheduled($article),
             'translations' => $translations,
             // L'exercice dont part l'article, s'il est visible dans cette langue : la page invite à le faire. Sans lui,
@@ -147,5 +149,13 @@ final class BlogController extends AbstractController
             ]))),
             ...$blog->neighbours($article),
         ]);
+    }
+
+    /** @return array{html: string, sommaire: list<array{id: string, title: string}>} */
+    private function outline(string $html): array
+    {
+        $outline = ArticleOutline::of($html);
+
+        return ['html' => $outline['html'], 'sommaire' => $outline['sections']];
     }
 }

@@ -1,5 +1,6 @@
 import { m } from '../i18n';
 import { mountShare } from '../app/share';
+import { mesurer } from '../mesure';
 
 /**
  * Progression jouée en invité (localStorage) : une fois connecté, on la remonte au compte,
@@ -217,3 +218,28 @@ if (filtresPratique) filtresEnDirect(filtresPratique, 'pratique:recherche', { tr
 
 const filtresAtelier = document.querySelector<HTMLFormElement>('[data-studio-filters]');
 if (filtresAtelier) filtresEnDirect(filtresAtelier, 'atelier:recherche');
+
+/**
+ * « Copier » sur les blocs de code des articles : le lecteur reprend un extrait sans le sélectionner à la main. Sans
+ * presse-papiers (page non sécurisée, vieux navigateur), pas de bouton.
+ */
+if (navigator.clipboard) {
+	for (const pre of document.querySelectorAll<HTMLPreElement>('.blog-page .lesson pre')) {
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'code-copy';
+		button.textContent = m.share.copyCode;
+		button.addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(pre.querySelector('code')?.textContent ?? pre.textContent ?? '');
+			} catch {
+				return;
+			}
+			button.textContent = m.share.codeCopied;
+			mesurer('code-copie', { page: location.pathname });
+			setTimeout(() => (button.textContent = m.share.copyCode), 2000);
+		});
+		pre.classList.add('has-copy');
+		pre.append(button);
+	}
+}

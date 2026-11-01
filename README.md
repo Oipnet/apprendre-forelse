@@ -292,6 +292,10 @@ Les résultats s'exportent en CSV.
   `course:` reprend celui de l'article français. Les clics se comptent dans Umami (`article-parcours`, avec le
   parcours et la position : `colonne` ou `fin`).
 
+  Un article d'au moins trois intertitres (`##`) affiche son sommaire en tête ; chaque intertitre a son ancre. Les blocs
+  de code ont un bouton « Copier ». Sous l'article, l'encart « Écrit par » présente la personne du thème quand elle
+  déclare `bio` ou `links` (voir « Thème » plus bas).
+
   Un article se traduit en anglais dans `<pack>/articles/en/<slug>.md`, publié sur `/en/blog/<slug>` avec sa propre
   adresse (`running-symfony-in-the-browser.md`). Même en-tête, plus `translation_of:`, le nom de l'article français
   qu'il traduit (une traduction par article). Le blog anglais a sa liste, son flux (`/en/blog/rss.xml`) et ses
@@ -443,7 +447,9 @@ accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas
   les emails (confirmation d'adresse, mot de passe oublié, achat), les balises Open Graph et les données
   structurées. `chip` est la petite puce à côté, `tagline` l'accroche, `title` le `<title>` de l'accueil, `url` le
   site de la marque, `person` (`name`, `jobTitle`) l'auteur des parcours et des articles dans les données
-  structurées.
+  structurées. Avec `bio` (deux ou trois phrases) ou `links` (`malt`, `linkedin`, `github`, `site`, en https), un
+  encart « Écrit par » suit chaque article ; `portrait` (une image du dossier du thème, carrée) y met une photo, et
+  `locales.<langue>.person` traduit `jobTitle` et `bio`.
 - `colors` et `fonts` redéfinissent les jetons du thème default (`--color-accent`, `--color-bg`, `--font-serif`…,
   voir [docs/themes.md](docs/themes.md)) : les pages du site et les emails les suivent. Hexadécimal seulement ; une
   valeur mal écrite **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire

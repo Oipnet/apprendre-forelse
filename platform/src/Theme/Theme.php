@@ -140,11 +140,21 @@ final class Theme implements ResetInterface
      * La personne derrière les parcours et les exercices, pour les données structurées. Chaque thème déclare la
      * sienne (« person ») ; celle du moteur ne vaut que pour son thème : un autre thème qui n'en déclare pas n'en a pas.
      *
-     * @return array{name: string, jobTitle: string}|null
+     * Le titre et la présentation suivent la langue de la page quand le thème les traduit (« locales.<langue>.person »).
+     *
+     * @return array{name: string, jobTitle: string, bio?: string, links?: array<string, string>}|null
      */
     public function person(): ?array
     {
-        return $this->config()->person;
+        $person = $this->config()->person;
+
+        return null === $person ? null : [...$person, ...($this->translated()['person'] ?? [])];
+    }
+
+    /** Le portrait de la personne (« portrait » de theme.yaml), ou null : l'encart des articles s'en passe. */
+    public function portraitUrl(): ?string
+    {
+        return $this->imageUrl('portrait');
     }
 
     /** L'image du logo, ou null : l'en-tête n'affiche alors que le nom. */
@@ -233,7 +243,7 @@ final class Theme implements ResetInterface
     /**
      * Les textes traduits dans la langue de la page, vides dans la langue de theme.yaml.
      *
-     * @return array{chip?: string, title?: string, tagline?: string, home?: array<string, array<string, mixed>>}
+     * @return array{chip?: string, title?: string, tagline?: string, home?: array<string, array<string, mixed>>, person?: array{jobTitle?: string, bio?: string}}
      */
     private function translated(): array
     {

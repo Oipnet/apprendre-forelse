@@ -299,6 +299,8 @@ export const fr = {
 		copy: 'Copier le lien',
 		copied: 'Lien copié.',
 		on: 'Partager sur',
+		copyCode: 'Copier',
+		codeCopied: 'Copié ✓',
 	},
 
 	shortcuts: {

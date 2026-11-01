@@ -14,6 +14,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   parcours nommé par la nouvelle clé `course:` de l'article, ou à défaut celui du framework de son exercice de
   Pratique. Le parcours doit exister (`content:check`) ; il n'apparaît que s'il est visible et traduit dans la langue
   de la page. Clics comptés dans Umami (`article-parcours`).
+- **L'auteur sous chaque article** : « Écrit par », avec la présentation, les profils et le contact, quand la
+  personne du thème déclare `bio` ou `links` (`malt`, `linkedin`, `github`, `site`, en https). `portrait:` (image
+  du dossier du thème) y ajoute une photo ; `locales.<langue>.person` traduit `jobTitle` et `bio`. Les profils
+  passent aussi dans les données structurées (`sameAs`). Clics comptés dans Umami (`article-auteur`).
+- **Sommaire des articles** : chaque intertitre reçoit une ancre, et un article d'au moins trois intertitres affiche
+  son sommaire en tête.
+- **Copier un bloc de code** d'un article en un clic (événement Umami `code-copie`).
 - **Partager un chapitre terminé** : la réussite du dernier exercice d'un chapitre de parcours propose de l'annoncer
   (LinkedIn, X, Bluesky, lien), avec un lien vers la page publique du parcours (`utm_campaign=chapitre`). Rien pour un
   parcours en préparation.

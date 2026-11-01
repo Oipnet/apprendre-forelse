@@ -296,6 +296,8 @@ export const en: Messages = {
 		copy: 'Copy link',
 		copied: 'Link copied.',
 		on: 'Share on',
+		copyCode: 'Copy',
+		codeCopied: 'Copied ✓',
 	},
 
 	shortcuts: {
