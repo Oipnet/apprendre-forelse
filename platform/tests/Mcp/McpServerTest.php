@@ -89,8 +89,8 @@ final class McpServerTest extends WebTestCase
         $this->assertStringContainsString('config/packages/framework.yaml', $config);
         $this->assertStringContainsString('src/*/*.php', $config, 'L\'assistant apprend ce qu\'il peut modifier.');
 
-        $this->assertStringContainsString('no package can be added', $this->toolError('create_sandbox', ['framework' => 'laravel', 'files' => new \stdClass(), 'packages' => ['nesbot/carbon']]));
-        $this->assertStringContainsString('Unknown packages: evil/package', $this->toolError('create_sandbox', ['framework' => 'php', 'files' => new \stdClass(), 'packages' => ['evil/package']]));
+        $this->assertStringContainsString('no package can be added', $this->toolError('create_sandbox', ['framework' => 'laravel', 'files' => ['routes/web.php' => '<?php'], 'packages' => ['nesbot/carbon']]));
+        $this->assertStringContainsString('Unknown packages: evil/package', $this->toolError('create_sandbox', ['framework' => 'php', 'files' => ['public/index.php' => '<?php'], 'packages' => ['evil/package']]));
         $this->assertStringContainsString('not a playground link', $this->toolError('read_sandbox', ['url' => 'https://example.com/#code=abc']));
         $this->assertStringContainsString('carries no code', $this->toolError('read_sandbox', ['url' => 'https://apprendre.forelse.fr/bac-a-sable/symfony#nouveau']));
     }
