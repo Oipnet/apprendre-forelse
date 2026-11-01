@@ -8,8 +8,11 @@ use App\Seo\SchemaOrg;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Le bac à sable : une application web gratuite par framework (WebApplication), et la foire aux questions de sa page
- * d'accueil (FAQPage). Titre, description et canonique viennent de #[Seo] sur les actions (voir StaticPageSeo).
+ * Le bac à sable : une page web gratuite par framework (WebPage), et la foire aux questions de sa page d'accueil
+ * (FAQPage). Titre, description et canonique viennent de #[Seo] sur les actions (voir StaticPageSeo).
+ *
+ * Pas de WebApplication : Google exige une note ou des avis sur toute application (aggregateRating ou review), et
+ * le bac à sable n'en a pas. Sans eux, les pages sortent « non valides » dans la Search Console.
  */
 final readonly class ScratchSeo
 {
@@ -25,7 +28,16 @@ final readonly class ScratchSeo
     {
         $this->seo->addStructuredData(['@graph' => [
             $this->schema->organization(),
-            ...array_map($this->application(...), ScratchFramework::cases()),
+            [
+                ...$this->page($this->schema->url('app_scratch')),
+                // Les bacs à sable de chaque framework, décrits sur leur propre page.
+                'hasPart' => array_map(fn (ScratchFramework $framework) => [
+                    '@type' => 'WebPage',
+                    '@id' => $this->schema->url('app_scratch_'.$framework->value).'#page',
+                    'name' => $this->translator->trans('bac_a_sable.projet.titre', ['framework' => $framework->label()], 'apprentissage'),
+                    'url' => $this->schema->url('app_scratch_'.$framework->value),
+                ], ScratchFramework::cases()),
+            ],
             [
                 '@type' => 'FAQPage',
                 'mainEntity' => array_map(static fn (array $item) => [
@@ -39,23 +51,30 @@ final readonly class ScratchSeo
 
     public function project(ScratchFramework $framework): void
     {
-        $this->seo->addStructuredData(['@graph' => [$this->schema->organization(), $this->application($framework)]]);
+        $this->seo->addStructuredData(['@graph' => [
+            $this->schema->organization(),
+            [
+                ...$this->page($this->schema->url('app_scratch_'.$framework->value)),
+                'isPartOf' => ['@id' => $this->schema->url('app_scratch').'#page'],
+            ],
+        ]]);
     }
 
-    /** @return array<string, mixed> */
-    private function application(ScratchFramework $framework): array
+    /**
+     * La page en cours : titre et description sont ceux que #[Seo] a posés (StaticPageSeo passe avant l'action).
+     *
+     * @return array<string, mixed>
+     */
+    private function page(string $url): array
     {
         return [
-            '@type' => 'WebApplication',
-            'name' => $this->translator->trans('bac_a_sable.projet.titre', ['framework' => $framework->label()], 'apprentissage'),
-            'url' => $this->schema->url('app_scratch_'.$framework->value),
-            'description' => $this->translator->trans('bac_a_sable.'.$framework->value.'.description', [], 'seo'),
-            'applicationCategory' => 'DeveloperApplication',
-            'operatingSystem' => 'Any',
-            'browserRequirements' => 'Requires JavaScript and WebAssembly',
+            '@type' => 'WebPage',
+            '@id' => $url.'#page',
+            'name' => $this->seo->getTitle(),
+            'url' => $url,
+            ...(null === ($description = $this->seo->getDescription()) ? [] : ['description' => $description]),
             'inLanguage' => $this->seo->getLanguageTag(),
             'isAccessibleForFree' => true,
-            'offers' => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'EUR'],
             'publisher' => ['@id' => $this->schema->site().'/#organisation'],
         ];
     }

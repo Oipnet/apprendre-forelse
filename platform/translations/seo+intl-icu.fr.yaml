@@ -58,6 +58,8 @@ parcours:
         beginner: Débutant
         intermediate: Intermédiaire
         advanced: Avancé
+    # Le certificat délivré à la fin d'un parcours (educationalCredentialAwarded du Course).
+    certificat: Certificat de réussite
 
 # Les titres d'une page de contenu menés par ses notions : {libelle} distingue deux pages d'une même notion.
 contenu:

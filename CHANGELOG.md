@@ -8,6 +8,17 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Données structurées** (schema.org), d'après le test des résultats enrichis de Google :
+  - le bac à sable se décrit en `WebPage` et non plus en `WebApplication` : Google exige une note ou des avis sur une
+    application, et leur absence rendait ces pages « non valides » dans la Search Console ;
+  - le `Course` d'un parcours annonce le certificat délivré (`educationalCredentialAwarded`), son formateur quand le
+    thème déclare une personne (`instructor`) et sa langue avec la région (`fr-FR`) ;
+  - le catalogue liste ses cours en forme « page de synthèse » (position et adresse de chaque parcours) ;
+  - le sommaire d'un chapitre est une `LearningResource` rattachée au cours, comme ses exercices ;
+  - les dates des articles et des exercices de Pratique portent l'heure et le fuseau.
+
 ## 3.27.0 — 2026-11-01
 
 ### Ajouté

@@ -144,8 +144,8 @@ final class BlogTest extends WebTestCase
         }
 
         $this->assertArrayHasKey('BlogPosting', $types);
-        $this->assertSame('2026-09-20', $types['BlogPosting']['datePublished']);
-        $this->assertSame('2026-09-25', $types['BlogPosting']['dateModified']);
+        $this->assertMatchesRegularExpression('/^2026-09-20T00:00:00[+-]\d\d:\d\d$/', $types['BlogPosting']['datePublished'], 'Avec l\'heure et le fuseau, comme Google le recommande.');
+        $this->assertStringStartsWith('2026-09-25T00:00:00', $types['BlogPosting']['dateModified']);
         $this->assertSame('http://localhost/blog/symfony-dans-le-navigateur', $types['BlogPosting']['url']);
         $this->assertSame(['Accueil', 'Le blog', 'Symfony dans le navigateur, sans serveur'], array_column($types['BreadcrumbList']['itemListElement'], 'name'));
     }

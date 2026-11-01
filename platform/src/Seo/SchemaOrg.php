@@ -90,4 +90,15 @@ final readonly class SchemaOrg
 
         return ['@type' => 'BreadcrumbList', 'itemListElement' => $items];
     }
+
+    /**
+     * Une date de publication ou de modification, au format que Google recommande : avec l'heure et le fuseau
+     * (« 2026-11-01T00:00:00+01:00 »). Les contenus ne datent qu'au jour : minuit, dans le fuseau du site.
+     */
+    public function date(string|\DateTimeInterface $day): string
+    {
+        $day = $day instanceof \DateTimeInterface ? $day->format('Y-m-d') : $day;
+
+        return new \DateTimeImmutable($day.' 00:00:00')->format(\DATE_ATOM);
+    }
 }
