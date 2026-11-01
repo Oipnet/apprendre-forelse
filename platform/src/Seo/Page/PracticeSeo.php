@@ -122,8 +122,8 @@ final readonly class PracticeSeo
                 'mainEntityOfPage' => $url,
                 'inLanguage' => $this->seo->getLanguage(),
                 'image' => $image,
-                'datePublished' => $practice->published->format('Y-m-d'),
-                'dateModified' => $this->dates->practiceModified($practice),
+                'datePublished' => $this->schema->date($practice->published),
+                'dateModified' => $this->schema->date($this->dates->practiceModified($practice)),
                 'author' => $this->schema->author(),
                 'publisher' => [
                     ...$this->schema->organization(),

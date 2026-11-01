@@ -64,8 +64,8 @@ final readonly class BlogSeo
                 'mainEntityOfPage' => $url,
                 'inLanguage' => $this->seo->getLanguage(),
                 'image' => $image,
-                'datePublished' => $article->published->format('Y-m-d'),
-                'dateModified' => $article->modified(),
+                'datePublished' => $this->schema->date($article->published),
+                'dateModified' => $this->schema->date($article->modified()),
                 'author' => $this->schema->author($this->theme->author($this->blog->authorOf($article))),
                 'publisher' => [
                     ...$this->schema->organization(),
