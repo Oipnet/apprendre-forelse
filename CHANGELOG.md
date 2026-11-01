@@ -8,6 +8,25 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Un parcours sur chaque article** : dans la colonne collante (écran large) ou en fin d'article (téléphone), l'encart « Aller plus loin » propose le
+  parcours nommé par la nouvelle clé `course:` de l'article, ou à défaut celui du framework de son exercice de
+  Pratique. Le parcours doit exister (`content:check`) ; il n'apparaît que s'il est visible et traduit dans la langue
+  de la page. Clics comptés dans Umami (`article-parcours`).
+- **Les auteurs** : la personne du thème accepte `bio`, `about` (Markdown), `links` (`malt`, `linkedin`, `github`,
+  `site`, en https) et `portrait` (image de `assets/`) ; `authors:` déclare d'autres auteurs par identifiant, et un
+  article nomme le sien (`author:`). Sous chaque article, l'encart « Écrit par » (présentation, profils, contact) ;
+  pour chaque auteur présenté, une page `/auteurs/<identifiant>` (`/en/authors/…`) avec ses articles, une
+  `ProfilePage` et le sitemap. Les profils passent dans les données structurées (`sameAs`). Clics comptés dans Umami
+  (`article-auteur`, `auteur-lien`).
+- **Sommaire des articles** : chaque intertitre reçoit une ancre, et un article d'au moins trois intertitres affiche
+  son sommaire en tête.
+- **Copier un bloc de code** d'un article en un clic (événement Umami `code-copie`).
+- **Partager un chapitre terminé** : la réussite du dernier exercice d'un chapitre de parcours propose de l'annoncer
+  (LinkedIn, X, Bluesky, lien), avec un lien vers la page publique du parcours (`utm_campaign=chapitre`). Rien pour un
+  parcours en préparation.
+
 ## 3.27.0 — 2026-11-01
 
 ### Ajouté

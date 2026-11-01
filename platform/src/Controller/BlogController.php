@@ -3,15 +3,19 @@
 namespace App\Controller;
 
 use App\Content\Article;
+use App\Content\ArticleOutline;
 use App\Content\Blog;
 use App\Content\LessonRenderer;
+use App\Content\PracticeTrack;
 use App\Content\PracticeVisibility;
+use App\Content\TrackVisibility;
 use App\Search\RelatedContent;
 use App\Search\SearchDocument;
 use App\Seo\Page\BlogSeo;
 use App\Seo\SchemaOrg;
 use App\Share\ArticleShare;
 use App\Share\ShareImage;
+use App\Theme\Theme;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -117,25 +121,44 @@ final class BlogController extends AbstractController
     }
 
     #[Route(['fr' => '/blog/{slug}', 'en' => '/en/blog/{slug}'], name: 'app_article', requirements: ['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'], methods: ['GET'])]
-    public function show(string $slug, Blog $blog, BlogSeo $seo, LessonRenderer $markdown, PracticeVisibility $practices, RelatedContent $related): Response
+    public function show(string $slug, Blog $blog, BlogSeo $seo, LessonRenderer $markdown, PracticeVisibility $practices, PracticeTrack $practiceTracks, TrackVisibility $tracks, RelatedContent $related, Theme $theme): Response
     {
         $article = $blog->find($slug) ?? throw $this->createNotFoundException();
         $translations = $blog->translations($article);
         $seo->article($article, $translations);
         $practice = null !== ($id = $blog->practiceOf($article)) ? $practices->find($id) : null;
+        $courseId = $blog->courseOf($article) ?? (null !== $practice ? $practiceTracks->of($practice)?->id : null);
+        $course = null !== $courseId ? $tracks->findHere($courseId) : null;
 
         return $this->render('blog/show.html.twig', [
             'article' => $article,
-            // Le titre de tête du Markdown, s'il y en a un, répète celui de la page : il disparaît.
-            'html' => $markdown->toHtmlUnderTitle($article->markdown),
+            // Le titre de tête du Markdown, s'il y en a un, répète celui de la page : il disparaît. Les intertitres
+            // reçoivent une ancre, et le sommaire en tête d'un article assez long.
+            ...$this->outline($markdown->toHtmlUnderTitle($article->markdown)),
             'scheduled' => $blog->isScheduled($article),
             'translations' => $translations,
             // L'exercice dont part l'article, s'il est visible dans cette langue : la page invite à le faire. Sans lui,
             // elle invite aux exercices de Pratique en général. Un lecteur arrivé d'ailleurs repart sinon après l'article.
             'practice' => $practice,
-            // Ça pourrait vous intéresser : les contenus proches (voir App\Search\RelatedContent), sans l'exercice déjà proposé.
-            'related' => $related->forArticle($article, null !== $practice ? [SearchDocument::idOf(SearchDocument::PRACTICE, $practice->exercise->id)] : []),
+            // Le parcours qui prolonge l'article (clé `course`, ou celui du framework de l'exercice), s'il est visible et
+            // traduit dans la langue de la page : l'article attire, l'exercice fait essayer, le parcours est ce qui se vend.
+            'course' => $course,
+            // Qui a écrit l'article : l'encart « Écrit par » le présente (un identifiant inconnu retombe sur l'auteur par défaut).
+            'author' => $theme->author($blog->authorOf($article)) ?? $theme->author(),
+            // Ça pourrait vous intéresser : les contenus proches (voir App\Search\RelatedContent), sans l'exercice ni le parcours déjà proposés.
+            'related' => $related->forArticle($article, array_values(array_filter([
+                null !== $practice ? SearchDocument::idOf(SearchDocument::PRACTICE, $practice->exercise->id) : null,
+                null !== $course ? SearchDocument::idOf(SearchDocument::TRACK, $course->id) : null,
+            ]))),
             ...$blog->neighbours($article),
         ]);
+    }
+
+    /** @return array{html: string, sommaire: list<array{id: string, title: string}>} */
+    private function outline(string $html): array
+    {
+        $outline = ArticleOutline::of($html);
+
+        return ['html' => $outline['html'], 'sommaire' => $outline['sections']];
     }
 }

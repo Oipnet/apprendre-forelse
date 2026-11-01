@@ -106,6 +106,7 @@ share:
         pratique: "{framework} : « {titre} », un exercice court à faire dans le navigateur."
         pratique_reussie: "J'ai réussi l'exercice « {titre} » ({framework}), directement dans le navigateur."
         certificat: "J'ai terminé le parcours « {parcours} » sur {site} : {n, plural, one {# exercice réussi} other {# exercices réussis}}, chacun validé par des tests."
+        chapitre: "J'ai terminé le chapitre {numero} « {chapitre} » du parcours « {parcours} » sur {site}, exercices validés par des tests, directement dans le navigateur."
 
 # Les filtres de format (src/Twig) : unités des durées estimées (|duree). Les nombres arrivent déjà écrits.
 format:

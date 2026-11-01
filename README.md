@@ -256,6 +256,8 @@ Les résultats s'exportent en CSV.
   updated: 2026-10-20                                   # facultative : dernière révision du fond
   visibility: admin                                     # facultative : en préparation
   practice: laravel-13-26-read-through                  # facultative : l'exercice de Pratique dont part l'article
+  course: symfony-pour-dev-php                          # facultative : le parcours proposé en fin d'article
+  author: grace-hopper                                  # facultative : un des « authors » du thème (sinon « person »)
   tags: [Symfony, Sécurité]                             # facultative : les sujets, filtres de la liste
   ---
   ```
@@ -283,6 +285,17 @@ Les résultats s'exportent en CSV.
   elle mène à la liste des exercices de Pratique. Une traduction sans `practice:` reprend celle de l'article
   français ; si l'exercice n'est pas traduit, elle invite à la Pratique anglaise. Les clics se comptent dans Umami
   (événements `article-exercice`, avec sa position, et `article-pratique`).
+
+  L'encart « Aller plus loin » propose un parcours, dans la colonne collante sur un écran large (au-dessus des
+  contenus proches) et sous l'invitation à essayer sur un téléphone : celui de `course:` (l'identifiant d'un
+  parcours, qui doit exister), sinon le parcours du framework de l'exercice de `practice:`, comme après un exercice de
+  Pratique. Un parcours en préparation ou non traduit dans la langue de la page n'est pas proposé. Une traduction sans
+  `course:` reprend celui de l'article français. Les clics se comptent dans Umami (`article-parcours`, avec le
+  parcours et la position : `colonne` ou `fin`).
+
+  Un article d'au moins trois intertitres (`##`) affiche son sommaire en tête ; chaque intertitre a son ancre. Les blocs
+  de code ont un bouton « Copier ». Sous l'article, l'encart « Écrit par » présente la personne du thème quand elle
+  déclare `bio` ou `links` (voir « Thème » plus bas).
 
   Un article se traduit en anglais dans `<pack>/articles/en/<slug>.md`, publié sur `/en/blog/<slug>` avec sa propre
   adresse (`running-symfony-in-the-browser.md`). Même en-tête, plus `translation_of:`, le nom de l'article français
@@ -435,7 +448,13 @@ accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas
   les emails (confirmation d'adresse, mot de passe oublié, achat), les balises Open Graph et les données
   structurées. `chip` est la petite puce à côté, `tagline` l'accroche, `title` le `<title>` de l'accueil, `url` le
   site de la marque, `person` (`name`, `jobTitle`) l'auteur des parcours et des articles dans les données
-  structurées.
+  structurées. Avec `bio` (deux ou trois phrases) ou `links` (`malt`, `linkedin`, `github`, `site`, en https), un
+  encart « Écrit par » suit chaque article ; `portrait` (une image carrée de `assets/`) y met une photo, `about` (du
+  Markdown) remplit sa page `/auteurs/<nom>`, et `locales.<langue>.person` traduit `jobTitle`, `bio` et `about`.
+  D'autres auteurs se déclarent sous `authors:`, par identifiant (`grace-hopper: {name, jobTitle, bio…}`, même forme,
+  traduits sous `locales.<langue>.authors`) ; un article nomme le sien avec `author: grace-hopper`, sinon c'est
+  `person`. Chaque auteur qui a une présentation a sa page (`/auteurs/grace-hopper`, `/en/authors/…`) : photo,
+  présentation, profils, ses articles, et une `ProfilePage` dans les données structurées.
 - `colors` et `fonts` redéfinissent les jetons du thème default (`--color-accent`, `--color-bg`, `--font-serif`…,
   voir [docs/themes.md](docs/themes.md)) : les pages du site et les emails les suivent. Hexadécimal seulement ; une
   valeur mal écrite **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire

@@ -3,20 +3,24 @@
 
 {#
   Un article du blog, rendu depuis le Markdown de son pack (voir App\Content\Article).
-  Variables : article, html, scheduled, translations (le même article dans les autres langues), practice (l'exercice
-  dont part l'article, ou null), previous, next, related (les contenus proches, voir search/_related.html.twig).
+  Variables : article, html, sommaire (les intertitres ancrés, vide pour un article court), scheduled, translations (le même article dans les autres langues), practice (l'exercice
+  dont part l'article, ou null), course (le parcours qui le prolonge, ou null), author (Theme::author(), ou null), previous, next, related (les contenus
+  proches, voir search/_related.html.twig).
 
   Les contenus proches restent en vue pendant la lecture : colonne collante à droite sur un écran large, trois liens
   sous le titre sur un téléphone (un lecteur qui s'arrête en route ne verrait pas un bloc de fin d'article).
 
   L'invitation à faire l'exercice apparaît deux fois : en tête, pour qui veut essayer avant de lire, et en fin d'article,
   là où le lecteur arrivé d'un autre site repartirait. Sans exercice, elle mène aux exercices de Pratique.
+  Le parcours se propose dans la colonne collante sur un écran large (en vue pendant toute la lecture, au-dessus des
+  contenus proches), et en fin d'article sur un téléphone, où la colonne n'existe pas.
 #}
 {% block title %}{{ article.title }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="blog-page mx-auto w-full {{ related ? 'max-w-6xl' : 'max-w-3xl' }} px-4 py-10 sm:px-6">
-        <div class="{{ related ? 'lg:grid lg:grid-cols-[minmax(0,48rem)_15rem] lg:justify-between lg:gap-12' }}">
+    {% set colonne = related or course %}
+    <main class="blog-page mx-auto w-full {{ colonne ? 'max-w-6xl' : 'max-w-3xl' }} px-4 py-10 sm:px-6">
+        <div class="{{ colonne ? 'lg:grid lg:grid-cols-[minmax(0,48rem)_15rem] lg:justify-between lg:gap-12' }}">
         <div class="min-w-0">
         <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
             <ol>
@@ -50,8 +54,36 @@
                 {{ include('search/_related.html.twig', {depuis: 'article', compact: true}) }}
             </header>
 
+            {%- if sommaire %}
+            <nav class="blog-toc mt-8 rounded-md border border-line px-5 py-4 text-sm" aria-labelledby="blog-toc-titre">
+                <p id="blog-toc-titre" class="font-semibold">{{ 'show.sommaire'|trans }}</p>
+                <ol class="mt-2 list-decimal space-y-1 pl-5">
+                    {%- for section in sommaire %}
+                    <li><a href="#{{ section.id }}">{{ section.title }}</a></li>
+                    {%- endfor %}
+                </ol>
+            </nav>
+            {%- endif %}
             <div class="lesson prose prose-theme mt-8 max-w-none">{{ html|raw }}</div>
         </article>
+
+        {% if author and (author.bio is defined or author.links is defined) %}
+            {# L'auteur, juste après le texte : le lecteur qui a aimé l'article sait qui l'a écrit et comment le joindre. #}
+            <aside class="blog-author mt-10 flex gap-4 border-t border-line pt-6" aria-label="{{ 'show.auteur.titre'|trans }}">
+                {%- if author.portraitUrl %}<img class="h-16 w-16 shrink-0 rounded-full object-cover" src="{{ author.portraitUrl }}" alt="" width="64" height="64" loading="lazy">{% endif %}
+                <div class="min-w-0">
+                    <p class="text-sm text-ink-muted">{{ 'show.auteur.titre'|trans }}</p>
+                    <p class="font-semibold">{% if author.hasPage %}<a href="{{ path('app_author', {slug: author.id}) }}" rel="author" data-umami-event="article-auteur" data-umami-event-lien="page">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %} <span class="font-normal text-ink-muted">· {{ author.jobTitle }}</span></p>
+                    {%- if author.bio is defined %}<p class="mt-1">{{ author.bio }}</p>{% endif %}
+                    <p class="blog-author-links mt-3 flex flex-wrap gap-2">
+                        {%- for key, url in author.links|default({}) %}
+                        <a class="btn" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="article-auteur" data-umami-event-lien="{{ key }}">{{ ('show.auteur.lien.' ~ key)|trans }}</a>
+                        {%- endfor %}
+                        <a class="btn" href="{{ path('app_contact') }}" data-umami-event="article-auteur" data-umami-event-lien="contact">{{ 'show.auteur.contact'|trans }}</a>
+                    </p>
+                </div>
+            </aside>
+        {% endif %}
 
         <aside class="blog-cta mt-10 rounded-md border border-line bg-bg-2 px-5 py-5" aria-labelledby="blog-cta-titre">
             {% if practice %}
@@ -66,6 +98,8 @@
             {% endif %}
         </aside>
 
+        {% if course %}{{ _self.parcours(course, 'fin', 'blog-course mt-6 rounded-md border border-line px-5 py-5 lg:hidden') }}{% endif %}
+
         {% if previous or next %}
             <nav class="blog-nav mt-12 flex flex-wrap justify-between gap-4 border-t border-line pt-6" aria-label="{{ 'show.autres'|trans }}">
                 {% if previous %}<a class="btn" href="{{ path('app_article', {slug: previous.slug}) }}">← {{ previous.title }}</a>{% endif %}
@@ -74,11 +108,24 @@
         {% endif %}
         <p class="blog-back mt-6 text-sm"><a href="{{ path('app_blog') }}">{{ 'show.tous'|trans }}</a></p>
         </div>
-        {% if related %}
+        {% if colonne %}
             <div class="hidden lg:block">
-                <div class="sticky top-24">{{ include('search/_related.html.twig', {depuis: 'article'}) }}</div>
+                <div class="sticky top-24 space-y-8">
+                    {%- if course %}{{ _self.parcours(course, 'colonne', 'blog-course blog-course-sidebar rounded-md border border-line px-4 py-4') }}{% endif %}
+                    {{- include('search/_related.html.twig', {depuis: 'article'}) -}}
+                </div>
             </div>
         {% endif %}
         </div>
     </main>
 {% endblock %}
+
+{# Le parcours qui prolonge l'article : en fin d'article (téléphone) ou dans la colonne (écran large). #}
+{% macro parcours(course, position, class) %}
+    <aside class="{{ class }}" aria-label="{{ 'show.parcours.titre'|trans({}, 'blog') }}">
+        <p class="font-semibold">{{ 'show.parcours.titre'|trans({}, 'blog') }}</p>
+        <p class="mt-2"><strong>{{ course.title }}</strong>{% if course.description %} · {{ course.description }}{% endif %}</p>
+        <p class="mt-1 text-sm text-ink-muted">{{ 'show.parcours.detail'|trans({}, 'blog') }}</p>
+        <a class="btn mt-4" href="{{ path('app_track', {trackId: course.id}) }}" data-umami-event="article-parcours" data-umami-event-position="{{ position }}" data-umami-event-parcours="{{ course.id }}">{{ 'show.parcours.bouton'|trans({}, 'blog') }} →</a>
+    </aside>
+{% endmacro %}

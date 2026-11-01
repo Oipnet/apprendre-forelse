@@ -129,10 +129,11 @@ export class SuccessPanel {
 			}
 			panel.innerHTML = `<strong>🎉 ${m.success.succeeded} ${gainText(result, this.config, session.solutionRevealed)}</strong>${lessonLinkHtml(this.exercise, this.config, `<p>${m.success.chapterDone}</p>`)}${nextStepHtml(this.exercise, this.config)}`;
 			if (practice) panel.querySelector('.button')?.before(this.beforeAfterButton(), ' ');
-			// Annoncer la réussite : le texte proposé le dit (« J'ai réussi l'exercice… »).
-			if (this.config.share) {
-				panel.insertAdjacentHTML('beforeend', shareHtml(this.config.share.success, m.success.shareSuccess));
-				mountShare(panel.querySelector<HTMLElement>('[data-share]')!, this.config.share.success, this.deps.mesure);
+			// Annoncer la réussite : le texte proposé le dit (« J'ai réussi l'exercice… », « J'ai terminé le chapitre… »).
+			const success = this.config.share?.success ?? this.config.chapterShare;
+			if (success) {
+				panel.insertAdjacentHTML('beforeend', shareHtml(success, this.config.share ? m.success.shareSuccess : m.success.shareChapter));
+				mountShare(panel.querySelector<HTMLElement>('[data-share]')!, success, this.deps.mesure);
 			}
 			const ask = this.deps.savedReview ? null : this.deps.mentor.reviewButton();
 			if (ask) panel.append(ask);
