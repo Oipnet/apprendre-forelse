@@ -62,7 +62,7 @@ final readonly class PlaygroundTools
             'packages' => $this->catalog($framework),
             'notes' => [
                 'Only files matching editable_paths can be shared; "*" does not cross a "/".',
-                'Framework configuration, composer.json and vendor/ are fixed: there is no network and no database server.',
+                'Framework configuration, composer.json and vendor/ are fixed, and there is no network: "about" says what the playground includes (database, console…).',
                 'The preview serves the app at "/"; the user can type other addresses, like /bonjour/Ada.',
             ],
         ];
