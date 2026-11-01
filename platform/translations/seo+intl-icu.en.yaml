@@ -40,6 +40,7 @@ parcours:
         beginner: Beginner
         intermediate: Intermediate
         advanced: Advanced
+    certificat: Certificate of completion
 
 notions:
     titre: Concepts practised in exercises

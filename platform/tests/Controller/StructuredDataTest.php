@@ -70,8 +70,11 @@ final class StructuredDataTest extends WebTestCase
         $this->assertSame(['Course', 'BreadcrumbList'], array_keys($data));
         $course = $data['Course'];
         $this->assertSame('Découverte', $course['name']);
-        $this->assertSame('fr', $course['inLanguage']);
+        $this->assertSame('fr-FR', $course['inLanguage']);
         $this->assertSame('Online', $course['hasCourseInstance']['courseMode']);
+        $this->assertSame('fr-FR', $course['hasCourseInstance']['inLanguage']);
+        $this->assertArrayNotHasKey('instructor', $course['hasCourseInstance'], 'Le thème du moteur ne déclare personne : l\'organisation suffit.');
+        $this->assertSame(['@type' => 'EducationalOccupationalCredential', 'name' => 'Certificat de réussite', 'credentialCategory' => 'Certificate'], $course['educationalCredentialAwarded']);
         $this->assertSame(['@type' => 'Offer', 'category' => 'Free', 'price' => '0.00', 'priceCurrency' => 'EUR', 'url' => 'http://localhost/parcours/decouverte', 'availability' => 'https://schema.org/InStock'], $course['offers']);
         $this->assertArrayNotHasKey('numberOfCredits', $course);
         $this->assertBreadcrumb([[1, 'Accueil', 'http://localhost/'], [2, 'Découverte', 'http://localhost/parcours/decouverte']], $data['BreadcrumbList']);
@@ -135,6 +138,39 @@ final class StructuredDataTest extends WebTestCase
         $this->assertSame('http://localhost/parcours/decouverte#cours', $this->structuredData($client, '/parcours/decouverte')['Course']['@id'], 'Le même @id que le Course du parcours.');
     }
 
+    public function testSommaireDeChapitre(): void
+    {
+        $client = static::createClient();
+        $data = $this->structuredData($client, '/parcours/decouverte/chapitre/bonjour/sommaire');
+
+        $this->assertSame(['BreadcrumbList', 'LearningResource'], array_keys($data));
+        $chapter = $data['LearningResource'];
+        $this->assertSame('chapter', $chapter['learningResourceType']);
+        $this->assertSame('http://localhost/parcours/decouverte/chapitre/bonjour/sommaire', $chapter['url']);
+        $this->assertTrue($chapter['isAccessibleForFree'], 'Premier chapitre.');
+        $this->assertSame('http://localhost/parcours/decouverte#cours', $chapter['isPartOf']['@id'], 'Le même @id que le Course du parcours.');
+    }
+
+    public function testBacASable(): void
+    {
+        $client = static::createClient();
+        $data = $this->structuredData($client, '/bac-a-sable');
+
+        // Pas de WebApplication : Google exige une note ou des avis sur une application, et le bac à sable n'en a pas.
+        $this->assertSame(['BreadcrumbList', 'Organization', 'WebPage', 'FAQPage'], array_keys($data));
+        $this->assertSame('http://localhost/bac-a-sable#page', $data['WebPage']['@id']);
+        $this->assertTrue($data['WebPage']['isAccessibleForFree']);
+        $this->assertSame(
+            ['http://localhost/bac-a-sable/symfony', 'http://localhost/bac-a-sable/laravel', 'http://localhost/bac-a-sable/php'],
+            array_column($data['WebPage']['hasPart'], 'url'),
+        );
+
+        $page = $this->structuredData($client, '/bac-a-sable/symfony')['WebPage'];
+        $this->assertSame('http://localhost/bac-a-sable/symfony', $page['url']);
+        $this->assertSame('http://localhost/bac-a-sable#page', $page['isPartOf']['@id']);
+        $this->assertNotEmpty($page['description']);
+    }
+
     public function testPratique(): void
     {
         $client = static::createClient();
@@ -144,7 +180,7 @@ final class StructuredDataTest extends WebTestCase
         $data = $this->structuredData($client, '/pratique/exemple-map-request-header');
         $this->assertSame(['Article', 'BreadcrumbList'], array_keys($data));
         $article = $data['Article'];
-        $this->assertSame('2026-09-16', $article['datePublished']);
+        $this->assertStringStartsWith('2026-09-16T00:00:00', $article['datePublished']);
         $this->assertGreaterThanOrEqual($article['datePublished'], $article['dateModified']);
         $this->assertSame(['@id' => 'http://localhost/#organisation'], $article['author'], 'Sans personne déclarée, l\'organisation est l\'auteur.');
         $this->assertCount(3, $data['BreadcrumbList']['itemListElement']);

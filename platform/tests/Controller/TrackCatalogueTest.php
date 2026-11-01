@@ -30,12 +30,11 @@ final class TrackCatalogueTest extends WebTestCase
             $lists[$data['@type']] = $data;
         }
         $this->assertSame(1, $lists['ItemList']['numberOfItems']);
-        $this->assertSame(['@type' => 'ListItem', 'position' => 1], array_intersect_key($lists['ItemList']['itemListElement'][0], ['@type' => 1, 'position' => 1]));
-        $this->assertSame(['Course', 'Découverte', 'http://localhost/parcours/decouverte'], [
-            $lists['ItemList']['itemListElement'][0]['item']['@type'],
-            $lists['ItemList']['itemListElement'][0]['item']['name'],
-            $lists['ItemList']['itemListElement'][0]['item']['url'],
-        ]);
+        // Forme « page de synthèse » : la place et l'adresse, le cours est décrit sur sa page.
+        $this->assertSame(
+            ['@type' => 'ListItem', 'position' => 1, 'url' => 'http://localhost/parcours/decouverte'],
+            $lists['ItemList']['itemListElement'][0],
+        );
         $this->assertArrayHasKey('BreadcrumbList', $lists);
     }
 
