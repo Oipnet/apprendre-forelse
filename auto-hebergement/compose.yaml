@@ -75,6 +75,11 @@ services:
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
       # IndexNow (Bing, Yandex…) : clé servie par /indexnow.txt, voir platform/.env. Vide : rien n'est envoyé.
       INDEXNOW_KEY: ${INDEXNOW_KEY:-}
+      # Recherche du site (facultative) : l'adresse d'un Meilisearch que vous faites tourner, et sa clé maîtresse
+      # (voir platform/.env et deploy/compose.yaml, service « recherche »). Vide : pas de recherche.
+      MEILISEARCH_URL: ${MEILISEARCH_URL:-}
+      MEILISEARCH_KEY: ${MEILISEARCH_KEY:-}
+      MEILISEARCH_INDEX: ${MEILISEARCH_INDEX:-site}
       # Mesure d'audience (facultative, voir « Savoir qui visite le site » dans le README).
       ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
       ANALYTICS_WEBSITE_ID: ${ANALYTICS_WEBSITE_ID:-}
