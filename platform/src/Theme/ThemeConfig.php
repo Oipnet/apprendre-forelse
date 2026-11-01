@@ -16,9 +16,9 @@ final readonly class ThemeConfig
      * @param list<string>                                                                                   $stylesheets feuilles du thème (« assets/theme.css »), posées après celle du moteur
      * @param list<string>                                                                                   $scripts     scripts du thème, chargés après ceux du moteur
      * @param list<string>                                                                                   $preload     polices du thème à précharger
-     * @param array{name: string, jobTitle: string}|null                                                     $person    la personne derrière les contenus (marque du moteur seulement)
+     * @param array{name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>}|null $person    la personne derrière les contenus (marque du moteur seulement)
      * @param array{image: string|null, font: string|null, text_font: string|null, colors: array<string, string>} $shareCard l'habillage des images de partage dessinées par le moteur (fichiers du dossier du thème)
-     * @param array<string, array{chip?: string, title?: string, tagline?: string, home: array<string, array<string, mixed>>}> $locales les textes traduits, par langue (« locales » de theme.yaml)
+     * @param array<string, array{chip?: string, title?: string, tagline?: string, home: array<string, array<string, mixed>>, person?: array{jobTitle?: string, bio?: string, about?: string}}> $locales les textes traduits, par langue (« locales » de theme.yaml)
      */
     public function __construct(
         /** Vrai quand aucun theme.yaml n'est monté : c'est le thème du moteur. */
@@ -37,6 +37,8 @@ final readonly class ThemeConfig
         public array $fonts,
         public array $home,
         public ?array $person = null,
+        /** @var array<string, array<string, mixed>> les autres auteurs des articles, par identifiant (« authors ») */
+        public array $authors = [],
         public array $stylesheets = [],
         public array $scripts = [],
         public array $preload = [],

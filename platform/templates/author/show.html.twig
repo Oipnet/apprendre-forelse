@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+{% trans_default_domain 'blog' %}
+
+{#
+  La page d'un auteur (voir App\Controller\AuthorController) : qui il est, comment le joindre, ce qu'il a écrit.
+  Variables : person (un auteur de Theme::author() : id, name, jobTitle, bio?, about?, links?, portraitUrl), about (la
+  présentation, en HTML), articles (ses plus récents), more (il en a d'autres), tracks (les parcours publics dans la
+  langue de la page, pour l'auteur par défaut).
+#}
+{% block title %}{{ person.name }} · {{ theme.name }}{% endblock %}
+
+{% block body %}
+    <main class="author-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
+            <ol>
+                <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
+                <li aria-current="page">{{ person.name }}</li>
+            </ol>
+        </nav>
+
+        <header class="mt-6 flex flex-wrap items-center gap-6">
+            {%- if person.portraitUrl %}<img class="h-28 w-28 shrink-0 rounded-full object-cover" src="{{ person.portraitUrl }}" alt="{{ person.name }}" width="112" height="112">{% endif %}
+            <div class="min-w-0">
+                <h1 class="text-3xl font-semibold sm:text-4xl">{{ person.name }}</h1>
+                <p class="mt-1 text-lg text-ink-muted">{{ person.jobTitle }}</p>
+            </div>
+        </header>
+
+        <div class="lesson prose prose-theme mt-8 max-w-none">{{ about|raw }}</div>
+
+        <p class="author-links mt-6 flex flex-wrap gap-2">
+            {%- for key, url in person.links|default({}) %}
+            <a class="btn{{ loop.first ? ' btn-primary' }}" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="auteur-lien" data-umami-event-lien="{{ key }}">{{ ('show.auteur.lien.' ~ key)|trans }}</a>
+            {%- endfor %}
+            <a class="btn" href="{{ path('app_contact') }}" data-umami-event="auteur-lien" data-umami-event-lien="contact">{{ 'show.auteur.contact'|trans }}</a>
+        </p>
+
+        {% if tracks %}
+            <section class="mt-12" aria-labelledby="auteur-parcours">
+                <h2 id="auteur-parcours" class="text-2xl font-semibold">{{ 'auteur.parcours'|trans }}</h2>
+                <ul class="mt-4 space-y-4">
+                    {%- for track in tracks %}
+                    <li><a class="font-semibold" href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a>{% if track.description %}<span class="block text-ink-muted">{{ track.description }}</span>{% endif %}</li>
+                    {%- endfor %}
+                </ul>
+            </section>
+        {% endif %}
+
+        {% if articles %}
+            <section class="mt-12" aria-labelledby="auteur-articles">
+                <h2 id="auteur-articles" class="text-2xl font-semibold">{{ 'auteur.articles'|trans }}</h2>
+                <ul class="mt-2">
+                    {%- for article in articles %}
+                    <li class="border-t border-line py-6 first:border-t-0">{{ include('blog/_article_card.html.twig') }}</li>
+                    {%- endfor %}
+                </ul>
+                {%- if more %}<p class="mt-2 text-sm"><a href="{{ path('app_blog') }}">{{ 'show.tous'|trans }}</a></p>{% endif %}
+            </section>
+        {% endif %}
+    </main>
+{% endblock %}

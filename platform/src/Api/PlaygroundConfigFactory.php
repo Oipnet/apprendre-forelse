@@ -3,11 +3,14 @@
 namespace App\Api;
 
 use App\Ai\Mentor;
+use App\Content\ChapterOutline;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
+use App\Content\Track;
 use App\Entity\User;
 use App\Scratch\ScratchFramework;
 use App\Share\ShareLinks;
+use App\Share\SiteHost;
 use App\Theme\Theme;
 use App\Security\SandboxOrigin;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -32,6 +35,7 @@ final readonly class PlaygroundConfigFactory
         private Security $security,
         private TranslatorInterface $translator,
         private EnvironmentAssetUrls $assets,
+        private SiteHost $site,
         /** Bêta fermée : l'inscription exige un code de cohorte, l'invité sans code est orienté vers la liste d'attente. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private bool $inviteOnly,
@@ -72,7 +76,34 @@ final readonly class PlaygroundConfigFactory
             ] : []),
             // Bêta fermée : l'invité sans code d'invitation est orienté vers la liste d'attente plutôt que vers un formulaire qu'il ne peut pas remplir.
             'waitlistUrl' => !$user && $this->inviteOnly ? $this->urls->generate('app_home').'#liste-attente' : null,
+            'chapterShare' => null === $track ? null : $this->chapterShare($exercise, $track),
         ];
+    }
+
+    /**
+     * Le dernier exercice d'un chapitre réussi, l'apprenant peut l'annoncer : « J'ai terminé le chapitre 2… ». Le lien
+     * mène à la page publique du parcours (les exercices, eux, demandent un compte). Rien pour un parcours en
+     * préparation : sa page n'existe pas pour qui suivrait le lien.
+     *
+     * @return array{text: string, linkedin: string, x: string, bluesky: string, lien: string, natif: string}|null
+     */
+    private function chapterShare(Exercise $exercise, Track $track): ?array
+    {
+        $chapter = $this->content->chapterOf($exercise);
+        if (null === $chapter || $track->isRestricted() || !$this->content->closesChapter($exercise)) {
+            return null;
+        }
+
+        return ShareLinks::of(
+            $this->urls->generate('app_track', ['trackId' => $track->id], UrlGeneratorInterface::ABSOLUTE_URL),
+            $this->translator->trans('share.texte.chapitre', [
+                'numero' => ChapterOutline::numberOf($track, $chapter),
+                'chapitre' => $chapter->title,
+                'parcours' => $track->title,
+                'site' => $this->site->name(),
+            ]),
+            'chapitre',
+        );
     }
 
     /**

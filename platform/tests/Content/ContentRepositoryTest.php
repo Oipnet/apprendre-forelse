@@ -455,6 +455,7 @@ final class ContentRepositoryTest extends TestCase
         yield 'sujet vide' => ['a', "---\n$header\ntags: [Symfony, '']\n---\nTexte", 'chaque sujet de « tags » est un texte court'];
         yield 'sujet en double' => ['a', "---\n$header\ntags: [Sécurité, securite]\n---\nTexte", 'sujet « securite » donné deux fois'];
         yield 'exercice inconnu' => ['a', "---\n$header\npractice: inconnu\n---\nTexte", '« practice » nomme l\'exercice de Pratique « inconnu », introuvable'];
+        yield 'parcours inconnu' => ['a', "---\n$header\ncourse: inconnu\n---\nTexte", '« course » nomme le parcours « inconnu », introuvable'];
     }
 
     #[DataProvider('articlesRefuses')]

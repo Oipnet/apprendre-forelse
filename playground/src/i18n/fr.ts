@@ -210,6 +210,7 @@ export const fr = {
 		succeeded: 'Exercice réussi !',
 		chapterDone: 'Vous avez terminé le chapitre.',
 		shareSuccess: 'Partager votre réussite',
+		shareChapter: 'Partager ce chapitre terminé',
 		saveFailed: (error: string) => `La progression n'a pas pu être enregistrée : ${error}`,
 	},
 
@@ -298,6 +299,8 @@ export const fr = {
 		copy: 'Copier le lien',
 		copied: 'Lien copié.',
 		on: 'Partager sur',
+		copyCode: 'Copier',
+		codeCopied: 'Copié ✓',
 	},
 
 	shortcuts: {

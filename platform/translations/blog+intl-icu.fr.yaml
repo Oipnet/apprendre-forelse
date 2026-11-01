@@ -25,6 +25,7 @@ index:
     suivre_detail: "Les nouveaux articles dans votre lecteur de flux, dès leur parution."
 
 show:
+    sommaire: "Sommaire"
     en_preparation: "En préparation : cet article n'est visible que des administrateurs."
     programme: "Programmé : cet article paraîtra le {date}. D'ici là, seuls les administrateurs le voient."
     mis_a_jour: 'mis à jour le <time datetime="{datetime}">{date}</time>'
@@ -41,6 +42,26 @@ show:
         detail: "Un vrai framework, qui tourne dans votre navigateur : rien à installer."
         bouton: "Faire l'exercice"
         bouton_pratique: "Voir les exercices de Pratique"
+    # Le parcours qui prolonge l'article, en fin de lecture.
+    parcours:
+        titre: "Aller plus loin"
+        detail: "Un parcours complet, exercice après exercice, dans le navigateur. Le premier chapitre est gratuit."
+        bouton: "Découvrir le parcours"
+    # L'auteur, sous l'article (« person » du thème) : ses profils et le contact.
+    auteur:
+        titre: "Écrit par"
+        contact: "Me contacter"
+        lien:
+            malt: "Mon profil Malt"
+            linkedin: "LinkedIn"
+            github: "GitHub"
+            site: "Mon site"
 
 feed:
     description: "Les articles de {site}."
+
+# La page d'un auteur (/auteurs/<nom>).
+auteur:
+    fil_ariane: "Auteur"
+    parcours: "Ses parcours"
+    articles: "Ses derniers articles"
