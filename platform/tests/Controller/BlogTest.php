@@ -212,8 +212,11 @@ final class BlogTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', '/blog/symfony-dans-le-navigateur');
 
-        $course = $crawler->filter('aside.blog-course');
-        $this->assertCount(1, $course, 'Sans clé « course », le parcours du framework de l\'exercice.');
+        $courses = $crawler->filter('aside.blog-course');
+        $this->assertCount(2, $courses, 'Sans clé « course », le parcours du framework de l\'exercice : dans la colonne et, sur téléphone, en fin d\'article.');
+        $this->assertSame(['fin', 'colonne'], $courses->filter('a.btn')->each(static fn ($a) => $a->attr('data-umami-event-position')));
+        $this->assertCount(1, $crawler->filter('.sticky aside.blog-course'), 'Dans la colonne collante, en vue pendant la lecture.');
+        $course = $courses->first();
         $this->assertSame('/parcours/decouverte', $course->filter('a.btn')->attr('href'));
         $this->assertSame('article-parcours', $course->filter('a.btn')->attr('data-umami-event'), 'Le clic se mesure.');
         $this->assertSame('decouverte', $course->filter('a.btn')->attr('data-umami-event-parcours'));

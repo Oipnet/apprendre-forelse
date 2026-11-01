@@ -12,13 +12,15 @@
 
   L'invitation à faire l'exercice apparaît deux fois : en tête, pour qui veut essayer avant de lire, et en fin d'article,
   là où le lecteur arrivé d'un autre site repartirait. Sans exercice, elle mène aux exercices de Pratique.
-  Le parcours suit, en fin d'article seulement : qui a lu jusqu'au bout est prêt à aller plus loin.
+  Le parcours se propose dans la colonne collante sur un écran large (en vue pendant toute la lecture, au-dessus des
+  contenus proches), et en fin d'article sur un téléphone, où la colonne n'existe pas.
 #}
 {% block title %}{{ article.title }} · {{ theme.name }}{% endblock %}
 
 {% block body %}
-    <main class="blog-page mx-auto w-full {{ related ? 'max-w-6xl' : 'max-w-3xl' }} px-4 py-10 sm:px-6">
-        <div class="{{ related ? 'lg:grid lg:grid-cols-[minmax(0,48rem)_15rem] lg:justify-between lg:gap-12' }}">
+    {% set colonne = related or course %}
+    <main class="blog-page mx-auto w-full {{ colonne ? 'max-w-6xl' : 'max-w-3xl' }} px-4 py-10 sm:px-6">
+        <div class="{{ colonne ? 'lg:grid lg:grid-cols-[minmax(0,48rem)_15rem] lg:justify-between lg:gap-12' }}">
         <div class="min-w-0">
         <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
             <ol>
@@ -68,14 +70,7 @@
             {% endif %}
         </aside>
 
-        {% if course %}
-            <aside class="blog-course mt-6 rounded-md border border-line px-5 py-5" aria-labelledby="blog-course-titre">
-                <h2 id="blog-course-titre" class="text-lg font-semibold">{{ 'show.parcours.titre'|trans }}</h2>
-                <p class="mt-2"><strong>{{ course.title }}</strong>{% if course.description %} · {{ course.description }}{% endif %}</p>
-                <p class="mt-1 text-sm text-ink-muted">{{ 'show.parcours.detail'|trans }}</p>
-                <a class="btn mt-4" href="{{ path('app_track', {trackId: course.id}) }}" data-umami-event="article-parcours" data-umami-event-parcours="{{ course.id }}">{{ 'show.parcours.bouton'|trans }} →</a>
-            </aside>
-        {% endif %}
+        {% if course %}{{ _self.parcours(course, 'fin', 'blog-course mt-6 rounded-md border border-line px-5 py-5 lg:hidden') }}{% endif %}
 
         {% if previous or next %}
             <nav class="blog-nav mt-12 flex flex-wrap justify-between gap-4 border-t border-line pt-6" aria-label="{{ 'show.autres'|trans }}">
@@ -85,11 +80,24 @@
         {% endif %}
         <p class="blog-back mt-6 text-sm"><a href="{{ path('app_blog') }}">{{ 'show.tous'|trans }}</a></p>
         </div>
-        {% if related %}
+        {% if colonne %}
             <div class="hidden lg:block">
-                <div class="sticky top-24">{{ include('search/_related.html.twig', {depuis: 'article'}) }}</div>
+                <div class="sticky top-24 space-y-8">
+                    {%- if course %}{{ _self.parcours(course, 'colonne', 'blog-course blog-course-sidebar rounded-md border border-line px-4 py-4') }}{% endif %}
+                    {{- include('search/_related.html.twig', {depuis: 'article'}) -}}
+                </div>
             </div>
         {% endif %}
         </div>
     </main>
 {% endblock %}
+
+{# Le parcours qui prolonge l'article : en fin d'article (téléphone) ou dans la colonne (écran large). #}
+{% macro parcours(course, position, class) %}
+    <aside class="{{ class }}" aria-label="{{ 'show.parcours.titre'|trans({}, 'blog') }}">
+        <p class="font-semibold">{{ 'show.parcours.titre'|trans({}, 'blog') }}</p>
+        <p class="mt-2"><strong>{{ course.title }}</strong>{% if course.description %} · {{ course.description }}{% endif %}</p>
+        <p class="mt-1 text-sm text-ink-muted">{{ 'show.parcours.detail'|trans({}, 'blog') }}</p>
+        <a class="btn mt-4" href="{{ path('app_track', {trackId: course.id}) }}" data-umami-event="article-parcours" data-umami-event-position="{{ position }}" data-umami-event-parcours="{{ course.id }}">{{ 'show.parcours.bouton'|trans({}, 'blog') }} →</a>
+    </aside>
+{% endmacro %}
