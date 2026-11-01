@@ -20,7 +20,7 @@ enum ScratchFramework: string
     public function environment(): string
     {
         return match ($this) {
-            self::Symfony => 'symfony-8',
+            self::Symfony => 'symfony-8-doctrine',
             self::Laravel => 'laravel-13',
             self::Php => 'php-8',
         };
@@ -51,6 +51,7 @@ enum ScratchFramework: string
                 'src/*/*.php',
                 'templates/*.html.twig',
                 'templates/*/*.html.twig',
+                'migrations/*.php',
             ],
             self::Laravel => [
                 'routes/web.php',

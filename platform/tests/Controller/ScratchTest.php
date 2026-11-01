@@ -70,7 +70,7 @@ final class ScratchTest extends WebTestCase
         $payload = $this->json($client, '/api/bac-a-sable/symfony');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSame('symfony-8', $payload['environment']['id']);
+        $this->assertSame('symfony-8-doctrine', $payload['environment']['id'], 'Le bac à sable Symfony a Doctrine, sur SQLite.');
         $this->assertSame('src/Controller/AccueilController.php', $payload['open']);
         $this->assertSame(['src/Controller/AccueilController.php', 'templates/accueil.html.twig'], array_keys($payload['files']));
         $this->assertStringContainsString("#[Route('/', name: 'accueil')]", $payload['files']['src/Controller/AccueilController.php']);

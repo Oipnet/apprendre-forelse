@@ -103,7 +103,7 @@ bac_a_sable:
         fil_ariane: Bac à sable
     symfony:
         titre: "Bac à sable Symfony en ligne"
-        description: "Un projet Symfony 8 complet dans votre navigateur : contrôleurs, Twig, console. Testez une idée et partagez votre code par un lien, sans compte."
+        description: "Un projet Symfony 8 complet dans votre navigateur : contrôleurs, Twig, console, Doctrine sur SQLite. Testez une idée et partagez votre code par un lien, sans compte."
         fil_ariane: Bac à sable Symfony
     laravel:
         titre: "Bac à sable Laravel en ligne"

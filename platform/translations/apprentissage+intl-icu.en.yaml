@@ -286,7 +286,7 @@ bac_a_sable:
     index:
         titre: A PHP, Symfony or Laravel project, in your browser
         intro: "Try an idea, reproduce a bug, show code to a colleague: the project runs in the browser, with nothing to install and no account. A link is all it takes to share it."
-        symfony: "Controllers with #[Route], Twig templates and bin/console, on Symfony 8."
+        symfony: "Controllers with #[Route], Twig templates, bin/console and Doctrine, on Symfony 8."
         laravel: "Routes, Blade views and php artisan, on Laravel 13."
         php: "PHP 8.4 with no framework: an index.php, your classes loaded by Composer, and your scripts run in the console."
         ouvrir: "Open the {framework} playground"
@@ -314,9 +314,9 @@ bac_a_sable:
             reponse: "No. The code runs in your browser, and a shared link carries it after the #, a part of the address the browser never sends to the server. Nothing is stored on our side."
         versions:
             question: "Which versions of PHP, Symfony and Laravel?"
-            reponse: "PHP 8.4 everywhere. Symfony 8, with Twig and bin/console, and Laravel 13, with Blade and php artisan, are full applications: controllers, routes, views, services. The PHP project has no framework at all: an index.php, classes loaded by Composer, and scripts run with php."
+            reponse: "PHP 8.4 everywhere. Symfony 8, with Twig, bin/console and Doctrine on SQLite, and Laravel 13, with Blade and php artisan, are full applications: controllers, routes, views, services. The PHP project has no framework at all: an index.php, classes loaded by Composer, and scripts run with php."
     symfony:
-        texte: "A real Symfony 8 project runs here, in your browser: write a controller with #[Route], a Twig template or a service, run bin/console, and see the result right away. Ideal to try a feature, reproduce a bug or show code to a colleague, without installing PHP or creating an account."
+        texte: "A real Symfony 8 project runs here, in your browser: write a controller with #[Route], a Twig template, a service or a Doctrine entity, run bin/console, and see the result right away. Ideal to try a feature, reproduce a bug or show code to a colleague, without installing PHP or creating an account."
     php:
         texte: "A PHP 8.4 project with no framework runs here, in your browser: route requests in public/index.php, write your classes in src/, run a script with php, and see the result right away. Ideal to try a PHP function, reproduce a bug or show code to a colleague, without installing PHP or creating an account."
     laravel:

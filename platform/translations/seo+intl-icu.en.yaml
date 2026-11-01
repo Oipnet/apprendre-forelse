@@ -75,7 +75,7 @@ bac_a_sable:
         fil_ariane: Playground
     symfony:
         titre: "Online Symfony playground"
-        description: "A full Symfony 8 project in your browser: controllers, Twig, console. Try an idea and share your code with a link, no account needed."
+        description: "A full Symfony 8 project in your browser: controllers, Twig, console, Doctrine on SQLite. Try an idea and share your code with a link, no account needed."
         fil_ariane: Symfony playground
     laravel:
         titre: "Online Laravel playground"
