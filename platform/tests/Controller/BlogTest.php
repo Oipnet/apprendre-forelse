@@ -258,7 +258,7 @@ final class BlogTest extends WebTestCase
             $this->assertStringContainsString('Ada Lovelace', $author->text());
             $this->assertStringContainsString('Je forme des devs PHP.', $author->text());
             $this->assertSame(['page', 'malt', 'linkedin', 'contact'], $author->filter('a')->each(static fn ($a) => $a->attr('data-umami-event-lien')), 'La page auteur, les profils, puis le contact.');
-            $this->assertSame('https://www.malt.fr/profile/ada', $author->filter('a')->first()->attr('href'));
+            $this->assertSame('https://www.malt.fr/profile/ada', $author->filter('a[data-umami-event-lien="malt"]')->attr('href'));
             $this->assertSame('/contact', $author->filter('a')->last()->attr('href'));
             $this->assertSame('/auteurs/ada-lovelace', $author->filter('a[rel="author"]')->attr('href'), 'Le nom mène à la page de l\'auteur.');
 
