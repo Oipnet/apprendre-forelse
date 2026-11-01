@@ -185,7 +185,8 @@ final class SearchTest extends WebTestCase
         $this->usePacks(__DIR__.'/../../../examples/packs', __DIR__.'/../Fixtures/packs/pratique');
         $client = $this->client(enabled: false);
 
-        $crawler = $client->request('GET', '/blog/symfony-dans-le-navigateur');
+        // Un article sans parcours à proposer : la colonne n'aurait rien à montrer (voir BlogTest pour l'encart du parcours).
+        $crawler = $client->request('GET', '/blog/les-tests-en-direct');
 
         $this->assertResponseIsSuccessful();
         $this->assertCount(0, $crawler->filter('.related'));
