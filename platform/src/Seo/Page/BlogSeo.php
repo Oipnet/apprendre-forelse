@@ -66,7 +66,7 @@ final readonly class BlogSeo
                 'image' => $image,
                 'datePublished' => $this->schema->date($article->published),
                 'dateModified' => $this->schema->date($article->modified()),
-                'author' => $this->schema->author(),
+                'author' => $this->schema->author($this->theme->author($this->blog->authorOf($article))),
                 'publisher' => [
                     ...$this->schema->organization(),
                     ...(null === ($logo = $this->theme->logoLargeUrl()) ? [] : ['logo' => ['@type' => 'ImageObject', 'url' => $this->schema->absolute($logo)]]),

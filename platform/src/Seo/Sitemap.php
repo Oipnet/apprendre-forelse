@@ -168,6 +168,12 @@ final readonly class Sitemap
             if ($this->selfHosting->enabled()) {
                 $entries[] = $this->entry('app_self_hosting', [], self::PAGES_UPDATED_AT);
             }
+            // La page de l'auteur, dans chaque langue que le thème parle.
+            foreach ($this->theme->authors() as $author) {
+                foreach ($author['hasPage'] ? $homes : [] as $locale) {
+                    $entries[] = $this->entry('app_author', ['_locale' => $locale, 'slug' => $author['id']], self::PAGES_UPDATED_AT);
+                }
+            }
             $entries[] = $this->entry('app_contact', [], self::PAGES_UPDATED_AT);
             $entries[] = $this->entry('app_legal_notice', [], LegalVersions::UPDATED_AT);
             $entries[] = $this->entry('app_privacy', [], LegalVersions::UPDATED_AT);

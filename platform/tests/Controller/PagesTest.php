@@ -165,6 +165,21 @@ final class PagesTest extends WebTestCase
         $this->assertSame(['name' => 'Ada', 'xp' => 0], $config['user'], 'Le playground affiche qui est connecté (la page n\'a pas l\'en-tête du site).');
     }
 
+    public function testLeDernierExerciceDUnChapitrePermetDAnnoncerLeChapitreTermine(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $client->loginUser($this->createUser());
+
+        $config = json_decode($client->request('GET', '/parcours/decouverte/02-bonjour-prenom')->filter('[data-playground]')->attr('data-config'), true);
+        $this->assertStringStartsWith('J\'ai terminé le chapitre 1 « Bonjour Symfony » du parcours « Découverte » sur ', $config['chapterShare']['text'] ?? '');
+        $this->assertSame('http://localhost/parcours/decouverte?utm_source=lien&utm_medium=partage&utm_campaign=chapitre', $config['chapterShare']['lien'], 'Le lien mène à la page publique du parcours.');
+        $this->assertArrayNotHasKey('share', $config, 'Pas de bouton « Partager » dans la barre : seul le chapitre terminé s\'annonce.');
+
+        $config = json_decode($client->request('GET', '/parcours/decouverte/01-bonjour')->filter('[data-playground]')->attr('data-config'), true);
+        $this->assertNull($config['chapterShare'], 'Au milieu d\'un chapitre, rien à annoncer.');
+    }
+
     /** Packs du moteur + un pack de test dont le parcours « debut » conseille « suite ». */
     private function avecParcoursEnchaines(): void
     {

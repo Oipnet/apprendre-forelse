@@ -24,13 +24,13 @@ final readonly class ThemeLoader
     public const string LEGACY_FILE = 'marque.yaml';
 
     /** Les clés acceptées à la racine de theme.yaml. */
-    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'colors', 'editor', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'share_card', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles', 'locales'];
+    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'authors', 'colors', 'editor', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'share_card', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles', 'locales'];
 
     /**
      * Ce qu'une langue peut traduire, sous « locales: <langue>: » : les textes de la marque et les sections de
      * l'accueil. Le reste (couleurs, images, polices) ne dépend pas de la langue.
      */
-    public const array LOCALE_KEYS = ['chip', 'title', 'tagline', 'home'];
+    public const array LOCALE_KEYS = ['chip', 'title', 'tagline', 'home', 'person', 'authors'];
 
     /** Le sous-dossier du thème servi tel quel sur /theme/<thème>/<version>/assets/… (voir ThemeController). */
     public const string ASSETS = 'assets';
@@ -84,7 +84,22 @@ final readonly class ThemeLoader
     /** La personne derrière les contenus, pour les données structurées (auteur des parcours et des articles). */
     private const array NO_SHARE_CARD = ['image' => null, 'font' => null, 'text_font' => null, 'colors' => []];
 
-    private const array PERSON_SHAPE = ['name' => 'texte*', 'jobTitle' => 'texte*'];
+    /** Les profils qu'un auteur peut lier (encart des articles, sameAs des données structurées), dans cet ordre. */
+    public const array PERSON_LINKS = ['malt', 'linkedin', 'github', 'site'];
+
+    private const array PERSON_SHAPE = [
+        'name' => 'texte*',
+        'jobTitle' => 'texte*',
+        // Deux ou trois phrases sur soi, sous les articles : ce qu'on fait, pour qui, si l'on est disponible.
+        'bio' => 'texte',
+        // La page auteur (/auteur) : une présentation plus longue, en Markdown. Sans elle, la page reprend « bio ».
+        'about' => 'texte',
+        'links' => ['malt' => 'texte', 'linkedin' => 'texte', 'github' => 'texte', 'site' => 'texte'],
+        // Une photo carrée, dans le dossier assets/ du thème (« assets/auteurs/ada.webp »).
+        'portrait' => 'texte',
+    ];
+    /** Ce qu'une langue traduit de la personne : le reste (nom, liens) ne change pas. */
+    private const array PERSON_LOCALE_SHAPE = ['jobTitle' => 'texte', 'bio' => 'texte', 'about' => 'texte'];
 
     public function __construct(
         /** Le thème du moteur : son accueil, sa Person. */
@@ -151,7 +166,8 @@ final readonly class ThemeLoader
             fonts: self::block($config, 'fonts', ThemeStylesheet::FONTS, new FontStack(), $error),
             home: self::home($config['home'] ?? [], $error),
             shareCard: $engine ? self::NO_SHARE_CARD : self::shareCard($config['share_card'] ?? [], $directory, $error),
-            person: isset($config['person']) ? self::person($config['person'], $error) : null,
+            person: isset($config['person']) ? self::person($config['person'], 'person', $directory, $error) : null,
+            authors: self::authors($config['authors'] ?? null, $directory, $error),
             stylesheets: self::assets($config, 'stylesheets', 'css', $directory, $error),
             scripts: self::assets($config, 'scripts', 'js', $directory, $error),
             preload: self::assets($config, 'preload', 'woff2', $directory, $error),
@@ -433,6 +449,17 @@ final readonly class ThemeLoader
                     $translated[$key] = self::text($texts, $key, '', $localeError);
                 }
             }
+            if (isset($texts['person'])) {
+                $translated['person'] = self::personTexts($texts['person'], 'person', $localeError);
+            }
+            if (isset($texts['authors'])) {
+                if (!\is_array($texts['authors']) || array_is_list($texts['authors'])) {
+                    throw $localeError('« authors » associe l\'identifiant d\'un auteur à ses textes traduits.');
+                }
+                foreach ($texts['authors'] as $id => $authorTexts) {
+                    $translated['authors'][(string) $id] = self::personTexts($authorTexts, 'authors.'.$id, $localeError);
+                }
+            }
             $result[$locale] = $translated;
         }
 
@@ -465,14 +492,83 @@ final readonly class ThemeLoader
      *
      * @return array{name: string, jobTitle: string}
      */
-    private static function person(mixed $person, \Closure $error): array
+    private static function person(mixed $person, string $path, string $directory, \Closure $error): array
     {
         if (!\is_array($person)) {
-            throw $error(sprintf('« person » doit décrire une sous-section (%s).', implode(', ', array_keys(self::PERSON_SHAPE))));
+            throw $error(sprintf('« %s » doit décrire une sous-section (%s).', $path, implode(', ', array_keys(self::PERSON_SHAPE))));
         }
-        self::checkShape($person, self::PERSON_SHAPE, 'person', $error);
+        self::checkShape($person, self::PERSON_SHAPE, $path, $error);
+        $result = ['name' => (string) $person['name'], 'jobTitle' => (string) $person['jobTitle']];
+        foreach (['bio', 'about'] as $key) {
+            if (isset($person[$key]) && '' !== trim((string) $person[$key])) {
+                $result[$key] = trim((string) $person[$key]);
+            }
+        }
+        $links = [];
+        foreach (self::PERSON_LINKS as $key) {
+            $url = trim((string) ($person['links'][$key] ?? ''));
+            if ('' === $url) {
+                continue;
+            }
+            if (!str_starts_with($url, 'https://') || false === filter_var($url, \FILTER_VALIDATE_URL)) {
+                throw $error(sprintf('« %s.links.%s » doit être une adresse en https:// (%s).', $path, $key, $url));
+            }
+            $links[$key] = $url;
+        }
+        if ([] !== $links) {
+            $result['links'] = $links;
+        }
+        if (isset($person['portrait'])) {
+            $file = (string) $person['portrait'];
+            if (!str_starts_with($file, self::ASSETS.'/') || null === self::assetPath($directory, substr($file, \strlen(self::ASSETS) + 1))) {
+                throw $error(sprintf('« %s.portrait » doit être une image du dossier %s/ du thème (%s).', $path, self::ASSETS, $file));
+            }
+            $result['portrait'] = $file;
+        }
 
-        return ['name' => (string) $person['name'], 'jobTitle' => (string) $person['jobTitle']];
+        return $result;
+    }
+
+    /**
+     * Les autres auteurs des articles, par identifiant (celui de leur page, /auteurs/<identifiant>, et de la clé
+     * « author » d'un article). « person » reste l'auteur par défaut, et celui des parcours.
+     *
+     * @param \Closure(string): \RuntimeException $error
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private static function authors(mixed $authors, string $directory, \Closure $error): array
+    {
+        if (null === $authors) {
+            return [];
+        }
+        if (!\is_array($authors) || array_is_list($authors)) {
+            throw $error('« authors » associe l\'identifiant d\'un auteur (« ada-lovelace ») à sa description (name, jobTitle, bio…).');
+        }
+        $result = [];
+        foreach ($authors as $id => $author) {
+            if (!\is_string($id) || 1 !== preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $id)) {
+                throw $error(sprintf('« authors.%s » : l\'identifiant d\'un auteur s\'écrit en minuscules, sans accent (« ada-lovelace »).', $id));
+            }
+            $result[$id] = self::person($author, 'authors.'.$id, $directory, $error);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param \Closure(string): \RuntimeException $error
+     *
+     * @return array<string, string>
+     */
+    private static function personTexts(mixed $texts, string $path, \Closure $error): array
+    {
+        if (!\is_array($texts)) {
+            throw $error(sprintf('« %s » doit décrire une sous-section (%s).', $path, implode(', ', array_keys(self::PERSON_LOCALE_SHAPE))));
+        }
+        self::checkShape($texts, self::PERSON_LOCALE_SHAPE, $path, $error);
+
+        return array_map(static fn ($text) => trim((string) $text), $texts);
     }
 
     /**

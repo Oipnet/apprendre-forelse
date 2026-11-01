@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use App\Content\Article;
 use App\Content\Blog;
 use App\Content\ContentRepository;
 use App\Entity\User;
@@ -205,6 +206,97 @@ final class BlogTest extends WebTestCase
 
         $this->assertCount(0, $crawler->filter('.blog-cta-top'));
         $this->assertSame('/pratique', $crawler->filter('aside.blog-cta a.btn')->attr('href'));
+    }
+
+    public function testEnFinDArticleLeParcoursDuFrameworkDeLExercicePrendLeRelais(): void
+    {
+        $crawler = $this->client->request('GET', '/blog/symfony-dans-le-navigateur');
+
+        $courses = $crawler->filter('aside.blog-course');
+        $this->assertCount(2, $courses, 'Sans clé « course », le parcours du framework de l\'exercice : dans la colonne et, sur téléphone, en fin d\'article.');
+        $this->assertSame(['fin', 'colonne'], $courses->filter('a.btn')->each(static fn ($a) => $a->attr('data-umami-event-position')));
+        $this->assertCount(1, $crawler->filter('.sticky aside.blog-course'), 'Dans la colonne collante, en vue pendant la lecture.');
+        $course = $courses->first();
+        $this->assertSame('/parcours/decouverte', $course->filter('a.btn')->attr('href'));
+        $this->assertSame('article-parcours', $course->filter('a.btn')->attr('data-umami-event'), 'Le clic se mesure.');
+        $this->assertSame('decouverte', $course->filter('a.btn')->attr('data-umami-event-parcours'));
+        $this->assertStringContainsString('Le premier chapitre est gratuit.', $course->text());
+    }
+
+    public function testLaCleCourseLEmporteSurLeParcoursDeLExercice(): void
+    {
+        $blog = static::getContainer()->get(Blog::class);
+        $article = new Article('a', 'pratique', 'T', 'D', new \DateTimeImmutable('2026-09-01'), 'Texte', 'a.md', practice: 'nouveaute-recente', course: 'payant');
+        $this->assertSame('payant', $blog->courseOf($article));
+
+        // Une traduction sans clé reprend le parcours de l'article français (ici, aucun : le repli sur l'exercice se fait à l'affichage).
+        $translation = static::getContainer()->get(ContentRepository::class)->findArticle('symfony-in-the-browser', 'en');
+        $this->assertNotNull($translation);
+        $this->assertNull($blog->courseOf($translation));
+    }
+
+    public function testLAuteurSePresenteSousLArticle(): void
+    {
+        $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
+        $this->assertCount(0, $crawler->filter('.blog-author'), 'Le thème du moteur ne présente personne.');
+        $this->client->request('GET', '/auteurs/ada-lovelace');
+        $this->assertResponseStatusCodeSame(404, 'Ni n\'a de page auteur.');
+
+        $themes = sys_get_temp_dir().'/themes-'.bin2hex(random_bytes(4));
+        mkdir($themes.'/auteur', 0o777, true);
+        file_put_contents($themes.'/auteur/theme.yaml', "name: Auteur\nperson:\n  name: Ada Lovelace\n  jobTitle: Formatrice\n  bio: 'Je forme des devs PHP.'\n  links: {malt: 'https://www.malt.fr/profile/ada', linkedin: 'https://www.linkedin.com/in/ada'}\nauthors:\n  grace-hopper: {name: Grace Hopper, jobTitle: Amirale, bio: 'Compilatrice.'}\n");
+        $before = [$_SERVER['THEMES_DIR'] ?? null, $_SERVER['THEME'] ?? null];
+        $_SERVER['THEMES_DIR'] = $_ENV['THEMES_DIR'] = $themes;
+        $_SERVER['THEME'] = $_ENV['THEME'] = 'auteur';
+        try {
+            static::ensureKernelShutdown();
+            $this->client = static::createClient();
+            $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
+
+            $this->assertResponseIsSuccessful();
+            $author = $crawler->filter('aside.blog-author');
+            $this->assertStringContainsString('Ada Lovelace', $author->text());
+            $this->assertStringContainsString('Je forme des devs PHP.', $author->text());
+            $this->assertSame(['page', 'malt', 'linkedin', 'contact'], $author->filter('a')->each(static fn ($a) => $a->attr('data-umami-event-lien')), 'La page auteur, les profils, puis le contact.');
+            $this->assertSame('https://www.malt.fr/profile/ada', $author->filter('a[data-umami-event-lien="malt"]')->attr('href'));
+            $this->assertSame('/contact', $author->filter('a')->last()->attr('href'));
+            $this->assertSame('/auteurs/ada-lovelace', $author->filter('a[rel="author"]')->attr('href'), 'Le nom mène à la page de l\'auteur.');
+
+            // La page de l'auteur : sa présentation (la bio, faute de « about »), ses profils, ses articles.
+            $crawler = $this->client->request('GET', '/auteurs/ada-lovelace');
+            $this->assertResponseIsSuccessful();
+            $this->assertSame('Ada Lovelace', $crawler->filter('h1')->text());
+            $this->assertStringContainsString('Je forme des devs PHP.', $crawler->filter('.author-page')->text());
+            $this->assertSame('https://www.malt.fr/profile/ada', $crawler->filter('.author-links a')->first()->attr('href'));
+            $this->assertGreaterThan(0, $crawler->filter('.author-page a[href="/blog/les-tests-en-direct"]')->count(), 'Ses articles.');
+            $this->assertStringContainsString('"ProfilePage"', (string) $this->client->getResponse()->getContent());
+            $this->client->request('GET', '/auteurs/quelqu-un-d-autre');
+            $this->assertResponseStatusCodeSame(404);
+
+            // Un autre auteur du thème a sa page ; les articles qui ne le nomment pas (clé « author ») n'y sont pas.
+            $crawler = $this->client->request('GET', '/auteurs/grace-hopper');
+            $this->assertResponseIsSuccessful();
+            $this->assertSame('Grace Hopper', $crawler->filter('h1')->text());
+            $this->assertCount(0, $crawler->filter('.author-page a[href="/blog/les-tests-en-direct"]'));
+            $this->assertStringContainsString('#auteur-grace-hopper', (string) $this->client->getResponse()->getContent(), 'Son propre @id dans les données structurées.');
+        } finally {
+            foreach (['THEMES_DIR' => $before[0], 'THEME' => $before[1]] as $name => $value) {
+                if (null === $value) {
+                    unset($_SERVER[$name], $_ENV[$name]);
+                } else {
+                    $_SERVER[$name] = $_ENV[$name] = $value;
+                }
+            }
+            (new \Symfony\Component\Filesystem\Filesystem())->remove($themes);
+        }
+    }
+
+    public function testSansParcoursNiExercicePasDEncart(): void
+    {
+        $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
+
+        $this->assertCount(0, $crawler->filter('aside.blog-course'));
+        $this->assertSame('/pratique', $crawler->filter('aside.blog-cta a.btn')->attr('href'), 'L\'invitation à la Pratique reste.');
     }
 
     public function testUneTraductionReprendLExerciceDeLArticleFrancais(): void

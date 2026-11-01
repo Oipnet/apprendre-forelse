@@ -3,6 +3,7 @@
 namespace App\Theme;
 
 use Symfony\Component\Asset\Packages;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Translation\LocaleSwitcher;
@@ -140,11 +141,67 @@ final class Theme implements ResetInterface
      * La personne derrière les parcours et les exercices, pour les données structurées. Chaque thème déclare la
      * sienne (« person ») ; celle du moteur ne vaut que pour son thème : un autre thème qui n'en déclare pas n'en a pas.
      *
-     * @return array{name: string, jobTitle: string}|null
+     * Le titre et la présentation suivent la langue de la page quand le thème les traduit (« locales.<langue>.person »).
+     *
+     * @return array{name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, portrait?: string}|null
      */
     public function person(): ?array
     {
-        return $this->config()->person;
+        $person = $this->config()->person;
+
+        return null === $person ? null : [...$person, ...($this->translated()['person'] ?? [])];
+    }
+
+    /**
+     * L'auteur d'un article ou d'une page auteur, dans la langue de la page : « person » (l'auteur par défaut, null),
+     * ou l'un des « authors » par son identifiant. Null pour un identifiant inconnu, ou un thème sans personne.
+     *
+     * @return array{id: string, name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, portraitUrl: string|null, isDefault: bool, hasPage: bool}|null
+     */
+    public function author(?string $id = null): ?array
+    {
+        $default = $this->defaultAuthorId();
+        if (null === $id || $id === $default) {
+            $author = $this->person();
+            $id = $default;
+            $isDefault = true;
+        } else {
+            $author = $this->config()->authors[$id] ?? null;
+            if (null !== $author) {
+                $author = [...$author, ...($this->translated()['authors'][$id] ?? [])];
+            }
+            $isDefault = false;
+        }
+        if (null === $author || null === $id) {
+            return null;
+        }
+
+        return [
+            ...$author,
+            'id' => $id,
+            'portraitUrl' => isset($author['portrait']) ? $this->assetUrl($author['portrait']) : null,
+            'isDefault' => $isDefault,
+            // Une page auteur a besoin d'une présentation, courte (« bio ») ou longue (« about »).
+            'hasPage' => isset($author['bio']) || isset($author['about']),
+        ];
+    }
+
+    /**
+     * Tous les auteurs, l'auteur par défaut en premier.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function authors(): array
+    {
+        return array_values(array_filter([$this->author(), ...array_map($this->author(...), array_keys($this->config()->authors))]));
+    }
+
+    /** L'identifiant de l'auteur par défaut (« person ») dans l'adresse de sa page (« arnaud-pointet »), tiré de son nom. */
+    public function defaultAuthorId(): ?string
+    {
+        $name = $this->config()->person['name'] ?? null;
+
+        return null === $name ? null : (new AsciiSlugger('fr'))->slug($name)->lower()->toString();
     }
 
     /** L'image du logo, ou null : l'en-tête n'affiche alors que le nom. */
@@ -233,7 +290,7 @@ final class Theme implements ResetInterface
     /**
      * Les textes traduits dans la langue de la page, vides dans la langue de theme.yaml.
      *
-     * @return array{chip?: string, title?: string, tagline?: string, home?: array<string, array<string, mixed>>}
+     * @return array{chip?: string, title?: string, tagline?: string, home?: array<string, array<string, mixed>>, person?: array{jobTitle?: string, bio?: string, about?: string}, authors?: array<string, array<string, string>>}
      */
     private function translated(): array
     {

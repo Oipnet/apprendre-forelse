@@ -25,6 +25,7 @@ index:
     suivre_detail: "New articles in your feed reader, as soon as they are published."
 
 show:
+    sommaire: "Contents"
     en_preparation: "Draft: only administrators can see this article."
     programme: "Scheduled: this article will be published on {date}. Until then, only administrators can see it."
     mis_a_jour: 'updated on <time datetime="{datetime}">{date}</time>'
@@ -41,6 +42,26 @@ show:
         detail: "A real framework, running in your browser: nothing to install."
         bouton: "Do the exercise"
         bouton_pratique: "Browse the Practice exercises"
+    # The course that follows on from the article, at the end.
+    parcours:
+        titre: "Go further"
+        detail: "A complete course, one exercise at a time, in your browser. The first chapter is free."
+        bouton: "Discover the course"
+    # The author, below the article (the theme's "person"): profiles and contact.
+    auteur:
+        titre: "Written by"
+        contact: "Contact me"
+        lien:
+            malt: "My Malt profile"
+            linkedin: "LinkedIn"
+            github: "GitHub"
+            site: "My website"
 
 feed:
     description: "Articles from {site}."
+
+# An author's page (/en/authors/<name>).
+auteur:
+    fil_ariane: "Author"
+    parcours: "Courses"
+    articles: "Latest articles"

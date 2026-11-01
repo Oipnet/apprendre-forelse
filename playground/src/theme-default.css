@@ -286,3 +286,32 @@
 		font-style: italic;
 	}
 }
+
+/* « Copier » sur les blocs de code des articles (entries/site.ts), en haut à droite du bloc ; les intertitres ancrés
+   du sommaire ne collent pas au bord haut de la fenêtre. */
+@layer components {
+	pre.has-copy {
+		position: relative;
+	}
+	.code-copy {
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+		padding: 0.125rem 0.5rem;
+		border: 1px solid color-mix(in srgb, var(--color-dark-ink) 30%, transparent);
+		border-radius: 0.25rem;
+		background: var(--color-dark);
+		color: var(--color-dark-ink);
+		font-family: var(--font-sans);
+		font-size: 0.75rem;
+		cursor: pointer;
+		opacity: 0.7;
+	}
+	.code-copy:hover,
+	.code-copy:focus-visible {
+		opacity: 1;
+	}
+	.blog-page .lesson h2[id] {
+		scroll-margin-top: 1.5rem;
+	}
+}

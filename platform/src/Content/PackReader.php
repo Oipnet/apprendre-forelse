@@ -103,7 +103,7 @@ final class PackReader
             $this->practiceTranslations[$locale] = array_replace(array_intersect_key($this->practices, $translations), $translations);
         }
         $this->checkTranslations();
-        $this->checkArticlePractices();
+        $this->checkArticleTargets();
         foreach ($this->articles as &$articles) {
             uasort($articles, static fn (Article $a, Article $b) => [$b->published, $a->slug] <=> [$a->published, $b->slug]);
         }
@@ -231,13 +231,16 @@ final class PackReader
         }
     }
 
-    /** L'exercice qu'un article invite à faire existe : une faute de frappe donnerait une invitation qui ne mène nulle part. */
-    private function checkArticlePractices(): void
+    /** L'exercice et le parcours qu'un article propose existent : une faute de frappe donnerait une invitation qui ne mène nulle part. */
+    private function checkArticleTargets(): void
     {
         foreach ($this->articles as $articles) {
             foreach ($articles as $article) {
                 if (null !== $article->practice && !isset($this->practices[$article->practice])) {
                     throw new ContentException(sprintf('%s : « practice » nomme l\'exercice de Pratique « %s », introuvable.', $article->file, $article->practice));
+                }
+                if (null !== $article->course && !isset($this->tracks[$article->course])) {
+                    throw new ContentException(sprintf('%s : « course » nomme le parcours « %s », introuvable.', $article->file, $article->course));
                 }
             }
         }
