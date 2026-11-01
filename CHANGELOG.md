@@ -29,6 +29,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Modifié
 
+- **Bac à sable Symfony avec Doctrine** : il tourne sur l'environnement `symfony-8-doctrine` (Doctrine ORM, migrations,
+  MakerBundle, base SQLite) au lieu de `symfony-8`. On peut y créer une entité (`make:entity`), ses tables
+  (`doctrine:schema:update --force`) et partager par un lien un exemple qui touche la base, comme ceux des articles du
+  blog. Les migrations (`migrations/*.php`) sont modifiables. L'archive à télécharger est plus lourde.
 - **Données structurées** (schema.org), d'après le test des résultats enrichis de Google :
   - le bac à sable se décrit en `WebPage` et non plus en `WebApplication` : Google exige une note ou des avis sur une
     application, et leur absence rendait ces pages « non valides » dans la Search Console ;

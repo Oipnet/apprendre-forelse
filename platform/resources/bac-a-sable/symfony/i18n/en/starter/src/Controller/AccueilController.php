@@ -21,6 +21,7 @@ final class AccueilController extends AbstractController
                 'Add a route with #[Route]',
                 'Create a service in src/Service/ and inject it here',
                 'Run "debug:router" in the console',
+                'Create an entity with "make:entity", then its table with "doctrine:schema:update --force"',
             ],
         ]);
     }
