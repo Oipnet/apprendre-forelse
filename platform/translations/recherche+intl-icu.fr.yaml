@@ -26,3 +26,5 @@ onglet:
     parcours: "Parcours"
     chapitre: "Chapitres"
     exercice: "Exercices de parcours"
+related:
+    titre: "Ça pourrait vous intéresser"

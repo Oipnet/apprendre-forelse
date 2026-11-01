@@ -135,6 +135,7 @@ export const fr = {
 		furtherVersion: (framework: string, version: string) => `Les autres nouveautés de ${framework} ${version}`,
 		furtherTrack: (track: string) => `Le parcours ${track}`,
 		furtherPractice: 'Tous les exercices de la Pratique',
+		relatedTitle: 'Ça pourrait vous intéresser',
 	},
 
 	hints: {

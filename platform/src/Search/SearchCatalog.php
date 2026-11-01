@@ -8,6 +8,7 @@ use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\LessonRenderer;
+use App\Content\Practice;
 use App\Content\PublishedContent;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -45,30 +46,11 @@ final readonly class SearchCatalog
         $documents = [];
 
         foreach ($this->published->practices($locale) as $practice) {
-            $exercise = $practice->exercise;
-            $documents[] = new SearchDocument(
-                SearchDocument::PRACTICE,
-                $exercise->id,
-                $exercise->title,
-                $this->path('app_exercise_pratique', ['_locale' => $locale, 'exerciseId' => $exercise->id]),
-                $this->frameworks->labelOf($practice->framework).(null !== $practice->version ? ' '.$practice->version : ''),
-                $practice->summary,
-                $this->text($exercise->instructions),
-                $exercise->concepts,
-            );
+            $documents[] = $this->practiceDocument($practice);
         }
 
         foreach ($this->published->articles($locale) as $article) {
-            $documents[] = new SearchDocument(
-                SearchDocument::ARTICLE,
-                $article->slug,
-                $article->title,
-                $this->path('app_article', ['_locale' => $locale, 'slug' => $article->slug]),
-                implode(', ', $article->tags),
-                $article->description,
-                $this->text($article->markdown),
-                $article->tags,
-            );
+            $documents[] = $this->articleDocument($article);
         }
 
         $intros = $this->content->conceptIntros($locale);
@@ -131,6 +113,38 @@ final readonly class SearchCatalog
         }
 
         return $documents;
+    }
+
+    /** Un exercice de Pratique, dans sa langue. */
+    public function practiceDocument(Practice $practice): SearchDocument
+    {
+        $exercise = $practice->exercise;
+
+        return new SearchDocument(
+            SearchDocument::PRACTICE,
+            $exercise->id,
+            $exercise->title,
+            $this->path('app_exercise_pratique', ['_locale' => $practice->locale(), 'exerciseId' => $exercise->id]),
+            $this->frameworks->labelOf($practice->framework).(null !== $practice->version ? ' '.$practice->version : ''),
+            $practice->summary,
+            $this->text($exercise->instructions),
+            $exercise->concepts,
+        );
+    }
+
+    /** Un article, dans sa langue. */
+    public function articleDocument(Article $article): SearchDocument
+    {
+        return new SearchDocument(
+            SearchDocument::ARTICLE,
+            $article->slug,
+            $article->title,
+            $this->path('app_article', ['_locale' => $article->locale, 'slug' => $article->slug]),
+            implode(', ', $article->tags),
+            $article->description,
+            $this->text($article->markdown),
+            $article->tags,
+        );
     }
 
     /** Du Markdown au texte brut : ce qu'un lecteur voit, code compris (on cherche aussi « MapRequestPayload »). */

@@ -188,7 +188,12 @@ export function furtherHtml(exercise: Pick<ExercisePayload, 'practice' | 'enviro
 		practice.track ? `<li><a href="${escapeHtml(practice.track.url)}">${m.layout.furtherTrack(escapeHtml(practice.track.title))}</a></li>` : '',
 		`<li><a href="${escapeHtml(config.back.url)}">${m.layout.furtherPractice}</a></li>`,
 	];
-	return `<h3>${m.layout.furtherTitle}</h3>
+	// Les contenus proches d'abord : ce qui prolonge le sujet de l'exercice, plutôt que la liste de tout.
+	const related = practice.related?.length
+		? `<h3>${m.layout.relatedTitle}</h3>
+			<ul class="further related">${practice.related.map((link) => `<li><a href="${escapeHtml(link.url)}" data-umami-event="contenu-lie" data-umami-event-depuis="exercice" data-umami-event-type="${escapeHtml(link.type)}">${escapeHtml(link.title)}</a></li>`).join('')}</ul>`
+		: '';
+	return `${related}<h3>${m.layout.furtherTitle}</h3>
 			<ul class="further">${links.join('')}</ul>`;
 }
 

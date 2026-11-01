@@ -17,6 +17,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   `app:recherche:indexer`. Les indices et solutions n'y entrent pas. Sans `MEILISEARCH_URL`, rien ne change. Les thèmes
   affichent un champ dans l'en-tête avec `search_enabled()` ; celui du moteur le fait. Les pages de résultats ne
   s'indexent pas (`Disallow` dans robots.txt). Un clic sur un résultat est compté par Umami (`recherche-resultat`).
+- **« Ça pourrait vous intéresser »** : les contenus proches d'un article ou d'un exercice de Pratique, d'après la même
+  recherche (ses notions et son titre ; exercices, articles, notions, parcours). Sur un article, une colonne qui reste
+  en vue sur un écran large et trois liens sous le titre sur un téléphone ; dans le playground, en tête de « Pour aller
+  plus loin » ; dans la page publique de l'exercice, pour les moteurs de recherche. Gardés une heure ; sans
+  Meilisearch, rien ne s'affiche et la page ne change pas. Un clic est compté par Umami (`contenu-lie`).
 
 ## 3.26.0 — 2026-10-31
 

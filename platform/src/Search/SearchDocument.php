@@ -50,9 +50,14 @@ final readonly class SearchDocument
     /** L'identifiant du document dans Meilisearch : lettres, chiffres, tirets et soulignés seulement. */
     public function id(): string
     {
-        $id = $this->type.'-'.preg_replace('/[^A-Za-z0-9_-]/', '_', $this->key);
+        return self::idOf($this->type, $this->key);
+    }
 
-        return \strlen($id) <= 200 ? $id : $this->type.'-'.hash('xxh128', $this->key);
+    public static function idOf(string $type, string $key): string
+    {
+        $id = $type.'-'.preg_replace('/[^A-Za-z0-9_-]/', '_', $key);
+
+        return \strlen($id) <= 200 ? $id : $type.'-'.hash('xxh128', $key);
     }
 
     /** @return array<string, mixed> le document envoyé à Meilisearch */

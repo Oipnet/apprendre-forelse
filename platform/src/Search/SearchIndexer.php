@@ -18,7 +18,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class SearchIndexer
 {
     /** À changer avec les réglages ci-dessous : l'index est alors réécrit au passage suivant. */
-    private const string SETTINGS_VERSION = '1';
+    private const string SETTINGS_VERSION = '2';
 
     /** Les langues de Meilisearch (ISO 639-3) pour les nôtres : découpage des mots et mots vides. */
     public const array LANGUAGES = ['fr' => 'fra', 'en' => 'eng'];
@@ -87,7 +87,7 @@ final readonly class SearchIndexer
             // Par ordre d'importance : un mot trouvé dans le titre compte plus que dans le texte.
             'searchableAttributes' => ['title', 'keywords', 'label', 'summary', 'text'],
             'displayedAttributes' => ['id', 'type', 'title', 'url', 'label', 'summary', 'text'],
-            'filterableAttributes' => ['type'],
+            'filterableAttributes' => ['type', 'id'],
             'sortableAttributes' => ['weight'],
             // Les règles par défaut, puis le poids du type pour départager (voir SearchDocument::WEIGHTS).
             'rankingRules' => ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness', 'weight:desc'],

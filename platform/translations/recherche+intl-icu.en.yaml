@@ -25,3 +25,5 @@ onglet:
     parcours: "Tracks"
     chapitre: "Chapters"
     exercice: "Track exercises"
+related:
+    titre: "You might also like"

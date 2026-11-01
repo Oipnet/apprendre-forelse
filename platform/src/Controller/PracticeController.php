@@ -16,6 +16,7 @@ use App\Content\PracticeVisibility;
 use App\Entity\ExerciseProgress;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
+use App\Search\RelatedContent;
 use App\Security\TrackAccessChecker;
 use App\Seo\Page\PracticeSeo;
 use App\Service\TrackProgress;
@@ -126,7 +127,7 @@ final class PracticeController extends AbstractController
      * publique de l'exercice — le problème et la fonctionnalité expliquée, sans éditeur (TrackAccessChecker).
      */
     #[Route(['fr' => '/pratique/{exerciseId}', 'en' => '/en/practice/{exerciseId}'], name: 'app_exercise_pratique', methods: ['GET'])]
-    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access, PracticeTrack $tracks, PracticeShare $share): Response
+    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access, PracticeTrack $tracks, PracticeShare $share, RelatedContent $related): Response
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
         $seo->practice($practice);
@@ -141,6 +142,8 @@ final class PracticeController extends AbstractController
             'track' => $this->translated() ? null : $tracks->of($practice),
             // Les liens de partage : inviter à faire l'exercice, ou annoncer l'avoir réussi (panneau de réussite).
             'share' => ['invite' => $share->links($practice), 'success' => $share->links($practice, true)],
+            // Ça pourrait vous intéresser : les contenus proches (voir App\Search\RelatedContent).
+            'related' => $related->forPractice($practice),
         ];
 
         $user = $this->getUser();

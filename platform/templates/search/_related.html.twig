@@ -1,0 +1,20 @@
+{#
+  « Ça pourrait vous intéresser » : les contenus proches d'une page (voir App\Search\RelatedContent).
+  Variables : related (list<App\Search\RelatedLink>, rien n'est affiché si vide), depuis (la page, pour la mesure :
+  article, pratique), compact (sur téléphone, sous le titre : les trois premiers liens, sans étiquette).
+  Un clic est compté par Umami (contenu-lie), avec la page d'origine et le type du contenu ouvert.
+#}
+{% if related %}
+    {% set compact = compact|default(false) %}
+    <aside class="related {{ compact ? 'related-compact mt-5 rounded-md border border-line px-4 py-3 lg:hidden' : 'related-sidebar' }}" aria-label="{{ 'related.titre'|trans({}, 'recherche') }}">
+        <p class="{{ compact ? 'text-sm' : 'text-base' }} font-semibold">{{ 'related.titre'|trans({}, 'recherche') }}</p>
+        <ul class="{{ compact ? 'mt-2 space-y-1.5 text-sm' : 'mt-3 space-y-3' }}">
+            {% for link in compact ? related|slice(0, 3) : related %}
+                <li>
+                    {% if not compact %}<span class="block text-xs font-medium text-ink-muted">{{ ('type.' ~ link.type)|trans({}, 'recherche') }}{% if link.label %} · {{ link.label }}{% endif %}</span>{% endif %}
+                    <a class="{{ compact ? '' : 'font-medium' }}" href="{{ link.url }}" data-umami-event="contenu-lie" data-umami-event-depuis="{{ depuis }}" data-umami-event-type="{{ link.type }}">{{ link.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </aside>
+{% endif %}

@@ -28,6 +28,10 @@ framework:
             # Empreinte du contenu envoyé à Meilisearch (voir App\Search\SearchIndexer) : perdue, l'index est réécrit, rien de plus.
             search.cache:
                 adapter: cache.app
+            # Contenus proches d'une page (voir App\Search\RelatedContent) : une heure, pour ne pas interroger Meilisearch à chaque page.
+            search.related.cache:
+                adapter: cache.app
+                default_lifetime: 3600
             # Packs de contenu chargés (ContentRepository), périmés fichier par fichier : pas de durée de vie. Cache
             # système (fichiers PHP servis par opcache), recréé par le cache:clear de chaque démarrage.
             content.cache:
@@ -44,4 +48,6 @@ when@test:
                 indexnow.cache:
                     adapter: cache.adapter.array
                 search.cache:
+                    adapter: cache.adapter.array
+                search.related.cache:
                     adapter: cache.adapter.array

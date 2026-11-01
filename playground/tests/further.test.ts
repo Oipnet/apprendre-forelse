@@ -31,6 +31,18 @@ describe('furtherHtml', () => {
 		expect(html).toContain('Tous les exercices de la Pratique');
 	});
 
+	it('propose d\'abord les contenus proches, échappés et mesurés', () => {
+		const html = furtherHtml({ practice: { ...practice, related: [{ type: 'article', title: 'Valider <une> API', url: '/blog/valider' }] }, environment }, { back });
+
+		expect(html).toContain('Ça pourrait vous intéresser');
+		expect(html).toContain('<a href="/blog/valider" data-umami-event="contenu-lie" data-umami-event-depuis="exercice" data-umami-event-type="article">Valider &lt;une&gt; API</a>');
+		expect(html.indexOf('Ça pourrait vous intéresser')).toBeLessThan(html.indexOf('Pour aller plus loin'));
+	});
+
+	it('sans contenu proche, pas de titre vide', () => {
+		expect(furtherHtml({ practice: { ...practice, related: [] }, environment }, { back })).not.toContain('Ça pourrait vous intéresser');
+	});
+
 	it('dans un parcours, n\'ajoute rien', () => {
 		expect(furtherHtml({ practice: null, environment }, { back })).toBe('');
 	});

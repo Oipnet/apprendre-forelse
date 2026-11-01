@@ -46,9 +46,9 @@ final readonly class Meilisearch
      *
      * @return list<array<string, mixed>> une réponse par recherche, dans le même ordre
      */
-    public function multiSearch(array $queries): array
+    public function multiSearch(array $queries, float $timeout = self::SEARCH_TIMEOUT): array
     {
-        return $this->request('POST', '/multi-search', ['queries' => $queries], self::SEARCH_TIMEOUT)['results'] ?? [];
+        return $this->request('POST', '/multi-search', ['queries' => $queries], $timeout)['results'] ?? [];
     }
 
     /** @param array<string, mixed> $settings */
