@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use App\Content\Article;
 use App\Content\Blog;
 use App\Content\ContentRepository;
 use App\Entity\User;
@@ -219,11 +220,23 @@ final class BlogTest extends WebTestCase
         $this->assertStringContainsString('Le premier chapitre est gratuit.', $course->text());
     }
 
-    public function testLArticleNommeLeParcoursQuIlProlonge(): void
+    public function testLaCleCourseLEmporteSurLeParcoursDeLExercice(): void
+    {
+        $blog = static::getContainer()->get(Blog::class);
+        $article = new Article('a', 'pratique', 'T', 'D', new \DateTimeImmutable('2026-09-01'), 'Texte', 'a.md', practice: 'nouveaute-recente', course: 'payant');
+        $this->assertSame('payant', $blog->courseOf($article));
+
+        // Une traduction sans clé reprend le parcours de l'article français (ici, aucun : le repli sur l'exercice se fait à l'affichage).
+        $translation = static::getContainer()->get(ContentRepository::class)->findArticle('symfony-in-the-browser', 'en');
+        $this->assertNotNull($translation);
+        $this->assertNull($blog->courseOf($translation));
+    }
+
+    public function testSansParcoursNiExercicePasDEncart(): void
     {
         $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
 
-        $this->assertSame('/parcours/decouverte', $crawler->filter('aside.blog-course a.btn')->attr('href'), 'La clé « course », sans exercice.');
+        $this->assertCount(0, $crawler->filter('aside.blog-course'));
         $this->assertSame('/pratique', $crawler->filter('aside.blog-cta a.btn')->attr('href'), 'L\'invitation à la Pratique reste.');
     }
 
