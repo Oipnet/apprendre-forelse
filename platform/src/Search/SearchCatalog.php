@@ -54,7 +54,7 @@ final readonly class SearchCatalog
                 $this->frameworks->labelOf($practice->framework).(null !== $practice->version ? ' '.$practice->version : ''),
                 $practice->summary,
                 $this->text($exercise->instructions),
-                array_values($exercise->concepts),
+                $exercise->concepts,
             );
         }
 
@@ -67,7 +67,7 @@ final readonly class SearchCatalog
                 implode(', ', $article->tags),
                 $article->description,
                 $this->text($article->markdown),
-                array_values($article->tags),
+                $article->tags,
             );
         }
 
@@ -124,7 +124,7 @@ final readonly class SearchCatalog
                         $track->title.' · '.$chapter->title,
                         '',
                         $this->text($exercise->instructions),
-                        array_values($exercise->concepts),
+                        $exercise->concepts,
                     );
                 }
             }
