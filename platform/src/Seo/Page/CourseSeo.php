@@ -62,16 +62,24 @@ final readonly class CourseSeo
                 'description' => self::plain($track->description),
                 'url' => $url,
                 ...(null === $track->level ? [] : ['educationalLevel' => $this->trans('parcours.niveau.'.$track->level)]),
-                'inLanguage' => $this->seo->getLanguage(),
+                'inLanguage' => $this->seo->getLanguageTag(),
                 'provider' => $this->schema->organization(),
+                // Chaque parcours terminé donne droit à un certificat de réussite (voir CertificateController).
+                'educationalCredentialAwarded' => [
+                    '@type' => 'EducationalOccupationalCredential',
+                    'name' => $this->trans('parcours.certificat'),
+                    'credentialCategory' => 'Certificate',
+                ],
                 ...(null === $image ? [] : ['image' => $this->schema->absolute($image)]),
                 // Le résultat enrichi « Cours » de Google demande la charge de travail sur chaque session (courseWorkload) ;
                 // timeRequired, au niveau du cours, ne la remplace pas.
                 'hasCourseInstance' => [
                     '@type' => 'CourseInstance',
                     'courseMode' => 'Online',
-                    'inLanguage' => $this->seo->getLanguage(),
+                    'inLanguage' => $this->seo->getLanguageTag(),
                     ...(null === $duration ? [] : ['courseWorkload' => $duration]),
+                    // Le formateur : la personne que déclare le thème ; sans elle, l'organisation signe déjà comme provider.
+                    ...(null === $this->theme->person() ? [] : ['instructor' => $this->schema->author()]),
                 ],
                 ...(null === $duration ? [] : ['timeRequired' => $duration]),
                 'syllabusSections' => array_map(static fn (Chapter $chapter) => [
@@ -118,7 +126,22 @@ final readonly class CourseSeo
             ->addStructuredData($this->schema->breadcrumb([
                 [$track->title, $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id])],
                 [$chapter->title, $url],
-            ]));
+            ]))
+            // Le chapitre, rattaché au cours de son parcours comme ses exercices (même @id que le Course).
+            ->addStructuredData([
+                '@type' => 'LearningResource',
+                'name' => $chapter->title,
+                'description' => $this->seo->getDescription(),
+                'url' => $url,
+                'learningResourceType' => 'chapter',
+                'inLanguage' => $this->seo->getLanguage(),
+                'isAccessibleForFree' => $track->isFreeChapter($chapter),
+                ...(null === ($minutes = $this->content->durationOf($track, $chapter)) ? [] : ['timeRequired' => DurationExtension::iso($minutes)]),
+                ...([] === $concepts ? [] : ['teaches' => $concepts]),
+                ...(null === $track->level ? [] : ['educationalLevel' => $this->trans('parcours.niveau.'.$track->level)]),
+                'isPartOf' => $this->courseReference($track),
+                'provider' => $this->schema->organization(),
+            ]);
         $this->alternates($track, 'app_chapter_summary', ['trackId' => $track->id, 'chapterId' => $chapter->id]);
         $this->shareImage($track);
     }
@@ -152,16 +175,23 @@ final readonly class CourseSeo
                 ...(null === $exercise->duration ? [] : ['timeRequired' => DurationExtension::iso($exercise->duration)]),
                 ...([] === $exercise->concepts ? [] : ['teaches' => $exercise->concepts]),
                 ...(null === $track->level ? [] : ['educationalLevel' => $this->trans('parcours.niveau.'.$track->level)]),
-                'isPartOf' => [
-                    '@type' => 'Course',
-                    '@id' => $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id]).'#cours',
-                    'name' => $track->title,
-                    'url' => $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id]),
-                ],
+                'isPartOf' => $this->courseReference($track),
                 'provider' => $this->schema->organization(),
             ]);
         $this->alternates($track, 'app_exercise', ['trackId' => $track->id, 'exerciseId' => $exercise->id]);
         $this->shareImage($track);
+    }
+
+    /**
+     * Le cours d'un parcours, désigné depuis ses chapitres et ses exercices : le même @id que son Course.
+     *
+     * @return array<string, mixed>
+     */
+    private function courseReference(Track $track): array
+    {
+        $url = $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id]);
+
+        return ['@type' => 'Course', '@id' => $url.'#cours', 'name' => $track->title, 'url' => $url];
     }
 
     /** L'image de partage du parcours (clé « image » de track.yaml) sur ses pages ; sans elle, celle de la marque. */
@@ -180,7 +210,7 @@ final readonly class CourseSeo
 
     /**
      * Le catalogue (/parcours) : la page qui répond à « apprendre Symfony en ligne », « formation Laravel »… Le titre
-     * nomme les frameworks des parcours publiés ; les données structurées listent les cours (ItemList de Course).
+     * nomme les frameworks des parcours publiés ; les données structurées listent les adresses des cours (ItemList).
      *
      * @param list<Track> $tracks les parcours publiés, sans filtre
      */
@@ -211,16 +241,12 @@ final readonly class CourseSeo
                 'name' => $this->trans('catalogue.liste'),
                 'url' => $url,
                 'numberOfItems' => \count($tracks),
+                // Forme « page de synthèse » de Google : chaque cours est décrit sur sa propre page, la liste n'en
+                // donne que la place et l'adresse.
                 'itemListElement' => array_map(fn (Track $track, int $index) => [
                     '@type' => 'ListItem',
                     'position' => $index + 1,
-                    'item' => [
-                        '@type' => 'Course',
-                        'name' => $track->title,
-                        'description' => self::plain($track->description),
-                        'url' => $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id]),
-                        'provider' => $this->schema->organization(),
-                    ],
+                    'url' => $this->schema->url('app_track', ['_locale' => $track->locale, 'trackId' => $track->id]),
                 ], $tracks, array_keys($tracks)),
             ])
             ->addStructuredData($this->schema->breadcrumb([[$this->trans('catalogue.fil_ariane'), $url]]));
