@@ -16,7 +16,7 @@ final readonly class ArticleReader
     }
 
     /** Les clés de l'en-tête d'un article : une autre (« date », « auteur »…) est une faute de frappe, refusée. */
-    private const array ARTICLE_KEYS = ['title', 'description', 'published', 'updated', 'visibility', 'practice', 'tags'];
+    private const array ARTICLE_KEYS = ['title', 'description', 'published', 'updated', 'visibility', 'practice', 'course', 'tags'];
     /** Une traduction nomme en plus l'article français qu'elle traduit. */
     private const array TRANSLATION_KEYS = [...self::ARTICLE_KEYS, 'translation_of'];
 
@@ -71,6 +71,7 @@ final readonly class ArticleReader
             locale: $locale,
             translationOf: Article::LOCALE === $locale ? null : $this->files->required($meta, 'translation_of', $file),
             practice: isset($meta['practice']) ? (string) $meta['practice'] : null,
+            course: isset($meta['course']) ? (string) $meta['course'] : null,
             tags: self::tags($meta['tags'] ?? [], $file),
         );
     }

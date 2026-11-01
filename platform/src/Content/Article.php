@@ -40,6 +40,12 @@ final readonly class Article
          */
         public ?string $practice = null,
         /**
+         * Le parcours vers lequel l'article mène en fin de lecture (clé `course`, son identifiant). Sans cette clé, la page
+         * propose le parcours du framework de l'exercice (voir PracticeTrack). Une traduction sans cette clé reprend
+         * celle de l'article français.
+         */
+        public ?string $course = null,
+        /**
          * Les sujets de l'article (clé `tags`), tels qu'ils s'affichent : la liste du blog se filtre par sujet (voir
          * Blog::topics()). Chaque langue écrit les siens : une traduction ne reprend pas ceux de l'article français.
          *

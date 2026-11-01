@@ -256,6 +256,7 @@ Les résultats s'exportent en CSV.
   updated: 2026-10-20                                   # facultative : dernière révision du fond
   visibility: admin                                     # facultative : en préparation
   practice: laravel-13-26-read-through                  # facultative : l'exercice de Pratique dont part l'article
+  course: symfony-pour-dev-php                          # facultative : le parcours proposé en fin d'article
   tags: [Symfony, Sécurité]                             # facultative : les sujets, filtres de la liste
   ---
   ```
@@ -283,6 +284,12 @@ Les résultats s'exportent en CSV.
   elle mène à la liste des exercices de Pratique. Une traduction sans `practice:` reprend celle de l'article
   français ; si l'exercice n'est pas traduit, elle invite à la Pratique anglaise. Les clics se comptent dans Umami
   (événements `article-exercice`, avec sa position, et `article-pratique`).
+
+  Sous cette invitation, l'encart « Aller plus loin » propose un parcours : celui de `course:` (l'identifiant d'un
+  parcours, qui doit exister), sinon le parcours du framework de l'exercice de `practice:`, comme après un exercice de
+  Pratique. Un parcours en préparation ou non traduit dans la langue de la page n'est pas proposé. Une traduction sans
+  `course:` reprend celui de l'article français. Les clics se comptent dans Umami (`article-parcours`, avec le
+  parcours).
 
   Un article se traduit en anglais dans `<pack>/articles/en/<slug>.md`, publié sur `/en/blog/<slug>` avec sa propre
   adresse (`running-symfony-in-the-browser.md`). Même en-tête, plus `translation_of:`, le nom de l'article français

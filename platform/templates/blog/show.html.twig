@@ -4,13 +4,15 @@
 {#
   Un article du blog, rendu depuis le Markdown de son pack (voir App\Content\Article).
   Variables : article, html, scheduled, translations (le même article dans les autres langues), practice (l'exercice
-  dont part l'article, ou null), previous, next, related (les contenus proches, voir search/_related.html.twig).
+  dont part l'article, ou null), course (le parcours qui le prolonge, ou null), previous, next, related (les contenus
+  proches, voir search/_related.html.twig).
 
   Les contenus proches restent en vue pendant la lecture : colonne collante à droite sur un écran large, trois liens
   sous le titre sur un téléphone (un lecteur qui s'arrête en route ne verrait pas un bloc de fin d'article).
 
   L'invitation à faire l'exercice apparaît deux fois : en tête, pour qui veut essayer avant de lire, et en fin d'article,
   là où le lecteur arrivé d'un autre site repartirait. Sans exercice, elle mène aux exercices de Pratique.
+  Le parcours suit, en fin d'article seulement : qui a lu jusqu'au bout est prêt à aller plus loin.
 #}
 {% block title %}{{ article.title }} · {{ theme.name }}{% endblock %}
 
@@ -65,6 +67,15 @@
                 <a class="btn btn-primary mt-4" href="{{ path('app_practice') }}" data-umami-event="article-pratique">{{ 'show.cta.bouton_pratique'|trans }} →</a>
             {% endif %}
         </aside>
+
+        {% if course %}
+            <aside class="blog-course mt-6 rounded-md border border-line px-5 py-5" aria-labelledby="blog-course-titre">
+                <h2 id="blog-course-titre" class="text-lg font-semibold">{{ 'show.parcours.titre'|trans }}</h2>
+                <p class="mt-2"><strong>{{ course.title }}</strong>{% if course.description %} · {{ course.description }}{% endif %}</p>
+                <p class="mt-1 text-sm text-ink-muted">{{ 'show.parcours.detail'|trans }}</p>
+                <a class="btn mt-4" href="{{ path('app_track', {trackId: course.id}) }}" data-umami-event="article-parcours" data-umami-event-parcours="{{ course.id }}">{{ 'show.parcours.bouton'|trans }} →</a>
+            </aside>
+        {% endif %}
 
         {% if previous or next %}
             <nav class="blog-nav mt-12 flex flex-wrap justify-between gap-4 border-t border-line pt-6" aria-label="{{ 'show.autres'|trans }}">

@@ -207,6 +207,26 @@ final class BlogTest extends WebTestCase
         $this->assertSame('/pratique', $crawler->filter('aside.blog-cta a.btn')->attr('href'));
     }
 
+    public function testEnFinDArticleLeParcoursDuFrameworkDeLExercicePrendLeRelais(): void
+    {
+        $crawler = $this->client->request('GET', '/blog/symfony-dans-le-navigateur');
+
+        $course = $crawler->filter('aside.blog-course');
+        $this->assertCount(1, $course, 'Sans clé « course », le parcours du framework de l\'exercice.');
+        $this->assertSame('/parcours/decouverte', $course->filter('a.btn')->attr('href'));
+        $this->assertSame('article-parcours', $course->filter('a.btn')->attr('data-umami-event'), 'Le clic se mesure.');
+        $this->assertSame('decouverte', $course->filter('a.btn')->attr('data-umami-event-parcours'));
+        $this->assertStringContainsString('Le premier chapitre est gratuit.', $course->text());
+    }
+
+    public function testLArticleNommeLeParcoursQuIlProlonge(): void
+    {
+        $crawler = $this->client->request('GET', '/blog/les-tests-en-direct');
+
+        $this->assertSame('/parcours/decouverte', $crawler->filter('aside.blog-course a.btn')->attr('href'), 'La clé « course », sans exercice.');
+        $this->assertSame('/pratique', $crawler->filter('aside.blog-cta a.btn')->attr('href'), 'L\'invitation à la Pratique reste.');
+    }
+
     public function testUneTraductionReprendLExerciceDeLArticleFrancais(): void
     {
         $blog = static::getContainer()->get(Blog::class);

@@ -156,6 +156,16 @@ final readonly class Blog
         return $this->content->findArticle($article->translationOf)?->practice;
     }
 
+    /** Le parcours que l'article propose : le sien, ou celui de l'article français qu'il traduit. */
+    public function courseOf(Article $article): ?string
+    {
+        if (null !== $article->course || null === $article->translationOf) {
+            return $article->course;
+        }
+
+        return $this->content->findArticle($article->translationOf)?->course;
+    }
+
     /** La langue de la page demandée, si le blog la parle ; le français sinon. */
     public function locale(): string
     {

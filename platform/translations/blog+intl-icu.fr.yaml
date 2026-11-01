@@ -41,6 +41,11 @@ show:
         detail: "Un vrai framework, qui tourne dans votre navigateur : rien à installer."
         bouton: "Faire l'exercice"
         bouton_pratique: "Voir les exercices de Pratique"
+    # Le parcours qui prolonge l'article, en fin de lecture.
+    parcours:
+        titre: "Aller plus loin"
+        detail: "Un parcours complet, exercice après exercice, dans le navigateur. Le premier chapitre est gratuit."
+        bouton: "Découvrir le parcours"
 
 feed:
     description: "Les articles de {site}."

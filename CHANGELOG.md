@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Un parcours en fin d'article** : sous l'invitation à faire l'exercice, l'encart « Aller plus loin » propose le
+  parcours nommé par la nouvelle clé `course:` de l'article, ou à défaut celui du framework de son exercice de
+  Pratique. Le parcours doit exister (`content:check`) ; il n'apparaît que s'il est visible et traduit dans la langue
+  de la page. Clics comptés dans Umami (`article-parcours`).
+
 ## 3.27.0 — 2026-11-01
 
 ### Ajouté

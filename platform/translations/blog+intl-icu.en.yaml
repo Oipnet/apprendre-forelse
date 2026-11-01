@@ -41,6 +41,11 @@ show:
         detail: "A real framework, running in your browser: nothing to install."
         bouton: "Do the exercise"
         bouton_pratique: "Browse the Practice exercises"
+    # The course that follows on from the article, at the end.
+    parcours:
+        titre: "Go further"
+        detail: "A complete course, one exercise at a time, in your browser. The first chapter is free."
+        bouton: "Discover the course"
 
 feed:
     description: "Articles from {site}."
