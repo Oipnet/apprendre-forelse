@@ -29,6 +29,9 @@ header:
     deconnexion: "Déconnexion"
     connexion: "Connexion"
     creer_compte: "Créer un compte"
+    # La recherche du site (si Meilisearch est configuré) : le champ de l'en-tête et son bouton.
+    rechercher: "Rechercher"
+    rechercher_exemple: "Rechercher un exercice, une notion…"
 
 footer:
     navigation: "Pied de page"

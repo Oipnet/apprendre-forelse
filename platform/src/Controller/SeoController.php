@@ -37,6 +37,9 @@ final class SeoController extends AbstractController
                 // Mesure d'audience (traceur Umami et son point de collecte, voir docker/Caddyfile) : rien à indexer, et
                 // un robot qui affiche la page n'a pas à la charger ni à se compter comme visite.
                 'Disallow: /mesure/',
+                // Les pages de résultats de la recherche du site : une par requête tapée, sans rien de propre.
+                'Disallow: /recherche',
+                'Disallow: /en/search',
                 // Liens d'invitation : un code de cohorte ne doit pas circuler par un moteur de recherche.
                 'Disallow: /*?code=',
                 'Disallow: /*&code=',

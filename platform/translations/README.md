@@ -20,6 +20,7 @@ Un domaine par zone du site, au format [ICU](https://symfony.com/doc/current/ref
 | `apprentissage` | `exercise/`, `practice/`, `track/`, `chapter/`, `concept/` ; les refus des API du playground (`api.`) et les textes que le serveur lui envoie (`playground.` : lien de retour, note de démarrage et étapes des profils de framework) |
 | `blog` | `blog/` |
 | `classement` | `leaderboard/` |
+| `recherche` | `search/` (la page de recherche ; le champ de l'en-tête est dans `messages`, `header.rechercher`) |
 | `certificat` | `certificate/` |
 | `legal` | les balises des pages juridiques (`legal/`), dont le texte reste dans les gabarits (voir plus bas) |
 | `emails` | `emails/` |

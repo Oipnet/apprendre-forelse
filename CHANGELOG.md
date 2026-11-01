@@ -8,6 +8,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Recherche du site** (`/recherche`, `/en/search`) : exercices de Pratique parus, articles, notions, parcours, leurs
+  chapitres et leurs exercices, dans la langue de la page, avec les mots trouvés mis en valeur et un onglet par type.
+  Elle s'appuie sur Meilisearch (service `recherche` des `compose.yaml`, `MEILISEARCH_URL`, `MEILISEARCH_KEY`) : le
+  worker y envoie le contenu publié toutes les dix minutes (`scheduler_search`), ou tout de suite avec
+  `app:recherche:indexer`. Les indices et solutions n'y entrent pas. Sans `MEILISEARCH_URL`, rien ne change. Les thèmes
+  affichent un champ dans l'en-tête avec `search_enabled()` ; celui du moteur le fait. Les pages de résultats ne
+  s'indexent pas (`Disallow` dans robots.txt). Un clic sur un résultat est compté par Umami (`recherche-resultat`).
+
 ## 3.26.0 — 2026-10-31
 
 ### Ajouté

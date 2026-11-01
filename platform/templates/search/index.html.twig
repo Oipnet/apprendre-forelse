@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+{% trans_default_domain 'recherche' %}
+
+{#
+  La recherche du site (voir App\Controller\SearchController) : un formulaire GET, puis les résultats de Meilisearch.
+  Variables : query (les mots cherchés), type (l'onglet choisi, ou null), results (App\Search\SearchResults|null, null
+  sans recherche ou si Meilisearch ne répond pas), unavailable (Meilisearch injoignable).
+  Le titre et l'extrait d'un résultat sont du HTML déjà échappé par App\Search\SiteSearch, d'où |raw.
+  Un clic sur un résultat est compté par Umami (recherche-resultat), avec la requête, le type et le rang.
+#}
+{% block title %}{{ (query ? 'index.titre_requete' : 'index.titre')|trans({q: query}) }} · {{ theme.name }}{% endblock %}
+
+{% block body %}
+    <main class="search-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <h1 class="text-3xl font-semibold">{{ 'index.titre'|trans }}</h1>
+        {% if not query %}<p class="lead mt-3 text-lg text-ink-muted">{{ 'index.intro'|trans }}</p>{% endif %}
+
+        <form class="search-form mt-6 flex gap-2" role="search" method="get" action="{{ path('app_search') }}">
+            <label class="sr-only" for="search-q">{{ 'index.champ'|trans }}</label>
+            <input class="field min-w-0 flex-1" type="search" id="search-q" name="q" value="{{ query }}" placeholder="{{ 'index.exemple'|trans }}" maxlength="100" autocomplete="off"{% if not query %} autofocus{% endif %}>
+            {% if type %}<input type="hidden" name="type" value="{{ type }}">{% endif %}
+            <button class="btn btn-primary" type="submit">{{ 'index.bouton'|trans }}</button>
+        </form>
+
+        {% if unavailable %}
+            <p class="search-unavailable mt-8 rounded-md border border-line bg-bg-2 px-4 py-3" role="status">{{ 'index.indisponible'|trans }}</p>
+        {% elseif results %}
+            {% if results.types|length > 1 %}
+                <nav class="search-tabs mt-8 flex flex-wrap gap-2" aria-label="{{ 'index.onglets'|trans }}">
+                    <a class="tag{% if not results.type %} tag-active font-semibold text-ink{% endif %}" href="{{ path('app_search', {q: query}) }}"{% if not results.type %} aria-current="page"{% endif %}>{{ 'index.tous'|trans }} <span class="text-ink-muted">{{ results.total }}</span></a>
+                    {% for key, count in results.types %}
+                        <a class="tag{% if results.type == key %} tag-active font-semibold text-ink{% endif %}" href="{{ path('app_search', {q: query, type: key}) }}"{% if results.type == key %} aria-current="page"{% endif %}>{{ ('onglet.' ~ key)|trans }} <span class="text-ink-muted">{{ count }}</span></a>
+                    {% endfor %}
+                </nav>
+            {% endif %}
+
+            <p class="search-count mt-6 text-sm text-ink-muted" role="status">{{ 'index.resultats'|trans({n: results.type ? (results.types[results.type] ?? 0) : results.total, q: query}) }}</p>
+
+            {% if results.hits %}
+                <ol class="search-results mt-4 space-y-3">
+                    {% for hit in results.hits %}
+                        <li class="search-result rounded-lg border border-line bg-surface p-4">
+                            <p class="text-xs font-medium text-ink-muted"><span class="search-type">{{ ('type.' ~ hit.type)|trans }}</span>{% if hit.label %} · {{ hit.label }}{% endif %}</p>
+                            <h2 class="mt-1 text-lg font-semibold"><a href="{{ hit.url }}" data-umami-event="recherche-resultat" data-umami-event-q="{{ query }}" data-umami-event-type="{{ hit.type }}" data-umami-event-rang="{{ loop.index }}">{{ hit.titleHtml|raw }}</a></h2>
+                            {% if hit.excerptHtml %}<p class="search-excerpt mt-1 text-sm text-ink-muted">{{ hit.excerptHtml|raw }}</p>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <p class="search-empty mt-6">{{ 'index.aucun'|trans({q: query}) }} <a href="{{ path('app_concepts') }}">{{ 'index.aucun_lien'|trans }}</a></p>
+            {% endif %}
+        {% endif %}
+    </main>
+{% endblock %}
