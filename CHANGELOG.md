@@ -41,6 +41,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   - le catalogue liste ses cours en forme « page de synthèse » (position et adresse de chaque parcours) ;
   - le sommaire d'un chapitre est une `LearningResource` rattachée au cours, comme ses exercices ;
   - les dates des articles et des exercices de Pratique portent l'heure et le fuseau.
+- Environnement `symfony-8-2-dev` : ajout de `symfony/expression-language`, pour les fonctions de sécurité
+  (`is_granted()`, `current_user()`…) dans les contraintes `When` et `Expression` du Validator.
 
 ## 3.27.0 — 2026-11-01
 
