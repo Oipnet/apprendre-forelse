@@ -73,7 +73,7 @@
                 {%- if author.portraitUrl %}<img class="h-16 w-16 shrink-0 rounded-full object-cover" src="{{ author.portraitUrl }}" alt="" width="64" height="64" loading="lazy">{% endif %}
                 <div class="min-w-0">
                     <p class="text-sm text-ink-muted">{{ 'show.auteur.titre'|trans }}</p>
-                    <p class="font-semibold">{% if author.hasPage %}<a href="{{ path('app_author', {slug: author.id}) }}" rel="author">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %} <span class="font-normal text-ink-muted">· {{ author.jobTitle }}</span></p>
+                    <p class="font-semibold">{% if author.hasPage %}<a href="{{ path('app_author', {slug: author.id}) }}" rel="author" data-umami-event="article-auteur" data-umami-event-lien="page">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %} <span class="font-normal text-ink-muted">· {{ author.jobTitle }}</span></p>
                     {%- if author.bio is defined %}<p class="mt-1">{{ author.bio }}</p>{% endif %}
                     <p class="blog-author-links mt-3 flex flex-wrap gap-2">
                         {%- for key, url in author.links|default({}) %}
