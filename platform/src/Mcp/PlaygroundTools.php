@@ -74,8 +74,8 @@ final readonly class PlaygroundTools
      * project (see get_starter). Nothing is stored: the code travels inside the link, after the "#". The page asks
      * the visitor before running code received by a link.
      *
-     * @param array<string, string> $files
-     * @param list<string>          $packages
+     * @param array<string, mixed> $files    ce que l'assistant envoie : vérifié ici
+     * @param array<mixed>         $packages
      *
      * @return array<string, mixed>
      */
@@ -99,23 +99,38 @@ final readonly class PlaygroundTools
         if ([] !== $refused) {
             throw new ToolCallException(\sprintf('These paths cannot be edited in the %s playground: %s. Editable paths: %s ("*" does not cross a "/").', $framework->label(), implode(', ', $refused), implode(', ', $exercise->editable)));
         }
+        $wanted = [];
+        foreach ($packages as $package) {
+            if (!\is_string($package)) {
+                throw new ToolCallException('Packages are given by name, e.g. "nesbot/carbon".');
+            }
+            $wanted[$package] = $package;
+        }
+        $wanted = array_values($wanted);
         $catalog = array_column($this->catalog($framework), 'name');
-        $unknown = array_values(array_diff($packages, $catalog));
+        $unknown = array_values(array_diff($wanted, $catalog));
         if ([] !== $unknown) {
             throw new ToolCallException([] === $catalog
                 ? \sprintf('The %s playground comes with its own packages: no package can be added.', $framework->label())
                 : \sprintf('Unknown packages: %s. Available: %s.', implode(', ', $unknown), implode(', ', $catalog)));
         }
+
+        // Seuls les fichiers qui diffèrent du départ partent dans le lien : un fichier inchangé ne ferait que l'allonger.
+        $starting = $this->content->startingFiles($exercise);
+        $changed = [];
+        $unchanged = [];
         foreach ($files as $path => $content) {
             if (!\is_string($content)) {
                 throw new ToolCallException(\sprintf('The content of "%s" must be a string.', $path));
             }
+            if (($starting[$path] ?? null) === $content) {
+                $unchanged[] = $path;
+            } else {
+                $changed[$path] = $content;
+            }
         }
-
-        $starting = $this->content->startingFiles($exercise);
-        $changed = array_filter($files, static fn (string $content, int|string $path) => ($starting[(string) $path] ?? null) !== $content, \ARRAY_FILTER_USE_BOTH);
         try {
-            $fragment = $this->links->encode($changed, array_values(array_unique($packages)));
+            $fragment = $this->links->encode($changed, $wanted);
         } catch (\LengthException $e) {
             throw new ToolCallException($e->getMessage().' Share fewer or shorter files.');
         }
@@ -123,9 +138,9 @@ final readonly class PlaygroundTools
         return [
             'url' => $this->url($framework, $language).'#'.$fragment,
             'framework' => $framework->value,
-            'files' => array_map('strval', array_keys($changed)),
-            'unchanged' => array_values(array_map('strval', array_keys(array_diff_key($files, $changed)))),
-            'packages' => array_values(array_unique($packages)),
+            'files' => array_keys($changed),
+            'unchanged' => $unchanged,
+            'packages' => $wanted,
             'next' => 'Give this link to the user: it opens the project in their browser, where they click Run to start it, then edit and share it again.',
         ];
     }

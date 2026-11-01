@@ -34,7 +34,7 @@ final class ScratchLink
         }
         $data = ['v' => 1, 'files' => (object) $files];
         if ([] !== $packages) {
-            $data['packages'] = array_values($packages);
+            $data['packages'] = $packages;
         }
         $json = json_encode($data, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
         if (\strlen($json) > self::MAX_BYTES) {
