@@ -13,4 +13,5 @@ return [
     EasyCorp\Bundle\EasyAdminBundle\EasyAdminBundle::class => ['all' => true],
     SymfonyCasts\Bundle\ResetPassword\SymfonyCastsResetPasswordBundle::class => ['all' => true],
     Sentry\SentryBundle\SentryBundle::class => ['prod' => true],
+    Symfony\AI\McpBundle\McpBundle::class => ['all' => true],
 ];

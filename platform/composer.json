@@ -32,6 +32,7 @@
         "symfony/http-client": "8.1.*",
         "symfony/lock": "8.1.*",
         "symfony/mailer": "8.1.*",
+        "symfony/mcp-bundle": "^0.15",
         "symfony/messenger": "8.1.*",
         "symfony/process": "8.1.*",
         "symfony/rate-limiter": "8.1.*",

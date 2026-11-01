@@ -19,6 +19,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 final readonly class OriginIsolationListener
 {
+    /** Le serveur MCP du bac à sable (config/packages/mcp.yaml). */
+    public const string MCP_PATH = '/mcp';
+
     public function __construct(private SandboxOrigin $sandbox, private ContentSecurityPolicy $policy)
     {
     }
@@ -38,8 +41,10 @@ final readonly class OriginIsolationListener
             throw new NotFoundHttpException();
         }
         // Écritures : refusées si le navigateur annonce une autre origine que la page (bac à sable compris).
+        // Sauf le serveur MCP : sans compte ni cookie, il n'a rien à protéger, et un client MCP dans un navigateur
+        // (inspecteur, éditeur en ligne) l'appelle depuis sa propre origine.
         $origin = $request->headers->get('Origin');
-        if (!$request->isMethodSafe() && null !== $origin && $origin !== $request->getSchemeAndHttpHost()) {
+        if (!$request->isMethodSafe() && null !== $origin && self::MCP_PATH !== $request->getPathInfo() && $origin !== $request->getSchemeAndHttpHost()) {
             throw new AccessDeniedHttpException('Origine non autorisée.');
         }
     }

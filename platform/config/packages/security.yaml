@@ -16,6 +16,10 @@ security:
             # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
+        # Le serveur MCP du bac à sable : public, sans compte ni session de la plateforme.
+        mcp:
+            pattern: ^/mcp$
+            security: false
         main:
             lazy: true
             provider: app_user_provider
