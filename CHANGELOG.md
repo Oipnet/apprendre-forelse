@@ -14,6 +14,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   parcours nommé par la nouvelle clé `course:` de l'article, ou à défaut celui du framework de son exercice de
   Pratique. Le parcours doit exister (`content:check`) ; il n'apparaît que s'il est visible et traduit dans la langue
   de la page. Clics comptés dans Umami (`article-parcours`).
+- **Partager un chapitre terminé** : la réussite du dernier exercice d'un chapitre de parcours propose de l'annoncer
+  (LinkedIn, X, Bluesky, lien), avec un lien vers la page publique du parcours (`utm_campaign=chapitre`). Rien pour un
+  parcours en préparation.
 
 ## 3.27.0 — 2026-11-01
 

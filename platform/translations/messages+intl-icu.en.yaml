@@ -99,6 +99,7 @@ share:
         pratique: "{framework}: “{titre}”, a short exercise to do in the browser."
         pratique_reussie: "I passed the “{titre}” exercise ({framework}), right in the browser."
         certificat: "I finished the “{parcours}” track on {site}: {n, plural, one {# exercise passed} other {# exercises passed}}, each one checked by tests."
+        chapitre: "I finished chapter {numero}, “{chapitre}”, of the “{parcours}” track on {site}: every exercise checked by tests, right in the browser."
 
 format:
     duree:

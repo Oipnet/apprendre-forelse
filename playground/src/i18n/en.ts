@@ -207,6 +207,7 @@ export const en: Messages = {
 		succeeded: 'Exercise completed!',
 		chapterDone: 'You have finished the chapter.',
 		shareSuccess: 'Share your success',
+		shareChapter: 'Share this finished chapter',
 		saveFailed: (error: string) => `Your progress could not be saved: ${error}`,
 	},
 
