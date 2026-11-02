@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.28.0 — 2026-11-02
+
 ### Ajouté
 
 - **Appels aux API d'IA depuis le navigateur** (parcours IA) : un environnement qui déclare `network:` (`anthropic`,
