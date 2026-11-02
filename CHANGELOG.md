@@ -35,6 +35,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   port du tunnel SSH. Umami ne joint plus Meilisearch, Meilisearch ne joint plus la base. En préproduction, Mailpit
   n'est plus que sur `courrier` (interne) et `front`. Au déploiement, tous les conteneurs sont recréés une fois ;
   supprimer ensuite l'ancien réseau `…_default` (voir `deploy/README.md`).
+- **Utilisateur PostgreSQL dédié à Umami** : Umami ne se connecte plus avec l'utilisateur du site (`formation`), qui
+  ouvrait toute la base (comptes, achats) à une faille d'Umami. `umami-base` crée l'utilisateur `umami`, lui donne la
+  base `umami` et ses tables, et ferme la base du site aux autres utilisateurs. **Nouvelle variable obligatoire**
+  `UMAMI_DB_PASSWORD` dans le `.env` de chaque instance, à poser avant le déploiement (`deploy/README.md`, section 8).
 
 ## 3.28.1 — 2026-11-02
 

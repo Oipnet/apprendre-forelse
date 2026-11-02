@@ -243,3 +243,21 @@ docker compose up -d
 Sans elle, une clé par défaut, écrite dans `compose.yaml` : le service reste injoignable de l'extérieur, mais la clé
 n'a alors rien de secret. Pour remplir l'index tout de suite plutôt qu'au prochain passage du worker :
 `docker compose exec app php bin/console app:recherche:indexer`. `MEILISEARCH_URL=` (vide) dans `.env` éteint la recherche.
+
+## 8. Utilisateur PostgreSQL d'Umami
+
+Umami se connecte à PostgreSQL avec son propre utilisateur, `umami`, propriétaire de la base `umami` et de rien
+d'autre ; la base du site n'accepte plus que son propriétaire, `formation`. Le service `umami-base` s'en charge à
+chaque `docker compose up` : il crée l'utilisateur (ou remet son mot de passe), lui donne la base et les tables déjà
+créées par `formation`, puis s'arrête. Rien n'est effacé.
+
+`compose.yaml` exige `UMAMI_DB_PASSWORD` dans le `.env` de **chaque instance**, préproduction comprise (sans Umami, mais
+Compose lit tout le fichier). À poser **avant** le déploiement qui l'apporte : sans elle, le déploiement s'arrête avant
+de toucher à quoi que ce soit.
+
+```sh
+echo "UMAMI_DB_PASSWORD=$(openssl rand -hex 32)" >> .env
+```
+
+Umami dérive le secret de ses sessions de son adresse de base : au changement, il faut se reconnecter au tableau de
+bord, et les visiteurs du jour peuvent compter deux fois (identifiant de visite recalculé). Les mesures restent.
