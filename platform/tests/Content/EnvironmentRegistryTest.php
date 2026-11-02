@@ -89,7 +89,7 @@ final class EnvironmentRegistryTest extends TestCase
         $this->assertNotNull($app->file('config/packages/security.yaml'));
         // Le titre ne s'hérite pas ; le reste, si.
         $this->assertStringContainsString('Messenger', $app->title);
-        $this->assertSame('8.4', $app->phpVersion);
+        $this->assertSame('8.5', $app->phpVersion);
         $this->assertSame('symfony', $app->framework->id);
         $this->assertSame(['var/cache'], $app->cacheDirs);
     }
