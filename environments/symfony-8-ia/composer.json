@@ -33,6 +33,7 @@
         "symfony/mailer": "8.1.*",
         "symfony/mcp-bundle": "^1.0@beta",
         "symfony/messenger": "8.1.*",
+        "symfony/rate-limiter": "8.1.*",
         "symfony/runtime": "8.1.*",
         "symfony/scheduler": "8.1.*",
         "symfony/security-bundle": "8.1.*",
