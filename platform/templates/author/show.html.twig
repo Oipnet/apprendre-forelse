@@ -32,7 +32,7 @@
             {%- for key, url in person.links|default({}) %}
             <a class="btn{{ loop.first ? ' btn-primary' }}" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="auteur-lien" data-umami-event-lien="{{ key }}">{{ ('show.auteur.lien.' ~ key)|trans }}</a>
             {%- endfor %}
-            <a class="btn" href="{{ path('app_contact') }}" data-umami-event="auteur-lien" data-umami-event-lien="contact">{{ 'show.auteur.contact'|trans }}</a>
+            <a class="btn btn-primary" href="{{ path('app_contact') }}" data-umami-event="auteur-lien" data-umami-event-lien="contact">{{ 'show.auteur.contact'|trans }}</a>
         </p>
 
         {% if tracks %}

@@ -70,16 +70,16 @@
         {% if author and (author.bio is defined or author.links is defined) %}
             {# L'auteur, juste après le texte : le lecteur qui a aimé l'article sait qui l'a écrit et comment le joindre. #}
             <aside class="blog-author mt-10 flex gap-4 border-t border-line pt-6" aria-label="{{ 'show.auteur.titre'|trans }}">
-                {%- if author.portraitUrl %}<img class="h-16 w-16 shrink-0 rounded-full object-cover" src="{{ author.portraitUrl }}" alt="" width="64" height="64" loading="lazy">{% endif %}
+                {%- if author.portraitUrl %}<img class="h-20 w-20 shrink-0 self-start rounded-full object-cover" src="{{ author.portraitUrl }}" alt="" width="80" height="80" loading="lazy">{% endif %}
                 <div class="min-w-0">
                     <p class="text-sm text-ink-muted">{{ 'show.auteur.titre'|trans }}</p>
                     <p class="font-semibold">{% if author.hasPage %}<a href="{{ path('app_author', {slug: author.id}) }}" rel="author" data-umami-event="article-auteur" data-umami-event-lien="page">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %} <span class="font-normal text-ink-muted">· {{ author.jobTitle }}</span></p>
-                    {%- if author.bio is defined %}<p class="mt-1">{{ author.bio }}</p>{% endif %}
+                    {%- if author.bio is defined %}<p class="mt-1 text-sm text-ink-muted">{{ author.bio }}</p>{% endif %}
                     <p class="blog-author-links mt-3 flex flex-wrap gap-2">
                         {%- for key, url in author.links|default({}) %}
                         <a class="btn" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="article-auteur" data-umami-event-lien="{{ key }}">{{ ('show.auteur.lien.' ~ key)|trans }}</a>
                         {%- endfor %}
-                        <a class="btn" href="{{ path('app_contact') }}" data-umami-event="article-auteur" data-umami-event-lien="contact">{{ 'show.auteur.contact'|trans }}</a>
+                        <a class="btn btn-primary" href="{{ path('app_contact') }}" data-umami-event="article-auteur" data-umami-event-lien="contact">{{ 'show.auteur.contact'|trans }}</a>
                     </p>
                 </div>
             </aside>
