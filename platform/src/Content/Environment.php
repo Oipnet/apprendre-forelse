@@ -21,6 +21,8 @@ final readonly class Environment
      * @param FrameworkProfile $framework   ce que le moteur sait de ce framework (voir FrameworkRegistry)
      * @param list<string>     $cacheDirs   dossiers de cache à vider entre deux runs de tests
      * @param list<string>     $phpExtensions extensions PHP à charger en plus dans le navigateur (intl)
+     * @param list<string>     $network     fournisseurs d'IA dont le PHP du navigateur peut appeler l'API
+     *                                      (voir EnvironmentRegistry::NETWORK_PROVIDERS)
      */
     public function __construct(
         public string $id,
@@ -31,7 +33,18 @@ final readonly class Environment
         public FrameworkProfile $framework,
         public array $cacheDirs,
         public array $phpExtensions = [],
+        public array $network = [],
     ) {
+    }
+
+    /**
+     * Les hôtes que le PHP du navigateur peut joindre : ceux des fournisseurs de `network:`.
+     *
+     * @return list<string>
+     */
+    public function networkHosts(): array
+    {
+        return array_values(array_map(static fn (string $provider): string => EnvironmentRegistry::NETWORK_PROVIDERS[$provider], $this->network));
     }
 
     /** Le dossier de cet environnement — le dernier de la chaîne, celui qui porte son environment.yaml. */

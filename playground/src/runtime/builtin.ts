@@ -1,5 +1,5 @@
 import discovered from 'virtual:forelse-runtimes';
-import phpWasm from './php-wasm';
+import phpWasm, { phpWasmNetwork } from './php-wasm';
 import { registerRuntime } from './registry';
 
 /**
@@ -9,4 +9,4 @@ import { registerRuntime } from './registry';
  * `forelse` (voir discover-runtimes.ts). Cette liste ne se modifie donc jamais : installer un paquet
  * de runtime suffit.
  */
-for (const manifest of [phpWasm, ...discovered]) registerRuntime(manifest);
+for (const manifest of [phpWasm, phpWasmNetwork, ...discovered]) registerRuntime(manifest);

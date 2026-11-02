@@ -399,6 +399,8 @@ export const fr = {
 		unknown: (id: string, known: string[]) => `Runtime « ${id} » inconnu de ce playground (connus : ${known.join(', ') || 'aucun'}).`,
 		downloadFailed: (url: string, status: number) => `Téléchargement impossible : ${url} (${status})`,
 		downloading: (megabytes: number) => `Téléchargement de l'environnement (${megabytes.toFixed(1)} Mo)`,
+		networkUnavailable: 'Cet environnement appelle des API d\'IA, mais ce worker PHP n\'a pas de réseau.',
+		networkRefused: (host: string) => `Le PHP du navigateur ne peut joindre que les API d'IA du parcours, pas ${host}.`,
 		phpBinaryMissing: (file: string, status: number) => `Binaire PHP introuvable : ${file} (${status})`,
 		notBooted: 'Environnement non démarré.',
 		unknownPhpFramework: (id: string, console: string, known: string[]) => `Framework PHP « ${id} » inconnu de ce playground (connus : ${known.join(', ')}) : sa console « ${console} » n'a pas de script (voir src/runtime/php-frameworks.ts).`,
@@ -436,6 +438,19 @@ export const fr = {
 	},
 
 	/** Les paquets Composer du bac à sable PHP (packages.ts). */
+	apiKey: {
+		button: 'Clé API',
+		buttonTitle: 'Votre clé d\'API, pour essayer votre code avec un vrai modèle',
+		buttonTitleSet: (provider: string) => `Clé ${provider} utilisée par l'aperçu et la console`,
+		title: 'Essayer avec votre clé d\'API',
+		intro: 'Les tests rejouent des réponses enregistrées et n\'en ont pas besoin. Votre clé sert à l\'aperçu et à la console, pour voir un vrai modèle répondre à votre code.',
+		provider: 'Fournisseur',
+		key: 'Clé',
+		keySet: 'Clé enregistrée pour cet onglet',
+		advice: 'Elle reste dans cet onglet, oubliée à sa fermeture : elle n\'est ni sauvegardée avec votre code, ni envoyée à Forelse. Prenez une clé dédiée, avec un plafond de dépense.',
+		use: 'Utiliser cette clé',
+		forget: 'Oublier ma clé',
+	},
 	packages: {
 		button: 'Paquets',
 		buttonTitle: 'Ajouter des paquets Composer au projet',

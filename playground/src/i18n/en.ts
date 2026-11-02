@@ -396,6 +396,8 @@ export const en: Messages = {
 		unknown: (id: string, known: string[]) => `Runtime “${id}” is unknown to this playground (known: ${known.join(', ') || 'none'}).`,
 		downloadFailed: (url: string, status: number) => `Download failed: ${url} (${status})`,
 		downloading: (megabytes: number) => `Downloading the environment (${megabytes.toFixed(1)} MB)`,
+		networkUnavailable: 'This environment calls AI APIs, but this PHP worker has no network access.',
+		networkRefused: (host: string) => `The browser's PHP can only reach the course's AI APIs, not ${host}.`,
 		phpBinaryMissing: (file: string, status: number) => `PHP binary not found: ${file} (${status})`,
 		notBooted: 'Environment not started.',
 		unknownPhpFramework: (id: string, console: string, known: string[]) => `PHP framework “${id}” is unknown to this playground (known: ${known.join(', ')}): its console “${console}” has no script (see src/runtime/php-frameworks.ts).`,
@@ -428,6 +430,19 @@ export const en: Messages = {
 		resumeDraft: 'Resume my draft',
 	},
 
+	apiKey: {
+		button: 'API key',
+		buttonTitle: 'Your API key, to try your code against a real model',
+		buttonTitleSet: (provider: string) => `${provider} key used by the preview and the console`,
+		title: 'Try it with your API key',
+		intro: 'The tests replay recorded responses and do not need it. Your key is for the preview and the console, to see a real model answer your code.',
+		provider: 'Provider',
+		key: 'Key',
+		keySet: 'Key saved for this tab',
+		advice: 'It stays in this tab and is forgotten when you close it: it is neither saved with your code nor sent to Forelse. Use a dedicated key with a spending cap.',
+		use: 'Use this key',
+		forget: 'Forget my key',
+	},
 	packages: {
 		button: 'Packages',
 		buttonTitle: 'Add Composer packages to the project',

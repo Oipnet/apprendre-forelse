@@ -28,6 +28,18 @@ final class EnvironmentRegistry implements ResetInterface
     /** Les extensions que le PHP du navigateur sait charger à la demande (`extensions:` dans environment.yaml). */
     public const array PHP_EXTENSIONS = ['intl'];
 
+    /**
+     * Les API que le PHP du navigateur peut joindre, par fournisseur (`network:` dans environment.yaml). Rien d'autre :
+     * le worker qui a le réseau n'autorise que ces hôtes (sa CSP, docker/Caddyfile, et sa propre liste), pour qu'un code
+     * piégé ne puisse pas envoyer la clé de l'apprenant ailleurs.
+     */
+    public const array NETWORK_PROVIDERS = [
+        'anthropic' => 'api.anthropic.com',
+        'gemini' => 'generativelanguage.googleapis.com',
+        'mistral' => 'api.mistral.ai',
+        'openai' => 'api.openai.com',
+    ];
+
     /** @var array<string, Environment> */
     private array $environments = [];
     /** @var array<string, string>|null identifiant => dossier, tous dossiers confondus */
@@ -211,6 +223,7 @@ final class EnvironmentRegistry implements ResetInterface
             // et « cache: » dans environment.yaml a le dernier mot pour un projet arrangé autrement.
             cacheDirs: array_values(array_map('strval', (array) ($meta['cache'] ?? $framework->cacheDirs))),
             phpExtensions: $this->phpExtensions($id, $meta['extensions'] ?? []),
+            network: $this->network($id, $meta['network'] ?? []),
         );
     }
 
@@ -233,6 +246,26 @@ final class EnvironmentRegistry implements ResetInterface
         }
 
         return array_values(array_unique($extensions));
+    }
+
+    /**
+     * Les fournisseurs d'IA dont l'environnement appelle l'API depuis le navigateur. Seuls ceux de NETWORK_PROVIDERS :
+     * un environnement ne peut pas ouvrir le réseau vers un hôte quelconque.
+     *
+     * @return list<string>
+     */
+    private function network(string $id, mixed $providers): array
+    {
+        if (!\is_array($providers) || !array_is_list($providers)) {
+            throw new ContentException(sprintf('Environnement « %s » : « network » doit être une liste.', $id));
+        }
+        foreach ($providers as $provider) {
+            if (!\is_string($provider) || !\array_key_exists($provider, self::NETWORK_PROVIDERS)) {
+                throw new ContentException(sprintf('Environnement « %s » : fournisseur « %s » inconnu dans « network » (%s).', $id, \is_scalar($provider) ? $provider : get_debug_type($provider), implode(', ', array_keys(self::NETWORK_PROVIDERS))));
+            }
+        }
+
+        return array_values(array_unique($providers));
     }
 
     /**

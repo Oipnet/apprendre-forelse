@@ -59,12 +59,22 @@ framework: symfony  # symfony (défaut), laravel, docker, nuxt
 cache: [var/cache]  # facultatif : les caches à vider entre deux runs, si ceux du framework ne conviennent pas
 extends: <id>       # facultatif : prolonge un autre environnement (voir « Fusionner »)
 extensions: [intl]  # facultatif : extensions que le PHP du navigateur charge en plus (aujourd'hui intl seulement)
+network: [anthropic, openai]  # facultatif : API d'IA que le PHP de l'aperçu peut appeler (parcours IA)
 ```
 
 `extensions:` existe parce qu'intl pèse lourd : l'extension et ses données ICU, environ 13,5 Mo compressés, ne se
 téléchargent que pour les environnements qui la demandent (`symfony-8-easyadmin`, dont les champs de date et de montant
 en ont besoin). Le moteur refuse une extension que php-wasm ne sait pas charger à part. Côté serveur (vérification des
 réussites, intégration continue), le PHP natif a déjà intl.
+
+`network:` ouvre le réseau du PHP de l'aperçu vers les API de ces fournisseurs, et d'eux seuls : `anthropic`, `gemini`,
+`mistral`, `openai` (liste fermée, `EnvironmentRegistry::NETWORK_PROVIDERS`). La page démarre alors le worker
+`php-network-worker` : ses requêtes HTTPS deviennent des `fetch()` du navigateur (mode « TCP over fetch » de php-wasm), sa
+CSP n'autorise que ces quatre API (`docker/Caddyfile`), et le bouton « Clé API » donne la clé de l'apprenant à l'aperçu et à
+la console en variable d'environnement (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `MISTRAL_API_KEY`, `GEMINI_API_KEY`). La clé
+reste dans l'onglet (sessionStorage) : elle n'est écrite dans aucun fichier, donc ni sauvegardée, ni partagée, ni envoyée
+au vérificateur ou au mentor. Les tests n'ont ni réseau ni clé : ils rejouent des réponses enregistrées, comme le
+vérificateur du serveur. Le bac à sable n'a jamais le réseau, son code pouvant venir d'un lien partagé.
 
 `framework:` choisit le **runtime**, c'est-à-dire ce que le moteur sait faire tourner : la console du
 projet, l'organisation de ses dossiers, ses caches, son lanceur de tests. Chaque runtime est déclaré

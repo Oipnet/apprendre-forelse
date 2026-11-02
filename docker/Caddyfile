@@ -82,8 +82,17 @@
 	# simulateur Nuxt y évalue le code de l'apprenant : sans cette politique, un fetch('/api/…') dans une route
 	# Nuxt partirait avec sa session. Un worker suit la CSP de son propre script : il ne peut plus joindre que les
 	# archives d'environnement et les fichiers du build, qu'il télécharge pour démarrer.
-	@workers path_regexp workers ^/build/assets/[^/]*worker[^/]*\.js$
+	@workers {
+		path_regexp workers ^/build/assets/[^/]*worker[^/]*\.js$
+		not path /build/assets/php-network-worker*
+	}
 	header @workers Content-Security-Policy "connect-src {$APP_URL}/envs/ {$APP_URL}/build/ blob: data:"
+
+	# Le worker PHP des parcours IA (environnements qui déclarent `network:`) : le PHP de l'aperçu y appelle les API des
+	# fournisseurs avec la clé de l'apprenant. Ces quatre hôtes seulement (EnvironmentRegistry::NETWORK_PROVIDERS), et
+	# jamais le site lui-même hors des fichiers de démarrage : un code piégé ne peut envoyer la clé nulle part ailleurs.
+	@network_worker path_regexp ^/build/assets/php-network-worker[^/]*\.js$
+	header @network_worker Content-Security-Policy "connect-src {$APP_URL}/envs/ {$APP_URL}/build/ blob: data: https://api.anthropic.com https://api.openai.com https://api.mistral.ai https://generativelanguage.googleapis.com"
 
 	# Mesure d'audience : le traceur et son point de collecte sont servis par le site lui-même, et non
 	# depuis le domaine d'Umami. Même origine = rien à autoriser côté navigateur, et un bloqueur de
