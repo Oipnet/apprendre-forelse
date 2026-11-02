@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Corrigé
+
+- **Complétion du parcours IA** : l'index de complétion de `symfony-8-ia` connaît Symfony AI (agent, messages, exceptions,
+  outils, store), les attributs MCP, les exceptions du client HTTP, `LoggerInterface` et `Uuid`. `content:check` refusait
+  13 exercices sur 36 du pack le-comptoir, dont l'éditeur n'aurait pas proposé les imports.
+
 ## 3.28.0 — 2026-11-02
 
 ### Ajouté
