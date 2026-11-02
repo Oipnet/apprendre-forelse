@@ -25,7 +25,7 @@ final class SymfonyProfile implements FrameworkProfileProvider
             codeDirs: ['src/', 'config/packages/', 'templates/'],
             cacheDirs: ['var/cache'],
             testCaches: ['var/cache/test'],
-            hidden: ['vendor', 'var', '.git', 'node_modules', '.phpunit.cache'],
+            hidden: ['vendor', 'var', '.git', 'node_modules', '.phpunit.cache', '.forelse'],
             namespaceRoots: ['src' => 'App', 'tests' => 'App\\Tests', 'migrations' => 'DoctrineMigrations'],
             lessonLanguages: '```php, ```twig, ```yaml, ```bash',
             drafting: PhpWasm::DRAFTING.<<<'TEXTE'

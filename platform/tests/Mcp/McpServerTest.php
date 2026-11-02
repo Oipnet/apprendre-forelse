@@ -53,7 +53,7 @@ final class McpServerTest extends WebTestCase
         $this->assertSame('http://localhost/en/playground/symfony?utm_source=mcp&utm_medium=ia&utm_campaign=bac-a-sable', $starter['url']);
         $this->assertArrayHasKey('src/Controller/AccueilController.php', $starter['files']);
         $this->assertContains('src/*/*.php', $starter['editable_paths']);
-        $this->assertSame([], $starter['packages'], 'Symfony arrive avec ses paquets.');
+        $this->assertContains('symfony/security-bundle', array_column($starter['packages'], 'name'), 'Les paquets du bac à sable Symfony, ajoutés avec leur recette Flex.');
         $this->assertStringStartsWith('# Symfony playground', $starter['about']);
         $this->assertContains('config/services.yaml', $starter['config_files']);
         $this->assertArrayNotHasKey('config/services.yaml', $starter['files'], 'La configuration n\'est envoyée qu\'à la demande.');
@@ -87,6 +87,9 @@ final class McpServerTest extends WebTestCase
         $this->assertSame('fr', $read['language']);
         $this->assertSame($index, $read['files']['public/index.php']);
         $this->assertSame(['nesbot/carbon'], $read['packages']);
+
+        $symfony = $this->tool('create_sandbox', ['framework' => 'symfony', 'files' => ['src/Controller/AccueilController.php' => '<?php'], 'packages' => ['symfony/security-bundle']]);
+        $this->assertSame(['symfony/security-bundle'], (new ScratchLink())->decode($symfony['url'])['packages'], 'Symfony : un paquet du catalogue, sa recette Flex s\'appliquera à l\'ouverture.');
     }
 
     public function testUnBugQuiDependDeLaConfigurationSeReproduit(): void

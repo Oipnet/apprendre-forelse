@@ -26,7 +26,7 @@ import { ApiProgressStore, LocalProgressStore, type ProgressStore, type SavedPro
 import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
 import { changedFiles, decodeFragment, encodeFragment, NEW_PROJECT, withFragment } from './scratch';
-import { composerRequest, knownPackages, Packages, packagesDialog, parseCatalog, readSelection, requiredPackages, writeSelection } from './packages';
+import { composerRequest, knownPackages, Packages, packagesDialog, parseCatalog, parseInvalidation, readSelection, requiredPackages, writeSelection } from './packages';
 import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
@@ -155,7 +155,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const paquets: Promise<Packages | null> = catalogueUrl
 		? fetch(catalogueUrl)
 				.then((response) => (response.ok ? response.json() : null))
-				.then((data: unknown) => new Packages(parseCatalog(data), new URL(catalogueUrl, location.href), moteur))
+				.then((data: unknown) => new Packages(parseCatalog(data), new URL(catalogueUrl, location.href), moteur, undefined, parseInvalidation(data)))
 				.catch(() => null)
 		: Promise.resolve(null);
 	const urlInput = $<HTMLInputElement>('#url');
@@ -371,9 +371,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			packagesDialog(root, projetPaquets, {
 				lang: document.documentElement.lang || 'fr',
 				requestUrl: catalogue.requestUrl,
-				onChange: (paquet, ajoute) => {
+				intro: framework.id === 'symfony' ? m.packages.introSymfony : undefined,
+				onChange: (paquet, ajoute, changements) => {
 					writeSelection(stockage, exercise.id, projetPaquets.names);
 					mesurer('bac-a-sable-paquet', { ...mesure, paquet, ajoute });
+					// Les fichiers de la recette Flex (config/packages/…, bundles.php, .env) dans l'explorateur et l'éditeur,
+					// et dans la console ce qu'aurait affiché le composer require équivalent.
+					files.synchronise(changements);
+					if (changements.rapport) consolePanel.logCommand(`composer ${ajoute ? 'require' : 'remove'} ${paquet}`, changements.rapport);
 					reload();
 				},
 			});

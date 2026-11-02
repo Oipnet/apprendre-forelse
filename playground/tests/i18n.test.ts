@@ -46,6 +46,8 @@ const EXCEPTIONS: Record<string, string[]> = {
 	'entries/site.ts': ['Création refusée ('],
 	// Le texte que PHPUnit écrit dans ses messages d'échec, que le runtime reconnaît : pas un texte de l'interface.
 	'runtime/phpunit.ts': ['Failed asserting'],
+	// Ce que Symfony Flex écrit dans le terminal après un composer require, reproduit tel quel dans la console.
+	'app/recipes.ts': ['Symfony operations: '],
 };
 
 /** Les messages de débogage pour les développeurs (console.warn('…', e)) ne sont pas traduits. */

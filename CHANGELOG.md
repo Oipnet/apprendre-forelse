@@ -8,6 +8,18 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Paquets Composer dans le bac à sable Symfony**, avec leurs recettes Flex : form, validator, security-bundle,
+  serializer, messenger, mailer, workflow, translation, uid, expression-language, rate-limiter, object-mapper,
+  ux-twig-component, doctrine-fixtures-bundle, zenstruck/foundry, knp-paginator-bundle (`symfony-8-doctrine/paquets.json`).
+  Ils se résolvent contre le `composer.lock` de l'environnement (aucune version déjà installée ne bouge). Les recettes
+  sont lues à l'empaquetage sur les dépôts de Flex (`environments/bin/recettes-flex.php`, même choix de version que
+  Flex) ; le navigateur les applique comme Flex (bundle dans `config/bundles.php`, fichiers de `config/` et `src/` s'ils
+  n'existent pas, bloc du `.env`), vide le cache du conteneur et montre dans la console le `composer require`
+  équivalent. Décocher défait la recette, sans supprimer un fichier modifié. Le lien partagé et le serveur MCP
+  (`create_sandbox`) acceptent ces paquets.
+
 ### Modifié
 
 - **Encart « Écrit par »** : photo de 80 px alignée en haut, présentation en plus petit et en gris, et « Me contacter »

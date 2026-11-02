@@ -103,12 +103,13 @@ enum ScratchFramework: string
     }
 
     /**
-     * Le catalogue des paquets Composer qu'on peut ajouter (bouton « Paquets »), dans public/ : seul le projet sans
-     * framework en a, Symfony et Laravel arrivent avec les leurs.
+     * Le catalogue des paquets Composer qu'on peut ajouter (bouton « Paquets »), dans public/ : PHP sans framework, et
+     * Symfony, dont les paquets arrivent avec leur recette Flex (environments/bin/recettes-flex.php). Laravel arrive
+     * avec les siens.
      */
     public function packageCatalog(): ?string
     {
-        return self::Php === $this ? 'envs/'.$this->environment().'.paquets.json' : null;
+        return self::Laravel === $this ? null : 'envs/'.$this->environment().'.paquets.json';
     }
 
     /** Le nom affiché (titres, liens). */

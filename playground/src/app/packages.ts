@@ -1,15 +1,19 @@
 /**
- * Les paquets Composer du bac à sable PHP (bouton « Paquets ») : un catalogue fermé, empaqueté sur le serveur
+ * Les paquets Composer des bacs à sable PHP et Symfony (bouton « Paquets ») : un catalogue fermé, empaqueté sur le serveur
  * (environments/bin/build-paquets.php). Chaque paquet est une archive de vendor/, ses dépendances comprises, servie
  * depuis /envs comme l'environnement : PHP n'a jamais besoin du réseau, et le code d'un lien partagé non plus.
  *
  * Ajouter un paquet écrit ses fichiers dans le projet, et sa table d'autoload dans vendor/forelse-paquets/, que lit
  * le chargeur du projet (.forelse/paquets.php) : `require 'vendor/autoload.php'` suffit. Le retirer efface sa table :
  * ses classes ne se chargent plus (les fichiers restent, invisibles, jusqu'au prochain démarrage).
+ *
+ * Dans un projet Symfony, chaque paquet apporte aussi ses recettes Flex (recipes.ts), appliquées après l'archive et
+ * défaites au retrait.
  */
 import { strFromU8, unzipSync } from 'fflate';
 import { m } from '../i18n';
 import { escapeHtml } from './html';
+import { applyRecipe, parseRecipe, type Recipe, type RecipeChanges, recipesReport, unapplyRecipe } from './recipes';
 
 export interface CatalogEntry {
 	nom: string;
@@ -19,11 +23,20 @@ export interface CatalogEntry {
 	dependances: string[];
 	archive: string;
 	poids: number;
+	/** Les recettes Flex du paquet et de ses dépendances (bac à sable Symfony), dans l'ordre d'installation. */
+	recettes?: Recipe[];
+}
+
+/** Ce qu'un ajout ou un retrait a changé dans le projet (recettes Flex), et ce que Flex en aurait écrit. */
+export interface PackageChanges extends RecipeChanges {
+	rapport: string;
 }
 
 type Store = Pick<Storage, 'getItem' | 'setItem'>;
 interface Writer {
 	writeFiles(files: Record<string, string>): Promise<void>;
+	writeFile(path: string, content: string): Promise<void>;
+	readFile(path: string): Promise<string | null>;
 	deleteFile(path: string): Promise<void>;
 }
 
@@ -39,10 +52,21 @@ export const tablePath = (entry: Pick<CatalogEntry, 'slug'>) => `vendor/forelse-
 export function parseCatalog(data: unknown): CatalogEntry[] {
 	const paquets = (data as { paquets?: unknown } | null)?.paquets;
 	if (!Array.isArray(paquets)) return [];
-	return paquets.filter(
-		(p): p is CatalogEntry =>
-			typeof p === 'object' && p !== null && typeof p.nom === 'string' && NAME.test(p.nom) && typeof p.slug === 'string' && /^[a-z0-9_.-]+$/.test(p.slug) && typeof p.archive === 'string' && /^[\w.-]+\.zip$/.test(p.archive),
-	);
+	return paquets
+		.filter(
+			(p): p is CatalogEntry =>
+				typeof p === 'object' && p !== null && typeof p.nom === 'string' && NAME.test(p.nom) && typeof p.slug === 'string' && /^[a-z0-9_.-]+$/.test(p.slug) && typeof p.archive === 'string' && /^[\w.-]+\.zip$/.test(p.archive),
+		)
+		.map((p) => ({ ...p, recettes: Array.isArray(p.recettes) ? p.recettes.map(parseRecipe).filter((r): r is Recipe => r !== null) : [] }));
+}
+
+/**
+ * Les fichiers à effacer après un ajout ou un retrait : le cache du conteneur de Symfony, qui ne remarquerait pas une
+ * classe apparue dans vendor/. Seulement sous var/.
+ */
+export function parseInvalidation(data: unknown): string[] {
+	const invalider = (data as { invalider?: unknown } | null)?.invalider;
+	return Array.isArray(invalider) ? invalider.filter((p): p is string => typeof p === 'string' && p.startsWith('var/') && !p.split('/').includes('..')) : [];
 }
 
 /** Les noms reçus (lien, brouillon) qui sont au catalogue, dans son ordre, sans doublon. */
@@ -124,6 +148,7 @@ export class Packages {
 		private readonly baseUrl: URL,
 		private readonly runtime: Writer,
 		private readonly fetcher: typeof fetch = fetch.bind(globalThis),
+		private readonly invalidate: string[] = [],
 	) {}
 
 	get names(): string[] {
@@ -134,11 +159,19 @@ export class Packages {
 		return this.installed.has(name);
 	}
 
-	async add(name: string): Promise<void> {
+	/** Ajoute le paquet, puis applique ses recettes Flex (celles qu'un autre paquet ajouté n'a pas déjà appliquées). */
+	async add(name: string): Promise<PackageChanges> {
+		const changes: PackageChanges = { fichiers: {}, supprimes: [], gardes: [], rapport: '' };
 		const entry = this.entry(name);
-		if (!entry || this.installed.has(name)) return;
+		if (!entry || this.installed.has(name)) return changes;
 		await this.runtime.writeFiles(await this.download(entry));
+		const dejaAppliquees = this.appliedRecipes();
 		this.installed.add(name);
+		const nouvelles = (entry.recettes ?? []).filter((recipe) => !dejaAppliquees.has(recipe.paquet));
+		for (const recipe of nouvelles) await applyRecipe(this.runtime, recipe, changes);
+		changes.rapport = recipesReport(nouvelles);
+		await this.invalidateCache();
+		return changes;
 	}
 
 	/** Un paquet que `composer remove` a déjà retiré du projet (sa table effacée par PHP) : il pourra revenir. */
@@ -146,11 +179,28 @@ export class Packages {
 		this.installed.delete(name);
 	}
 
-	async remove(name: string): Promise<void> {
+	/** Retire le paquet et défait ses recettes, sauf celles dont un autre paquet ajouté a encore besoin. */
+	async remove(name: string): Promise<PackageChanges> {
+		const changes: PackageChanges = { fichiers: {}, supprimes: [], gardes: [], rapport: '' };
 		const entry = this.entry(name);
-		if (!entry || !this.installed.has(name)) return;
+		if (!entry || !this.installed.has(name)) return changes;
 		await this.runtime.deleteFile(tablePath(entry));
 		this.installed.delete(name);
+		const encoreUtiles = this.appliedRecipes();
+		const aDefaire = (entry.recettes ?? []).filter((recipe) => !encoreUtiles.has(recipe.paquet)).reverse();
+		for (const recipe of aDefaire) await unapplyRecipe(this.runtime, recipe, changes);
+		changes.rapport = recipesReport(aDefaire, true);
+		await this.invalidateCache();
+		return changes;
+	}
+
+	/** Les paquets dont la recette est appliquée : ceux des paquets ajoutés et de leurs dépendances. */
+	private appliedRecipes(): Set<string> {
+		return new Set(this.catalog.filter((entry) => this.installed.has(entry.nom)).flatMap((entry) => (entry.recettes ?? []).map((recipe) => recipe.paquet)));
+	}
+
+	private async invalidateCache(): Promise<void> {
+		for (const path of this.invalidate) await this.runtime.deleteFile(path);
 	}
 
 	private entry(name: string): CatalogEntry | undefined {
@@ -186,12 +236,16 @@ export function packagesListHtml(catalog: CatalogEntry[], checked: (name: string
  * La boîte « Paquets » : cocher ajoute le paquet au projet, décocher le retire. `onChange` suit chaque changement
  * réussi (enregistrer le choix, recharger l'aperçu) ; une case dont l'ajout échoue se décoche et le dit.
  */
-export function packagesDialog(host: HTMLElement, packages: Packages, options: { lang: string; requestUrl: string | null; onChange: (name: string, added: boolean) => void }): void {
+export function packagesDialog(
+	host: HTMLElement,
+	packages: Packages,
+	options: { lang: string; requestUrl: string | null; intro?: string; onChange: (name: string, added: boolean, changes: PackageChanges) => void },
+): void {
 	const dialog = document.createElement('dialog');
 	dialog.className = 'feedback packages-dialog';
 	dialog.setAttribute('aria-labelledby', 'packages-dialog-title');
 	dialog.innerHTML = `<h2 id="packages-dialog-title">${m.packages.title}</h2>
-		<p>${m.packages.intro}</p>
+		<p>${options.intro ?? m.packages.intro}</p>
 		${packagesListHtml(packages.catalog, (name) => packages.has(name), options.lang)}
 		<p class="packages-status" role="status"></p>
 		${options.requestUrl ? `<p class="packages-request"><a href="${escapeHtml(options.requestUrl)}" target="_blank" rel="noopener">${m.packages.request}</a></p>` : ''}
@@ -205,9 +259,10 @@ export function packagesDialog(host: HTMLElement, packages: Packages, options: {
 			box.disabled = true;
 			status.textContent = adding ? m.packages.adding(name) : m.packages.removing(name);
 			try {
-				await (adding ? packages.add(name) : packages.remove(name));
+				const changes = await (adding ? packages.add(name) : packages.remove(name));
 				status.textContent = adding ? m.packages.added(name) : m.packages.removed(name);
-				options.onChange(name, adding);
+				if (changes.gardes.length) status.textContent += ` ${m.packages.kept(changes.gardes.join(', '))}`;
+				options.onChange(name, adding, changes);
 			} catch (error) {
 				box.checked = !adding;
 				status.textContent = m.packages.failed(name, error instanceof Error ? error.message : String(error));
