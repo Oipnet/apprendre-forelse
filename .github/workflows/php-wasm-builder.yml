@@ -6,7 +6,7 @@ name: Essai php-wasm-builder
 
 on:
   push:
-    branches: [claude/project-thread-w6d8el]
+    branches: [claude/project-thread-hlrniq]
     paths: [.github/workflows/php-wasm-builder.yml, playground/spike/builder/**, playground/src/runtime/**]
   workflow_dispatch:
 
@@ -14,9 +14,9 @@ permissions:
   contents: read
 
 env:
-  # PR #14 de lyrixx/php-wasm-builder : iconv, openssl et session.
-  BUILDER_REF: 234aa3c207506fffdf1c41ae7dab519da3cd5f6a
-  EXTENSIONS: ctype dom filter iconv mbstring openssl pdo_sqlite session simplexml tokenizer xml xmlreader xmlwriter
+  # main de lyrixx/php-wasm-builder (PR #14 fusionnée) : fileinfo, iconv, openssl et session.
+  BUILDER_REF: 70d13ed199fd6c44daf7397e2f4b9b4a301070bd
+  EXTENSIONS: ctype dom fileinfo filter iconv mbstring openssl pdo_sqlite session simplexml tokenizer xml xmlreader xmlwriter
   PHP_VERSION: 8.5.12
   MEMORY: 256mb
 
@@ -72,14 +72,14 @@ jobs:
       - name: Vérifier la version et les extensions
         run: |
           node node/run.mjs --build build/forelse/php-node.mjs -r 'echo PHP_VERSION, "\n", implode(" ", get_loaded_extensions()), "\n";'
-          node node/run.mjs --build build/forelse/php-web.mjs -r 'session_start(); var_dump(session_status() === PHP_SESSION_ACTIVE, iconv("UTF-8", "ASCII//TRANSLIT", "é"), strlen(openssl_encrypt("x", "aes-256-cbc", str_repeat("k", 32), 0, str_repeat("i", 16))) > 0);'
+          node node/run.mjs --build build/forelse/php-web.mjs -r 'session_start(); var_dump(session_status() === PHP_SESSION_ACTIVE, iconv("UTF-8", "ASCII//TRANSLIT", "é"), strlen(openssl_encrypt("x", "aes-256-cbc", str_repeat("k", 32), 0, str_repeat("i", 16))) > 0, (new finfo(FILEINFO_MIME_TYPE))->buffer("<?php echo 1;"));'
 
       - name: Comparer les tailles
         run: |
           command -v brotli > /dev/null || sudo apt-get install -y brotli > /dev/null
           taille() { printf '| %s | %s | %s | %s |\n' "$1" "$(stat -c %s "$2" | numfmt --to=si)" "$(gzip -9c "$2" | wc -c | numfmt --to=si)" "$(brotli -q 11 -c "$2" | wc -c | numfmt --to=si)"; }
           mkdir -p /tmp/php-wasm && cd /tmp/php-wasm
-          npm pack --silent @php-wasm/web-8-4@3.1.57 > /dev/null
+          npm pack --silent @php-wasm/web-8-4@3.1.61 > /dev/null
           tar -xzf php-wasm-web-8-4-*.tgz
           {
             echo '| Binaire | Brut | gzip | brotli |'
