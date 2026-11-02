@@ -12,6 +12,7 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
 use Mcp\Schema\ToolAnnotations;
+use Mcp\Server\RequestContext;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
@@ -33,6 +34,7 @@ final readonly class PlaygroundTools
         private EnvironmentRegistry $environments,
         private ScratchLink $links,
         private UrlGeneratorInterface $urls,
+        private McpAnalytics $analytics,
     ) {
     }
 
@@ -49,8 +51,10 @@ final readonly class PlaygroundTools
         ScratchFramework $framework,
         #[Schema(description: 'Language of the starting project and its page: "fr" for a French-speaking user, else "en".', enum: ['en', 'fr'])]
         string $language = 'en',
+        ?RequestContext $context = null,
     ): array {
         $exercise = $this->projects->exercise($framework, $this->locale($language));
+        $this->analytics->track('mcp-depart', ['framework' => $framework->value, 'langue' => $this->locale($language)], $context);
 
         return [
             'framework' => $framework->value,
@@ -93,6 +97,7 @@ final readonly class PlaygroundTools
         array $packages = [],
         #[Schema(description: 'Language of the page: "fr" for a French-speaking user, else "en".', enum: ['en', 'fr'])]
         string $language = 'en',
+        ?RequestContext $context = null,
     ): array {
         $exercise = $this->projects->exercise($framework, $this->locale($language));
         $refused = array_values(array_filter(array_keys($files), static fn (int|string $path) => !$exercise->isEditable((string) $path)));
@@ -134,6 +139,7 @@ final readonly class PlaygroundTools
         } catch (\LengthException $e) {
             throw new ToolCallException($e->getMessage().' Share fewer or shorter files.');
         }
+        $this->analytics->track('mcp-lien-cree', ['framework' => $framework->value, 'langue' => $this->locale($language), 'fichiers' => \count($changed), 'paquets' => \count($wanted)], $context);
 
         return [
             'url' => $this->url($framework, $language).'#'.$fragment,
@@ -155,6 +161,7 @@ final readonly class PlaygroundTools
     public function read(
         #[Schema(description: 'The full playground link, including the part after "#code=".')]
         string $url,
+        ?RequestContext $context = null,
     ): array {
         $path = (string) parse_url(strtok($url, '#') ?: '', \PHP_URL_PATH);
         if (1 !== preg_match('~/(?:bac-a-sable|en/playground)/(symfony|laravel|php)/?$~', $path, $match)) {
@@ -164,6 +171,8 @@ final readonly class PlaygroundTools
         if (null === $project) {
             throw new ToolCallException('This link carries no code, or it is damaged (incomplete copy?): it must contain "#code=" followed by the whole code.');
         }
+
+        $this->analytics->track('mcp-lien-lu', ['framework' => $match[1]], $context);
 
         return [
             'framework' => $match[1],
