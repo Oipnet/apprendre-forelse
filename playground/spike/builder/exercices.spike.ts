@@ -54,6 +54,7 @@ describe.each(['php-wasm', 'builder'] as Runtime[])('%s', (runtime) => {
 		const solution = await p.runTests();
 		const compte = (r: typeof depart) => `${r.cases.filter((c) => c.status === 'passed').length}/${r.cases.length}`;
 		const echecs = solution.cases.filter((c) => c.status !== 'passed').map((c) => `${c.name} : ${(c.message ?? '').split('\n')[0].slice(0, 100)}`);
+		if (echecs.length) console.log(`--- ${runtime} ${id}\n${solution.output.slice(0, 3000)}`);
 		verdicts.set(`${runtime} ${id}`, `${compte(depart)} ${compte(solution)}`);
 		lignes.push(`| ${runtime} | ${id} | ${compte(depart)} | ${compte(solution)}${echecs.length ? ` ❌ ${echecs.join(' ; ').replace(/\|/g, '\\|')}` : ''}${solution.cases.length ? '' : ` ❌ ${solution.output.replace(/\s+/g, ' ').slice(0, 200)}`} | ${Math.round(performance.now() - debut)} ms |`);
 		expect.soft(solution.cases.length).toBeGreaterThan(0);
