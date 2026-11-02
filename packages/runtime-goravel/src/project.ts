@@ -179,7 +179,9 @@ function summarize(message: string): string {
 	message = message.split(/\n(?=\S+\.go:\d+:)/)[0];
 	const messages = /Messages:\s+([\s\S]*)$/.exec(message);
 	const error = /Error:\s+([\s\S]*?)(?:\n\s*(?:Test|Messages):|$)/.exec(message);
-	const text = messages?.[1] ?? error?.[1] ?? message.replace(/^\S+_test\.go:\d+:\s*/gm, '');
+	// Sans testify (t.Fatalf), la ligne commence par son emplacement : celui du test, ou « value.go:365 » quand
+	// l'interpréteur ne connaît pas l'appelant. Ni l'un ni l'autre n'aide l'apprenant.
+	const text = messages?.[1] ?? error?.[1] ?? message.replace(/^\S+\.go:\d+:\s*/gm, '');
 	const clean = text.trim();
 	return clean.length > 400 ? `${clean.slice(0, 400)}…` : clean;
 }
