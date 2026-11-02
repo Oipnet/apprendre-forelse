@@ -37,7 +37,7 @@ export interface ExercisePayload {
 	tests: Record<string, string>;
 	environment: {
 		id: string;
-		phpVersion: '8.4' | '';
+		phpVersion: string;
 		/** Extensions que le PHP du navigateur charge en plus (intl). Absent d'un moteur antérieur. */
 		phpExtensions?: string[];
 		/** Les API d'IA que le PHP du navigateur peut appeler (parcours IA) ; absent ou vide pour les autres. */

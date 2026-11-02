@@ -46,7 +46,13 @@ async function download(url: string, progress: (p: BootProgress) => void): Promi
  * de tests re-télécharge le .wasm et échoue si le serveur n'est plus joignable.
  */
 let compiledPhp: Promise<WebAssembly.Module> | undefined;
-function compilePhpWasm(version: '8.4'): Promise<WebAssembly.Module> {
+
+/**
+ * La seule version de PHP embarquée (voir vite.config.ts), celle du serveur. Un environnement qui demande une version
+ * antérieure (« php: '8.4' » d'un pack plus ancien) tourne sur celle-ci : PHP 8.5 exécute le code écrit pour 8.4.
+ */
+const BROWSER_PHP = '8.5';
+function compilePhpWasm(version: typeof BROWSER_PHP): Promise<WebAssembly.Module> {
 	compiledPhp ??= getPHPLoaderModule(version).then(async ({ dependencyFilename }) => {
 		try {
 			return await WebAssembly.compileStreaming(fetch(dependencyFilename));
@@ -73,9 +79,9 @@ export function servePhpWorker(network: PhpNetwork | null = null): void {
 	});
 }
 
-async function loadPhp(requested: string, extensions: string[], hosts: string[], network: PhpNetwork | null): Promise<PHP> {
+async function loadPhp(_requested: string, extensions: string[], hosts: string[], network: PhpNetwork | null): Promise<PHP> {
 	if (hosts.length && !network) throw new Error(m.runtime.networkUnavailable);
-	const version = requested as '8.4';
+	const version = BROWSER_PHP;
 	const wasm = await compilePhpWasm(version);
 	// Emscripten n'offre pas de voie d'échec à instantiateWasm : sans elle, une instanciation refusée (mémoire Wasm
 	// indisponible, plausible sur mobile) laissait le démarrage en suspens pour toujours.

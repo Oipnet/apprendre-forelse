@@ -35,7 +35,7 @@ final class PhpProfile implements FrameworkProfileProvider
             namespaceRoots: ['src' => 'App', 'tests' => 'App\\Tests'],
             lessonLanguages: '```php, ```bash',
             drafting: PhpWasm::DRAFTING.<<<'TEXTE'
-                Conventions de ce projet (PHP 8.4 sans framework), à respecter même si tu connais d'autres façons de faire :
+                Conventions de ce projet (PHP 8.5 sans framework), à respecter même si tu connais d'autres façons de faire :
                 - public/index.php est le contrôleur frontal : il charge vendor/autoload.php et route avec un `match`
                   sur le chemin de l'URL. Les classes vivent dans src/ (espace de noms App\, chargé par Composer).
                 - Les vues sont des fichiers PHP de templates/, et toute valeur affichée passe par htmlspecialchars().

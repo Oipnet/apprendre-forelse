@@ -11,7 +11,7 @@ namespace App\Content\Framework\Profiles;
 final class PhpWasm
 {
     public const string DRAFTING = <<<'TEXTE'
-        Exécution : PHP 8.4 compilé en WebAssembly, dans le navigateur de l'apprenant.
+        Exécution : PHP 8.5 compilé en WebAssembly, dans le navigateur de l'apprenant.
         - php-wasm n'a pas l'extension intl : évite ce qui en dépend (MoneyType, NumberType sans
           html5, dates localisées).
         - Les liens `docs` peuvent aussi pointer vers le manuel PHP (https://www.php.net/manual/fr/).

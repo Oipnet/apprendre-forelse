@@ -8,5 +8,5 @@
 id: symfony-8-ia
 extends: symfony-8-app
 title: Symfony 8.1 — Symfony AI (platform, agent, store), MCP, Doctrine (SQLite), Security, PHPUnit
-php: '8.4'
+php: '8.5'
 network: [anthropic, gemini, mistral, openai]

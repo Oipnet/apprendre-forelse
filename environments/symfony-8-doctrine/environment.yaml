@@ -3,4 +3,4 @@
 id: symfony-8-doctrine
 extends: symfony-8
 title: Symfony 8.1 — Twig, Doctrine ORM (SQLite), PHPUnit
-php: '8.4'
+php: '8.5'

@@ -95,7 +95,7 @@ faq:
         reponse: "You don't watch anything: you write all the code yourself, on a project that grows exercise after exercise. The time you spend is practice time."
     a_jour:
         question: "Is it up to date?"
-        reponse: "Each track targets the current versions (Symfony 8 and PHP 8.4 for the first one), and the exercises are checked automatically with every engine update."
+        reponse: "Each track targets the current versions (Symfony 8 and PHP 8.5 for the first one), and the exercises are checked automatically with every engine update."
     hebergement:
         question: "Can I host it myself?"
         reponse: "Yes, eventually: the engine is licensed under the AGPL and its code will be published at launch. The tracks are the paid content: that's what you buy."

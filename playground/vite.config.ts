@@ -36,12 +36,12 @@ const nodeShims = [
 ];
 
 /**
- * Seul PHP 8.4 est embarqué : les autres versions pointent vers un module vide.
+ * Seul PHP 8.5 est embarqué : les autres versions pointent vers un module vide.
  * Les « overrides » npm évitent déjà de télécharger leurs binaires, mais npm enregistre
  * mal le chemin de ces paquets locaux (liens cassés après `npm ci`) : l'alias ne dépend pas d'eux.
  */
 const unusedPhpVersions = {
-	find: /^@php-wasm\/(web|node)-(5-2|7-4|8-0|8-1|8-2|8-3|8-5)$/,
+	find: /^@php-wasm\/(web|node)-(5-2|7-4|8-0|8-1|8-2|8-3|8-4)$/,
 	replacement: fileURLToPath(new URL('./stubs/php-wasm-unused/index.js', import.meta.url)),
 };
 

@@ -88,7 +88,7 @@ export class PhpWasmProject implements Runtime {
 	}
 
 	private phpVersion(): string {
-		return this.env.options?.phpVersion || '8.4';
+		return this.env.options?.phpVersion || '8.5';
 	}
 
 	/** Les extensions que l'environnement demande en plus (option « phpExtensions », séparée par des virgules). */

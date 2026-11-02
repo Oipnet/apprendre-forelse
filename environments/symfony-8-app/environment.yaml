@@ -3,4 +3,4 @@
 id: symfony-8-app
 extends: symfony-8
 title: Symfony 8.1 — Twig, Doctrine (SQLite), Form, Validator, Security, Serializer, Messenger, Mailer, Workflow, PHPUnit
-php: '8.4'
+php: '8.5'
