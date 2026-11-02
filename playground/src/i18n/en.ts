@@ -96,6 +96,7 @@ export const en: Messages = {
 		tree: 'Project files',
 		project: 'Project',
 		newFile: 'New file',
+		download: 'Download the project (.zip)',
 		console: 'Console',
 		requests: 'Requests',
 		database: 'Database',
@@ -337,6 +338,7 @@ export const en: Messages = {
 	editor: {
 		readonlyTitle: (path: string) => `${path} (read-only)`,
 		readonlyMessage: 'This file is provided by the exercise and cannot be edited.',
+		composerReadonlyMessage: 'Dependencies are already installed in the browser: PHP runs there in WebAssembly, with no access to Packagist, so editing composer.json would not install anything. Download the project to keep working on it locally (composer install).',
 	},
 
 	completion: {

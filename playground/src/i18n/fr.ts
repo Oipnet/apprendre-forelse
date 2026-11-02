@@ -99,6 +99,7 @@ export const fr = {
 		tree: 'Fichiers du projet',
 		project: 'Projet',
 		newFile: 'Créer un fichier',
+		download: 'Télécharger le projet (.zip)',
 		console: 'Console',
 		requests: 'Requêtes',
 		database: 'Base',
@@ -342,6 +343,7 @@ export const fr = {
 	editor: {
 		readonlyTitle: (path: string) => `${path} (lecture seule)`,
 		readonlyMessage: 'Ce fichier est fourni par l\'exercice et ne peut pas être modifié.',
+		composerReadonlyMessage: 'Les dépendances sont déjà installées dans le navigateur : PHP y tourne en WebAssembly, sans accès à Packagist, donc modifier composer.json n\'installerait rien. Téléchargez le projet pour le faire évoluer chez vous (composer install).',
 	},
 
 	completion: {

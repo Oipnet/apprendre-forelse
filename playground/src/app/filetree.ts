@@ -7,12 +7,18 @@ interface Node {
 	children?: Map<string, Node>;
 }
 
+/** Des fichiers techniques que l'explorateur ne montre pas (ils restent dans le projet et le téléchargement). */
+const CACHES = new Set(['.gitkeep', '.keep']);
+
 function build(paths: string[]): Map<string, Node> {
 	const racine = new Map<string, Node>();
 	for (const path of paths) {
 		let niveau = racine;
 		const segments = path.split('/');
+		// Un .gitkeep ne sert qu'à garder un dossier vide dans git : le dossier s'affiche, pas lui.
+		const garderLeDossierSeulement = CACHES.has(segments[segments.length - 1]);
 		segments.forEach((name, index) => {
+			if (garderLeDossierSeulement && index === segments.length - 1) return;
 			const chemin = segments.slice(0, index + 1).join('/');
 			const dossier = index < segments.length - 1;
 			let node = niveau.get(name);

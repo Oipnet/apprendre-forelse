@@ -8,8 +8,17 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Télécharger le projet** : un bouton ⤓ dans l'explorateur de l'éditeur (exercices et bac à sable) télécharge le
+  projet en .zip, tel que l'explorateur le montre (sans vendor/ ni caches, sans les tests cachés), avec les dernières
+  frappes.
+
 ### Modifié
 
+- **Explorateur** : les `.gitkeep` ne s'affichent plus ; leur dossier reste visible.
+- **composer.json en lecture seule** : le message de l'éditeur explique pourquoi (dépendances préinstallées dans le
+  navigateur, pas d'accès à Packagist) et renvoie au téléchargement du projet.
 - **Encart « Écrit par »** : photo de 80 px alignée en haut, présentation en plus petit et en gris, et « Me contacter »
   en bouton principal (aussi sur la page auteur).
 

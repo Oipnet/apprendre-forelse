@@ -1384,10 +1384,14 @@ dialog.packages-dialog > p.packages-request {
 		display: none;
 	}
 }
-.filetree-head:has(.filetree-new:not([hidden])) {
+.filetree-head {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+}
+.filetree-actions {
+	display: flex;
+	gap: 0.25rem;
 }
 .filetree-new {
 	padding: 0 0.35rem;
