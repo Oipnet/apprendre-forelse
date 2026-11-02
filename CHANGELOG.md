@@ -8,6 +8,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Encart « Écrit par »** : photo de 80 px alignée en haut, présentation en plus petit et en gris, et « Me contacter »
+  en bouton principal (aussi sur la page auteur).
+
 ## 3.28.0 — 2026-11-02
 
 ### Ajouté
