@@ -360,6 +360,15 @@ jobs:
             type=edge,branch=main
             type=sha,format=long,prefix=
 
+      # Le Caddyfile n'est lu qu'au démarrage du conteneur : une erreur de syntaxe ne se verrait qu'au déploiement.
+      # « adapt » le traduit en JSON sans rien démarrer, avec la même FrankenPHP que l'image (Dockerfile).
+      - name: Syntaxe du Caddyfile
+        run: |
+          base=$(sed -n 's/^FROM \(dunglas\/frankenphp:[^ ]*\) AS php_base$/\1/p' Dockerfile)
+          docker run --rm -e SERVER_NAME=:80 -e APP_URL=https://exemple.test \
+            -v "$PWD/docker/Caddyfile:/etc/frankenphp/Caddyfile:ro" "$base" \
+            frankenphp adapt --config /etc/frankenphp/Caddyfile --adapter caddyfile > /dev/null
+
       - name: Construire l'image
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
