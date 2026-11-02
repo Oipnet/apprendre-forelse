@@ -46,6 +46,8 @@ Relais /sandbox (origine bac à sable) ── Service Worker ── iframe d'ape
 
 Le code de l'apprenant n'est **jamais exécuté sur le serveur** : PHP tourne dans le bac à sable WebAssembly du navigateur, sans accès au disque ni au réseau. Le playground offre aussi une **console** du projet (`bin/console` pour Symfony : Doctrine, `debug:router`… ; `php artisan` pour Laravel : `migrate`, `route:list`…), exécutée dans ce même bac à sable.
 
+Le bac à sable (`/bac-a-sable`, `/en/playground`) a aussi un **serveur MCP** sur `/mcp` (HTTP, sans compte), pour les assistants IA (Claude, ChatGPT, Cursor…) : `get_starter` (projet de départ, chemins modifiables, paquets), `create_sandbox` (fabrique le lien partagé, rien n'est stocké) et `read_sandbox` (relit un lien). Voir `App\Mcp\PlaygroundTools` ; le lien suit le format de `playground/src/app/scratch.ts` (`App\Scratch\ScratchLink`). Quota par adresse IP : limiteur `mcp`. Ajout dans Claude Code : `claude mcp add --transport http forelse https://apprendre.forelse.fr/mcp`.
+
 ## Démarrer en local
 
 Prérequis : PHP 8.5 (avec `pdo_pgsql`), Composer, Node.js 22+, PostgreSQL 15+.

@@ -75,3 +75,8 @@ framework:
             policy: sliding_window
             limit: 20
             interval: '1 hour'
+        # Serveur MCP du bac à sable (/mcp), par adresse IP : une conversation fait quelques appels, pas des milliers.
+        mcp:
+            policy: sliding_window
+            limit: 300
+            interval: '1 hour'

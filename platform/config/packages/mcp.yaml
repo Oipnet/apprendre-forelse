@@ -1,0 +1,22 @@
+# Le serveur MCP du bac à sable (https://<instance>/mcp) : les assistants IA (Claude, ChatGPT, Cursor…) y fabriquent
+# des liens de bac à sable Symfony, Laravel ou PHP et relisent ceux qu'on leur donne. Voir App\Mcp\PlaygroundTools.
+mcp:
+    servers:
+        forelse:
+            name: 'apprendre-forelse-playground'
+            version: '1.0.0'
+            description: 'Run Symfony, Laravel or plain PHP code in the browser, from a shareable link.'
+            website_url: 'https://apprendre.forelse.fr/en/playground'
+            instructions: |
+                Creates links to an online PHP playground (Symfony 8, Laravel 13, or plain PHP 8.4 with Composer
+                autoloading) that runs in the browser with WebAssembly: no account, nothing to install. Use it when the
+                user wants to try, demo, share or debug a small PHP example. Call get_starter for the starting project
+                and the editable paths, then create_sandbox with only the files you change, and give the user the link.
+                Use read_sandbox to see the code behind a playground link. Pass language "fr" to French-speaking users.
+            registry:
+                tools: ['App\Mcp\']
+            http:
+                path: /mcp
+                # La protection contre le DNS rebinding sert aux serveurs locaux : celui-ci est public, sans compte ni
+                # donnée privée, et doit répondre sur le domaine de chaque instance.
+                allowed_hosts: false

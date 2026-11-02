@@ -26,6 +26,16 @@ describe('le code dans l’adresse', () => {
 		expect(decodeFragment(fragmentOf({ v: 1, files, packages: ['a/b', 42] }))?.packages).toEqual(['a/b']);
 	});
 
+	it('relit un lien fabriqué par le serveur MCP (platform/src/Scratch/ScratchLink.php, gzdeflate)', () => {
+		const fromTheServer =
+			'code=q1YqU7Iy1FFKy8xJLVayqlYqyi8tSS3WL09N0ivIKFCyUrKxB9IxeTF5pcWpCp45OaW5mXmJJakxMcGlBQX5RSUxMW6JyYkpqcUxMUEgvdYgtWCWlVV6aolGjJJ-jJKOQlqegoamgq2dQoySU35eVn5pkcLhlQof5vd1xihpAvUo1dYCAA';
+
+		expect(decodeFragment(`#${fromTheServer}`)).toEqual({
+			files: { 'routes/web.php': '<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\nRoute::get("/", fn () => "Bonjour é 🎉");\n' },
+			packages: [],
+		});
+	});
+
 	it('ne garde que les fichiers modifiés ou créés depuis le départ', () => {
 		expect(changedFiles({ a: 'départ', b: 'modifié', c: 'nouveau' }, { a: 'départ', b: 'avant' })).toEqual({ b: 'modifié', c: 'nouveau' });
 	});
