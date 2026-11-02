@@ -638,7 +638,7 @@ final class ContentRepositoryTest extends TestCase
         $this->assertSame(['pratique/programme', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]', 'pratique/en-preparation', 'pratique/nouveaute-recente', 'pratique/point-precis', 'pratique/cote-laravel', 'pratique/exemple-goravel-salut'], $ids($repository->select('pratique')));
         $this->assertSame(['pratique/point-precis'], $ids($repository->select('pratique/point-precis')));
         $this->assertCount(5, $repository->select('pratique-test'), 'Un pack comprend ses exercices de Pratique.');
-        $this->assertSame(['decouverte/01-bonjour', 'decouverte/01-bonjour [en]', 'decouverte/02-bonjour-prenom', 'decouverte/02-bonjour-prenom [en]', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]'], $ids($repository->select('demo')), 'Chaque traduction se vérifie aussi.');
+        $this->assertSame(['decouverte/01-bonjour', 'decouverte/01-bonjour [en]', 'decouverte/02-bonjour-prenom', 'decouverte/02-bonjour-prenom [en]', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]', 'pratique/exemple-goravel-salut'], $ids($repository->select('demo')), 'Chaque traduction se vérifie aussi.');
         $this->assertContains('pratique/point-precis', $ids($repository->select(null)));
         $this->assertSame(['decouverte/01-bonjour', 'decouverte/01-bonjour [en]', 'decouverte/02-bonjour-prenom', 'decouverte/02-bonjour-prenom [en]'], $ids($repository->select(null, 'bonjour')), 'Un chapitre exclut la Pratique.');
     }
