@@ -3,6 +3,7 @@
 Un projet Laravel 13 tourne dans votre navigateur, sans rien installer : modifiez le code, l'aperçu se met à jour à chaque frappe.
 
 - **Le code** : les routes `routes/web.php` et la vue `resources/views/accueil.blade.php` sont ouvertes. Le bouton ＋ de l'explorateur crée des contrôleurs, des modèles ou d'autres vues.
+- **La configuration** : `config/*.php` et `bootstrap/app.php` (middlewares, exceptions) se modifient depuis l'explorateur. Les paquets installés, eux, ne changent pas.
 - **L'aperçu** : tapez une adresse dans sa barre, par exemple `/bonjour/Ada`.
 - **La console** : l'onglet Console lance `php artisan`, par exemple `route:list`.
 - **Exécuter** recharge l'aperçu ; **Nouveau projet** repart du projet de départ.

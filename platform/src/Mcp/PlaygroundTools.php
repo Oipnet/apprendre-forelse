@@ -41,7 +41,8 @@ final readonly class PlaygroundTools
     /**
      * Returns the starting project of a playground (Symfony 8, Laravel 13 or plain PHP 8.4 with Composer autoloading):
      * its files, the paths you may create or edit, and, for plain PHP, the Composer packages you may add. Call it
-     * before create_sandbox to write code that fits the project.
+     * before create_sandbox to write code that fits the project. Configuration files (config/, bootstrap/) are listed
+     * in config_files; ask for their content with include_config when you need to change one.
      *
      * @return array<string, mixed>
      */
@@ -51,10 +52,15 @@ final readonly class PlaygroundTools
         ScratchFramework $framework,
         #[Schema(description: 'Language of the starting project and its page: "fr" for a French-speaking user, else "en".', enum: ['en', 'fr'])]
         string $language = 'en',
+        #[Schema(description: 'Also return the content of the configuration files (config/, bootstrap/), e.g. to reproduce a bug that depends on the configuration.')]
+        bool $include_config = false,
         ?RequestContext $context = null,
     ): array {
         $exercise = $this->projects->exercise($framework, $this->locale($language));
-        $this->analytics->track('mcp-depart', ['framework' => $framework->value, 'langue' => $this->locale($language)], $context);
+        $this->analytics->track('mcp-depart', ['framework' => $framework->value, 'langue' => $this->locale($language), 'config' => $include_config], $context);
+        // La configuration (surtout celle de Laravel) pèse lourd : elle n'est envoyée qu'à la demande.
+        $files = $this->content->startingFiles($exercise);
+        $config = array_filter($files, self::isConfig(...), \ARRAY_FILTER_USE_KEY);
 
         return [
             'framework' => $framework->value,
@@ -62,11 +68,12 @@ final readonly class PlaygroundTools
             'about' => $exercise->instructions,
             'open' => $exercise->open,
             'editable_paths' => $exercise->editable,
-            'files' => $this->content->startingFiles($exercise),
+            'files' => $include_config ? $files : array_diff_key($files, $config),
+            'config_files' => array_keys($config),
             'packages' => $this->catalog($framework),
             'notes' => [
-                'Only files matching editable_paths can be shared; "*" does not cross a "/".',
-                'Framework configuration, composer.json and vendor/ are fixed, and there is no network: "about" says what the playground includes (database, console…).',
+                'Only files matching editable_paths can be shared; "*" does not cross a "/". The configuration can be changed, but the installed packages cannot (composer.json, config/bundles.php and vendor/ are fixed), and there is no network: "about" says what the playground includes (database, console…).',
+                'To reproduce a bug from the user\'s project, keep only the code and configuration that trigger it, adapted to these paths.',
                 'The preview serves the app at "/"; the user can type other addresses, like /bonjour/Ada.',
             ],
         ];
@@ -181,6 +188,11 @@ final readonly class PlaygroundTools
             'packages' => $project['packages'],
             'note' => 'Only the files that differ from the starting project are listed: get_starter returns the others.',
         ];
+    }
+
+    private static function isConfig(int|string $path): bool
+    {
+        return str_starts_with((string) $path, 'config/') || str_starts_with((string) $path, 'bootstrap/');
     }
 
     private function locale(string $language): string

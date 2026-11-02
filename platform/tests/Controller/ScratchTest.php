@@ -88,12 +88,14 @@ final class ScratchTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSame('symfony-8-doctrine', $payload['environment']['id'], 'Le bac à sable Symfony a Doctrine, sur SQLite.');
         $this->assertSame('src/Controller/AccueilController.php', $payload['open']);
-        $this->assertSame(['src/Controller/AccueilController.php', 'templates/accueil.html.twig'], array_keys($payload['files']));
+        $this->assertSame(['src/Controller/AccueilController.php', 'templates/accueil.html.twig'], array_values(array_filter(array_keys($payload['files']), static fn (string $path) => !str_starts_with($path, 'config/'))));
+        $this->assertArrayHasKey('config/services.yaml', $payload['files'], 'La configuration modifiable fait partie du départ : « Nouveau projet » la remet.');
         $this->assertStringContainsString("#[Route('/', name: 'accueil')]", $payload['files']['src/Controller/AccueilController.php']);
         $this->assertSame([], $payload['objectives']);
         $this->assertSame([], $payload['tests']);
         $this->assertSame([], $payload['hints']);
-        $this->assertNotContains('config/packages/*.yaml', $payload['editable'], 'Un lien partagé ne touche pas à la configuration du framework.');
+        $this->assertContains('config/packages/*.yaml', $payload['editable'], 'Reproduire un problème demande souvent de toucher à la configuration.');
+        $this->assertNotContains('config/bundles.php', $payload['editable']);
         $this->assertStringNotContainsString('<h1', $payload['instructionsHtml']);
     }
 
