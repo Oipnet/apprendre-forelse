@@ -33,7 +33,7 @@ final class McpServerTest extends WebTestCase
     {
         $init = $this->handshake();
 
-        $this->assertSame('apprendre-forelse-playground', $init['result']['serverInfo']['name']);
+        $this->assertSame('php-playground', $init['result']['serverInfo']['name']);
         $this->assertStringContainsString('create_sandbox', $init['result']['instructions']);
 
         $tools = $this->call('tools/list')['result']['tools'];

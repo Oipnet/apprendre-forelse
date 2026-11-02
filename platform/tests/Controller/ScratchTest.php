@@ -33,7 +33,7 @@ final class ScratchTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h1', 'The playground from your AI assistant');
         $this->assertSame('http://localhost/mcp', $crawler->filter('.mcp-url')->text());
-        $this->assertStringContainsString('claude mcp add --transport http forelse http://localhost/mcp', $crawler->filter('main')->text());
+        $this->assertStringContainsString('claude mcp add --transport http php-playground http://localhost/mcp', $crawler->filter('main')->text());
         $this->assertStringContainsString('/hello/{name}', $crawler->filter('main')->text(), 'Les accolades de l\'exemple ne sont pas lues comme un paramètre.');
         $this->assertFalse($client->getResponse()->headers->has('X-Robots-Tag'), 'La page s\'indexe.');
     }

@@ -3,7 +3,7 @@
 
 {# Le serveur MCP du bac à sable (App\Mcp\PlaygroundTools) : de quoi l'ajouter à un assistant IA. #}
 {% block body %}
-    {% set mcp_url = url('_mcp_endpoint_forelse') %}
+    {% set mcp_url = url('_mcp_endpoint_playground') %}
     <main class="scratch">
         <div class="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
             <p class="text-sm font-medium text-ink-muted"><a href="{{ path('app_scratch') }}">{{ 'bac_a_sable.retour'|trans }}</a></p>
@@ -22,7 +22,7 @@
                 </div>
                 <div>
                     <dt class="font-semibold">Claude Code</dt>
-                    <dd><pre class="mt-2 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>claude mcp add --transport http forelse {{ mcp_url }}</code></pre></dd>
+                    <dd><pre class="mt-2 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>claude mcp add --transport http php-playground {{ mcp_url }}</code></pre></dd>
                 </div>
                 <div>
                     <dt class="font-semibold">ChatGPT</dt>
@@ -31,12 +31,12 @@
                 <div>
                     <dt class="font-semibold">Cursor</dt>
                     <dd class="mt-1 text-ink-muted">{{ 'bac_a_sable.ia.cursor'|trans }}</dd>
-                    <dd><pre class="mt-2 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>{{ {mcpServers: {forelse: {url: mcp_url}}}|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</code></pre></dd>
+                    <dd><pre class="mt-2 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>{{ {mcpServers: {"php-playground": {url: mcp_url}}}|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</code></pre></dd>
                 </div>
                 <div>
                     <dt class="font-semibold">VS Code</dt>
                     <dd class="mt-1 text-ink-muted">{{ 'bac_a_sable.ia.vscode'|trans }}</dd>
-                    <dd><pre class="mt-2 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>{{ {servers: {forelse: {type: 'http', url: mcp_url}}}|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</code></pre></dd>
+                    <dd><pre class="mt-2 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>{{ {servers: {"php-playground": {type: 'http', url: mcp_url}}}|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</code></pre></dd>
                 </div>
             </dl>
 
