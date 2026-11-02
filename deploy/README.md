@@ -12,6 +12,11 @@ Chaque instance a son `.env`, donc son nom de projet Docker, sa base et ses volu
 copiés par la CI (`.github/workflows/ci.yml`) ; le proxy, lui, s'installe une fois.
 
 - `compose.yaml` : les services d'une instance. Seul, l'application tient elle-même 80/443 (l'ancien fonctionnement).
+  Chaque service n'est que sur les réseaux dont il a besoin (tableau en bas du fichier) : la base, Meilisearch et
+  Umami ne se voient pas tous, et la base et la recherche n'ont pas accès à Internet. Au premier déploiement qui les
+  apporte, tous les conteneurs sont recréés (quelques secondes de coupure) ; l'ancien réseau `<projet>_default` reste,
+  vide : `docker network rm forelse_default` (production) ou `forelse-staging_default` (préproduction), noms exacts
+  dans `docker network ls`.
 - `derriere-front.yaml` : l'instance passe derrière le proxy (plus de port publié, réseau `front`).
 - `preproduction.yaml` : ce qui distingue la préproduction (pas d'indexation, pas d'Umami).
 - `deployer.sh` : copie de la base, migrations, bascule, contrôle de `/sante`, retour à l'image précédente en cas d'échec. La copie (`pg_dump -Fc`) est gardée dans `sauvegardes/` du dossier de l'instance, les 10 plus récentes (`DEPLOY_DUMPS_DIR`, `DEPLOY_DUMPS_KEEP`). Pour restaurer : `docker compose exec -T db sh -c 'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < sauvegardes/avant-deploiement-….dump`. Ces copies restent sur le VPS : la sauvegarde hors du serveur est `sauvegarde/` (section 5).
