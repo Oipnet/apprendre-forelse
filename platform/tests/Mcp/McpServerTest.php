@@ -55,6 +55,9 @@ final class McpServerTest extends WebTestCase
         $this->assertContains('src/*/*.php', $starter['editable_paths']);
         $this->assertSame([], $starter['packages'], 'Symfony arrive avec ses paquets.');
         $this->assertStringStartsWith('# Symfony playground', $starter['about']);
+        $this->assertContains('config/services.yaml', $starter['config_files']);
+        $this->assertArrayNotHasKey('config/services.yaml', $starter['files'], 'La configuration n\'est envoyée qu\'à la demande.');
+        $this->assertStringContainsString('App\\:', $this->tool('get_starter', ['framework' => 'symfony', 'include_config' => true])['files']['config/services.yaml']);
 
         $php = $this->tool('get_starter', ['framework' => 'php', 'language' => 'fr']);
         $this->assertStringStartsWith('http://localhost/bac-a-sable/php?', $php['url']);
@@ -86,12 +89,28 @@ final class McpServerTest extends WebTestCase
         $this->assertSame(['nesbot/carbon'], $read['packages']);
     }
 
+    public function testUnBugQuiDependDeLaConfigurationSeReproduit(): void
+    {
+        $this->handshake();
+        $services = $this->tool('get_starter', ['framework' => 'symfony', 'include_config' => true])['files']['config/services.yaml'];
+        $changed = $services."\n    App\\Service\\Horloge:\n        arguments: ['%kernel.debug%']\n";
+
+        $created = $this->tool('create_sandbox', ['framework' => 'symfony', 'files' => [
+            'config/services.yaml' => $changed,
+            'config/packages/framework.yaml' => $this->tool('get_starter', ['framework' => 'symfony', 'include_config' => true])['files']['config/packages/framework.yaml'],
+        ]]);
+
+        $this->assertSame(['config/services.yaml'], $created['files']);
+        $this->assertSame(['config/packages/framework.yaml'], $created['unchanged']);
+        $this->assertSame(['config/services.yaml' => $changed], (new ScratchLink())->decode($created['url'])['files']);
+    }
+
     public function testCeQueLaPageNAccepteraitPasEstRefuseAvecLaRaison(): void
     {
         $this->handshake();
 
-        $config = $this->toolError('create_sandbox', ['framework' => 'symfony', 'files' => ['config/packages/framework.yaml' => 'framework: ~']]);
-        $this->assertStringContainsString('config/packages/framework.yaml', $config);
+        $config = $this->toolError('create_sandbox', ['framework' => 'symfony', 'files' => ['config/bundles.php' => '<?php return [];']]);
+        $this->assertStringContainsString('config/bundles.php', $config, 'Les bundles dépendent des paquets installés.');
         $this->assertStringContainsString('src/*/*.php', $config, 'L\'assistant apprend ce qu\'il peut modifier.');
 
         $this->assertStringContainsString('no package can be added', $this->toolError('create_sandbox', ['framework' => 'laravel', 'files' => ['routes/web.php' => '<?php'], 'packages' => ['nesbot/carbon']]));
