@@ -2,10 +2,15 @@
 
 namespace App\Tests\Mcp;
 
+use App\Instance\Analytics;
+use App\Mcp\McpAnalytics;
 use App\Scratch\ScratchLink;
+use Psr\Log\NullLogger;
 use App\Tests\DatabaseTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 /**
  * Le serveur MCP du bac à sable (/mcp), appelé comme un assistant IA l'appelle : poignée de main, liste des outils,
@@ -110,6 +115,37 @@ final class McpServerTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(429);
         $this->assertResponseHasHeader('Retry-After');
+    }
+
+    public function testChaqueLienCreeEstMesureDansUmamiSansLeCode(): void
+    {
+        $sent = [];
+        $umami = new MockHttpClient(static function (string $method, string $url, array $options) use (&$sent) {
+            $sent[] = ['url' => $url, 'headers' => $options['headers'], 'body' => json_decode($options['body'], true)];
+
+            return new MockResponse('{}');
+        });
+        $this->client->disableReboot();
+        static::getContainer()->set(McpAnalytics::class, new McpAnalytics(new Analytics('/mesure/traceur.js', 'site-forelse'), $umami, static::getContainer()->get('request_stack'), new NullLogger()));
+        $this->handshake();
+
+        $this->tool('create_sandbox', ['framework' => 'laravel', 'files' => ['routes/web.php' => '<?php // secret'], 'language' => 'fr']);
+
+        $this->assertCount(1, $sent);
+        $this->assertSame('http://umami:3000/api/send', $sent[0]['url']);
+        $this->assertContains('User-Agent: '.McpAnalytics::USER_AGENT, $sent[0]['headers']);
+        $this->assertSame('site-forelse', $sent[0]['body']['payload']['website']);
+        $this->assertSame('mcp-lien-cree', $sent[0]['body']['payload']['name']);
+        $this->assertSame(['framework' => 'laravel', 'langue' => 'fr', 'fichiers' => 1, 'paquets' => 0, 'client' => 'test'], $sent[0]['body']['payload']['data'], 'Le client annoncé à la poignée de main, et rien du code.');
+    }
+
+    public function testUnUmamiInjoignableNeFaitPasEchouerLOutil(): void
+    {
+        $this->client->disableReboot();
+        static::getContainer()->set(McpAnalytics::class, new McpAnalytics(new Analytics('/mesure/traceur.js', 'site-forelse'), new MockHttpClient(new MockResponse('', ['error' => 'Connexion refusée'])), static::getContainer()->get('request_stack'), new NullLogger()));
+        $this->handshake();
+
+        $this->assertSame('php', $this->tool('read_sandbox', ['url' => 'https://apprendre.forelse.fr/bac-a-sable/php#'.(new ScratchLink())->encode(['public/index.php' => '<?php'])])['framework']);
     }
 
     /** @return array<string, mixed> la réponse à « initialize » */
