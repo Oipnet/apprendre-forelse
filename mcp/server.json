@@ -1,0 +1,19 @@
+{
+    "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+    "name": "io.github.Oipnet/php-playground",
+    "title": "PHP, Symfony & Laravel playground",
+    "description": "Create shareable links to run Symfony, Laravel or plain PHP code in the browser, no install.",
+    "version": "1.0.0",
+    "websiteUrl": "https://apprendre.forelse.fr/en/playground/ai",
+    "repository": {
+        "url": "https://github.com/Oipnet/apprendre-forelse",
+        "source": "github",
+        "subfolder": "platform"
+    },
+    "remotes": [
+        {
+            "type": "streamable-http",
+            "url": "https://apprendre.forelse.fr/mcp"
+        }
+    ]
+}

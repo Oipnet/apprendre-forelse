@@ -31,6 +31,7 @@ final readonly class SearchIndexing
         'app_scratch_symfony',
         'app_scratch_laravel',
         'app_scratch_php',
+        'app_scratch_ai',
         'app_blog',
         'app_article',
         'app_legal_notice',

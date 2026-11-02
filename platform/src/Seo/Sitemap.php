@@ -162,6 +162,7 @@ final readonly class Sitemap
                 foreach (ScratchFramework::cases() as $framework) {
                     $entries[] = $this->entry('app_scratch_'.$framework->value, ['_locale' => $locale], self::SCRATCH_UPDATED_AT);
                 }
+                $entries[] = $this->entry('app_scratch_ai', ['_locale' => $locale], self::SCRATCH_UPDATED_AT);
             }
 
             $entries[] = $this->entry('app_organizations', [], self::PAGES_UPDATED_AT);

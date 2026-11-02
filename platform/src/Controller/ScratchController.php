@@ -63,6 +63,14 @@ final class ScratchController extends AbstractController
         return $this->play(ScratchFramework::Php, $request, $projects, $configs, $markdown);
     }
 
+    /** Le bac à sable depuis un assistant IA : l'adresse du serveur MCP (/mcp) et comment l'ajouter à chaque client. */
+    #[Route(['fr' => '/bac-a-sable/ia', 'en' => '/en/playground/ai'], name: 'app_scratch_ai', methods: ['GET'])]
+    #[Seo('bac_a_sable.ia.titre', 'bac_a_sable.ia.description', breadcrumb: 'bac_a_sable.ia.fil_ariane', domain: 'seo')]
+    public function ai(): Response
+    {
+        return $this->render('scratch/ai.html.twig', ['frameworks' => ScratchFramework::cases()]);
+    }
+
     /** Le projet de départ, au format d'un exercice (contrat : playground/src/app/types.ts, ExercisePayload). */
     #[Route(['fr' => '/api/bac-a-sable/{framework}', 'en' => '/en/api/bac-a-sable/{framework}'], name: 'api_scratch', methods: ['GET'], format: 'json')]
     public function project(ScratchFramework $framework, Request $request, ScratchProjects $projects, ExercisePayloadFactory $payloads): JsonResponse

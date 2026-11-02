@@ -95,15 +95,17 @@ final class SearchIndexingTest extends WebTestCase
             'http://localhost/notions',
             // Les notions du contenu traduit : l'index anglais, sans « Controller » (pas d'intro anglaise).
             'http://localhost/en/concepts',
-            // Le bac à sable, dans les deux langues : le choix du framework, puis un projet par framework.
+            // Le bac à sable, dans les deux langues : le choix du framework, un projet par framework, puis depuis une IA.
             'http://localhost/bac-a-sable',
             'http://localhost/bac-a-sable/symfony',
             'http://localhost/bac-a-sable/laravel',
             'http://localhost/bac-a-sable/php',
+            'http://localhost/bac-a-sable/ia',
             'http://localhost/en/playground',
             'http://localhost/en/playground/symfony',
             'http://localhost/en/playground/laravel',
             'http://localhost/en/playground/php',
+            'http://localhost/en/playground/ai',
             'http://localhost/ecoles-et-entreprises',
             'http://localhost/contact',
             'http://localhost/mentions-legales',
