@@ -152,7 +152,7 @@ final readonly class PlaygroundTools
     }
 
     /**
-     * Reads a playground link (https://apprendre.forelse.fr/bac-a-sable/... or /en/playground/...#code=...): returns
+     * Reads a playground link (https://<site>/bac-a-sable/... or /en/playground/...#code=...): returns
      * the framework and the files that differ from the starting project, to review or fix the code someone shared.
      *
      * @return array<string, mixed>
