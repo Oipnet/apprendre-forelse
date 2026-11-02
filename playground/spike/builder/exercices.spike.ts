@@ -42,7 +42,7 @@ afterAll(() => {
 	if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\n### Exercices de Pratique\n\n${resume}\n\n${tableau}\n`);
 });
 
-describe.each(['php-wasm', 'builder'] as Runtime[])('%s', (runtime) => {
+describe.each(['php-wasm'] as Runtime[])('%s', (runtime) => {
 	it.each(exercices)('$id', async ({ id, environnement }) => {
 		const debut = performance.now();
 		const exercice = join(PRATIQUE, id);

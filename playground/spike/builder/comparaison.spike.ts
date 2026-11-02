@@ -90,7 +90,7 @@ class AccueilTest extends TestCase {
     public function testEcho(): void { $this->postJson('/api/echo', ['plat' => 'tourte'])->assertJson(['plat' => 'tourte']); }
 }`;
 
-describe.each(['php-wasm', 'builder'] as Runtime[])('%s', (runtime) => {
+describe.each(['php-wasm'] as Runtime[])('%s', (runtime) => {
 	it('Symfony : aperçu, formulaire, corps JSON, PHPUnit, console', async () => {
 		const projet = await demarrer(runtime, 'symfony-8', symfony);
 		await projet.writeFiles({ 'src/Controller/MenuController.php': CONTROLEUR, 'tests/MenuTest.php': TEST_SYMFONY });

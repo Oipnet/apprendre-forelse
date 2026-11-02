@@ -1,50 +1,32 @@
-name: Essai php-wasm-builder
+name: Essai PHP 8.5
 
-# Essai (branche de travail, pas pour main) : compile PHP en WebAssembly avec lyrixx/php-wasm-builder et les
-# extensions dont les parcours ont besoin, compare la taille du binaire avec celui de @php-wasm, puis joue les mêmes
-# scénarios Symfony et Laravel sur les deux (playground/spike/builder).
+# Essai temporaire (branche de travail, retiré avant la revue) : joue les scénarios Symfony/Laravel et les exercices de
+# Pratique sur @php-wasm 8.5 (playground/spike/builder).
 
 on:
   push:
     branches: [claude/project-thread-hlrniq]
-    paths: [.github/workflows/php-wasm-builder.yml, playground/spike/builder/**, playground/src/runtime/**]
-  workflow_dispatch:
+    paths: [.github/workflows/php-wasm-builder.yml, playground/spike/builder/**]
 
 permissions:
   contents: read
 
-env:
-  # main de lyrixx/php-wasm-builder (PR #14 fusionnée) : fileinfo, iconv, openssl et session.
-  BUILDER_REF: 70d13ed199fd6c44daf7397e2f4b9b4a301070bd
-  EXTENSIONS: ctype dom fileinfo filter iconv mbstring openssl pdo_sqlite session simplexml tokenizer xml xmlreader xmlwriter
-  PHP_VERSION: 8.5.12
-  MEMORY: 256mb
-
 jobs:
-  build:
+  essai:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: lyrixx/php-wasm-builder
-          ref: ${{ env.BUILDER_REF }}
-          persist-credentials: false
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: moteur
           persist-credentials: false
 
-      # Les exercices de Pratique, joués sur les deux runtimes
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ vars.CONTENU_DEPOT }}
           token: ${{ secrets.CONTENU_TOKEN }}
           path: contenu
           persist-credentials: false
-
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -56,42 +38,6 @@ jobs:
           extensions: ctype, iconv, intl, zip
           coverage: none
 
-      # Sans processus dans le navigateur, posix_spawnp manque : exec() et popen() arrêtaient tout le module
-      # (« Aborted(missing function: posix_spawnp) »). Il échoue désormais comme un appel système absent (ENOSYS).
-      - name: Compiler PHP
-        run: |
-          echo 'addToLibrary({ posix_spawn: () => 52, posix_spawnp: () => 52 });' > docker/spawn.js
-          sed -i 's/^COPY run.c api.js /COPY run.c api.js spawn.js /; s/--pre-js api.js \\/--pre-js api.js --js-library spawn.js \\/' docker/Dockerfile
-          grep -n 'spawn.js' docker/Dockerfile
-          docker buildx bake \
-            --set "default.args.PHP_VERSION=$PHP_VERSION" \
-            --set "default.args.EXTENSIONS=$EXTENSIONS" \
-            --set "default.args.MEMORY=$MEMORY" \
-            --set "default.output=type=local,dest=./build/forelse"
-
-      - name: Vérifier la version et les extensions
-        run: |
-          node node/run.mjs --build build/forelse/php-node.mjs -r 'echo PHP_VERSION, "\n", implode(" ", get_loaded_extensions()), "\n";'
-          node node/run.mjs --build build/forelse/php-web.mjs -r 'session_start(); var_dump(session_status() === PHP_SESSION_ACTIVE, iconv("UTF-8", "ASCII//TRANSLIT", "é"), strlen(openssl_encrypt("x", "aes-256-cbc", str_repeat("k", 32), 0, str_repeat("i", 16))) > 0, (new finfo(FILEINFO_MIME_TYPE))->buffer("<?php echo 1;"));'
-
-      - name: flock et horloge
-        run: |
-          node node/run.mjs --build build/forelse/php-node.mjs -r '$f = fopen("/tmp/verrou", "c"); var_dump(flock($f, LOCK_SH), flock($f, LOCK_UN), flock($f, LOCK_EX | LOCK_NB), microtime(true), hrtime(true));' || true
-
-      - name: Comparer les tailles
-        run: |
-          command -v brotli > /dev/null || sudo apt-get install -y brotli > /dev/null
-          taille() { printf '| %s | %s | %s | %s |\n' "$1" "$(stat -c %s "$2" | numfmt --to=si)" "$(gzip -9c "$2" | wc -c | numfmt --to=si)" "$(brotli -q 11 -c "$2" | wc -c | numfmt --to=si)"; }
-          mkdir -p /tmp/php-wasm && cd /tmp/php-wasm
-          npm pack --silent @php-wasm/web-8-4@3.1.61 > /dev/null
-          tar -xzf php-wasm-web-8-4-*.tgz
-          {
-            echo '| Binaire | Brut | gzip | brotli |'
-            echo '|---|---|---|---|'
-            taille 'php-wasm-builder (web)' "$GITHUB_WORKSPACE/build/forelse/php-web.wasm"
-            for wasm in $(find package -name '*.wasm'); do taille "@php-wasm 8.4 ${wasm#package/}" "$wasm"; done
-          } | tee -a "$GITHUB_STEP_SUMMARY"
-
       - name: Environnements
         run: for env in symfony-8 symfony-8-doctrine symfony-8-2-dev symfony-8-2-doctrine-dev laravel-13; do moteur/environments/bin/build-env.sh "$env" "$RUNNER_TEMP/envs"; done
 
@@ -99,10 +45,9 @@ jobs:
         run: npm ci
         working-directory: moteur/playground
 
-      - name: Scénarios et exercices sur les deux runtimes
+      - name: Scénarios et exercices en PHP 8.5
         working-directory: moteur/playground
         env:
-          BUILDER_MJS: ${{ github.workspace }}/build/forelse/php-node.mjs
           ENVS: ${{ runner.temp }}/envs
           CONTENU: ${{ github.workspace }}/contenu
         run: npx vitest run --config spike/builder/vitest.config.ts

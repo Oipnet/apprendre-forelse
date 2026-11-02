@@ -20,7 +20,7 @@ export const ENVS = process.env.ENVS ?? '';
 export type Runtime = 'php-wasm' | 'builder';
 export const runtimes: Record<Runtime, () => Promise<PhpInstance>> = {
 	'php-wasm': async () => {
-		const php = new PHP(await loadNodeRuntime('8.4'));
+		const php = new PHP(await loadNodeRuntime('8.5'));
 		await php.setSpawnHandler(createSpawnHandler((_command, processApi) => processApi.exit(0)));
 		return php;
 	},
@@ -49,5 +49,5 @@ export function projet(runtime: Runtime) {
 }
 
 export function spec(env: string, framework: FrameworkProfile): EnvironmentSpec {
-	return { id: env, framework, options: { phpVersion: '8.4' }, archiveUrl: env, previewBasePath: '/preview', previewSecure: false };
+	return { id: env, framework, options: { phpVersion: '8.5' }, archiveUrl: env, previewBasePath: '/preview', previewSecure: false };
 }
