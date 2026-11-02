@@ -43,15 +43,43 @@ $travail = sys_get_temp_dir().'/paquets-'.$envId.'-'.bin2hex(random_bytes(4));
 mkdir($travail, recursive: true);
 register_shutdown_function(static fn () => exec('rm -rf '.escapeshellarg($travail)));
 
-// La version de PHP du navigateur, pas celle de la machine qui empaquette.
-file_put_contents($travail.'/composer.json', json_encode([
-    'require' => array_column($catalogue['paquets'], 'version', 'nom'),
-    'config' => ['platform' => ['php' => $php[1].'.0'], 'allow-plugins' => false, 'sort-packages' => true],
-], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
-passthru('cd '.escapeshellarg($travail).' && composer update --no-interaction --prefer-dist --no-scripts --no-plugins --no-progress --quiet && composer dump-autoload --optimize --no-scripts --quiet', $code);
+// Le projet de l'environnement, tel qu'il est verrouillé (composer.json et composer.lock), plus les paquets du catalogue :
+// `composer require` ne touche à aucune version déjà verrouillée, donc chaque archive se superpose au vendor/ de
+// l'environnement sans rien remplacer (un projet sans dépendance, comme php-8, revient à résoudre le catalogue seul).
+// La version de PHP est celle du navigateur, pas celle de la machine qui empaquette.
+$projet = json_decode((string) @file_get_contents($envDir.'/composer.json'), true) ?: [];
+$verrou = json_decode((string) @file_get_contents($envDir.'/composer.lock'), true) ?: [];
+unset($projet['autoload'], $projet['autoload-dev'], $projet['scripts'], $projet['config']);
+// Un projet verrouillé a déjà été résolu pour le PHP du navigateur (dernière version corrective de cette branche) :
+// « .0 » refuserait ses paquets qui demandent, par exemple, PHP >= 8.4.1.
+$plateforme = $php[1].([] === ($verrou['packages'] ?? []) ? '.0' : '.99');
+$projet['config'] = ['platform' => ['php' => $plateforme], 'allow-plugins' => false, 'sort-packages' => true];
+file_put_contents($travail.'/composer.json', json_encode($projet ?: new stdClass(), \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+if ([] !== $verrou) {
+    copy($envDir.'/composer.lock', $travail.'/composer.lock');
+}
+$demandes = implode(' ', array_map(static fn (array $p) => escapeshellarg($p['nom'].':'.$p['version']), $catalogue['paquets']));
+passthru('cd '.escapeshellarg($travail).' && composer require --no-interaction --prefer-dist --no-scripts --no-plugins --no-progress '.(getenv('PAQUETS_VERBEUX') ? '' : '--quiet ').$demandes.' && composer dump-autoload --optimize --no-scripts --quiet', $code);
 if (0 !== $code) {
-    fwrite(STDERR, "Composer a échoué pour le catalogue de {$envId}.\n");
+    fwrite(STDERR, "Composer a échoué pour le catalogue de {$envId} (PAQUETS_VERBEUX=1 affiche pourquoi).\n");
     exit(1);
+}
+
+// Ce que l'environnement installe déjà : ni dans les archives, ni dans les recettes.
+$deja = [];
+foreach ([...($verrou['packages'] ?? []), ...($verrou['packages-dev'] ?? [])] as $paquet) {
+    foreach ([$paquet['name'], ...array_keys($paquet['replace'] ?? []), ...array_keys($paquet['provide'] ?? [])] as $fourni) {
+        $deja[$fourni] = true;
+    }
+}
+foreach (array_keys($projet['replace'] ?? []) as $remplace) {
+    $deja[$remplace] = true;
+}
+foreach ($catalogue['paquets'] as $entree) {
+    if (isset($deja[$entree['nom']])) {
+        fwrite(STDERR, "{$entree['nom']} est déjà installé dans {$envId} : il n'a rien à faire au catalogue.\n");
+        exit(1);
+    }
 }
 
 // Même garde que build-env.sh : quand GitHub refuse ses archives, Composer se rabat sur un clone git, et
@@ -64,7 +92,7 @@ if ([] !== $clones && '1' !== getenv('PAQUETS_CLONES_ACCEPTES')) {
 
 $installes = [];
 foreach (json_decode((string) file_get_contents($travail.'/vendor/composer/installed.json'), true)['packages'] as $paquet) {
-    $installes[$paquet['name']] = $paquet;
+    $installes[$paquet['name']] = $paquet + ['install-path-absolu' => $travail.'/vendor/'.$paquet['name']];
     foreach ([...array_keys($paquet['replace'] ?? []), ...array_keys($paquet['provide'] ?? [])] as $fourni) {
         $installes[$fourni] ??= $paquet;
     }
@@ -74,26 +102,41 @@ $vendor = $travail.'/vendor';
 $classes = array_filter(array_map(static fn (string $chemin) => str_starts_with($chemin, $vendor.'/') ? substr($chemin, strlen($vendor) + 1) : null, require $vendor.'/composer/autoload_classmap.php'));
 $fichiers = array_filter(array_map(static fn (string $chemin) => str_starts_with($chemin, $vendor.'/') ? substr($chemin, strlen($vendor) + 1) : null, require $vendor.'/composer/autoload_files.php'));
 
-/** Le paquet et ses dépendances installées, par nom. */
-$fermeture = static function (string $nom) use ($installes): array {
+/**
+ * Le paquet et ses dépendances installées, par nom, sauf ce que l'environnement a déjà : chaque dépendance avant ce
+ * qui en dépend, l'ordre dans lequel Composer les installe (et Flex applique leurs recettes).
+ */
+$fermeture = static function (string $nom) use ($installes, $deja): array {
     $vus = [];
-    $file = [$nom];
-    while (null !== ($courant = array_shift($file))) {
+    $enCours = [];
+    $visiter = static function (string $courant) use (&$visiter, &$vus, &$enCours, $installes, $deja): void {
         $paquet = $installes[$courant] ?? null;
-        if (null === $paquet || isset($vus[$paquet['name']])) {
-            continue;
+        if (null === $paquet || isset($vus[$paquet['name']]) || isset($enCours[$paquet['name']]) || isset($deja[$paquet['name']])) {
+            return;
         }
-        $vus[$paquet['name']] = $paquet;
-        foreach (array_keys($paquet['require'] ?? []) as $dependance) {
+        $enCours[$paquet['name']] = true;
+        $dependances = array_keys($paquet['require'] ?? []);
+        sort($dependances);
+        foreach ($dependances as $dependance) {
             if (str_contains($dependance, '/')) {
-                $file[] = $dependance;
+                $visiter($dependance);
             }
         }
-    }
-    ksort($vus);
+        $vus[$paquet['name']] = $paquet;
+    };
+    $visiter($nom);
 
     return $vus;
 };
+
+// Un environnement qui a Flex : les recettes des paquets ajoutés (config/bundles.php, config/packages, .env…),
+// appliquées par le navigateur comme Flex le ferait (voir recettes-flex.php).
+$recettes = null;
+if (isset($deja['symfony/flex'])) {
+    require __DIR__.'/recettes-flex.php';
+    $recettes = new RecettesFlex($installes, $plateforme, RecettesFlex::lecteurHttp());
+}
+$recettesLues = [];
 
 @mkdir($sortie, recursive: true);
 foreach (glob($sortie.'/'.$envId.'.paquet.*.zip') ?: [] as $ancienne) {
@@ -174,8 +217,19 @@ foreach ($catalogue['paquets'] as $entree) {
         'archive' => $archive,
         'poids' => filesize($sortie.'/'.$archive),
     ];
+    if (null !== $recettes) {
+        $liste = array_values(array_filter(array_map(static function (string $p) use ($recettes, &$recettesLues) {
+            return array_key_exists($p, $recettesLues) ? $recettesLues[$p] : ($recettesLues[$p] = $recettes->recette($p));
+        }, array_keys($paquets))));
+        if ([] !== $liste) {
+            $manifeste[array_key_last($manifeste)]['recettes'] = $liste;
+        }
+    }
     printf("%7s  %s %s (%d paquets)\n", number_format(filesize($sortie.'/'.$archive) / 1024, 0, ',', ' ').' Ko', $nom, $paquets[$nom]['version'], count($paquets));
 }
 
-file_put_contents($sortie.'/'.$envId.'.paquets.json', json_encode(['paquets' => $manifeste], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n");
+// Le cache du conteneur de Symfony ne voit pas une classe apparue dans vendor/ (le sérialiseur s'active si sa classe
+// existe) : le navigateur efface ces fichiers après chaque ajout ou retrait, et Symfony recompile.
+$invalider = null === $recettes ? [] : ['var/cache/dev/App_KernelDevDebugContainer.php.meta', 'var/cache/test/App_KernelTestDebugContainer.php.meta'];
+file_put_contents($sortie.'/'.$envId.'.paquets.json', json_encode(['paquets' => $manifeste] + ([] === $invalider ? [] : ['invalider' => $invalider]), \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n");
 echo "{$sortie}/{$envId}.paquets.json\n";

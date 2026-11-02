@@ -28,12 +28,25 @@ environments/bin/build-env.sh                  # tous
 environments/bin/build-env.sh symfony-8 /tmp/envs   # ailleurs que dans le moteur
 ```
 
-Un environnement qui a un `paquets.json` (aujourd'hui `php-8`, le bac à sable sans framework) propose
-aussi des paquets Composer à ajouter depuis le navigateur (bouton « Paquets »). `build-env.sh` les
-empaquette avec `bin/build-paquets.php` : tous se résolvent ensemble pour la version de PHP du
-navigateur, puis chacun donne une archive avec ses dépendances (`<id>.paquet.<paquet>.<empreinte>.zip`)
-et le catalogue `<id>.paquets.json`. Ajouter un paquet au catalogue, c'est une ligne dans
-`paquets.json` (nom, contrainte de version, description en français et en anglais).
+Un environnement qui a un `paquets.json` (aujourd'hui `php-8`, le bac à sable sans framework, et
+`symfony-8-doctrine`, le bac à sable Symfony) propose aussi des paquets Composer à ajouter depuis le
+navigateur (bouton « Paquets »). `build-env.sh` les empaquette avec `bin/build-paquets.php` : tous se
+résolvent ensemble, par un `composer require` dans une copie du projet verrouillé (`composer.json` et
+`composer.lock` de l'environnement), pour la version de PHP du navigateur. Aucune version déjà installée ne
+bouge, et chaque paquet donne une archive de ce qu'il ajoute, dépendances comprises
+(`<id>.paquet.<paquet>.<empreinte>.zip`), avec le catalogue `<id>.paquets.json`. Ajouter un paquet au
+catalogue, c'est une ligne dans `paquets.json` (nom, contrainte de version, description en français et en
+anglais) ; pour Symfony, la contrainte d'un composant suit celle du projet (`8.1.*`). Le projet charge ces
+archives par `.forelse/paquets.php`, déclaré dans les `files` de son autoload.
+
+Un environnement qui a Flex (`symfony/flex` dans son verrou) reçoit en plus les **recettes Flex** de chaque
+paquet et de ses dépendances, lues à l'empaquetage sur `github.com/symfony/recipes` puis `recipes-contrib`
+(`bin/recettes-flex.php`, même version de recette que Flex, recette automatique pour un bundle qui n'en a pas).
+Le navigateur les applique comme Flex : le bundle dans `config/bundles.php`, les fichiers de `config/`, `src/`,
+`templates/` et `translations/` s'ils n'existent pas, le bloc `###> paquet ###` du `.env`. Le reste (Docker,
+Makefile, `.gitignore`, lignes ajoutées à un fichier du projet comme `phpunit.dist.xml`) est noté dans
+`ignore`. Le catalogue nomme aussi les fichiers du cache du conteneur à effacer (`invalider`) : Symfony ne
+remarquerait pas seul une classe apparue dans `vendor/`.
 
 Le même catalogue sert la console : `composer require <paquet>` et `composer remove` (exercices comme bac à sable),
 avec `composer dump-autoload` qui relit `composer.json`. C'est un petit Composer sans réseau,

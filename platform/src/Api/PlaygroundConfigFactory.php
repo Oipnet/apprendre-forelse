@@ -146,7 +146,7 @@ final readonly class PlaygroundConfigFactory
                     ], array_values(array_filter(ScratchFramework::cases(), static fn (ScratchFramework $f) => $f !== $framework))),
                     ['title' => $this->translator->trans('bac_a_sable.pratique', [], 'apprentissage'), 'url' => $this->urls->generate('app_practice')],
                 ],
-                // Les paquets Composer à ajouter (PHP sans framework), tant que leur catalogue a été construit
+                // Les paquets Composer à ajouter (PHP sans framework, Symfony), tant que leur catalogue a été construit
                 // (environments/bin/build-paquets.php) ; un paquet qui manque se demande par la page de contact.
                 'packages' => null === ($catalogue = $framework->packageCatalog()) || null === ($url = $this->assets->builtUrl($catalogue, $request)) ? null : [
                     'url' => $url,

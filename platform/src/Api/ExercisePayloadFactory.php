@@ -96,8 +96,9 @@ final readonly class ExercisePayloadFactory
                 'framework' => $environment->framework->forBrowser($this->translator),
                 'archiveUrl' => $this->assets->url($environment->archivePath(), $request),
                 'completionIndexUrl' => $this->assets->url($environment->completionIndexPath(), $request),
-                // Les paquets que `composer require` sait poser dans la console (projet sans framework), s'ils ont été construits.
-                'packagesUrl' => null === ($catalogue = $environment->packageCatalogPath()) ? null : $this->assets->builtUrl($catalogue, $request),
+                // Les paquets que `composer require` sait poser dans la console (projet sans framework), s'ils ont été
+                // construits. Pas ailleurs : la console de Symfony n'a pas de composer, et ses paquets sont ceux du bac à sable.
+                'packagesUrl' => null === ($catalogue = $environment->packageCatalogPath()) || !\in_array('composer', $environment->framework->rawCommands, true) ? null : $this->assets->builtUrl($catalogue, $request),
             ],
             ...$this->navigation->of($exercise),
             'practice' => $practice ? [

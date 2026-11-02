@@ -34,12 +34,14 @@ final class EnvironmentRegistryTest extends TestCase
         $this->assertSame('envs/nuxt-4.zip', $environment->archivePath());
     }
 
-    /** Le catalogue des paquets (composer require) : celui du projet sans framework, aucun pour Symfony. */
-    public function testSeulLeProjetSansFrameworkAUnCatalogueDePaquets(): void
+    /** Le catalogue des paquets : celui du projet sans framework, celui du bac à sable Symfony (et de ses variantes). */
+    public function testLesBacsASableOntUnCatalogueDePaquets(): void
     {
         $environments = new EnvironmentRegistry(self::ROOT.'/environments');
 
         $this->assertSame('envs/php-8.paquets.json', $environments->get('php-8')->packageCatalogPath());
+        $this->assertSame('envs/symfony-8-doctrine.paquets.json', $environments->get('symfony-8-doctrine')->packageCatalogPath());
+        $this->assertSame('envs/symfony-8-doctrine.paquets.json', $environments->get('symfony-8-doctrine-en')->packageCatalogPath(), 'La variante anglaise prolonge le bac à sable : même catalogue.');
         $this->assertNull($environments->get('symfony-8')->packageCatalogPath());
     }
 
