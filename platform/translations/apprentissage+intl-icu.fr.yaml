@@ -47,6 +47,10 @@ exercise:
         tout_le_parcours: "Tout le parcours {titre}"
 
 practice:
+    # La carte d'un exercice intégrée sur un autre site (/integrer/pratique/<id>).
+    integration:
+        bouton: "Faire l'exercice"
+        detail: "Dans le navigateur, sans compte, rien à installer."
     card:
         programme: "Programmé le {date}"
         reussi: "✓ Réussi"
@@ -353,6 +357,7 @@ bac_a_sable:
         exemple_laravel: "« Montre-moi dans un bac à sable Laravel comment valider un formulaire avec une FormRequest. »"
         exemple_php: "« Fais-moi un bac à sable PHP avec Carbon qui affiche le nombre de jours avant Noël. »"
         exemple_lien: "« Voici mon lien de bac à sable, pourquoi ma route renvoie 404 ? »"
+        exemple_bug: "« Mon service n'est pas injecté dans ce contrôleur : isole le problème et fais-moi un bac à sable Symfony qui le reproduit. »"
         outils: Les outils du serveur
         get_starter: "Le projet de départ d'un bac à sable : ses fichiers, ce qu'on peut modifier, et les paquets Composer disponibles en PHP."
         create_sandbox: "Crée le lien d'un bac à sable à partir des fichiers modifiés par l'assistant."

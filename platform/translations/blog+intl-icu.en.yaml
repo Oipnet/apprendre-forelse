@@ -26,6 +26,8 @@ index:
 
 show:
     sommaire: "Contents"
+    # Under an article code block that opens in the playground (```php sandbox=…).
+    essayer: "Try this code in the {framework} playground"
     en_preparation: "Draft: only administrators can see this article."
     programme: "Scheduled: this article will be published on {date}. Until then, only administrators can see it."
     mis_a_jour: 'updated on <time datetime="{datetime}">{date}</time>'

@@ -298,6 +298,22 @@ export const en: Messages = {
 		on: 'Share on',
 		copyCode: 'Copy',
 		codeCopied: 'Copied ✓',
+		embedTitle: 'Embed on your site',
+		embedDetail: 'Paste this code into your page (blog, course material, docs): the exercise shows up there, and one click opens it here.',
+		embedCopy: 'Copy the code',
+		embedCopied: 'Code copied.',
+	},
+
+	mobile: {
+		title: 'Easier on a computer',
+		detail: 'You code here in a real editor, with a console and a preview: on a phone, it\'s cramped. Send yourself the link to pick it up on a computer, or carry on here.',
+		email: 'Email me the link',
+		share: 'Send the link…',
+		copy: 'Copy the link',
+		copied: 'Link copied: open it on your computer.',
+		stay: 'Carry on on my phone',
+		subject: (title: string) => `To pick up on a computer: ${title}`,
+		body: 'The exercise, to open on a computer:',
 	},
 
 	shortcuts: {

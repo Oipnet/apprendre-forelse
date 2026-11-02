@@ -33,6 +33,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Partager un chapitre terminé** : la réussite du dernier exercice d'un chapitre de parcours propose de l'annoncer
   (LinkedIn, X, Bluesky, lien), avec un lien vers la page publique du parcours (`utm_campaign=chapitre`). Rien pour un
   parcours en préparation.
+- **« Essayer ce code »** : un bloc de code d'article annoncé `sandbox=php` (ou `symfony`, `laravel`, avec un fichier
+  facultatif : `sandbox=symfony:src/Controller/MenuController.php`) est suivi d'un lien qui l'ouvre dans le bac à
+  sable, le code dans l'adresse. Vérifié par `content:check` ; clics comptés dans Umami (`article-essayer`).
+- **Intégrer un exercice de Pratique sur un autre site** : la boîte « Partager » du playground donne un code à coller
+  (une carte en iframe, `/integrer/pratique/<id>`, puis un lien vers l'exercice). La carte est la seule page que tout
+  site peut encadrer (`frame-ancestors *`, `noindex`) ; ses liens ouvrent l'exercice dans un nouvel onglet
+  (`utm_source=integration`). Umami : `integration-copiee`, `integration-ouverte`.
+- **Sur un téléphone, reprendre sur ordinateur** : à l'ouverture d'un exercice, une boîte propose de s'envoyer le
+  lien (email, partage du téléphone, copie, `utm_source=rappel`) ou de continuer ici, choix retenu. Umami :
+  `mobile-ordinateur` (`choix`).
 
 ### Modifié
 

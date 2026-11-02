@@ -314,4 +314,28 @@
 	.blog-page .lesson h2[id] {
 		scroll-margin-top: 1.5rem;
 	}
+	/* La carte d'un exercice intégrée sur un autre site (practice/embed.html.twig) : rien autour. */
+	body.embed-page {
+		min-height: 0;
+		padding: 0.5rem;
+		background: transparent;
+	}
+	/* « Essayer ce code » sous un bloc d'article (App\Content\ArticleRenderer). */
+	.lesson .code-try {
+		margin-top: -0.75rem;
+		text-align: right;
+		font-size: 0.875rem;
+	}
+	.lesson .code-try-link {
+		font-weight: 600;
+		color: var(--color-accent);
+		text-decoration: none;
+	}
+	.lesson .code-try-link::before {
+		content: '▶ ';
+	}
+	.lesson .code-try-link:hover,
+	.lesson .code-try-link:focus-visible {
+		text-decoration: underline;
+	}
 }

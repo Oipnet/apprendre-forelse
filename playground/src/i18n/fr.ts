@@ -301,6 +301,24 @@ export const fr = {
 		on: 'Partager sur',
 		copyCode: 'Copier',
 		codeCopied: 'Copié ✓',
+		embedTitle: 'Intégrer sur votre site',
+		embedDetail: 'Collez ce code dans votre page (blog, support de cours, documentation) : l\'exercice s\'y affiche, et un clic l\'ouvre ici.',
+		embedCopy: 'Copier le code',
+		embedCopied: 'Code copié.',
+	},
+
+	/** Sur un téléphone, à l'ouverture d'un exercice (mobile.ts). */
+	mobile: {
+		title: 'Plus confortable sur un ordinateur',
+		detail: 'Vous codez ici dans un vrai éditeur, avec une console et un aperçu : sur un téléphone, c\'est à l\'étroit. Envoyez-vous le lien pour reprendre sur ordinateur, ou continuez ici.',
+		email: 'M\'envoyer le lien par email',
+		share: 'Envoyer le lien…',
+		copy: 'Copier le lien',
+		copied: 'Lien copié : ouvrez-le sur votre ordinateur.',
+		stay: 'Continuer sur le téléphone',
+		/** L'email qu'on s'envoie : objet, puis texte (l'adresse suit). */
+		subject: (title: string) => `À reprendre sur ordinateur : ${title}`,
+		body: 'L\'exercice, à ouvrir sur un ordinateur :',
 	},
 
 	shortcuts: {

@@ -299,6 +299,19 @@ Les résultats s'exportent en CSV.
   de code ont un bouton « Copier ». Sous l'article, l'encart « Écrit par » présente la personne du thème quand elle
   déclare `bio` ou `links` (voir « Thème » plus bas).
 
+  Un bloc de code peut s'ouvrir dans le bac à sable : après son langage, `sandbox=php`, `sandbox=symfony` ou
+  `sandbox=laravel` (le fichier ouvert à l'arrivée du bac à sable), ou `sandbox=symfony:src/Controller/MenuController.php`
+  pour un autre fichier modifiable. Le bloc devient tout le fichier, il doit donc se suffire (namespace, `use`…).
+  Dessous, un lien « Essayer ce code dans le bac à sable » emporte le code dans l'adresse (rien n'est stocké) ;
+  `content:check` refuse un bac à sable ou un fichier qu'il n'accepte pas. Les clics se comptent dans Umami
+  (`article-essayer`, avec le framework).
+
+      ```php sandbox=symfony:src/Controller/MenuController.php
+      <?php
+      namespace App\Controller;
+      …
+      ```
+
   Un article se traduit en anglais dans `<pack>/articles/en/<slug>.md`, publié sur `/en/blog/<slug>` avec sa propre
   adresse (`running-symfony-in-the-browser.md`). Même en-tête, plus `translation_of:`, le nom de l'article français
   qu'il traduit (une traduction par article). Le blog anglais a sa liste, son flux (`/en/blog/rss.xml`) et ses

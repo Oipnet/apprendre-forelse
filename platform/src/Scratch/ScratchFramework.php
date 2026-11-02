@@ -38,7 +38,10 @@ enum ScratchFramework: string
 
     /**
      * Ce que le visiteur peut modifier et créer. Un `*` ne franchit pas un « / » (voir Exercise::isEditable) : le
-     * code de l'application et ses vues, pas la configuration du framework, qu'un lien partagé n'a pas à changer.
+     * code de l'application, ses vues et sa configuration, pour reproduire un problème tel qu'il se pose dans un vrai
+     * projet. Restent figés ce qui dépend de vendor/ (composer.json, config/bundles.php) : les paquets sont installés
+     * une fois pour toutes. Toute configuration modifiable existe aussi dans starter/ (copie de l'environnement,
+     * vérifiée par ScratchStarterTest) : sinon « Revenir au départ » supprimerait le fichier au lieu de le remettre.
      *
      * @return list<string>
      */
@@ -52,6 +55,14 @@ enum ScratchFramework: string
                 'templates/*.html.twig',
                 'templates/*/*.html.twig',
                 'migrations/*.php',
+                'config/*.yaml',
+                'config/packages/*.yaml',
+                'config/routes/*.yaml',
+                // La configuration en PHP aussi, sans config/bundles.php ni preload.php : `*` ne sait pas exclure.
+                'config/services*.php',
+                'config/routes*.php',
+                'config/packages/*.php',
+                'config/routes/*.php',
             ],
             self::Laravel => [
                 'routes/web.php',
@@ -60,6 +71,8 @@ enum ScratchFramework: string
                 'app/Http/Controllers/*.php',
                 'resources/views/*.blade.php',
                 'resources/views/*/*.blade.php',
+                'config/*.php',
+                'bootstrap/*.php',
             ],
             self::Php => [
                 'public/index.php',
@@ -72,6 +85,21 @@ enum ScratchFramework: string
                 'bin/*.php',
             ],
         };
+    }
+
+    /** Ce chemin peut-il porter du code partagé (même règle que Exercise::isEditable) ? */
+    public function isEditable(string $path): bool
+    {
+        if ('' === $path || str_starts_with($path, '/') || array_intersect(explode('/', $path), ['', '.', '..'])) {
+            return false;
+        }
+        foreach ($this->editable() as $entry) {
+            if ($entry === $path || (str_contains($entry, '*') && fnmatch($entry, $path, \FNM_PATHNAME))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

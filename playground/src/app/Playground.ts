@@ -20,6 +20,7 @@ import { MentorClient, errorTextOf, stripAnsi } from './mentor';
 import { MentorPanel } from './MentorPanel';
 import { m } from '../i18n';
 import { mesurer } from '../mesure';
+import { suggestDesktop } from './mobile';
 import { bindPaneTabs, bindWorkpanes, bootProgress, fitEditor } from './panes';
 import { ApiProgressStore, LocalProgressStore, type ProgressStore, type SavedProgress } from './progress';
 import { ProjectFilesController } from './ProjectFilesController';
@@ -88,9 +89,12 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// système quand le navigateur en a un.
 	if (config.share && !scratch) {
 		const share = config.share.invite;
-		$<HTMLButtonElement>('#share').addEventListener('click', () => shareDialog(root, share, m.layout.shareTitle, mesure));
+		const embed = config.share.embed ?? null;
+		$<HTMLButtonElement>('#share').addEventListener('click', () => shareDialog(root, share, m.layout.shareTitle, mesure, embed));
 	}
 	const status = statusBar($('.status'));
+	// Sur un téléphone : proposer de reprendre sur ordinateur, sans empêcher de continuer ici (mobile.ts).
+	suggestDesktop(root, exercise.title, mesure);
 
 	// --- Petits écrans : un volet à la fois, explorateur replié, éditeur compact -------------
 	const narrow = window.matchMedia('(max-width: 800px)');

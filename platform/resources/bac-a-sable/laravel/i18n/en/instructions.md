@@ -3,6 +3,7 @@
 A Laravel 13 project runs in your browser, with nothing to install: edit the code and the preview updates as you type.
 
 - **The code**: the routes `routes/web.php` and the view `resources/views/accueil.blade.php` are open. The file tree's ＋ button creates controllers, models or more views.
+- **The configuration**: `config/*.php` and `bootstrap/app.php` (middleware, exceptions) can be edited from the file tree. The installed packages can't change.
 - **The preview**: type an address in its bar, for example `/bonjour/Ada`.
 - **The console**: the Console tab runs `php artisan`, for example `route:list`.
 - **Run** reloads the preview; **New project** starts again from the starting project.
