@@ -20,6 +20,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **composer.json en lecture seule** : le message de l'éditeur explique pourquoi (dépendances préinstallées dans le
   navigateur, pas d'accès à Packagist) et renvoie au téléchargement du projet. Avec un catalogue de paquets (PHP sans
   framework), il indique `composer require` dans la console et, au bac à sable, le bouton 📦.
+- **Bouton 📦 du bac à sable PHP** : cocher ou décocher un paquet met aussi à jour composer.json et composer.lock (comme
+  `composer require`/`remove`), de même pour les paquets d'un lien partagé au démarrage : le projet téléchargé les
+  retrouve avec un `composer install`.
 - **Encart « Écrit par »** : photo de 80 px alignée en haut, présentation en plus petit et en gris, et « Me contacter »
   en bouton principal (aussi sur la page auteur).
 

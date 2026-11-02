@@ -162,6 +162,16 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// La console est créée plus bas : les messages de l'aperçu arrivés avant sont gardés en attente.
 	const messagesDeLApercu = new Mailbox<[level: 'warn' | 'error', message: string]>();
 	const versLaConsole = (level: 'warn' | 'error', message: string) => messagesDeLApercu.post([level, message]);
+	/**
+	 * Le composer.json suit les paquets posés hors de la console (bouton 📦, lien partagé), comme après un
+	 * `composer require` : le projet téléchargé les retrouve avec un `composer install`.
+	 */
+	const declarerDansComposerJson = async (moteurPhp: Pick<Runtime, 'runCommand'>, action: 'require' | 'remove', noms: string[]): Promise<CommandResult | null> => {
+		if (!noms.length || !moteurPhp.runCommand || !framework.rawCommands?.includes('composer')) return null;
+		const resultat = await moteurPhp.runCommand(['composer', action, ...noms, '--quiet']);
+		if (resultat.exitCode !== 0) versLaConsole('error', resultat.output);
+		return resultat;
+	};
 	// L'onglet « Base », créé plus bas : chaque réponse de l'aperçu peut avoir changé la base.
 	let base: DatabasePanel | null = null;
 	const bridge = new PreviewBridge(runtime, $<HTMLIFrameElement>('#frame'), config.sandboxUrl, {
@@ -264,6 +274,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 					status(m.packages.adding(nom), 'busy');
 					await projetPaquets.add(nom).catch((error: unknown) => versLaConsole('error', m.packages.failed(nom, error instanceof Error ? error.message : String(error))));
 				}
+				const declares = new Set(requiredPackages(composerJson));
+				await declarerDansComposerJson(moteur, 'require', projetPaquets.names.filter((nom) => !declares.has(nom)));
 				if (shared) writeSelection(stockage, exercise.id, projetPaquets.names);
 			}
 			// Un composer.json apporté par l'exercice ou le brouillon (autre namespace, paquets) : l'autoload de
@@ -374,7 +386,9 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 				onChange: (paquet, ajoute) => {
 					writeSelection(stockage, exercise.id, projetPaquets.names);
 					mesurer('bac-a-sable-paquet', { ...mesure, paquet, ajoute });
-					reload();
+					void declarerDansComposerJson(runtime, ajoute ? 'require' : 'remove', [paquet])
+						.then((resultat) => resultat && commandRan.emit(resultat))
+						.finally(reload);
 				},
 			});
 		});
