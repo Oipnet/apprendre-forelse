@@ -125,6 +125,19 @@ export class ConsolePanel {
 		this.output.scrollTop = this.output.scrollHeight;
 	}
 
+	/**
+	 * Une commande faite ailleurs que dans le champ de la console, affichée comme si on l'avait tapée : le bouton
+	 * « Paquets » y montre le `composer require` équivalent et ce que Flex en a fait.
+	 */
+	logCommand(commandLine: string, output: string): void {
+		const entry = document.createElement('div');
+		entry.className = 'console-entry';
+		entry.innerHTML = `<div class="console-command"><span class="prompt">$</span> ${escapeHtml(commandLine)}</div><pre class="console-result"></pre>`;
+		entry.querySelector('pre')!.textContent = output;
+		this.output.append(entry);
+		this.output.scrollTop = this.output.scrollHeight;
+	}
+
 	async run(commandLine: string, { quiet = false } = {}): Promise<CommandResult | null> {
 		const line = commandLine.trim();
 		const args = parseCommandLine(line, this.aliases);

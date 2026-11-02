@@ -37,9 +37,9 @@ export type PhpInstance = Pick<PHP, 'mkdir' | 'writeFile' | 'fileExists' | 'unli
 export interface PhpWasmProjectDeps {
 	/**
 	 * Une instance PHP neuve, de cette version (le binaire n'est téléchargé et compilé qu'une fois), avec ces
-	 * extensions en plus (intl).
+	 * extensions en plus (intl). `network` : les hôtes qu'elle peut joindre (API d'IA) ; vide, elle n'a pas de réseau.
 	 */
-	loadPhp(version: string, extensions: string[]): Promise<PhpInstance>;
+	loadPhp(version: string, extensions: string[], network: string[]): Promise<PhpInstance>;
 	/** L'archive du projet, en signalant la progression du téléchargement. */
 	download(url: string, onProgress: (progress: BootProgress) => void): Promise<Uint8Array>;
 	/** Les frameworks PHP connus, par identifiant de profil (PHP_FRAMEWORKS par défaut). */
@@ -72,6 +72,12 @@ export class PhpWasmProject implements Runtime {
 	 */
 	private testsDirty = false;
 	private readonly cookies = new HttpCookieStore();
+	/**
+	 * Les secrets de l'apprenant (sa clé d'API), donnés à l'aperçu et à la console en variables d'environnement. Jamais
+	 * à l'instance de tests, qui n'a pas non plus de réseau : les tests rejouent des réponses enregistrées, comme le
+	 * vérificateur du serveur, qui n'a pas la clé.
+	 */
+	private secrets: Record<string, string> = {};
 
 	constructor(private readonly deps: PhpWasmProjectDeps) {}
 
@@ -88,6 +94,17 @@ export class PhpWasmProject implements Runtime {
 	/** Les extensions que l'environnement demande en plus (option « phpExtensions », séparée par des virgules). */
 	private phpExtensions(): string[] {
 		return (this.env.options?.phpExtensions ?? '').split(',').map((extension) => extension.trim()).filter(Boolean);
+	}
+
+	/** Les hôtes que l'aperçu peut joindre (option « network », séparée par des virgules) ; vide pour presque tous les environnements. */
+	private networkHosts(): string[] {
+		return (this.env.options?.network ?? '').split(',').map((host) => host.trim()).filter(Boolean);
+	}
+
+	/** Les secrets, tels que PHP les lit : `$_SERVER` (Symfony, avant son .env) et l'environnement (getenv). */
+	private withSecrets(options: PHPRunOptions): PHPRunOptions {
+		if (!Object.keys(this.secrets).length) return options;
+		return { ...options, env: { ...options.env, ...this.secrets }, $_SERVER: { ...options.$_SERVER, ...this.secrets } };
 	}
 
 	/**
@@ -115,7 +132,8 @@ export class PhpWasmProject implements Runtime {
 	 * l'apprenant travaille déjà ; sa copie du projet rend la main au worker entre deux tranches.
 	 */
 	private async createPhp(background = false, loading?: Promise<PhpInstance>): Promise<PhpInstance> {
-		const php = await (loading ?? this.deps.loadPhp(this.phpVersion(), this.phpExtensions()));
+		// Le réseau pour l'aperçu seulement : l'instance de tests n'en a jamais.
+		const php = await (loading ?? this.deps.loadPhp(this.phpVersion(), this.phpExtensions(), background ? [] : this.networkHosts()));
 		php.mkdir(APP_DIR);
 		if (background) await writeTreeInSlices(php, this.baseFiles);
 		else writeTree(php, this.baseFiles);
@@ -145,7 +163,7 @@ export class PhpWasmProject implements Runtime {
 	/** Exécute un script de l'aperçu ; une erreur fatale PHP rend quand même sa page (ex. page d'erreur Symfony). */
 	private async runPreview(options: PHPRunOptions, start: number): Promise<HttpResponse> {
 		try {
-			return this.toHttpResponse(await this.preview.run(options), start);
+			return this.toHttpResponse(await this.preview.run(this.withSecrets(options)), start);
 		} catch (error) {
 			if (error instanceof PHPExecutionFailureError) return this.toHttpResponse(error.response, start);
 			throw error;
@@ -269,7 +287,7 @@ export class PhpWasmProject implements Runtime {
 		this.framework = phpFramework(frameworks, spec.framework)();
 		// PHP (le binaire WebAssembly, compilé pendant son téléchargement) et l'archive du projet arrivent en même temps :
 		// PHP attendait la fin de l'archive pour seulement commencer à se télécharger.
-		const php = this.deps.loadPhp(this.phpVersion(), this.phpExtensions());
+		const php = this.deps.loadPhp(this.phpVersion(), this.phpExtensions(), this.networkHosts());
 		php.catch(() => {}); // attendu plus bas : son échec éventuel s'y lève
 		const archive = await this.deps.download(spec.archiveUrl, progress);
 		progress({ step: 'unpack', ratio: null, label: spec.framework.unpackLabel });
@@ -396,7 +414,7 @@ export class PhpWasmProject implements Runtime {
 		const avant = this.instantane(this.preview);
 		let text: string;
 		try {
-			text = (await this.preview.run({ scriptPath: CONSOLE, $_SERVER: { CONSOLE_ARGS: JSON.stringify(args) } })).text;
+			text = (await this.preview.run(this.withSecrets({ scriptPath: CONSOLE, $_SERVER: { CONSOLE_ARGS: JSON.stringify(args) } }))).text;
 		} catch (error) {
 			if (!(error instanceof PHPExecutionFailureError)) throw error;
 			text = `${error.response.text}\n${error.response.errors}`;
@@ -405,6 +423,10 @@ export class PhpWasmProject implements Runtime {
 		const exitCode = markerAt === -1 ? 255 : Number(text.slice(markerAt + CONSOLE_MARKER.length)) || 0;
 		const { fichiers, supprimes } = this.propagerLesChangements(avant, this.instantane(this.preview));
 		return { exitCode, output: (markerAt === -1 ? text : text.slice(0, markerAt)).replace(/\s+$/, ''), durationMs: performance.now() - start, fichiers, supprimes };
+	}
+
+	async setSecrets(secrets: Record<string, string>) {
+		this.secrets = { ...secrets };
 	}
 
 	/** Les bases SQLite de l'aperçu, lues sans passer par l'application (voir database.php). */

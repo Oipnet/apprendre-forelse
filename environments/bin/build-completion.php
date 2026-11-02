@@ -244,6 +244,24 @@ const NAMESPACES = [
     // Classes du projet Laravel dont héritent contrôleurs et tests
     'App\\Http\\Controllers\\Controller',
     'Tests\\TestCase',
+    // Symfony AI, serveur MCP et pannes réseau (symfony-8-ia ; absents ailleurs, simplement ignorés)
+    'Symfony\\AI\\Agent\\AgentInterface',
+    'Symfony\\AI\\Agent\\Exception\\',
+    'Symfony\\AI\\Agent\\Toolbox\\Attribute\\',
+    'Symfony\\AI\\Platform\\Message\\',
+    'Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\',
+    'Symfony\\AI\\Platform\\Exception\\',
+    'Symfony\\AI\\Platform\\TokenUsage\\',
+    'Symfony\\AI\\Store\\RetrieverInterface',
+    'Symfony\\AI\\Store\\StoreInterface',
+    'Symfony\\AI\\Store\\Document\\VectorizerInterface',
+    'Symfony\\AI\\Store\\Query\\',
+    'Mcp\\Capability\\Attribute\\',
+    'Mcp\\Schema\\ToolAnnotations',
+    'Symfony\\Component\\Security\\Core\\Authorization\\AccessDecisionManagerInterface',
+    'Symfony\\Component\\Uid\\Uuid',
+    'Psr\\Log\\LoggerInterface',
+    'Symfony\\Contracts\\HttpClient\\Exception\\',
 ];
 const EXCLUDED = ['\\Tests\\', '\\Session\\Storage\\Handler\\'];
 

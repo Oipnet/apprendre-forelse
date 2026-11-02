@@ -26,11 +26,12 @@ import { ApiProgressStore, LocalProgressStore, type ProgressStore, type SavedPro
 import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
 import { changedFiles, decodeFragment, encodeFragment, NEW_PROJECT, withFragment } from './scratch';
-import { composerRequest, knownPackages, Packages, packagesDialog, parseCatalog, readSelection, requiredPackages, writeSelection } from './packages';
+import { composerRequest, knownPackages, Packages, packagesDialog, parseCatalog, parseInvalidation, readSelection, requiredPackages, writeSelection } from './packages';
 import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
 import { TestResultsView } from './TestResultsView';
+import { ApiKeyPanel, redactSecrets } from './api-key';
 import { bindRunButton } from './run';
 import { statusBar } from './status';
 import type { ExercisePayload, PlaygroundConfig } from './types';
@@ -120,11 +121,26 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// La page se monte sans attendre PHP : consignes, éditeur et explorateur s'affichent tout de suite, et chaque appel
 	// au runtime (frappes, lecture d'un fichier, aperçu) attend `demarre` : PHP prêt, projet de départ écrit. Seuls le
 	// bouton Exécuter et la mise en route de l'aperçu attendent la fin de tout le démarrage.
-	const moteur = createRuntime(framework.runtime);
+	// Le réseau vers les API d'IA : seulement pour un environnement qui le déclare, et jamais dans le bac à sable, dont le
+	// code peut venir d'un lien partagé par quelqu'un d'autre.
+	const reseau = !scratch && framework.runtime === 'php-wasm' && Boolean(exercise.environment.network?.length);
+	const moteur = createRuntime(reseau ? 'php-wasm-network' : framework.runtime);
 	let demarrer!: (etapes: Promise<void>) => void;
 	const demarre = new Promise<void>((resolve) => (demarrer = resolve));
 	demarre.catch(() => {}); // l'échec s'affiche plus bas, dans l'écran de démarrage
 	const runtime = apresDemarrage(moteur, demarre);
+	// Parcours IA : la clé de l'apprenant, donnée à l'aperçu et à la console (jamais aux tests), et retirée de ce qu'on
+	// envoie au mentor.
+	const cleApi = reseau
+		? new ApiKeyPanel(root, $<HTMLButtonElement>('#api-key'), exercise.environment.network!, runtime, (() => {
+				try {
+					return sessionStorage;
+				} catch {
+					return null;
+				}
+			})())
+		: null;
+	const sansCle = (texte: string) => (cleApi ? redactSecrets(texte, cleApi.current()) : texte);
 	// Bac à sable PHP : les paquets Composer du catalogue (packages.ts), ceux du lien partagé ou ceux laissés la dernière fois.
 	const stockage = (() => {
 		try {
@@ -139,7 +155,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const paquets: Promise<Packages | null> = catalogueUrl
 		? fetch(catalogueUrl)
 				.then((response) => (response.ok ? response.json() : null))
-				.then((data: unknown) => new Packages(parseCatalog(data), new URL(catalogueUrl, location.href), moteur))
+				.then((data: unknown) => new Packages(parseCatalog(data), new URL(catalogueUrl, location.href), moteur, undefined, parseInvalidation(data)))
 				.catch(() => null)
 		: Promise.resolve(null);
 	const urlInput = $<HTMLInputElement>('#url');
@@ -177,7 +193,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			if (!metrics.firstRequest) mark('firstRequest');
 			base?.changed();
 			// Une réponse en erreur : le mentor peut l'expliquer (si l'apprenant a un compte).
-			mentor.setError('preview', res.status >= 500 ? `${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, res.headers['content-type']?.[0])}` : null);
+			mentor.setError('preview', res.status >= 500 ? sansCle(`${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, res.headers['content-type']?.[0])}`) : null);
 		},
 	});
 	// Le relais de l'aperçu (page du bac à sable, Service Worker) se prépare pendant que PHP démarre : il n'a
@@ -217,6 +233,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 						phpVersion: exercise.environment.phpVersion,
 						// Les options d'un runtime sont des chaînes : la liste voyage séparée par des virgules.
 						...(exercise.environment.phpExtensions?.length ? { phpExtensions: exercise.environment.phpExtensions.join(',') } : {}),
+						...(reseau ? { network: exercise.environment.network!.map((n) => n.host).join(',') } : {}),
 					},
 					// URL absolue : le worker peut tourner depuis une URL blob: (dev), sans base relative.
 					archiveUrl,
@@ -288,7 +305,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	};
 	const consolePanel = new ConsolePanel($('#console-output'), $<HTMLInputElement>('#console-cmd'), commandesComposer, (result) => {
 		commandRan.emit(result);
-		mentor.setError('console', result.exitCode === 0 ? null : stripAnsi(result.output));
+		mentor.setError('console', result.exitCode === 0 ? null : sansCle(stripAnsi(result.output)));
 		reload();
 	}, consoleName, framework.consoleAliases, framework.rawCommands);
 	messagesDeLApercu.deliverTo(([level, message]) => {
@@ -354,9 +371,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			packagesDialog(root, projetPaquets, {
 				lang: document.documentElement.lang || 'fr',
 				requestUrl: catalogue.requestUrl,
-				onChange: (paquet, ajoute) => {
+				intro: framework.id === 'symfony' ? m.packages.introSymfony : undefined,
+				onChange: (paquet, ajoute, changements) => {
 					writeSelection(stockage, exercise.id, projetPaquets.names);
 					mesurer('bac-a-sable-paquet', { ...mesure, paquet, ajoute });
+					// Les fichiers de la recette Flex (config/packages/…, bundles.php, .env) dans l'explorateur et l'éditeur,
+					// et dans la console ce qu'aurait affiché le composer require équivalent.
+					files.synchronise(changements);
+					if (changements.rapport) consolePanel.logCommand(`composer ${ajoute ? 'require' : 'remove'} ${paquet}`, changements.rapport);
 					reload();
 				},
 			});

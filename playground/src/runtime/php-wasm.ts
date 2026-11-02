@@ -1,5 +1,5 @@
 import type { RuntimeManifest } from '@forelse/runtime-contract';
-import { WasmRuntime } from './WasmRuntime';
+import { NetworkWasmRuntime, WasmRuntime } from './WasmRuntime';
 
 /**
  * Le runtime livré avec le moteur : PHP compilé en WebAssembly.
@@ -12,4 +12,14 @@ export default {
 	id: 'php-wasm',
 	label: 'PHP',
 	create: () => new WasmRuntime(),
+} satisfies RuntimeManifest;
+
+/**
+ * Le même runtime, avec le réseau vers les API d'IA. Aucun profil ne le nomme : la page le choisit quand
+ * l'environnement déclare `network:` (voir runtimeFor, Playground.ts).
+ */
+export const phpWasmNetwork = {
+	id: 'php-wasm-network',
+	label: 'PHP',
+	create: () => new NetworkWasmRuntime(),
 } satisfies RuntimeManifest;

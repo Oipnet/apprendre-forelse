@@ -87,14 +87,18 @@ final readonly class ExercisePayloadFactory
                 // Extensions chargées en plus par le PHP du navigateur (intl, pour EasyAdmin) : les autres environnements
                 // n'en téléchargent pas les données.
                 'phpExtensions' => $environment->phpExtensions,
+                // Les fournisseurs d'IA que le PHP du navigateur peut appeler (parcours IA), et leurs hôtes : seul cet
+                // environnement-là démarre le worker qui a le réseau, et la clé de l'apprenant ne sort que vers eux.
+                'network' => array_map(static fn (string $provider, string $host): array => ['provider' => $provider, 'host' => $host], $environment->network, $environment->networkHosts()),
                 // Ce que le navigateur sait du framework vient d'ici : console, dossiers du projet,
                 // caches, namespaces… Il ne redéclare plus rien de son côté (voir FrameworkProfile). Ses textes
                 // (note de démarrage, étapes) sont traduits dans la langue de la page.
                 'framework' => $environment->framework->forBrowser($this->translator),
                 'archiveUrl' => $this->assets->url($environment->archivePath(), $request),
                 'completionIndexUrl' => $this->assets->url($environment->completionIndexPath(), $request),
-                // Les paquets que `composer require` sait poser dans la console (projet sans framework), s'ils ont été construits.
-                'packagesUrl' => null === ($catalogue = $environment->packageCatalogPath()) ? null : $this->assets->builtUrl($catalogue, $request),
+                // Les paquets que `composer require` sait poser dans la console (projet sans framework), s'ils ont été
+                // construits. Pas ailleurs : la console de Symfony n'a pas de composer, et ses paquets sont ceux du bac à sable.
+                'packagesUrl' => null === ($catalogue = $environment->packageCatalogPath()) || !\in_array('composer', $environment->framework->rawCommands, true) ? null : $this->assets->builtUrl($catalogue, $request),
             ],
             ...$this->navigation->of($exercise),
             'practice' => $practice ? [

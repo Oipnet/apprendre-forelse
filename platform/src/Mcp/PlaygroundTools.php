@@ -40,7 +40,7 @@ final readonly class PlaygroundTools
 
     /**
      * Returns the starting project of a playground (Symfony 8, Laravel 13 or plain PHP 8.4 with Composer autoloading):
-     * its files, the paths you may create or edit, and, for plain PHP, the Composer packages you may add. Call it
+     * its files, the paths you may create or edit, and, for Symfony and plain PHP, the Composer packages you may add. Call it
      * before create_sandbox to write code that fits the project. Configuration files (config/, bootstrap/) are listed
      * in config_files; ask for their content with include_config when you need to change one.
      *
@@ -72,7 +72,7 @@ final readonly class PlaygroundTools
             'config_files' => array_keys($config),
             'packages' => $this->catalog($framework),
             'notes' => [
-                'Only files matching editable_paths can be shared; "*" does not cross a "/". The configuration can be changed, but the installed packages cannot (composer.json, config/bundles.php and vendor/ are fixed), and there is no network: "about" says what the playground includes (database, console…).',
+                'Only files matching editable_paths can be shared; "*" does not cross a "/". The configuration can be changed; composer.json, config/bundles.php and vendor/ are fixed, except through "packages" (for Symfony, each package comes with its Flex recipe: bundle, config/packages file, .env block). There is no network: "about" says what the playground includes (database, console…).',
                 'To reproduce a bug from the user\'s project, keep only the code and configuration that trigger it, adapted to these paths.',
                 'The preview serves the app at "/"; the user can type other addresses, like /bonjour/Ada.',
             ],
@@ -100,7 +100,7 @@ final readonly class PlaygroundTools
             'additionalProperties' => ['type' => 'string'],
         ])]
         array $files,
-        #[Schema(description: 'Plain PHP playground only: Composer packages to add, from the "packages" list of get_starter (e.g. "nesbot/carbon").', items: ['type' => 'string'])]
+        #[Schema(description: 'Symfony and plain PHP playgrounds: Composer packages to add, from the "packages" list of get_starter (e.g. "symfony/security-bundle", "nesbot/carbon"). For Symfony, their Flex recipe is applied when the page opens.', items: ['type' => 'string'])]
         array $packages = [],
         #[Schema(description: 'Language of the page: "fr" for a French-speaking user, else "en".', enum: ['en', 'fr'])]
         string $language = 'en',

@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -58,20 +59,28 @@ final class ScratchTest extends WebTestCase
         $this->assertNull($config['scratch']['packages'], 'Laravel arrive avec ses paquets : pas de bouton « Paquets ».');
     }
 
-    public function testLeProjetPhpProposeLesPaquetsDuCatalogueConstruit(): void
+    /** @return iterable<string, array{string, string}> */
+    public static function projetsAvecPaquets(): iterable
+    {
+        yield 'PHP sans framework' => ['php', 'php-8'];
+        yield 'Symfony, avec les recettes Flex' => ['symfony', 'symfony-8-doctrine'];
+    }
+
+    #[DataProvider('projetsAvecPaquets')]
+    public function testLeProjetProposeLesPaquetsDuCatalogueConstruit(string $framework, string $environnement): void
     {
         $client = static::createClient();
         // Construit par environments/bin/build-env.sh ; une copie vide suffit quand il ne l'a pas été.
-        $catalogue = static::getContainer()->getParameter('kernel.project_dir').'/public/envs/php-8.paquets.json';
+        $catalogue = static::getContainer()->getParameter('kernel.project_dir').'/public/envs/'.$environnement.'.paquets.json';
         $present = is_file($catalogue);
         try {
             if (!$present) {
                 @mkdir(dirname($catalogue), recursive: true);
                 file_put_contents($catalogue, '{"paquets":[]}');
             }
-            $crawler = $client->request('GET', '/bac-a-sable/php');
+            $crawler = $client->request('GET', '/bac-a-sable/'.$framework);
             $config = json_decode((string) $crawler->filter('[data-playground]')->attr('data-config'), true, flags: \JSON_THROW_ON_ERROR);
-            $this->assertStringStartsWith('http://localhost/envs/php-8.paquets.json?v=', $config['scratch']['packages']['url']);
+            $this->assertStringStartsWith('http://localhost/envs/'.$environnement.'.paquets.json?v=', $config['scratch']['packages']['url']);
             $this->assertSame('/contact', $config['scratch']['packages']['requestUrl'], 'Un paquet qui manque se demande par la page de contact.');
         } finally {
             if (!$present) {

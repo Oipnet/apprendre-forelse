@@ -85,10 +85,12 @@ function projet(script: Script = () => '', frameworks?: Record<string, () => Php
 	const instances: FauxPhp[] = [];
 	const versions: string[] = [];
 	const extensions: string[][] = [];
+	const reseaux: string[][] = [];
 	const project = new PhpWasmProject({
-		async loadPhp(version, demandees) {
+		async loadPhp(version, demandees, hotes) {
 			versions.push(version);
 			extensions.push(demandees);
+			reseaux.push(hotes);
 			const php = new FauxPhp(script);
 			instances.push(php);
 			return php;
@@ -99,7 +101,7 @@ function projet(script: Script = () => '', frameworks?: Record<string, () => Php
 		},
 		frameworks,
 	});
-	return { project, instances, versions, extensions };
+	return { project, instances, versions, extensions, reseaux };
 }
 
 /** Le projet démarré, instance de tests prête. */
@@ -133,6 +135,40 @@ describe('PhpWasmProject', () => {
 		await p.project.boot({ ...env(), options: { phpVersion: '8.4', phpExtensions: 'intl' } });
 		await p.project.runTests().catch(() => {});
 		expect(p.extensions).toEqual([['intl'], ['intl']]);
+	});
+
+	it('donne le réseau à l\'aperçu seulement, jamais à l\'instance de tests', async () => {
+		const sans = await demarre();
+		expect(sans.reseaux).toEqual([[], []]);
+
+		const p = projet();
+		await p.project.boot({ ...env(), options: { phpVersion: '8.4', network: 'api.anthropic.com, api.openai.com' } });
+		await p.project.runTests().catch(() => {});
+		expect(p.reseaux).toEqual([['api.anthropic.com', 'api.openai.com'], []]);
+	});
+
+	it('passe la clé de l\'apprenant à l\'aperçu et à la console, pas aux tests', async () => {
+		const vus: PHPRunOptions[] = [];
+		const { project } = await demarre((_php, options) => {
+			vus.push(options);
+			return options.scriptPath === '/runner/run-tests.php' ? rapport([]) : '';
+		});
+		await project.setSecrets({ ANTHROPIC_API_KEY: 'sk-ant-secret' });
+		vus.length = 0;
+		await project.request({ method: 'GET', url: '/preview/abc/', headers: {} });
+		await project.runCommand(['about']);
+		await project.runTests();
+		const [page, commande, tests] = vus;
+		for (const options of [page, commande]) {
+			expect(options.$_SERVER?.ANTHROPIC_API_KEY).toBe('sk-ant-secret');
+			expect(options.env?.ANTHROPIC_API_KEY).toBe('sk-ant-secret');
+		}
+		expect(JSON.stringify(tests)).not.toContain('sk-ant-secret');
+
+		await project.setSecrets({});
+		vus.length = 0;
+		await project.request({ method: 'GET', url: '/preview/abc/', headers: {} });
+		expect(JSON.stringify(vus)).not.toContain('sk-ant-secret');
 	});
 
 	it('charge PHP pendant le téléchargement de l\'archive, pas après', async () => {

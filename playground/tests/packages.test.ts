@@ -48,7 +48,7 @@ describe('une archive de paquet', () => {
 describe('Packages', () => {
 	const zip = zipSync({ 'vendor/nesbot/carbon/src/Carbon.php': strToU8('<?php'), [tablePath(carbon)]: strToU8('<?php return [];') });
 	const setup = () => {
-		const runtime = { writeFiles: vi.fn(async () => {}), deleteFile: vi.fn(async () => {}) };
+		const runtime = { writeFiles: vi.fn(async () => {}), writeFile: vi.fn(async () => {}), readFile: vi.fn(async () => null), deleteFile: vi.fn(async () => {}) };
 		const fetcher = vi.fn(async (_url: URL) => new Response(zip));
 		return { runtime, fetcher, packages: new Packages([carbon, uuid], new URL('https://forelse.test/envs/php-8.paquets.json?v=1'), runtime, fetcher as unknown as typeof fetch) };
 	};

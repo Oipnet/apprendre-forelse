@@ -34,12 +34,14 @@ final class EnvironmentRegistryTest extends TestCase
         $this->assertSame('envs/nuxt-4.zip', $environment->archivePath());
     }
 
-    /** Le catalogue des paquets (composer require) : celui du projet sans framework, aucun pour Symfony. */
-    public function testSeulLeProjetSansFrameworkAUnCatalogueDePaquets(): void
+    /** Le catalogue des paquets : celui du projet sans framework, celui du bac à sable Symfony (et de ses variantes). */
+    public function testLesBacsASableOntUnCatalogueDePaquets(): void
     {
         $environments = new EnvironmentRegistry(self::ROOT.'/environments');
 
         $this->assertSame('envs/php-8.paquets.json', $environments->get('php-8')->packageCatalogPath());
+        $this->assertSame('envs/symfony-8-doctrine.paquets.json', $environments->get('symfony-8-doctrine')->packageCatalogPath());
+        $this->assertSame('envs/symfony-8-doctrine.paquets.json', $environments->get('symfony-8-doctrine-en')->packageCatalogPath(), 'La variante anglaise prolonge le bac à sable : même catalogue.');
         $this->assertNull($environments->get('symfony-8')->packageCatalogPath());
     }
 
@@ -174,6 +176,27 @@ final class EnvironmentRegistryTest extends TestCase
 
         $this->expectException(ContentException::class);
         $this->expectExceptionMessage('extension « gd » inconnue (intl)');
+        (new EnvironmentRegistry($this->tmp))->get('maison');
+    }
+
+    /** Le réseau du navigateur ne s'ouvre que vers les API déclarées, et aucun environnement existant ne l'a. */
+    public function testLeReseauNOuvreQueLesApiDesFournisseursDeclares(): void
+    {
+        $this->assertSame([], (new EnvironmentRegistry(self::ROOT.'/environments'))->get('symfony-8')->network);
+
+        $this->tmp = $this->environnements(['ia' => "id: ia\nphp: '8.4'\nnetwork: [anthropic, openai, anthropic]\n"]);
+        $environnement = (new EnvironmentRegistry($this->tmp))->get('ia');
+
+        $this->assertSame(['anthropic', 'openai'], $environnement->network);
+        $this->assertSame(['api.anthropic.com', 'api.openai.com'], $environnement->networkHosts());
+    }
+
+    public function testUnHoteQuelconqueEstRefuseDansNetwork(): void
+    {
+        $this->tmp = $this->environnements(['maison' => "id: maison\nphp: '8.4'\nnetwork: [attaquant.example]\n"]);
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage('fournisseur « attaquant.example » inconnu dans « network » (anthropic, gemini, mistral, openai)');
         (new EnvironmentRegistry($this->tmp))->get('maison');
     }
 

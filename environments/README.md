@@ -28,12 +28,25 @@ environments/bin/build-env.sh                  # tous
 environments/bin/build-env.sh symfony-8 /tmp/envs   # ailleurs que dans le moteur
 ```
 
-Un environnement qui a un `paquets.json` (aujourd'hui `php-8`, le bac à sable sans framework) propose
-aussi des paquets Composer à ajouter depuis le navigateur (bouton « Paquets »). `build-env.sh` les
-empaquette avec `bin/build-paquets.php` : tous se résolvent ensemble pour la version de PHP du
-navigateur, puis chacun donne une archive avec ses dépendances (`<id>.paquet.<paquet>.<empreinte>.zip`)
-et le catalogue `<id>.paquets.json`. Ajouter un paquet au catalogue, c'est une ligne dans
-`paquets.json` (nom, contrainte de version, description en français et en anglais).
+Un environnement qui a un `paquets.json` (aujourd'hui `php-8`, le bac à sable sans framework, et
+`symfony-8-doctrine`, le bac à sable Symfony) propose aussi des paquets Composer à ajouter depuis le
+navigateur (bouton « Paquets »). `build-env.sh` les empaquette avec `bin/build-paquets.php` : tous se
+résolvent ensemble, par un `composer require` dans une copie du projet verrouillé (`composer.json` et
+`composer.lock` de l'environnement), pour la version de PHP du navigateur. Aucune version déjà installée ne
+bouge, et chaque paquet donne une archive de ce qu'il ajoute, dépendances comprises
+(`<id>.paquet.<paquet>.<empreinte>.zip`), avec le catalogue `<id>.paquets.json`. Ajouter un paquet au
+catalogue, c'est une ligne dans `paquets.json` (nom, contrainte de version, description en français et en
+anglais) ; pour Symfony, la contrainte d'un composant suit celle du projet (`8.1.*`). Le projet charge ces
+archives par `.forelse/paquets.php`, déclaré dans les `files` de son autoload.
+
+Un environnement qui a Flex (`symfony/flex` dans son verrou) reçoit en plus les **recettes Flex** de chaque
+paquet et de ses dépendances, lues à l'empaquetage sur `github.com/symfony/recipes` puis `recipes-contrib`
+(`bin/recettes-flex.php`, même version de recette que Flex, recette automatique pour un bundle qui n'en a pas).
+Le navigateur les applique comme Flex : le bundle dans `config/bundles.php`, les fichiers de `config/`, `src/`,
+`templates/` et `translations/` s'ils n'existent pas, le bloc `###> paquet ###` du `.env`. Le reste (Docker,
+Makefile, `.gitignore`, lignes ajoutées à un fichier du projet comme `phpunit.dist.xml`) est noté dans
+`ignore`. Le catalogue nomme aussi les fichiers du cache du conteneur à effacer (`invalider`) : Symfony ne
+remarquerait pas seul une classe apparue dans `vendor/`.
 
 Le même catalogue sert la console : `composer require <paquet>` et `composer remove` (exercices comme bac à sable),
 avec `composer dump-autoload` qui relit `composer.json`. C'est un petit Composer sans réseau,
@@ -59,12 +72,22 @@ framework: symfony  # symfony (défaut), laravel, docker, nuxt
 cache: [var/cache]  # facultatif : les caches à vider entre deux runs, si ceux du framework ne conviennent pas
 extends: <id>       # facultatif : prolonge un autre environnement (voir « Fusionner »)
 extensions: [intl]  # facultatif : extensions que le PHP du navigateur charge en plus (aujourd'hui intl seulement)
+network: [anthropic, openai]  # facultatif : API d'IA que le PHP de l'aperçu peut appeler (parcours IA)
 ```
 
 `extensions:` existe parce qu'intl pèse lourd : l'extension et ses données ICU, environ 13,5 Mo compressés, ne se
 téléchargent que pour les environnements qui la demandent (`symfony-8-easyadmin`, dont les champs de date et de montant
 en ont besoin). Le moteur refuse une extension que php-wasm ne sait pas charger à part. Côté serveur (vérification des
 réussites, intégration continue), le PHP natif a déjà intl.
+
+`network:` ouvre le réseau du PHP de l'aperçu vers les API de ces fournisseurs, et d'eux seuls : `anthropic`, `gemini`,
+`mistral`, `openai` (liste fermée, `EnvironmentRegistry::NETWORK_PROVIDERS`). La page démarre alors le worker
+`php-network-worker` : ses requêtes HTTPS deviennent des `fetch()` du navigateur (mode « TCP over fetch » de php-wasm), sa
+CSP n'autorise que ces quatre API (`docker/Caddyfile`), et le bouton « Clé API » donne la clé de l'apprenant à l'aperçu et à
+la console en variable d'environnement (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `MISTRAL_API_KEY`, `GEMINI_API_KEY`). La clé
+reste dans l'onglet (sessionStorage) : elle n'est écrite dans aucun fichier, donc ni sauvegardée, ni partagée, ni envoyée
+au vérificateur ou au mentor. Les tests n'ont ni réseau ni clé : ils rejouent des réponses enregistrées, comme le
+vérificateur du serveur. Le bac à sable n'a jamais le réseau, son code pouvant venir d'un lien partagé.
 
 `framework:` choisit le **runtime**, c'est-à-dire ce que le moteur sait faire tourner : la console du
 projet, l'organisation de ses dossiers, ses caches, son lanceur de tests. Chaque runtime est déclaré

@@ -1,6 +1,7 @@
 import { m } from '../i18n';
 import { foldButtonHtml, railHtml } from './folding';
 import { navigateurIntegre } from './boot';
+import { apiKeyButtonHtml } from './api-key';
 import { escapeHtml } from './html';
 import { foldShortcutLabel } from './shortcuts';
 import { sanitize } from './markdown';
@@ -33,6 +34,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 		}
 		<div class="actions">
 			${config.scratch?.packages ? `<button id="packages" class="ghost" title="${m.packages.buttonTitle}" disabled><span class="icon" aria-hidden="true">📦</span><span class="label"> ${m.packages.button}</span></button>` : ''}
+			${exercise.environment.network?.length && !noBrief ? apiKeyButtonHtml() : ''}
 			${config.share ? `<button id="share" class="ghost" title="${m.layout.shareTitle}"><span class="icon" aria-hidden="true">🔗</span><span class="label"> ${m.layout.share}</span></button>` : ''}
 			${config.feedbackUrl ? `<button id="feedback" class="ghost" title="${m.layout.feedbackTitle}"><span class="icon" aria-hidden="true">💬</span><span class="label"> ${m.layout.feedback}</span></button>` : ''}
 			<button id="solution" class="ghost" hidden><span class="icon" aria-hidden="true">📖</span><span class="label">${m.layout.solution}</span></button>

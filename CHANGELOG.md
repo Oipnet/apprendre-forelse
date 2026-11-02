@@ -10,6 +10,40 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Paquets Composer dans le bac à sable Symfony**, avec leurs recettes Flex : form, validator, security-bundle,
+  serializer, messenger, mailer, workflow, translation, uid, expression-language, rate-limiter, object-mapper,
+  ux-twig-component, doctrine-fixtures-bundle, zenstruck/foundry, knp-paginator-bundle (`symfony-8-doctrine/paquets.json`).
+  Ils se résolvent contre le `composer.lock` de l'environnement (aucune version déjà installée ne bouge). Les recettes
+  sont lues à l'empaquetage sur les dépôts de Flex (`environments/bin/recettes-flex.php`, même choix de version que
+  Flex) ; le navigateur les applique comme Flex (bundle dans `config/bundles.php`, fichiers de `config/` et `src/` s'ils
+  n'existent pas, bloc du `.env`), vide le cache du conteneur et montre dans la console le `composer require`
+  équivalent. Décocher défait la recette, sans supprimer un fichier modifié. Le lien partagé et le serveur MCP
+  (`create_sandbox`) acceptent ces paquets.
+
+## 3.28.1 — 2026-11-02
+
+### Modifié
+
+- **Encart « Écrit par »** : photo de 80 px alignée en haut, présentation en plus petit et en gris, et « Me contacter »
+  en bouton principal (aussi sur la page auteur).
+
+### Corrigé
+
+- **Complétion du parcours IA** : l'index de complétion de `symfony-8-ia` connaît Symfony AI (agent, messages, exceptions,
+  outils, store), les attributs MCP, les exceptions du client HTTP, `LoggerInterface` et `Uuid`. `content:check` refusait
+  13 exercices sur 36 du pack le-comptoir, dont l'éditeur n'aurait pas proposé les imports.
+
+## 3.28.0 — 2026-11-02
+
+### Ajouté
+
+- **Appels aux API d'IA depuis le navigateur** (parcours IA) : un environnement qui déclare `network:` (`anthropic`,
+  `gemini`, `mistral`, `openai`) démarre un worker PHP dont les requêtes HTTPS deviennent des `fetch()` du navigateur,
+  vers ces API seulement (CSP du worker dans `docker/Caddyfile`, liste vérifiée à chaque appel). Bouton « Clé API » : la
+  clé de l'apprenant reste dans l'onglet et n'atteint que l'aperçu et la console (variable d'environnement), jamais
+  les tests, les fichiers, les liens partagés ni le mentor. Le bac à sable n'a jamais le réseau. Méthode facultative
+  `setSecrets()` dans le contrat des runtimes.
+
 - **Un parcours sur chaque article** : dans la colonne collante (écran large) ou en fin d'article (téléphone), l'encart « Aller plus loin » propose le
   parcours nommé par la nouvelle clé `course:` de l'article, ou à défaut celui du framework de son exercice de
   Pratique. Le parcours doit exister (`content:check`) ; il n'apparaît que s'il est visible et traduit dans la langue
