@@ -1,9 +1,8 @@
 id: exemple-goravel-salut
 title: Un paramètre de route avec Goravel
 environment: goravel-1
-published: 2026-11-02
+published: 2026-08-10
 summary: "Goravel, le framework Go inspiré de Laravel, tourne dans le navigateur : lisez un paramètre de route et validez-le dans un contrôleur."
-concepts: [Routage, Contrôleur]
 
 open: app/http/controllers/salut_controller.go
 preview: /salut/Ada
