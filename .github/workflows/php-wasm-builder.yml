@@ -6,7 +6,7 @@ name: Essai PHP 8.5
 on:
   push:
     branches: [claude/project-thread-hlrniq]
-    paths: [.github/workflows/php-wasm-builder.yml, playground/spike/builder/**]
+    paths: [.github/workflows/php-wasm-builder.yml, playground/spike/builder/**, playground/package-lock.json]
 
 permissions:
   contents: read
