@@ -47,6 +47,8 @@ export class EditorPanel {
 	private readonly files = new Map<string, OpenFile>();
 	private readonly viewStates = new Map<string, monaco.editor.ICodeEditorViewState | null>();
 	private current?: OpenFile;
+	/** Le message affiché quand on tente de modifier composer.json (il change si l'environnement a un catalogue de paquets). */
+	composerMessage: string = m.editor.composerReadonlyMessage;
 
 	constructor(
 		private readonly tabs: HTMLElement,
@@ -107,7 +109,7 @@ export class EditorPanel {
 		this.current = file;
 		file.tab.classList.add('active');
 		this.editor.setModel(file.model);
-		this.editor.updateOptions({ readOnly: file.readonly, readOnlyMessage: { value: file.path === 'composer.json' ? m.editor.composerReadonlyMessage : m.editor.readonlyMessage } });
+		this.editor.updateOptions({ readOnly: file.readonly, readOnlyMessage: { value: file.path === 'composer.json' ? this.composerMessage : m.editor.readonlyMessage } });
 		const state = this.viewStates.get(path);
 		if (state) this.editor.restoreViewState(state);
 		this.editor.focus();

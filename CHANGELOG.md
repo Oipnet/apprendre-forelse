@@ -18,7 +18,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 - **Explorateur** : les `.gitkeep` ne s'affichent plus ; leur dossier reste visible.
 - **composer.json en lecture seule** : le message de l'éditeur explique pourquoi (dépendances préinstallées dans le
-  navigateur, pas d'accès à Packagist) et renvoie au téléchargement du projet.
+  navigateur, pas d'accès à Packagist) et renvoie au téléchargement du projet. Avec un catalogue de paquets (PHP sans
+  framework), il indique `composer require` dans la console et, au bac à sable, le bouton 📦.
 - **Encart « Écrit par »** : photo de 80 px alignée en haut, présentation en plus petit et en gris, et « Me contacter »
   en bouton principal (aussi sur la page auteur).
 

@@ -339,6 +339,9 @@ export const en: Messages = {
 		readonlyTitle: (path: string) => `${path} (read-only)`,
 		readonlyMessage: 'This file is provided by the exercise and cannot be edited.',
 		composerReadonlyMessage: 'Dependencies are already installed in the browser: PHP runs there in WebAssembly, with no access to Packagist, so editing composer.json would not install anything. Download the project to keep working on it locally (composer install).',
+		/** `button`: the 📦 button is there (sandbox). */
+		composerCatalogMessage: (button: boolean) =>
+			`composer.json cannot be edited by hand: PHP runs here in WebAssembly, with no access to Packagist. To add a package from the catalog, run composer require <package> in the console${button ? ' or tick it with the 📦 button' : ''}: composer.json and the autoloader are updated.`,
 	},
 
 	completion: {

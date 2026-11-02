@@ -344,6 +344,9 @@ export const fr = {
 		readonlyTitle: (path: string) => `${path} (lecture seule)`,
 		readonlyMessage: 'Ce fichier est fourni par l\'exercice et ne peut pas être modifié.',
 		composerReadonlyMessage: 'Les dépendances sont déjà installées dans le navigateur : PHP y tourne en WebAssembly, sans accès à Packagist, donc modifier composer.json n\'installerait rien. Téléchargez le projet pour le faire évoluer chez vous (composer install).',
+		/** `button` : le bouton 📦 est là (bac à sable). */
+		composerCatalogMessage: (button: boolean) =>
+			`composer.json n'est pas modifiable à la main : PHP tourne ici en WebAssembly, sans accès à Packagist. Pour ajouter un paquet du catalogue, lancez composer require <paquet> dans la console${button ? ' ou cochez-le avec le bouton 📦' : ''} : composer.json et l'autoload sont mis à jour.`,
 	},
 
 	completion: {

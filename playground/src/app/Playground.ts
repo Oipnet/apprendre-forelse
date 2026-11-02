@@ -382,6 +382,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const [{ EditorPanel, monaco }, { registerCompletion }, { BeforeAfterDialog }] = await editeur;
 	mark('editorLoaded');
 	const editor = new EditorPanel($('#tabs'), $('#editor'), (path, content) => session.edit(path, content));
+	// Un catalogue de paquets (PHP sans framework) : le message de composer.json dit comment en ajouter un.
+	if (catalogueUrl) editor.composerMessage = m.editor.composerCatalogMessage(!!catalogue);
 	const files = new ProjectFilesController(root, editor, runtime, exercise, session, compact.matches, scratch ? m.scratch.newProject : m.files);
 	// Les fichiers modifiables arrivent tout de suite ; ceux à lire seulement, quand PHP peut les lire.
 	const fichiersALire = files.addInitialFiles(initial, editables);
