@@ -42,7 +42,7 @@ final class ReponsesEnregistrees
         array_push(self::$aServir, ...$reponses);
     }
 
-    /** @return list<array{fournisseur: string, methode: string, url: string, corps: array<mixed>}> */
+    /** @return list<array{fournisseur: string, methode: string, url: string, corps: array<mixed>, timeout: ?float, max_duration: ?float}> */
     public static function requetes(): array
     {
         return self::$requetes;
@@ -65,16 +65,24 @@ final class ReponsesEnregistrees
             $corps = $morceaux;
         }
         $json = \is_string($corps) && '' !== $corps ? json_decode($corps, true) : null;
-        self::$requetes[] = ['fournisseur' => $fournisseur, 'methode' => $methode, 'url' => $url, 'corps' => \is_array($json) ? $json : []];
+        self::$requetes[] = [
+            'fournisseur' => $fournisseur, 'methode' => $methode, 'url' => $url, 'corps' => \is_array($json) ? $json : [],
+            'timeout' => $options['timeout'] ?? null, 'max_duration' => $options['max_duration'] ?? null,
+        ];
 
         $reponse = array_shift(self::$aServir);
         if (null === $reponse) {
             return self::erreur(sprintf('Votre code appelle le modèle plus souvent que prévu (%d appels) : le test n\'a pas d\'autre réponse.', \count(self::$requetes)));
         }
 
+        if ($reponse->silence) {
+            // Une chaîne vide dans le corps d'une MockResponse simule un délai dépassé (le timeout du client).
+            return new MockResponse(['']);
+        }
+
         return new MockResponse(json_encode($reponse->auFormat($fournisseur, $url), \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE), [
-            'http_code' => 200,
-            'response_headers' => ['content-type' => 'application/json'],
+            'http_code' => $reponse->statut,
+            'response_headers' => ['content-type' => 'application/json', ...$reponse->entetes],
         ]);
     }
 

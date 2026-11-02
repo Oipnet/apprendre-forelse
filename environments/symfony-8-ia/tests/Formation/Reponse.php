@@ -18,7 +18,32 @@ final readonly class Reponse
         public array $vecteurs = [],
         public int $jetonsEnEntree = 12,
         public int $jetonsEnSortie = 8,
+        public int $statut = 200,
+        public array $entetes = [],
+        public bool $silence = false,
     ) {
+    }
+
+    /**
+     * Une panne du fournisseur : 529 (surchargé), 500, 503… Le corps d'erreur est lisible par chaque bridge.
+     *
+     * @param array<string, string> $entetes en-têtes de la réponse, par exemple ['retry-after' => '20']
+     */
+    public static function erreur(int $statut = 529, string $message = 'Overloaded', array $entetes = []): self
+    {
+        return new self(texte: $message, statut: $statut, entetes: $entetes);
+    }
+
+    /** Le quota du compte est atteint : 429, avec le délai avant de réessayer (en secondes). */
+    public static function tropDeRequetes(int $reessayerDans = 20): self
+    {
+        return self::erreur(429, 'Rate limit exceeded', ['retry-after' => (string) $reessayerDans]);
+    }
+
+    /** Le fournisseur ne répond pas : la requête dépasse son délai (timeout du client HTTP). */
+    public static function delaiDepasse(): self
+    {
+        return new self(silence: true);
     }
 
     public static function texte(string $texte, int $jetonsEnEntree = 12, int $jetonsEnSortie = 8): self
@@ -47,6 +72,10 @@ final readonly class Reponse
     /** @return array<string, mixed> le corps JSON que renverrait ce fournisseur */
     public function auFormat(string $fournisseur, string $url): array
     {
+        if ($this->statut >= 400) {
+            // Une forme qui convient à tous : Anthropic et OpenAI lisent error.message, Gemini error.status, Mistral le code HTTP.
+            return ['type' => 'error', 'error' => ['type' => 429 === $this->statut ? 'rate_limit_error' : 'overloaded_error', 'message' => $this->texte, 'code' => $this->statut, 'status' => 429 === $this->statut ? 'RESOURCE_EXHAUSTED' : 'UNAVAILABLE']];
+        }
         if ([] !== $this->vecteurs) {
             return $this->vecteursAuFormat($fournisseur);
         }
