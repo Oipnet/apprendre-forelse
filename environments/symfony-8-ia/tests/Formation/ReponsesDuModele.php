@@ -109,6 +109,43 @@ trait ReponsesDuModele
         return $corps[$nom] ?? $corps['generationConfig'][$nom] ?? null;
     }
 
+    /**
+     * La limite de jetons de réponse du dernier appel, quel que soit le nom que lui donne le fournisseur : max_tokens
+     * (Anthropic, Mistral), max_output_tokens (OpenAI) ou maxOutputTokens (Gemini). Null si absente.
+     */
+    protected function limiteDeJetons(): ?int
+    {
+        foreach (['max_tokens', 'max_output_tokens', 'maxOutputTokens'] as $nom) {
+            $valeur = $this->optionEnvoyee($nom);
+            if (null !== $valeur) {
+                return (int) $valeur;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Le schéma JSON de sortie structurée demandé au dernier appel (option response_format), là où le fournisseur le
+     * range ; null si l'appel n'en demande pas.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function schemaDemande(): ?array
+    {
+        $appel = $this->dernierAppelAuModele();
+        $corps = $appel['corps'];
+
+        $schema = match ($appel['fournisseur']) {
+            'anthropic' => $corps['output_config']['format']['schema'] ?? null,
+            'openai' => $corps['text']['format']['schema'] ?? null,
+            'gemini' => $corps['generationConfig']['responseJsonSchema'] ?? null,
+            default => $corps['response_format']['json_schema']['schema'] ?? null,
+        };
+
+        return \is_array($schema) ? $schema : null;
+    }
+
     /** Le modèle demandé au dernier appel (dans l'URL pour Gemini). */
     protected function modeleDemande(): string
     {
