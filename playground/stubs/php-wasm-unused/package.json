@@ -1,7 +1,7 @@
 {
   "name": "php-wasm-unused",
   "version": "0.0.0",
-  "description": "Remplace les binaires des versions PHP non embarquées (seul PHP 8.4 est utilisé).",
+  "description": "Remplace les binaires des versions PHP non embarquées (seul PHP 8.5 est utilisé).",
   "type": "module",
   "main": "index.js",
   "exports": {

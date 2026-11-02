@@ -1,6 +1,6 @@
 # PHP playground
 
-A PHP 8.4 project with no framework runs in your browser, with nothing to install: edit the code and the preview updates as you type.
+A PHP 8.5 project with no framework runs in your browser, with nothing to install: edit the code and the preview updates as you type.
 
 - **The code**: `public/index.php` receives every request and picks the page, `templates/accueil.php` displays it. The classes in `src/` (namespace `App\`) are loaded by Composer, with no `require`. The file tree's ＋ button creates more classes, views or scripts.
 - **The preview**: type an address in its bar, for example `/bonjour/Ada`.

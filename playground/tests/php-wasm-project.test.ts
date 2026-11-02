@@ -68,7 +68,7 @@ const profile = (overrides: Partial<FrameworkProfile> = {}): FrameworkProfile =>
 });
 
 const env = (framework = profile()): EnvironmentSpec => ({
-	id: 'symfony-8', framework, options: { phpVersion: '8.4' }, archiveUrl: 'https://exemple/projet.zip', previewBasePath: '/preview/abc', previewSecure: false,
+	id: 'symfony-8', framework, options: { phpVersion: '8.5' }, archiveUrl: 'https://exemple/projet.zip', previewBasePath: '/preview/abc', previewSecure: false,
 });
 
 const archive = zipSync({
@@ -117,8 +117,8 @@ describe('PhpWasmProject', () => {
 	it('démarre deux instances avec le projet, le lanceur de tests et la console du framework', async () => {
 		const { preview, tests, progress, versions } = await demarre(() => '', { symfony: () => ({ consoleScript: '<?php // console', extraFiles: { '/runner/en-plus.php': '<?php' } }) });
 		expect(progress.map((p) => p.step)).toEqual(['download', 'unpack', 'boot']);
-		expect(progress[2].label).toBe('Démarrage de PHP 8.4');
-		expect(versions).toEqual(['8.4', '8.4']);
+		expect(progress[2].label).toBe('Démarrage de PHP 8.5');
+		expect(versions).toEqual(['8.5', '8.5']);
 		for (const php of [preview, tests]) {
 			expect(php.text('/app/src/Menu.php')).toBe('<?php // menu');
 			expect(php.text('/runner/console.php')).toBe('<?php // console');
@@ -132,7 +132,7 @@ describe('PhpWasmProject', () => {
 		expect(sans.extensions).toEqual([[], []]);
 
 		const p = projet();
-		await p.project.boot({ ...env(), options: { phpVersion: '8.4', phpExtensions: 'intl' } });
+		await p.project.boot({ ...env(), options: { phpVersion: '8.5', phpExtensions: 'intl' } });
 		await p.project.runTests().catch(() => {});
 		expect(p.extensions).toEqual([['intl'], ['intl']]);
 	});
@@ -142,7 +142,7 @@ describe('PhpWasmProject', () => {
 		expect(sans.reseaux).toEqual([[], []]);
 
 		const p = projet();
-		await p.project.boot({ ...env(), options: { phpVersion: '8.4', network: 'api.anthropic.com, api.openai.com' } });
+		await p.project.boot({ ...env(), options: { phpVersion: '8.5', network: 'api.anthropic.com, api.openai.com' } });
 		await p.project.runTests().catch(() => {});
 		expect(p.reseaux).toEqual([['api.anthropic.com', 'api.openai.com'], []]);
 	});

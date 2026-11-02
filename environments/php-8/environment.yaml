@@ -2,5 +2,5 @@
 # empaqueté par environments/bin/build-env.sh. Il sert au bac à sable « PHP ».
 id: php-8
 title: PHP 8.4 — sans framework
-php: '8.4'
+php: '8.5'
 framework: php

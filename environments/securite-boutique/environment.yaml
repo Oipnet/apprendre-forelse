@@ -3,4 +3,4 @@
 # Voir houblon-noir/SPEC-BOUTIQUE.md dans le dépôt de contenu.
 id: securite-boutique
 title: Symfony 8.1 — boutique vulnérable (Security, Doctrine SQLite, Form, Serializer, Monolog)
-php: '8.4'
+php: '8.5'

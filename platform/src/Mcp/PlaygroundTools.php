@@ -39,7 +39,7 @@ final readonly class PlaygroundTools
     }
 
     /**
-     * Returns the starting project of a playground (Symfony 8, Laravel 13 or plain PHP 8.4 with Composer autoloading):
+     * Returns the starting project of a playground (Symfony 8, Laravel 13 or plain PHP 8.5 with Composer autoloading):
      * its files, the paths you may create or edit, and, for Symfony and plain PHP, the Composer packages you may add. Call it
      * before create_sandbox to write code that fits the project. Configuration files (config/, bootstrap/) are listed
      * in config_files; ask for their content with include_config when you need to change one.

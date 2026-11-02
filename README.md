@@ -1,7 +1,7 @@
 # Forelse · apprendre — le moteur
 
 Une plateforme pour **apprendre à développer en codant**, sans vidéo ni installation. L'apprenant écrit son code dans
-le navigateur, où tourne un vrai projet : PHP 8.4 compilé en WebAssembly pour Symfony et Laravel, et des simulateurs
+le navigateur, où tourne un vrai projet : PHP 8.5 compilé en WebAssembly pour Symfony et Laravel, et des simulateurs
 pour Docker et Nuxt. L'aperçu se met à jour en direct, et des tests automatiques valident chaque objectif. Rien n'est
 exécuté sur le serveur.
 

@@ -331,7 +331,7 @@ bac_a_sable:
         intro: "Essayez une idée, reproduisez un bug, montrez du code à un collègue : le projet tourne dans le navigateur, sans rien installer ni créer de compte. Un lien suffit à le partager."
         symfony: "Contrôleurs avec #[Route], gabarits Twig, bin/console et Doctrine, sur Symfony 8."
         laravel: "Routes, vues Blade et php artisan, sur Laravel 13."
-        php: "PHP 8.4 sans framework : un index.php, vos classes chargées par Composer, et vos scripts lancés dans la console."
+        php: "PHP 8.5 sans framework : un index.php, vos classes chargées par Composer, et vos scripts lancés dans la console."
         ouvrir: "Ouvrir le bac à sable {framework}"
         comment: Comment ça marche
         rien_a_installer: Rien à installer.
@@ -368,7 +368,7 @@ bac_a_sable:
         titre: Questions fréquentes
         tester:
             question: "Comment tester du code PHP en ligne, sans rien installer ?"
-            reponse: "Ouvrez le bac à sable PHP, Symfony ou Laravel : PHP 8.4 tourne dans votre navigateur, compilé en WebAssembly. Vous modifiez le code et l'aperçu se met à jour, sans serveur, sans Docker et sans Composer."
+            reponse: "Ouvrez le bac à sable PHP, Symfony ou Laravel : PHP 8.5 tourne dans votre navigateur, compilé en WebAssembly. Vous modifiez le code et l'aperçu se met à jour, sans serveur, sans Docker et sans Composer."
         compte:
             question: "Faut-il créer un compte ?"
             reponse: "Non. Le bac à sable est gratuit et ouvert à tous. Votre brouillon est gardé dans votre navigateur : vous le retrouvez en revenant sur la page."
@@ -380,10 +380,10 @@ bac_a_sable:
             reponse: "Non. Le code s'exécute dans votre navigateur, et un lien partagé le porte après le #, une partie de l'adresse que le navigateur n'envoie jamais au serveur. Rien n'est stocké de notre côté."
         versions:
             question: "Quelles versions de PHP, de Symfony et de Laravel ?"
-            reponse: "PHP 8.4 partout. Symfony 8, avec Twig, bin/console et Doctrine sur SQLite, et Laravel 13, avec Blade et php artisan, sont des applications complètes : contrôleurs, routes, vues, services. Le projet PHP n'a aucun framework : un index.php, des classes chargées par Composer, et des scripts lancés avec php."
+            reponse: "PHP 8.5 partout. Symfony 8, avec Twig, bin/console et Doctrine sur SQLite, et Laravel 13, avec Blade et php artisan, sont des applications complètes : contrôleurs, routes, vues, services. Le projet PHP n'a aucun framework : un index.php, des classes chargées par Composer, et des scripts lancés avec php."
     symfony:
         texte: "Un vrai projet Symfony 8 tourne ici, dans votre navigateur : écrivez un contrôleur avec #[Route], un gabarit Twig, un service ou une entité Doctrine, lancez bin/console, et voyez le résultat aussitôt. Idéal pour essayer une fonctionnalité, reproduire un bug ou montrer du code à un collègue, sans installer PHP ni créer de compte."
     php:
-        texte: "Un projet PHP 8.4 sans framework tourne ici, dans votre navigateur : routez les requêtes dans public/index.php, écrivez vos classes dans src/, lancez un script avec php, et voyez le résultat aussitôt. Idéal pour essayer une fonction de PHP, reproduire un bug ou montrer du code à un collègue, sans installer PHP ni créer de compte."
+        texte: "Un projet PHP 8.5 sans framework tourne ici, dans votre navigateur : routez les requêtes dans public/index.php, écrivez vos classes dans src/, lancez un script avec php, et voyez le résultat aussitôt. Idéal pour essayer une fonction de PHP, reproduire un bug ou montrer du code à un collègue, sans installer PHP ni créer de compte."
     laravel:
         texte: "Un vrai projet Laravel 13 tourne ici, dans votre navigateur : déclarez des routes, écrivez une vue Blade ou un contrôleur, lancez php artisan, et voyez le résultat aussitôt. Idéal pour essayer une fonctionnalité, reproduire un bug ou montrer du code à un collègue, sans installer PHP ni créer de compte."

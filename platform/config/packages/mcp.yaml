@@ -7,7 +7,7 @@ mcp:
             version: '1.0.0'
             description: 'Run Symfony, Laravel or plain PHP code in the browser, from a shareable link.'
             instructions: |
-                Creates links to an online PHP playground (Symfony 8, Laravel 13, or plain PHP 8.4 with Composer
+                Creates links to an online PHP playground (Symfony 8, Laravel 13, or plain PHP 8.5 with Composer
                 autoloading) that runs in the browser with WebAssembly: no account, nothing to install. Use it when the
                 user wants to try, demo, share or debug a small PHP example, or to reproduce a bug from their project in a
                 minimal project they can share. Call get_starter for the starting project and the editable paths (code,

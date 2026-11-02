@@ -3,4 +3,4 @@
 # quand symfony-8 passera en 8.2.
 id: symfony-8-2-dev
 title: Symfony 8.2 en développement — Console, Twig, Form, Security, Workflow, Lock, Translation, JsonSchema, ExpressionLanguage, PHPUnit
-php: '8.4'
+php: '8.5'

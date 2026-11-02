@@ -55,7 +55,7 @@ final class PackCarriedEnvironmentTest extends TestCase
         $this->assertTrue($environnement->isComposed());
         $this->assertNotNull($environnement->file('src/Kernel.php'), 'Le squelette vient du moteur.');
         $this->assertNotNull($environnement->file('src/Controller/BoutiqueController.php'));
-        $this->assertSame('8.4', $environnement->phpVersion, 'La clé « php » s\'hérite.');
+        $this->assertSame('8.5', $environnement->phpVersion, 'La clé « php » s\'hérite.');
     }
 
     /** Un pack ne s'approprie pas « symfony-8 » en silence : le chargement s'arrête et nomme les deux. */

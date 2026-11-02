@@ -20,6 +20,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   équivalent. Décocher défait la recette, sans supprimer un fichier modifié. Le lien partagé et le serveur MCP
   (`create_sandbox`) acceptent ces paquets.
 
+### Modifié
+
+- **PHP 8.5 dans le navigateur** (`@php-wasm/web-8-5`), la version du serveur et du vérificateur : un exercice qui
+  emploie une nouveauté de 8.5 (`|>` par exemple) ne passe plus côté serveur pour planter dans le navigateur. Les
+  environnements du moteur déclarent `php: '8.5'` ; PHP 8.4 n'est plus embarqué, et un environnement de pack qui
+  demande encore 8.4 tourne en 8.5. Les textes du bac à sable, de la FAQ et du serveur MCP disent 8.5.
+
 ## 3.28.1 — 2026-11-02
 
 ### Modifié

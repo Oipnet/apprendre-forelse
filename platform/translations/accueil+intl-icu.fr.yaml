@@ -99,7 +99,7 @@ faq:
         reponse: "Vous ne regardez rien : vous écrivez tout le code vous-même, sur un projet qui grandit exercice après exercice. Le temps passé est du temps de pratique."
     a_jour:
         question: "Est-ce à jour ?"
-        reponse: "Chaque parcours cible les versions actuelles (Symfony 8 et PHP 8.4 pour le premier), et les exercices sont vérifiés automatiquement à chaque mise à jour du moteur."
+        reponse: "Chaque parcours cible les versions actuelles (Symfony 8 et PHP 8.5 pour le premier), et les exercices sont vérifiés automatiquement à chaque mise à jour du moteur."
     hebergement:
         question: "Puis-je l'héberger moi-même ?"
         reponse: "Oui, à terme : le moteur est sous licence AGPL et son code sera publié à l'ouverture. Les parcours, eux, sont le contenu payant : c'est ce que vous achetez."

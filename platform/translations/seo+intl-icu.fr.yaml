@@ -113,7 +113,7 @@ bac_a_sable:
         fil_ariane: Bac à sable Laravel
     php:
         titre: "Bac à sable PHP en ligne, sans framework"
-        description: "Un projet PHP 8.4 dans votre navigateur, sans framework : index.php, classes autoloadées, scripts en console. Testez du code PHP et partagez-le par un lien, sans compte."
+        description: "Un projet PHP 8.5 dans votre navigateur, sans framework : index.php, classes autoloadées, scripts en console. Testez du code PHP et partagez-le par un lien, sans compte."
         fil_ariane: Bac à sable PHP
     ia:
         titre: "Serveur MCP : un bac à sable PHP, Symfony ou Laravel depuis votre IA"

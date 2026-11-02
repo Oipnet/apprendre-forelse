@@ -51,7 +51,7 @@
 		"@php-wasm/node-8-2": "file:./stubs/php-wasm-unused",
 		"@php-wasm/web-8-3": "file:./stubs/php-wasm-unused",
 		"@php-wasm/node-8-3": "file:./stubs/php-wasm-unused",
-		"@php-wasm/web-8-5": "file:./stubs/php-wasm-unused",
-		"@php-wasm/node-8-5": "file:./stubs/php-wasm-unused"
+		"@php-wasm/web-8-4": "file:./stubs/php-wasm-unused",
+		"@php-wasm/node-8-4": "file:./stubs/php-wasm-unused"
 	}
 }
