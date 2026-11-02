@@ -38,6 +38,8 @@ export interface WorkerRuntimeOptions {
 	commands?: boolean;
 	/** Le worker sait-il lire les bases du projet (inspectDatabase) ? Par défaut, non. */
 	database?: boolean;
+	/** Le worker accepte-t-il des secrets (setSecrets : la clé d'API de l'apprenant) ? Par défaut, non. */
+	secrets?: boolean;
 }
 
 /**
@@ -72,6 +74,8 @@ export class WorkerRuntime implements Runtime {
 	private env?: EnvironmentSpec;
 	/** Ce que la page a écrit (ou supprimé : null) depuis le démarrage, dans l'ordre : rejoué au redémarrage. */
 	private readonly files = new Map<string, string | null>();
+	/** Les derniers secrets donnés : rejoués au redémarrage, comme les fichiers. */
+	private secrets: Record<string, string> = {};
 	/** Le redémarrage en cours : les nouveaux appels l'attendent. */
 	private restarting: Promise<void> | null = null;
 	private readonly restartListeners = new Set<(event: RuntimeRestart) => void>();
@@ -88,6 +92,7 @@ export class WorkerRuntime implements Runtime {
 		// Sans console, la méthode n'existe pas : la page le voit, au lieu d'essuyer un échec par commande.
 		if (options.commands === false) this.runCommand = undefined;
 		if (!options.database) this.inspectDatabase = undefined;
+		if (!options.secrets) this.setSecrets = undefined;
 		this.worker = this.start();
 	}
 
@@ -198,6 +203,7 @@ export class WorkerRuntime implements Runtime {
 					else await this.send('deleteFile', [path]).catch(() => {});
 				}
 				await this.send('writeFiles', [written]);
+				if (this.setSecrets && Object.keys(this.secrets).length) await this.send('setSecrets', [this.secrets]);
 			} catch (error) {
 				const message = error instanceof Error ? error.message.split('\n')[0] : String(error);
 				this.emit({ phase: 'failed', error: message });
@@ -278,4 +284,9 @@ export class WorkerRuntime implements Runtime {
 	};
 
 	inspectDatabase?: () => Promise<DatabaseSnapshot[]> = () => this.call('inspectDatabase');
+
+	setSecrets?: (secrets: Record<string, string>) => Promise<void> = (secrets) => {
+		this.secrets = { ...secrets };
+		return this.call('setSecrets', secrets);
+	};
 }

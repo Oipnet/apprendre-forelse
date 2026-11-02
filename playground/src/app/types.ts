@@ -40,6 +40,8 @@ export interface ExercisePayload {
 		phpVersion: '8.4' | '';
 		/** Extensions que le PHP du navigateur charge en plus (intl). Absent d'un moteur antérieur. */
 		phpExtensions?: string[];
+		/** Les API d'IA que le PHP du navigateur peut appeler (parcours IA) ; absent ou vide pour les autres. */
+		network?: { provider: string; host: string }[];
 		/** Ce que le moteur sait de ce framework (voir App\Content\Framework\FrameworkProfile). */
 		framework: FrameworkProfile;
 		archiveUrl: string;

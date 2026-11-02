@@ -87,6 +87,9 @@ final readonly class ExercisePayloadFactory
                 // Extensions chargées en plus par le PHP du navigateur (intl, pour EasyAdmin) : les autres environnements
                 // n'en téléchargent pas les données.
                 'phpExtensions' => $environment->phpExtensions,
+                // Les fournisseurs d'IA que le PHP du navigateur peut appeler (parcours IA), et leurs hôtes : seul cet
+                // environnement-là démarre le worker qui a le réseau, et la clé de l'apprenant ne sort que vers eux.
+                'network' => array_map(static fn (string $provider, string $host): array => ['provider' => $provider, 'host' => $host], $environment->network, $environment->networkHosts()),
                 // Ce que le navigateur sait du framework vient d'ici : console, dossiers du projet,
                 // caches, namespaces… Il ne redéclare plus rien de son côté (voir FrameworkProfile). Ses textes
                 // (note de démarrage, étapes) sont traduits dans la langue de la page.

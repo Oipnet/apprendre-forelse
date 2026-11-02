@@ -177,6 +177,27 @@ final class EnvironmentRegistryTest extends TestCase
         (new EnvironmentRegistry($this->tmp))->get('maison');
     }
 
+    /** Le réseau du navigateur ne s'ouvre que vers les API déclarées, et aucun environnement existant ne l'a. */
+    public function testLeReseauNOuvreQueLesApiDesFournisseursDeclares(): void
+    {
+        $this->assertSame([], (new EnvironmentRegistry(self::ROOT.'/environments'))->get('symfony-8')->network);
+
+        $this->tmp = $this->environnements(['ia' => "id: ia\nphp: '8.4'\nnetwork: [anthropic, openai, anthropic]\n"]);
+        $environnement = (new EnvironmentRegistry($this->tmp))->get('ia');
+
+        $this->assertSame(['anthropic', 'openai'], $environnement->network);
+        $this->assertSame(['api.anthropic.com', 'api.openai.com'], $environnement->networkHosts());
+    }
+
+    public function testUnHoteQuelconqueEstRefuseDansNetwork(): void
+    {
+        $this->tmp = $this->environnements(['maison' => "id: maison\nphp: '8.4'\nnetwork: [attaquant.example]\n"]);
+
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage('fournisseur « attaquant.example » inconnu dans « network » (anthropic, gemini, mistral, openai)');
+        (new EnvironmentRegistry($this->tmp))->get('maison');
+    }
+
     /**
      * @param array<string, string> $fichiers « <env> » pour son environment.yaml, « <env>/chemin » pour un fichier
      */

@@ -31,6 +31,7 @@ import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { SuccessPanel } from './SuccessPanel';
 import { TestResultsView } from './TestResultsView';
+import { ApiKeyPanel, redactSecrets } from './api-key';
 import { bindRunButton } from './run';
 import { statusBar } from './status';
 import type { ExercisePayload, PlaygroundConfig } from './types';
@@ -120,11 +121,26 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	// La page se monte sans attendre PHP : consignes, éditeur et explorateur s'affichent tout de suite, et chaque appel
 	// au runtime (frappes, lecture d'un fichier, aperçu) attend `demarre` : PHP prêt, projet de départ écrit. Seuls le
 	// bouton Exécuter et la mise en route de l'aperçu attendent la fin de tout le démarrage.
-	const moteur = createRuntime(framework.runtime);
+	// Le réseau vers les API d'IA : seulement pour un environnement qui le déclare, et jamais dans le bac à sable, dont le
+	// code peut venir d'un lien partagé par quelqu'un d'autre.
+	const reseau = !scratch && framework.runtime === 'php-wasm' && Boolean(exercise.environment.network?.length);
+	const moteur = createRuntime(reseau ? 'php-wasm-network' : framework.runtime);
 	let demarrer!: (etapes: Promise<void>) => void;
 	const demarre = new Promise<void>((resolve) => (demarrer = resolve));
 	demarre.catch(() => {}); // l'échec s'affiche plus bas, dans l'écran de démarrage
 	const runtime = apresDemarrage(moteur, demarre);
+	// Parcours IA : la clé de l'apprenant, donnée à l'aperçu et à la console (jamais aux tests), et retirée de ce qu'on
+	// envoie au mentor.
+	const cleApi = reseau
+		? new ApiKeyPanel(root, $<HTMLButtonElement>('#api-key'), exercise.environment.network!, runtime, (() => {
+				try {
+					return sessionStorage;
+				} catch {
+					return null;
+				}
+			})())
+		: null;
+	const sansCle = (texte: string) => (cleApi ? redactSecrets(texte, cleApi.current()) : texte);
 	// Bac à sable PHP : les paquets Composer du catalogue (packages.ts), ceux du lien partagé ou ceux laissés la dernière fois.
 	const stockage = (() => {
 		try {
@@ -177,7 +193,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			if (!metrics.firstRequest) mark('firstRequest');
 			base?.changed();
 			// Une réponse en erreur : le mentor peut l'expliquer (si l'apprenant a un compte).
-			mentor.setError('preview', res.status >= 500 ? `${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, res.headers['content-type']?.[0])}` : null);
+			mentor.setError('preview', res.status >= 500 ? sansCle(`${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, res.headers['content-type']?.[0])}`) : null);
 		},
 	});
 	// Le relais de l'aperçu (page du bac à sable, Service Worker) se prépare pendant que PHP démarre : il n'a
@@ -217,6 +233,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 						phpVersion: exercise.environment.phpVersion,
 						// Les options d'un runtime sont des chaînes : la liste voyage séparée par des virgules.
 						...(exercise.environment.phpExtensions?.length ? { phpExtensions: exercise.environment.phpExtensions.join(',') } : {}),
+						...(reseau ? { network: exercise.environment.network!.map((n) => n.host).join(',') } : {}),
 					},
 					// URL absolue : le worker peut tourner depuis une URL blob: (dev), sans base relative.
 					archiveUrl,
@@ -288,7 +305,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	};
 	const consolePanel = new ConsolePanel($('#console-output'), $<HTMLInputElement>('#console-cmd'), commandesComposer, (result) => {
 		commandRan.emit(result);
-		mentor.setError('console', result.exitCode === 0 ? null : stripAnsi(result.output));
+		mentor.setError('console', result.exitCode === 0 ? null : sansCle(stripAnsi(result.output)));
 		reload();
 	}, consoleName, framework.consoleAliases, framework.rawCommands);
 	messagesDeLApercu.deliverTo(([level, message]) => {

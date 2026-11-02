@@ -10,6 +10,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Appels aux API d'IA depuis le navigateur** (parcours IA) : un environnement qui déclare `network:` (`anthropic`,
+  `gemini`, `mistral`, `openai`) démarre un worker PHP dont les requêtes HTTPS deviennent des `fetch()` du navigateur,
+  vers ces API seulement (CSP du worker dans `docker/Caddyfile`, liste vérifiée à chaque appel). Bouton « Clé API » : la
+  clé de l'apprenant reste dans l'onglet et n'atteint que l'aperçu et la console (variable d'environnement), jamais
+  les tests, les fichiers, les liens partagés ni le mentor. Le bac à sable n'a jamais le réseau. Méthode facultative
+  `setSecrets()` dans le contrat des runtimes.
+
 - **Un parcours sur chaque article** : dans la colonne collante (écran large) ou en fin d'article (téléphone), l'encart « Aller plus loin » propose le
   parcours nommé par la nouvelle clé `course:` de l'article, ou à défaut celui du framework de son exercice de
   Pratique. Le parcours doit exister (`content:check`) ; il n'apparaît que s'il est visible et traduit dans la langue

@@ -94,6 +94,12 @@ if [ -n "$INSTALL_DIR" ]; then
         # shellcheck disable=SC2086
         (cd "$INSTALL_DIR" && composer reinstall --no-interaction --quiet $PATH_PACKAGES && composer dump-autoload --optimize --quiet)
     fi
+    # Correctif propre à un environnement (vendor que php-wasm ne sait pas exécuter tel quel) : voir
+    # correctifs/<environnement>.php. Relancé à chaque empaquetage, il doit être idempotent.
+    CORRECTIF="$(dirname "$0")/correctifs/$(basename "$INSTALL_DIR").php"
+    if [ -f "$CORRECTIF" ]; then
+        php "$CORRECTIF" "$INSTALL_DIR" || exit 1
+    fi
     # Un paquet installé par clone porte son .git, ses tests et sa documentation : quand GitHub refuse ses
     # archives (403, limite des requêtes anonymes), Composer se rabat sans rien dire sur un « git clone », et
     # l'archive que chaque apprenant télécharge passe de quelques dizaines de Mo à plusieurs Go.

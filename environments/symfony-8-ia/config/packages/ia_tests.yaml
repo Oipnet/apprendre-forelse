@@ -1,0 +1,9 @@
+# Les tests ne joignent aucun modèle : le client HTTP de Symfony y est un MockHttpClient, dont les réponses viennent du
+# test (App\Tests\Formation\ReponsesDuModele). Pas de réseau, pas de clé, et le même résultat à chaque fois : c'est ce
+# qui permet au vérificateur du serveur de rejouer une réussite.
+when@test:
+    framework:
+        http_client:
+            mock_response_factory: App\Tests\Formation\ReponsesEnregistrees
+    services:
+        App\Tests\Formation\ReponsesEnregistrees: ~

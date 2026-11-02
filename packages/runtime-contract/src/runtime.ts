@@ -146,6 +146,13 @@ export interface Runtime {
 	 */
 	inspectDatabase?(): Promise<DatabaseSnapshot[]>;
 	/**
+	 * Facultatif : des secrets de l'apprenant (sa clé d'API d'IA), passés en variables d'environnement à l'aperçu et à la
+	 * console, et à rien d'autre : ni aux tests (qui rejouent des réponses enregistrées, comme le vérificateur du serveur),
+	 * ni aux fichiers du projet, donc ni aux sauvegardes ni aux liens partagés. Chaque appel remplace les précédents ;
+	 * un objet vide les retire.
+	 */
+	setSecrets?(secrets: Record<string, string>): Promise<void>;
+	/**
 	 * Facultatif : prévient quand le runtime a dû être relancé parce qu'il ne répondait plus (une boucle
 	 * infinie dans le code de l'apprenant). Les fichiers sont rejoués ; ce qui ne vivait qu'en mémoire
 	 * (base de l'aperçu, sessions) est perdu.
