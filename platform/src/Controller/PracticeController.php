@@ -20,6 +20,7 @@ use App\Search\RelatedContent;
 use App\Security\TrackAccessChecker;
 use App\Seo\Page\PracticeSeo;
 use App\Service\TrackProgress;
+use App\Share\PracticeEmbed;
 use App\Share\PracticeShare;
 use App\Share\ShareImage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -122,12 +123,32 @@ final class PracticeController extends AbstractController
     }
 
     /**
+     * La carte d'un exercice, à intégrer sur un autre site (voir PracticeEmbed) : le titre, le résumé et un bouton
+     * qui ouvre l'exercice ici. N'importe quel site peut l'encadrer (`_embeddable`, voir OriginIsolationListener) :
+     * elle ne montre que ce que la page publique montre, et n'offre aucune action de compte.
+     */
+    #[Route(['fr' => '/integrer/pratique/{exerciseId}', 'en' => '/en/embed/practice/{exerciseId}'], name: 'app_practice_embed', defaults: ['_embeddable' => true], methods: ['GET'])]
+    public function embed(string $exerciseId, PracticeEmbed $embed): Response
+    {
+        $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
+        $response = $this->render('practice/embed.html.twig', [
+            'practice' => $practice,
+            'framework' => $embed->framework($practice),
+            'url' => $embed->exerciseUrl($practice),
+        ]);
+        // Une copie de la page publique : hors des moteurs de recherche, qui suivent le lien sous la carte.
+        $response->headers->set('X-Robots-Tag', 'noindex');
+
+        return $response;
+    }
+
+    /**
      * Le playground, avec ou sans compte : un visiteur écrit le code, ses essais sont gardés dans son navigateur
      * et remontent sur son compte s'il en crée un. Seule une instance sur invitation le renvoie vers la page
      * publique de l'exercice — le problème et la fonctionnalité expliquée, sans éditeur (TrackAccessChecker).
      */
     #[Route(['fr' => '/pratique/{exerciseId}', 'en' => '/en/practice/{exerciseId}'], name: 'app_exercise_pratique', methods: ['GET'])]
-    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access, PracticeTrack $tracks, PracticeShare $share, RelatedContent $related): Response
+    public function play(string $exerciseId, PlaygroundConfigFactory $configs, PracticeVersionIndex $versions, PracticeSeo $seo, LessonRenderer $markdown, TrackAccessChecker $access, PracticeTrack $tracks, PracticeShare $share, PracticeEmbed $embed, RelatedContent $related): Response
     {
         $practice = $this->practices->find($exerciseId) ?? throw $this->createNotFoundException();
         $seo->practice($practice);
@@ -151,7 +172,10 @@ final class PracticeController extends AbstractController
             return $this->render('practice/show.html.twig', $context);
         }
 
-        return $this->render('exercise/play.html.twig', [...$context, 'exercise' => $practice->exercise, 'config' => [...$configs->create($practice->exercise), 'share' => $context['share']]]);
+        // La boîte de partage du playground propose aussi d'intégrer l'exercice sur un autre site.
+        $config = [...$configs->create($practice->exercise), 'share' => [...$context['share'], 'embed' => $embed->code($practice)]];
+
+        return $this->render('exercise/play.html.twig', [...$context, 'exercise' => $practice->exercise, 'config' => $config]);
     }
 
     /** La page est-elle dans une autre langue que celle des packs (/en/practice) ? */

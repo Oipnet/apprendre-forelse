@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Content\Article;
 use App\Content\ArticleOutline;
 use App\Content\Blog;
-use App\Content\LessonRenderer;
+use App\Content\ArticleRenderer;
 use App\Content\PracticeTrack;
 use App\Content\PracticeVisibility;
 use App\Content\TrackVisibility;
@@ -72,7 +72,7 @@ final class BlogController extends AbstractController
      * l'article deviennent des <category> (dev.to en fait ses tags), son image une enclosure (voir ArticleShare).
      */
     #[Route(['fr' => '/blog/rss.xml', 'en' => '/en/blog/rss.xml'], name: 'app_blog_feed', methods: ['GET'])]
-    public function feed(Blog $blog, LessonRenderer $markdown, SchemaOrg $schema, ArticleShare $share): Response
+    public function feed(Blog $blog, ArticleRenderer $markdown, SchemaOrg $schema, ArticleShare $share): Response
     {
         if (!$blog->isOpen()) {
             throw $this->createNotFoundException();
@@ -121,7 +121,7 @@ final class BlogController extends AbstractController
     }
 
     #[Route(['fr' => '/blog/{slug}', 'en' => '/en/blog/{slug}'], name: 'app_article', requirements: ['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'], methods: ['GET'])]
-    public function show(string $slug, Blog $blog, BlogSeo $seo, LessonRenderer $markdown, PracticeVisibility $practices, PracticeTrack $practiceTracks, TrackVisibility $tracks, RelatedContent $related, Theme $theme): Response
+    public function show(string $slug, Blog $blog, BlogSeo $seo, ArticleRenderer $markdown, PracticeVisibility $practices, PracticeTrack $practiceTracks, TrackVisibility $tracks, RelatedContent $related, Theme $theme): Response
     {
         $article = $blog->find($slug) ?? throw $this->createNotFoundException();
         $translations = $blog->translations($article);

@@ -108,7 +108,8 @@ export interface PlaygroundConfig {
 	/** Le mentor (revue de code, erreurs expliquées) ; null pour un invité ou sans clé d'API côté serveur. */
 	mentor?: { reviewUrl: string; explainUrl: string } | null;
 	/** Pratique : les liens de partage, pour inviter à faire l'exercice ou annoncer sa réussite (App\Share\PracticeShare). */
-	share?: { invite: ShareLinks; success: ShareLinks } | null;
+	/** `embed` : le code HTML qui intègre l'exercice sur un autre site (Pratique seulement, voir PracticeEmbed). */
+	share?: { invite: ShareLinks; success: ShareLinks; embed?: string | null } | null;
 	/** Parcours, dernier exercice d'un chapitre : de quoi annoncer le chapitre terminé (lien vers la page du parcours). */
 	chapterShare?: ShareLinks | null;
 	/** Bac à sable : où aller ensuite (l'autre framework, la Pratique), sous la consigne. */

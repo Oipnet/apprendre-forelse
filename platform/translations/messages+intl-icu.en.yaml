@@ -95,6 +95,9 @@ share:
         blog_sujet: "Blog · {sujet}"
         certificat: "Certificate of completion · {nom}"
         alt: "{surtitre}: {titre}"
+    # Under an exercise card embedded on another site (PracticeEmbed); {lien}: the link to the exercise.
+    integration:
+        lien: "{lien}: a {framework} exercise to do in the browser, on {site}."
     texte:
         pratique: "{framework}: “{titre}”, a short exercise to do in the browser."
         pratique_reussie: "I passed the “{titre}” exercise ({framework}), right in the browser."

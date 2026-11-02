@@ -77,17 +77,49 @@ export function mountShare(root: HTMLElement, links: Pick<ShareLinks, 'text' | '
 	}
 }
 
-/** Une boîte de partage (« Partager cet exercice »), avec les mêmes boutons que la page. */
-export function shareDialog(host: HTMLElement, links: ShareLinks, title: string, mesure: Record<string, string> = {}): void {
+/**
+ * Une boîte de partage (« Partager cet exercice »), avec les mêmes boutons que la page. Avec `embed`, elle propose
+ * aussi le code qui intègre l'exercice sur un autre site (une iframe, puis un lien vers l'exercice).
+ */
+export function shareDialog(host: HTMLElement, links: ShareLinks, title: string, mesure: Record<string, string> = {}, embed: string | null = null): void {
 	const dialog = document.createElement('dialog');
 	dialog.className = 'feedback share-dialog';
 	dialog.setAttribute('aria-labelledby', 'share-dialog-title');
 	dialog.innerHTML = `<h2 id="share-dialog-title">${escapeHtml(title)}</h2>
 		${shareHtml(links, m.share.on)}
+		${embed ? embedHtml(embed) : ''}
 		<p class="confirm-actions"><button type="button" class="ghost" data-close>${m.common.close}</button></p>`;
 	host.append(dialog);
 	mountShare(dialog.querySelector<HTMLElement>('[data-share]')!, links, mesure);
+	const embedBlock = dialog.querySelector<HTMLElement>('[data-embed]');
+	if (embedBlock && embed) mountEmbed(embedBlock, embed, mesure);
 	dialog.querySelector('[data-close]')!.addEventListener('click', () => dialog.close());
 	dialog.addEventListener('close', () => dialog.remove());
 	dialog.showModal();
+}
+
+/** Le code d'intégration, à copier : lisible et sélectionnable, même si le presse-papiers est refusé. */
+function embedHtml(code: string): string {
+	return `<div class="share-embed" data-embed>
+		<h3>${m.share.embedTitle}</h3>
+		<p>${m.share.embedDetail}</p>
+		<textarea readonly rows="4" spellcheck="false" aria-label="${escapeHtml(m.share.embedTitle)}">${escapeHtml(code)}</textarea>
+		<button type="button" class="ghost small" data-embed-copy>${m.share.embedCopy}</button>
+		<span class="share-status" role="status"></span>
+	</div>`;
+}
+
+function mountEmbed(root: HTMLElement, code: string, mesure: Record<string, string>): void {
+	const status = root.querySelector<HTMLElement>('.share-status')!;
+	const area = root.querySelector<HTMLTextAreaElement>('textarea')!;
+	area.addEventListener('focus', () => area.select());
+	root.querySelector<HTMLButtonElement>('[data-embed-copy]')!.addEventListener('click', async () => {
+		try {
+			await navigator.clipboard.writeText(code);
+			status.textContent = m.share.embedCopied;
+		} catch {
+			area.focus(); // sélectionné : à copier à la main
+		}
+		mesurer('integration-copiee', mesure);
+	});
 }

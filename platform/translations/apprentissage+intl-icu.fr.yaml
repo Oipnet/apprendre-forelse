@@ -47,6 +47,10 @@ exercise:
         tout_le_parcours: "Tout le parcours {titre}"
 
 practice:
+    # La carte d'un exercice intégrée sur un autre site (/integrer/pratique/<id>).
+    integration:
+        bouton: "Faire l'exercice"
+        detail: "Dans le navigateur, sans compte, rien à installer."
     card:
         programme: "Programmé le {date}"
         reussi: "✓ Réussi"

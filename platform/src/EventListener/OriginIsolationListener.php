@@ -58,8 +58,13 @@ final readonly class OriginIsolationListener
         $headers = $event->getResponse()->headers;
         $headers->set('X-Content-Type-Options', 'nosniff');
         $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        // Le relais ne peut être encadré que par la plateforme ; les pages de la plateforme par personne d'autre.
-        $ancestors = $this->sandbox->isSandboxRequest($event->getRequest()) ? $this->sandbox->platformOrigin : "'self'";
+        // Le relais ne peut être encadré que par la plateforme ; les pages de la plateforme par personne d'autre,
+        // sauf celles faites pour être intégrées ailleurs (route avec `_embeddable`, ex. la carte d'un exercice).
+        $ancestors = match (true) {
+            $this->sandbox->isSandboxRequest($event->getRequest()) => $this->sandbox->platformOrigin,
+            true === $event->getRequest()->attributes->get('_embeddable') => '*',
+            default => "'self'",
+        };
         $headers->set('Content-Security-Policy', 'frame-ancestors '.$ancestors);
         // À part : frame-ancestors est ignorée dans un en-tête Report-Only, et doit s'appliquer dès maintenant.
         $headers->set($this->policy->headerName(), $this->policy->policy($event->getRequest()), false);
