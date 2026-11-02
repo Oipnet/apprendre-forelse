@@ -24,6 +24,12 @@ final class LessonRenderer
 
     public function __construct()
     {
+        $this->converter = new MarkdownConverter(self::environment());
+    }
+
+    /** Les règles de rendu, partagées avec les articles (ArticleRenderer). */
+    public static function environment(): Environment
+    {
         $environment = new Environment([
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
@@ -32,7 +38,8 @@ final class LessonRenderer
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new GithubFlavoredMarkdownExtension());
         $environment->addRenderer(FencedCode::class, new CodeBlockRenderer(new Highlighter()), 10);
-        $this->converter = new MarkdownConverter($environment);
+
+        return $environment;
     }
 
     public function toHtml(string $markdown): string
@@ -46,8 +53,16 @@ final class LessonRenderer
      */
     public function toHtmlUnderTitle(string $markdown): string
     {
+        return self::underTitle($markdown, $this->toHtml(...));
+    }
+
+    /**
+     * @param callable(string): string $toHtml
+     */
+    public static function underTitle(string $markdown, callable $toHtml): string
+    {
         $markdown = (string) preg_replace('/\A\s*#[ \t][^\n]*\n/', '', $markdown);
 
-        return (string) preg_replace('#<(/?)h1\b#', '<$1h2', $this->toHtml($markdown));
+        return (string) preg_replace('#<(/?)h1\b#', '<$1h2', $toHtml($markdown));
     }
 }

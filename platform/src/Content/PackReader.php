@@ -242,6 +242,9 @@ final class PackReader
                 if (null !== $article->course && !isset($this->tracks[$article->course])) {
                     throw new ContentException(sprintf('%s : « course » nomme le parcours « %s », introuvable.', $article->file, $article->course));
                 }
+                foreach (CodeSandbox::problemsIn($article->markdown) as $problem) {
+                    throw new ContentException(sprintf('%s : bloc de code %s', $article->file, $problem));
+                }
             }
         }
     }

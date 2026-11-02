@@ -456,6 +456,8 @@ final class ContentRepositoryTest extends TestCase
         yield 'sujet en double' => ['a', "---\n$header\ntags: [Sécurité, securite]\n---\nTexte", 'sujet « securite » donné deux fois'];
         yield 'exercice inconnu' => ['a', "---\n$header\npractice: inconnu\n---\nTexte", '« practice » nomme l\'exercice de Pratique « inconnu », introuvable'];
         yield 'parcours inconnu' => ['a', "---\n$header\ncourse: inconnu\n---\nTexte", '« course » nomme le parcours « inconnu », introuvable'];
+        yield 'bac à sable inconnu' => ['a', "---\n$header\n---\n```php sandbox=nuxt\necho 1;\n```", '« sandbox=nuxt » : bac à sable inconnu'];
+        yield 'fichier hors du bac à sable' => ['a', "---\n$header\n---\n```yaml sandbox=symfony:config/services.yaml\nservices: ~\n```", 'le bac à sable Symfony ne modifie pas ce fichier'];
     }
 
     #[DataProvider('articlesRefuses')]

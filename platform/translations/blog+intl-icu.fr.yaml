@@ -26,6 +26,8 @@ index:
 
 show:
     sommaire: "Sommaire"
+    # Sous un bloc de code d'article ouvert dans le bac à sable (```php sandbox=…).
+    essayer: "Essayer ce code dans le bac à sable {framework}"
     en_preparation: "En préparation : cet article n'est visible que des administrateurs."
     programme: "Programmé : cet article paraîtra le {date}. D'ici là, seuls les administrateurs le voient."
     mis_a_jour: 'mis à jour le <time datetime="{datetime}">{date}</time>'

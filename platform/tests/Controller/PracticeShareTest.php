@@ -94,6 +94,40 @@ final class PracticeShareTest extends WebTestCase
         $this->assertStringStartsWith('https://www.linkedin.com/sharing/share-offsite/?url=http%3A%2F%2Flocalhost%2Fpratique%2Fnouveaute-recente%3Futm_source%3Dlinkedin', $config['share']['invite']['linkedin']);
     }
 
+    public function testLePlaygroundProposeDIntegrerLExercice(): void
+    {
+        $crawler = $this->client->request('GET', '/pratique/nouveaute-recente');
+        $config = json_decode((string) $crawler->filter('[data-playground]')->attr('data-config'), true);
+
+        $code = $config['share']['embed'];
+        $this->assertStringStartsWith('<iframe src="http://localhost/integrer/pratique/nouveaute-recente" title="Une nouveauté récente"', $code);
+        $this->assertStringContainsString('<p><a href="http://localhost/pratique/nouveaute-recente">Une nouveauté récente</a> : un exercice Symfony 8.1 à faire dans le navigateur', $code, 'Sous la carte, un vrai lien (sans utm) vers l\'exercice.');
+    }
+
+    public function testLaCarteDIntegrationSEncadrePartout(): void
+    {
+        $crawler = $this->client->request('GET', '/integrer/pratique/nouveaute-recente');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('Content-Security-Policy', 'frame-ancestors *');
+        $this->assertResponseHeaderSame('X-Robots-Tag', 'noindex');
+        $this->assertSame('Une nouveauté récente', trim($crawler->filter('h1')->text()));
+        $this->assertCount(0, $crawler->filter('header, footer'), 'Ni en-tête ni pied de page dans la carte.');
+        $links = $crawler->filter('a[data-umami-event="integration-ouverte"]');
+        $this->assertCount(3, $links);
+        foreach ($links as $link) {
+            $this->assertSame('_blank', $link->getAttribute('target'), 'Chaque lien sort de l\'iframe.');
+            $this->assertSame('http://localhost/pratique/nouveaute-recente?utm_source=integration&utm_medium=iframe&utm_campaign=nouveaute-recente', $link->getAttribute('href'));
+        }
+
+        $this->client->request('GET', '/pratique/nouveaute-recente');
+        $this->assertResponseHeaderSame('Content-Security-Policy', "frame-ancestors 'self'", 'La page de l\'exercice, elle, ne s\'encadre pas ailleurs.');
+        $this->client->request('GET', '/integrer/pratique/inconnu');
+        $this->assertResponseStatusCodeSame(404);
+        $this->client->request('GET', '/integrer/pratique/programme');
+        $this->assertResponseStatusCodeSame(404);
+    }
+
     public function testSurInvitationLaPagePubliqueProposeLesBoutons(): void
     {
         $initial = $_SERVER['REGISTRATION_INVITE_ONLY'] ?? '0';

@@ -74,6 +74,21 @@ enum ScratchFramework: string
         };
     }
 
+    /** Ce chemin peut-il porter du code partagé (même règle que Exercise::isEditable) ? */
+    public function isEditable(string $path): bool
+    {
+        if ('' === $path || str_starts_with($path, '/') || array_intersect(explode('/', $path), ['', '.', '..'])) {
+            return false;
+        }
+        foreach ($this->editable() as $entry) {
+            if ($entry === $path || (str_contains($entry, '*') && fnmatch($entry, $path, \FNM_PATHNAME))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Le catalogue des paquets Composer qu'on peut ajouter (bouton « Paquets »), dans public/ : seul le projet sans
      * framework en a, Symfony et Laravel arrivent avec les leurs.

@@ -29,6 +29,10 @@ commun:
     liste_et: " and "
 
 practice:
+    # An exercise card embedded on another site (/en/embed/practice/<id>).
+    integration:
+        bouton: "Do the exercise"
+        detail: "In the browser, no account, nothing to install."
     card:
         programme: "Scheduled for {date}"
         reussi: "✓ Completed"

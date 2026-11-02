@@ -959,6 +959,57 @@ dialog.share-dialog .confirm-actions {
 	margin: 1rem 0 0;
 	text-align: right;
 }
+/* Intégrer l'exercice sur un autre site (boîte de partage de la Pratique). */
+.share-embed {
+	margin-top: 1.2rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--border);
+}
+.share-embed h3 {
+	margin: 0 0 0.4rem;
+	font-size: 0.95rem;
+}
+.share-embed p {
+	margin: 0 0 0.6rem;
+	color: var(--muted);
+	font-size: 13px;
+}
+.share-embed textarea {
+	display: block;
+	width: 100%;
+	margin-bottom: 0.5rem;
+	padding: 0.5rem;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	background: var(--panel-2);
+	color: var(--text);
+	font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+	font-size: 12px;
+	resize: vertical;
+}
+
+/* Sur un téléphone : reprendre sur ordinateur (app/mobile.ts). */
+dialog.mobile-desktop h2 {
+	margin: 0 0 0.6rem;
+	font-size: 1.1rem;
+}
+dialog.mobile-desktop p {
+	margin: 0 0 0.8rem;
+	line-height: 1.45;
+}
+.mobile-desktop-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.mobile-desktop-actions > * {
+	justify-content: center;
+	text-align: center;
+}
+dialog.mobile-desktop .confirm-actions {
+	margin: 0.4rem 0 0;
+	text-align: center;
+}
 
 /* --- « Un avis ? » : dialogue de retour sur l'exercice --------------------------------- */
 dialog.feedback {
