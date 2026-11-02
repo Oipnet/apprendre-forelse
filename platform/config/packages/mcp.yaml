@@ -6,7 +6,7 @@ mcp:
             name: 'apprendre-forelse-playground'
             version: '1.0.0'
             description: 'Run Symfony, Laravel or plain PHP code in the browser, from a shareable link.'
-            website_url: 'https://apprendre.forelse.fr/en/playground'
+            website_url: 'https://apprendre.forelse.fr/en/playground/ai'
             instructions: |
                 Creates links to an online PHP playground (Symfony 8, Laravel 13, or plain PHP 8.4 with Composer
                 autoloading) that runs in the browser with WebAssembly: no account, nothing to install. Use it when the

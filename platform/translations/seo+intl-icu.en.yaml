@@ -86,6 +86,10 @@ bac_a_sable:
         titre: "Online PHP playground, no framework"
         description: "A PHP 8.4 project in your browser, with no framework: index.php, autoloaded classes, console scripts. Test PHP code and share it with a link, no account needed."
         fil_ariane: PHP playground
+    ia:
+        titre: "MCP server: a PHP, Symfony or Laravel playground from your AI"
+        description: "Add our MCP server to Claude, ChatGPT, Cursor or VS Code: your assistant creates a PHP, Symfony or Laravel playground that runs in the browser, and gives you its link."
+        fil_ariane: From an AI
 
 compte:
     connexion: "Log in to pick up your tracks where you left off, and find your completed exercises and your place on the leaderboard."

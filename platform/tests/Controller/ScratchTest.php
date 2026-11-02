@@ -22,6 +22,22 @@ final class ScratchTest extends WebTestCase
         $this->assertSelectorExists('.site-footer a[href="/bac-a-sable"]');
     }
 
+    public function testLaPageIaDonneLAdresseDuServeurMcpEtCommentLAjouter(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/bac-a-sable');
+        $this->assertSame('/bac-a-sable/ia', $crawler->filter('.scratch-ai a')->attr('href'), 'Annoncée sur la page du bac à sable.');
+
+        $crawler = $client->request('GET', '/en/playground/ai');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'The playground from your AI assistant');
+        $this->assertSame('http://localhost/mcp', $crawler->filter('.mcp-url')->text());
+        $this->assertStringContainsString('claude mcp add --transport http forelse http://localhost/mcp', $crawler->filter('main')->text());
+        $this->assertStringContainsString('/hello/{name}', $crawler->filter('main')->text(), 'Les accolades de l\'exemple ne sont pas lues comme un paramètre.');
+        $this->assertFalse($client->getResponse()->headers->has('X-Robots-Tag'), 'La page s\'indexe.');
+    }
+
     public function testLaPageDuProjetMonteLePlaygroundSansCompte(): void
     {
         $client = static::createClient();

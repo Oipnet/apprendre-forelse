@@ -336,7 +336,29 @@ bac_a_sable:
         partager_detail: "Le bouton Partager crée une adresse qui contient votre code. La personne qui l'ouvre retrouve le projet tel quel."
         prive: Votre code reste chez vous.
         prive_detail: "Il voyage dans le lien, après le #, que le serveur ne reçoit pas. Votre brouillon reste dans ce navigateur."
+        ia: "Vous utilisez Claude, ChatGPT ou Cursor ? <a href=\"{url}\">Ajoutez le bac à sable à votre assistant IA</a> : il crée le projet et vous en donne le lien."
         pratique: "Envie d'être guidé ? Les <a href=\"{url}\">exercices de la Pratique</a> font découvrir les nouveautés de Symfony et de Laravel, corrigés par des tests."
+    ia:
+        titre: Le bac à sable depuis votre assistant IA
+        intro: "Claude, ChatGPT, Cursor ou VS Code créent pour vous un bac à sable PHP, Symfony ou Laravel et vous en donnent le lien : vous ouvrez, vous cliquez sur Exécuter, le code tourne dans votre navigateur. Il suffit d'ajouter notre serveur MCP à votre assistant, gratuitement et sans compte."
+        adresse: Adresse du serveur MCP
+        adresse_detail: "Un serveur MCP distant (HTTP « streamable »), sans authentification."
+        installer: L'ajouter à votre assistant
+        claude: "Sur claude.ai ou dans l'application : Paramètres, Connecteurs, Ajouter un connecteur personnalisé, puis collez l'adresse ci-dessus."
+        chatgpt: "Dans les paramètres, section Applications et connecteurs, activez le mode développeur puis créez un connecteur avec l'adresse ci-dessus."
+        cursor: "Dans ~/.cursor/mcp.json (ou .cursor/mcp.json dans le projet) :"
+        vscode: "Dans .vscode/mcp.json, puis utilisez le mode agent de Copilot :"
+        demander: Que lui demander ?
+        exemple_symfony: "« Crée-moi un bac à sable Symfony avec un contrôleur /hello/'{name}' qui répond en JSON. »"
+        exemple_laravel: "« Montre-moi dans un bac à sable Laravel comment valider un formulaire avec une FormRequest. »"
+        exemple_php: "« Fais-moi un bac à sable PHP avec Carbon qui affiche le nombre de jours avant Noël. »"
+        exemple_lien: "« Voici mon lien de bac à sable, pourquoi ma route renvoie 404 ? »"
+        outils: Les outils du serveur
+        get_starter: "Le projet de départ d'un bac à sable : ses fichiers, ce qu'on peut modifier, et les paquets Composer disponibles en PHP."
+        create_sandbox: "Crée le lien d'un bac à sable à partir des fichiers modifiés par l'assistant."
+        read_sandbox: "Relit le code d'un lien de bac à sable, pour l'expliquer ou le corriger."
+        confiance: Rien n'est stocké, rien ne s'exécute sur le serveur
+        confiance_detail: "Le serveur ne fait que fabriquer le lien : le code voyage dedans, après le #, et rien n'est gardé de notre côté. Le code tourne ensuite dans votre navigateur, en WebAssembly, et seulement après votre clic sur Exécuter. Nous comptons les appels (framework, langue, assistant utilisé) pour mesurer l'usage, jamais le code."
     faq:
         titre: Questions fréquentes
         tester:

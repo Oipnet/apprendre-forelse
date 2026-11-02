@@ -297,7 +297,29 @@ bac_a_sable:
         partager_detail: "The Share button creates an address that contains your code. Whoever opens it gets the project as it is."
         prive: Your code stays with you.
         prive_detail: "It travels in the link, after the #, which the server never receives. Your draft stays in this browser."
+        ia: "Using Claude, ChatGPT or Cursor? <a href=\"{url}\">Add the playground to your AI assistant</a>: it builds the project and gives you the link."
         pratique: "Want some guidance? The <a href=\"{url}\">Practice exercises</a> walk you through what's new in Symfony and Laravel, checked by tests."
+    ia:
+        titre: The playground from your AI assistant
+        intro: "Claude, ChatGPT, Cursor or VS Code create a PHP, Symfony or Laravel playground for you and give you its link: open it, click Run, and the code runs in your browser. Just add our MCP server to your assistant, free and with no account."
+        adresse: MCP server address
+        adresse_detail: "A remote MCP server (streamable HTTP), with no authentication."
+        installer: Add it to your assistant
+        claude: "On claude.ai or in the app: Settings, Connectors, Add custom connector, then paste the address above."
+        chatgpt: "In the settings, under Apps & Connectors, turn on developer mode, then create a connector with the address above."
+        cursor: "In ~/.cursor/mcp.json (or .cursor/mcp.json in your project):"
+        vscode: "In .vscode/mcp.json, then use Copilot's agent mode:"
+        demander: What to ask
+        exemple_symfony: "“Create a Symfony playground with a /hello/'{name}' controller that answers in JSON.”"
+        exemple_laravel: "“Show me in a Laravel playground how to validate a form with a FormRequest.”"
+        exemple_php: "“Make a PHP playground with Carbon that shows how many days are left until Christmas.”"
+        exemple_lien: "“Here is my playground link: why does my route return a 404?”"
+        outils: The server's tools
+        get_starter: "A playground's starting project: its files, what can be edited, and the Composer packages available in plain PHP."
+        create_sandbox: "Creates a playground link from the files the assistant changed."
+        read_sandbox: "Reads the code behind a playground link, to explain or fix it."
+        confiance: Nothing is stored, nothing runs on the server
+        confiance_detail: "The server only builds the link: the code travels inside it, after the #, and we keep nothing. The code then runs in your browser, in WebAssembly, and only after you click Run. We count the calls (framework, language, assistant used) to measure usage, never the code."
     faq:
         titre: Frequently asked questions
         tester:

@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
+
+{# Le serveur MCP du bac à sable (App\Mcp\PlaygroundTools) : de quoi l'ajouter à un assistant IA. #}
+{% block body %}
+    {% set mcp_url = url('_mcp_endpoint_forelse') %}
+    <main class="scratch">
+        <div class="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+            <p class="text-sm font-medium text-ink-muted"><a href="{{ path('app_scratch') }}">{{ 'bac_a_sable.retour'|trans }}</a></p>
+            <h1 class="mt-1 text-3xl font-semibold">{{ 'bac_a_sable.ia.titre'|trans }}</h1>
+            <p class="lead mt-3 text-lg text-ink-muted">{{ 'bac_a_sable.ia.intro'|trans }}</p>
+
+            <h2 class="mt-10 text-2xl font-semibold">{{ 'bac_a_sable.ia.adresse'|trans }}</h2>
+            <p class="mt-2 text-ink-muted">{{ 'bac_a_sable.ia.adresse_detail'|trans }}</p>
+            <pre class="mcp-url mt-3 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>{{ mcp_url }}</code></pre>
+
+            <h2 class="mt-10 text-2xl font-semibold">{{ 'bac_a_sable.ia.installer'|trans }}</h2>
+            <dl class="mt-4 space-y-6">
+                <div>
+                    <dt class="font-semibold">Claude</dt>
+                    <dd class="mt-1 text-ink-muted">{{ 'bac_a_sable.ia.claude'|trans }}</dd>
+                </div>
+                <div>
+                    <dt class="font-semibold">Claude Code</dt>
+                    <dd><pre class="mt-2 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>claude mcp add --transport http forelse {{ mcp_url }}</code></pre></dd>
+                </div>
+                <div>
+                    <dt class="font-semibold">ChatGPT</dt>
+                    <dd class="mt-1 text-ink-muted">{{ 'bac_a_sable.ia.chatgpt'|trans }}</dd>
+                </div>
+                <div>
+                    <dt class="font-semibold">Cursor</dt>
+                    <dd class="mt-1 text-ink-muted">{{ 'bac_a_sable.ia.cursor'|trans }}</dd>
+                    <dd><pre class="mt-2 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>{{ {mcpServers: {forelse: {url: mcp_url}}}|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</code></pre></dd>
+                </div>
+                <div>
+                    <dt class="font-semibold">VS Code</dt>
+                    <dd class="mt-1 text-ink-muted">{{ 'bac_a_sable.ia.vscode'|trans }}</dd>
+                    <dd><pre class="mt-2 overflow-x-auto rounded border border-line bg-surface p-3 text-sm"><code>{{ {servers: {forelse: {type: 'http', url: mcp_url}}}|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</code></pre></dd>
+                </div>
+            </dl>
+
+            <h2 class="mt-10 text-2xl font-semibold">{{ 'bac_a_sable.ia.demander'|trans }}</h2>
+            <ul class="mt-4 list-disc space-y-2 pl-6">
+                <li>{{ 'bac_a_sable.ia.exemple_symfony'|trans }}</li>
+                <li>{{ 'bac_a_sable.ia.exemple_laravel'|trans }}</li>
+                <li>{{ 'bac_a_sable.ia.exemple_php'|trans }}</li>
+                <li>{{ 'bac_a_sable.ia.exemple_lien'|trans }}</li>
+            </ul>
+
+            <h2 class="mt-10 text-2xl font-semibold">{{ 'bac_a_sable.ia.outils'|trans }}</h2>
+            <dl class="mt-4 space-y-3">
+                <div><dt><code>get_starter</code></dt><dd class="text-ink-muted">{{ 'bac_a_sable.ia.get_starter'|trans }}</dd></div>
+                <div><dt><code>create_sandbox</code></dt><dd class="text-ink-muted">{{ 'bac_a_sable.ia.create_sandbox'|trans }}</dd></div>
+                <div><dt><code>read_sandbox</code></dt><dd class="text-ink-muted">{{ 'bac_a_sable.ia.read_sandbox'|trans }}</dd></div>
+            </dl>
+
+            <h2 class="mt-10 text-2xl font-semibold">{{ 'bac_a_sable.ia.confiance'|trans }}</h2>
+            <p class="mt-2 text-ink-muted">{{ 'bac_a_sable.ia.confiance_detail'|trans }}</p>
+
+            <p class="mt-10">
+                {% for framework in frameworks %}
+                    <a class="btn{% if loop.first %} btn-primary{% endif %} mr-2 mt-2" href="{{ path('app_scratch_' ~ framework.value) }}#nouveau">{{ 'bac_a_sable.index.ouvrir'|trans({framework: framework.label}) }}</a>
+                {% endfor %}
+            </p>
+        </div>
+    </main>
+{% endblock %}
