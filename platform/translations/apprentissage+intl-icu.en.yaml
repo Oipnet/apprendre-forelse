@@ -277,6 +277,9 @@ playground:
         php:
             demarrage: "PHP runs entirely in your browser, compiled to WebAssembly."
             decompression: Unpacking the PHP project
+        goravel:
+            demarrage: "Goravel runs entirely in your browser: the framework is compiled to WebAssembly, and your Go code is interpreted on each start."
+            decompression: Unpacking the Goravel project
 
 # The playground (scratch/, App\Scratch): a blank project, with no objective, shared by a link.
 bac_a_sable:

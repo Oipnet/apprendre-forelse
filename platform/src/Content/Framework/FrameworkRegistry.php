@@ -4,6 +4,7 @@ namespace App\Content\Framework;
 
 use App\Content\ContentException;
 use App\Content\Framework\Profiles\DockerProfile;
+use App\Content\Framework\Profiles\GoravelProfile;
 use App\Content\Framework\Profiles\LaravelProfile;
 use App\Content\Framework\Profiles\NuxtProfile;
 use App\Content\Framework\Profiles\PhpProfile;
@@ -89,6 +90,6 @@ final class FrameworkRegistry
     /** @return list<FrameworkProfileProvider> */
     private static function builtin(): array
     {
-        return [new SymfonyProfile(), new LaravelProfile(), new DockerProfile(), new NuxtProfile(), new PhpProfile()];
+        return [new SymfonyProfile(), new LaravelProfile(), new DockerProfile(), new NuxtProfile(), new PhpProfile(), new GoravelProfile()];
     }
 }
