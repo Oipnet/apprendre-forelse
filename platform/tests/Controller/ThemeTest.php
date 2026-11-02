@@ -170,6 +170,19 @@ final class ThemeTest extends WebTestCase
         $this->assertStringContainsString(':root{--accent:#5ab0cc}', (string) $client->getResponse()->getContent());
     }
 
+    /** La page d'exercice suit le système (clair ou sombre), sauf quand le thème n'a qu'une palette d'éditeur sombre. */
+    public function testLaPageDExerciceSuitLeSystemeSaufPaletteSombreSeule(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/parcours/decouverte/01-bonjour');
+        $this->assertSelectorExists('html[data-editor-scheme="auto"]', 'Palettes du moteur : claire ou sombre, selon le système.');
+
+        self::ensureKernelShutdown();
+        $client = $this->clientAvecTheme("name: Atelier Bigorneau\neditor:\n  accent: '#5ab0cc'\n");
+        $client->request('GET', '/parcours/decouverte/01-bonjour');
+        $this->assertSelectorExists('html[data-editor-scheme="dark"]', 'Une palette sombre seule : pas de clair mélangé.');
+    }
+
     /** Le thème sombre suit le système, sauf quand la marque impose sa palette (claire) : les deux ne se mélangent pas. */
     public function testLeThemeSombreSuitLeSystemeSaufPaletteDeMarque(): void
     {

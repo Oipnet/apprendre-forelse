@@ -11,6 +11,7 @@ final readonly class ThemeConfig
      * @param array<string, string|null>                                                                     $images    fichier du dossier du thème par rôle (logo, icon, share), null si non déclaré
      * @param array<string, string>                                                                          $colors    variable CSS => couleur, thème clair
      * @param array<string, string>                                                                          $editor    variable CSS => couleur, thème sombre de l'éditeur
+     * @param array<string, string>                                                                          $editorLight variable CSS => couleur, thème clair de l'éditeur (« editor_light »)
      * @param array<string, string>                                                                          $fonts     variable CSS => pile de polices
      * @param array{showcase: array<string, mixed>|null, author: array<string, mixed>|null, demo: array<string, mixed>|null} $home
      * @param list<string>                                                                                   $stylesheets feuilles du thème (« assets/theme.css »), posées après celle du moteur
@@ -36,6 +37,7 @@ final readonly class ThemeConfig
         public array $editor,
         public array $fonts,
         public array $home,
+        public array $editorLight = [],
         public ?array $person = null,
         /** @var array<string, array<string, mixed>> les autres auteurs des articles, par identifiant (« authors ») */
         public array $authors = [],

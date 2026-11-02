@@ -268,6 +268,17 @@ final class Theme implements ResetInterface
     }
 
     /**
+     * Vrai quand l'éditeur d'exercice et l'atelier suivent le thème du système (clair ou sombre) : le thème n'a pas
+     * de palette d'éditeur (celles du moteur ont les deux), ou il a aussi sa palette claire (« editor_light »).
+     * Un thème qui ne déclare que « editor » garde un éditeur toujours sombre : la palette claire du moteur ne
+     * remplace pas la sienne en douce.
+     */
+    public function editorFollowsSystemTheme(): bool
+    {
+        return [] === $this->config()->editor || [] !== $this->config()->editorLight;
+    }
+
+    /**
      * Vrai tant que la marque ne déclare pas de couleurs : le site suit alors le thème du système (clair ou sombre).
      * Une palette imposée est claire (ThemeStylesheet::COLORS) : on ne la mélange pas aux encres du thème sombre.
      */

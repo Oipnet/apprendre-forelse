@@ -6,7 +6,8 @@
   son logo. Chaque page pose son entrée Vite (playground ou atelier), qui apporte toute sa feuille (editor.css).
   Blocs : title, robots, stylesheets, javascripts, body_class, body.
 #}
-<html lang="{{ app.locale }}">
+{# data-editor-scheme : « auto » suit le système (palette claire d'editor.css, Monaco en vs), « dark » reste sombre. #}
+<html lang="{{ app.locale }}" data-editor-scheme="{{ theme.editorFollowsSystemTheme ? 'auto' : 'dark' }}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
