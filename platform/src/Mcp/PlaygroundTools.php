@@ -57,7 +57,7 @@ final readonly class PlaygroundTools
         ?RequestContext $context = null,
     ): array {
         $exercise = $this->projects->exercise($framework, $this->locale($language));
-        $this->analytics->track('mcp-depart', ['framework' => $framework->value, 'langue' => $this->locale($language), 'config' => $include_config], $context);
+        $this->analytics->track('mcp-depart', ['framework' => $framework->value, 'langue' => $this->locale($language), 'config' => (int) $include_config], $context);
         // La configuration (surtout celle de Laravel) pèse lourd : elle n'est envoyée qu'à la demande.
         $files = $this->content->startingFiles($exercise);
         $config = array_filter($files, self::isConfig(...), \ARRAY_FILTER_USE_KEY);
