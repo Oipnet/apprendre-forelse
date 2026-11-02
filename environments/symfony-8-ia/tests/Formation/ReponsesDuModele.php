@@ -34,10 +34,41 @@ trait ReponsesDuModele
         ReponsesEnregistrees::prevoir(...array_map(static fn (Reponse|string $r): Reponse => \is_string($r) ? Reponse::texte($r) : $r, $reponses));
     }
 
-    /** @return list<array{fournisseur: string, methode: string, url: string, corps: array<mixed>}> */
+    /**
+     * Les appels au modèle de langage (conversation, outils, sortie structurée), sans les calculs d'embeddings.
+     *
+     * @return list<array{fournisseur: string, methode: string, url: string, corps: array<mixed>}>
+     */
     protected function appelsAuModele(): array
     {
-        return ReponsesEnregistrees::requetes();
+        return array_values(array_filter(ReponsesEnregistrees::requetes(), static fn (array $r): bool => !self::estUnEmbedding($r['url'])));
+    }
+
+    /**
+     * Les appels qui calculent des embeddings (chapitre RAG).
+     *
+     * @return list<array{fournisseur: string, methode: string, url: string, corps: array<mixed>}>
+     */
+    protected function appelsDEmbeddings(): array
+    {
+        return array_values(array_filter(ReponsesEnregistrees::requetes(), static fn (array $r): bool => self::estUnEmbedding($r['url'])));
+    }
+
+    /** @return list<string> les textes envoyés pour calcul d'embeddings, dans l'ordre, tous appels confondus */
+    protected function textesVectorises(): array
+    {
+        $textes = [];
+        foreach ($this->appelsDEmbeddings() as $appel) {
+            $corps = $appel['corps'];
+            if (isset($corps['input'])) {
+                array_push($textes, ...array_map('strval', (array) $corps['input']));
+            }
+            foreach ($corps['requests'] ?? (isset($corps['content']) ? [$corps] : []) as $requete) {
+                $textes[] = self::texteDe($requete['content']['parts'] ?? []);
+            }
+        }
+
+        return $textes;
     }
 
     /** @return array{fournisseur: string, methode: string, url: string, corps: array<mixed>} */
@@ -64,7 +95,8 @@ trait ReponsesDuModele
     }
 
     /**
-     * La conversation envoyée au dernier appel, sans le message système : rôle (« user » ou « assistant ») et texte.
+     * La conversation envoyée au dernier appel, sans le message système ni les outils : rôle (« user » ou « assistant »)
+     * et texte.
      *
      * @return list<array{role: string, texte: string}>
      */
@@ -83,10 +115,12 @@ trait ReponsesDuModele
                 'model' => 'assistant',
                 default => (string) ($message['role'] ?? ''),
             };
-            if ('system' === $role) {
+            $texte = self::texteDe($message['content'] ?? $message['parts'] ?? '');
+            // Le message système, les appels d'outils et leurs résultats ne sont pas la conversation : voir resultatsDOutils().
+            if (!\in_array($role, ['user', 'assistant'], true) || '' === $texte) {
                 continue;
             }
-            $conversation[] = ['role' => $role, 'texte' => self::texteDe($message['content'] ?? $message['parts'] ?? '')];
+            $conversation[] = ['role' => $role, 'texte' => $texte];
         }
 
         return $conversation;
@@ -157,6 +191,82 @@ trait ReponsesDuModele
         return preg_match('#/models/([^/:]+)#', $appel['url'], $m) ? $m[1] : '';
     }
 
+    /**
+     * Les résultats d'outils renvoyés au modèle au dernier appel, dans l'ordre : le nom de l'outil et ce qu'il a répondu.
+     *
+     * @return list<array{outil: string, texte: string}>
+     */
+    protected function resultatsDOutils(): array
+    {
+        $appel = $this->dernierAppelAuModele();
+        $corps = $appel['corps'];
+        $noms = [];
+        $resultats = [];
+        foreach ($corps['messages'] ?? $corps['input'] ?? $corps['contents'] ?? [] as $message) {
+            foreach ($message['tool_calls'] ?? [] as $appelDOutil) {
+                $noms[$appelDOutil['id'] ?? ''] = $appelDOutil['function']['name'] ?? '';
+            }
+            if ('function_call' === ($message['type'] ?? null)) {
+                $noms[$message['call_id'] ?? ''] = $message['name'] ?? '';
+            }
+            if ('function_call_output' === ($message['type'] ?? null)) {
+                $resultats[] = ['outil' => $noms[$message['call_id'] ?? ''] ?? '', 'texte' => self::enTexte($message['output'] ?? '')];
+            }
+            if ('tool' === ($message['role'] ?? null)) {
+                $resultats[] = ['outil' => $noms[$message['tool_call_id'] ?? ''] ?? '', 'texte' => self::enTexte($message['content'] ?? '')];
+            }
+            foreach (\is_array($message['content'] ?? null) ? $message['content'] : $message['parts'] ?? [] as $partie) {
+                if (!\is_array($partie)) {
+                    continue;
+                }
+                if ('tool_use' === ($partie['type'] ?? null)) {
+                    $noms[$partie['id'] ?? ''] = $partie['name'] ?? '';
+                }
+                if ('tool_result' === ($partie['type'] ?? null)) {
+                    $contenu = $partie['content'] ?? '';
+                    $resultats[] = ['outil' => $noms[$partie['tool_use_id'] ?? ''] ?? '', 'texte' => \is_array($contenu) ? self::texteDe($contenu) : self::enTexte($contenu)];
+                }
+                if (isset($partie['functionResponse'])) {
+                    $reponse = $partie['functionResponse']['response'] ?? [];
+                    $resultats[] = ['outil' => (string) ($partie['functionResponse']['name'] ?? ''), 'texte' => self::enTexte(\is_array($reponse) && \array_key_exists('result', $reponse) ? $reponse['result'] : $reponse)];
+                }
+            }
+        }
+
+        return $resultats;
+    }
+
+    /** Ce que l'outil $nom a répondu en dernier, renvoyé au modèle au dernier appel ; null s'il n'a pas été appelé. */
+    protected function resultatDOutil(string $nom): ?string
+    {
+        $resultats = array_filter($this->resultatsDOutils(), static fn (array $r): bool => $nom === $r['outil']);
+
+        return [] === $resultats ? null : $resultats[array_key_last($resultats)]['texte'];
+    }
+
+    /**
+     * L'outil $nom tel que le dernier appel le décrit au modèle : sa description et le schéma JSON de ses paramètres ;
+     * null s'il n'est pas proposé.
+     *
+     * @return array{description: string, parametres: array<string, mixed>}|null
+     */
+    protected function outilPropose(string $nom): ?array
+    {
+        $corps = $this->dernierAppelAuModele()['corps'];
+        foreach ($corps['tools'] ?? [] as $outil) {
+            foreach ($outil['functionDeclarations'] ?? [$outil['function'] ?? $outil] as $declaration) {
+                if ($nom === ($declaration['name'] ?? null)) {
+                    return [
+                        'description' => (string) ($declaration['description'] ?? ''),
+                        'parametres' => (array) ($declaration['input_schema'] ?? $declaration['parameters'] ?? $declaration['parametersJsonSchema'] ?? []),
+                    ];
+                }
+            }
+        }
+
+        return null;
+    }
+
     /** @return list<string> les noms des outils proposés au modèle au dernier appel */
     protected function outilsProposes(): array
     {
@@ -172,6 +282,16 @@ trait ReponsesDuModele
         }
 
         return $noms;
+    }
+
+    private static function estUnEmbedding(string $url): bool
+    {
+        return str_contains(strtolower((string) parse_url($url, \PHP_URL_PATH)), 'embed');
+    }
+
+    private static function enTexte(mixed $valeur): string
+    {
+        return \is_string($valeur) ? $valeur : json_encode($valeur, \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR);
     }
 
     private static function texteDe(mixed $contenu): string
