@@ -1,0 +1,12 @@
+# Environnement d'exécution du parcours Symfony + IA : l'application Symfony complète (symfony-8-app), plus Symfony AI
+# (platform, agent, store SQLite) et le serveur MCP. Il prolonge symfony-8-app : ne vivent ici que les fichiers qu'il
+# ajoute ou remplace, et son composer.json (vendor/ ne se superpose pas).
+#
+# network: le PHP de l'aperçu peut appeler l'API de ces fournisseurs, avec la clé que l'apprenant donne dans le panneau
+# « Clé API » (ANTHROPIC_API_KEY, OPENAI_API_KEY, MISTRAL_API_KEY ou GEMINI_API_KEY). Les tests n'ont ni réseau ni clé :
+# ils rejouent des réponses enregistrées, comme le vérificateur du serveur.
+id: symfony-8-ia
+extends: symfony-8-app
+title: Symfony 8.1 — Symfony AI (platform, agent, store), MCP, Doctrine (SQLite), Security, PHPUnit
+php: '8.4'
+network: [anthropic, gemini, mistral, openai]
