@@ -58,6 +58,11 @@ enum ScratchFramework: string
                 'config/*.yaml',
                 'config/packages/*.yaml',
                 'config/routes/*.yaml',
+                // La configuration en PHP aussi, sans config/bundles.php ni preload.php : `*` ne sait pas exclure.
+                'config/services*.php',
+                'config/routes*.php',
+                'config/packages/*.php',
+                'config/routes/*.php',
             ],
             self::Laravel => [
                 'routes/web.php',

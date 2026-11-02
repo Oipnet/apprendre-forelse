@@ -44,6 +44,10 @@ final class ScratchStarterTest extends KernelTestCase
     {
         $this->assertTrue(ScratchFramework::Symfony->isEditable('config/packages/framework.yaml'));
         $this->assertTrue(ScratchFramework::Symfony->isEditable('config/services.yaml'));
+        $this->assertTrue(ScratchFramework::Symfony->isEditable('config/services.php'), 'La configuration Symfony s\'écrit aussi en PHP.');
+        $this->assertTrue(ScratchFramework::Symfony->isEditable('config/packages/framework.php'));
+        $this->assertTrue(ScratchFramework::Symfony->isEditable('config/routes.php'));
+        $this->assertFalse(ScratchFramework::Symfony->isEditable('config/preload.php'));
         $this->assertFalse(ScratchFramework::Symfony->isEditable('config/bundles.php'), 'Activer un bundle demande ses paquets dans vendor/.');
         $this->assertFalse(ScratchFramework::Symfony->isEditable('composer.json'));
         $this->assertTrue(ScratchFramework::Laravel->isEditable('config/app.php'));
