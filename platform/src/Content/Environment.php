@@ -44,7 +44,7 @@ final readonly class Environment
      */
     public function networkHosts(): array
     {
-        return array_values(array_map(static fn (string $provider): string => EnvironmentRegistry::NETWORK_PROVIDERS[$provider], $this->network));
+        return array_map(static fn (string $provider): string => EnvironmentRegistry::NETWORK_PROVIDERS[$provider], $this->network);
     }
 
     /** Le dossier de cet environnement — le dernier de la chaîne, celui qui porte son environment.yaml. */
