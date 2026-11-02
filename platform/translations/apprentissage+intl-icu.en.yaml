@@ -318,6 +318,7 @@ bac_a_sable:
         exemple_laravel: "“Show me in a Laravel playground how to validate a form with a FormRequest.”"
         exemple_php: "“Make a PHP playground with Carbon that shows how many days are left until Christmas.”"
         exemple_lien: "“Here is my playground link: why does my route return a 404?”"
+        exemple_bug: "“My service isn't injected into this controller: isolate the problem and make me a Symfony playground that reproduces it.”"
         outils: The server's tools
         get_starter: "A playground's starting project: its files, what can be edited, and the Composer packages available in plain PHP."
         create_sandbox: "Creates a playground link from the files the assistant changed."
