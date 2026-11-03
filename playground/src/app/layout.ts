@@ -78,7 +78,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 			</nav>
 			<div class="code-body">
 				<aside class="filetree" id="filetree">
-					<div class="filetree-head">${m.layout.project} <button id="new-file" class="filetree-new" type="button" title="${m.layout.newFile}" aria-label="${m.layout.newFile}" hidden>＋</button></div>
+					<div class="filetree-head">${m.layout.project} <span class="filetree-actions"><button id="download-project" class="filetree-new" type="button" title="${m.layout.download}" aria-label="${m.layout.download}">⤓</button><button id="new-file" class="filetree-new" type="button" title="${m.layout.newFile}" aria-label="${m.layout.newFile}" hidden>＋</button></span></div>
 					<div id="filetree-body"></div>
 				</aside>
 				<div class="editor" id="editor"></div>

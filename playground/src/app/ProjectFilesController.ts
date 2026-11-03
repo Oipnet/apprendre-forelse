@@ -1,4 +1,5 @@
 import type { CommandResult, Runtime } from '@forelse/runtime-contract';
+import { strToU8, zipSync } from 'fflate';
 import type { EditorPanel } from '../editor/monaco';
 import { m } from '../i18n';
 import { confirmDialog, noticeDialog, undoToast } from './dialogs';
@@ -36,6 +37,7 @@ export class ProjectFilesController {
 	) {
 		this.hiddenTests = new Set(Object.keys(exercise.tests));
 		this.bindNewFile();
+		this.$('#download-project').addEventListener('click', () => void this.download());
 		const montrer = (visible: boolean) => {
 			this.$('#filetree').hidden = !visible;
 			this.$('#toggle-tree').classList.toggle('open', visible);
@@ -129,6 +131,31 @@ export class ProjectFilesController {
 		if (aOuvrir) this.editor.open(aOuvrir);
 		if (nouveaux) this.drawTree();
 		if (Object.keys(fichiers).length || supprimes.length) this.session.saveDraft();
+	}
+
+	/**
+	 * Le projet tel que l'explorateur le montre, en .zip : le code de l'apprenant et la configuration, sans vendor/
+	 * ni caches (un `composer install` les remet), ni les tests cachés.
+	 */
+	async archive(): Promise<Uint8Array> {
+		const chemins = (this.paths.size ? [...this.paths] : await this.runtime.listFiles()).filter((path) => !this.hiddenTests.has(path));
+		const fichiers: Record<string, Uint8Array> = {};
+		for (const path of chemins.sort()) {
+			// Les dernières frappes ne sont peut-être pas encore écrites dans le runtime : le brouillon fait foi.
+			const contenu = this.session.current[path] ?? (await this.runtime.readFile(path));
+			if (null !== contenu) fichiers[path] = strToU8(contenu);
+		}
+		return zipSync(fichiers, { level: 6 });
+	}
+
+	private async download() {
+		const lien = document.createElement('a');
+		lien.href = URL.createObjectURL(new Blob([(await this.archive()) as Uint8Array<ArrayBuffer>], { type: 'application/zip' }));
+		lien.download = `${this.exercise.id.replace(/[^\w.-]+/g, '-')}.zip`;
+		document.body.append(lien);
+		lien.click();
+		lien.remove();
+		setTimeout(() => URL.revokeObjectURL(lien.href), 10_000);
 	}
 
 	/** Créer un fichier, là où l'exercice le permet (un motif comme src/Entity/*.php). */
