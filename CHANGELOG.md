@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.32.0 — 2026-11-03
+
 ### Ajouté
 
 - **Page des offres** (`/formations`, `/en/training`) : ce que la personne du thème vend de son temps, formations en
