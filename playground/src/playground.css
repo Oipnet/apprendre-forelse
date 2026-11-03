@@ -959,6 +959,85 @@ dialog.share-dialog .confirm-actions {
 	margin: 1rem 0 0;
 	text-align: right;
 }
+/* Partage du bac à sable : la case « Lien court », sa durée, le lien affiché et les liens courts déjà créés (scratch-share.ts). */
+.share-short {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.8rem;
+	margin-bottom: 0.8rem;
+	font-size: 14px;
+}
+.share-short label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+.share-short-duree[hidden] {
+	display: none;
+}
+.share-short-info {
+	width: 1.4rem;
+	height: 1.4rem;
+	padding: 0;
+	border: 1px solid var(--border);
+	border-radius: 50%;
+	background: var(--panel-2);
+	color: var(--muted);
+	font-size: 12px;
+	line-height: 1;
+	cursor: help;
+}
+.share-short-hint {
+	flex-basis: 100%;
+	margin: 0;
+	color: var(--muted);
+	font-size: 13px;
+}
+.share-url {
+	margin: 0 0 0.6rem;
+}
+.share-url input {
+	width: 100%;
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	background: var(--panel-2);
+	color: var(--text);
+	font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+	font-size: 13px;
+}
+.share-short-list {
+	margin-top: 1rem;
+	padding-top: 0.8rem;
+	border-top: 1px solid var(--border);
+}
+.share-short-list h3 {
+	margin: 0 0 0.4rem;
+	font-size: 0.95rem;
+}
+.share-short-list ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-height: 12rem;
+	overflow-y: auto;
+}
+.share-short-list li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem 0.6rem;
+	padding: 0.25rem 0;
+	font-size: 13px;
+}
+.share-short-list a {
+	font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+	overflow-wrap: anywhere;
+}
+.share-short-expiry {
+	color: var(--muted);
+}
 /* Intégrer l'exercice sur un autre site (boîte de partage de la Pratique). */
 .share-embed {
 	margin-top: 1.2rem;

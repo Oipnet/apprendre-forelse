@@ -10,6 +10,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Liens courts du bac à sable** (`/bac-a-sable/s/<id>`, `/en/playground/s/<id>`, 8 caractères au lieu de ~1600) :
+  la boîte de partage propose une case « Lien court », cochée par défaut, avec une info-bulle qui dit que le code est
+  alors gardé sur le serveur (table `scratch_share`, migration). Durée au choix : sans limite (par défaut), 1 an,
+  6 mois ou 1 mois ; un lien expiré répond 410 et le planificateur (`scheduler_scratch`, à ajouter au worker des
+  instances qui ont leur propre `compose.yaml`) l'efface dans l'heure. Le navigateur qui a créé un lien en garde la clé
+  et peut le supprimer (« Vos liens courts »). Décochée, la case redonne le lien long d'avant : rien n'est stocké. Le
+  lien court redirige vers le lien long (`X-Robots-Tag: noindex`), les anciens liens marchent toujours, `read_sandbox`
+  (MCP) relit aussi les liens courts. Limite : 30 liens par heure et par adresse IP (`scratch_share`).
 - **Paquets Composer dans le bac à sable Symfony**, avec leurs recettes Flex : form, validator, security-bundle,
   serializer, messenger, mailer, workflow, translation, uid, expression-language, rate-limiter, object-mapper,
   ux-twig-component, doctrine-fixtures-bundle, zenstruck/foundry, knp-paginator-bundle (`symfony-8-doctrine/paquets.json`).

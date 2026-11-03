@@ -18,7 +18,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Le bac à sable : un projet Symfony, Laravel ou PHP sans framework vierge, dans le navigateur, sans compte. On y essaie du code et on en
- * partage le lien : le code voyage dans l'adresse (après le #), le serveur ne le voit ni ne le garde.
+ * partage le lien : par défaut un lien court, dont le serveur garde le code (ScratchShareController) ; sinon le lien long,
+ * où le code voyage dans l'adresse (après le #) et que le serveur ne voit ni ne garde.
  */
 final class ScratchController extends AbstractController
 {

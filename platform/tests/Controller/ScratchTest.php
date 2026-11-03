@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * Le bac à sable : un projet Symfony, Laravel ou PHP sans framework vierge, servi au playground comme un exercice sans objectif, ouvert à
- * tout visiteur. Le code partagé voyage dans le fragment de l'adresse : rien ici ne le reçoit.
+ * tout visiteur. Le lien long porte le code dans le fragment de l'adresse ; les liens courts : ScratchShareTest.
  */
 final class ScratchTest extends WebTestCase
 {
