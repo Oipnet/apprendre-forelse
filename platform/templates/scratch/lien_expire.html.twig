@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+{% trans_default_domain 'apprentissage' %}
+
+{# Un lien court du bac à sable expiré, supprimé par son auteur ou mal recopié (410, voir ScratchShareController). #}
+{% block title %}{{ 'bac_a_sable.lien_expire.titre'|trans }}{% endblock %}
+{% block body %}
+    <main class="scratch">
+        <div class="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+            <h1 class="text-3xl font-semibold">{{ 'bac_a_sable.lien_expire.titre'|trans }}</h1>
+            <p class="lead mt-3 text-lg text-ink-muted">{{ 'bac_a_sable.lien_expire.detail'|trans }}</p>
+            <p class="mt-6"><a class="button" href="{{ path('app_scratch') }}">{{ 'bac_a_sable.lien_expire.action'|trans }}</a></p>
+        </div>
+    </main>
+{% endblock %}

@@ -108,7 +108,7 @@ final readonly class PlaygroundConfigFactory
 
     /**
      * Le bac à sable : un projet sans objectif, gardé dans le navigateur, pour tout visiteur. Ni mentor, ni avis, ni
-     * inscription proposée : on y essaie du code, et on le partage (le code voyage dans l'adresse, voir scratch.ts).
+     * inscription proposée : on y essaie du code, et on le partage (lien court gardé sur le serveur, ou lien long qui porte le code, voir scratch.ts).
      *
      * @return array<string, mixed>
      */
@@ -146,6 +146,8 @@ final readonly class PlaygroundConfigFactory
                     ], array_values(array_filter(ScratchFramework::cases(), static fn (ScratchFramework $f) => $f !== $framework))),
                     ['title' => $this->translator->trans('bac_a_sable.pratique', [], 'apprentissage'), 'url' => $this->urls->generate('app_practice')],
                 ],
+                // Les liens courts (ScratchShareController) : la case « Lien court » de la boîte de partage, cochée par défaut.
+                'shortLinks' => ['url' => $this->urls->generate('api_scratch_share', ['framework' => $framework->value])],
                 // Les paquets Composer à ajouter (PHP sans framework, Symfony), tant que leur catalogue a été construit
                 // (environments/bin/build-paquets.php) ; un paquet qui manque se demande par la page de contact.
                 'packages' => null === ($catalogue = $framework->packageCatalog()) || null === ($url = $this->assets->builtUrl($catalogue, $request)) ? null : [

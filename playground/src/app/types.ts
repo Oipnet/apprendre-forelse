@@ -116,5 +116,10 @@ export interface PlaygroundConfig {
 	chapterShare?: ShareLinks | null;
 	/** Bac à sable : où aller ensuite (l'autre framework, la Pratique), sous la consigne. */
 	/** Le bac à sable : les liens d'après, et le catalogue des paquets Composer (PHP sans framework, Symfony ; packages.ts). */
-	scratch?: { links: { title: string; url: string }[]; packages?: { url: string; requestUrl: string | null } | null } | null;
+	scratch?: {
+		links: { title: string; url: string }[];
+		packages?: { url: string; requestUrl: string | null } | null;
+		/** Les liens courts (scratch-share.ts) : l'API qui les crée ; absent, le lien long seulement. */
+		shortLinks?: { url: string } | null;
+	} | null;
 }

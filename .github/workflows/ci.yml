@@ -183,6 +183,7 @@ jobs:
             playground/package-lock.json
             packages/simulateur-nuxt/package-lock.json
             packages/simulateur-nuxt/conformite/reference/package-lock.json
+            packages/runtime-goravel/package-lock.json
 
       # Le Dockerfile ne peut pas lire .nvmrc : on vérifie qu'il construit le playground avec le même Node
       # que celui qui vient de le tester. Sinon, l'image livrerait un build que la CI n'a jamais vu.
@@ -214,7 +215,7 @@ jobs:
           path: |
             environments/*/vendor
             platform/public/envs
-          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'environments/*/paquets.json', 'environments/bin/**', 'packages/simulateur-docker/composer.json', 'packages/simulateur-docker/src/**', 'packages/simulateur-docker/bin/**', 'environments/nuxt-*/**') }}
+          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'environments/*/paquets.json', 'environments/bin/**', 'packages/simulateur-docker/composer.json', 'packages/simulateur-docker/src/**', 'packages/simulateur-docker/bin/**', 'environments/nuxt-*/**', 'environments/goravel-*/**') }}
 
       - name: Construire les environnements
         if: steps.cache-environnements.outputs.cache-hit != 'true'
@@ -235,10 +236,23 @@ jobs:
           composer audit --abandoned=report --working-dir=packages/simulateur-docker
           npm audit --omit=dev --audit-level=high --prefix playground
           npm audit --omit=dev --audit-level=high --prefix packages/simulateur-nuxt
+          npm audit --omit=dev --audit-level=high --prefix packages/runtime-goravel
 
       - name: Tests du simulateur Docker
         run: php vendor/bin/phpunit
         working-directory: packages/simulateur-docker
+
+      # Goravel : le framework Go compilé en WebAssembly (packages/runtime-goravel/go). Le binaire sert aux tests
+      # du runtime, et à content:check pour les environnements Goravel (même binaire que le navigateur).
+      - name: Go (runtime Goravel)
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: packages/runtime-goravel/go/go.mod
+          cache-dependency-path: packages/runtime-goravel/go/go.sum
+
+      - name: Tests du runtime Goravel
+        run: npm ci && npm run build:wasm && npm run typecheck && npm test
+        working-directory: packages/runtime-goravel
 
       - name: Tests du simulateur Nuxt
         run: npm ci && npm run typecheck && npm test

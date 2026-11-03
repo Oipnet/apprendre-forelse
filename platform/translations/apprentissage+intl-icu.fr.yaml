@@ -315,6 +315,9 @@ playground:
         php:
             demarrage: "PHP tourne entièrement dans votre navigateur, compilé en WebAssembly."
             decompression: Décompression du projet PHP
+        goravel:
+            demarrage: "Goravel tourne entièrement dans votre navigateur : le framework est compilé en WebAssembly, et votre code Go est interprété à chaque démarrage."
+            decompression: Décompression du projet Goravel
 
 # Le bac à sable (scratch/, App\Scratch) : un projet vierge, sans objectif, que l'on partage par un lien.
 bac_a_sable:
@@ -364,6 +367,11 @@ bac_a_sable:
         read_sandbox: "Relit le code d'un lien de bac à sable, pour l'expliquer ou le corriger."
         confiance: Rien n'est stocké, rien ne s'exécute sur le serveur
         confiance_detail: "Le serveur ne fait que fabriquer le lien : le code voyage dedans, après le #, et rien n'est gardé de notre côté. Le code tourne ensuite dans votre navigateur, en WebAssembly, et seulement après votre clic sur Exécuter. Nous comptons les appels (framework, langue, assistant utilisé) pour mesurer l'usage, jamais le code."
+    # Un lien court expiré, supprimé ou mal recopié (scratch/lien_expire.html.twig).
+    lien_expire:
+        titre: Ce lien de bac à sable n'existe plus
+        detail: "Il a expiré, son auteur l'a supprimé, ou il a été mal recopié. Demandez-lui un nouveau lien, ou ouvrez un bac à sable vierge."
+        action: Ouvrir le bac à sable
     faq:
         titre: Questions fréquentes
         tester:
@@ -374,10 +382,10 @@ bac_a_sable:
             reponse: "Non. Le bac à sable est gratuit et ouvert à tous. Votre brouillon est gardé dans votre navigateur : vous le retrouvez en revenant sur la page."
         partager:
             question: "Comment partager mon code PHP, Symfony ou Laravel ?"
-            reponse: "Le bouton Partager crée un lien qui contient votre code. La personne qui l'ouvre retrouve le projet tel quel, peut le modifier et vous renvoyer sa version : pratique pour montrer un bug, une idée ou une solution."
+            reponse: "Le bouton Partager crée un lien vers votre code. La personne qui l'ouvre retrouve le projet tel quel, peut le modifier et vous renvoyer sa version : pratique pour montrer un bug, une idée ou une solution. Par défaut, le lien est court (/bac-a-sable/s/…) ; décochez « Lien court » pour un lien qui contient tout le code."
         confidentialite:
             question: "Mon code est-il envoyé à un serveur ?"
-            reponse: "Non. Le code s'exécute dans votre navigateur, et un lien partagé le porte après le #, une partie de l'adresse que le navigateur n'envoie jamais au serveur. Rien n'est stocké de notre côté."
+            reponse: "Le code s'exécute dans votre navigateur, jamais sur le serveur. Pour le partager, vous choisissez : un lien court garde le code sur notre serveur, jusqu'à la date choisie (ou jusqu'à ce que vous le supprimiez) ; sans la case « Lien court », le lien porte tout le code après le #, une partie de l'adresse que le navigateur n'envoie jamais au serveur, et rien n'est stocké de notre côté."
         versions:
             question: "Quelles versions de PHP, de Symfony et de Laravel ?"
             reponse: "PHP 8.5 partout. Symfony 8, avec Twig, bin/console et Doctrine sur SQLite, et Laravel 13, avec Blade et php artisan, sont des applications complètes : contrôleurs, routes, vues, services. Le projet PHP n'a aucun framework : un index.php, des classes chargées par Composer, et des scripts lancés avec php."

@@ -46,7 +46,7 @@ final class PracticeTest extends WebTestCase
         $crawler = $this->client->request('GET', '/pratique');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSame(['Lire un en-tête avec #[MapRequestHeader]', 'Une nouveauté récente', 'Un point précis', 'Côté Laravel'], $crawler->filter('.practice-list .title')->extract(['_text']), 'Du plus récent au plus ancien, pack de démo compris.');
+        $this->assertSame(['Lire un en-tête avec #[MapRequestHeader]', 'Une nouveauté récente', 'Un point précis', 'Côté Laravel', 'Un paramètre de route avec Goravel'], $crawler->filter('.practice-list .title')->extract(['_text']), 'Du plus récent au plus ancien, pack de démo compris.');
         $this->assertStringContainsString('Symfony 8.1', $crawler->filter('.practice-list li')->eq(1)->text());
         $this->assertSelectorExists('header nav a[href="/pratique"]', 'La Pratique est dans le menu.');
         $this->assertSelectorTextContains('.pr-signup', 'Ces exercices s\'écrivent sans compte', 'Le bas de la liste ne promet pas un compte avant d\'avoir rien montré.');
@@ -80,7 +80,7 @@ final class PracticeTest extends WebTestCase
         $this->assertSame(['Côté Laravel', 'Un point précis'], $titres('tri=titre&notions[]=Validator&notions[]=Eloquent'), 'Plusieurs notions se cumulent, et le tri par titre passe avant la date.');
         $this->assertSame(['Une nouveauté récente'], $titres('recherche='.rawurlencode('dernière version')), 'La recherche lit aussi le résumé.');
         $this->assertSame(['Un point précis'], $titres('recherche=validator'), 'La recherche lit aussi les notions, sans tenir compte de la casse.');
-        $this->assertCount(4, $titres('notions[]=Inconnue'), 'Une notion que le framework choisi ne connaît pas est oubliée, pas une erreur.');
+        $this->assertCount(5, $titres('notions[]=Inconnue'), 'Une notion que le framework choisi ne connaît pas est oubliée, pas une erreur.');
         $this->assertSame([], $titres('framework=cobol'));
         $this->assertSelectorTextContains('main', 'Aucun exercice avec ces filtres');
     }

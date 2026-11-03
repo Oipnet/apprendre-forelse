@@ -222,7 +222,7 @@ final class EnvironmentRegistryTest extends TestCase
 
         try {
             $this->expectException(\App\Content\ContentException::class);
-            $this->expectExceptionMessage('framework « rails » inconnu (symfony, laravel, docker, nuxt, php)');
+            $this->expectExceptionMessage('framework « rails » inconnu (symfony, laravel, docker, nuxt, php, goravel)');
             (new EnvironmentRegistry($tmp))->get('maison');
         } finally {
             @unlink($tmp.'/maison/environment.yaml');

@@ -8,8 +8,28 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.30.0 — 2026-11-03
+
+### Modifié
+
+- **Mesure d'audience sans les robots** : le traceur d'Umami n'est chargé qu'au premier geste du visiteur (souris,
+  toucher, molette, clavier). Un robot qui fait tourner un vrai Chrome sans `navigator.webdriver` (Chrome Linux
+  1920x1080 en-US : 163 visites en 5 jours, toutes d'une page sans aucun événement) n'est plus compté. Les événements
+  mesurés avant ce geste (`exercice-ouvert`, `compte-cree`…) attendent le traceur. Rien de plus n'est collecté ; un
+  visiteur qui repart sans rien toucher n'est plus compté.
+
+## 3.29.0 — 2026-11-03
+
 ### Ajouté
 
+- **Liens courts du bac à sable** (`/bac-a-sable/s/<id>`, `/en/playground/s/<id>`, 8 caractères au lieu de ~1600) :
+  la boîte de partage propose une case « Lien court », cochée par défaut, avec une info-bulle qui dit que le code est
+  alors gardé sur le serveur (table `scratch_share`, migration). Durée au choix : sans limite (par défaut), 1 an,
+  6 mois ou 1 mois ; un lien expiré répond 410 et le planificateur (`scheduler_scratch`, à ajouter au worker des
+  instances qui ont leur propre `compose.yaml`) l'efface dans l'heure. Le navigateur qui a créé un lien en garde la clé
+  et peut le supprimer (« Vos liens courts »). Décochée, la case redonne le lien long d'avant : rien n'est stocké. Le
+  lien court redirige vers le lien long (`X-Robots-Tag: noindex`), les anciens liens marchent toujours, `read_sandbox`
+  (MCP) relit aussi les liens courts. Limite : 30 liens par heure et par adresse IP (`scratch_share`).
 - **Paquets Composer dans le bac à sable Symfony**, avec leurs recettes Flex : form, validator, security-bundle,
   serializer, messenger, mailer, workflow, translation, uid, expression-language, rate-limiter, object-mapper,
   ux-twig-component, doctrine-fixtures-bundle, zenstruck/foundry, knp-paginator-bundle (`symfony-8-doctrine/paquets.json`).
@@ -26,6 +46,19 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   emploie une nouveauté de 8.5 (`|>` par exemple) ne passe plus côté serveur pour planter dans le navigateur. Les
   environnements du moteur déclarent `php: '8.5'` ; PHP 8.4 n'est plus embarqué, et un environnement de pack qui
   demande encore 8.4 tourne en 8.5. Les textes du bac à sable, de la FAQ et du serveur MCP disent 8.5.
+
+### Sécurité
+
+- **Réseaux Docker cloisonnés** (`deploy/compose.yaml`) : plus de réseau commun à tous les services. La base est sur
+  `base` (avec l'application, le worker et Umami), Meilisearch sur `recherche` (application et worker), tous deux
+  internes, donc sans Internet ; l'application et le worker sortent par `sortie`, Umami a son propre réseau pour le
+  port du tunnel SSH. Umami ne joint plus Meilisearch, Meilisearch ne joint plus la base. En préproduction, Mailpit
+  n'est plus que sur `courrier` (interne) et `front`. Au déploiement, tous les conteneurs sont recréés une fois ;
+  supprimer ensuite l'ancien réseau `…_default` (voir `deploy/README.md`).
+- **Utilisateur PostgreSQL dédié à Umami** : Umami ne se connecte plus avec l'utilisateur du site (`formation`), qui
+  ouvrait toute la base (comptes, achats) à une faille d'Umami. `umami-base` crée l'utilisateur `umami`, lui donne la
+  base `umami` et ses tables, et ferme la base du site aux autres utilisateurs. **Nouvelle variable obligatoire**
+  `UMAMI_DB_PASSWORD` dans le `.env` de chaque instance, à poser avant le déploiement (`deploy/README.md`, section 8).
 
 ## 3.28.1 — 2026-11-02
 

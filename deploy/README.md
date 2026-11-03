@@ -12,6 +12,11 @@ Chaque instance a son `.env`, donc son nom de projet Docker, sa base et ses volu
 copiés par la CI (`.github/workflows/ci.yml`) ; le proxy, lui, s'installe une fois.
 
 - `compose.yaml` : les services d'une instance. Seul, l'application tient elle-même 80/443 (l'ancien fonctionnement).
+  Chaque service n'est que sur les réseaux dont il a besoin (tableau en bas du fichier) : la base, Meilisearch et
+  Umami ne se voient pas tous, et la base et la recherche n'ont pas accès à Internet. Au premier déploiement qui les
+  apporte, tous les conteneurs sont recréés (quelques secondes de coupure) ; l'ancien réseau `<projet>_default` reste,
+  vide : `docker network rm forelse_default` (production) ou `forelse-staging_default` (préproduction), noms exacts
+  dans `docker network ls`.
 - `derriere-front.yaml` : l'instance passe derrière le proxy (plus de port publié, réseau `front`).
 - `preproduction.yaml` : ce qui distingue la préproduction (pas d'indexation, pas d'Umami).
 - `deployer.sh` : copie de la base, migrations, bascule, contrôle de `/sante`, retour à l'image précédente en cas d'échec. La copie (`pg_dump -Fc`) est gardée dans `sauvegardes/` du dossier de l'instance, les 10 plus récentes (`DEPLOY_DUMPS_DIR`, `DEPLOY_DUMPS_KEEP`). Pour restaurer : `docker compose exec -T db sh -c 'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < sauvegardes/avant-deploiement-….dump`. Ces copies restent sur le VPS : la sauvegarde hors du serveur est `sauvegarde/` (section 5).
@@ -238,3 +243,21 @@ docker compose up -d
 Sans elle, une clé par défaut, écrite dans `compose.yaml` : le service reste injoignable de l'extérieur, mais la clé
 n'a alors rien de secret. Pour remplir l'index tout de suite plutôt qu'au prochain passage du worker :
 `docker compose exec app php bin/console app:recherche:indexer`. `MEILISEARCH_URL=` (vide) dans `.env` éteint la recherche.
+
+## 8. Utilisateur PostgreSQL d'Umami
+
+Umami se connecte à PostgreSQL avec son propre utilisateur, `umami`, propriétaire de la base `umami` et de rien
+d'autre ; la base du site n'accepte plus que son propriétaire, `formation`. Le service `umami-base` s'en charge à
+chaque `docker compose up` : il crée l'utilisateur (ou remet son mot de passe), lui donne la base et les tables déjà
+créées par `formation`, puis s'arrête. Rien n'est effacé.
+
+`compose.yaml` exige `UMAMI_DB_PASSWORD` dans le `.env` de **chaque instance**, préproduction comprise (sans Umami, mais
+Compose lit tout le fichier). À poser **avant** le déploiement qui l'apporte : sans elle, le déploiement s'arrête avant
+de toucher à quoi que ce soit.
+
+```sh
+echo "UMAMI_DB_PASSWORD=$(openssl rand -hex 32)" >> .env
+```
+
+Umami dérive le secret de ses sessions de son adresse de base : au changement, il faut se reconnecter au tableau de
+bord, et les visiteurs du jour peuvent compter deux fois (identifiant de visite recalculé). Les mesures restent.

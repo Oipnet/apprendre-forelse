@@ -26,6 +26,7 @@ import { ApiProgressStore, LocalProgressStore, type ProgressStore, type SavedPro
 import { ProjectFilesController } from './ProjectFilesController';
 import { RequestsPanel } from './requests';
 import { changedFiles, decodeFragment, encodeFragment, NEW_PROJECT, withFragment } from './scratch';
+import { scratchShareDialog } from './scratch-share';
 import { composerRequest, knownPackages, Packages, packagesDialog, parseCatalog, parseInvalidation, readSelection, requiredPackages, writeSelection } from './packages';
 import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
@@ -353,12 +354,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		void session.saveDraft();
 		history.replaceState(history.state, '', location.pathname + location.search);
 	}
-	// Partager le bac à sable : le lien porte les fichiers modifiés, les dernières frappes comprises.
+	// Partager le bac à sable : les fichiers modifiés, les dernières frappes comprises, dans un lien court (gardé sur le
+	// serveur) ou dans le lien long (après le #), au choix du visiteur (scratch-share.ts).
 	if (config.share && scratch) {
 		const share = config.share.invite;
 		$<HTMLButtonElement>('#share').addEventListener('click', async () => {
 			await session.flush().catch(() => false);
-			shareDialog(root, withFragment(share, encodeFragment(changedFiles(session.current, exercise.files), (await paquets)?.names ?? [])), m.scratch.shareTitle, mesure);
+			const fragment = encodeFragment(changedFiles(session.current, exercise.files), (await paquets)?.names ?? []);
+			scratchShareDialog(root, { title: m.scratch.shareTitle, fragment, longLinks: withFragment(share, fragment), shortLinksUrl: config.scratch?.shortLinks?.url ?? null, mesure });
 		});
 	}
 	if (catalogue) {

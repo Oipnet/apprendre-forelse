@@ -23,10 +23,13 @@ final readonly class FrameworkProfile
     /** Lanceurs de tests connus du moteur : PHPUnit en PHP natif, Vitest sous Node. */
     public const string PHPUNIT = 'phpunit';
     public const string VITEST = 'vitest';
+    /** Tests Go (fonctions TestXxx), lancés par le binaire du runtime Goravel sous Node. */
+    public const string GOTEST = 'gotest';
 
-    /** Runtimes du navigateur : PHP compilé en WebAssembly, et le simulateur Nuxt. */
+    /** Runtimes du navigateur : PHP compilé en WebAssembly, le simulateur Nuxt, Goravel compilé en WebAssembly. */
     public const string PHP_WASM = 'php-wasm';
     public const string NUXT_SIM = 'nuxt-sim';
+    public const string GORAVEL_WASM = 'goravel-wasm';
 
     /**
      * @param string                       $id              identifiant écrit dans environment.yaml (« symfony »)
@@ -111,6 +114,7 @@ final readonly class FrameworkProfile
         return match ($this->testRunner) {
             self::PHPUNIT => 'PHPUnit',
             self::VITEST => 'Vitest',
+            self::GOTEST => 'go test',
             default => $this->testRunner,
         };
     }
