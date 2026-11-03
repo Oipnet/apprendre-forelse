@@ -10,6 +10,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Page auteur en vitrine** (`/auteurs/<nom>`) : pastille de disponibilité, métier et ville sous le nom, bouton
+  principal (le premier profil) et prise de rendez-vous, chiffres clés, expertises en étiquettes, services en cartes,
+  parcours, mentions (« Ils en parlent »), avis de clients, et un dernier appel avant le pied de page. Nouvelles clés
+  facultatives de `person` (et des `authors`) : `location`, `availability`, `booking`, `cta`, `expertise`, `skills`,
+  `stats`, `services`, `press`, `testimonials`, traduisibles sous `locales.<langue>.person` (sauf `booking`). Les
+  données structurées de la page ajoutent `knowsAbout` et la ville (`address`), le titre de la page le métier et la ville.
+  Les classes `author-*` du gabarit servent d'accroches aux thèmes.
 - **Page d'exercice en clair ou en sombre, selon le système** (éditeurs de l'atelier compris) : palette claire neutre
   du moteur, Monaco en `vs` ou `vs-dark`, bascule à chaud. Les blocs de code, la sortie des tests et la console restent
   sombres. Un thème habille le clair avec la clé `editor_light:` (mêmes clés que `editor:`) ; un thème qui n'a que

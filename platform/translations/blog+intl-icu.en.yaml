@@ -62,8 +62,26 @@ show:
 feed:
     description: "Articles from {site}."
 
-# An author's page (/en/authors/<name>).
+# An author's page (/en/authors/<name>): a showcase, in the first person.
 auteur:
     fil_ariane: "Author"
-    parcours: "Courses"
-    articles: "Latest articles"
+    titre_lieu: "{metier} in {lieu}"
+    chiffres: "At a glance"
+    expertise_haut: "What I do best"
+    expertise: "Expertise"
+    services: "How I can help"
+    histoire_haut: "My background"
+    presse: "Featured in"
+    avis: "Client reviews"
+    parcours_haut: "I teach"
+    parcours: "My courses"
+    articles_haut: "I write"
+    articles: "My latest articles"
+    dernier_appel: "Let's work together"
+    contact: "Contact me"
+    lien:
+        malt: "Hire me on Malt"
+        linkedin: "LinkedIn"
+        github: "GitHub"
+        site: "My website"
+        booking: "Book a call"

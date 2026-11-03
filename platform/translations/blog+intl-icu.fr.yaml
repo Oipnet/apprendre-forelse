@@ -62,8 +62,28 @@ show:
 feed:
     description: "Les articles de {site}."
 
-# La page d'un auteur (/auteurs/<nom>).
+# La page d'un auteur (/auteurs/<nom>) : une vitrine, à la première personne.
 auteur:
     fil_ariane: "Auteur"
-    parcours: "Ses parcours"
-    articles: "Ses derniers articles"
+    # Le métier et la ville (« location » de la personne), sous le nom et dans le titre de la page.
+    titre_lieu: "{metier} à {lieu}"
+    chiffres: "En quelques chiffres"
+    expertise_haut: "Ce que je sais faire"
+    expertise: "Expertises"
+    services: "Ce que je propose"
+    histoire_haut: "Mon parcours"
+    presse: "Ils en parlent"
+    avis: "Avis de clients"
+    parcours_haut: "J'enseigne"
+    parcours: "Mes parcours"
+    articles_haut: "J'écris"
+    articles: "Mes derniers articles"
+    dernier_appel: "Travaillons ensemble"
+    contact: "Me contacter"
+    # Les boutons de la page : le premier profil est le bouton principal.
+    lien:
+        malt: "Me proposer une mission"
+        linkedin: "LinkedIn"
+        github: "GitHub"
+        site: "Mon site"
+        booking: "Réserver un appel"
