@@ -40,7 +40,8 @@
             <header>
                 <h1 class="text-3xl font-semibold">{{ article.title }}</h1>
                 <p class="meta mt-2 text-sm text-ink-muted">
-                    {%- if theme.person %}{{ theme.person.name }} · {% endif -%}
+                    {#- La signature de l'article : son auteur, qui mène à sa page quand il en a une. #}
+                    {%- if author %}{% if author.hasPage %}<a class="text-ink-muted" href="{{ path('app_author', {slug: author.id}) }}" rel="author">{{ author.name }}</a>{% else %}{{ author.name }}{% endif %} · {% endif -%}
                     <time datetime="{{ article.published|date('Y-m-d') }}">{{ article.published|date_longue }}</time>
                     {%- if article.updated %} · {{ 'show.mis_a_jour'|trans({datetime: article.updated|date('Y-m-d'), date: article.updated|date_longue|e})|raw }}{% endif %}
                     · {{ 'commun.lecture'|trans({minutes: article.readingMinutes}) }}

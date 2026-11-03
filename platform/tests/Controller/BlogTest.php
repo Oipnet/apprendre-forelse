@@ -261,6 +261,7 @@ final class BlogTest extends WebTestCase
             $this->assertSame('https://www.malt.fr/profile/ada', $author->filter('a[data-umami-event-lien="malt"]')->attr('href'));
             $this->assertSame('/contact', $author->filter('a')->last()->attr('href'));
             $this->assertSame('/auteurs/ada-lovelace', $author->filter('a[rel="author"]')->attr('href'), 'Le nom mène à la page de l\'auteur.');
+            $this->assertSame('/auteurs/ada-lovelace', $crawler->filter('article header .meta a[rel="author"]')->attr('href'), 'La signature sous le titre aussi.');
 
             // La page de l'auteur : sa présentation (la bio, faute de « about »), ses profils, ses articles.
             $crawler = $this->client->request('GET', '/auteurs/ada-lovelace');
