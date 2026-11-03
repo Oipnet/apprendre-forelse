@@ -24,7 +24,7 @@ final readonly class ThemeLoader
     public const string LEGACY_FILE = 'marque.yaml';
 
     /** Les clés acceptées à la racine de theme.yaml. */
-    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'authors', 'colors', 'editor', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'share_card', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles', 'locales'];
+    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'authors', 'colors', 'editor', 'editor_light', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'share_card', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles', 'locales'];
 
     /**
      * Ce qu'une langue peut traduire, sous « locales: <langue>: » : les textes de la marque et les sections de
@@ -163,6 +163,7 @@ final readonly class ThemeLoader
             images: $engine ? array_fill_keys(self::IMAGES, null) : self::images($config, $directory, $error),
             colors: self::block($config, 'colors', ThemeStylesheet::COLORS, new HexColor(), $error),
             editor: self::block($config, 'editor', ThemeStylesheet::EDITOR_COLORS, new HexColor(), $error),
+            editorLight: self::block($config, 'editor_light', ThemeStylesheet::EDITOR_COLORS, new HexColor(), $error),
             fonts: self::block($config, 'fonts', ThemeStylesheet::FONTS, new FontStack(), $error),
             home: self::home($config['home'] ?? [], $error),
             shareCard: $engine ? self::NO_SHARE_CARD : self::shareCard($config['share_card'] ?? [], $directory, $error),

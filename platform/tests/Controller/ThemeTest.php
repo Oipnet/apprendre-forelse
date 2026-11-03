@@ -170,6 +170,20 @@ final class ThemeTest extends WebTestCase
         $this->assertStringContainsString(':root{--accent:#5ab0cc}', (string) $client->getResponse()->getContent());
     }
 
+    /** L'éditeur (ici celui du bac à sable, ouvert à tous) suit le système, sauf quand le thème n'a qu'une palette sombre. */
+    public function testLEditeurSuitLeSystemeSaufPaletteSombreSeule(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/bac-a-sable/symfony');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('html[data-editor-scheme="auto"]', 'Palettes du moteur : claire ou sombre, selon le système.');
+
+        self::ensureKernelShutdown();
+        $client = $this->clientAvecTheme("name: Atelier Bigorneau\neditor:\n  accent: '#5ab0cc'\n");
+        $client->request('GET', '/bac-a-sable/symfony');
+        $this->assertSelectorExists('html[data-editor-scheme="dark"]', 'Une palette sombre seule : pas de clair mélangé.');
+    }
+
     /** Le thème sombre suit le système, sauf quand la marque impose sa palette (claire) : les deux ne se mélangent pas. */
     public function testLeThemeSombreSuitLeSystemeSaufPaletteDeMarque(): void
     {

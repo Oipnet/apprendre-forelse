@@ -301,6 +301,31 @@ final class ThemeTest extends TestCase
         $this->assertStringNotContainsString('body.site-page{', $styles);
     }
 
+    /** « editor_light » : la palette claire, posée seulement quand le système la demande et que la page suit le système. */
+    public function testLaPaletteClaireDeLEditeurSuitLeSysteme(): void
+    {
+        $this->write("name: A\neditor:\n  accent: '#5ab0cc'\n");
+        $this->assertStringNotContainsString('prefers-color-scheme', self::theme($this->tmp)->styles());
+        $this->assertFalse(self::theme($this->tmp)->editorFollowsSystemTheme(), 'Une palette sombre seule : la page reste sombre.');
+
+        $this->write("name: A\neditor:\n  accent: '#5ab0cc'\neditor_light:\n  accent: '#2f6b16'\n  background: '#fbfcf8'\n");
+        $styles = self::theme($this->tmp)->styles();
+        $this->assertStringEndsWith(":root{--accent:#5ab0cc}@media (prefers-color-scheme: light){:root[data-editor-scheme='auto']{--accent:#2f6b16;--bg:#fbfcf8}}", $styles);
+        $this->assertTrue(self::theme($this->tmp)->editorFollowsSystemTheme());
+
+        $this->write("name: A\n");
+        $this->assertTrue(self::theme($this->tmp)->editorFollowsSystemTheme(), 'Sans palette : celles du moteur, claire et sombre.');
+    }
+
+    public function testUneCouleurDEditeurClaireQuiNEnEstPasUneEstRefusee(): void
+    {
+        $this->write("name: A\neditor_light:\n  ink: noir\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« editor_light.ink » : une couleur hexadécimale est attendue');
+        self::theme($this->tmp)->styles();
+    }
+
     public function testUneCouleurDEditeurQuiNEnEstPasUneEstRefusee(): void
     {
         $this->write("name: A\neditor:\n  accent: bleu\n");

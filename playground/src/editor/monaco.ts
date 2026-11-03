@@ -19,6 +19,20 @@ self.MonacoEnvironment = { getWorker: () => createModuleWorker(editorWorkerUrl, 
 
 export { monaco };
 
+/**
+ * Le thème de Monaco suit celui de la page : clair (vs) quand le système le demande et que la page le permet
+ * (data-editor-scheme="auto" sur <html>, voir editor_base.html.twig), sombre (vs-dark) sinon. Sans l'attribut,
+ * l'éditeur reste sombre, comme avant.
+ */
+const lightScheme = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-color-scheme: light)') : null;
+
+export function monacoTheme(): 'vs' | 'vs-dark' {
+	return document.documentElement.dataset.editorScheme === 'auto' && lightScheme?.matches ? 'vs' : 'vs-dark';
+}
+
+// Le thème de Monaco est global : un seul écouteur suffit pour tous les éditeurs (fichiers, avant / après).
+lightScheme?.addEventListener('change', () => monaco.editor.setTheme(monacoTheme()));
+
 const LANGUAGES: Record<string, string> = { php: 'php', twig: 'twig', yaml: 'yaml', yml: 'yaml', css: 'css', md: 'markdown', sh: 'shell', ini: 'ini', html: 'html', vue: 'html', js: 'javascript', mjs: 'javascript', ts: 'typescript', json: 'json', conf: 'shell', dockerfile: 'dockerfile' };
 
 export function languageOf(path: string): string {
@@ -56,7 +70,7 @@ export class EditorPanel {
 		private readonly onChange: (path: string, content: string) => void,
 	) {
 		this.editor = monaco.editor.create(container, {
-			theme: 'vs-dark',
+			theme: monacoTheme(),
 			automaticLayout: true,
 			fontSize: 14,
 			minimap: { enabled: false },

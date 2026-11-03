@@ -58,6 +58,20 @@ de `<head>` qu'elle partage avec `base.html.twig`) et `_theme_preview.html.twig`
 | `accent-fill` | `--accent-fill` (fond sous un texte blanc) | | `line`, `ink`, `muted` | `--border`, `--text`, `--muted` |
 | `accent-text` | `--accent-text` (texte sur fond sombre) | | `success`, `error`, `gold` | `--ok`, `--ko`, `--gold` |
 
+Ces pages suivent le système, comme Monaco (thème `vs` en clair, `vs-dark` en sombre) : le moteur a aussi une palette
+neutre claire. Un thème qui déclare `editor:` sans `editor_light:` garde ses pages sombres (sa palette n'est faite que
+pour le sombre) ; avec `editor_light:` (mêmes clés que `editor:`), il habille aussi le clair. Les blocs de code, la
+sortie des tests et la console restent sombres dans les deux cas, comme un terminal.
+
+```yaml
+editor:        # sombre
+  accent-text: '#a3d977'
+  background: '#141c15'
+editor_light:  # clair, quand le système le demande
+  accent-text: '#2f6b16'
+  background: '#fbfcf8'
+```
+
 ## Feuilles, scripts et polices
 
 `theme.yaml` liste les fichiers de `assets/` à charger sur les pages du site, après ceux du moteur :

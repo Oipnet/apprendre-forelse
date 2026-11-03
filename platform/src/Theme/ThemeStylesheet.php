@@ -29,9 +29,10 @@ final class ThemeStylesheet
     ];
 
     /**
-     * Les couleurs du thème sombre, celui de l'éditeur d'exercice et de l'atelier (:root dans site.css).
-     * Déclarées à part du thème clair, et jamais déduites de lui : une couleur claire assombrie
-     * automatiquement, c'est un contraste perdu au hasard. Absentes, celles du moteur restent.
+     * Les couleurs de l'éditeur d'exercice et de l'atelier (:root dans editor.css) : « editor » pour leur thème sombre,
+     * « editor_light » pour leur thème clair, avec les mêmes clés. Déclarées à part du thème du site, et jamais
+     * déduites l'une de l'autre : une couleur éclaircie ou assombrie automatiquement, c'est un contraste perdu au
+     * hasard. Absentes, celles du moteur restent.
      */
     public const array EDITOR_COLORS = [
         'accent' => '--accent',
@@ -56,7 +57,13 @@ final class ThemeStylesheet
         $css = self::rule('html', [...$config->colors, ...$config->fonts]);
 
         // Le thème sombre de l'éditeur d'exercice et de l'atelier : ses variables ne servent qu'à eux.
-        return $css.self::rule(':root', $config->editor);
+        $css .= self::rule(':root', $config->editor);
+
+        // Son thème clair, quand le système le demande : même sélecteur que la palette claire du moteur (editor.css),
+        // posé après elle, pour l'emporter.
+        $light = self::rule(":root[data-editor-scheme='auto']", $config->editorLight);
+
+        return '' === $light ? $css : $css.'@media (prefers-color-scheme: light){'.$light.'}';
     }
 
     /**
