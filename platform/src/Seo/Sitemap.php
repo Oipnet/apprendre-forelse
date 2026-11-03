@@ -175,6 +175,12 @@ final readonly class Sitemap
                     $entries[] = $this->entry('app_author', ['_locale' => $locale, 'slug' => $author['id']], self::PAGES_UPDATED_AT);
                 }
             }
+            // La page des offres, dans chaque langue où le thème la déclare.
+            foreach ($homes as $locale) {
+                if ($this->theme->offersIn($locale)) {
+                    $entries[] = $this->entry('app_offers', ['_locale' => $locale], self::PAGES_UPDATED_AT);
+                }
+            }
             $entries[] = $this->entry('app_contact', [], self::PAGES_UPDATED_AT);
             $entries[] = $this->entry('app_legal_notice', [], LegalVersions::UPDATED_AT);
             $entries[] = $this->entry('app_privacy', [], LegalVersions::UPDATED_AT);
