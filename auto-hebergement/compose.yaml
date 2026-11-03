@@ -84,6 +84,7 @@ services:
       ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
       ANALYTICS_WEBSITE_ID: ${ANALYTICS_WEBSITE_ID:-}
       ANALYTICS_SERVER_NAME: ${ANALYTICS_SERVER_NAME:-http://127.0.0.1:9998}
+      ANALYTICS_ALLOWED_IPS: ${ANALYTICS_ALLOWED_IPS:-0.0.0.0/0 ::/0}
       # Suivi des erreurs (facultatif, voir .env.example). Vide : rien ne part.
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}

@@ -66,6 +66,8 @@ services:
       # Nom d'hôte qui sert le tableau de bord d'Umami (ex. https://suivi.example.org, avec son enregistrement
       # DNS). Vide : il n'est pas exposé, et se consulte par un tunnel SSH.
       ANALYTICS_SERVER_NAME: ${ANALYTICS_SERVER_NAME:-http://127.0.0.1:9998}
+      # Adresses autorisées sur ce nom d'hôte (ex. « 203.0.113.7/32 2001:db8:1:2::/64 »). Absent : toutes (voir deploy/README.md).
+      ANALYTICS_ALLOWED_IPS: ${ANALYTICS_ALLOWED_IPS:-0.0.0.0/0 ::/0}
       # Suivi des erreurs : le DSN du projet Sentry (ou GlitchTip). Vide : rien ne part.
       # Vérification : `docker compose exec app php bin/console app:sentry:essai`.
       SENTRY_DSN: ${SENTRY_DSN:-}
