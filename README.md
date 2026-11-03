@@ -469,7 +469,12 @@ accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas
   D'autres auteurs se déclarent sous `authors:`, par identifiant (`grace-hopper: {name, jobTitle, bio…}`, même forme,
   traduits sous `locales.<langue>.authors`) ; un article nomme le sien avec `author: grace-hopper`, sinon c'est
   `person`. Chaque auteur qui a une présentation a sa page (`/auteurs/grace-hopper`, `/en/authors/…`) : photo,
-  présentation, profils, ses articles, et une `ProfilePage` dans les données structurées.
+  présentation, profils, ses articles, et une `ProfilePage` dans les données structurées. Pour en faire une vitrine,
+  `person` accepte aussi `location` (la ville, à côté du métier), `availability` (une pastille, « Disponible pour une
+  mission »), `booking` (un lien de rendez-vous en https), `cta` (le titre du dernier appel), `expertise` et `skills`
+  (des listes d'étiquettes, aussi `knowsAbout` des données structurées), et des listes de fiches : `stats`
+  (`value`, `label`), `services` (`title`, `text`), `press` (`name`, `text`, `url`) et `testimonials` (`quote`,
+  `author`). Toutes se traduisent sous `locales.<langue>.person`, sauf `booking`.
 - `colors` et `fonts` redéfinissent les jetons du thème default (`--color-accent`, `--color-bg`, `--font-serif`…,
   voir [docs/themes.md](docs/themes.md)) : les pages du site et les emails les suivent. Hexadécimal seulement ; une
   valeur mal écrite **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire

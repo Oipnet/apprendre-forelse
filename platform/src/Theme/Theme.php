@@ -143,7 +143,7 @@ final class Theme implements ResetInterface
      *
      * Le titre et la présentation suivent la langue de la page quand le thème les traduit (« locales.<langue>.person »).
      *
-     * @return array{name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, portrait?: string}|null
+     * @return array{name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, portrait?: string, location?: string, availability?: string, booking?: string, cta?: string, expertise?: list<string>, skills?: list<string>, stats?: list<array<string, string>>, services?: list<array<string, string>>, press?: list<array<string, string>>, testimonials?: list<array<string, string>>}|null
      */
     public function person(): ?array
     {
@@ -156,7 +156,7 @@ final class Theme implements ResetInterface
      * L'auteur d'un article ou d'une page auteur, dans la langue de la page : « person » (l'auteur par défaut, null),
      * ou l'un des « authors » par son identifiant. Null pour un identifiant inconnu, ou un thème sans personne.
      *
-     * @return array{id: string, name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, portraitUrl: string|null, isDefault: bool, hasPage: bool}|null
+     * @return array{id: string, name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, location?: string, availability?: string, booking?: string, cta?: string, expertise?: list<string>, skills?: list<string>, stats?: list<array<string, string>>, services?: list<array<string, string>>, press?: list<array<string, string>>, testimonials?: list<array<string, string>>, portraitUrl: string|null, isDefault: bool, hasPage: bool}|null
      */
     public function author(?string $id = null): ?array
     {

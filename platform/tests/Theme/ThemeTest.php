@@ -270,6 +270,36 @@ final class ThemeTest extends TestCase
         (new ThemeLoader())->load($this->tmp);
     }
 
+    /** La vitrine de la page auteur : des listes de fiches, traduisibles, vérifiées fiche par fiche. */
+    public function testLaVitrineDeLAuteurSeDeclareEtSeTraduit(): void
+    {
+        $this->write("name: A\nperson:\n  name: Ada\n  jobTitle: F\n  location: Londres\n  availability: Disponible\n  booking: 'https://calendly.com/ada'\n  expertise: [PHP]\n  stats: [{value: '58', label: missions}]\n  press: [{name: Blog, url: 'https://exemple.fr'}]\nlocales:\n  en:\n    person: {availability: Available, stats: [{value: '58', label: projects}]}\n");
+        $config = (new ThemeLoader())->load($this->tmp);
+
+        $this->assertSame(['name' => 'Ada', 'jobTitle' => 'F', 'stats' => [['value' => '58', 'label' => 'missions']], 'press' => [['name' => 'Blog', 'url' => 'https://exemple.fr']], 'location' => 'Londres', 'availability' => 'Disponible', 'expertise' => ['PHP'], 'booking' => 'https://calendly.com/ada'], $config->person);
+        $this->assertSame(['availability' => 'Available', 'stats' => [['value' => '58', 'label' => 'projects']]], $config->locales['en']['person']);
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function vitrinesMalEcrites(): iterable
+    {
+        yield 'fiche incomplète' => ['stats: [{value: 58}]', '« person.stats[0].label » est obligatoire'];
+        yield 'champ inconnu' => ['services: [{title: T, text: X, prix: 3}]', '« person.services[0].prix » inconnue'];
+        yield 'pas une liste' => ['testimonials: {quote: Q, author: A}', '« person.testimonials » doit être une liste de fiches'];
+        yield 'mention sans https' => ["press: [{name: B, url: 'http://exemple.fr'}]", '« person.press[0].url » doit être une adresse en https://'];
+        yield 'rendez-vous sans https' => ["booking: 'http://calendly.com/ada'", '« person.booking » doit être une adresse en https://'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('vitrinesMalEcrites')]
+    public function testUneVitrineMalEcriteEstSignalee(string $yaml, string $message): void
+    {
+        $this->write("name: A\nperson:\n  name: Ada\n  jobTitle: F\n  {$yaml}\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage($message);
+        (new ThemeLoader())->load($this->tmp);
+    }
+
     public function testUnePersonneIncompleteEstSignalee(): void
     {
         $this->write("name: A\nperson: {name: Ada Lovelace}\n");

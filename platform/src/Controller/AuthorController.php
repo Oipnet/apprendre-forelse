@@ -43,7 +43,8 @@ final class AuthorController extends AbstractController
 
         return $this->render('author/show.html.twig', [
             'person' => $author,
-            'about' => $markdown->toHtml($author['about'] ?? $author['bio'] ?? ''),
+            // La présentation longue ; la courte (« bio ») est déjà sous son nom.
+            'about' => isset($author['about']) ? $markdown->toHtml($author['about']) : null,
             'articles' => \array_slice($articles, 0, self::ARTICLES),
             'more' => \count($articles) > self::ARTICLES,
             // Les parcours sont ceux de l'auteur par défaut, celui que nomment leurs données structurées.
