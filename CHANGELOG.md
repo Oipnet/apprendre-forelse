@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.29.0 — 2026-11-03
+
 ### Ajouté
 
 - **Liens courts du bac à sable** (`/bac-a-sable/s/<id>`, `/en/playground/s/<id>`, 8 caractères au lieu de ~1600) :
