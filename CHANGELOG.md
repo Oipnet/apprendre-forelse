@@ -8,6 +8,17 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Page des offres** (`/formations`, `/en/training`) : ce que la personne du thème vend de son temps, formations en
+  entreprise et audits, prix affichés. En-tête avec un extrait de code et ses tests, chiffres clés, offres en cartes
+  (une ancre chacune, `#audit-acces`), ce qui les distingue, un exemple de programme et de constat d'audit, le déroulé,
+  les questions fréquentes et un dernier appel ; chaque bouton mène au rendez-vous (`offers.booking`, sinon
+  `person.booking`, sinon la page de contact). Nouvelle clé facultative `offers` de `theme.yaml`, traduite en entier
+  sous `locales.<langue>.offers` ; sans elle, pas de page (404). Données structurées : un `Service` par offre, avec son
+  `Offer` quand `amount` donne le prix en chiffres, rendu par la personne du thème, et la FAQ en `FAQPage`. La page
+  entre dans le plan du site. Les classes `offers-*` du gabarit servent d'accroches aux thèmes.
+
 ## 3.31.1 — 2026-11-03
 
 ### Modifié

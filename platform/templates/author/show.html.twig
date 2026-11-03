@@ -8,7 +8,7 @@
   Variables : person (un auteur de Theme::author() : id, name, jobTitle, bio?, about?, links?, portraitUrl, location?,
   availability?, booking?, cta?, expertise?, skills?, stats?, services?, press?, testimonials?), about (la présentation
   longue, en HTML, ou null), articles (ses plus récents), more (il en a d'autres), tracks (les parcours publics dans la
-  langue de la page, pour l'auteur par défaut).
+  langue de la page, pour l'auteur par défaut), offers (le thème a une page des offres, pour l'auteur par défaut).
   Les classes author-* sont des points d'accroche pour la feuille d'un thème.
 #}
 {% block title %}{{ person.name }} · {{ theme.name }}{% endblock %}
@@ -89,6 +89,10 @@
                 </ol>
                 {%- endif %}
             </section>
+        {% endif %}
+
+        {% if offers %}
+            <p class="author-offers mt-6"><a class="font-semibold" href="{{ path('app_offers') }}">{{ 'auteur.offres'|trans }} →</a></p>
         {% endif %}
 
         {% if about or person.press is defined or person.testimonials is defined %}

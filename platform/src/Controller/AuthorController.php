@@ -47,6 +47,8 @@ final class AuthorController extends AbstractController
             'about' => isset($author['about']) ? $markdown->toHtml($author['about']) : null,
             'articles' => \array_slice($articles, 0, self::ARTICLES),
             'more' => \count($articles) > self::ARTICLES,
+            // Ses formations et audits, quand le thème a une page des offres : elle dit ce qu'il vend, celle-ci qui il est.
+            'offers' => $author['isDefault'] && null !== $theme->offers(),
             // Les parcours sont ceux de l'auteur par défaut, celui que nomment leurs données structurées.
             'tracks' => $author['isDefault'] ? array_values(array_filter($tracks->tracksHere(), static fn ($track) => !$track->isRestricted() && $track->locale === $tracks->locale())) : [],
         ]);
