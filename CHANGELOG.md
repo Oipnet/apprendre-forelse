@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.31.1 — 2026-11-03
+
 ### Modifié
 
 - **Signature des articles** : le nom de l'auteur, sous le titre, mène à sa page (`/auteurs/<nom>`), et c'est bien
