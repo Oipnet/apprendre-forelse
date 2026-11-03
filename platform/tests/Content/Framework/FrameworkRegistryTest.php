@@ -21,8 +21,8 @@ final class FrameworkRegistryTest extends TestCase
     {
         $registry = new FrameworkRegistry();
 
-        $this->assertSame(['symfony', 'laravel', 'docker', 'nuxt', 'php'], $registry->ids());
-        $this->assertSame(['symfony' => 'Symfony', 'laravel' => 'Laravel', 'docker' => 'Docker', 'nuxt' => 'Nuxt', 'php' => 'PHP'], $registry->labels());
+        $this->assertSame(['symfony', 'laravel', 'docker', 'nuxt', 'php', 'goravel'], $registry->ids());
+        $this->assertSame(['symfony' => 'Symfony', 'laravel' => 'Laravel', 'docker' => 'Docker', 'nuxt' => 'Nuxt', 'php' => 'PHP', 'goravel' => 'Goravel'], $registry->labels());
         $this->assertSame('symfony', $registry->default()->id);
     }
 
@@ -41,7 +41,7 @@ final class FrameworkRegistryTest extends TestCase
     public function testUnFrameworkInconnuEstSignaleAvecLaListe(): void
     {
         $this->expectException(ContentException::class);
-        $this->expectExceptionMessage('Framework « rails » inconnu (symfony, laravel, docker, nuxt, php)');
+        $this->expectExceptionMessage('Framework « rails » inconnu (symfony, laravel, docker, nuxt, php, goravel)');
         (new FrameworkRegistry())->get('rails');
     }
 

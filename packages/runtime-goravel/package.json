@@ -1,0 +1,33 @@
+{
+	"name": "@forelse/runtime-goravel",
+	"version": "0.1.0",
+	"description": "Goravel (Go) dans le navigateur : le framework compilé en WebAssembly, le code de l'apprenant interprété par yaegi.",
+	"license": "AGPL-3.0-or-later",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./browser": "./src/browser/forelse.ts",
+		"./vite": "./src/node/vite.ts",
+		"./tests": "./bin/tests.ts",
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"build:wasm": "go/build.sh",
+		"test": "vitest run tests/",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@forelse/runtime-contract": "file:../runtime-contract",
+		"fflate": "^0.8.3"
+	},
+	"devDependencies": {
+		"@types/node": "^24.19.2",
+		"typescript": "^7.0.2",
+		"vitest": "^5.0.5"
+	},
+	"forelse": {
+		"runtime": "./src/browser/forelse.ts",
+		"vite": "./src/node/vite.ts"
+	}
+}

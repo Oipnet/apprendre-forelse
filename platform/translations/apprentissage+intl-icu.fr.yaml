@@ -315,6 +315,9 @@ playground:
         php:
             demarrage: "PHP tourne entièrement dans votre navigateur, compilé en WebAssembly."
             decompression: Décompression du projet PHP
+        goravel:
+            demarrage: "Goravel tourne entièrement dans votre navigateur : le framework est compilé en WebAssembly, et votre code Go est interprété à chaque démarrage."
+            decompression: Décompression du projet Goravel
 
 # Le bac à sable (scratch/, App\Scratch) : un projet vierge, sans objectif, que l'on partage par un lien.
 bac_a_sable:

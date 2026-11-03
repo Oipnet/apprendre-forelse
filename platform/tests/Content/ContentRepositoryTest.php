@@ -359,7 +359,7 @@ final class ContentRepositoryTest extends TestCase
     {
         $repository = $this->repository(self::ROOT.'/examples/packs', __DIR__.'/../Fixtures/packs/pratique');
 
-        $this->assertSame(['programme', 'exemple-map-request-header', 'en-preparation', 'nouveaute-recente', 'point-precis', 'cote-laravel'], array_keys($repository->practices()), 'Du plus récent au plus ancien, tous packs confondus.');
+        $this->assertSame(['programme', 'exemple-map-request-header', 'en-preparation', 'nouveaute-recente', 'point-precis', 'cote-laravel', 'exemple-goravel-salut'], array_keys($repository->practices()), 'Du plus récent au plus ancien, tous packs confondus.');
 
         $practice = $repository->findPractice('nouveaute-recente');
         $this->assertNotNull($practice);
@@ -635,10 +635,10 @@ final class ContentRepositoryTest extends TestCase
         $repository = $this->repository(self::ROOT.'/examples/packs', __DIR__.'/../Fixtures/packs/pratique');
         $ids = static fn (array $exercises) => array_map(static fn ($e) => ($e->trackId ?? 'pratique').'/'.$e->id.('fr' === $e->locale ? '' : ' ['.$e->locale.']'), $exercises);
 
-        $this->assertSame(['pratique/programme', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]', 'pratique/en-preparation', 'pratique/nouveaute-recente', 'pratique/point-precis', 'pratique/cote-laravel'], $ids($repository->select('pratique')));
+        $this->assertSame(['pratique/programme', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]', 'pratique/en-preparation', 'pratique/nouveaute-recente', 'pratique/point-precis', 'pratique/cote-laravel', 'pratique/exemple-goravel-salut'], $ids($repository->select('pratique')));
         $this->assertSame(['pratique/point-precis'], $ids($repository->select('pratique/point-precis')));
         $this->assertCount(5, $repository->select('pratique-test'), 'Un pack comprend ses exercices de Pratique.');
-        $this->assertSame(['decouverte/01-bonjour', 'decouverte/01-bonjour [en]', 'decouverte/02-bonjour-prenom', 'decouverte/02-bonjour-prenom [en]', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]'], $ids($repository->select('demo')), 'Chaque traduction se vérifie aussi.');
+        $this->assertSame(['decouverte/01-bonjour', 'decouverte/01-bonjour [en]', 'decouverte/02-bonjour-prenom', 'decouverte/02-bonjour-prenom [en]', 'pratique/exemple-map-request-header', 'pratique/exemple-map-request-header [en]', 'pratique/exemple-goravel-salut'], $ids($repository->select('demo')), 'Chaque traduction se vérifie aussi.');
         $this->assertContains('pratique/point-precis', $ids($repository->select(null)));
         $this->assertSame(['decouverte/01-bonjour', 'decouverte/01-bonjour [en]', 'decouverte/02-bonjour-prenom', 'decouverte/02-bonjour-prenom [en]'], $ids($repository->select(null, 'bonjour')), 'Un chapitre exclut la Pratique.');
     }

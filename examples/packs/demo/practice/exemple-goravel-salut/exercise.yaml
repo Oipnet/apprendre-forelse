@@ -1,0 +1,37 @@
+id: exemple-goravel-salut
+title: Un paramètre de route avec Goravel
+environment: goravel-1
+published: 2026-08-10
+summary: "Goravel, le framework Go inspiré de Laravel, tourne dans le navigateur : lisez un paramètre de route et validez-le dans un contrôleur."
+
+open: app/http/controllers/salut_controller.go
+preview: /salut/Ada
+
+editable:
+  - app/http/controllers/salut_controller.go
+  - routes/web.go
+
+requests:
+  - title: Un prénom
+    method: GET
+    path: /salut/Ada
+  - title: Un prénom trop court
+    method: GET
+    path: /salut/A
+
+docs:
+  - title: 'Goravel : le routage'
+    url: https://www.goravel.dev/the-basics/routing.html
+  - title: 'Goravel : les réponses'
+    url: https://www.goravel.dev/the-basics/response.html
+
+objectives:
+  - test: TestSalutUtiliseLePrenom
+    label: 'GET /salut/Ada répond en JSON {"message": "Salut Ada !"}'
+  - test: TestSalutRefuseUnPrenomTropCourt
+    label: 'GET /salut/A répond 422 avec {"erreur": "prénom trop court"}'
+
+hints:
+  - "`ctx.Request().Route(\"nom\")` lit le paramètre `{nom}` déclaré dans routes/web.go."
+  - "`ctx.Response().Json(http.StatusUnprocessableEntity, http.Json{...})` répond avec un autre code que 200 (le paquet `net/http` n'est pas importé ici : le code 422 s'écrit aussi `422`)."
+  - "`len(nom) < 2` suffit pour ce prénom : en Go, len compte des octets, pas des lettres."
