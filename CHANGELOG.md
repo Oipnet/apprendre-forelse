@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.31.0 — 2026-11-03
+
 ### Ajouté
 
 - **Page auteur en vitrine** (`/auteurs/<nom>`) : pastille de disponibilité, métier et ville sous le nom, bouton
