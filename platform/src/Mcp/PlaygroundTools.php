@@ -8,6 +8,7 @@ use App\Content\Exercise;
 use App\Scratch\ScratchFramework;
 use App\Scratch\ScratchLink;
 use App\Scratch\ScratchProjects;
+use App\Scratch\ScratchShortLinks;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
@@ -35,6 +36,7 @@ final readonly class PlaygroundTools
         private ScratchLink $links,
         private UrlGeneratorInterface $urls,
         private McpAnalytics $analytics,
+        private ScratchShortLinks $shortLinks,
     ) {
     }
 
@@ -159,18 +161,25 @@ final readonly class PlaygroundTools
     }
 
     /**
-     * Reads a playground link (https://<site>/bac-a-sable/... or /en/playground/...#code=...): returns
+     * Reads a playground link (https://<site>/bac-a-sable/... or /en/playground/...#code=..., or a short link
+     * /bac-a-sable/s/<id> or /en/playground/s/<id>): returns
      * the framework and the files that differ from the starting project, to review or fix the code someone shared.
      *
      * @return array<string, mixed>
      */
     #[McpTool(name: 'read_sandbox', title: 'Read a shared PHP playground', annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false))]
     public function read(
-        #[Schema(description: 'The full playground link, including the part after "#code=".')]
+        #[Schema(description: 'The full playground link: a short link (/s/<id>), or a long one including the part after "#code=".')]
         string $url,
         ?RequestContext $context = null,
     ): array {
         $path = (string) parse_url(strtok($url, '#') ?: '', \PHP_URL_PATH);
+        // Un lien court (/bac-a-sable/s/<id>) : le code est gardé sur le serveur, on relit le lien long qu'il ouvre.
+        if (1 === preg_match('~/(?:bac-a-sable|en/playground)/s/([0-9a-zA-Z]{8})/?$~', $path, $short)) {
+            $share = $this->shortLinks->find($short[1]) ?? throw new ToolCallException('This short link no longer exists: it expired or its author deleted it.');
+            $path = $this->urls->generate('app_scratch_'.$share->getFramework()->value, ['_locale' => str_contains($path, '/en/playground/') ? 'en' : Exercise::LOCALE]);
+            $url = $path.'#'.$share->getCode();
+        }
         if (1 !== preg_match('~/(?:bac-a-sable|en/playground)/(symfony|laravel|php)/?$~', $path, $match)) {
             throw new ToolCallException('This is not a playground link: expected /bac-a-sable/<symfony|laravel|php> or /en/playground/<symfony|laravel|php>.');
         }

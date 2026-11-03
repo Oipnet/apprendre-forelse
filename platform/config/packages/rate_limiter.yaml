@@ -80,3 +80,9 @@ framework:
             policy: sliding_window
             limit: 300
             interval: '1 hour'
+        # Liens courts du bac à sable (/api/bac-a-sable/…/liens), par adresse IP : chaque lien garde du code en base.
+        # De quoi partager souvent, pas de quoi remplir la base.
+        scratch_share:
+            policy: sliding_window
+            limit: 30
+            interval: '1 hour'

@@ -4,7 +4,10 @@ namespace App\Tests\Mcp;
 
 use App\Instance\Analytics;
 use App\Mcp\McpAnalytics;
+use App\Scratch\ScratchFramework;
 use App\Scratch\ScratchLink;
+use App\Scratch\ScratchShareDuration;
+use App\Scratch\ScratchShortLinks;
 use Psr\Log\NullLogger;
 use App\Tests\DatabaseTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -14,7 +17,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 /**
  * Le serveur MCP du bac à sable (/mcp), appelé comme un assistant IA l'appelle : poignée de main, liste des outils,
- * puis un lien fabriqué et relu. Rien n'est stocké : le lien porte le code.
+ * puis un lien fabriqué et relu. Rien n'est stocké : le lien porte le code (un lien court partagé depuis la page se relit aussi).
  */
 final class McpServerTest extends WebTestCase
 {
@@ -120,6 +123,20 @@ final class McpServerTest extends WebTestCase
         $this->assertStringContainsString('Unknown packages: evil/package', $this->toolError('create_sandbox', ['framework' => 'php', 'files' => ['public/index.php' => '<?php'], 'packages' => ['evil/package']]));
         $this->assertStringContainsString('not a playground link', $this->toolError('read_sandbox', ['url' => 'https://example.com/#code=abc']));
         $this->assertStringContainsString('carries no code', $this->toolError('read_sandbox', ['url' => 'https://apprendre.forelse.fr/bac-a-sable/symfony#nouveau']));
+    }
+
+    public function testUnLienCourtSeRelitAussi(): void
+    {
+        $this->handshake();
+        $index = "<?php\necho 'court';\n";
+        $created = static::getContainer()->get(ScratchShortLinks::class)->create(ScratchFramework::Php, (new ScratchLink())->encode(['public/index.php' => $index]), ScratchShareDuration::Never);
+
+        $read = $this->tool('read_sandbox', ['url' => 'https://apprendre.forelse.fr/en/playground/s/'.$created->share->getId()]);
+
+        $this->assertSame('php', $read['framework']);
+        $this->assertSame('en', $read['language']);
+        $this->assertSame($index, $read['files']['public/index.php']);
+        $this->assertStringContainsString('no longer exists', $this->toolError('read_sandbox', ['url' => 'https://apprendre.forelse.fr/bac-a-sable/s/Zz99Zz99']));
     }
 
     public function testUnClientMcpDansUnNavigateurNEstPasRefusePourSonOrigine(): void
