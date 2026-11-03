@@ -14,6 +14,19 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   du moteur, Monaco en `vs` ou `vs-dark`, bascule à chaud. Les blocs de code, la sortie des tests et la console restent
   sombres. Un thème habille le clair avec la clé `editor_light:` (mêmes clés que `editor:`) ; un thème qui n'a que
   `editor:` garde ses pages sombres (`data-editor-scheme="dark"`).
+- **Télécharger le projet** : un bouton ⤓ dans l'explorateur de l'éditeur (exercices et bac à sable) télécharge le
+  projet en .zip, tel que l'explorateur le montre (sans vendor/ ni caches, sans les tests cachés), avec les dernières
+  frappes.
+
+### Modifié
+
+- **Explorateur** : les `.gitkeep` ne s'affichent plus ; leur dossier reste visible.
+- **composer.json en lecture seule** : le message de l'éditeur explique pourquoi (dépendances préinstallées dans le
+  navigateur, pas d'accès à Packagist) et renvoie au téléchargement du projet. Avec un catalogue de paquets (PHP sans
+  framework), il indique `composer require` dans la console et, au bac à sable, le bouton 📦.
+- **Bouton 📦 du bac à sable PHP** : cocher ou décocher un paquet met aussi à jour composer.json et composer.lock (comme
+  `composer require`/`remove`), de même pour les paquets d'un lien partagé au démarrage : le projet téléchargé les
+  retrouve avec un `composer install`.
 
 ## 3.30.0 — 2026-11-03
 
