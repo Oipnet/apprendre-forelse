@@ -326,7 +326,7 @@ final class Theme implements ResetInterface
     /**
      * Les textes traduits dans la langue de la page, vides dans la langue de theme.yaml.
      *
-     * @return array{chip?: string, title?: string, tagline?: string, home?: array<string, array<string, mixed>>, person?: array{jobTitle?: string, bio?: string, about?: string}, authors?: array<string, array<string, string>>}
+     * @return array{chip?: string, title?: string, tagline?: string, home?: array<string, array<string, mixed>>, person?: array{jobTitle?: string, bio?: string, about?: string}, authors?: array<string, array<string, string>>, offers?: array<string, mixed>}
      */
     private function translated(): array
     {
