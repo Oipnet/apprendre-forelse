@@ -8,6 +8,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Signature des articles** : le nom de l'auteur, sous le titre, mène à sa page (`/auteurs/<nom>`), et c'est bien
+  l'auteur de l'article (clé `author`), plus toujours la personne du thème.
+
 ## 3.31.0 — 2026-11-03
 
 ### Ajouté
