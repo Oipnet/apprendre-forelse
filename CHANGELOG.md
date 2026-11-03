@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.30.0 — 2026-11-03
+
 ### Modifié
 
 - **Mesure d'audience sans les robots** : le traceur d'Umami n'est chargé qu'au premier geste du visiteur (souris,
