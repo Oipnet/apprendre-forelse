@@ -151,6 +151,12 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp" # HTTP/3
+    # La base, la recherche et la mesure d'audience, chacune sur son réseau interne ; Internet par « sortie » (Stripe,
+    # Anthropic, SMTP, connexion GitHub/Google/LinkedIn, Sentry). Voir « networks » en bas du fichier.
+    networks:
+      - base
+      - recherche
+      - sortie
     # Plafonds : un service qui s'emballe ne fait pas tomber les autres (réglables dans .env).
     mem_limit: ${APP_MEM_LIMIT:-1536m}
     pids_limit: 512
@@ -180,6 +186,11 @@ services:
     # Le contrôle de santé de l'image interroge Caddy, qui ne tourne pas ici.
     healthcheck:
       disable: true
+    # Comme « app » : la file d'attente (base), l'indexation (recherche), les emails et IndexNow (sortie).
+    networks:
+      - base
+      - recherche
+      - sortie
     mem_limit: 256m
     pids_limit: 64
 
@@ -294,6 +305,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+    # Joint par « app » et « worker » seulement ; réseau interne, donc pas d'accès à Internet.
+    networks:
+      - recherche
     mem_limit: ${RECHERCHE_MEM_LIMIT:-512m}
     pids_limit: 128
 
@@ -312,6 +326,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+    # Réseau interne : ni Internet, ni la recherche, ni le proxy.
+    networks:
+      - base
 
   # Mesure d'audience : combien de visiteurs, sur quelles pages, venus d'où. Umami ne pose pas de cookie
   # et ne conserve pas d'adresse IP : rien à faire accepter par un bandeau de consentement. Tout reste sur
@@ -332,10 +349,13 @@ services:
       umami-base:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:?}@db:5432/umami
+      # Son propre utilisateur PostgreSQL, propriétaire de la base « umami » et de rien d'autre (créé par « umami-base ») :
+      # une faille dans Umami ne donne pas la base du site. UMAMI_DB_PASSWORD (.env) : `openssl rand -hex 32`, des
+      # caractères sûrs dans une adresse.
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:?UMAMI_DB_PASSWORD manquant dans .env}@db:5432/umami
       DATABASE_TYPE: postgresql
-      # Pas d'APP_SECRET : Umami le dérive de DATABASE_URL. Changer le mot de passe PostgreSQL déconnecte
-      # donc du tableau de bord, sans rien perdre des mesures.
+      # Pas d'APP_SECRET : Umami le dérive de DATABASE_URL. Changer UMAMI_DB_PASSWORD déconnecte donc du tableau de
+      # bord, sans rien perdre des mesures.
       # Le traceur est servi sous ce nom, et non /script.js, que les bloqueurs de publicités connaissent.
       TRACKER_SCRIPT_NAME: traceur.js
       DISABLE_TELEMETRY: "1"
@@ -348,10 +368,18 @@ services:
       #   ssh -L 8081:localhost:3000 <le serveur>   puis http://localhost:8081
       # La collecte, elle, ne passe pas par ici : Caddy la relaie depuis le conteneur « app ».
       - "127.0.0.1:${ANALYTICS_LOCAL_PORT:-3000}:3000"
+    # « base » pour sa base et pour « app », qui lui relaie la collecte ; « tableau-mesure », à lui seul, pour le port
+    # ci-dessus : Docker ne publie pas de port sur un réseau interne.
+    networks:
+      - base
+      - tableau-mesure
 
   # Umami tient ses tables dans sa propre base, sur le PostgreSQL déjà là. Le script d'initialisation de
   # l'image officielle ne tourne qu'à la toute première création du volume : cette base-ci n'existerait
-  # donc jamais sur un serveur déjà en service. Ce conteneur la crée si elle manque, puis s'arrête.
+  # donc jamais sur un serveur déjà en service. Ce conteneur, à chaque `up`, la crée si elle manque, crée
+  # l'utilisateur « umami » (ou remet son mot de passe à celui du .env), lui donne la base et les tables qu'elle
+  # contient (créées par « formation » avant qu'Umami ait son utilisateur), et ferme la base du site aux autres
+  # utilisateurs. Puis il s'arrête. Rien n'est effacé : il peut tourner autant de fois qu'on veut.
   umami-base:
     image: postgres:17-alpine
     logging: *logging
@@ -359,11 +387,50 @@ services:
       db:
         condition: service_healthy
     environment:
+      PGHOST: db
+      PGUSER: formation
       PGPASSWORD: ${POSTGRES_PASSWORD:?}
-    entrypoint: ["sh", "-c"]
-    command:
-      - psql -h db -U formation -d formation -tAc "SELECT 1 FROM pg_database WHERE datname='umami'" | grep -q 1 || psql -h db -U formation -d formation -c 'CREATE DATABASE umami'
+      UMAMI_DB_PASSWORD: ${UMAMI_DB_PASSWORD:?UMAMI_DB_PASSWORD manquant dans .env}
+    configs:
+      - source: umami-base
+        target: /umami-base.sh
+    entrypoint: ["sh", "/umami-base.sh"]
     restart: "no"
+    networks:
+      - base
+
+configs:
+  # Le script de « umami-base » ($$ : un $ pour le shell, pas une variable de Compose).
+  umami-base:
+    content: |
+      set -eu
+      psql -d formation -tAc "SELECT 1 FROM pg_database WHERE datname='umami'" | grep -q 1 \
+        || psql -d formation -c 'CREATE DATABASE umami'
+      psql -v ON_ERROR_STOP=1 -q -d formation -v mdp="$$UMAMI_DB_PASSWORD" <<'SQL'
+      SELECT 'CREATE ROLE umami LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'umami') \gexec
+      ALTER ROLE umami WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD :'mdp';
+      ALTER DATABASE umami OWNER TO umami;
+      -- Seul « formation » (propriétaire) se connecte à la base du site.
+      REVOKE ALL ON DATABASE formation FROM PUBLIC;
+      SQL
+      psql -v ON_ERROR_STOP=1 -q -d umami <<'SQL'
+      ALTER SCHEMA public OWNER TO umami;
+      -- Tables et vues (leurs séquences suivent), puis séquences libres et types, encore à « formation ».
+      SELECT format('ALTER %s public.%I OWNER TO umami',
+                    CASE c.relkind WHEN 'v' THEN 'VIEW' WHEN 'm' THEN 'MATERIALIZED VIEW' ELSE 'TABLE' END, c.relname)
+        FROM pg_class c
+       WHERE c.relnamespace = 'public'::regnamespace AND c.relkind IN ('r', 'p', 'v', 'm')
+         AND c.relowner <> 'umami'::regrole \gexec
+      SELECT format('ALTER SEQUENCE public.%I OWNER TO umami', c.relname)
+        FROM pg_class c
+       WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'S' AND c.relowner <> 'umami'::regrole \gexec
+      SELECT format('ALTER TYPE public.%I OWNER TO umami', t.typname)
+        FROM pg_type t
+       WHERE t.typnamespace = 'public'::regnamespace AND t.typtype IN ('e', 'd', 'c')
+         AND NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.oid = t.typrelid AND c.relkind <> 'c')
+         AND t.typowner <> 'umami'::regrole \gexec
+      SQL
+      echo "Base umami prête, à l'utilisateur umami."
 
 volumes:
   data:
@@ -374,7 +441,23 @@ volumes:
   config:
   db:
 
+# Chaque service ne rejoint que les réseaux dont il a besoin : un service compromis (Umami, Meilisearch, la base) ne
+# voit pas les autres, et ceux qui n'ont rien à faire sur Internet n'y ont pas accès (internal: true). Plus de réseau
+# « default » : tout nouveau service doit déclarer ses « networks ».
+#
+#   réseau          interne  services
+#   base            oui      app, worker, db, umami, umami-base
+#   recherche       oui      app, worker, recherche
+#   sortie          non      app, worker (Internet, et les ports 80/443 sans proxy)
+#   tableau-mesure  non      umami (le port 127.0.0.1:3000 du tunnel SSH)
+#   empaquetage     non      empaqueteur (Internet, rien d'autre)
+#   front           non      app (derriere-front.yaml) et le proxy commun ; mailpit en préproduction
+#   aucun                    verificateur (network_mode: none)
 networks:
-  # Le réseau par défaut relie app, la base et les autres. L'empaqueteur n'a que celui-ci : Internet, rien d'autre.
-  default:
+  base:
+    internal: true
+  recherche:
+    internal: true
+  sortie:
+  tableau-mesure:
   empaquetage:

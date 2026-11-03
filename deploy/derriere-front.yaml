@@ -12,8 +12,8 @@ services:
       SYMFONY_TRUSTED_PROXIES: private_ranges
       # Même confiance côté Caddy : la vraie adresse du visiteur dans les journaux et pour Umami.
       CADDY_TRUSTED_PROXIES: private_ranges
+    # S'ajoute aux réseaux de compose.yaml (base, recherche, sortie).
     networks:
-      default:
       front:
         aliases:
           - ${FRONT_ALIAS:?FRONT_ALIAS manquant dans .env (ex. forelse-prod)}
