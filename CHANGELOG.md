@@ -8,6 +8,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Mesure d'audience sans les robots** : le traceur d'Umami n'est chargé qu'au premier geste du visiteur (souris,
+  toucher, molette, clavier). Un robot qui fait tourner un vrai Chrome sans `navigator.webdriver` (Chrome Linux
+  1920x1080 en-US : 163 visites en 5 jours, toutes d'une page sans aucun événement) n'est plus compté. Les événements
+  mesurés avant ce geste (`exercice-ouvert`, `compte-cree`…) attendent le traceur. Rien de plus n'est collecté ; un
+  visiteur qui repart sans rien toucher n'est plus compté.
+
 ## 3.29.0 — 2026-11-03
 
 ### Ajouté
