@@ -146,6 +146,13 @@ http://127.0.0.1:2020 {
 # Variable absente, le cas par défaut : Caddy écoute une adresse locale inutilisée, le tableau de bord n'est
 # donc accessible que par un tunnel SSH (voir auto-hebergement/README.md). À n'ouvrir qu'après avoir changé
 # le mot de passe du compte « admin », qui vaut « umami » à la première installation.
+#
+# ANALYTICS_ALLOWED_IPS restreint ce nom d'hôte à quelques adresses (plages séparées par des espaces, ex. l'IP fixe
+# d'une box dont on passe par le VPN) : les autres reçoivent une 403, sans voir la page de connexion. Derrière un
+# reverse proxy, c'est l'adresse du visiteur qui compte (X-Forwarded-For, voir trusted_proxies plus haut). Par
+# défaut, aucune restriction.
 {$ANALYTICS_SERVER_NAME:http://127.0.0.1:9998} {
+	@refuse not client_ip {$ANALYTICS_ALLOWED_IPS:0.0.0.0/0 ::/0}
+	respond @refuse 403
 	reverse_proxy {$ANALYTICS_UPSTREAM:umami:3000}
 }

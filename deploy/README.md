@@ -261,3 +261,24 @@ echo "UMAMI_DB_PASSWORD=$(openssl rand -hex 32)" >> .env
 
 Umami dérive le secret de ses sessions de son adresse de base : au changement, il faut se reconnecter au tableau de
 bord, et les visiteurs du jour peuvent compter deux fois (identifiant de visite recalculé). Les mesures restent.
+
+## 9. Tableau de bord d'Umami sans tunnel
+
+Le tableau de bord sur son propre nom d'hôte, ouvert seulement depuis l'IP fixe de la box (on y passe par le VPN de
+la box depuis le téléphone, en mode « tout le trafic ») ; tout autre visiteur reçoit une 403.
+
+1. Enregistrement DNS `A` de `stats.forelse.fr` vers le serveur. Pas de `AAAA` si le VPN de la box ne transporte pas
+   l'IPv6 : le téléphone sortirait alors en IPv6 par le réseau mobile, et serait refusé.
+2. `/srv/forelse/.env` (en `http://` : c'est le proxy qui tient le HTTPS) :
+
+   ```dotenv
+   ANALYTICS_SERVER_NAME=http://stats.forelse.fr
+   ANALYTICS_ALLOWED_IPS=<IPv4 de la box>/32
+   ```
+
+   puis `docker compose up -d app`.
+3. `/srv/front/.env` : ajouter `stats.forelse.fr` à `PRODUCTION_HOSTS`, puis `docker compose up -d` dans `/srv/front`
+   (le nouveau nom obtient son certificat).
+
+À vérifier : `curl -I https://stats.forelse.fr` depuis le serveur répond 403 ; depuis le téléphone, VPN actif, la page
+de connexion d'Umami s'affiche. Le tunnel SSH reste possible en secours.

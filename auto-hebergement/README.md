@@ -361,6 +361,14 @@ ANALYTICS_SERVER_NAME=https://suivi.example.org
 Caddy obtiendra son certificat tout seul. **À ne faire qu'une fois le mot de passe changé** : cette
 adresse expose la page de connexion d'Umami sur l'internet.
 
+Pour ne l'ouvrir qu'à vous, listez vos adresses dans `ANALYTICS_ALLOWED_IPS` (ex. l'IP fixe de votre box ;
+depuis un téléphone, passez par le VPN de la box) : tout autre visiteur reçoit une 403, sans même voir la
+page de connexion.
+
+```dotenv
+ANALYTICS_ALLOWED_IPS=203.0.113.7/32 2001:db8:1:2::/64
+```
+
 Au-delà des pages vues, la plateforme envoie des événements, tous anonymes : `exercice-ouvert`,
 `tests-lances`, `exercice-reussi`, `indice-demande` et `solution-consultee`, avec l'identifiant de
 l'exercice et du parcours. Ils se lisent dans *Events*, et ils répondent à la question que les pages

@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Tableau de bord d'Umami réservé à quelques adresses** : `ANALYTICS_ALLOWED_IPS` (plages séparées par des espaces)
+  restreint le nom d'hôte `ANALYTICS_SERVER_NAME` ; les autres visiteurs reçoivent une 403, sans voir la page de
+  connexion. Vide : aucune restriction, comme avant. Derrière le proxy commun, c'est l'adresse du visiteur qui est
+  vérifiée.
+
 ## 3.32.0 — 2026-11-03
 
 ### Ajouté
