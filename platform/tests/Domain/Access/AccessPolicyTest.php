@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Tests\Access\Domain;
+namespace App\Tests\Domain\Access;
 
-use App\Access\Domain\AccessPolicy;
-use App\Access\Domain\Learner;
-use App\Access\Domain\Track;
+use App\Domain\Access\AccessPolicy;
+use App\Domain\Access\Learner;
+use App\Domain\Access\Track;
 use PHPUnit\Framework\TestCase;
 
 /**
