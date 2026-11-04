@@ -475,6 +475,13 @@ accroche, ni sa favicon. Un thème déclare les siens ; ce qu'il ne déclare pas
   (des listes d'étiquettes, aussi `knowsAbout` des données structurées), et des listes de fiches : `stats`
   (`value`, `label`), `services` (`title`, `text`), `press` (`name`, `text`, `url`) et `testimonials` (`quote`,
   `author`). Toutes se traduisent sous `locales.<langue>.person`, sauf `booking`.
+- `offers` (facultatif) ouvre la page des offres (`/formations`, `/en/training` quand `locales.en.offers` la traduit) :
+  ce que la personne vend de son temps, prix affichés. `hero` (`title` obligatoire, `eyebrow`, `lead`, `button`,
+  `more`, `note`) et `items` (au moins une offre : `id` sert d'ancre, `title`, `price` et `cta` obligatoires, `tag`,
+  `audience`, `features`, `unit`, `note`, et `amount`, le prix en chiffres pour les données structurées) suffisent ;
+  `seo`, `booking`, `showcase`, `stats`, `proof`, `catalog`, `reasons`, `program`, `example`, `steps`, `faq` et
+  `cta` ajoutent chacun leur section (la forme exacte de chacun : `ThemeLoader::OFFERS_SHAPE`). Une traduction
+  remplace la page en entier.
 - `colors` et `fonts` redéfinissent les jetons du thème default (`--color-accent`, `--color-bg`, `--font-serif`…,
   voir [docs/themes.md](docs/themes.md)) : les pages du site et les emails les suivent. Hexadécimal seulement ; une
   valeur mal écrite **arrête la page** avec un message qui dit laquelle — une instance à moitié habillée est pire

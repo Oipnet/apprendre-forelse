@@ -13,4 +13,7 @@ mcp-publisher login github   # le nom io.github.Oipnet/… exige le compte GitHu
 mcp-publisher publish
 ```
 
-Une nouvelle version (outils changés, description…) : augmenter `version`, puis `mcp-publisher publish`.
+Une nouvelle version (outils changés, description, icône…) : augmenter `version`, puis `mcp-publisher publish`.
+
+`icon.png` (256×256) est l'icône de la fiche, servie depuis GitHub (raw.githubusercontent.com, branche main) : la
+fusionner sur main avant de publier.

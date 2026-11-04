@@ -18,8 +18,9 @@ final readonly class ThemeConfig
      * @param list<string>                                                                                   $scripts     scripts du thème, chargés après ceux du moteur
      * @param list<string>                                                                                   $preload     polices du thème à précharger
      * @param array<string, mixed>|null $person    la personne derrière les contenus (marque du moteur seulement)
+     * @param array<string, mixed>|null $offers    la page des offres (/formations), vérifiée par ThemeLoader
      * @param array{image: string|null, font: string|null, text_font: string|null, colors: array<string, string>} $shareCard l'habillage des images de partage dessinées par le moteur (fichiers du dossier du thème)
-     * @param array<string, array{chip?: string, title?: string, tagline?: string, home: array<string, array<string, mixed>>, person?: array<string, mixed>}> $locales les textes traduits, par langue (« locales » de theme.yaml)
+     * @param array<string, array{chip?: string, title?: string, tagline?: string, home: array<string, array<string, mixed>>, person?: array<string, mixed>, offers?: array<string, mixed>}> $locales les textes traduits, par langue (« locales » de theme.yaml)
      */
     public function __construct(
         /** Vrai quand aucun theme.yaml n'est monté : c'est le thème du moteur. */
@@ -48,6 +49,7 @@ final readonly class ThemeConfig
         public bool $replacesEngineStyles = false,
         public array $shareCard = ['image' => null, 'font' => null, 'text_font' => null, 'colors' => []],
         public array $locales = [],
+        public ?array $offers = null,
     ) {
     }
 }

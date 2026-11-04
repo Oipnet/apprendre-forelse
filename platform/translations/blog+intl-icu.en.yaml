@@ -63,6 +63,13 @@ feed:
     description: "Articles from {site}."
 
 # An author's page (/en/authors/<name>): a showcase, in the first person.
+offres:
+    # The offers page (/en/training): its texts come from the theme ("offers"), these are the shared labels.
+    fil_ariane: "Training and audits"
+    chiffres: "At a glance"
+    auteur: "About me"
+    rendez_vous: "Book a call"
+    voir: "See the offers"
 auteur:
     fil_ariane: "Author"
     titre_lieu: "{metier} in {lieu}"
@@ -78,6 +85,7 @@ auteur:
     articles_haut: "I write"
     articles: "My latest articles"
     dernier_appel: "Let's work together"
+    offres: "Training and audits: offers and prices"
     contact: "Contact me"
     lien:
         malt: "Hire me on Malt"
