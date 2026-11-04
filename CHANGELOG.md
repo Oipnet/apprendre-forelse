@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.33.0 — 2026-11-04
+
 ### Ajouté
 
 - **Tableau de bord d'Umami réservé à quelques adresses** : `ANALYTICS_ALLOWED_IPS` (plages séparées par des espaces)
