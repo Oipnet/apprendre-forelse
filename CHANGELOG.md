@@ -20,6 +20,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   (GHSA-j99q-3wr8-xj43), ne touche pas le moteur : rien n'est jamais écrit sous `platform/public`. Changements de
   comportement sans effet ici : 404 pour un script introuvable, 413 pour un corps trop gros, `error_get_last()`
   conservé entre deux requêtes d'un worker.
+- **Symfony 8.1.11** : corrige les failles publiées le 04/11 (`composer audit` bloquait la CI), dont
+  http-foundation, security-http (connexion programmatique qui sautait `checkPostAuth()`), serializer (fichier du
+  serveur lu par `UploadedFile` ou une URI `data:`), validator (contrainte `Ip` contournable en IPv6) et yaml (temps
+  d'analyse exponentiel).
 
 ## 3.33.0 — 2026-11-04
 
