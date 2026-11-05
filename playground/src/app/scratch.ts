@@ -1,7 +1,8 @@
 /**
- * Le bac à sable : son code voyage dans l'adresse partagée, après « #code= ». Le fragment n'est jamais envoyé au
- * serveur (ni à la mesure d'audience, voir data-exclude-hash dans _head.html.twig) : rien n'est stocké côté plateforme,
- * et le lien suffit à retrouver le projet.
+ * Le lien long du bac à sable : son code voyage dans l'adresse partagée, après « #code= ». Le fragment n'est jamais
+ * envoyé au serveur (ni à la mesure d'audience, voir data-exclude-hash dans _head.html.twig) : rien n'est stocké côté
+ * plateforme, et le lien suffit à retrouver le projet. Le lien court (scratch-share.ts) garde ce même fragment sur le
+ * serveur et y redirige.
  *
  * Seuls les fichiers modifiés depuis le départ partent, compressés (deflate), puis encodés en base64url.
  */

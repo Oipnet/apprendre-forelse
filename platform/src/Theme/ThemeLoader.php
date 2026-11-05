@@ -24,13 +24,13 @@ final readonly class ThemeLoader
     public const string LEGACY_FILE = 'marque.yaml';
 
     /** Les clés acceptées à la racine de theme.yaml. */
-    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'authors', 'colors', 'editor', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'share_card', 'home', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles', 'locales'];
+    public const array KEYS = ['name', 'chip', 'title', 'tagline', 'url', 'person', 'authors', 'colors', 'editor', 'editor_light', 'fonts', 'logo', 'email_logo', 'icon', 'share', 'share_card', 'home', 'offers', 'stylesheets', 'scripts', 'preload', 'replaces_engine_styles', 'locales'];
 
     /**
      * Ce qu'une langue peut traduire, sous « locales: <langue>: » : les textes de la marque et les sections de
      * l'accueil. Le reste (couleurs, images, polices) ne dépend pas de la langue.
      */
-    public const array LOCALE_KEYS = ['chip', 'title', 'tagline', 'home', 'person', 'authors'];
+    public const array LOCALE_KEYS = ['chip', 'title', 'tagline', 'home', 'person', 'authors', 'offers'];
 
     /** Le sous-dossier du thème servi tel quel sur /theme/<thème>/<version>/assets/… (voir ThemeController). */
     public const string ASSETS = 'assets';
@@ -97,9 +97,65 @@ final readonly class ThemeLoader
         'links' => ['malt' => 'texte', 'linkedin' => 'texte', 'github' => 'texte', 'site' => 'texte'],
         // Une photo carrée, dans le dossier assets/ du thème (« assets/auteurs/ada.webp »).
         'portrait' => 'texte',
+        // La page auteur, en vitrine : la ville (« Bordeaux »), une pastille (« Disponible pour une mission »), un lien
+        // de prise de rendez-vous (https), l'accroche du dernier appel, les expertises (en avant) et les autres outils.
+        'location' => 'texte',
+        'availability' => 'texte',
+        'booking' => 'texte',
+        'cta' => 'texte',
+        'expertise' => 'textes',
+        'skills' => 'textes',
     ];
-    /** Ce qu'une langue traduit de la personne : le reste (nom, liens) ne change pas. */
-    private const array PERSON_LOCALE_SHAPE = ['jobTitle' => 'texte', 'bio' => 'texte', 'about' => 'texte'];
+
+    /**
+     * Les listes de fiches de la page auteur, et la forme de chaque fiche : les chiffres clés, les services, les
+     * mentions (« Ils en parlent ») et les avis. Une liste de phrases ne suffit pas : chaque fiche a deux ou trois champs.
+     */
+    private const array PERSON_ITEMS = [
+        'stats' => ['value' => 'texte*', 'label' => 'texte*'],
+        'services' => ['title' => 'texte*', 'text' => 'texte*'],
+        'press' => ['name' => 'texte*', 'text' => 'texte', 'url' => 'texte'],
+        'testimonials' => ['quote' => 'texte*', 'author' => 'texte*'],
+    ];
+
+    /** Ce qu'une langue traduit de la personne : le reste (nom, liens, photo, rendez-vous) ne change pas. */
+    private const array PERSON_LOCALE_SHAPE = [
+        'jobTitle' => 'texte', 'bio' => 'texte', 'about' => 'texte', 'location' => 'texte', 'availability' => 'texte',
+        'cta' => 'texte', 'expertise' => 'textes', 'skills' => 'textes',
+    ];
+
+    /**
+     * La page des offres (/formations, voir OffersController) : ce que la personne du thème vend de son temps,
+     * formations et audits, avec les prix. Chaque section est facultative, sauf l'en-tête et les offres elles-mêmes.
+     * Une clé dont la forme est ['fiches' => …] est une liste de fiches de cette forme.
+     */
+    private const array OFFERS_SHAPE = [
+        // Le <title> et la description de la page, quand ceux tirés de l'en-tête ne conviennent pas.
+        'seo' => ['title' => 'texte', 'description' => 'texte'],
+        'hero' => ['eyebrow' => 'texte', 'title' => 'texte*', 'lead' => 'texte', 'button' => 'texte', 'more' => 'texte', 'note' => 'texte'],
+        // Le lien de prise de rendez-vous (https) ; sans lui, celui de « person.booking », sinon la page de contact.
+        'booking' => 'texte',
+        // Un extrait de code et ce que ses tests vérifient, à côté de l'en-tête.
+        'showcase' => ['file' => 'texte', 'badge' => 'texte', 'code' => 'texte*', 'checks' => 'textes', 'result' => 'texte'],
+        'stats' => ['fiches' => ['value' => 'texte*', 'label' => 'texte*']],
+        'proof' => 'texte',
+        'catalog' => ['eyebrow' => 'texte', 'title' => 'texte*', 'lead' => 'texte'],
+        // Les offres : « id » est l'ancre (#audit-acces), « amount » le prix en chiffres pour les données structurées.
+        'items' => ['fiches' => [
+            'id' => 'texte*', 'tag' => 'texte', 'title' => 'texte*', 'audience' => 'texte', 'features' => 'textes',
+            'price' => 'texte*', 'unit' => 'texte', 'amount' => 'texte', 'note' => 'texte', 'cta' => 'texte*',
+        ]],
+        'reasons' => ['eyebrow' => 'texte', 'title' => 'texte*', 'items' => ['fiches' => ['title' => 'texte*', 'text' => 'texte*']]],
+        'program' => ['title' => 'texte*', 'lead' => 'texte', 'days' => ['fiches' => ['label' => 'texte*', 'title' => 'texte*', 'text' => 'texte*']]],
+        // Un exemple de constat d'audit ; une valeur entre `accents graves` s'affiche comme du code.
+        'example' => [
+            'title' => 'texte*', 'lead' => 'texte', 'link' => ['text' => 'texte*', 'url' => 'texte*'], 'severity' => 'texte',
+            'label' => 'texte', 'finding' => 'texte*', 'rows' => ['fiches' => ['label' => 'texte*', 'value' => 'texte*']],
+        ],
+        'steps' => ['title' => 'texte*', 'items' => ['fiches' => ['title' => 'texte*', 'text' => 'texte*']]],
+        'faq' => ['title' => 'texte*', 'items' => ['fiches' => ['question' => 'texte*', 'answer' => 'texte*']]],
+        'cta' => ['eyebrow' => 'texte', 'title' => 'texte*', 'button' => 'texte*'],
+    ];
 
     public function __construct(
         /** Le thème du moteur : son accueil, sa Person. */
@@ -163,10 +219,12 @@ final readonly class ThemeLoader
             images: $engine ? array_fill_keys(self::IMAGES, null) : self::images($config, $directory, $error),
             colors: self::block($config, 'colors', ThemeStylesheet::COLORS, new HexColor(), $error),
             editor: self::block($config, 'editor', ThemeStylesheet::EDITOR_COLORS, new HexColor(), $error),
+            editorLight: self::block($config, 'editor_light', ThemeStylesheet::EDITOR_COLORS, new HexColor(), $error),
             fonts: self::block($config, 'fonts', ThemeStylesheet::FONTS, new FontStack(), $error),
             home: self::home($config['home'] ?? [], $error),
             shareCard: $engine ? self::NO_SHARE_CARD : self::shareCard($config['share_card'] ?? [], $directory, $error),
             person: isset($config['person']) ? self::person($config['person'], 'person', $directory, $error) : null,
+            offers: isset($config['offers']) ? self::offers($config['offers'], 'offers', $error) : null,
             authors: self::authors($config['authors'] ?? null, $directory, $error),
             stylesheets: self::assets($config, 'stylesheets', 'css', $directory, $error),
             scripts: self::assets($config, 'scripts', 'js', $directory, $error),
@@ -452,6 +510,10 @@ final readonly class ThemeLoader
             if (isset($texts['person'])) {
                 $translated['person'] = self::personTexts($texts['person'], 'person', $localeError);
             }
+            // Une page des offres traduite remplace l'originale en entier : prix, ancres et rendez-vous compris.
+            if (isset($texts['offers'])) {
+                $translated['offers'] = self::offers($texts['offers'], 'offers', $localeError);
+            }
             if (isset($texts['authors'])) {
                 if (!\is_array($texts['authors']) || array_is_list($texts['authors'])) {
                     throw $localeError('« authors » associe l\'identifiant d\'un auteur à ses textes traduits.');
@@ -497,12 +559,22 @@ final readonly class ThemeLoader
         if (!\is_array($person)) {
             throw $error(sprintf('« %s » doit décrire une sous-section (%s).', $path, implode(', ', array_keys(self::PERSON_SHAPE))));
         }
-        self::checkShape($person, self::PERSON_SHAPE, $path, $error);
-        $result = ['name' => (string) $person['name'], 'jobTitle' => (string) $person['jobTitle']];
-        foreach (['bio', 'about'] as $key) {
+        $result = self::personItems($person, $path, $error);
+        self::checkShape(array_diff_key($person, self::PERSON_ITEMS), self::PERSON_SHAPE, $path, $error);
+        $result = ['name' => (string) $person['name'], 'jobTitle' => (string) $person['jobTitle'], ...$result];
+        foreach (['bio', 'about', 'location', 'availability', 'cta'] as $key) {
             if (isset($person[$key]) && '' !== trim((string) $person[$key])) {
                 $result[$key] = trim((string) $person[$key]);
             }
+        }
+        foreach (['expertise', 'skills'] as $key) {
+            $list = array_values(array_filter(array_map(trim(...), $person[$key] ?? []), static fn ($item) => '' !== $item));
+            if ([] !== $list) {
+                $result[$key] = $list;
+            }
+        }
+        if (isset($person['booking'])) {
+            $result['booking'] = self::httpsUrl((string) $person['booking'], $path.'.booking', $error);
         }
         $links = [];
         foreach (self::PERSON_LINKS as $key) {
@@ -510,10 +582,7 @@ final readonly class ThemeLoader
             if ('' === $url) {
                 continue;
             }
-            if (!str_starts_with($url, 'https://') || false === filter_var($url, \FILTER_VALIDATE_URL)) {
-                throw $error(sprintf('« %s.links.%s » doit être une adresse en https:// (%s).', $path, $key, $url));
-            }
-            $links[$key] = $url;
+            $links[$key] = self::httpsUrl($url, $path.'.links.'.$key, $error);
         }
         if ([] !== $links) {
             $result['links'] = $links;
@@ -566,9 +635,129 @@ final readonly class ThemeLoader
         if (!\is_array($texts)) {
             throw $error(sprintf('« %s » doit décrire une sous-section (%s).', $path, implode(', ', array_keys(self::PERSON_LOCALE_SHAPE))));
         }
+        $items = self::personItems($texts, $path, $error);
+        $texts = array_diff_key($texts, self::PERSON_ITEMS);
         self::checkShape($texts, self::PERSON_LOCALE_SHAPE, $path, $error);
 
-        return array_map(static fn ($text) => trim((string) $text), $texts);
+        return [...array_map(static fn ($text) => \is_array($text) ? array_values(array_map(trim(...), $text)) : trim((string) $text), $texts), ...$items];
+    }
+
+    /**
+     * Les listes de fiches d'une personne (PERSON_ITEMS), vérifiées : chaque fiche a ses champs obligatoires, et rien
+     * d'autre. Une adresse de mention (« press.url ») est en https.
+     *
+     * @param array<mixed>                         $person
+     * @param \Closure(string): \RuntimeException $error
+     *
+     * @return array<string, list<array<string, string>>>
+     */
+    private static function personItems(array $person, string $path, \Closure $error): array
+    {
+        $result = [];
+        foreach (self::PERSON_ITEMS as $key => $shape) {
+            if (!isset($person[$key])) {
+                continue;
+            }
+            if (!\is_array($person[$key]) || !array_is_list($person[$key])) {
+                throw $error(sprintf('« %s.%s » doit être une liste de fiches (%s).', $path, $key, implode(', ', array_keys($shape))));
+            }
+            foreach ($person[$key] as $index => $item) {
+                $itemPath = sprintf('%s.%s[%d]', $path, $key, $index);
+                if (!\is_array($item)) {
+                    throw $error(sprintf('« %s » doit être une fiche (%s).', $itemPath, implode(', ', array_keys($shape))));
+                }
+                // Un chiffre (« value: 58 ») est lu comme un nombre : c'est bien du texte à afficher.
+                $item = array_map(static fn ($value) => \is_int($value) || \is_float($value) ? (string) $value : $value, $item);
+                self::checkShape($item, $shape, $itemPath, $error);
+                $item = array_map(static fn ($text) => trim((string) $text), $item);
+                if (isset($item['url'])) {
+                    $item['url'] = self::httpsUrl($item['url'], $itemPath.'.url', $error);
+                }
+                $result[$key][] = $item;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * La page des offres, vérifiée contre OFFERS_SHAPE : au moins une offre, des ancres uniques, un prix en chiffres
+     * et des liens sûrs (le rendez-vous en https, le lien de l'exemple en https ou sur le site).
+     *
+     * @param \Closure(string): \RuntimeException $error
+     *
+     * @return array<string, mixed>
+     */
+    private static function offers(mixed $offers, string $path, \Closure $error): array
+    {
+        if (!\is_array($offers) || array_is_list($offers)) {
+            throw $error(sprintf('« %s » doit décrire la page (%s).', $path, implode(', ', array_keys(self::OFFERS_SHAPE))));
+        }
+        foreach (['hero', 'items'] as $key) {
+            if (!isset($offers[$key])) {
+                throw $error(sprintf('« %s.%s » est obligatoire.', $path, $key));
+            }
+        }
+        $offers = self::numbersAsText($offers);
+        self::checkShape($offers, self::OFFERS_SHAPE, $path, $error);
+        if ([] === $offers['items']) {
+            throw $error(sprintf('« %s.items » doit lister au moins une offre.', $path));
+        }
+        $ids = [];
+        foreach ($offers['items'] as $index => $item) {
+            $itemPath = sprintf('%s.items[%d]', $path, $index);
+            if (1 !== preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $item['id'])) {
+                throw $error(sprintf('« %s.id » sert d\'ancre : des minuscules, des chiffres et des tirets (%s).', $itemPath, $item['id']));
+            }
+            if (isset($ids[$item['id']])) {
+                throw $error(sprintf('« %s.id » : l\'ancre « %s » est déjà prise.', $itemPath, $item['id']));
+            }
+            $ids[$item['id']] = true;
+            if (isset($item['amount']) && 1 !== preg_match('/^\d+(?:\.\d{1,2})?$/', $item['amount'])) {
+                throw $error(sprintf('« %s.amount » est un prix en chiffres, sans unité (1200 ou 1200.50) : %s.', $itemPath, $item['amount']));
+            }
+        }
+        if (isset($offers['booking'])) {
+            $offers['booking'] = self::httpsUrl($offers['booking'], $path.'.booking', $error);
+        }
+        if (isset($offers['example']['link'])) {
+            $url = trim($offers['example']['link']['url']);
+            if (!str_starts_with($url, '/') || str_starts_with($url, '//')) {
+                $url = self::httpsUrl($url, $path.'.example.link.url', $error);
+            }
+            $offers['example']['link']['url'] = $url;
+        }
+
+        /** @var array<string, mixed> $offers vérifiée : ses clés sont celles de la forme */
+        return $offers;
+    }
+
+    /**
+     * Un chiffre écrit sans guillemets (« value: 58 », « amount: 1200 ») est lu comme un nombre par le YAML : c'est
+     * bien du texte à afficher.
+     *
+     * @param array<mixed> $values
+     *
+     * @return array<mixed>
+     */
+    private static function numbersAsText(array $values): array
+    {
+        return array_map(static fn ($value) => match (true) {
+            \is_array($value) => self::numbersAsText($value),
+            \is_int($value), \is_float($value) => (string) $value,
+            default => $value,
+        }, $values);
+    }
+
+    /** @param \Closure(string): \RuntimeException $error */
+    private static function httpsUrl(string $url, string $path, \Closure $error): string
+    {
+        $url = trim($url);
+        if (!str_starts_with($url, 'https://') || false === filter_var($url, \FILTER_VALIDATE_URL)) {
+            throw $error(sprintf('« %s » doit être une adresse en https:// (%s).', $path, $url));
+        }
+
+        return $url;
     }
 
     /**
@@ -592,6 +781,21 @@ final readonly class ThemeLoader
             if (null === $value) {
                 if ($required) {
                     throw $error(sprintf('« %s.%s » est obligatoire.', $path, $key));
+                }
+                continue;
+            }
+            if (\is_array($type) && isset($type['fiches'])) {
+                $fields = $type['fiches'];
+                if (!\is_array($value) || !array_is_list($value)) {
+                    throw $error(sprintf('« %s.%s » doit être une liste de fiches (%s).', $path, $key, implode(', ', array_keys($fields))));
+                }
+                foreach ($value as $index => $item) {
+                    $itemPath = sprintf('%s.%s[%d]', $path, $key, $index);
+                    if (!\is_array($item) || array_is_list($item)) {
+                        throw $error(sprintf('« %s » doit être une fiche (%s).', $itemPath, implode(', ', array_keys($fields))));
+                    }
+                    /** @var array<string, string|array<mixed>> $fields */
+                    self::checkShape($item, $fields, $itemPath, $error);
                 }
                 continue;
             }

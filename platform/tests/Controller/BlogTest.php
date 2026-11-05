@@ -244,7 +244,7 @@ final class BlogTest extends WebTestCase
 
         $themes = sys_get_temp_dir().'/themes-'.bin2hex(random_bytes(4));
         mkdir($themes.'/auteur', 0o777, true);
-        file_put_contents($themes.'/auteur/theme.yaml', "name: Auteur\nperson:\n  name: Ada Lovelace\n  jobTitle: Formatrice\n  bio: 'Je forme des devs PHP.'\n  links: {malt: 'https://www.malt.fr/profile/ada', linkedin: 'https://www.linkedin.com/in/ada'}\nauthors:\n  grace-hopper: {name: Grace Hopper, jobTitle: Amirale, bio: 'Compilatrice.'}\n");
+        file_put_contents($themes.'/auteur/theme.yaml', "name: Auteur\nperson:\n  name: Ada Lovelace\n  jobTitle: Formatrice\n  bio: 'Je forme des devs PHP.'\n  links: {malt: 'https://www.malt.fr/profile/ada', linkedin: 'https://www.linkedin.com/in/ada'}\n  location: Londres\n  availability: 'Disponible pour une mission'\n  booking: 'https://calendly.com/ada'\n  expertise: [Symfony]\n  skills: [Vue.js]\n  stats: [{value: '20 ans', label: 'de code'}]\n  services: [{title: 'Auditer', text: 'Un projet existant.'}]\n  press: [{name: 'A Week of Symfony', text: 'Cité', url: 'https://symfony.com/blog'}]\n  testimonials: [{quote: 'Parfait.', author: 'Un client'}]\nauthors:\n  grace-hopper: {name: Grace Hopper, jobTitle: Amirale, bio: 'Compilatrice.'}\n");
         $before = [$_SERVER['THEMES_DIR'] ?? null, $_SERVER['THEME'] ?? null];
         $_SERVER['THEMES_DIR'] = $_ENV['THEMES_DIR'] = $themes;
         $_SERVER['THEME'] = $_ENV['THEME'] = 'auteur';
@@ -261,6 +261,7 @@ final class BlogTest extends WebTestCase
             $this->assertSame('https://www.malt.fr/profile/ada', $author->filter('a[data-umami-event-lien="malt"]')->attr('href'));
             $this->assertSame('/contact', $author->filter('a')->last()->attr('href'));
             $this->assertSame('/auteurs/ada-lovelace', $author->filter('a[rel="author"]')->attr('href'), 'Le nom mène à la page de l\'auteur.');
+            $this->assertSame('/auteurs/ada-lovelace', $crawler->filter('article header .meta a[rel="author"]')->attr('href'), 'La signature sous le titre aussi.');
 
             // La page de l'auteur : sa présentation (la bio, faute de « about »), ses profils, ses articles.
             $crawler = $this->client->request('GET', '/auteurs/ada-lovelace');
@@ -270,6 +271,23 @@ final class BlogTest extends WebTestCase
             $this->assertSame('https://www.malt.fr/profile/ada', $crawler->filter('.author-links a')->first()->attr('href'));
             $this->assertGreaterThan(0, $crawler->filter('.author-page a[href="/blog/les-tests-en-direct"]')->count(), 'Ses articles.');
             $this->assertStringContainsString('"ProfilePage"', (string) $this->client->getResponse()->getContent());
+            // La vitrine : la pastille, le métier et la ville, le rendez-vous, les chiffres, les expertises, les mentions,
+            // les avis, et un dernier appel qui reprend le profil principal et le contact.
+            $this->assertSame('Disponible pour une mission', $crawler->filter('.author-badge')->text());
+            $this->assertSame('Formatrice à Londres', $crawler->filter('.author-job')->text());
+            $this->assertSame(['malt', 'booking', 'linkedin'], $crawler->filter('.author-links a')->each(static fn ($a) => $a->attr('data-umami-event-lien')), 'Le profil principal, le rendez-vous, puis les autres profils.');
+            $this->assertSame('20 ans', $crawler->filter('.author-stats dd')->text());
+            $this->assertSame(['Symfony', 'Vue.js'], $crawler->filter('.author-chip')->each(static fn ($chip) => $chip->text()));
+            $this->assertStringContainsString('Auditer', $crawler->filter('.author-card')->text());
+            $this->assertSame('https://symfony.com/blog', $crawler->filter('.author-press a')->attr('href'));
+            $this->assertStringContainsString('Parfait.', $crawler->filter('.author-testimonial')->text());
+            $this->assertSame(['malt', 'contact'], $crawler->filter('.author-final a')->each(static fn ($a) => $a->attr('data-umami-event-lien')));
+            $this->assertCount(1, $crawler->filter('.author-page')->filter('p:contains("Je forme des devs PHP.")'), 'La bio n\'est pas répétée faute de « about ».');
+            $this->assertStringContainsString('Ada Lovelace, Formatrice à Londres', $crawler->filter('title')->text());
+            $html = (string) $this->client->getResponse()->getContent();
+            $this->assertStringContainsString('"knowsAbout":["Symfony","Vue.js"]', $html);
+            $this->assertStringContainsString('"addressLocality":"Londres"', $html);
+            $this->assertStringNotContainsString('calendly', substr($html, (int) strpos($html, '"sameAs"'), 200), 'Le rendez-vous n\'est pas un profil.');
             $this->client->request('GET', '/auteurs/quelqu-un-d-autre');
             $this->assertResponseStatusCodeSame(404);
 

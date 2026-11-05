@@ -100,7 +100,7 @@ body.playground-page {
 }
 .instructions p,
 .instructions li {
-	color: #d4d4dc;
+	color: var(--text-soft);
 }
 .instructions code,
 .hint code {
@@ -167,7 +167,7 @@ body.playground-page {
 .objectives li[data-state='passed'] .dot {
 	background: var(--ok);
 	border-color: var(--ok);
-	color: #0d1f15;
+	color: var(--on-ok);
 }
 .objectives li[data-state='passed'] .dot::after {
 	content: '✓';
@@ -268,7 +268,7 @@ a.chip:hover {
 	margin-top: 1rem;
 	padding: 0.8rem 1rem;
 	border-radius: var(--radius);
-	background: rgba(63, 191, 127, 0.12);
+	background: color-mix(in srgb, var(--ok) 12%, transparent);
 	border: 1px solid var(--ok);
 	display: grid;
 	gap: 0.6rem;
@@ -317,8 +317,8 @@ a.chip:hover {
 	text-transform: uppercase;
 	letter-spacing: 0.14em;
 	color: var(--gold);
-	border: 1px solid rgba(224, 176, 74, 0.45);
-	background: rgba(224, 176, 74, 0.08);
+	border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+	background: color-mix(in srgb, var(--gold) 8%, transparent);
 	padding: 2px 6px;
 	border-radius: 4px;
 	white-space: nowrap;
@@ -363,14 +363,14 @@ a.chip:hover {
 	font-weight: 600;
 	padding: 0.1rem 0.6rem;
 	border-radius: 999px;
-	background: rgba(63, 191, 127, 0.15);
+	background: color-mix(in srgb, var(--ok) 15%, transparent);
 	color: var(--ok);
 }
 .already-done {
 	margin-bottom: 0.8rem;
 	padding: 0.6rem 0.8rem;
 	border-radius: var(--radius);
-	background: rgba(63, 191, 127, 0.12);
+	background: color-mix(in srgb, var(--ok) 12%, transparent);
 	border: 1px solid var(--ok);
 	color: var(--ok);
 	font-size: 13px;
@@ -387,7 +387,7 @@ a.chip:hover {
 .hint {
 	padding: 0.6rem 0.8rem;
 	border-radius: var(--radius);
-	background: rgba(224, 176, 74, 0.08);
+	background: color-mix(in srgb, var(--gold) 8%, transparent);
 	border-left: 3px solid var(--gold);
 }
 .hint strong {
@@ -428,7 +428,7 @@ a.chip:hover {
 	white-space: nowrap;
 }
 .tab.active {
-	background: #1e1e1e;
+	background: var(--editor-bg);
 	color: var(--text);
 	box-shadow: inset 0 2px 0 var(--accent);
 }
@@ -514,7 +514,7 @@ a.chip:hover {
 	border: none;
 	border-radius: 0;
 	background: transparent;
-	color: #c9c9d1;
+	color: var(--text-soft);
 	font: inherit;
 	padding: 0 0.6rem 0 1.1rem;
 }
@@ -768,7 +768,7 @@ a.chip:hover {
 	padding: 1rem;
 	display: grid;
 	place-items: center;
-	background: rgba(22, 23, 29, 0.96);
+	background: color-mix(in srgb, var(--bg) 96%, transparent);
 	z-index: 100;
 	transition: opacity 0.3s;
 }
@@ -958,6 +958,85 @@ dialog.share-dialog h2 {
 dialog.share-dialog .confirm-actions {
 	margin: 1rem 0 0;
 	text-align: right;
+}
+/* Partage du bac à sable : la case « Lien court », sa durée, le lien affiché et les liens courts déjà créés (scratch-share.ts). */
+.share-short {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.8rem;
+	margin-bottom: 0.8rem;
+	font-size: 14px;
+}
+.share-short label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+.share-short-duree[hidden] {
+	display: none;
+}
+.share-short-info {
+	width: 1.4rem;
+	height: 1.4rem;
+	padding: 0;
+	border: 1px solid var(--border);
+	border-radius: 50%;
+	background: var(--panel-2);
+	color: var(--muted);
+	font-size: 12px;
+	line-height: 1;
+	cursor: help;
+}
+.share-short-hint {
+	flex-basis: 100%;
+	margin: 0;
+	color: var(--muted);
+	font-size: 13px;
+}
+.share-url {
+	margin: 0 0 0.6rem;
+}
+.share-url input {
+	width: 100%;
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	background: var(--panel-2);
+	color: var(--text);
+	font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+	font-size: 13px;
+}
+.share-short-list {
+	margin-top: 1rem;
+	padding-top: 0.8rem;
+	border-top: 1px solid var(--border);
+}
+.share-short-list h3 {
+	margin: 0 0 0.4rem;
+	font-size: 0.95rem;
+}
+.share-short-list ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-height: 12rem;
+	overflow-y: auto;
+}
+.share-short-list li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem 0.6rem;
+	padding: 0.25rem 0;
+	font-size: 13px;
+}
+.share-short-list a {
+	font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+	overflow-wrap: anywhere;
+}
+.share-short-expiry {
+	color: var(--muted);
 }
 /* Intégrer l'exercice sur un autre site (boîte de partage de la Pratique). */
 .share-embed {
@@ -1159,7 +1238,7 @@ dialog.packages-dialog > p.packages-request {
 	margin-top: 1rem;
 	padding: 0.7rem 0.9rem;
 	border-radius: var(--radius);
-	background: rgba(124, 156, 255, 0.08);
+	background: color-mix(in srgb, var(--accent) 8%, transparent);
 	border-left: 3px solid var(--accent);
 	display: grid;
 	gap: 0.5rem;
@@ -1237,7 +1316,7 @@ dialog.packages-dialog > p.packages-request {
 	padding: 0.3rem 0.8rem;
 	font-size: 12.5px;
 	color: var(--gold);
-	background: rgba(224, 176, 74, 0.08);
+	background: color-mix(in srgb, var(--gold) 8%, transparent);
 	border-bottom: 1px solid var(--border);
 }
 .small-screen-note button {
@@ -1384,10 +1463,14 @@ dialog.packages-dialog > p.packages-request {
 		display: none;
 	}
 }
-.filetree-head:has(.filetree-new:not([hidden])) {
+.filetree-head {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+}
+.filetree-actions {
+	display: flex;
+	gap: 0.25rem;
 }
 .filetree-new {
 	padding: 0 0.35rem;
@@ -1594,7 +1677,7 @@ dialog.confirm p {
 }
 .rail-badge[data-kind='ok'] {
 	background: var(--ok);
-	color: #0d1f15;
+	color: var(--on-ok);
 }
 
 @media (max-width: 1100px) {

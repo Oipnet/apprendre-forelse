@@ -96,6 +96,7 @@ export const en: Messages = {
 		tree: 'Project files',
 		project: 'Project',
 		newFile: 'New file',
+		download: 'Download the project (.zip)',
 		console: 'Console',
 		requests: 'Requests',
 		database: 'Database',
@@ -337,6 +338,10 @@ export const en: Messages = {
 	editor: {
 		readonlyTitle: (path: string) => `${path} (read-only)`,
 		readonlyMessage: 'This file is provided by the exercise and cannot be edited.',
+		composerReadonlyMessage: 'Dependencies are already installed in the browser: PHP runs there in WebAssembly, with no access to Packagist, so editing composer.json would not install anything. Download the project to keep working on it locally (composer install).',
+		/** `button`: the 📦 button is there (sandbox). */
+		composerCatalogMessage: (button: boolean) =>
+			`composer.json cannot be edited by hand: PHP runs here in WebAssembly, with no access to Packagist. To add a package from the catalog, run composer require <package> in the console${button ? ' or tick it with the 📦 button' : ''}: composer.json and the autoloader are updated.`,
 	},
 
 	completion: {
@@ -431,6 +436,22 @@ export const en: Messages = {
 		runTitle: (mod: string) => `Reload the preview with your code (${mod} + Enter)`,
 		ran: 'Preview reloaded',
 		shareTitle: 'Share your code',
+		shortLink: {
+			label: 'Short link',
+			infoLabel: 'What a short link changes',
+			hint: 'A short link keeps your code on our server, until the date you pick or until you delete it. Untick the box for a long link that contains all the code: nothing is then stored on our side.',
+			duration: 'Valid for',
+			durations: { jamais: 'no limit', '1a': '1 year', '6m': '6 months', '1m': '1 month' },
+			urlLabel: 'The link to share',
+			creating: 'Creating the short link…',
+			failed: 'Short link unavailable right now: here is the long link, which contains all the code.',
+			mine: 'Your short links',
+			expires: (date: string) => `until ${date}`,
+			never: 'no limit',
+			delete: 'Delete',
+			deleted: 'Link deleted: it no longer opens.',
+			deleteFailed: 'Deleting failed: try again in a moment.',
+		},
 		sharedStatus: 'Shared code: read it before running it',
 		sharedTitle: 'This link contains code written by someone else.',
 		sharedDetail: 'Read it in the editor before running it. It runs isolated from this site, but the page it shows can imitate anything: never type a password into it.',

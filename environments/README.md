@@ -68,7 +68,7 @@ Un `.archiveignore` dans un environnement (motifs `zip -x`, un par ligne) allèg
 id: symfony-8
 title: Symfony 8.1 — Twig, PHPUnit
 php: '8.5'          # obligatoire, sauf pour un environnement sans PHP (Nuxt)
-framework: symfony  # symfony (défaut), laravel, docker, nuxt
+framework: symfony  # symfony (défaut), laravel, docker, nuxt, goravel
 cache: [var/cache]  # facultatif : les caches à vider entre deux runs, si ceux du framework ne conviennent pas
 extends: <id>       # facultatif : prolonge un autre environnement (voir « Fusionner »)
 extensions: [intl]  # facultatif : extensions que le PHP du navigateur charge en plus (aujourd'hui intl seulement)

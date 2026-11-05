@@ -99,6 +99,7 @@ export const fr = {
 		tree: 'Fichiers du projet',
 		project: 'Projet',
 		newFile: 'Créer un fichier',
+		download: 'Télécharger le projet (.zip)',
 		console: 'Console',
 		requests: 'Requêtes',
 		database: 'Base',
@@ -342,6 +343,10 @@ export const fr = {
 	editor: {
 		readonlyTitle: (path: string) => `${path} (lecture seule)`,
 		readonlyMessage: 'Ce fichier est fourni par l\'exercice et ne peut pas être modifié.',
+		composerReadonlyMessage: 'Les dépendances sont déjà installées dans le navigateur : PHP y tourne en WebAssembly, sans accès à Packagist, donc modifier composer.json n\'installerait rien. Téléchargez le projet pour le faire évoluer chez vous (composer install).',
+		/** `button` : le bouton 📦 est là (bac à sable). */
+		composerCatalogMessage: (button: boolean) =>
+			`composer.json n'est pas modifiable à la main : PHP tourne ici en WebAssembly, sans accès à Packagist. Pour ajouter un paquet du catalogue, lancez composer require <paquet> dans la console${button ? ' ou cochez-le avec le bouton 📦' : ''} : composer.json et l'autoload sont mis à jour.`,
 	},
 
 	completion: {
@@ -439,6 +444,23 @@ export const fr = {
 		runTitle: (mod: string) => `Recharger l'aperçu avec votre code (${mod} + Entrée)`,
 		ran: 'Aperçu rechargé',
 		shareTitle: 'Partager votre code',
+		/** La case « Lien court » de la boîte de partage (scratch-share.ts). */
+		shortLink: {
+			label: 'Lien court',
+			infoLabel: 'Ce que change le lien court',
+			hint: 'Un lien court garde votre code sur notre serveur, jusqu\'à la date choisie ou jusqu\'à ce que vous le supprimiez. Décochez la case pour un lien long qui contient tout le code : rien n\'est alors stocké de notre côté.',
+			duration: 'Valable',
+			durations: { jamais: 'sans limite', '1a': '1 an', '6m': '6 mois', '1m': '1 mois' },
+			urlLabel: 'Le lien à partager',
+			creating: 'Création du lien court…',
+			failed: 'Lien court indisponible pour le moment : voici le lien long, qui contient tout le code.',
+			mine: 'Vos liens courts',
+			expires: (date: string) => `jusqu'au ${date}`,
+			never: 'sans limite',
+			delete: 'Supprimer',
+			deleted: 'Lien supprimé : il ne s\'ouvre plus.',
+			deleteFailed: 'La suppression a échoué : réessayez dans un instant.',
+		},
 		sharedStatus: 'Code partagé : lisez-le avant de l\'exécuter',
 		sharedTitle: 'Ce lien contient du code écrit par quelqu\'un d\'autre.',
 		sharedDetail: 'Lisez-le dans l\'éditeur avant de l\'exécuter. Il tourne isolé de ce site, mais la page qu\'il affiche peut imiter n\'importe quoi : n\'y saisissez jamais un mot de passe.',

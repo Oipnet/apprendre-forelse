@@ -155,7 +155,7 @@ final class ThemeTest extends TestCase
     {
         yield 'liste' => ["locales: [en]\n", '« locales » associe une langue'];
         yield 'langue mal écrite' => ["locales:\n  English: {tagline: Learn.}\n", '« locales.English » : une langue s\'écrit en deux lettres'];
-        yield 'clé non traduisible' => ["locales:\n  en: {colors: {accent: '#000000'}}\n", 'locales.en, clé « colors » inconnue (acceptées : chip, title, tagline, home, person, authors)'];
+        yield 'clé non traduisible' => ["locales:\n  en: {colors: {accent: '#000000'}}\n", 'locales.en, clé « colors » inconnue (acceptées : chip, title, tagline, home, person, authors, offers)'];
         yield 'section incomplète' => ["locales:\n  en:\n    home:\n      author: {title: Us}\n", 'locales.en, « home.author.lead » est obligatoire'];
         yield 'texte qui n\'en est pas un' => ["locales:\n  en: {tagline: [Learn]}\n", 'locales.en, « tagline » doit être du texte'];
     }
@@ -270,6 +270,106 @@ final class ThemeTest extends TestCase
         (new ThemeLoader())->load($this->tmp);
     }
 
+    /** La vitrine de la page auteur : des listes de fiches, traduisibles, vérifiées fiche par fiche. */
+    public function testLaVitrineDeLAuteurSeDeclareEtSeTraduit(): void
+    {
+        $this->write("name: A\nperson:\n  name: Ada\n  jobTitle: F\n  location: Londres\n  availability: Disponible\n  booking: 'https://calendly.com/ada'\n  expertise: [PHP]\n  stats: [{value: '58', label: missions}]\n  press: [{name: Blog, url: 'https://exemple.fr'}]\nlocales:\n  en:\n    person: {availability: Available, stats: [{value: '58', label: projects}]}\n");
+        $config = (new ThemeLoader())->load($this->tmp);
+
+        $this->assertSame(['name' => 'Ada', 'jobTitle' => 'F', 'stats' => [['value' => '58', 'label' => 'missions']], 'press' => [['name' => 'Blog', 'url' => 'https://exemple.fr']], 'location' => 'Londres', 'availability' => 'Disponible', 'expertise' => ['PHP'], 'booking' => 'https://calendly.com/ada'], $config->person);
+        $this->assertSame(['availability' => 'Available', 'stats' => [['value' => '58', 'label' => 'projects']]], $config->locales['en']['person']);
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function vitrinesMalEcrites(): iterable
+    {
+        yield 'fiche incomplète' => ['stats: [{value: 58}]', '« person.stats[0].label » est obligatoire'];
+        yield 'champ inconnu' => ['services: [{title: T, text: X, prix: 3}]', '« person.services[0].prix » inconnue'];
+        yield 'pas une liste' => ['testimonials: {quote: Q, author: A}', '« person.testimonials » doit être une liste de fiches'];
+        yield 'mention sans https' => ["press: [{name: B, url: 'http://exemple.fr'}]", '« person.press[0].url » doit être une adresse en https://'];
+        yield 'rendez-vous sans https' => ["booking: 'http://calendly.com/ada'", '« person.booking » doit être une adresse en https://'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('vitrinesMalEcrites')]
+    public function testUneVitrineMalEcriteEstSignalee(string $yaml, string $message): void
+    {
+        $this->write("name: A\nperson:\n  name: Ada\n  jobTitle: F\n  {$yaml}\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage($message);
+        (new ThemeLoader())->load($this->tmp);
+    }
+
+    /** La page des offres : déclarée, traduite en entier, et son rendez-vous retombe sur celui de la personne. */
+    public function testLaPageDesOffresSeDeclareEtSeTraduit(): void
+    {
+        $this->write(<<<'YAML'
+            name: A
+            person: {name: Ada, jobTitle: F, booking: 'https://calendly.com/ada'}
+            offers:
+              hero: {title: Formations}
+              stats: [{value: 20, label: ans}]
+              items:
+                - {id: formation, title: Former, price: '1 200 €', amount: 1200, cta: Réserver, features: [Deux jours]}
+              example: {title: Un constat, finding: Une faille, link: {text: L'article, url: /blog/idor}}
+              faq: {title: Questions, items: [{question: OPCO ?, answer: Non.}]}
+            locales:
+              en:
+                offers:
+                  hero: {title: Training}
+                  items: [{id: training, title: Train, price: '€1,200', cta: Book}]
+            YAML);
+
+        $fr = self::theme($this->tmp, 'fr')->offers();
+        $this->assertSame('Formations', $fr['hero']['title']);
+        $this->assertSame(['value' => '20', 'label' => 'ans'], $fr['stats'][0], 'Un chiffre écrit sans guillemets reste du texte.');
+        $this->assertSame('1200', $fr['items'][0]['amount']);
+        $this->assertSame('/blog/idor', $fr['example']['link']['url']);
+        $this->assertSame('https://calendly.com/ada', $fr['booking'], 'Le rendez-vous de la personne.');
+
+        $en = self::theme($this->tmp, 'en')->offers();
+        $this->assertSame('Training', $en['hero']['title']);
+        $this->assertSame('training', $en['items'][0]['id'], 'Une page traduite remplace l\'originale en entier.');
+        $this->assertArrayNotHasKey('faq', $en);
+        $this->assertTrue(self::theme($this->tmp)->offersIn('en'));
+    }
+
+    public function testSansTraductionPasDePageDesOffresDansCetteLangue(): void
+    {
+        $this->write("name: A\noffers:\n  hero: {title: F}\n  items: [{id: a, title: T, price: '1 €', cta: C}]\nlocales:\n  en: {tagline: Learn.}\n");
+
+        $this->assertNotNull(self::theme($this->tmp, 'fr')->offers());
+        $this->assertNull(self::theme($this->tmp, 'en')->offers());
+        $this->assertFalse(self::theme($this->tmp)->offersIn('en'));
+        $this->assertNull(self::theme($this->tmp, 'fr')->offers()['booking'], 'Ni rendez-vous ni personne : la page renverra au contact.');
+        $this->assertNull(self::theme()->offers(), 'Le thème du moteur ne vend rien.');
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function offresMalEcrites(): iterable
+    {
+        yield 'sans offre' => ["  hero: {title: F}\n", '« offers.items » est obligatoire'];
+        yield 'liste vide' => ["  hero: {title: F}\n  items: []\n", '« offers.items » doit lister au moins une offre'];
+        yield 'offre incomplète' => ["  hero: {title: F}\n  items: [{id: a, title: T, cta: C}]\n", '« offers.items[0].price » est obligatoire'];
+        yield 'ancre invalide' => ["  hero: {title: F}\n  items: [{id: 'Audit Accès', title: T, price: P, cta: C}]\n", '« offers.items[0].id » sert d\'ancre'];
+        yield 'ancre en double' => ["  hero: {title: F}\n  items: [{id: a, title: T, price: P, cta: C}, {id: a, title: U, price: P, cta: C}]\n", 'l\'ancre « a » est déjà prise'];
+        yield 'prix avec unité' => ["  hero: {title: F}\n  items: [{id: a, title: T, price: P, amount: '1 200 €', cta: C}]\n", '« offers.items[0].amount » est un prix en chiffres'];
+        yield 'clé inconnue' => ["  hero: {title: F}\n  items: [{id: a, title: T, price: P, cta: C}]\n  prix: 3\n", '« offers.prix » inconnue'];
+        yield 'faq sans liste' => ["  hero: {title: F}\n  items: [{id: a, title: T, price: P, cta: C}]\n  faq: {title: Q, items: {question: Q, answer: R}}\n", '« offers.faq.items » doit être une liste de fiches'];
+        yield 'rendez-vous sans https' => ["  hero: {title: F}\n  items: [{id: a, title: T, price: P, cta: C}]\n  booking: 'http://calendly.com/ada'\n", '« offers.booking » doit être une adresse en https://'];
+        yield 'lien vers un autre site' => ["  hero: {title: F}\n  items: [{id: a, title: T, price: P, cta: C}]\n  example: {title: E, finding: F, link: {text: L, url: '//exemple.fr'}}\n", '« offers.example.link.url » doit être une adresse en https://'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('offresMalEcrites')]
+    public function testUnePageDesOffresMalEcriteEstSignalee(string $yaml, string $message): void
+    {
+        $this->write("name: A\noffers:\n{$yaml}");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage($message);
+        (new ThemeLoader())->load($this->tmp);
+    }
+
     public function testUnePersonneIncompleteEstSignalee(): void
     {
         $this->write("name: A\nperson: {name: Ada Lovelace}\n");
@@ -299,6 +399,31 @@ final class ThemeTest extends TestCase
         $this->assertStringContainsString(':root{--accent:#5ab0cc;--bg:#12171b}', $styles);
         // Les pages du site redéfinissent ces variables pour elles : le thème clair n'est pas touché.
         $this->assertStringNotContainsString('body.site-page{', $styles);
+    }
+
+    /** « editor_light » : la palette claire, posée seulement quand le système la demande et que la page suit le système. */
+    public function testLaPaletteClaireDeLEditeurSuitLeSysteme(): void
+    {
+        $this->write("name: A\neditor:\n  accent: '#5ab0cc'\n");
+        $this->assertStringNotContainsString('prefers-color-scheme', self::theme($this->tmp)->styles());
+        $this->assertFalse(self::theme($this->tmp)->editorFollowsSystemTheme(), 'Une palette sombre seule : la page reste sombre.');
+
+        $this->write("name: A\neditor:\n  accent: '#5ab0cc'\neditor_light:\n  accent: '#2f6b16'\n  background: '#fbfcf8'\n");
+        $styles = self::theme($this->tmp)->styles();
+        $this->assertStringEndsWith(":root{--accent:#5ab0cc}@media (prefers-color-scheme: light){:root[data-editor-scheme='auto']{--accent:#2f6b16;--bg:#fbfcf8}}", $styles);
+        $this->assertTrue(self::theme($this->tmp)->editorFollowsSystemTheme());
+
+        $this->write("name: A\n");
+        $this->assertTrue(self::theme($this->tmp)->editorFollowsSystemTheme(), 'Sans palette : celles du moteur, claire et sombre.');
+    }
+
+    public function testUneCouleurDEditeurClaireQuiNEnEstPasUneEstRefusee(): void
+    {
+        $this->write("name: A\neditor_light:\n  ink: noir\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('« editor_light.ink » : une couleur hexadécimale est attendue');
+        self::theme($this->tmp)->styles();
     }
 
     public function testUneCouleurDEditeurQuiNEnEstPasUneEstRefusee(): void

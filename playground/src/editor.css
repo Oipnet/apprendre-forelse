@@ -1,5 +1,6 @@
 /*
- * La base de la page d'exercice et des éditeurs de l'atelier : variables (thème sombre), boutons, consigne, fiche.
+ * La base de la page d'exercice et des éditeurs de l'atelier : variables (thème sombre, et clair quand la page suit le
+ * système : data-editor-scheme="auto", voir editor_base.html.twig), boutons, consigne, fiche.
  * Autonome : ni site.css, ni la feuille du thème actif. Un thème n'habille ces pages que par sa palette « editor: »,
  * sa police à chasse fixe (« fonts.mono » → --font-mono) et son nom, sa puce et son logo dans la barre (voir #235).
  * Extrait de l'ancienne site.css, sans rien de la marque Forelse : polices du système, JetBrains Mono pour le code.
@@ -41,8 +42,45 @@
 	--gold: #facc15;
 	--ok: #4ade80;
 	--ko: #f87171;
+	/* Dérivées, pas réglables par un thème : le texte sur une pastille --ok, le fond de l'éditeur Monaco (vs-dark),
+	   le texte secondaire des listes (consigne, explorateur). */
+	--on-ok: #0d1f15;
+	--editor-bg: #1e1e1e;
+	--text-soft: #d4d4dc;
 	--radius: 8px;
 	color-scheme: dark;
+}
+/*
+ * Le thème clair, quand le système le demande et que la page le permet (data-editor-scheme="auto" : le thème du site
+ * n'a pas de palette d'éditeur, ou il a aussi « editor_light »). Un thème remplace ces valeurs par « editor_light »,
+ * avec les mêmes clés que « editor » ; contrastes vérifiés par contrast.test.ts.
+ */
+@media (prefers-color-scheme: light) {
+	:root[data-editor-scheme='auto'] {
+		--bg: #fafafa;
+		--panel: #ffffff;
+		--panel-2: #f4f4f5;
+		--border: #d4d4d8;
+		--text: #18181b;
+		--muted: #52525b;
+		--accent: #3b82f6;
+		--accent-fill: #2563eb;
+		--accent-text: #1d4ed8;
+		--gold: #8a5a00;
+		--ok: #15803d;
+		--ko: #b91c1c;
+		--on-ok: #ffffff;
+		--editor-bg: #fffffe;
+		--text-soft: #27272a;
+		color-scheme: light;
+	}
+	/* Les blocs de code, la sortie des tests, la console et les réponses HTTP restent sombres : la coloration .hl-*
+	   et les couleurs ANSI (.fg-*, .bg-*) sont faites pour un fond sombre, comme dans un terminal. */
+	:root[data-editor-scheme='auto'] :is(.lesson pre, .instructions pre, .output pre, .console-output, .req-response) {
+		border-color: #33343a;
+		background: #1f2024;
+		color: #e4e4e7;
+	}
 }
 * {
 	box-sizing: border-box;
@@ -183,7 +221,7 @@ button.small,
 .exercises [data-state='completed'] .state {
 	background: var(--ok);
 	border-color: var(--ok);
-	color: #0b2a1b;
+	color: var(--on-ok);
 }
 .exercises [data-state='in_progress'] .state {
 	border-color: var(--gold);
@@ -249,9 +287,9 @@ button.small,
 .alert {
 	padding: 0.7rem 1rem;
 	border-radius: var(--radius);
-	background: rgba(239, 90, 90, 0.12);
+	background: color-mix(in srgb, var(--ko) 12%, transparent);
 	border: 1px solid var(--ko);
-	color: #ffb3b3;
+	color: color-mix(in srgb, var(--ko) 55%, var(--text));
 	margin-bottom: 1rem;
 }
 .lesson {

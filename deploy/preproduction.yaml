@@ -17,6 +17,9 @@ services:
       # Le thème que la production prendra à la prochaine version, tant que l'admin de la préproduction n'en a pas
       # choisi un autre (/admin → Thèmes).
       THEME: forelse
+    # Pour joindre Mailpit (réseau « courrier »), en plus des réseaux de compose.yaml.
+    networks:
+      courrier:
     volumes:
       # Les thèmes de la production, déposés par la CI du dépôt de contenu (/srv/forelse/themes), en lecture seule :
       # la préproduction montre ce que les apprenants verront à la prochaine version. Remplace le ./themes de
@@ -31,6 +34,8 @@ services:
       # Comme « app » : sans lui, ses erreurs arrivaient dans Sentry rangées en production.
       SENTRY_ENVIRONMENT: preproduction
       THEME: forelse
+    networks:
+      courrier:
     volumes:
       - /srv/forelse/themes:/themes:ro
 
@@ -48,8 +53,9 @@ services:
     environment:
       MP_WEBROOT: /mails/
       MP_MAX_MESSAGES: "500"
+    # « courrier » (interne) pour recevoir les emails d'« app » et du « worker », « front » pour le proxy (/mails).
     networks:
-      default:
+      courrier:
       front:
         aliases:
           - forelse-preprod-mail
@@ -61,3 +67,7 @@ services:
     profiles: [jamais]
   umami-base:
     profiles: [jamais]
+
+networks:
+  courrier:
+    internal: true

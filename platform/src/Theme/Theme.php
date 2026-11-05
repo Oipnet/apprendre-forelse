@@ -143,7 +143,7 @@ final class Theme implements ResetInterface
      *
      * Le titre et la présentation suivent la langue de la page quand le thème les traduit (« locales.<langue>.person »).
      *
-     * @return array{name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, portrait?: string}|null
+     * @return array{name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, portrait?: string, location?: string, availability?: string, booking?: string, cta?: string, expertise?: list<string>, skills?: list<string>, stats?: list<array<string, string>>, services?: list<array<string, string>>, press?: list<array<string, string>>, testimonials?: list<array<string, string>>}|null
      */
     public function person(): ?array
     {
@@ -156,7 +156,7 @@ final class Theme implements ResetInterface
      * L'auteur d'un article ou d'une page auteur, dans la langue de la page : « person » (l'auteur par défaut, null),
      * ou l'un des « authors » par son identifiant. Null pour un identifiant inconnu, ou un thème sans personne.
      *
-     * @return array{id: string, name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, portraitUrl: string|null, isDefault: bool, hasPage: bool}|null
+     * @return array{id: string, name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>, location?: string, availability?: string, booking?: string, cta?: string, expertise?: list<string>, skills?: list<string>, stats?: list<array<string, string>>, services?: list<array<string, string>>, press?: list<array<string, string>>, testimonials?: list<array<string, string>>, portraitUrl: string|null, isDefault: bool, hasPage: bool}|null
      */
     public function author(?string $id = null): ?array
     {
@@ -268,6 +268,17 @@ final class Theme implements ResetInterface
     }
 
     /**
+     * Vrai quand l'éditeur d'exercice et l'atelier suivent le thème du système (clair ou sombre) : le thème n'a pas
+     * de palette d'éditeur (celles du moteur ont les deux), ou il a aussi sa palette claire (« editor_light »).
+     * Un thème qui ne déclare que « editor » garde un éditeur toujours sombre : la palette claire du moteur ne
+     * remplace pas la sienne en douce.
+     */
+    public function editorFollowsSystemTheme(): bool
+    {
+        return [] === $this->config()->editor || [] !== $this->config()->editorLight;
+    }
+
+    /**
      * Vrai tant que la marque ne déclare pas de couleurs : le site suit alors le thème du système (clair ou sombre).
      * Une palette imposée est claire (ThemeStylesheet::COLORS) : on ne la mélange pas aux encres du thème sombre.
      */
@@ -288,9 +299,34 @@ final class Theme implements ResetInterface
     }
 
     /**
+     * La page des offres (« offers » de theme.yaml) dans la langue de la page, ou null : un thème qui ne la déclare
+     * pas, ou ne la traduit pas dans cette langue, n'a pas de page. Le rendez-vous retombe sur celui de l'original,
+     * puis sur celui de la personne.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function offers(): ?array
+    {
+        $original = $this->config()->offers;
+        $offers = $this->translated()['offers'] ?? (($this->locale?->getLocale() ?? $this->defaultLocale) === $this->defaultLocale ? $original : null);
+        if (null === $offers) {
+            return null;
+        }
+        $booking = $offers['booking'] ?? $original['booking'] ?? $this->config()->person['booking'] ?? null;
+
+        return [...$offers, 'booking' => $booking];
+    }
+
+    /** Vrai quand le thème a une page des offres dans cette langue (le plan du site, les liens d'une autre langue). */
+    public function offersIn(string $locale): bool
+    {
+        return null !== $this->config()->offers && ($locale === $this->defaultLocale || isset($this->config()->locales[$locale]['offers']));
+    }
+
+    /**
      * Les textes traduits dans la langue de la page, vides dans la langue de theme.yaml.
      *
-     * @return array{chip?: string, title?: string, tagline?: string, home?: array<string, array<string, mixed>>, person?: array{jobTitle?: string, bio?: string, about?: string}, authors?: array<string, array<string, string>>}
+     * @return array{chip?: string, title?: string, tagline?: string, home?: array<string, array<string, mixed>>, person?: array{jobTitle?: string, bio?: string, about?: string}, authors?: array<string, array<string, string>>, offers?: array<string, mixed>}
      */
     private function translated(): array
     {

@@ -1,0 +1,220 @@
+{% extends 'base.html.twig' %}
+{% trans_default_domain 'blog' %}
+
+{#
+  La page des offres (voir App\Controller\OffersController) : ce que la personne du thème vend de son temps,
+  formations et audits, prix affichés. D'abord l'en-tête et ses preuves, puis les offres, ce qui les distingue, un
+  exemple de programme et de constat d'audit, le déroulé, les questions fréquentes et un dernier appel. Chaque section
+  n'apparaît que si le thème la remplit (« offers » de theme.yaml, voir ThemeLoader::OFFERS_SHAPE).
+  Variables : offers (la page, dans la langue de la page), booking (le lien de rendez-vous, ou celui de la page de
+  contact), external (le rendez-vous est sur un autre site), author (l'auteur par défaut quand il a une page, ou null).
+  Les classes offers-* sont des points d'accroche pour la feuille d'un thème.
+#}
+{% block title %}{{ offers.seo.title ?? offers.hero.title }} · {{ theme.name }}{% endblock %}
+
+{% macro eyebrow(text) %}<p class="offers-eyebrow text-sm font-semibold tracking-wide text-accent uppercase">{{ text }}</p>{% endmacro %}
+{% macro booking(href, external, label, where, primary = true) %}<a class="offers-booking btn{{ primary ? ' btn-primary' }}" href="{{ href }}"{% if external %} rel="noopener" target="_blank"{% endif %} data-umami-event="offres-rendez-vous" data-umami-event-lieu="{{ where }}">{{ label }}</a>{% endmacro %}
+
+{% block body %}
+    <main class="offers-page">
+        <div class="mx-auto w-full max-w-6xl px-4 pt-8 pb-12 sm:px-6">
+            <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
+                <ol>
+                    <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
+                    <li aria-current="page">{{ 'offres.fil_ariane'|trans }}</li>
+                </ol>
+            </nav>
+
+            <header class="offers-hero mt-8 flex flex-wrap items-center gap-10">
+                <div class="min-w-0 flex-[999_1_32rem]">
+                    {%- if offers.hero.eyebrow is defined %}{{ _self.eyebrow(offers.hero.eyebrow) }}{% endif %}
+                    <h1 class="mt-2 text-4xl leading-tight font-semibold sm:text-5xl">{{ offers.hero.title }}</h1>
+                    {%- if offers.hero.lead is defined %}<p class="offers-lead mt-5 max-w-2xl text-lg text-ink-soft sm:text-xl">{{ offers.hero.lead }}</p>{% endif %}
+                    <p class="mt-7 flex flex-wrap gap-3">
+                        {{ _self.booking(booking, external, offers.hero.button ?? 'offres.rendez_vous'|trans, 'en-tete') }}
+                        <a class="offers-more btn" href="#offres">{{ offers.hero.more ?? 'offres.voir'|trans }}</a>
+                    </p>
+                    {%- if offers.hero.note is defined %}<p class="mt-3 text-sm text-ink-muted">{{ offers.hero.note }}</p>{% endif %}
+                </div>
+                {%- if offers.showcase is defined %}
+                <figure class="offers-showcase m-0 min-w-0 flex-[1_1_22rem] overflow-hidden rounded-xl bg-dark text-dark-ink">
+                    {%- if offers.showcase.file is defined or offers.showcase.badge is defined %}
+                    <div class="flex items-center justify-between gap-3 border-b border-white/15 px-4 py-2.5 font-mono text-xs text-dark-muted">
+                        <span>{{ offers.showcase.file ?? '' }}</span>
+                        {%- if offers.showcase.badge is defined %}<span class="offers-showcase-badge text-right">{{ offers.showcase.badge }}</span>{% endif %}
+                    </div>
+                    {%- endif %}
+                    <pre class="m-0 overflow-x-auto p-4 font-mono text-[13px] leading-relaxed"><code>{{ offers.showcase.code }}</code></pre>
+                    {%- if offers.showcase.checks is defined or offers.showcase.result is defined %}
+                    <figcaption class="flex flex-col gap-1.5 border-t border-white/15 px-4 py-3 text-sm">
+                        {%- for check in offers.showcase.checks|default([]) %}
+                        <span class="offers-check flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ check }}</span>
+                        {%- endfor %}
+                        {%- if offers.showcase.result is defined %}<span class="offers-showcase-result mt-0.5 font-mono text-xs">{{ offers.showcase.result }}</span>{% endif %}
+                    </figcaption>
+                    {%- endif %}
+                </figure>
+                {%- endif %}
+            </header>
+
+            {% if offers.stats is defined or offers.proof is defined or author %}
+                <section class="mt-14" aria-label="{{ 'offres.chiffres'|trans }}">
+                    {%- if offers.stats is defined %}
+                    <dl class="offers-stats grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-4">
+                        {%- for stat in offers.stats %}
+                        <div class="flex flex-col-reverse bg-surface p-5">
+                            <dt class="text-sm text-ink-muted">{{ stat.label }}</dt>
+                            <dd class="font-serif text-3xl leading-tight font-semibold">{{ stat.value }}</dd>
+                        </div>
+                        {%- endfor %}
+                    </dl>
+                    {%- endif %}
+                    {%- if offers.proof is defined or author %}
+                    <p class="mt-4 text-ink-soft">{{ offers.proof ?? '' }}{% if author %} <a href="{{ path('app_author', {slug: author.id}) }}">{{ 'offres.auteur'|trans }}</a>{% endif %}</p>
+                    {%- endif %}
+                </section>
+            {% endif %}
+        </div>
+
+        <section id="offres" class="offers-catalog scroll-mt-20 border-y border-line bg-bg-2" aria-labelledby="offres-titre">
+            <div class="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
+                {%- if offers.catalog is defined %}
+                {%- if offers.catalog.eyebrow is defined %}{{ _self.eyebrow(offers.catalog.eyebrow) }}{% endif %}
+                <h2 id="offres-titre" class="mt-1 text-3xl font-semibold sm:text-4xl">{{ offers.catalog.title }}</h2>
+                {%- if offers.catalog.lead is defined %}<p class="mt-3 max-w-2xl text-ink-soft">{{ offers.catalog.lead }}</p>{% endif %}
+                {%- else %}
+                <h2 id="offres-titre" class="sr-only">{{ 'offres.fil_ariane'|trans }}</h2>
+                {%- endif %}
+                <div class="mt-8 grid gap-6 md:grid-cols-[repeat(auto-fit,minmax(18rem,1fr))]">
+                    {%- for item in offers.items %}
+                    <article id="{{ item.id }}" class="offers-card {{ loop.first ? 'offers-card-main' }} flex scroll-mt-20 flex-col rounded-xl border border-line bg-surface p-6">
+                        {%- if item.tag is defined %}<p class="offers-tag self-start rounded-full border border-line bg-bg-2 px-3 py-0.5 text-sm font-semibold">{{ item.tag }}</p>{% endif %}
+                        <h3 class="mt-3 text-2xl leading-snug font-semibold">{{ item.title }}</h3>
+                        {%- if item.audience is defined %}<p class="mt-2 text-ink-muted">{{ item.audience }}</p>{% endif %}
+                        {%- if item.features is defined %}
+                        <ul class="mt-4 list-disc space-y-1.5 pl-5 text-ink-soft">
+                            {%- for feature in item.features %}<li>{{ feature }}</li>{% endfor %}
+                        </ul>
+                        {%- endif %}
+                        <div class="offers-price mt-auto border-t border-dashed border-line pt-5">
+                            <p class="mt-4"><span class="font-serif text-3xl font-semibold">{{ item.price }}</span>{% if item.unit is defined %} <span class="text-ink-muted">{{ item.unit }}</span>{% endif %}</p>
+                            {%- if item.note is defined %}<p class="mt-1 text-sm text-ink-muted">{{ item.note }}</p>{% endif %}
+                            <p class="mt-5">{{ _self.booking(booking, external, item.cta, item.id, loop.first) }}</p>
+                        </div>
+                    </article>
+                    {%- endfor %}
+                </div>
+            </div>
+        </section>
+
+        <div class="mx-auto w-full max-w-6xl px-4 sm:px-6">
+            {% if offers.reasons is defined %}
+                <section class="mt-16" aria-labelledby="offres-raisons">
+                    {%- if offers.reasons.eyebrow is defined %}{{ _self.eyebrow(offers.reasons.eyebrow) }}{% endif %}
+                    <h2 id="offres-raisons" class="mt-1 text-3xl font-semibold sm:text-4xl">{{ offers.reasons.title }}</h2>
+                    <ul class="mt-8 grid gap-8 md:grid-cols-3">
+                        {%- for reason in offers.reasons.items|default([]) %}
+                        <li>
+                            <span class="offers-icon inline-grid h-11 w-11 place-items-center rounded-lg bg-bg-2" aria-hidden="true">
+                                {%- if loop.index0 % 3 == 0 %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 13l-2 2 2 2M16 13l2 2-2 2"/></svg>
+                                {%- elseif loop.index0 % 3 == 1 %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>
+                                {%- else %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{% endif -%}
+                            </span>
+                            <h3 class="mt-3 text-lg font-semibold">{{ reason.title }}</h3>
+                            <p class="mt-1 text-ink-soft">{{ reason.text }}</p>
+                        </li>
+                        {%- endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            {% if offers.program is defined %}
+                <section class="mt-16" aria-labelledby="offres-programme">
+                    <h2 id="offres-programme" class="text-2xl font-semibold sm:text-3xl">{{ offers.program.title }}</h2>
+                    {%- if offers.program.lead is defined %}<p class="mt-2 text-ink-muted">{{ offers.program.lead }}</p>{% endif %}
+                    <ol class="offers-program mt-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]">
+                        {%- for day in offers.program.days|default([]) %}
+                        <li class="bg-surface p-5">
+                            <p class="offers-day font-mono text-sm font-semibold text-accent uppercase">{{ day.label }}</p>
+                            <h3 class="mt-1 text-lg font-semibold">{{ day.title }}</h3>
+                            <p class="mt-2 text-ink-soft">{{ day.text }}</p>
+                        </li>
+                        {%- endfor %}
+                    </ol>
+                </section>
+            {% endif %}
+
+            {% if offers.example is defined %}
+                <section class="mt-16 flex flex-wrap items-center gap-10" aria-labelledby="offres-exemple">
+                    <div class="min-w-0 flex-[1_1_20rem]">
+                        <h2 id="offres-exemple" class="text-2xl font-semibold sm:text-3xl">{{ offers.example.title }}</h2>
+                        {%- if offers.example.lead is defined %}<p class="mt-3 text-ink-soft">{{ offers.example.lead }}</p>{% endif %}
+                        {%- if offers.example.link is defined %}<p class="mt-3"><a href="{{ offers.example.link.url }}">{{ offers.example.link.text }}</a></p>{% endif %}
+                    </div>
+                    <div class="offers-finding min-w-0 flex-[999_1_30rem] rounded-xl border border-line bg-surface p-6">
+                        {%- if offers.example.severity is defined or offers.example.label is defined %}
+                        <p class="flex flex-wrap items-center gap-3">
+                            {%- if offers.example.severity is defined %}<span class="offers-severity rounded-full border border-danger bg-danger-bg px-3 py-0.5 text-sm font-semibold text-danger">{{ offers.example.severity }}</span>{% endif %}
+                            {%- if offers.example.label is defined %}<span class="font-mono text-sm text-ink-muted">{{ offers.example.label }}</span>{% endif %}
+                        </p>
+                        {%- endif %}
+                        <h3 class="mt-3 text-lg font-semibold">{{ offers.example.finding }}</h3>
+                        {%- if offers.example.rows is defined %}
+                        <dl class="mt-3 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
+                            {%- for row in offers.example.rows %}
+                            <dt class="font-semibold">{{ row.label }}</dt>
+                            {%- if row.value starts with '`' and row.value ends with '`' and row.value|length > 2 %}
+                            <dd class="m-0 min-w-0 font-mono text-sm break-words"><code>{{ row.value|slice(1, -1) }}</code></dd>
+                            {%- else %}
+                            <dd class="m-0 text-ink-soft">{{ row.value }}</dd>
+                            {%- endif %}
+                            {%- endfor %}
+                        </dl>
+                        {%- endif %}
+                    </div>
+                </section>
+            {% endif %}
+
+            {% if offers.steps is defined %}
+                <section class="mt-16" aria-labelledby="offres-etapes">
+                    <h2 id="offres-etapes" class="text-2xl font-semibold sm:text-3xl">{{ offers.steps.title }}</h2>
+                    <ol class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                        {%- for step in offers.steps.items|default([]) %}
+                        <li class="flex gap-3">
+                            <span class="offers-step-number inline-grid h-9 w-9 shrink-0 place-items-center rounded-md bg-bg-2 font-semibold" aria-hidden="true">{{ loop.index }}</span>
+                            <div><h3 class="font-semibold">{{ step.title }}</h3><p class="mt-1 text-ink-soft">{{ step.text }}</p></div>
+                        </li>
+                        {%- endfor %}
+                    </ol>
+                </section>
+            {% endif %}
+
+            {% if offers.faq is defined %}
+                <section class="mx-auto mt-16 max-w-3xl" aria-labelledby="offres-faq">
+                    <h2 id="offres-faq" class="text-2xl font-semibold sm:text-3xl">{{ offers.faq.title }}</h2>
+                    <div class="offers-faq mt-5 border-t border-line">
+                        {%- for item in offers.faq.items|default([]) %}
+                        <details class="border-b border-line py-4"{% if loop.first %} open{% endif %}>
+                            <summary class="cursor-pointer text-lg font-semibold">{{ item.question }}</summary>
+                            <p class="mt-2 text-ink-soft">{{ item.answer }}</p>
+                        </details>
+                        {%- endfor %}
+                    </div>
+                </section>
+            {% endif %}
+        </div>
+        <div class="h-16"></div>
+    </main>
+
+    {% if offers.cta is defined %}
+        <section class="offers-final bg-dark text-dark-ink" aria-labelledby="offres-dernier-appel">
+            <div class="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-6 px-4 py-12 sm:px-6">
+                <div class="min-w-0 flex-[1_1_26rem]">
+                    {%- if offers.cta.eyebrow is defined %}{{ _self.eyebrow(offers.cta.eyebrow) }}{% endif %}
+                    <h2 id="offres-dernier-appel" class="mt-1 text-2xl font-semibold sm:text-3xl">{{ offers.cta.title }}</h2>
+                </div>
+                {{ _self.booking(booking, external, offers.cta.button, 'dernier-appel') }}
+            </div>
+        </section>
+    {% endif %}
+{% endblock %}

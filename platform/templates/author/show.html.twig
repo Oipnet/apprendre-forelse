@@ -2,15 +2,24 @@
 {% trans_default_domain 'blog' %}
 
 {#
-  La page d'un auteur (voir App\Controller\AuthorController) : qui il est, comment le joindre, ce qu'il a écrit.
-  Variables : person (un auteur de Theme::author() : id, name, jobTitle, bio?, about?, links?, portraitUrl), about (la
-  présentation, en HTML), articles (ses plus récents), more (il en a d'autres), tracks (les parcours publics dans la
-  langue de la page, pour l'auteur par défaut).
+  La page d'un auteur (voir App\Controller\AuthorController) : une vitrine, pour qui veut travailler avec lui. D'abord
+  qui il est et comment le joindre, puis ce qu'il sait faire, son parcours, ce qu'il enseigne et ce qu'il écrit, et un
+  dernier appel. Chaque section n'apparaît que si le thème la remplit (« person » de theme.yaml).
+  Variables : person (un auteur de Theme::author() : id, name, jobTitle, bio?, about?, links?, portraitUrl, location?,
+  availability?, booking?, cta?, expertise?, skills?, stats?, services?, press?, testimonials?), about (la présentation
+  longue, en HTML, ou null), articles (ses plus récents), more (il en a d'autres), tracks (les parcours publics dans la
+  langue de la page, pour l'auteur par défaut), offers (le thème a une page des offres, pour l'auteur par défaut).
+  Les classes author-* sont des points d'accroche pour la feuille d'un thème.
 #}
 {% block title %}{{ person.name }} · {{ theme.name }}{% endblock %}
 
+{% set links = person.links|default({}) %}
+{% set job = person.location is defined ? 'auteur.titre_lieu'|trans({metier: person.jobTitle, lieu: person.location}) : person.jobTitle %}
+
+{% macro eyebrow(text) %}<p class="author-eyebrow text-sm font-semibold tracking-wide text-accent uppercase">{{ text }}</p>{% endmacro %}
+
 {% block body %}
-    <main class="author-page mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+    <main class="author-page mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
         <nav class="breadcrumb" aria-label="{{ 'commun.fil_ariane'|trans }}">
             <ol>
                 <li><a href="{{ path('app_home') }}">{{ 'commun.accueil'|trans }}</a></li>
@@ -18,37 +27,121 @@
             </ol>
         </nav>
 
-        <header class="mt-6 flex flex-wrap items-center gap-6">
-            {%- if person.portraitUrl %}<img class="h-28 w-28 shrink-0 rounded-full object-cover" src="{{ person.portraitUrl }}" alt="{{ person.name }}" width="112" height="112">{% endif %}
+        <header class="author-hero mt-6 grid items-center gap-6 sm:grid-cols-[auto_1fr] sm:gap-10">
+            {%- if person.portraitUrl %}<img class="author-portrait h-28 w-28 rounded-full object-cover sm:h-48 sm:w-48" src="{{ person.portraitUrl }}" alt="{{ person.name }}" width="192" height="192">{% endif %}
             <div class="min-w-0">
-                <h1 class="text-3xl font-semibold sm:text-4xl">{{ person.name }}</h1>
-                <p class="mt-1 text-lg text-ink-muted">{{ person.jobTitle }}</p>
+                {%- if person.availability is defined %}
+                <p class="author-badge inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-0.5 text-sm font-semibold"><span class="author-badge-dot h-2.5 w-2.5 rounded-full bg-success" aria-hidden="true"></span>{{ person.availability }}</p>
+                {%- endif %}
+                <h1 class="mt-3 text-4xl font-semibold sm:text-5xl">{{ person.name }}</h1>
+                <p class="author-job mt-2 text-lg text-ink-muted sm:text-xl">{{ job }}</p>
+                {%- if person.bio is defined %}<p class="author-pitch mt-4 max-w-2xl text-lg">{{ person.bio }}</p>{% endif %}
+                <p class="author-links mt-6 flex flex-wrap gap-3">
+                    {%- for key, url in links|slice(0, 1) %}
+                    <a class="btn btn-primary" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="auteur-lien" data-umami-event-lien="{{ key }}">{{ ('auteur.lien.' ~ key)|trans }}</a>
+                    {%- endfor %}
+                    {%- if person.booking is defined %}
+                    <a class="btn" href="{{ person.booking }}" rel="noopener" target="_blank" data-umami-event="auteur-lien" data-umami-event-lien="booking">{{ 'auteur.lien.booking'|trans }}</a>
+                    {%- endif %}
+                    {%- for key, url in links|slice(1) %}
+                    <a class="author-link-secondary btn" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="auteur-lien" data-umami-event-lien="{{ key }}">{{ ('auteur.lien.' ~ key)|trans }}</a>
+                    {%- endfor %}
+                    {%- if not links %}
+                    <a class="btn btn-primary" href="{{ path('app_contact') }}" data-umami-event="auteur-lien" data-umami-event-lien="contact">{{ 'auteur.contact'|trans }}</a>
+                    {%- endif %}
+                </p>
             </div>
         </header>
 
-        <div class="lesson prose prose-theme mt-8 max-w-none">{{ about|raw }}</div>
+        {% if person.stats is defined %}
+            <section class="mt-10" aria-label="{{ 'auteur.chiffres'|trans }}">
+                <dl class="author-stats grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-4">
+                    {%- for stat in person.stats %}
+                    <div class="author-stat flex flex-col-reverse bg-surface p-5">
+                        <dt class="text-sm text-ink-muted">{{ stat.label }}</dt>
+                        <dd class="font-serif text-3xl leading-tight font-semibold">{{ stat.value }}</dd>
+                    </div>
+                    {%- endfor %}
+                </dl>
+            </section>
+        {% endif %}
 
-        <p class="author-links mt-6 flex flex-wrap gap-2">
-            {%- for key, url in person.links|default({}) %}
-            <a class="btn{{ loop.first ? ' btn-primary' }}" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="auteur-lien" data-umami-event-lien="{{ key }}">{{ ('show.auteur.lien.' ~ key)|trans }}</a>
-            {%- endfor %}
-            <a class="btn btn-primary" href="{{ path('app_contact') }}" data-umami-event="auteur-lien" data-umami-event-lien="contact">{{ 'show.auteur.contact'|trans }}</a>
-        </p>
+        {% if person.expertise is defined or person.skills is defined or person.services is defined %}
+            <section class="mt-14" aria-labelledby="auteur-expertise">
+                {{ _self.eyebrow('auteur.expertise_haut'|trans) }}
+                <h2 id="auteur-expertise" class="mt-1 text-3xl font-semibold">{{ 'auteur.expertise'|trans }}</h2>
+                {%- if person.expertise is defined or person.skills is defined %}
+                <ul class="mt-5 flex flex-wrap gap-2">
+                    {%- for skill in person.expertise|default([]) %}<li class="author-chip author-chip-main rounded-full border border-accent bg-bg-2 px-3 py-1 text-sm font-semibold">{{ skill }}</li>{% endfor %}
+                    {%- for skill in person.skills|default([]) %}<li class="author-chip rounded-full border border-line bg-surface px-3 py-1 text-sm">{{ skill }}</li>{% endfor %}
+                </ul>
+                {%- endif %}
+                {%- if person.services is defined %}
+                <h3 class="sr-only">{{ 'auteur.services'|trans }}</h3>
+                <ol class="mt-6 grid gap-5 md:grid-cols-2">
+                    {%- for service in person.services %}
+                    <li class="author-card rounded-xl border border-line bg-surface p-5">
+                        <span class="author-card-number inline-grid h-9 w-9 place-items-center rounded-md bg-bg-2 font-serif font-semibold" aria-hidden="true">{{ loop.index }}</span>
+                        <h4 class="mt-3 text-xl font-semibold">{{ service.title }}</h4>
+                        <p class="mt-2 text-ink-muted">{{ service.text }}</p>
+                    </li>
+                    {%- endfor %}
+                </ol>
+                {%- endif %}
+            </section>
+        {% endif %}
+
+        {% if offers %}
+            <p class="author-offers mt-6"><a class="font-semibold" href="{{ path('app_offers') }}">{{ 'auteur.offres'|trans }} →</a></p>
+        {% endif %}
+
+        {% if about or person.press is defined or person.testimonials is defined %}
+            <section class="mt-14 grid items-start gap-10 {{ person.press is defined ? 'md:grid-cols-[3fr_2fr]' }}" aria-label="{{ 'auteur.histoire_haut'|trans }}">
+                <div class="min-w-0">
+                    {{ _self.eyebrow('auteur.histoire_haut'|trans) }}
+                    {%- if about %}<div class="author-about lesson prose prose-theme mt-1 max-w-none">{{ about|raw }}</div>{% endif %}
+                    {%- if person.testimonials is defined %}
+                    <h3 class="mt-8 text-xl font-semibold">{{ 'auteur.avis'|trans }}</h3>
+                    {%- for testimonial in person.testimonials %}
+                    <figure class="author-testimonial mt-4 border-l-4 border-accent pl-4">
+                        <blockquote class="text-ink-muted italic">« {{ testimonial.quote }} »</blockquote>
+                        <figcaption class="mt-1 text-sm">{{ testimonial.author }}</figcaption>
+                    </figure>
+                    {%- endfor %}
+                    {%- endif %}
+                </div>
+                {%- if person.press is defined %}
+                <aside class="author-press rounded-xl bg-dark p-6 text-dark-ink" aria-labelledby="auteur-presse">
+                    <h2 id="auteur-presse" class="author-eyebrow text-sm font-semibold tracking-wide uppercase">{{ 'auteur.presse'|trans }}</h2>
+                    <ul class="mt-3">
+                        {%- for mention in person.press %}
+                        <li class="border-t border-white/15 py-3 first:border-t-0">
+                            {%- if mention.url is defined %}<a class="font-semibold text-dark-ink" href="{{ mention.url }}" rel="noopener" target="_blank">{{ mention.name }}</a>{% else %}<span class="font-semibold">{{ mention.name }}</span>{% endif %}
+                            {%- if mention.text is defined %}<span class="block text-sm opacity-80">{{ mention.text }}</span>{% endif %}
+                        </li>
+                        {%- endfor %}
+                    </ul>
+                </aside>
+                {%- endif %}
+            </section>
+        {% endif %}
 
         {% if tracks %}
-            <section class="mt-12" aria-labelledby="auteur-parcours">
-                <h2 id="auteur-parcours" class="text-2xl font-semibold">{{ 'auteur.parcours'|trans }}</h2>
-                <ul class="mt-4 space-y-4">
+            <section class="mt-14" aria-labelledby="auteur-parcours">
+                {{ _self.eyebrow('auteur.parcours_haut'|trans) }}
+                <h2 id="auteur-parcours" class="mt-1 text-3xl font-semibold">{{ 'auteur.parcours'|trans }}</h2>
+                <ul class="mt-5 grid gap-4 md:grid-cols-3">
                     {%- for track in tracks %}
-                    <li><a class="font-semibold" href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a>{% if track.description %}<span class="block text-ink-muted">{{ track.description }}</span>{% endif %}</li>
+                    <li class="author-track rounded-xl border border-line bg-surface p-4"><a class="font-serif text-lg font-semibold" href="{{ path('app_track', {trackId: track.id}) }}">{{ track.title }}</a>{% if track.description %}<span class="mt-1 line-clamp-3 block text-sm text-ink-muted">{{ track.description }}</span>{% endif %}</li>
                     {%- endfor %}
                 </ul>
             </section>
         {% endif %}
 
         {% if articles %}
-            <section class="mt-12" aria-labelledby="auteur-articles">
-                <h2 id="auteur-articles" class="text-2xl font-semibold">{{ 'auteur.articles'|trans }}</h2>
+            <section class="mt-14" aria-labelledby="auteur-articles">
+                {{ _self.eyebrow('auteur.articles_haut'|trans) }}
+                <h2 id="auteur-articles" class="mt-1 text-3xl font-semibold">{{ 'auteur.articles'|trans }}</h2>
                 <ul class="mt-2">
                     {%- for article in articles %}
                     <li class="border-t border-line py-6 first:border-t-0">{{ include('blog/_article_card.html.twig') }}</li>
@@ -58,4 +151,16 @@
             </section>
         {% endif %}
     </main>
+
+    <section class="author-final border-t border-line bg-bg-2" aria-labelledby="auteur-dernier-appel">
+        <div class="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-5 px-4 py-10 sm:px-6">
+            <h2 id="auteur-dernier-appel" class="text-2xl font-semibold sm:text-3xl">{{ person.cta ?? 'auteur.dernier_appel'|trans }}</h2>
+            <p class="flex flex-wrap gap-3">
+                {%- for key, url in links|slice(0, 1) %}
+                <a class="btn btn-primary" href="{{ url }}" rel="me noopener" target="_blank" data-umami-event="auteur-lien" data-umami-event-lien="{{ key }}">{{ ('auteur.lien.' ~ key)|trans }}</a>
+                {%- endfor %}
+                <a class="btn{{ not links ? ' btn-primary' }}" href="{{ path('app_contact') }}" data-umami-event="auteur-lien" data-umami-event-lien="contact">{{ 'auteur.contact'|trans }}</a>
+            </p>
+        </div>
+    </section>
 {% endblock %}

@@ -4,6 +4,17 @@
 # Les packs de contenu ne sont PAS dans l'image : ils sont montés dans /packs.
 # La base PostgreSQL est un service à part (voir compose.yaml), indiquée par DATABASE_URL.
 
+# --- 0. Goravel en WebAssembly (runtime goravel-wasm, packages/runtime-goravel) -----------
+# Le framework Go compilé pour le navigateur. Même version de Go que go.mod ; le chargeur wasm_exec.js
+# vient du même compilateur (il change avec lui).
+FROM golang:1.25 AS goravel_wasm
+WORKDIR /src/go
+COPY packages/runtime-goravel/go/go.mod packages/runtime-goravel/go/go.sum ./
+RUN go mod download
+COPY packages/runtime-goravel/go/ ./
+RUN ./build.sh /out
+
+
 # --- 1. Playground : build Vite (îlot JS, runtime WebAssembly) -------------------------
 # Même version majeure que .nvmrc, avec laquelle la CI teste le playground (elle vérifie qu'elles concordent).
 FROM node:24-slim AS playground
@@ -17,6 +28,15 @@ WORKDIR /src/packages/simulateur-nuxt
 COPY packages/simulateur-nuxt/package.json packages/simulateur-nuxt/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY packages/simulateur-nuxt/src ./src
+
+# Goravel aussi : son binaire vient de l'étape 0, et le playground l'émet comme un asset (virtual:goravel-wasm).
+WORKDIR /src/packages/runtime-goravel
+COPY packages/runtime-goravel/package.json packages/runtime-goravel/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY packages/runtime-goravel/src ./src
+COPY packages/runtime-goravel/bin ./bin
+COPY --from=goravel_wasm /out/goravel.wasm ./dist/goravel.wasm
+COPY --from=goravel_wasm /out/wasm_exec.js ./src/wasm_exec.js
 
 WORKDIR /src/playground
 COPY playground/package.json playground/package-lock.json ./

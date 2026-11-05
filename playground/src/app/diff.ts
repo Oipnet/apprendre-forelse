@@ -2,7 +2,7 @@
  * « Avant / après » : le code de départ face à celui de l'apprenant, fichier par fichier, dans l'éditeur de
  * différences de Monaco (lecture seule). Proposé à la réussite d'un exercice de Pratique.
  */
-import { languageOf, monaco } from '../editor/monaco';
+import { languageOf, monaco, monacoTheme } from '../editor/monaco';
 import { m } from '../i18n';
 import { escapeHtml } from './html';
 
@@ -55,7 +55,7 @@ export class BeforeAfterDialog {
 			renderSideBySide: window.matchMedia('(min-width: 800px)').matches,
 			minimap: { enabled: false },
 			scrollBeyondLastLine: false,
-			theme: 'vs-dark',
+			theme: monacoTheme(),
 		});
 		this.show(changed[0], after);
 	}

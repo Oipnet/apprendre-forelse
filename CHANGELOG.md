@@ -8,8 +8,99 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Sécurité
+
+- **FrankenPHP 1.13.5** (image `dunglas/frankenphp:1.13.5-php8.5`, Caddy 2.11.9) : 17 failles corrigées. Celles qui
+  touchent la configuration du moteur (`php_server` + mode worker) : destructeurs d'une requête exécutés pendant la
+  réponse du client suivant en mode worker, cookies de session compris (GHSA-8qcf-v46r-g2mc) ; `request_body_timeout`
+  sans effet, un client lent par thread bloquait tout PHP (GHSA-j45x-h238-h4xx) ; en-tête `host` en HTTP/2 qui
+  remplaçait `HTTP_HOST` routé par Caddy (GHSA-2725-rh2w-9j9w) ; redirection ouverte sur la barre oblique finale de
+  `php_server` (GHSA-jvmv-5538-pqpg) ; plantages à distance (`die(-1)`, dépassement de `max_input_vars` :
+  GHSA-q6vv-3p75-53wr, GHSA-5359-vg53-5464). La faille la plus grave, un fichier non PHP téléversé exécuté comme PHP
+  (GHSA-j99q-3wr8-xj43), ne touche pas le moteur : rien n'est jamais écrit sous `platform/public`. Changements de
+  comportement sans effet ici : 404 pour un script introuvable, 413 pour un corps trop gros, `error_get_last()`
+  conservé entre deux requêtes d'un worker.
+
+## 3.33.0 — 2026-11-04
+
 ### Ajouté
 
+- **Tableau de bord d'Umami réservé à quelques adresses** : `ANALYTICS_ALLOWED_IPS` (plages séparées par des espaces)
+  restreint le nom d'hôte `ANALYTICS_SERVER_NAME` ; les autres visiteurs reçoivent une 403, sans voir la page de
+  connexion. Vide : aucune restriction, comme avant. Derrière le proxy commun, c'est l'adresse du visiteur qui est
+  vérifiée.
+
+## 3.32.0 — 2026-11-03
+
+### Ajouté
+
+- **Page des offres** (`/formations`, `/en/training`) : ce que la personne du thème vend de son temps, formations en
+  entreprise et audits, prix affichés. En-tête avec un extrait de code et ses tests, chiffres clés, offres en cartes
+  (une ancre chacune, `#audit-acces`), ce qui les distingue, un exemple de programme et de constat d'audit, le déroulé,
+  les questions fréquentes et un dernier appel ; chaque bouton mène au rendez-vous (`offers.booking`, sinon
+  `person.booking`, sinon la page de contact). Nouvelle clé facultative `offers` de `theme.yaml`, traduite en entier
+  sous `locales.<langue>.offers` ; sans elle, pas de page (404). Données structurées : un `Service` par offre, avec son
+  `Offer` quand `amount` donne le prix en chiffres, rendu par la personne du thème, et la FAQ en `FAQPage`. La page
+  entre dans le plan du site. Les classes `offers-*` du gabarit servent d'accroches aux thèmes.
+
+## 3.31.1 — 2026-11-03
+
+### Modifié
+
+- **Signature des articles** : le nom de l'auteur, sous le titre, mène à sa page (`/auteurs/<nom>`), et c'est bien
+  l'auteur de l'article (clé `author`), plus toujours la personne du thème.
+
+## 3.31.0 — 2026-11-03
+
+### Ajouté
+
+- **Page auteur en vitrine** (`/auteurs/<nom>`) : pastille de disponibilité, métier et ville sous le nom, bouton
+  principal (le premier profil) et prise de rendez-vous, chiffres clés, expertises en étiquettes, services en cartes,
+  parcours, mentions (« Ils en parlent »), avis de clients, et un dernier appel avant le pied de page. Nouvelles clés
+  facultatives de `person` (et des `authors`) : `location`, `availability`, `booking`, `cta`, `expertise`, `skills`,
+  `stats`, `services`, `press`, `testimonials`, traduisibles sous `locales.<langue>.person` (sauf `booking`). Les
+  données structurées de la page ajoutent `knowsAbout` et la ville (`address`), le titre de la page le métier et la ville.
+  Les classes `author-*` du gabarit servent d'accroches aux thèmes.
+- **Page d'exercice en clair ou en sombre, selon le système** (éditeurs de l'atelier compris) : palette claire neutre
+  du moteur, Monaco en `vs` ou `vs-dark`, bascule à chaud. Les blocs de code, la sortie des tests et la console restent
+  sombres. Un thème habille le clair avec la clé `editor_light:` (mêmes clés que `editor:`) ; un thème qui n'a que
+  `editor:` garde ses pages sombres (`data-editor-scheme="dark"`).
+- **Télécharger le projet** : un bouton ⤓ dans l'explorateur de l'éditeur (exercices et bac à sable) télécharge le
+  projet en .zip, tel que l'explorateur le montre (sans vendor/ ni caches, sans les tests cachés), avec les dernières
+  frappes.
+
+### Modifié
+
+- **Explorateur** : les `.gitkeep` ne s'affichent plus ; leur dossier reste visible.
+- **composer.json en lecture seule** : le message de l'éditeur explique pourquoi (dépendances préinstallées dans le
+  navigateur, pas d'accès à Packagist) et renvoie au téléchargement du projet. Avec un catalogue de paquets (PHP sans
+  framework), il indique `composer require` dans la console et, au bac à sable, le bouton 📦.
+- **Bouton 📦 du bac à sable PHP** : cocher ou décocher un paquet met aussi à jour composer.json et composer.lock (comme
+  `composer require`/`remove`), de même pour les paquets d'un lien partagé au démarrage : le projet téléchargé les
+  retrouve avec un `composer install`.
+
+## 3.30.0 — 2026-11-03
+
+### Modifié
+
+- **Mesure d'audience sans les robots** : le traceur d'Umami n'est chargé qu'au premier geste du visiteur (souris,
+  toucher, molette, clavier). Un robot qui fait tourner un vrai Chrome sans `navigator.webdriver` (Chrome Linux
+  1920x1080 en-US : 163 visites en 5 jours, toutes d'une page sans aucun événement) n'est plus compté. Les événements
+  mesurés avant ce geste (`exercice-ouvert`, `compte-cree`…) attendent le traceur. Rien de plus n'est collecté ; un
+  visiteur qui repart sans rien toucher n'est plus compté.
+
+## 3.29.0 — 2026-11-03
+
+### Ajouté
+
+- **Liens courts du bac à sable** (`/bac-a-sable/s/<id>`, `/en/playground/s/<id>`, 8 caractères au lieu de ~1600) :
+  la boîte de partage propose une case « Lien court », cochée par défaut, avec une info-bulle qui dit que le code est
+  alors gardé sur le serveur (table `scratch_share`, migration). Durée au choix : sans limite (par défaut), 1 an,
+  6 mois ou 1 mois ; un lien expiré répond 410 et le planificateur (`scheduler_scratch`, à ajouter au worker des
+  instances qui ont leur propre `compose.yaml`) l'efface dans l'heure. Le navigateur qui a créé un lien en garde la clé
+  et peut le supprimer (« Vos liens courts »). Décochée, la case redonne le lien long d'avant : rien n'est stocké. Le
+  lien court redirige vers le lien long (`X-Robots-Tag: noindex`), les anciens liens marchent toujours, `read_sandbox`
+  (MCP) relit aussi les liens courts. Limite : 30 liens par heure et par adresse IP (`scratch_share`).
 - **Paquets Composer dans le bac à sable Symfony**, avec leurs recettes Flex : form, validator, security-bundle,
   serializer, messenger, mailer, workflow, translation, uid, expression-language, rate-limiter, object-mapper,
   ux-twig-component, doctrine-fixtures-bundle, zenstruck/foundry, knp-paginator-bundle (`symfony-8-doctrine/paquets.json`).
@@ -29,16 +120,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Sécurité
 
-- **FrankenPHP 1.13.5** (image `dunglas/frankenphp:1.13.5-php8.5`, Caddy 2.11.9) : 17 failles corrigées. Celles qui
-  touchent la configuration du moteur (`php_server` + mode worker) : destructeurs d'une requête exécutés pendant la
-  réponse du client suivant en mode worker, cookies de session compris (GHSA-8qcf-v46r-g2mc) ; `request_body_timeout`
-  sans effet, un client lent par thread bloquait tout PHP (GHSA-j45x-h238-h4xx) ; en-tête `host` en HTTP/2 qui
-  remplaçait `HTTP_HOST` routé par Caddy (GHSA-2725-rh2w-9j9w) ; redirection ouverte sur la barre oblique finale de
-  `php_server` (GHSA-jvmv-5538-pqpg) ; plantages à distance (`die(-1)`, dépassement de `max_input_vars` :
-  GHSA-q6vv-3p75-53wr, GHSA-5359-vg53-5464). La faille la plus grave, un fichier non PHP téléversé exécuté comme PHP
-  (GHSA-j99q-3wr8-xj43), ne touche pas le moteur : rien n'est jamais écrit sous `platform/public`. Changements de
-  comportement sans effet ici : 404 pour un script introuvable, 413 pour un corps trop gros, `error_get_last()`
-  conservé entre deux requêtes d'un worker.
+- **Réseaux Docker cloisonnés** (`deploy/compose.yaml`) : plus de réseau commun à tous les services. La base est sur
+  `base` (avec l'application, le worker et Umami), Meilisearch sur `recherche` (application et worker), tous deux
+  internes, donc sans Internet ; l'application et le worker sortent par `sortie`, Umami a son propre réseau pour le
+  port du tunnel SSH. Umami ne joint plus Meilisearch, Meilisearch ne joint plus la base. En préproduction, Mailpit
+  n'est plus que sur `courrier` (interne) et `front`. Au déploiement, tous les conteneurs sont recréés une fois ;
+  supprimer ensuite l'ancien réseau `…_default` (voir `deploy/README.md`).
+- **Utilisateur PostgreSQL dédié à Umami** : Umami ne se connecte plus avec l'utilisateur du site (`formation`), qui
+  ouvrait toute la base (comptes, achats) à une faille d'Umami. `umami-base` crée l'utilisateur `umami`, lui donne la
+  base `umami` et ses tables, et ferme la base du site aux autres utilisateurs. **Nouvelle variable obligatoire**
+  `UMAMI_DB_PASSWORD` dans le `.env` de chaque instance, à poser avant le déploiement (`deploy/README.md`, section 8).
 
 ## 3.28.1 — 2026-11-02
 

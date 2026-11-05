@@ -75,7 +75,7 @@ services:
     # pcntl (chargée pour cette commande seulement) lui fait entendre le SIGTERM d'un arrêt : il finit le message en
     # cours et s'arrête, au lieu d'être tué au bout de 10 s. init : un vrai processus n°1, qui relaie les signaux.
     init: true
-    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "scheduler_verification", "scheduler_indexnow", "scheduler_search", "--time-limit=3600", "--memory-limit=128M"]
+    command: ["php", "-d", "extension=pcntl", "bin/console", "messenger:consume", "async", "scheduler_verification", "scheduler_indexnow", "scheduler_search", "scheduler_scratch", "--time-limit=3600", "--memory-limit=128M"]
     # Le contrôle de santé de l'image interroge Caddy, qui ne tourne pas ici.
     healthcheck:
       disable: true

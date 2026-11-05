@@ -1,0 +1,7 @@
+# Environnement d'exécution : un projet Goravel 1.18 (Go), servi par le runtime goravel-wasm
+# (packages/runtime-goravel). Le framework est compilé en WebAssembly ; ce dossier ne contient que le code
+# que l'apprenant modifie, interprété à chaque démarrage. Empaqueté par environments/bin/build-env.sh.
+id: goravel-1
+title: Goravel 1.18 — routes, contrôleurs, SQLite, tests Go
+framework: goravel
+cache: []

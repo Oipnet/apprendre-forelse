@@ -22,7 +22,7 @@
 .studio .verdict li {
 	padding-left: 1.2rem;
 	position: relative;
-	color: #d4d4dc;
+	color: var(--text-soft);
 }
 .studio .verdict li::before {
 	position: absolute;

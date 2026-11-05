@@ -11,14 +11,16 @@ final readonly class ThemeConfig
      * @param array<string, string|null>                                                                     $images    fichier du dossier du thème par rôle (logo, icon, share), null si non déclaré
      * @param array<string, string>                                                                          $colors    variable CSS => couleur, thème clair
      * @param array<string, string>                                                                          $editor    variable CSS => couleur, thème sombre de l'éditeur
+     * @param array<string, string>                                                                          $editorLight variable CSS => couleur, thème clair de l'éditeur (« editor_light »)
      * @param array<string, string>                                                                          $fonts     variable CSS => pile de polices
      * @param array{showcase: array<string, mixed>|null, author: array<string, mixed>|null, demo: array<string, mixed>|null} $home
      * @param list<string>                                                                                   $stylesheets feuilles du thème (« assets/theme.css »), posées après celle du moteur
      * @param list<string>                                                                                   $scripts     scripts du thème, chargés après ceux du moteur
      * @param list<string>                                                                                   $preload     polices du thème à précharger
-     * @param array{name: string, jobTitle: string, bio?: string, about?: string, links?: array<string, string>}|null $person    la personne derrière les contenus (marque du moteur seulement)
+     * @param array<string, mixed>|null $person    la personne derrière les contenus (marque du moteur seulement)
+     * @param array<string, mixed>|null $offers    la page des offres (/formations), vérifiée par ThemeLoader
      * @param array{image: string|null, font: string|null, text_font: string|null, colors: array<string, string>} $shareCard l'habillage des images de partage dessinées par le moteur (fichiers du dossier du thème)
-     * @param array<string, array{chip?: string, title?: string, tagline?: string, home: array<string, array<string, mixed>>, person?: array{jobTitle?: string, bio?: string, about?: string}}> $locales les textes traduits, par langue (« locales » de theme.yaml)
+     * @param array<string, array{chip?: string, title?: string, tagline?: string, home: array<string, array<string, mixed>>, person?: array<string, mixed>, offers?: array<string, mixed>}> $locales les textes traduits, par langue (« locales » de theme.yaml)
      */
     public function __construct(
         /** Vrai quand aucun theme.yaml n'est monté : c'est le thème du moteur. */
@@ -36,6 +38,7 @@ final readonly class ThemeConfig
         public array $editor,
         public array $fonts,
         public array $home,
+        public array $editorLight = [],
         public ?array $person = null,
         /** @var array<string, array<string, mixed>> les autres auteurs des articles, par identifiant (« authors ») */
         public array $authors = [],
@@ -46,6 +49,7 @@ final readonly class ThemeConfig
         public bool $replacesEngineStyles = false,
         public array $shareCard = ['image' => null, 'font' => null, 'text_font' => null, 'colors' => []],
         public array $locales = [],
+        public ?array $offers = null,
     ) {
     }
 }
