@@ -54,6 +54,7 @@ final readonly class ExerciseChecker
             $this->content->startingFiles($exercise),
             $this->content->testFiles($exercise),
             $this->content->solutionFiles($exercise),
+            array_map(fn (int $step) => $this->content->stepSolutionFiles($exercise, $step), array_keys($exercise->steps)),
         );
 
         foreach ($this->checks as $check) {

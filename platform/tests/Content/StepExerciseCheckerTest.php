@@ -140,6 +140,20 @@ final class StepExerciseCheckerTest extends TestCase
         $this->assertStringContainsString('Étape « rouge-dix-litres », solution : aucun test de l\'apprenant n\'échoue', $errors);
     }
 
+    /** Un mutant cité par une étape s'applique au code de cette étape, même si l'apprenant le récrit plus tard. */
+    public function testUnMutantSeVerifieSurLeCodeDeSonEtape(): void
+    {
+        $this->needsEnvironment();
+        $this->edit('exercise.yaml', "        label: Dix litres rapportent 500 centimes\n", "        label: Dix litres rapportent 500 centimes\n      - mutant: prix-oublie\n        label: Vos tests remarquent quand le prix est oublié\n");
+        $this->edit('exercise.yaml', "      - mutant: prix-oublie\n        label: Vos tests remarquent quand le prix est oublié\n\nmutants:", "\nmutants:");
+        $this->edit('exercise.yaml', 'search: \'$litres * self::PRIX_DU_LITRE\'', 'search: \'$litres * 50\'');
+        [$content, $checker] = $this->checker();
+
+        $result = $checker->check($content->findExercise('tdd', '01-le-premier-bidon'));
+
+        $this->assertSame([], $result->errors, 'Le texte du mutant est dans le code de l\'étape « vert-dix-litres », plus dans la solution finale.');
+    }
+
     public function testLaDerniereEtapeNePeutPasEtreRouge(): void
     {
         $this->edit('exercise.yaml', "  - id: refacto-prix\n    phase: refactor", "  - id: refacto-prix\n    phase: red");
