@@ -27,6 +27,19 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   environnements du moteur déclarent `php: '8.5'` ; PHP 8.4 n'est plus embarqué, et un environnement de pack qui
   demande encore 8.4 tourne en 8.5. Les textes du bac à sable, de la FAQ et du serveur MCP disent 8.5.
 
+### Sécurité
+
+- **FrankenPHP 1.13.5** (image `dunglas/frankenphp:1.13.5-php8.5`, Caddy 2.11.9) : 17 failles corrigées. Celles qui
+  touchent la configuration du moteur (`php_server` + mode worker) : destructeurs d'une requête exécutés pendant la
+  réponse du client suivant en mode worker, cookies de session compris (GHSA-8qcf-v46r-g2mc) ; `request_body_timeout`
+  sans effet, un client lent par thread bloquait tout PHP (GHSA-j45x-h238-h4xx) ; en-tête `host` en HTTP/2 qui
+  remplaçait `HTTP_HOST` routé par Caddy (GHSA-2725-rh2w-9j9w) ; redirection ouverte sur la barre oblique finale de
+  `php_server` (GHSA-jvmv-5538-pqpg) ; plantages à distance (`die(-1)`, dépassement de `max_input_vars` :
+  GHSA-q6vv-3p75-53wr, GHSA-5359-vg53-5464). La faille la plus grave, un fichier non PHP téléversé exécuté comme PHP
+  (GHSA-j99q-3wr8-xj43), ne touche pas le moteur : rien n'est jamais écrit sous `platform/public`. Changements de
+  comportement sans effet ici : 404 pour un script introuvable, 413 pour un corps trop gros, `error_get_last()`
+  conservé entre deux requêtes d'un worker.
+
 ## 3.28.1 — 2026-11-02
 
 ### Modifié
