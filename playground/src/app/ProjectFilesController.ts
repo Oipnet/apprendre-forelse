@@ -59,8 +59,12 @@ export class ProjectFilesController {
 			});
 			if (!ok) return;
 			const avant = { ...this.session.current };
+			const etape = this.session.step;
 			this.reset();
-			undoToast(this.root, texts.resetDone, m.common.cancel, () => this.restore(avant));
+			undoToast(this.root, texts.resetDone, m.common.cancel, () => {
+				this.restore(avant);
+				this.onRestore?.(etape);
+			});
 		});
 	}
 
@@ -206,7 +210,13 @@ export class ProjectFilesController {
 		}
 		this.drawTree();
 		this.session.saveDraft();
+		this.onReset?.();
 	}
+
+	/** Exercice à étapes : la réinitialisation ramène aussi à la première étape (voir StepsController). */
+	onReset?: () => void;
+	/** … et son annulation à l'étape d'avant (`step` : celle qu'avait la session avant la réinitialisation). */
+	onRestore?: (step: number | undefined) => void;
 
 	/** Annule une réinitialisation : le code d'avant revient, fichiers créés depuis compris. */
 	restore(avant: Record<string, string>): void {

@@ -19,12 +19,19 @@ final readonly class StructureCheck implements ExerciseCheck
             $result->error('Aucun test dans tests/.');
         }
         if (!$solution) {
-            $result->error('Aucune solution dans solution/.');
+            $result->error($exercise->hasSteps() ? 'Aucune solution dans steps/<étape>/solution/.' : 'Aucune solution dans solution/.');
         }
         $testCode = implode("\n", $context->tests);
-        foreach (array_filter($exercise->objectives, static fn (Objective $o) => $o->isHiddenTest()) as $objective) {
+        foreach (array_filter($exercise->allObjectives(), static fn (Objective $o) => $o->isHiddenTest()) as $objective) {
             if (!$context->runner->declares($testCode, $objective->test)) {
                 $result->error(sprintf('Objectif « %s » : aucun %s de ce nom dans tests/.', $objective->test, $context->runner->testNoun()));
+            }
+        }
+        // Un test caché qui porte le nom d'un test de l'apprenant : le rapport ne saurait plus lequel des deux a réussi.
+        $ownCode = implode("\n", array_intersect_key([...$starting, ...$solution], array_flip($exercise->ownTests())));
+        foreach (array_filter($exercise->allObjectives(), static fn (Objective $o) => $o->isHiddenTest()) as $objective) {
+            if ('' !== $ownCode && $context->runner->declares($ownCode, $objective->test)) {
+                $result->error(sprintf('Objectif « %s » : les tests de l\'apprenant (solution) ont une %s du même nom ; donnez au test caché un nom à lui.', $objective->test, $context->runner->testNoun()));
             }
         }
         // Un motif (migrations/*.php) désigne des fichiers qui n'existent pas encore : rien à vérifier.

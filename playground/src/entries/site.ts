@@ -17,9 +17,9 @@ async function importGuestProgress(url: string) {
 			const key = localStorage.key(i)!;
 			const match = key.startsWith(GUEST_PREFIX) ? key.slice(GUEST_PREFIX.length).match(/^([^/]+)\/([^/]+)$/) : null;
 			if (!match) continue;
-			const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as { files?: Record<string, string>; hintsUsed?: number; completed?: boolean } | null;
+			const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as { files?: Record<string, string>; hintsUsed?: number; completed?: boolean; step?: number } | null;
 			if (!saved) continue;
-			items.push({ trackId: match[1] === PRACTICE ? null : match[1], exerciseId: match[2], files: saved.files ?? {}, hintsUsed: saved.hintsUsed ?? 0, completed: !!saved.completed });
+			items.push({ trackId: match[1] === PRACTICE ? null : match[1], exerciseId: match[2], files: saved.files ?? {}, hintsUsed: saved.hintsUsed ?? 0, completed: !!saved.completed, ...(typeof saved.step === 'number' ? { step: saved.step } : {}) });
 			keys.push(key);
 		}
 	} catch {

@@ -30,6 +30,7 @@ import { scratchShareDialog } from './scratch-share';
 import { composerRequest, knownPackages, Packages, packagesDialog, parseCatalog, parseInvalidation, readSelection, requiredPackages, writeSelection } from './packages';
 import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
+import { StepsController } from './steps';
 import { SuccessPanel } from './SuccessPanel';
 import { TestResultsView } from './TestResultsView';
 import { ApiKeyPanel, redactSecrets } from './api-key';
@@ -353,6 +354,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		hintsUsed: saved?.hintsUsed ?? 0,
 		solutionRevealed: saved?.solutionRevealed ?? false,
 		completed: saved?.completed ?? false,
+		// Exercice à étapes : on reprend à l'étape enregistrée (voir StepsController).
+		...(exercise.steps?.length ? { step: saved?.step ?? 0 } : {}),
 	}, {
 		onWritten: reload,
 		// L'enregistrement automatique échoue (session expirée, accès terminé) : l'apprenant doit le savoir avant de fermer.
@@ -453,8 +456,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		mesure,
 	});
 	const results = new TestResultsView(root, mentor);
+	// Exercice à étapes : la frise, l'étape en cours, ses fichiers et ses objectifs (steps.ts).
+	const steps = exercise.steps?.length && !scratch ? new StepsController(root, exercise, { session, editor, status }) : null;
+	if (steps) {
+		files.onReset = () => void steps.goTo(0);
+		files.onRestore = (etape) => void steps.goTo(etape ?? 0);
+	}
 	const runButton = $<HTMLButtonElement>('#run');
-	bindRunButton(runButton, { exercise, scratch, runtime, session, results, success, folding, status, reload, showWorkpane, metrics, mesure });
+	bindRunButton(runButton, { exercise, scratch, runtime, session, results, success, folding, status, reload, showWorkpane, metrics, mesure, steps });
 
 	// --- Indices et solution -------------------------------------------------------------
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });

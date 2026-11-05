@@ -7,6 +7,8 @@ use App\Content\ContentRepository;
 use App\Content\EnvironmentRegistry;
 use App\Content\LessonRenderer;
 use App\Content\Exercise;
+use App\Content\ExerciseStep;
+use App\Content\StepPhase;
 use App\Content\PracticeVersionIndex;
 use App\Search\RelatedContent;
 use App\Search\RelatedLink;
@@ -81,6 +83,19 @@ final readonly class ExercisePayloadFactory
             'mutants' => array_map(static fn ($m) => ['id' => $m->id, 'label' => $m->label, 'changes' => $m->changes], $exercise->mutants),
             'files' => $this->content->startingFiles($exercise),
             'tests' => $this->content->testFiles($exercise),
+            // Exercice à étapes (rouge, vert, refacto) : chacune sa consigne, ses fichiers modifiables et ses objectifs.
+            'steps' => array_map(fn (ExerciseStep $step, int $index) => [
+                'id' => $step->id,
+                'phase' => $step->phase->value,
+                'title' => $step->title,
+                'instructionsHtml' => $this->markdown->toHtmlUnderTitle($step->instructions),
+                'editable' => $step->editable,
+                'open' => $step->open,
+                'objectives' => array_map(static fn ($o) => ['test' => $o->test, 'label' => $o->label], $step->objectives),
+                'mutants' => $step->mutantIds(),
+                // Étape rouge : le code sur lequel les tests de l'apprenant doivent passer (voir ExerciseSources).
+                'reference' => StepPhase::Red === $step->phase ? (object) $this->content->stepReferenceFiles($exercise, $index) : null,
+            ], $exercise->steps, array_keys($exercise->steps)),
             'environment' => [
                 'id' => $environment->id,
                 'phpVersion' => $environment->phpVersion,
@@ -117,6 +132,9 @@ final readonly class ExercisePayloadFactory
         ];
         if ('dev' === $this->kernelEnvironment) {
             $payload['solution'] = $this->content->solutionFiles($exercise);
+            if ($exercise->hasSteps()) {
+                $payload['stepSolutions'] = array_map(fn (int $index) => (object) $this->content->stepSolutionFiles($exercise, $index), array_keys($exercise->steps));
+            }
         }
 
         return $payload;

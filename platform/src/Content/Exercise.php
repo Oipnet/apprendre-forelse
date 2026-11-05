@@ -21,6 +21,7 @@ final readonly class Exercise
      * @param list<DocLink>        $docs     documentation utile pour résoudre l'exercice
      * @param list<Mutant>         $mutants  versions cassées de l'application, que les tests de l'apprenant doivent détecter
      * @param list<string>         $formerIds
+     * @param list<ExerciseStep>   $steps    exercice à étapes : $editable les réunit toutes, $objectives sont ceux de la dernière
      */
     public function __construct(
         public string $id,
@@ -53,7 +54,40 @@ final readonly class Exercise
          * chemin par chemin, ceux de l'exercice français.
          */
         public ?string $overlay = null,
+        public array $steps = [],
     ) {
+    }
+
+    public function hasSteps(): bool
+    {
+        return [] !== $this->steps;
+    }
+
+    /**
+     * Les objectifs de toutes les étapes (exercice à étapes), ou ceux de l'exercice.
+     *
+     * @return list<Objective>
+     */
+    public function allObjectives(): array
+    {
+        return $this->hasSteps() ? array_merge(...array_map(static fn (ExerciseStep $step) => $step->objectives, $this->steps)) : $this->objectives;
+    }
+
+    /**
+     * Les mutants à essayer pour ces objectifs : pour un exercice à étapes, ceux qu'ils citent ; sinon tous.
+     *
+     * @param list<Objective>|null $objectives null : ceux de l'exercice
+     *
+     * @return list<Mutant>
+     */
+    public function mutantsFor(?array $objectives = null): array
+    {
+        if (!$this->hasSteps() && null === $objectives) {
+            return $this->mutants;
+        }
+        $ids = array_filter(array_map(static fn (Objective $o) => $o->mutantId(), $objectives ?? $this->objectives));
+
+        return array_values(array_filter($this->mutants, static fn (Mutant $m) => \in_array($m->id, $ids, true)));
     }
 
     /** Le dernier exercice d'un chapitre, reconnaissable à son titre : le pack ne le déclare pas autrement. */

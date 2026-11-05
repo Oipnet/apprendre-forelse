@@ -7,6 +7,8 @@ export interface SessionState {
 	hintsUsed: number;
 	solutionRevealed: boolean;
 	completed: boolean;
+	/** Exercice à étapes : l'étape en cours (0 pour la première) ; absente pour un exercice ordinaire. */
+	step?: number;
 }
 
 export interface SessionOptions {
@@ -31,6 +33,8 @@ export class ExerciseSession {
 	hintsUsed: number;
 	solutionRevealed: boolean;
 	completed: boolean;
+	/** Exercice à étapes : l'étape en cours, enregistrée avec le brouillon. */
+	step: number | undefined;
 	/**
 	 * Écritures vers le runtime en attente, par fichier : un debounce global perdrait la
 	 * modification d'un fichier quand un autre change juste après.
@@ -53,6 +57,7 @@ export class ExerciseSession {
 		this.hintsUsed = state.hintsUsed;
 		this.solutionRevealed = state.solutionRevealed;
 		this.completed = state.completed;
+		this.step = state.step;
 		this.writeDelayMs = options.writeDelayMs ?? 400;
 		this.saveDelayMs = options.saveDelayMs ?? 1500;
 	}
@@ -103,7 +108,7 @@ export class ExerciseSession {
 	async saveNow(): Promise<void> {
 		clearTimeout(this.saveTimer);
 		this.saveTimer = undefined;
-		await this.progress.saveDraft(this.current, this.hintsUsed);
+		await this.progress.saveDraft(this.current, this.hintsUsed, this.step);
 	}
 
 	/** Enregistre le brouillon après son délai (les appels rapprochés n'en font qu'un) ; un échec est signalé. */
@@ -111,7 +116,7 @@ export class ExerciseSession {
 		clearTimeout(this.saveTimer);
 		this.saveTimer = setTimeout(() => {
 			this.saveTimer = undefined;
-			this.progress.saveDraft(this.current, this.hintsUsed).catch((error: unknown) => {
+			this.progress.saveDraft(this.current, this.hintsUsed, this.step).catch((error: unknown) => {
 				console.warn(error);
 				this.options.onDraftError?.(error instanceof Error ? error : new Error(String(error)));
 			});
@@ -126,8 +131,8 @@ export class ExerciseSession {
 		if (this.saveTimer === undefined) return;
 		clearTimeout(this.saveTimer);
 		this.saveTimer = undefined;
-		if (this.progress.saveDraftOnExit) this.progress.saveDraftOnExit(this.current, this.hintsUsed);
-		else void this.progress.saveDraft(this.current, this.hintsUsed).catch(() => {});
+		if (this.progress.saveDraftOnExit) this.progress.saveDraftOnExit(this.current, this.hintsUsed, this.step);
+		else void this.progress.saveDraft(this.current, this.hintsUsed, this.step).catch(() => {});
 	}
 
 	/** Ce qu'un indice de plus coûterait en XP (0 une fois réussi ou la solution consultée). */
@@ -146,15 +151,21 @@ export class ExerciseSession {
 	async complete(): Promise<CompletionResult> {
 		clearTimeout(this.saveTimer);
 		this.saveTimer = undefined;
-		await this.progress.saveDraft(this.current, this.hintsUsed);
+		await this.progress.saveDraft(this.current, this.hintsUsed, this.step);
 		const result = await this.progress.complete(this.hintsUsed);
 		this.completed = true;
 		return result;
 	}
 
-	/** La solution de référence ; null quand elle n'est pas accessible. */
+	/** Étape suivante d'un exercice à étapes : retenue tout de suite, le code reste celui de l'apprenant. */
+	async goToStep(step: number): Promise<void> {
+		this.step = step;
+		await this.saveNow();
+	}
+
+	/** La solution de référence (celle de l'étape en cours, pour un exercice à étapes) ; null quand elle n'est pas accessible. */
 	async revealSolution(): Promise<Record<string, string> | null> {
-		const files = await this.progress.revealSolution();
+		const files = await this.progress.revealSolution(this.step);
 		if (files) this.solutionRevealed = true;
 		return files;
 	}
