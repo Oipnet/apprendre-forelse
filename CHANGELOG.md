@@ -8,6 +8,23 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Sécurité
+
+- **FrankenPHP 1.13.5** (image `dunglas/frankenphp:1.13.5-php8.5`, Caddy 2.11.9) : 17 failles corrigées. Celles qui
+  touchent la configuration du moteur (`php_server` + mode worker) : destructeurs d'une requête exécutés pendant la
+  réponse du client suivant en mode worker, cookies de session compris (GHSA-8qcf-v46r-g2mc) ; `request_body_timeout`
+  sans effet, un client lent par thread bloquait tout PHP (GHSA-j45x-h238-h4xx) ; en-tête `host` en HTTP/2 qui
+  remplaçait `HTTP_HOST` routé par Caddy (GHSA-2725-rh2w-9j9w) ; redirection ouverte sur la barre oblique finale de
+  `php_server` (GHSA-jvmv-5538-pqpg) ; plantages à distance (`die(-1)`, dépassement de `max_input_vars` :
+  GHSA-q6vv-3p75-53wr, GHSA-5359-vg53-5464). La faille la plus grave, un fichier non PHP téléversé exécuté comme PHP
+  (GHSA-j99q-3wr8-xj43), ne touche pas le moteur : rien n'est jamais écrit sous `platform/public`. Changements de
+  comportement sans effet ici : 404 pour un script introuvable, 413 pour un corps trop gros, `error_get_last()`
+  conservé entre deux requêtes d'un worker.
+- **Symfony 8.1.11** : corrige les failles publiées le 04/11 (`composer audit` bloquait la CI), dont
+  http-foundation, security-http (connexion programmatique qui sautait `checkPostAuth()`), serializer (fichier du
+  serveur lu par `UploadedFile` ou une URI `data:`), validator (contrainte `Ip` contournable en IPv6) et yaml (temps
+  d'analyse exponentiel).
+
 ### Corrigé
 
 - **La page des offres (/formations, /en/training) et la page auteur (/auteurs/…) s'indexent** : elles manquaient à la
