@@ -52,6 +52,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   sommaires de chapitre à description écrite ont maintenant le leur, et un exercice dont la consigne s'ouvre sur une
   phrase qui annonce une liste (« Depuis : ») garde le premier élément de cette liste.
 - **Titre du blog** : « Le blog : Symfony, Laravel et PHP en pratique », au lieu de « Le blog » seul (et en anglais).
+- **L'adresse du serveur MCP (/mcp) ouverte dans un navigateur** redirige (301) vers la page d'installation
+  (/en/playground/ai ou /bac-a-sable/ia selon la langue) : les annuaires MCP y renvoient. Un client MCP (POST, ou GET
+  en `text/event-stream`) n'est pas concerné.
 
 ## 3.33.0 — 2026-11-04
 

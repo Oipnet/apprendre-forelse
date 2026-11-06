@@ -47,6 +47,24 @@ final class McpServerTest extends WebTestCase
         $this->assertSame(['framework', 'files'], $create['inputSchema']['required']);
     }
 
+    public function testUnNavigateurQuiOuvreLAdresseArriveSurLaPageDInstallation(): void
+    {
+        $this->client->request('GET', '/mcp', server: ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,*/*;q=0.8', 'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9']);
+        $this->assertResponseRedirects('/en/playground/ai', 301, 'Les liens des annuaires MCP profitent à la page.');
+        $this->assertSame(['Accept', 'Accept-Language'], $this->client->getResponse()->getVary());
+
+        $this->client->request('GET', '/mcp', server: ['HTTP_ACCEPT' => 'text/html', 'HTTP_ACCEPT_LANGUAGE' => 'fr-FR,fr;q=0.9']);
+        $this->assertResponseRedirects('/bac-a-sable/ia', 301, 'Dans la langue du navigateur.');
+    }
+
+    public function testUnClientMcpNEstJamaisRedirige(): void
+    {
+        $this->client->request('GET', '/mcp', server: ['HTTP_ACCEPT' => 'text/event-stream']);
+        $this->assertFalse($this->client->getResponse()->isRedirection(), 'Le GET d\'écoute d\'un client MCP va au serveur.');
+
+        $this->handshake();
+    }
+
     public function testLeProjetDeDepartDonneSesFichiersEtCeQuOnPeutModifier(): void
     {
         $this->handshake();
