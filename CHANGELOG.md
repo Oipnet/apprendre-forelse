@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.34.0 — 2026-11-06
+
 ### Ajouté
 
 - **Exercices à étapes** (`steps:` dans `exercise.yaml`), pour avancer au rythme du TDD : rouge, vert, refacto. Chaque
