@@ -359,6 +359,18 @@ final class ContentRepository implements ResetInterface
         return $this->sources()->solutionFiles($exercise);
     }
 
+    /** @return array<string, string> les solutions des étapes jusqu'à celle-ci comprise (voir ExerciseSources) */
+    public function stepSolutionFiles(Exercise $exercise, int $step): array
+    {
+        return $this->sources()->stepSolutionFiles($exercise, $step);
+    }
+
+    /** @return array<string, string> le code attendu d'une étape rouge (voir ExerciseSources) */
+    public function stepReferenceFiles(Exercise $exercise, int $step): array
+    {
+        return $this->sources()->stepReferenceFiles($exercise, $step);
+    }
+
     /** @return array<string, string> tests cachés, écrits dans tests/ du projet */
     public function testFiles(Exercise $exercise): array
     {

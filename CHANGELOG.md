@@ -8,6 +8,20 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Exercices à étapes** (`steps:` dans `exercise.yaml`), pour avancer au rythme du TDD : rouge, vert, refacto. Chaque
+  étape a sa consigne (`steps/<id>/instructions.md`), ses fichiers modifiables, ses objectifs et sa solution
+  (`steps/<id>/solution/`) ; l'apprenant garde son code d'une étape à l'autre. Le playground montre la frise des
+  étapes, verrouille les tests au vert et au refacto (le code au rouge) et propose « Étape suivante » quand l'étape est
+  réussie ; la réussite de l'exercice vient à la dernière. Une étape rouge se valide quand un test de l'apprenant
+  échoue sur son code (`own-tests: fail`, avec le message de PHPUnit) **et** passe sur le code attendu, celui de l'étape
+  verte suivante (`own-tests: reference`). La progression retient l'étape (`exercise_progress.step`, migration), « Voir
+  la solution » donne celle de l'étape en cours, la vérification d'une réussite rejoue les objectifs de la dernière
+  étape, et `content:check` vérifie les étapes une à une. Voir « Exercices à étapes » dans le README.
+- **Environnement `php-8-tdd`** pour le parcours « Apprendre le TDD en PHP » : `php-8` avec PHPUnit, le code dans
+  `src/` (`App\`), les tests dans `tests/` (`App\Tests\`).
+
 ### Sécurité
 
 - **FrankenPHP 1.13.5** (image `dunglas/frankenphp:1.13.5-php8.5`, Caddy 2.11.9) : 17 failles corrigées. Celles qui

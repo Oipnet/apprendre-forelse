@@ -52,6 +52,7 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 			${exercise.practice ? `<p class="lead">${escapeHtml(exercise.practice.summary)}</p>` : ''}
 			<div class="xp">${exercise.concepts.map((c) => conceptChip(c, exercise.conceptUrls[c])).join('')}${exercise.xp > 0 ? `<span class="chip gold">${m.common.xp(exercise.xp)}</span>` : ''}${exercise.practice?.version ? (exercise.practice.versionUrl ? `<a class="chip gold" href="${escapeHtml(exercise.practice.versionUrl)}" title="${m.layout.versionTitle}">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</a>` : `<span class="chip gold">${escapeHtml(framework.label)} ${escapeHtml(exercise.practice.version)}</span>`) : ''}</div>
 			<article class="instructions">${sanitize(exercise.instructionsHtml)}</article>
+			<div class="steps-panel" id="steps" hidden></div>
 			<h3${exercise.objectives.length ? '' : ' hidden'}>${m.layout.objectives}</h3>
 			<ul class="objectives">
 				${exercise.objectives.map((o) => `<li data-test="${escapeHtml(o.test)}"><span class="dot" aria-hidden="true"></span><span class="sr-only objective-state"></span><span>${escapeHtml(o.label)}</span></li>`).join('')}

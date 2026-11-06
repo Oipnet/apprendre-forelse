@@ -20,6 +20,12 @@ export const fr = {
 		/** Une ligne du rapport des mutants, dans la sortie des tests. */
 		reportDetected: (mutant: string) => `✔ détecté — ${mutant}`,
 		reportSurvived: (mutant: string) => `✘ survivant — ${mutant}`,
+		/** Étape rouge réussie : le test qui échoue (`test`), et pourquoi (`why` : le message de PHPUnit). */
+		redFor: (test: string, why: string) => (why ? `Rouge comme prévu : ${test} échoue — ${why}` : `Rouge comme prévu : ${test} échoue.`),
+		notRed: 'Vos tests passent tous : écrivez un test qui échoue sur le code actuel.',
+		/** Les tests de l'apprenant qui échouent aussi sur le code attendu (`tests` : leurs noms, déjà joints). */
+		referenceFailing: (tests: string) => `Sur le code attendu, ce test devrait passer, mais il échoue : ${tests}. Vérifiez ce que vous attendez (valeurs, noms de classe et de méthode de la consigne).`,
+		referenceBroken: 'Vos tests ne se lancent pas sur le code attendu : vérifiez les noms de classe et de méthode de la consigne.',
 	},
 
 	/** La surveillance du worker (WorkerRuntime). `runtime` : son libellé, qui commence la phrase (« Le simulateur Nuxt »). */

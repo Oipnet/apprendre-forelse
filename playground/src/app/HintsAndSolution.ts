@@ -8,7 +8,7 @@ import type { ExercisePayload, PlaygroundConfig } from './types';
 
 export interface HintsAndSolutionDeps {
 	session: ExerciseSession;
-	editor: Pick<EditorPanel, 'addFile' | 'has' | 'open' | 'setContent'>;
+	editor: Pick<EditorPanel, 'addFile' | 'has' | 'open' | 'setContent' | 'removeFile'>;
 	/** Sur petit écran : amène l'apprenant sur le volet où quelque chose vient de se passer. */
 	revealPane: (pane: 'brief' | 'code') => void;
 	/** Ce qui identifie l'exercice dans la mesure d'audience. */
@@ -64,7 +64,9 @@ export class HintsAndSolution {
 			let first: string | undefined;
 			for (const [path, content] of Object.entries(files)) {
 				const tabPath = `solution/${path}`;
-				if (!editor.has(tabPath)) editor.addFile(tabPath, content, true, `✓ ${path.split('/').pop()!}`);
+				// Exercice à étapes : la solution d'une étape suivante remplace celle déjà ouverte.
+				if (editor.has(tabPath)) editor.removeFile(tabPath);
+				editor.addFile(tabPath, content, true, `✓ ${path.split('/').pop()!}`);
 				first ??= tabPath;
 			}
 			if (first) editor.open(first);
@@ -111,7 +113,9 @@ export class HintsAndSolution {
 			solutionButton.hidden = false;
 			solutionButton.title = m.hints.devOnly;
 			solutionButton.addEventListener('click', () => {
-				for (const [path, content] of Object.entries(exercise.solution!)) editor.setContent(path, content);
+				// Exercice à étapes : la solution de l'étape en cours.
+				const files = exercise.stepSolutions?.[session.step ?? 0] ?? exercise.solution!;
+				for (const [path, content] of Object.entries(files)) editor.setContent(path, content);
 			});
 		}
 	}

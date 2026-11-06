@@ -11,6 +11,7 @@ final readonly class CheckContext
      * @param array<string, string> $starting état de départ, par chemin
      * @param array<string, string> $tests    tests cachés
      * @param array<string, string> $solution solution de référence
+     * @param list<array<string, string>> $steps exercice à étapes : la solution cumulée à la fin de chaque étape
      */
     public function __construct(
         public Environment $environment,
@@ -18,6 +19,7 @@ final readonly class CheckContext
         public array $starting,
         public array $tests,
         public array $solution,
+        public array $steps = [],
     ) {
     }
 }
