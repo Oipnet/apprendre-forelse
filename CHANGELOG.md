@@ -13,6 +13,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **La page des offres (/formations, /en/training) et la page auteur (/auteurs/…) s'indexent** : elles manquaient à la
   liste blanche de `SearchIndexing` et partaient en `noindex` (sans canonical ni Open Graph), alors que le sitemap les
   annonçait.
+- **Sans compte, « Acheter » et « Créer ma classe gratuite » mènent droit à la connexion** (`/connexion?suite=…`, qui
+  ramène à la page demandée) au lieu d'une adresse qui y redirige en 302 : les robots ne voient plus de liens vers des
+  redirections.
 
 ## 3.33.0 — 2026-11-04
 
