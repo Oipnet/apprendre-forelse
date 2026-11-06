@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Corrigé
+
+- **La page des offres (/formations, /en/training) et la page auteur (/auteurs/…) s'indexent** : elles manquaient à la
+  liste blanche de `SearchIndexing` et partaient en `noindex` (sans canonical ni Open Graph), alors que le sitemap les
+  annonçait.
+
 ## 3.33.0 — 2026-11-04
 
 ### Ajouté

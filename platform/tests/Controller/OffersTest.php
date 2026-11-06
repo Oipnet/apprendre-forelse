@@ -88,6 +88,7 @@ final class OffersTest extends WebTestCase
         $this->assertSame('GET /factures/{id}', $crawler->filter('.offers-finding dd code')->text(), 'Une valeur entre accents graves est du code.');
         $this->assertSame('Financement OPCO ?', $crawler->filter('.offers-faq summary')->text());
         $this->assertStringContainsString('Formation Symfony en entreprise | Atelier', $crawler->filter('title')->text());
+        $this->assertFalse($this->client->getResponse()->headers->has('X-Robots-Tag'), 'La page des offres s\'indexe : elle est dans le sitemap.');
 
         $html = (string) $this->client->getResponse()->getContent();
         $this->assertStringContainsString('"@type":"Service"', $html);
@@ -97,6 +98,7 @@ final class OffersTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/auteurs/ada-lovelace');
         $this->assertSame('/formations', $crawler->filter('.author-offers a')->attr('href'), 'La page auteur mène aux offres.');
+        $this->assertFalse($this->client->getResponse()->headers->has('X-Robots-Tag'), 'La page auteur s\'indexe : elle est dans le sitemap.');
 
         $this->client->request('GET', '/en/training');
         $this->assertResponseStatusCodeSame(404, 'Pas de page dans une langue que le thème ne traduit pas.');
