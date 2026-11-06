@@ -48,7 +48,7 @@ final class FreeClassTest extends WebTestCase
     {
         $this->client->request('GET', '/ecoles-et-entreprises');
 
-        $this->assertSelectorExists('#classe-gratuite a[href="'.self::URL.'"]');
+        $this->assertSelectorExists('#classe-gratuite a[href="/connexion?suite='.self::URL.'"]', 'Sans compte, droit à la connexion : pas de lien vers une redirection.');
         $this->client->request('GET', self::URL);
         $this->assertResponseRedirects('/connexion', message: 'Un visiteur se connecte ou s\'inscrit d\'abord.');
     }

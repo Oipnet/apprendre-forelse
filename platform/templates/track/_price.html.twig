@@ -25,7 +25,9 @@
             <p class="text-sm text-ink-muted">{{ 'track.price.cohorte'|trans({cohorte: quote.cohort.name}) }}</p>
         {% endif %}
         {% if offer.purchasable %}
-            <a class="btn btn-primary" href="{{ path('app_purchase', {trackId: track.id}) }}">{{ 'track.price.acheter'|trans }}</a>
+            {# Sans compte, droit à la connexion, qui ramène à l'achat : pas de lien vers une redirection (robots). #}
+            {% set achat = path('app_purchase', {trackId: track.id}) %}
+            <a class="btn btn-primary" href="{{ app.user ? achat : path('app_login', {suite: achat}) }}">{{ 'track.price.acheter'|trans }}</a>
         {% else %}
             {# Paiement pas encore configuré sur l'instance : le prix s'affiche, l'achat viendra. #}
             <span class="btn cursor-default opacity-60" aria-disabled="true">{{ 'track.price.bientot_disponible'|trans }}</span>
