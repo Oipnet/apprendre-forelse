@@ -33,6 +33,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Sans compte, « Acheter » et « Créer ma classe gratuite » mènent droit à la connexion** (`/connexion?suite=…`, qui
   ramène à la page demandée) au lieu d'une adresse qui y redirige en 302 : les robots ne voient plus de liens vers des
   redirections.
+- **Descriptions plus complètes** (audit Ahrefs, « Meta description too short ») : une description courte prend le
+  premier complément qui tient dans les 155 caractères, du plus parlant au plus court, au lieu d'y renoncer. Les
+  sommaires de chapitre à description écrite ont maintenant le leur, et un exercice dont la consigne s'ouvre sur une
+  phrase qui annonce une liste (« Depuis : ») garde le premier élément de cette liste.
+- **Titre du blog** : « Le blog : Symfony, Laravel et PHP en pratique », au lieu de « Le blog » seul (et en anglais).
 
 ## 3.33.0 — 2026-11-04
 

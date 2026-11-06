@@ -22,10 +22,16 @@ final readonly class ExerciseStory
     public function firstParagraph(string $source): string
     {
         $text = trim(html_entity_decode(strip_tags((string) preg_replace('#</(p|h[1-6]|li|ul|ol|pre|table|blockquote)>#', "\$0\n\n", $this->markdown->toHtml($source))), \ENT_QUOTES | \ENT_HTML5));
-        foreach (preg_split('/\n\s*\n/', $text) ?: [] as $paragraph) {
+        $paragraphs = array_values(array_filter(array_map(trim(...), preg_split('/\n\s*\n/', $text) ?: []), static fn (string $p): bool => '' !== $p));
+        foreach ($paragraphs as $i => $paragraph) {
             // Un titre répète celui de l'exercice : on cherche une vraie phrase.
-            if (mb_strlen(trim($paragraph)) >= 40) {
-                return trim($paragraph);
+            if (mb_strlen($paragraph) >= 40) {
+                // Une phrase qui annonce une liste (« Depuis : ») ne dit rien sans son premier élément.
+                if (str_ends_with($paragraph, ':') && isset($paragraphs[$i + 1])) {
+                    $paragraph .= ' '.$paragraphs[$i + 1];
+                }
+
+                return $paragraph;
             }
         }
 
