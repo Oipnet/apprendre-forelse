@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.35.0 — 2026-11-06
+
 ### Corrigé
 
 - **Titre de la page auteur** : trop long avec la marque, il garde le nom et le métier (« Arnaud Pointet, Développeur
