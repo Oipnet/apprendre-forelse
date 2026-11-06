@@ -169,10 +169,13 @@ export class ProjectFilesController {
 		const boutonNouveau = this.$<HTMLButtonElement>('#new-file');
 		boutonNouveau.hidden = motifsModifiables.length === 0;
 		boutonNouveau.addEventListener('click', async () => {
-			const autorises = motifsModifiables.join(', ');
-			const chemin = prompt(m.files.newFilePrompt(autorises), motifsModifiables[0].replace('*', m.files.newFileName))?.trim().replace(/^\/+/, '');
+			// Exercice à étapes : seulement là où l'étape en cours le permet (pas de code à une étape rouge).
+			const permis = this.editableNow?.() ?? editable;
+			const motifs = permis.filter((entree) => entree.includes('*'));
+			const autorises = (motifs.length ? motifs : permis).join(', ');
+			const chemin = prompt(m.files.newFilePrompt(autorises), (motifs[0] ?? motifsModifiables[0]).replace('*', m.files.newFileName))?.trim().replace(/^\/+/, '');
 			if (!chemin) return;
-			if (chemin.split('/').includes('..') || !estModifiable(chemin, editable)) {
+			if (chemin.split('/').includes('..') || !estModifiable(chemin, permis)) {
 				void noticeDialog(this.root, m.files.notEditableTitle, m.files.notEditable(chemin, autorises));
 				return;
 			}
@@ -217,6 +220,8 @@ export class ProjectFilesController {
 	onReset?: () => void;
 	/** … et son annulation à l'étape d'avant (`step` : celle qu'avait la session avant la réinitialisation). */
 	onRestore?: (step: number | undefined) => void;
+	/** Exercice à étapes : les fichiers modifiables de l'étape en cours, qui bornent la création de fichiers. */
+	editableNow?: () => string[];
 
 	/** Annule une réinitialisation : le code d'avant revient, fichiers créés depuis compris. */
 	restore(avant: Record<string, string>): void {

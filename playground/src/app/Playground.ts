@@ -460,6 +460,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const steps = exercise.steps?.length && !scratch ? new StepsController(root, exercise, { session, editor, status }) : null;
 	if (steps) {
 		files.onReset = () => void steps.goTo(0);
+		files.editableNow = () => steps.current.editable;
 		files.onRestore = (etape) => void steps.goTo(etape ?? 0);
 	}
 	const runButton = $<HTMLButtonElement>('#run');
