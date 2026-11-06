@@ -119,6 +119,7 @@ final class IndexNowTest extends WebTestCase
     public function testTheKeyFileIsServed(): void
     {
         $client = static::createClient();
+        $client->disableReboot();
         $this->resetDatabase();
 
         static::getContainer()->set(IndexNow::class, $this->indexNow());
@@ -127,12 +128,10 @@ final class IndexNowTest extends WebTestCase
         $this->assertSame(self::KEY, $client->getResponse()->getContent());
         $this->assertStringStartsWith('text/plain', (string) $client->getResponse()->headers->get('Content-Type'));
 
-        static::getContainer()->set(IndexNow::class, $this->indexNow());
         $client->request('GET', '/'.self::KEY.'.txt');
         $this->assertResponseIsSuccessful();
         $this->assertSame(self::KEY, $client->getResponse()->getContent(), 'Aussi à la racine, sous son nom : l\'adresse par défaut du protocole.');
 
-        static::getContainer()->set(IndexNow::class, $this->indexNow());
         $client->request('GET', '/autre-cle-123.txt');
         $this->assertResponseStatusCodeSame(404);
     }
