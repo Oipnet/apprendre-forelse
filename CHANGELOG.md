@@ -13,6 +13,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Titre de la page auteur** : trop long avec la marque, il garde le nom et le métier (« Arnaud Pointet, Développeur
   Symfony freelance à Bordeaux ») au lieu de tomber sur le nom seul (audit Ahrefs, « Title too short »).
 
+### Ajouté
+
+- **Clé IndexNow aussi à la racine** (`/<clé>.txt`, l'adresse par défaut du protocole) : un outil qui soumet sans
+  `keyLocation`, comme le bouton IndexNow d'Ahrefs, peut la vérifier. `/indexnow.txt` reste servie.
+
 ## 3.34.0 — 2026-11-06
 
 ### Ajouté
