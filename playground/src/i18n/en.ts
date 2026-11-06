@@ -136,6 +136,27 @@ export const en: Messages = {
 		relatedTitle: 'You might also like',
 	},
 
+	steps: {
+		phase: { red: 'Red', green: 'Green', refactor: 'Refactor' },
+		phaseHint: {
+			red: 'Write a failing test. Only the tests can be edited.',
+			green: 'Make the test pass, as simply as possible. The tests are locked.',
+			refactor: 'Improve the code without changing what it does. The tests are locked and must stay green.',
+		},
+		timeline: 'The steps of the exercise',
+		position: (position: number, total: number) => `Step ${position} of ${total}`,
+		stateDone: 'done',
+		stateCurrent: 'in progress',
+		next: 'Next step',
+		passed: (title: string) => `Step passed: ${title}`,
+		started: (position: number, title: string) => `Step ${position}: ${title}`,
+		locked: {
+			red: 'During red, you only write the test: the code waits for the green step.',
+			green: 'During green, the tests are locked: change the code, not the test.',
+			refactor: 'During refactor, the tests are locked: they must stay green as they are.',
+		},
+	},
+
 	hints: {
 		/** The hints button; `cost`: the XP one more hint would cost (0: free). */
 		hint: (cost: number) => (cost <= 0 ? 'Need a hint?' : `Need a hint? (−${cost} XP)`),

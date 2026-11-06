@@ -1,0 +1,7 @@
+# Environnement d'exécution du parcours « Apprendre le TDD en PHP » (pack la-fruitiere, dépôt de contenu) : le projet
+# sans framework de php-8, plus PHPUnit. L'apprenant écrit ses tests dans tests/ (namespace App\Tests), le code dans src/
+# (namespace App) ; les tests cachés des exercices vivent dans tests/Verification/. Il prolonge php-8 : la console,
+# le petit Composer (.forelse/composer.php) et le catalogue des paquets (paquets.json) en viennent.
+id: php-8-tdd
+extends: php-8
+title: PHP 8.5 — sans framework, PHPUnit (TDD)

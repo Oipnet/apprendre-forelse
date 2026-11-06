@@ -51,6 +51,8 @@ export const pathOf = (uri: monaco.Uri) => uri.path.replace(/^\/app\//, '');
 interface OpenFile {
 	path: string;
 	readonly: boolean;
+	/** Verrouillé le temps d'une étape : le message qui le dit (voir setReadonly). */
+	lockedMessage?: string;
 	model: monaco.editor.ITextModel;
 	tab: HTMLButtonElement;
 }
@@ -115,6 +117,20 @@ export class EditorPanel {
 		return this.files.has(path);
 	}
 
+	/**
+	 * Verrouille ou rouvre un fichier de l'apprenant (exercice à étapes : les tests pendant le vert et le refacto, le
+	 * code pendant le rouge). `message` : ce que dit l'éditeur à qui tape dans un fichier verrouillé.
+	 */
+	setReadonly(path: string, readonly: boolean, message?: string) {
+		const file = this.files.get(path);
+		if (!file) return;
+		file.readonly = readonly;
+		file.lockedMessage = message;
+		file.tab.classList.toggle('readonly', readonly);
+		file.tab.title = readonly ? m.editor.readonlyTitle(path) : path;
+		if (this.current === file) this.editor.updateOptions({ readOnly: readonly, readOnlyMessage: { value: message ?? m.editor.readonlyMessage } });
+	}
+
 	open(path: string) {
 		const file = this.files.get(path);
 		if (!file) return;
@@ -123,7 +139,7 @@ export class EditorPanel {
 		this.current = file;
 		file.tab.classList.add('active');
 		this.editor.setModel(file.model);
-		this.editor.updateOptions({ readOnly: file.readonly, readOnlyMessage: { value: file.path === 'composer.json' ? this.composerMessage : m.editor.readonlyMessage } });
+		this.editor.updateOptions({ readOnly: file.readonly, readOnlyMessage: { value: file.lockedMessage ?? (file.path === 'composer.json' ? this.composerMessage : m.editor.readonlyMessage) } });
 		const state = this.viewStates.get(path);
 		if (state) this.editor.restoreViewState(state);
 		this.editor.focus();

@@ -45,4 +45,40 @@ describe('gradeOwnTests', () => {
 		expect(aucun.cases[0]).toMatchObject({ status: 'failed', message: 'Écrivez un test.' });
 		expect(lances).toBe(0);
 	});
+
+	describe('étape rouge', () => {
+		const rouge: Grading = { ownTests: ['tests/MenuTest.php'], mutants: [], red: { reference: { 'src/Menu.php': '<?php // attendu' } } };
+
+		it('réussit quand un test échoue sur le code de l\'apprenant et passe sur le code attendu', async () => {
+			const poses: Record<string, string>[] = [];
+			const echec = { ...cas('testPrix', 'failed'), message: 'Failed asserting that 0 is identical to 500.' };
+			const { cases } = await gradeOwnTests(rouge, [cas('testCarte', 'passed'), echec], async () => ({ cases: [] }), wording, async (files) => {
+				poses.push(files);
+				return { cases: [cas('testCarte', 'passed'), cas('testPrix', 'passed')] };
+			});
+			expect(poses).toEqual([{ 'src/Menu.php': '<?php // attendu' }]);
+			expect(cases.map((c) => [c.name, c.status])).toEqual([['own-tests', 'failed'], ['own-tests-fail', 'passed'], ['own-tests-reference', 'passed']]);
+			// Réussi, l'objectif dit quand même pourquoi c'est rouge.
+			expect(cases[1].message).toBe('Rouge comme prévu : testPrix échoue — Failed asserting that 0 is identical to 500.');
+		});
+
+		it('échoue quand tous les tests passent déjà, ou quand le test échoue aussi sur le code attendu', async () => {
+			const vert = await gradeOwnTests(rouge, [cas('testPrix', 'passed')], async () => ({ cases: [] }), wording, async () => ({ cases: [cas('testPrix', 'passed')] }));
+			expect(vert.cases[1]).toMatchObject({ name: 'own-tests-fail', status: 'failed', message: 'Vos tests passent tous : écrivez un test qui échoue sur le code actuel.' });
+
+			const faux = await gradeOwnTests(rouge, [cas('testPrix', 'failed')], async () => ({ cases: [] }), wording, async () => ({ cases: [cas('testPrix', 'failed')] }));
+			expect(faux.cases[1].status).toBe('passed');
+			expect(faux.cases[2]).toMatchObject({ name: 'own-tests-reference', status: 'failed' });
+			expect(faux.cases[2].message).toContain('testPrix');
+
+			const casse = await gradeOwnTests(rouge, [cas('testPrix', 'error')], async () => ({ cases: [] }), wording, async () => ({ cases: [], broken: true }));
+			expect(casse.cases[1].status).toBe('passed');
+			expect(casse.cases[2].status).toBe('failed');
+		});
+
+		it('échoue sans runtime capable de poser le code attendu', async () => {
+			const { cases } = await gradeOwnTests(rouge, [cas('testPrix', 'failed')], async () => ({ cases: [] }), wording);
+			expect(cases[2]).toMatchObject({ name: 'own-tests-reference', status: 'failed' });
+		});
+	});
 });

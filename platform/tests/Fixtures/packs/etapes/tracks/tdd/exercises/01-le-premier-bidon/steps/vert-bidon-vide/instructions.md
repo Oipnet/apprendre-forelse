@@ -1,0 +1,1 @@
+Étape vert-bidon-vide.

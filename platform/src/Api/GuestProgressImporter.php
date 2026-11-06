@@ -35,7 +35,7 @@ final readonly class GuestProgressImporter
             if (!$exercise || !$this->guard->allows($user, $exercise) || $this->progress->find($user, $exercise)) {
                 continue;
             }
-            $this->progress->saveDraft($user, $exercise, $item->files, $item->hintsUsed);
+            $this->progress->saveDraft($user, $exercise, $item->files, $item->hintsUsed, $item->step);
             if ($item->completed) {
                 $this->progress->complete($user, $exercise, $item->hintsUsed);
             }

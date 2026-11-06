@@ -74,11 +74,15 @@ export interface TestRunResult {
 /**
  * Notation des tests écrits par l'apprenant (même logique que content:check, côté plateforme) :
  *  - « own-tests » : ses tests passent tous sur l'application correcte (au moins un) ;
- *  - « mutant:<id> » : ils échouent sur l'application cassée par ce mutant.
+ *  - « mutant:<id> » : ils échouent sur l'application cassée par ce mutant ;
+ *  - étape rouge d'un exercice à étapes (`red`) : « own-tests-fail », au moins un échoue sur le code de l'apprenant,
+ *    et « own-tests-reference », ils passent tous sur le code attendu de l'étape.
  */
 export interface Grading {
 	ownTests: string[];
 	mutants: { id: string; label: string; changes: { file: string; search: string; replace: string }[] }[];
+	/** Étape rouge : le code attendu (contenu par chemin), posé le temps d'un run des tests de l'apprenant. */
+	red?: { reference: Record<string, string> };
 }
 
 export interface CommandResult {

@@ -139,6 +139,34 @@ export const fr = {
 		relatedTitle: 'Ça pourrait vous intéresser',
 	},
 
+	/** Les exercices à étapes (rouge, vert, refacto) : frise, étape en cours, passage à la suivante. */
+	steps: {
+		phase: { red: 'Rouge', green: 'Vert', refactor: 'Refacto' },
+		/** Ce que la phase autorise, sous le titre de l'étape. */
+		phaseHint: {
+			red: 'Écrivez un test qui échoue. Seuls les tests sont modifiables.',
+			green: 'Faites passer le test, le plus simplement possible. Les tests sont verrouillés.',
+			refactor: 'Améliorez le code sans changer ce qu\'il fait. Les tests sont verrouillés et doivent rester verts.',
+		},
+		/** Le nom de la frise, pour les lecteurs d'écran. */
+		timeline: 'Les étapes de l\'exercice',
+		/** « Étape 2 sur 6 ». */
+		position: (position: number, total: number) => `Étape ${position} sur ${total}`,
+		stateDone: 'terminée',
+		stateCurrent: 'en cours',
+		next: 'Étape suivante',
+		/** La barre de statut, à l'étape validée. */
+		passed: (title: string) => `Étape réussie : ${title}`,
+		/** La barre de statut, à l'arrivée sur une étape. */
+		started: (position: number, title: string) => `Étape ${position} : ${title}`,
+		/** Ce que dit l'éditeur à qui tape dans un fichier verrouillé le temps de l'étape. */
+		locked: {
+			red: 'Pendant le rouge, on n\'écrit que le test : le code attendra l\'étape verte.',
+			green: 'Pendant le vert, les tests sont verrouillés : on change le code, pas le test.',
+			refactor: 'Pendant le refacto, les tests sont verrouillés : ils doivent rester verts tels quels.',
+		},
+	},
+
 	hints: {
 		/** Le bouton des indices ; `cost` : l'XP qu'un indice de plus coûterait (0 : gratuit). */
 		hint: (cost: number) => (cost <= 0 ? 'Un indice ?' : `Un indice ? (−${cost} XP)`),
