@@ -40,6 +40,14 @@ final class PageSeoTest extends TestCase
         $this->assertStringNotContainsString('complément', (string) $seo->getDescription());
     }
 
+    public function testLePremierComplementQuiTientEstRetenu(): void
+    {
+        $text = str_repeat('mot ', 25);
+        $seo = $this->seo()->setDescription($text, str_repeat('long ', 20), 'Un complément court.');
+
+        $this->assertSame(trim($text).' Un complément court.', $seo->getDescription(), 'Le complément trop long laisse place au suivant.');
+    }
+
     public function testUneDescriptionTropLongeNeDepassePas155Caracteres(): void
     {
         $description = $this->seo()->setDescription(str_repeat('développer, ', 30))->getDescription();

@@ -15,7 +15,7 @@ auto_hebergement:
 
 blog:
     titre: Le blog
-    titre_marque: "Le blog | {marque}"
+    titre_marque: "Le blog : Symfony, Laravel et PHP en pratique | {marque}"
     description: "Des articles qui partent d'un exercice pour aller plus loin : ce que fait vraiment le framework, où il s'arrête, et comment s'en servir en production. Et les coulisses de la plateforme."
     # Complément de la description, quand il y a plus d'un article.
     nombre_articles: "{n} articles."
@@ -70,11 +70,17 @@ chapitre:
     titre: "{chapitre} – chapitre {numero}, parcours {framework}"
     # {notions} : les notions de ses exercices (ou son titre), en minuscules.
     description: "Chapitre {numero} du parcours {parcours} : {notions}. {n, plural, one {# exercice à faire en écrivant du code, corrigé par des tests.} other {# exercices à faire en écrivant du code, corrigés par des tests.}}"
+    # Complète une description écrite trop courte.
+    complement: "Chapitre {numero} du parcours {parcours} : {n, plural, one {# exercice corrigé par des tests.} other {# exercices corrigés par des tests.}}"
+    complement_court: "{n, plural, one {# exercice corrigé par des tests.} other {# exercices corrigés par des tests.}}"
 
 exercice:
     libelle: "exercice : {exercice}"
     titre: "{exercice} – exercice {framework}"
     complement: "Un exercice du chapitre « {chapitre} », parcours {parcours}."
+    # Quand le complément complet ne tient pas : du plus parlant au plus court.
+    complement_court: "Un exercice du parcours {parcours}."
+    complement_minimal: Un exercice corrigé par des tests, dans le navigateur.
 
 pratique:
     fil_ariane: Pratique
@@ -97,6 +103,7 @@ pratique:
         titre: "{framework} : {fonctionnalite} – exercice"
         titre_court: "{framework} : {fonctionnalite}"
         complement: "Un exercice court de la Pratique {framework}, à faire dans le navigateur."
+        complement_court: "Exercice {framework} à faire dans le navigateur."
 
 bac_a_sable:
     index:

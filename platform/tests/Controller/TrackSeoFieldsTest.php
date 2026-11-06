@@ -52,7 +52,7 @@ final class TrackSeoFieldsTest extends WebTestCase
 
         $crawler = $client->request('GET', '/parcours/decouverte/chapitre/bonjour/sommaire');
         $this->assertResponseIsSuccessful();
-        $this->assertSame(self::DESCRIPTION, $crawler->filter('meta[name="description"]')->attr('content'));
+        $this->assertSame(self::DESCRIPTION.' 2 exercices corrigés par des tests.', $crawler->filter('meta[name="description"]')->attr('content'), 'Écrite et courte : complétée, sans dépasser 155 caractères.');
         $this->assertSelectorTextSame('.chapter-outline .lead', self::DESCRIPTION, 'Elle se lit aussi sur la page, pas seulement dans la meta.');
 
         $crawler = $client->request('GET', '/parcours/decouverte/01-bonjour');

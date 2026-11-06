@@ -5,7 +5,7 @@ commun:
 
 blog:
     titre: Blog
-    titre_marque: "Blog | {marque}"
+    titre_marque: "Blog: Symfony, Laravel and PHP in practice | {marque}"
     description: "Articles that start from an exercise and go further: what the framework really does, where it stops, and how to use it in production. Plus behind the scenes of the platform."
     nombre_articles: "{n} articles."
     fil_ariane: Blog
@@ -21,6 +21,7 @@ pratique:
         titre: "{framework}: {fonctionnalite} – exercise"
         titre_court: "{framework}: {fonctionnalite}"
         complement: "A short {framework} Practice exercise, to do in the browser."
+        complement_court: "A {framework} exercise to do in the browser."
 
 catalogue:
     sujet_par_defaut: web development
@@ -63,11 +64,15 @@ contenu:
 chapitre:
     titre: "{chapitre} – chapter {numero}, {framework} track"
     description: "Chapter {numero} of the {parcours} track: {notions}. {n, plural, one {# exercise to do by writing code, checked by tests.} other {# exercises to do by writing code, checked by tests.}}"
+    complement: "Chapter {numero} of the {parcours} track: {n, plural, one {# exercise checked by tests.} other {# exercises checked by tests.}}"
+    complement_court: "{n, plural, one {# exercise checked by tests.} other {# exercises checked by tests.}}"
 
 exercice:
     libelle: "exercise: {exercice}"
     titre: "{exercice} – {framework} exercise"
     complement: "An exercise from the “{chapitre}” chapter, {parcours} track."
+    complement_court: "An exercise from the {parcours} track."
+    complement_minimal: An exercise checked by tests, in the browser.
 
 bac_a_sable:
     index:
