@@ -23,6 +23,7 @@ const exempleFr = {
     { code: 'MTFACT', libelle: 'Montant', type: '9', longueur: 7, decimales: 2, signe: true },
     { code: 'NBREL', libelle: 'Nombre de relances', type: '9', longueur: 5 },
     { code: 'NBFACT', libelle: 'Nombre de factures', type: '9', longueur: 3 },
+    { code: 'ACTION', libelle: 'Action (C, M, A)', type: 'X', longueur: 1 },
   ],
   structures: [
     { code: 'FACTURE', libelle: 'Facture', rubriques: ['REGION', 'NUMCLI', 'NOMCLI', 'MTFACT'] },
@@ -48,6 +49,53 @@ const exempleFr = {
   // Tables de la base (façon DB2) : code de 2 lettres (préfixe des zones d'échange), nom, rubriques, clé.
   tables: [
     { code: 'CL', nom: 'CLIENT', rubriques: ['NUMCLI', 'NOMCLI', 'MTFACT', 'NBFACT'], cle: ['NUMCLI'] },
+  ],
+  // Écrans de saisie (voir dialogue.js) : le Dialogue CL, une fiche client et une liste, sur la table CLIENT.
+  ecrans: [
+    {
+      code: 'CL0010', nom: 'Fiche client',
+      zones: [
+        { nlg: '100', pos: 'A', lg: '1', col: '2', nat: 'L', libelle: 'CL0010' },
+        { nlg: '110', pos: 'A', lg: '1', col: '28', nat: 'L', libelle: 'FICHE CLIENT' },
+        { nlg: '200', rub: 'ACTION', pos: 'A', lg: '4', col: '2', nat: 'V', pres: 'N', trt: 'I' },
+        { nlg: '210', rub: 'NUMCLI', pos: 'A', lg: '6', col: '2', nat: 'V', pres: 'S', presence: 'R', segMaj: 'CL00', segSrc: 'CL00' },
+        { nlg: '220', rub: 'NOMCLI', lg: '1', nat: 'V', pres: 'S', presence: 'R', segMaj: 'CL00', segSrc: 'CL00' },
+        { nlg: '230', rub: 'MTFACT', lg: '1', nat: 'V', pres: 'S', segMaj: 'CL00', segSrc: 'CL00' },
+        { nlg: '240', rub: 'NBFACT', lg: '1', nat: 'V', pres: 'S', segMaj: 'CL00', segSrc: 'CL00' },
+        { nlg: '800', rub: 'LIERR', pos: 'A', lg: '22', col: '2', nat: 'P', pres: 'F' },
+        { nlg: '900', pos: 'A', lg: '24', col: '2', nat: 'L', libelle: 'ENTREE VALIDER  PF2 LISTE' },
+        { nlg: '910', pos: 'A', lg: '24', col: '29', nat: 'L', libelle: 'PF3 FIN  EFFACER SORTIR' },
+        { nlg: '950', rub: 'PFKEY', maj: 'G', segMaj: 'CL0020', segSrc: '02' },
+        { nlg: '951', maj: 'G', segMaj: '', segSrc: '03' },
+      ],
+      segments: [
+        { seg: 'CL00', cat: '', recep: 'T', affich: 'A', alim: '0010-NUMCLI', cle: 'NUMCLI', org: 'S' },
+      ],
+    },
+    {
+      code: 'CL0020', nom: 'Liste des clients',
+      zones: [
+        { nlg: '100', pos: 'A', lg: '1', col: '2', nat: 'L', libelle: 'CL0020' },
+        { nlg: '110', pos: 'A', lg: '1', col: '28', nat: 'L', libelle: 'LISTE DES CLIENTS' },
+        { nlg: '120', pos: 'A', lg: '3', col: '2', nat: 'L', libelle: 'A CLIENT  NOM DU CLIENT' },
+        { nlg: '130', pos: 'A', lg: '3', col: '35', nat: 'L', libelle: 'MONTANT  NB FACT.' },
+        { nlg: '200', rub: 'LIGNES', pos: 'A', lg: '4', col: '2', nat: 'R', rv: '12' },
+        { nlg: '210', rub: 'ACTION', pos: 'A', lg: '4', col: '2', nat: 'V', pres: 'F', trt: 'I' },
+        { nlg: '220', rub: 'NUMCLI', col: '1', nat: 'V', pres: 'F', segMaj: 'CL00', segSrc: 'CL00' },
+        { nlg: '230', rub: 'NOMCLI', col: '2', nat: 'V', pres: 'F', segMaj: 'CL00', segSrc: 'CL00' },
+        { nlg: '240', rub: 'MTFACT', col: '2', nat: 'V', pres: 'F', segMaj: 'CL00', segSrc: 'CL00' },
+        { nlg: '250', rub: 'NBFACT', col: '3', nat: 'V', pres: 'F', segMaj: 'CL00', segSrc: 'CL00' },
+        { nlg: '300', rub: 'FIN', pos: 'A', lg: '22', col: '2', nat: 'Z' },
+        { nlg: '310', rub: 'LIERR', pos: 'A', lg: '22', col: '2', nat: 'P', pres: 'F' },
+        { nlg: '400', pos: 'A', lg: '24', col: '2', nat: 'L', libelle: 'PF3 FICHE  PF8 SUITE' },
+        { nlg: '410', pos: 'A', lg: '24', col: '24', nat: 'L', libelle: 'ENTREE VALIDER  EFFACER SORTIR' },
+        { nlg: '950', rub: 'PFKEY', maj: 'G', segMaj: 'CL0010', segSrc: '03' },
+        { nlg: '951', trt: 'O', maj: 'V', segMaj: 'S', segSrc: '08' },
+      ],
+      segments: [
+        { seg: 'CL00', cat: 'R', recep: 'T', affich: 'A', alim: '0020-NUMCLI', cle: 'NUMCLI', org: 'S' },
+      ],
+    },
   ],
   // Langage structuré : une sous-fonction commence par une ligne N (titre, niveau, type, condition).
   lignes: [
@@ -181,6 +229,11 @@ const TEXTES_EN = {
   'Plafond de crédit': 'Credit limit', 'Code mouvement': 'Transaction code', 'Mouvement client': 'Customer transaction',
   'CLIENTS.DAT': 'CUSTOMERS.DAT', 'MOUVEMENTS.DAT': 'TRANSACT.DAT', 'CLIENTS.NEW': 'CUSTOMERS.NEW', 'MISE A JOUR DES CLIENTS': 'CUSTOMER UPDATE',
   INCONNU: 'UNKNOWN', 'ETAT.TXT': 'REPORT.TXT',
+  'Action (C, M, A)': 'Action (C, M, D)', 'Fiche client': 'Customer record', 'FICHE CLIENT': 'CUSTOMER RECORD',
+  'ENTREE VALIDER  PF2 LISTE': 'ENTER CONFIRM  PF2 LIST', 'PF3 FIN  EFFACER SORTIR': 'PF3 END  CLEAR EXIT',
+  'Liste des clients': 'Customer list', 'LISTE DES CLIENTS': 'CUSTOMER LIST', 'A CLIENT  NOM DU CLIENT': 'A CUSTNO  CUSTOMER NAME',
+  'MONTANT  NB FACT.': 'AMOUNT   NB INV.', 'PF3 FICHE  PF8 SUITE': 'PF3 RECORD  PF8 NEXT',
+  'ENTREE VALIDER  EFFACER SORTIR': 'ENTER CONFIRM  CLEAR EXIT',
   "CHIFFRE D'AFFAIRES PAR REGION                    PAGE": `${'SALES BY REGION'.padEnd(49)}PAGE`,
   'REGION   CLIENT  NOM                             MONTANT': 'REGION   CUST.   NAME                            AMOUNT',
   '         TOTAL REGION': '         REGION TOTAL', 'TOTAL GENERAL': 'GRAND TOTAL',
@@ -251,7 +304,7 @@ export function versFichier(r, valeur) {
 
 
 // ---- Émission en format fixe ----
-class Source {
+export class Source {
   constructor() { this.lignes = []; }
   a(t = '') { this.ligne('       ' + t); }            // zone A (colonne 8)
   b(t = '') { this.ligne('           ' + t); }        // zone B (colonne 12)
@@ -500,6 +553,7 @@ export function normaliser(modele) {
   m.tables ||= [];
   m.lignes ||= [];
   m.etats ||= [];
+  m.ecrans ||= [];
   if (!Array.isArray(m.appels)) {
     const t = m.traitement;
     const pris = new Set([...m.sorties.map((x) => x.code), ...m.tables.map((x) => x.code)]);

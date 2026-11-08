@@ -42,6 +42,10 @@
       "sortie": "[    ]\n[00042][+0042]\n",
       "fichiers": {}
     },
+    "numval.cbl": {
+      "sortie": "[        ] 000000009      0.00\n[12 3    ] 000000004      0.00\n[+5      ] 000000000      5.00\n[5-      ] 000000000     -5.00\n[.5      ] 000000000      0.50\n[5.      ] 000000000      5.00\n[  -7.25 ] 000000000     -7.25\n[1.2.3   ] 000000004      0.00\n[- 4     ] 000000000     -4.00\n[ABC     ] 000000001      0.00\n[12345678] 000000000  45678.00\n",
+      "fichiers": {}
+    },
     "sauts-melanges.cbl": {
       "sortie": "",
       "fichiers": {
@@ -59,5 +63,17 @@
       "sortie": "AABBCC    |\nABS ..00..00..00|\nABS ..00..07XY00|..07|\n0306\n0042ZZ\nF04\nHORS +0003\nHORS +0004\n555123\nQ Q |\nABS   00..07XY00|\n      00  00  00|\n[   ]\n[  5]\n*-*-ZZ\nCC\nBAS\n",
       "fichiers": {}
     }
+  },
+  "ecrans": {
+    "ecran sans base : controles": [
+      "A      000                                                                                                              0000\n",
+      "M      001CLIENT : ZONE OBLIGATOIRE                                                                                     2200\n",
+      "M      000                                                                        12    X                   -1.5     NOR1111\n",
+      "M      001CLIENT : NOMBRE ATTENDU                                                 1A    X                               4100\n",
+      "M      004REGION : VALEUR NON PREVUE                                              1     X                            EST1105\n",
+      "M      000                                                                         7    X                   99999.999   1110\n",
+      "M      001CLIENT : ZONE OBLIGATOIRE                                                                                     2200\n",
+      "E      000                                                                                                              0000\n"
+    ]
   }
 }

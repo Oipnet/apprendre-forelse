@@ -209,4 +209,26 @@ for (const [id, d] of Object.entries(DEFIS)) {
   cas.push([`defi ${id} : solution`, SOLUTIONS[id](normaliser(d.modele))]);
 }
 
-export { cas, SOLUTIONS };
+// Écrans de saisie sans base (GnuCOBOL ne compile pas les EXEC SQL) : contrôles de présence, de classe et de valeurs,
+// touches. Chaque échange : ICF, touche et zones saisies ; l'écran renvoyé (ECRAN-S) doit être celui de GnuCOBOL.
+const ecranControles = {
+  code: 'TS0001', nom: 'Controles', zones: [
+    { nlg: '100', pos: 'A', lg: '1', col: '2', nat: 'L', libelle: 'TEST' },
+    { nlg: '200', rub: 'NUMCLI', pos: 'A', lg: '3', col: '2', nat: 'V', pres: 'S', presence: 'R' },
+    { nlg: '210', rub: 'NOMCLI', lg: '1', nat: 'V', pres: 'S', presence: 'R' },
+    { nlg: '220', rub: 'MTFACT', lg: '1', nat: 'V', pres: 'S' },
+    { nlg: '230', rub: 'REGION', lg: '1', nat: 'V', pres: 'S', maj: 'V', segMaj: 'NOR' },
+    { nlg: '231', maj: 'V', segMaj: 'SUD' },
+    { nlg: '800', rub: 'LIERR', pos: 'A', lg: '22', col: '2', nat: 'P', pres: 'F' },
+    { nlg: '950', rub: 'PFKEY', maj: 'G', segMaj: '', segSrc: '03' },
+  ], segments: [],
+};
+const casEcrans = [
+  ['ecran sans base : controles', { ...structuredClone(exemple), ecrans: [ecranControles] }, 'TS0001', [
+    { icf: '0' }, { valeurs: {} }, { valeurs: { NUMCLI: '12', NOMCLI: 'X', MTFACT: '-1.5', REGION: 'NOR' } },
+    { valeurs: { NUMCLI: '1A', NOMCLI: 'X' } }, { valeurs: { NUMCLI: '1', NOMCLI: 'X', REGION: 'EST' } },
+    { valeurs: { NUMCLI: ' 7', NOMCLI: 'X', MTFACT: '99999.999' } }, { touche: '05' }, { touche: '03' },
+  ]],
+];
+
+export { cas, casEcrans, SOLUTIONS };

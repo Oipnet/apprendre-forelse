@@ -34,6 +34,7 @@
         <li><a href="#traitement">L'édition simplifiée</a></li>
         <li><a href="#structure">Le langage structuré</a></li>
         <li><a href="#etats">Les états</a></li>
+        <li><a href="#saisie">Les écrans de saisie</a></li>
         <li><a href="#base">La base</a></li>
         <li><a href="#terminal">Le terminal</a></li>
       </ol>
@@ -51,6 +52,7 @@
             <tr><td>Fichiers</td><td>C</td><td>L'appel des fichiers : code, utilisation, enregistrement, nom, argument (rupture ou synchronisation).</td></tr>
             <tr><td>Traitement</td><td>T</td><td>Le nom du programme, le titre, et pour une édition sans état : filtres, colonnes, détail, totaux. Les fichiers en sortie.</td></tr>
             <tr><td>États</td><td>K</td><td>Un état décrit à la manière du manuel : libellés, structures, composition.</td></tr>
+            <tr><td>(au terminal)</td><td>O</td><td>Des écrans de saisie qui lisent et mettent à jour les tables : description, Segments, maquette, exécution.</td></tr>
             <tr><td>Langage structuré</td><td>P</td><td>Vos traitements, en fonctions et sous-fonctions.</td></tr>
             <tr><td>Données</td><td>D</td><td>Le contenu des fichiers en entrée, saisi colonne par colonne.</td></tr>
             <tr><td>Base</td><td>B, Q</td><td>Les tables façon DB2, et une console SQL pour les interroger.</td></tr>
@@ -190,6 +192,25 @@
         <p>Saut <code>00</code> : surimpression ; saut absolu <code>*</code> à 01 : nouvelle page. Postes à 0 : chaque ligne est éditée tout de suite, sans être stockée. Les compteurs <code>5-dd00-eCL</code> (ligne dans la page), <code>CLM</code> (lignes par page), <code>CP</code> (page) et <code>CE</code> (lignes écrites) servent dans les conditions et les sources ; <code>CATX</code> est la catégorie en cours.</p>
       </section>
 
+      <section id="saisie">
+        <h2>Les écrans de saisie</h2>
+        <p>Un écran a un code de six caractères, les deux premiers étant le code du Dialogue (<code>CL0010</code>). Il se décrit au terminal (choix <code>O</code>) ; le programme généré est une transaction pseudo-conversationnelle : chaque Entrée ou touche PF reçoit l'écran, le contrôle, met à jour la base et renvoie l'écran suivant.</p>
+        <h3>Description (-CE)</h3>
+        <p>Une ligne par élément, dans l'ordre des numéros. Vue C1 : place et présentation ; vue C2 (PF11) : mise à jour et source.</p>
+        <ul>
+          <li>Position : <code>A</code> absolue (ligne, colonne), blanc relative à la zone précédente (lignes plus bas, ou colonnes après).</li>
+          <li>Nature : <code>V</code> saisie, <code>F</code> protégée mais reçue, <code>P</code> affichée seulement, <code>O</code> libellé de la rubrique seul, <code>L</code> libellé fixe (sans rubrique), <code>R</code> début de la partie répétitive (RV lignes, H lignes par instance), <code>Z</code> début du bas d'écran.</li>
+          <li>Présentation du libellé : <code>L</code> <code>M</code> long sur 36 à gauche ou à droite, <code>N</code> long utile, <code>S</code> <code>T</code> <code>U</code> les mêmes en court sur 18, <code>F</code> rubrique seule, <code>1</code> en-tête de colonne.</li>
+          <li><code>R</code> : saisie obligatoire. Traitement <code>I</code> : code mouvement de la catégorie (<code>C</code> création, <code>M</code> modification, <code>A</code> annulation) ; sans code mouvement, la mise à jour est implicite.</li>
+          <li>Mise à jour <code>M</code> : la rubrique met à jour le Segment indiqué ; <code>V</code> : valeur permise, une par ligne suite. La source : le Segment affiché qui alimente la rubrique.</li>
+          <li><code>LIERR</code> (nature P) reçoit le message d'erreur. <code>PFKEY</code> décrit les touches : <code>G</code> ou <code>S</code> appel d'un autre écran (blanc : fin de la conversation), <code>V</code> code opération de la touche (<code>S</code> suite de la liste…).</li>
+        </ul>
+        <h3>Segments (-CS)</h3>
+        <p>Les tables lues ou mises à jour : code du Segment (code de la table et deux chiffres), catégorie, utilisation en réception (<code>N</code> <code>L</code> lu <code>E</code> existence <code>M</code> modification <code>X</code> création et modification <code>T</code> les trois), en affichage (<code>A</code>), et la zone de l'écran qui donne la clé (<code>0010-NUMCLI</code> ; blanc : début de la table).</p>
+        <h3>Maquette et exécution</h3>
+        <p><code>-SIM</code> montre l'écran tel qu'il sera, les touches G et S enchaînent les maquettes ; Effacer revient. <code>-TP</code> exécute la transaction sur la base ; Effacer quitte. <code>-G</code> montre le source généré. En erreur, la zone fautive est signalée, le curseur s'y place et rien n'est écrit.</p>
+      </section>
+
       <section id="base">
         <h2>La base</h2>
         <p>Une base tourne dans le navigateur, à la manière de DB2. Chaque table a un code de deux lettres : ses colonnes s'utilisent sous la forme <code>CL-NOMCLI</code>. L'opérateur SQL prend le code de la table et le type d'accès :</p>
@@ -205,7 +226,7 @@
 
       <section id="terminal">
         <h2>Le terminal</h2>
-        <p>Les mêmes écrans sur 24 lignes de 80 colonnes. Un code sur la ligne CHOIX, puis Entrée : <code>R</code> <code>E</code> <code>C</code> <code>T</code> <code>P</code> <code>D</code> <code>K</code> (puis <code>-D</code>, <code>-L</code>, <code>-CE</code>) <code>S</code> <code>B</code> <code>Q</code> <code>G</code> <code>X</code>.</p>
+        <p>Les mêmes écrans sur 24 lignes de 80 colonnes. Un code sur la ligne CHOIX, puis Entrée : <code>R</code> <code>E</code> <code>C</code> <code>T</code> <code>P</code> <code>D</code> <code>K</code> (puis <code>-D</code>, <code>-L</code>, <code>-CE</code>) <code>O</code> (puis <code>-CE</code>, <code>-CS</code>, <code>-SIM</code>, <code>-TP</code>, <code>-G</code>) <code>S</code> <code>B</code> <code>Q</code> <code>G</code> <code>X</code>.</p>
         <ul>
           <li>Tab et Maj+Tab de champ en champ, Entrée valide l'écran, F1 à F12 pour PF1 à PF12.</li>
           <li>PF3 retour, PF7 et PF8 pages, PF10 et PF11 gauche et droite, PF12 menu.</li>

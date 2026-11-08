@@ -200,7 +200,7 @@ describe('partage par lien', () => {
 	it('le programme fait l\'aller-retour par le fragment de l\'adresse', async () => {
 		const fragment = await fragmentDe(exemple);
 		expect(fragment).toMatch(/^programme=[A-Za-z0-9_-]+$/);
-		expect(fragment.length).toBeLessThan(2000);
+		expect(fragment.length).toBeLessThan(2600); // avec les deux écrans de l'exemple
 		const recu = await lireFragment(`#${fragment}`);
 		expect(recu).not.toBeNull();
 		expect(generer(recu!)).toBe(generer(exemple));

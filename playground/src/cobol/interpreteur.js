@@ -635,6 +635,17 @@ export class Programme {
   operande(L) {
     const x = L.voir();
     if (!x) throw new ErreurCobol(tx('fin de source inattendue', 'unexpected end of source'));
+    if (x.t === 'mot' && x.v === 'FUNCTION') {
+      // fonctions intrinsèques : NUMVAL (texte saisi -> nombre) et TEST-NUMVAL (0 si le texte est un nombre)
+      const ligne = L.ligne();
+      L.p++;
+      const fn = L.mot();
+      if (!FONCTIONS.includes(fn)) throw new ErreurCobol(tx(`fonction ${fn} non prise en charge (${FONCTIONS.join(', ')})`, `function ${fn} not supported (${FONCTIONS.join(', ')})`), ligne);
+      L.mot('(');
+      const arg = this.operande(L);
+      L.mot(')');
+      return { fn, arg };
+    }
     if (x.t === 'lit') { L.p++; return { alpha: x.v }; }
     const f = figuratif(L);
     if (f) return f;
@@ -716,6 +727,37 @@ function contientSql(liste) {
   return liste.some((i) => i.v === 'SQL' || ['alors', 'sinon', 'corps', 'finFichier', 'sinonFin'].some((k) => i[k] && contientSql(i[k])));
 }
 
+const FONCTIONS = ['NUMVAL', 'TEST-NUMVAL'];
+
+// Lecture d'un nombre saisi, comme NUMVAL et TEST-NUMVAL de GnuCOBOL : blancs, un signe (devant ou derrière),
+// des chiffres avec au plus un point décimal. erreur : 0 si le texte est valide, sinon la position du premier
+// caractère fautif (longueur + 1 s'il n'y a aucun chiffre).
+function lireNumval(t) {
+  let etat = 'debut', signe = '', chiffres = '', point = false, avecSigne = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    const ko = { erreur: i + 1, valeur: '0' };
+    if (c === ' ') {
+      if (etat === 'nombre') etat = 'fin';
+      continue;
+    }
+    if (c === '+' || c === '-') {
+      if (avecSigne || etat === 'apres') return ko;
+      if (etat === 'debut') { signe = c; avecSigne = true; etat = 'signe'; continue; }
+      signe = c; avecSigne = true; etat = 'apres'; continue; // signe derrière le nombre
+    }
+    if (/[0-9]/.test(c) || c === '.') {
+      if (etat === 'fin' || etat === 'apres') return ko;
+      if (c === '.') { if (point) return ko; point = true; }
+      chiffres += c; etat = 'nombre'; continue;
+    }
+    return ko;
+  }
+  if (!/[0-9]/.test(chiffres)) return { erreur: t.length + 1, valeur: '0' };
+  const [e, d = ''] = chiffres.split('.');
+  return { erreur: 0, valeur: `${signe === '-' ? '-' : ''}${e || '0'}${d ? '.' + d : ''}` };
+}
+
 const VERBES = new Set(['MOVE', 'ADD', 'SUBTRACT', 'COMPUTE', 'DISPLAY', 'IF', 'PERFORM', 'OPEN', 'CLOSE', 'READ',
   'WRITE', 'SORT', 'SET', 'INITIALIZE', 'STOP', 'GO', 'GOBACK', 'CONTINUE', 'EXIT', 'NEXT']);
 const FINS = new Set(['ELSE', 'END-IF', 'END-PERFORM', 'END-READ', 'NOT', 'AT', 'END']);
@@ -784,6 +826,10 @@ class Execution {
   // valeur numérique d'un élément ou d'un littéral
   nombre(o) {
     if (o.num !== undefined) return Dec.de(o.num);
+    if (o.fn) {
+      const r = lireNumval(this.texte(o.arg));
+      return o.fn === 'TEST-NUMVAL' ? new Dec(BigInt(r.erreur)) : r.erreur ? new Dec(0n) : Dec.de(r.valeur);
+    }
     if (o.fig === 'ZERO') return new Dec(0n);
     if (o.alpha !== undefined || o.fig || o.all !== undefined) throw new ErreurCobol(tx('valeur non numérique dans un calcul', 'non-numeric value in a computation'));
     const el = this.res(o);
@@ -829,7 +875,7 @@ class Execution {
     return new Dec(d.n < 0n ? -r : r, e);
   }
 
-  estNumerique(o) { return o.num !== undefined || o.fig === 'ZERO' || (o.el && o.el.pic && o.el.pic.genre === '9'); }
+  estNumerique(o) { return o.fn !== undefined || o.num !== undefined || o.fig === 'ZERO' || (o.el && o.el.pic && o.el.pic.genre === '9'); }
 
   affecter(el, source) {
     if (el.enfants.length || el.pic.genre === 'X') {
@@ -878,6 +924,9 @@ class Execution {
       return this.lire(el);
     }
     if (o.fig) return CARACTERE_FIGURATIF[o.fig];
+    // TEST-NUMVAL est une fonction entière : GnuCOBOL l'affiche sur 9 chiffres
+    if (o.fn === 'TEST-NUMVAL') return this.nombre(o).n.toString().padStart(9, '0');
+    if (o.fn) { const d = this.nombre(o), neg = d.n < 0n, a = (neg ? -d.n : d.n).toString().padStart(d.e + 1, '0'); return (neg ? '-' : '') + (d.e ? `${a.slice(0, -d.e)}.${a.slice(-d.e)}` : a); }
     return o.all ?? o.alpha ?? o.num;
   }
 

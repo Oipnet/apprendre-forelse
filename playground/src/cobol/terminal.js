@@ -5,6 +5,7 @@ import {
 } from './generateur.js';
 import { Programme } from './interpreteur.js';
 import { ETAT_DEFAUT, listing } from './etats.js';
+import { analyserEcran, genererEcran, zonesMaquette, messageEntree, lireSortie, ecranVide, normaliserEcran, OPERATIONS } from './dialogue.js';
 import { bandeauReception, montrerLien } from './partage.js';
 import { ouvrirBase, sauverBase, synchroniser, contenuTable, viderTable, reinitialiserBase, formaterValeur } from './base.js';
 import { EN, cle, t as tx } from './langue.js';
@@ -21,6 +22,7 @@ modele.sorties ||= [];
 modele.lignes ||= [];
 modele.tables ||= [];
 modele.etats ||= [];
+modele.ecrans ||= [];
 // opérateurs de base de la première v0.5 -> opérateur SQL de Pacbase
 { const anciens = { INS: 'W', LEC: 'R', MAJ: 'RW', SUP: 'D', OUV: 'P', SUI: 'RN', FER: 'CL' };
   for (const l of modele.lignes) { const a = anciens[(l.ope || '').toUpperCase()]; if (a) { l.opes = `${(l.opes || '').trim()} ${a}`; l.ope = 'SQL'; } } }
@@ -93,16 +95,19 @@ const app = {
   },
   attention(touche, valeurs, modifies) {
     // le champ CHOIX est prioritaire, comme une commande
-    const choix = (valeurs.CHOIX || '').trim();
+    const v = VUES[this.courant.vue];
+    const choix = v.brut ? '' : (valeurs.CHOIX || '').trim();
     if (choix && touche === 'ENTREE') {
       const r = commande(choix);
       if (r) return;
     }
-    const v = VUES[this.courant.vue];
-    if (touche === 'PF3') return this.retour();
-    if (touche === 'PF12') { this.pile = []; return this.ouvrir('menu', {}, false); }
-    if (touche === 'PF1') return this.ouvrir('aide');
-    if (touche === 'EFFACER') return this.afficher({ texte: tx('ÉCRAN EFFACÉ : RIEN N\'EST ENREGISTRÉ. ENTRÉE POUR RÉAFFICHER.', 'SCREEN CLEARED: NOTHING IS SAVED. ENTER TO REDISPLAY.'), erreur: false });
+    // simulation et transaction : toutes les touches vont à l'écran de l'utilisateur
+    if (!v.brut) {
+      if (touche === 'PF3') return this.retour();
+      if (touche === 'PF12') { this.pile = []; return this.ouvrir('menu', {}, false); }
+      if (touche === 'PF1') return this.ouvrir('aide');
+      if (touche === 'EFFACER') return this.afficher({ texte: tx('ÉCRAN EFFACÉ : RIEN N\'EST ENREGISTRÉ. ENTRÉE POUR RÉAFFICHER.', 'SCREEN CLEARED: NOTHING IS SAVED. ENTER TO REDISPLAY.'), erreur: false });
+    }
     const r = v.gerer ? v.gerer(touche, valeurs, modifies, this.courant) : null;
     if (r?.erreur) {
       // l'écran garde la saisie de l'utilisateur, le champ fautif est signalé
@@ -119,22 +124,33 @@ const app = {
 };
 
 // les commandes anglaises sont des synonymes : END, END UPD, END REPORT, SHARE, HELP
+let contexte = 'etat';
 const SYNONYMES = { END: 'FIN', SHARE: 'PARTAGE', HELP: 'AIDE', UPD: 'MAJ', REPORT: 'ETAT' };
 function commande(texte) {
   const [mot, ...reste] = texte.toUpperCase().split(/\s+/).map((m) => SYNONYMES[m] || m);
-  if (mot === 'K') etatCourant(true);
-  const cibles = { K: 'etatD', '-D': 'etatD', '-L': 'etatL', '-CE': 'etatCE', M: 'menu', R: 'rubriques', E: 'enreg', C: 'appels', T: 'traitement', D: 'donnees', G: 'source', X: 'execution', P: 'specifique', S: 'sorties', B: 'base', Q: 'requetes', AIDE: 'aide', '?': 'aide' };
+  if (mot === 'K') { etatCourant(true); contexte = 'etat'; }
+  // -CE décrit l'état ou l'écran, selon le dernier ouvert (K ou O)
+  if (['O', '-CS', '-SIM', '-TP', '-G'].includes(mot)) contexte = 'ecran';
+  if (mot === 'O' && reste[0]) {
+    const code = reste[0];
+    if (!/^[A-Z][A-Z0-9]{5}$/.test(code)) { app.afficher({ texte: tx('O CODE : 6 CARACTÈRES, UNE LETTRE EN TÊTE (EX. CL0010).', 'O CODE: 6 CHARACTERS, STARTING WITH A LETTER (E.G. CL0010).'), erreur: true }, 'CHOIX'); return true; }
+    if (!ecranDe(code)) { modele.ecrans.push(ecranVide(code)); modele.ecrans.sort((p, q) => comparerCodes(p.code, q.code)); sauver(); }
+    ecranCourant = code;
+    app.ouvrir('ecranCE');
+    return true;
+  }
+  const cibles = { K: 'etatD', '-D': 'etatD', '-L': 'etatL', '-CE': contexte === 'ecran' ? 'ecranCE' : 'etatCE', O: 'ecrans', '-CS': 'ecranCS', '-SIM': 'ecranSIM', '-TP': 'ecranTP', '-G': 'ecranSource', M: 'menu', R: 'rubriques', E: 'enreg', C: 'appels', T: 'traitement', D: 'donnees', G: 'source', X: 'execution', P: 'specifique', S: 'sorties', B: 'base', Q: 'requetes', AIDE: 'aide', '?': 'aide' };
   if (mot === 'PARTAGE') {
     montrerLien(document.getElementById('lien-partage'), modele).then((copie) => app.afficher({ texte: copie ? tx('LIEN DE PARTAGE COPIÉ. IL EST AUSSI AFFICHÉ SOUS LE TERMINAL.', 'SHARE LINK COPIED. IT IS ALSO SHOWN BELOW THE TERMINAL.') : tx('LIEN DE PARTAGE AFFICHÉ SOUS LE TERMINAL.', 'SHARE LINK SHOWN BELOW THE TERMINAL.'), erreur: false }));
     return true;
   }
   if (mot === 'FIN') {
-    modele = normaliser(structuredClone(reste[0] === 'MAJ' ? exempleMiseAJour : reste[0] === 'ETAT' ? exempleEtat : exemple)); structCourante = appelDonnees = null; sauver(); app.pile = [];
+    modele = normaliser(structuredClone(reste[0] === 'MAJ' ? exempleMiseAJour : reste[0] === 'ETAT' ? exempleEtat : exemple)); structCourante = appelDonnees = ecranCourant = null; sauver(); app.pile = [];
     reinitialiserBase().then(() => { if (db) { synchroniser(db, modele); sauverBase(db); } });
     app.ouvrir('menu', {}, false); app.afficher({ texte: reste[0] === 'MAJ' ? tx('EXEMPLE DE MISE À JOUR CHARGÉ, BASE VIDÉE.', 'UPDATE EXAMPLE LOADED, DATABASE EMPTIED.') : reste[0] === 'ETAT' ? tx('EXEMPLE D\'ÉTAT CHARGÉ (CHOIX K), BASE VIDÉE.', 'REPORT EXAMPLE LOADED (OPTION K), DATABASE EMPTIED.') : tx('MODÈLE REMIS À L\'EXEMPLE DE DÉPART, BASE VIDÉE. FIN MAJ : EXEMPLE DE MISE À JOUR.', 'MODEL RESET TO THE STARTING EXAMPLE, DATABASE EMPTIED. END UPD: UPDATE EXAMPLE.'), erreur: false });
     return true;
   }
-  if (!cibles[mot]) { app.afficher({ texte: tx(`CHOIX ${mot} INCONNU. POSSIBLES : M R E C T P D K -L -CE -D S B Q G X PARTAGE AIDE FIN`, `UNKNOWN OPTION ${mot}. VALID: M R E C T P D K -L -CE -D S B Q G X SHARE HELP END`), erreur: true }, 'CHOIX'); return true; }
+  if (!cibles[mot]) { app.afficher({ texte: tx(`CHOIX ${mot} INCONNU. POSSIBLES : M R E C T P D K O S B Q G X PARTAGE AIDE FIN`, `UNKNOWN OPTION ${mot}. VALID: M R E C T P D K O S B Q G X SHARE HELP END`), erreur: true }, 'CHOIX'); return true; }
   if (mot === 'E' && reste[0]) {
     const code = reste[0].replace(/[^A-Z0-9-]/g, '').slice(0, 12);
     if (!/^[A-Z]/.test(code)) { app.afficher({ texte: tx('E CODE : UNE LETTRE EN TÊTE.', 'E CODE: MUST START WITH A LETTER.'), erreur: true }, 'CHOIX'); return true; }
@@ -161,6 +177,7 @@ VUES.menu = {
       ['P', tx('TRAITEMENTS', 'STRUCT. CODE'), tx('Langage structuré : fonctions et opérateurs', 'Structured code: functions and operators')],
       ['D', tx('DONNÉES', 'DATA'), tx(`Lignes des fichiers en entrée (D code) : ${appelsLus().map((a) => a.code).join(' ')}`, `Lines of the input files (D code): ${appelsLus().map((a) => a.code).join(' ')}`)],
       ['K', tx('ÉTATS', 'REPORTS'), (() => { const x = etatCourant(); return x ? tx(`${x.et.code} : -D composition, -L libellés, -CE structures`, `${x.et.code}: -D layout, -L labels, -CE structures`) : tx('Libellés, structures, catégories (crée l\'état)', 'Labels, structures, categories (creates it)'); })()],
+      ['O', tx('ÉCRANS', 'SCREENS'), tx(`${modele.ecrans.map((e) => e.code).join(' ').slice(0, 26) || 'Aucun'} : -CE -CS -SIM -TP (O code)`, `${modele.ecrans.map((e) => e.code).join(' ').slice(0, 26) || 'None'}: -CE -CS -SIM -TP (O code)`)],
       ['S', tx('SORTIES', 'OUTPUTS'), tx('Fichiers produits par le traitement', 'Files produced by the program')],
       ['B', tx('BASE', 'DATABASE'), tx('Tables de la base ; Q pour interroger en SQL', 'Database tables; Q to query in SQL')],
       ['G', tx('GÉNÉRATION', 'GENERATION'), tx('Source COBOL généré, en consultation', 'Generated COBOL source, read only')],
@@ -169,7 +186,7 @@ VUES.menu = {
     const champs = [...cadre('M00', tx('MENU GÉNÉRAL', 'MAIN MENU'), tx('PF1 AIDE  PF3 RETOUR  PF12 MENU  ENTRÉE VALIDER', 'PF1 HELP  PF3 BACK  PF12 MENU  ENTER CONFIRM'))];
     champs.push(lab(3, 6, tx('Tapez un code sur la ligne CHOIX ou en face d\'une ligne, puis Entrée.', 'Type a code on the OPTION line or next to a line, then Enter.'), 'bleu'));
     lignes.forEach(([c, t, d], i) => {
-      const l = 5 + i + (i > 2 ? 1 : 0) + (i > 6 ? 1 : 0); // trois groupes : modèle, traitement, résultat
+      const l = 5 + i + (i > 2 ? 1 : 0) + (i > 7 ? 1 : 0); // trois groupes : modèle, traitement, résultat
       champs.push(zone(l, 6, 1, `S${i}`), lab(l, 9, c, 'blanc'), lab(l, 12, pad(t, 16), 'turquoise'), lab(l, 29, pad(d, 49), 'bleu'));
     });
     const nbDonnees = modele.appels.reduce((n, a) => n + (a.donnees || []).length, 0);
@@ -178,7 +195,7 @@ VUES.menu = {
   },
   gerer(touche, v) {
     if (touche !== 'ENTREE') return { erreur: tx(`TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.`, `KEY ${touche} HAS NO EFFECT ON THIS SCREEN.`) };
-    const codes = ['R', 'E', 'C', 'T', 'P', 'D', 'K', 'S', 'B', 'G', 'X'];
+    const codes = ['R', 'E', 'C', 'T', 'P', 'D', 'K', 'O', 'S', 'B', 'G', 'X'];
     const i = codes.findIndex((_, k) => (v[`S${k}`] || '').trim());
     if (i >= 0) { commande(codes[i]); return { fait: true }; }
     return { message: { texte: tx('INDIQUEZ UN CHOIX.', 'ENTER AN OPTION.'), erreur: false } };
@@ -1135,6 +1152,265 @@ VUES.base = {
   },
 };
 
+// ----- écrans de saisie (Dialogue) : liste, description -CE, Segments -CS, simulation, transaction -----
+let ecranCourant = null;
+const ecranDe = (code) => modele.ecrans.find((e) => e.code === code);
+const ecranC = () => ecranDe(ecranCourant) || modele.ecrans[0] || null;
+const verdictEcran = (e) => { try { genererEcran(modele, e); return null; } catch (x) { return x.message; } };
+const piedEcran = (champs, e, l) => { const x = verdictEcran(e); champs.push(lab(l, 1, pad((x || tx(`Écran ${e.code} complet : -SIM pour le voir, -TP pour l'exécuter.`, `Screen ${e.code} complete: -SIM to see it, -TP to run it.`)).toUpperCase(), 78), x ? 'jaune' : 'vert')); };
+const sansEcran = (id, titre) => {
+  const champs = [...cadre(id, titre, tx('PF1 AIDE  PF3 RETOUR', 'PF1 HELP  PF3 BACK'))];
+  champs.push(lab(4, 1, tx('Aucun écran. CHOIX O CODE pour en créer un (6 caractères, les 2 premiers', 'No screen. OPTION O CODE to create one (6 characters, the first 2 being'), 'jaune'), lab(5, 1, tx('étant le code du Dialogue), ou FIN pour retrouver l\'exemple CL0010 / CL0020.', 'the Dialogue code), or END to get back the CL0010 / CL0020 example.'), 'jaune'));
+  return { champs, curseur: 'CHOIX' };
+};
+const PAR_PAGE_ECRAN = 13;
+
+VUES.ecrans = {
+  dessin(ctx) {
+    const champs = [...cadre('O01', tx('ÉCRANS DE SAISIE', 'ENTRY SCREENS'), tx('PF1 AIDE  PF3 RETOUR  PF7/8 PAGES  ENTRÉE VALIDER', 'PF1 HELP  PF3 BACK  PF7/8 PAGES  ENTER CONFIRM'))];
+    champs.push(lab(3, 1, tx('A CODE   NOM DE L\'ÉCRAN                   ZONES SEG. ÉTAT', 'A CODE   SCREEN NAME                      FIELDS SEG. STATUS'), 'blanc'));
+    const debut = ctx.page * PAR_PAGE_ECRAN;
+    for (let i = 0; i < PAR_PAGE_ECRAN; i++) {
+      const e = modele.ecrans[debut + i], l = 4 + i;
+      champs.push(zone(l, 1, 1, `A${i}`), zone(l, 3, 6, `CO${i}`, e?.code), zone(l, 10, 30, `NO${i}`, e?.nom, { majuscules: false }));
+      if (e) {
+        const x = verdictEcran(e);
+        champs.push(lab(l, 42, lpad(e.zones.length, 4), 'turquoise'), lab(l, 48, lpad(e.segments.length, 3), 'turquoise'), lab(l, 53, pad(x ? tx('À COMPLÉTER', 'INCOMPLETE') : 'OK', 25), x ? 'jaune' : 'vert'));
+      }
+    }
+    champs.push(lab(18, 1, tx('A : E description (-CE), U Segments (-CS), V simulation (-SIM), X exécution', 'A: E description (-CE), U Segments (-CS), V simulation (-SIM), X execution'), 'bleu'),
+      lab(19, 1, tx('(-TP), G source généré, S supprimer, D dupliquer (nouveau code dans CODE).', '(-TP), G generated source, S delete, D duplicate (new code in CODE).'), 'bleu'),
+      lab(20, 1, tx('Ligne vide : code et nom pour créer un écran. Les écrans lisent les tables (B).', 'Empty line: code and name to create a screen. Screens read the tables (B).'), 'bleu'));
+    return { champs, curseur: `CO${Math.max(0, Math.min(PAR_PAGE_ECRAN - 1, modele.ecrans.length - debut))}` };
+  },
+  gerer(touche, v, mod, ctx) {
+    if (touche === 'PF7') { if (!ctx.page) return { erreur: tx('DÉJÀ EN HAUT.', 'ALREADY AT THE TOP.') }; ctx.page--; return; }
+    if (touche === 'PF8') { if ((ctx.page + 1) * PAR_PAGE_ECRAN > modele.ecrans.length) return { erreur: tx('DÉJÀ EN BAS.', 'ALREADY AT THE BOTTOM.') }; ctx.page++; return; }
+    if (touche !== 'ENTREE') return { erreur: tx(`TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.`, `KEY ${touche} HAS NO EFFECT ON THIS SCREEN.`) };
+    const debut = ctx.page * PAR_PAGE_ECRAN, liste = [];
+    let ouvrir = null;
+    for (let i = 0; i < PAR_PAGE_ECRAN; i++) {
+      const e = modele.ecrans[debut + i];
+      const a = (v[`A${i}`] || '').trim(), code = (v[`CO${i}`] || '').trim(), nom = (v[`NO${i}`] || '').trim();
+      if (a === 'S' && e) continue;
+      if (!code && !nom && !e) continue;
+      if (!/^[A-Z][A-Z0-9]{5}$/.test(code)) return { erreur: tx('CODE DE L\'ÉCRAN : 6 CARACTÈRES, UNE LETTRE EN TÊTE (EX. CL0010).', 'SCREEN CODE: 6 CHARACTERS, STARTING WITH A LETTER (E.G. CL0010).'), champ: `CO${i}` };
+      if (a === 'D') {
+        if (!e) return { erreur: tx('D : SUR UN ÉCRAN EXISTANT.', 'D: ON AN EXISTING SCREEN.'), champ: `A${i}` };
+        if (code === e.code) return { erreur: tx('D : TAPEZ LE CODE DE LA COPIE DANS CODE.', 'D: TYPE THE CODE OF THE COPY IN CODE.'), champ: `CO${i}` };
+        liste.push(e, normaliserEcran({ ...structuredClone(e), code, nom }));
+        continue;
+      }
+      if (a && !'EUVXG'.includes(a)) return { erreur: tx('ACTION : E, U, V, X, G, S OU D.', 'ACTION: E, U, V, X, G, S OR D.'), champ: `A${i}` };
+      const n = e ? { ...e, code, nom } : ecranVide(code, nom);
+      if (e && code !== e.code) {
+        // les débranchements des autres écrans suivent le changement de code
+        for (const x of modele.ecrans) for (const z of x.zones) if (z.rub === 'PFKEY' || (!z.rub && !z.nat && !z.libelle)) { if ((z.segMaj || '').toUpperCase() === e.code) z.segMaj = code; }
+      }
+      liste.push(n);
+      if (a && !ouvrir) ouvrir = [a, code];
+    }
+    const tout = [...modele.ecrans.slice(0, debut), ...liste, ...modele.ecrans.slice(debut + PAR_PAGE_ECRAN)];
+    const vus = new Set();
+    for (const e of tout) { if (vus.has(e.code)) return { erreur: tx(`L'ÉCRAN ${e.code} EST EN DOUBLE.`, `SCREEN ${e.code} IS DUPLICATED.`) }; vus.add(e.code); }
+    modele.ecrans = tout.sort((p, q) => comparerCodes(p.code, q.code)); sauver();
+    if (ouvrir) { ecranCourant = ouvrir[1]; contexte = 'ecran'; app.ouvrir({ E: 'ecranCE', U: 'ecranCS', V: 'ecranSIM', X: 'ecranTP', G: 'ecranSource' }[ouvrir[0]]); return { fait: true }; }
+    return { message: { texte: tx(`${modele.ecrans.length} ÉCRAN(S).`, `${modele.ecrans.length} SCREEN(S).`), erreur: false } };
+  },
+};
+
+// description de l'écran (-CE) : deux vues, C1 (place et présentation) et C2 (mise à jour et source)
+const COLONNES_CE = {
+  C1: [['nlg', 3, 'NLG'], ['rub', 6, tx('RUBRIQ', 'ELEMNT')], ['pos', 1, 'P'], ['lg', 2, 'LG'], ['col', 2, 'CO'], ['nat', 1, 'N'], ['pres', 1, 'F'], ['presence', 1, 'R'],
+    ['trt', 1, 'T'], ['rv', 2, 'RV'], ['rh', 1, 'H'], ['typeLib', 1, 'L'], ['libelle', 30, tx('LIBELLÉ', 'LABEL')]],
+  C2: [['nlg', 3, 'NLG'], ['rub', 6, tx('RUBRIQ', 'ELEMNT')], ['maj', 1, 'M'], ['segMaj', 6, tx('MAJ', 'UPD')], ['rubMaj', 6, tx('RUBMAJ', 'ELEUPD')], ['typeSrc', 1, 'S'],
+    ['segSrc', 6, 'SOURCE'], ['rubSrc', 6, tx('RUBSRC', 'ELESRC')]],
+};
+const AIDE_CE = {
+  C1: [
+    tx('P : blanc relatif (LG lignes, CO colonnes après la zone précédente), A absolu.', 'P: blank relative (LG lines, CO columns after the previous field), A absolute.'),
+    tx('N : V saisie, F protégée reçue, P affichée, O libellé seul, L libellé fixe,', 'N: V entered, F protected received, P shown, O label only, L fixed label,'),
+    tx('R/Z début de la répétitive (RV lignes, H par instance) / du bas d\'écran.', 'R/Z start of the repetitive part (RV lines, H per instance) / of the bottom.'),
+    tx('F présentation (L M N S T U F 1), R obligatoire, T : I mouvement, O opération.', 'F presentation (L M N S T U F 1), R required, T: I transaction, O operation.'),
+  ],
+  C2: [
+    tx('M : M mise à jour du Segment MAJ (colonne RUBMAJ, par défaut la même rubrique),', 'M: M update of Segment UPD (column ELEUPD, by default the same element),'),
+    tx('V valeur permise (dans MAJ) ; sur PFKEY : G ou S écran appelé (MAJ) par la', 'V allowed value (in UPD); on PFKEY: G or S called screen (UPD) by the'),
+    tx('touche SOURCE (01-24), V code opération (A M S E P) pour la touche SOURCE.', 'SOURCE key (01-24), V operation code (A M S E P) for the SOURCE key.'),
+    tx('SOURCE : Segment affiché (-CS) qui alimente la rubrique (colonne RUBSRC).', 'SOURCE: displayed Segment (-CS) that feeds the element (column ELESRC).'),
+  ],
+};
+const champsLigneCE = (vue) => { let c = 3; return COLONNES_CE[vue].map(([k, n, h]) => { const x = { k, n, h, c }; c += n + 1; return x; }); };
+const zonesTriees = (e) => [...e.zones].sort((p, q) => Number(p.nlg) - Number(q.nlg));
+
+VUES.ecranCE = {
+  dessin(ctx) {
+    const e = ecranC(); if (!e) return sansEcran('O02', tx('DESCRIPTION DE L\'ÉCRAN (-CE)', 'SCREEN DESCRIPTION (-CE)'));
+    ctx.c ||= 'C1';
+    const cols = champsLigneCE(ctx.c);
+    const champs = [...cadre('O02', tx(`ÉCRAN ${e.code} (-CE) : ${e.nom}`, `SCREEN ${e.code} (-CE): ${e.nom}`).slice(0, 48), tx('PF1 AIDE  PF3 RETOUR  PF7/8 PAGES  PF11 VUE C1/C2  -CS -SIM -TP', 'PF1 HELP  PF3 BACK  PF7/8 PAGES  PF11 VIEW C1/C2  -CS -SIM -TP'))];
+    champs.push(lab(2, 1, tx(`VUE ${ctx.c} : ${ctx.c === 'C1' ? 'PLACE ET PRÉSENTATION' : 'MISE À JOUR ET SOURCE'}`, `VIEW ${ctx.c}: ${ctx.c === 'C1' ? 'POSITION AND PRESENTATION' : 'UPDATE AND SOURCE'}`), 'turquoise'));
+    champs.push(lab(3, 1, `A ${cols.map((x) => pad(x.h, x.n)).join(' ')}`, 'blanc'));
+    const liste = zonesTriees(e), debut = ctx.page * PAR_PAGE_ECRAN;
+    for (let i = 0; i < PAR_PAGE_ECRAN; i++) {
+      const z = liste[debut + i], l = 4 + i;
+      champs.push(zone(l, 1, 1, `A${i}`));
+      for (const x of cols) champs.push(zone(l, x.c, x.n, `${x.k}${i}`, z?.[x.k], x.k === 'libelle' ? { majuscules: false } : {}));
+    }
+    AIDE_CE[ctx.c].forEach((t, i) => champs.push(lab(17 + i, 1, t, 'bleu')));
+    piedEcran(champs, e, 21);
+    return { champs, curseur: `nlg${Math.max(0, Math.min(PAR_PAGE_ECRAN - 1, e.zones.length - debut))}` };
+  },
+  gerer(touche, v, mod, ctx) {
+    const e = ecranC(); if (!e) return { erreur: tx('AUCUN ÉCRAN : CHOIX O CODE.', 'NO SCREEN: OPTION O CODE.') };
+    if (touche === 'PF7') { if (!ctx.page) return { erreur: tx('DÉJÀ EN HAUT.', 'ALREADY AT THE TOP.') }; ctx.page--; return; }
+    if (touche === 'PF8') { if ((ctx.page + 1) * PAR_PAGE_ECRAN > e.zones.length) return { erreur: tx('DÉJÀ EN BAS.', 'ALREADY AT THE BOTTOM.') }; ctx.page++; return; }
+    if (touche !== 'ENTREE' && touche !== 'PF11' && touche !== 'PF10') return { erreur: tx(`TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.`, `KEY ${touche} HAS NO EFFECT ON THIS SCREEN.`) };
+    // la saisie est enregistrée avant de changer de vue
+    const cols = champsLigneCE(ctx.c), liste = zonesTriees(e), debut = ctx.page * PAR_PAGE_ECRAN, page = [];
+    for (let i = 0; i < PAR_PAGE_ECRAN; i++) {
+      const z = liste[debut + i], a = (v[`A${i}`] || '').trim();
+      if (a === 'S') continue;
+      if (a) return { erreur: tx('ACTION : S POUR SUPPRIMER LA LIGNE.', 'ACTION: S TO DELETE THE LINE.'), champ: `A${i}` };
+      const n = { ...(z || {}) };
+      for (const x of cols) { const t = (v[`${x.k}${i}`] ?? '').replace(/ +$/, ''); n[x.k] = x.k === 'libelle' ? t : t.trim().toUpperCase(); }
+      if (Object.entries(n).every(([, y]) => !String(y ?? '').trim())) continue;
+      if (!/^\d{1,3}$/.test(n.nlg || '')) return { erreur: tx('NLG : NUMÉRO DE LIGNE DE 1 À 3 CHIFFRES (ORDRE DES ZONES).', 'NLG: LINE NUMBER OF 1 TO 3 DIGITS (ORDER OF THE FIELDS).'), champ: `nlg${i}` };
+      n.nlg = n.nlg.padStart(3, '0');
+      page.push(n);
+    }
+    e.zones = [...liste.slice(0, debut), ...page, ...liste.slice(debut + PAR_PAGE_ECRAN)].sort((p, q) => Number(p.nlg) - Number(q.nlg));
+    sauver();
+    if (touche !== 'ENTREE') { ctx.c = ctx.c === 'C1' ? 'C2' : 'C1'; return; }
+    const x = verdictEcran(e);
+    return { message: { texte: (x ? tx(`ENREGISTRÉ. À COMPLÉTER : ${x}`, `SAVED. STILL TO COMPLETE: ${x}`) : tx(`${e.zones.length} LIGNE(S) DE DESCRIPTION.`, `${e.zones.length} DESCRIPTION LINE(S).`)).toUpperCase().slice(0, 78), erreur: !!x } };
+  },
+};
+
+VUES.ecranCS = {
+  dessin(ctx) {
+    const e = ecranC(); if (!e) return sansEcran('O03', tx('SEGMENTS DE L\'ÉCRAN (-CS)', 'SCREEN SEGMENTS (-CS)'));
+    const champs = [...cadre('O03', tx(`ÉCRAN ${e.code} : SEGMENTS (-CS)`, `SCREEN ${e.code}: SEGMENTS (-CS)`), tx('PF1 AIDE  PF3 RETOUR  ENTRÉE VALIDER  -CE DESCRIPTION  -SIM  -TP', 'PF1 HELP  PF3 BACK  ENTER CONFIRM  -CE DESCRIPTION  -SIM  -TP'))];
+    champs.push(lab(3, 1, tx('A SEGM C R A ALIMENTATION CLÉ    O TABLE', 'A SEGM C R D KEY SOURCE   KEY    O TABLE'), 'blanc'));
+    for (let i = 0; i < 8; i++) {
+      const x = e.segments[i], l = 4 + i;
+      champs.push(zone(l, 1, 1, `A${i}`), zone(l, 3, 4, `SG${i}`, x?.seg), zone(l, 8, 1, `CA${i}`, x?.cat), zone(l, 10, 1, `RE${i}`, x?.recep), zone(l, 12, 1, `AF${i}`, x?.affich),
+        zone(l, 14, 12, `AL${i}`, x?.alim), zone(l, 27, 6, `CL${i}`, x?.cle), zone(l, 34, 1, `OR${i}`, x?.org), zone(l, 36, 2, `EX${i}`, x?.externe));
+    }
+    champs.push(lab(13, 1, tx('SEGM : 2 lettres de la table (B) + 2 chiffres. C : catégorie blanc, R ou Z.', 'SEGM: 2 letters of the table (B) + 2 digits. C: category blank, R or Z.'), 'bleu'),
+      lab(14, 1, tx('R (réception) : N non utilisé, L lu, E existence, M modification, X création', 'R (reception): N not used, L read, E existence, M modify, X create and'), 'bleu'),
+      lab(15, 1, tx('et modification, T création, modification et annulation.', 'modify, T create, modify and delete.'), 'bleu'),
+      lab(16, 1, tx('A (affichage) : A lu pour afficher, N non. ALIMENTATION : zone de l\'écran qui', 'D (display): A read to display, N not. KEY SOURCE: screen field that gives'), 'bleu'),
+      lab(17, 1, tx(`donne la clé (${e.code.slice(2)}-RUBRIQ), blanc : début de la table. O : S (table SQL).`, `the key (${e.code.slice(2)}-ELEMNT), blank: start of the table. O: S (SQL table).`), 'bleu'),
+      lab(18, 1, tx('TABLE : code de la table si différent des 2 lettres du Segment.', 'TABLE: table code if different from the 2 letters of the Segment.'), 'bleu'),
+      lab(19, 1, pad(tx(`Tables : ${modele.tables.map((t) => `${t.code} ${t.nom} (${t.cle.join(' ')})`).join('  ') || 'aucune, écran B'}`, `Tables: ${modele.tables.map((t) => `${t.code} ${t.nom} (${t.cle.join(' ')})`).join('  ') || 'none, screen B'}`), 78), 'turquoise'));
+    piedEcran(champs, e, 21);
+    return { champs, curseur: `SG${Math.min(7, e.segments.length)}` };
+  },
+  gerer(touche, v) {
+    const e = ecranC(); if (!e) return { erreur: tx('AUCUN ÉCRAN : CHOIX O CODE.', 'NO SCREEN: OPTION O CODE.') };
+    if (touche !== 'ENTREE') return { erreur: tx(`TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.`, `KEY ${touche} HAS NO EFFECT ON THIS SCREEN.`) };
+    const segs = [];
+    for (let i = 0; i < 8; i++) {
+      const g = (k) => (v[`${k}${i}`] || '').trim().toUpperCase();
+      if (g('A') === 'S') continue;
+      if (g('A')) return { erreur: tx('ACTION : S POUR SUPPRIMER LA LIGNE.', 'ACTION: S TO DELETE THE LINE.'), champ: `A${i}` };
+      const x = { seg: g('SG'), cat: g('CA'), recep: g('RE'), affich: g('AF'), alim: g('AL'), cle: g('CL'), org: g('OR'), externe: g('EX') };
+      if (Object.values(x).every((y) => !y)) continue;
+      if (!x.seg) return { erreur: tx('SEGM : LE CODE DU SEGMENT (EX. CL00).', 'SEGM: THE SEGMENT CODE (E.G. CL00).'), champ: `SG${i}` };
+      segs.push(x);
+    }
+    e.segments = segs; sauver();
+    const x = verdictEcran(e);
+    return { message: { texte: (x ? tx(`ENREGISTRÉ. À COMPLÉTER : ${x}`, `SAVED. STILL TO COMPLETE: ${x}`) : tx(`${segs.length} SEGMENT(S).`, `${segs.length} SEGMENT(S).`)).toUpperCase().slice(0, 78), erreur: !!x } };
+  },
+};
+
+VUES.ecranSource = consultation('O05', tx('SOURCE DE LA TRANSACTION', 'TRANSACTION SOURCE'), () => {
+  const e = ecranC(); if (!e) throw new Error(tx('Aucun écran : CHOIX O CODE.', 'No screen: OPTION O CODE.'));
+  return genererEcran(modele, e).replace(/\n$/, '').split('\n').map((texte) => ({ texte }));
+});
+
+// touche 3270 -> code PFKEY du programme (EN Entrée, 01 à 24)
+const codeTouche = (t) => (t === 'ENTREE' ? 'EN' : /^PF(\d+)$/.test(t) ? t.slice(2).padStart(2, '0') : null);
+
+// simulation (-SIM) : la maquette seule, Effacer pour revenir, les touches G et S enchaînent les écrans
+VUES.ecranSIM = {
+  brut: true,
+  dessin(ctx) {
+    const e = ecranDe(ctx.code ||= ecranC()?.code);
+    if (!e) return sansEcran('O04', tx('SIMULATION', 'SIMULATION'));
+    let m;
+    try { m = analyserEcran(modele, e); } catch (x) {
+      const champs = [...cadre('O04', tx(`SIMULATION DE ${e.code}`, `SIMULATION OF ${e.code}`), tx('PF3 RETOUR', 'PF3 BACK'))];
+      champs.push(lab(4, 1, pad(x.message, 78), 'jaune'));
+      ctx.horsMaquette = true;
+      return { champs, curseur: 'CHOIX' };
+    }
+    ctx.horsMaquette = false;
+    ctx.message ||= { texte: tx(`SIMULATION DE ${e.code}. EFFACER (MAJ+ÉCHAP) POUR REVENIR.`, `SIMULATION OF ${e.code}. CLEAR (SHIFT+ESC) TO GO BACK.`), erreur: false };
+    return { champs: zonesMaquette(m, { simulation: true }) };
+  },
+  gerer(touche, v, mod, ctx) {
+    if (ctx.horsMaquette || touche === 'EFFACER') { app.retour(); return { fait: true }; }
+    const e = ecranDe(ctx.code), m = analyserEcran(modele, e), k = codeTouche(touche);
+    const t = m.touches.find((x) => x.touche === k && 'ecran' in x);
+    if (t?.ecran) { ctx.code = t.ecran; ctx.message = { texte: tx(`SIMULATION DE ${t.ecran}, APPELÉ PAR ${touche} DEPUIS ${e.code}.`, `SIMULATION OF ${t.ecran}, CALLED BY ${touche} FROM ${e.code}.`), erreur: false }; return; }
+    if (t) { app.retour(); return { fait: true }; }
+    const o = m.touches.find((x) => x.touche === k && x.oper);
+    ctx.message = { texte: o ? tx(`${touche} : OPÉRATION ${o.oper} (${OPERATIONS[o.oper]}), JOUÉE PAR -TP.`, `${touche}: OPERATION ${o.oper} (${OPERATIONS[o.oper]}), PLAYED BY -TP.`).toUpperCase() : tx(`${touche} : AUCUN DÉBRANCHEMENT DÉCRIT (PFKEY).`, `${touche}: NO BRANCH DESCRIBED (PFKEY).`), erreur: false };
+  },
+};
+
+// exécution (-TP) : le terminal joue le moniteur transactionnel, un échange par touche
+VUES.ecranTP = {
+  brut: true,
+  dessin(ctx) {
+    ctx.code ||= ecranC()?.code;
+    const e = ecranDe(ctx.code);
+    const fin = (texte) => { const champs = [...cadre('O06', tx(`TRANSACTION ${ctx.code || ''}`, `TRANSACTION ${ctx.code || ''}`), tx('PF3 RETOUR', 'PF3 BACK'))]; champs.push(lab(4, 1, pad(texte, 78), 'jaune')); ctx.horsMaquette = true; return { champs, curseur: 'CHOIX' }; };
+    if (!e) return fin(tx('Aucun écran : CHOIX O CODE.', 'No screen: OPTION O CODE.'));
+    if (!db) {
+      base(['ecranTP']);
+      return fin(erreurBase ? tx(`Base indisponible : ${erreurBase.message}`, `Database unavailable: ${erreurBase.message}`) : tx('Chargement de la base de données…', 'Loading the database…'));
+    }
+    try {
+      if (!ctx.m || ctx.m.code !== e.code) {
+        ctx.m = analyserEcran(modele, e);
+        ctx.pgm = new Programme(genererEcran(modele, e));
+        synchroniser(db, modele);
+        ctx.sortie = null;
+      }
+      if (!ctx.sortie) echangeTP(ctx, '0', 'EN', {});
+    } catch (x) { return fin(x.message); }
+    ctx.horsMaquette = false;
+    const s = ctx.sortie;
+    return { champs: zonesMaquette(ctx.m, { valeurs: { ...s.valeurs, LIERR: s.lierr }, erreurs: s.erreurs }), curseur: s.curseur || undefined };
+  },
+  gerer(touche, v, mod, ctx) {
+    if (ctx.horsMaquette) { app.retour(); return { fait: true }; }
+    if (touche === 'EFFACER') { app.retour(); app.afficher({ texte: tx(`TRANSACTION ${ctx.code} QUITTÉE (EFFACER).`, `TRANSACTION ${ctx.code} LEFT (CLEAR).`), erreur: false }); return { fait: true }; }
+    const k = codeTouche(touche);
+    if (!k) return { erreur: tx(`TOUCHE ${touche} NON TRANSMISE.`, `KEY ${touche} NOT SENT.`) };
+    try {
+      // les zones protégées reçues (F) repartent avec ce qui était affiché
+      echangeTP(ctx, '1', k, { ...ctx.sortie.valeurs, ...v });
+    } catch (x) { return { erreur: tx(`ARRÊT ANORMAL : ${x.message}`, `ABNORMAL END: ${x.message}`).toUpperCase().slice(0, 78) }; }
+    const s = ctx.sortie;
+    if (s.oper === 'E' || (s.oper === 'O' && !s.suite)) { app.retour(); app.afficher({ texte: tx(`FIN DE LA CONVERSATION (${ctx.code}).`, `END OF THE CONVERSATION (${ctx.code}).`), erreur: false }); return { fait: true }; }
+    if (s.oper === 'O') {
+      if (!ecranDe(s.suite)) return { erreur: tx(`ÉCRAN APPELÉ ${s.suite} INCONNU.`, `CALLED SCREEN ${s.suite} UNKNOWN.`) };
+      ctx.code = s.suite; ctx.m = null;
+    }
+  },
+};
+function echangeTP(ctx, icf, touche, valeurs) {
+  const r = ctx.pgm.executer({ fichiers: { 'ECRAN-E': messageEntree(ctx.m, { icf, touche, valeurs }), 'CONV-E': ctx.conv || '' }, db });
+  ctx.conv = r.fichiers['CONV-S'] ?? '';
+  ctx.sortie = lireSortie(ctx.m, r.fichiers['ECRAN-S']);
+  sauverBase(db);
+}
+
 VUES.aide = {
   dessin() {
     const t = EN ? [
@@ -1149,8 +1425,8 @@ VUES.aide = {
       ['vert', 'M menu  R data elements  E record (E code)  C file calls'],
       ['vert', 'T processing  P procedures  D data  K report (-D -L -CE)  S outputs  B base'],
       ['vert', 'Q SQL  G source  X run  END, END UPD, END REPORT: the examples'],
+      ['vert', 'O screens (O code): -CE description, -CS Segments, -SIM mock-up, -TP run, -G'],
       ['vert', 'SHARE  copies a link holding the whole program, to send to anyone you like'],
-      ['blanc', ''],
       ['blanc', 'ACTION CODES (column A of the lists)'],
       ['vert', 'S delete the line   D duplicate the line   otherwise: change it, then Enter'],
       ['blanc', ''],
@@ -1169,8 +1445,8 @@ VUES.aide = {
       ['vert', 'M menu  R rubriques  E enregistrement (E code)  C appel des fichiers'],
       ['vert', 'T traitement  P traitements  D données  K état (-D -L -CE)  S sorties  B base'],
       ['vert', 'Q SQL  G source  X exécution  FIN, FIN MAJ, FIN ETAT : les exemples'],
+      ['vert', 'O écrans (O code) : -CE description, -CS Segments, -SIM maquette, -TP, -G'],
       ['vert', 'PARTAGE  copie un lien qui contient tout le programme, à envoyer à qui vous voulez'],
-      ['blanc', ''],
       ['blanc', 'CODES ACTION (colonne A des listes)'],
       ['vert', 'S supprimer la ligne   D dupliquer la ligne   sinon : modifiez puis Entrée'],
       ['blanc', ''],
@@ -1186,7 +1462,8 @@ VUES.aide = {
 // ----- touches à l'écran (mobile) -----
 const REINIT = tx('RÉINIT', 'RESET');
 const touches = [[tx('ENTRÉE', 'ENTER'), () => ecran.attention('ENTREE')], ['TAB', () => { ecran.champSuivant(1); ecran.dessiner(); }], ['PF3', () => ecran.attention('PF3')],
-  ['PF7', () => ecran.attention('PF7')], ['PF8', () => ecran.attention('PF8')], ['PF1', () => ecran.attention('PF1')], ['PF12', () => ecran.attention('PF12')],
+  ['PF2', () => ecran.attention('PF2')], ['PF7', () => ecran.attention('PF7')], ['PF8', () => ecran.attention('PF8')], ['PF1', () => ecran.attention('PF1')], ['PF12', () => ecran.attention('PF12')],
+  [tx('EFFACER', 'CLEAR'), () => ecran.attention('EFFACER')],
   [tx('EFF FIN', 'ERASE EOF'), () => { ecran.effacerFinDeChamp(); ecran.dessiner(); }], [REINIT, () => { ecran.bloque = null; ecran.dessiner(); }]];
 const barre = document.getElementById('touches');
 for (const [t, f] of touches) {

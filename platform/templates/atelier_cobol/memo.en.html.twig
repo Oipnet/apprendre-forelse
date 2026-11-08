@@ -34,6 +34,7 @@
         <li><a href="#traitement">The simple listing</a></li>
         <li><a href="#structure">The structured language</a></li>
         <li><a href="#etats">Reports</a></li>
+        <li><a href="#saisie">Entry screens</a></li>
         <li><a href="#base">The database</a></li>
         <li><a href="#terminal">The terminal</a></li>
       </ol>
@@ -51,6 +52,7 @@
             <tr><td>Files</td><td>C</td><td>The file calls: code, usage, record, name, argument (control break or matching).</td></tr>
             <tr><td>Processing</td><td>T</td><td>The program name, the title, and for a listing without a report: filters, columns, detail, totals. The output files.</td></tr>
             <tr><td>Reports</td><td>K</td><td>A report described the way the manual does: labels, structures, layout.</td></tr>
+            <tr><td>(at the terminal)</td><td>O</td><td>Entry screens that read and update the tables: description, Segments, mock-up, run.</td></tr>
             <tr><td>Structured language</td><td>P</td><td>Your procedures, in functions and sub-functions.</td></tr>
             <tr><td>Data</td><td>D</td><td>The content of the input files, typed column by column.</td></tr>
             <tr><td>Database</td><td>B, Q</td><td>DB2-style tables, and an SQL console to query them.</td></tr>
@@ -190,6 +192,25 @@
         <p>Skip <code>00</code>: overprint; absolute skip <code>*</code> to 01: new page. Items at 0: each line is printed right away, without being stored. The counters <code>5-dd00-eCL</code> (line in the page), <code>CLM</code> (lines per page), <code>CP</code> (page) and <code>CE</code> (lines written) are used in conditions and sources; <code>CATX</code> is the current category.</p>
       </section>
 
+      <section id="saisie">
+        <h2>Entry screens</h2>
+        <p>A screen has a six-character code, the first two being the Dialogue code (<code>CL0010</code>). It is described at the terminal (option <code>O</code>); the generated program is a pseudo-conversational transaction: each Enter or PF key receives the screen, checks it, updates the database and sends back the next screen.</p>
+        <h3>Description (-CE)</h3>
+        <p>One line per element, in line-number order. View C1: position and presentation; view C2 (PF11): update and source.</p>
+        <ul>
+          <li>Positioning: <code>A</code> absolute (line, column), blank relative to the previous field (lines below, or columns after).</li>
+          <li>Nature: <code>V</code> entered, <code>F</code> protected but received, <code>P</code> shown only, <code>O</code> label of the element only, <code>L</code> fixed label (no element), <code>R</code> start of the repetitive part (RV lines, H lines per instance), <code>Z</code> start of the bottom part.</li>
+          <li>Label presentation: <code>L</code> <code>M</code> long on 36, left or right, <code>N</code> useful long, <code>S</code> <code>T</code> <code>U</code> the same with the short label on 18, <code>F</code> element alone, <code>1</code> column header.</li>
+          <li><code>R</code>: required entry. Processing <code>I</code>: transaction code of the category (<code>C</code> create, <code>M</code> modify, <code>D</code> delete); with no transaction code, the update is implicit.</li>
+          <li>Update <code>M</code>: the element updates the given Segment; <code>V</code>: allowed value, one per continuation line. Source: the displayed Segment that feeds the element.</li>
+          <li><code>LIERR</code> (nature P) receives the error message. <code>PFKEY</code> describes the keys: <code>G</code> or <code>S</code> calls another screen (blank: end of the conversation), <code>V</code> operation code of the key (<code>S</code> next page of the list…).</li>
+        </ul>
+        <h3>Segments (-CS)</h3>
+        <p>The tables read or updated: Segment code (table code and two digits), category, reception usage (<code>N</code> <code>L</code> read <code>E</code> existence <code>M</code> modify <code>X</code> create and modify <code>T</code> all three), display usage (<code>A</code>), and the screen field that gives the key (<code>0010-CUSTNO</code>; blank: start of the table).</p>
+        <h3>Mock-up and run</h3>
+        <p><code>-SIM</code> shows the screen as it will be, keys G and S chain the mock-ups; Clear goes back. <code>-TP</code> runs the transaction on the database; Clear leaves. <code>-G</code> shows the generated source. On an error, the faulty field is flagged, the cursor goes there and nothing is written.</p>
+      </section>
+
       <section id="base">
         <h2>The database</h2>
         <p>A database runs in the browser, the DB2 way. Each table has a two-letter code: its columns are used as <code>CL-CUSTNM</code>. The SQL operator takes the table code and the access type:</p>
@@ -205,7 +226,7 @@
 
       <section id="terminal">
         <h2>The terminal</h2>
-        <p>The same screens on 24 lines of 80 columns. A code on the OPTION line, then Enter: <code>R</code> <code>E</code> <code>C</code> <code>T</code> <code>P</code> <code>D</code> <code>K</code> (then <code>-D</code>, <code>-L</code>, <code>-CE</code>) <code>S</code> <code>B</code> <code>Q</code> <code>G</code> <code>X</code>.</p>
+        <p>The same screens on 24 lines of 80 columns. A code on the OPTION line, then Enter: <code>R</code> <code>E</code> <code>C</code> <code>T</code> <code>P</code> <code>D</code> <code>K</code> (then <code>-D</code>, <code>-L</code>, <code>-CE</code>) <code>O</code> (then <code>-CE</code>, <code>-CS</code>, <code>-SIM</code>, <code>-TP</code>, <code>-G</code>) <code>S</code> <code>B</code> <code>Q</code> <code>G</code> <code>X</code>.</p>
         <ul>
           <li>Tab and Shift+Tab from field to field, Enter sends the screen, F1 to F12 for PF1 to PF12.</li>
           <li>PF3 back, PF7 and PF8 pages, PF10 and PF11 left and right, PF12 menu.</li>

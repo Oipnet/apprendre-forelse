@@ -1,5 +1,5 @@
 // Partage d'un programme par lien, comme le bac à sable : le modèle (dictionnaire, enregistrements, fichiers appelés
-// et leurs données, traitement, langage structuré, sorties, tables, états) voyage dans l'adresse, après le #. Le serveur ne le voit ni ne le garde.
+// et leurs données, traitement, langage structuré, sorties, tables, états, écrans) voyage dans l'adresse, après le #. Le serveur ne le voit ni ne le garde.
 // Format : #programme=<JSON compressé (deflate brut), en base64 pour URL>.
 
 import { generer, normaliser } from './generateur.js';
@@ -25,9 +25,9 @@ async function transformer(octets, flux) {
 
 // Ce qui part dans le lien : le modèle seul (pas le contenu de la base, propre à chaque navigateur).
 function essentiel(modele) {
-  const { version, dictionnaire, structures, appels, traitement, sorties, tables, lignes, etats, defi } = normaliser(modele);
+  const { version, dictionnaire, structures, appels, traitement, sorties, tables, lignes, etats, ecrans, defi } = normaliser(modele);
   // le défi relevé voyage avec le programme : celui qui ouvre le lien voit la vérification
-  return { v: VERSION, version, dictionnaire, structures, appels, traitement, sorties, tables, lignes, ...(etats.length ? { etats } : {}), ...(defi ? { defi } : {}) };
+  return { v: VERSION, version, dictionnaire, structures, appels, traitement, sorties, tables, lignes, ...(etats.length ? { etats } : {}), ...(ecrans.length ? { ecrans } : {}), ...(defi ? { defi } : {}) };
 }
 
 export async function fragmentDe(modele) {
@@ -56,6 +56,7 @@ export async function lireFragment(hash = location.hash) {
       sorties: Array.isArray(m.sorties) ? m.sorties : [], tables: Array.isArray(m.tables) ? m.tables : [],
       lignes: Array.isArray(m.lignes) ? m.lignes : [],
       etats: Array.isArray(m.etats) ? m.etats : [],
+      ecrans: Array.isArray(m.ecrans) ? m.ecrans.filter((e) => e && typeof e === 'object' && typeof e.code === 'string').map((e) => ({ code: e.code, nom: String(e.nom ?? ''), zones: Array.isArray(e.zones) ? e.zones : [], segments: Array.isArray(e.segments) ? e.segments : [] })) : [],
       // version 1 : les données du fichier unique ; version 2 : chaque fichier appelé porte les siennes
       ...(Array.isArray(m.appels) ? { appels: m.appels } : { donnees: Array.isArray(m.donnees) ? m.donnees : [] }),
       // version du modèle (noms des zones) : un lien plus ancien est repris par normaliser

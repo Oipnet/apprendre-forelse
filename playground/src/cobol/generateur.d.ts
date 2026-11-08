@@ -20,6 +20,8 @@ export interface Etat {
   structures?: Array<{ st: string; rubrique?: string; suite?: string; debut?: number; mode?: string; w?: string; source?: string; indice?: string; condition?: string; format?: string; z?: string }>;
   categories?: Array<{ ct: string; nlg?: string; type?: string; car?: string; st?: string; lb?: string; saut?: string; sautType?: string; fosf?: string; condition?: string }>;
 }
+/** Écran de saisie (Dialogue) : lignes de description (-CE) et Segments (-CS), voir dialogue.js */
+export interface Ecran { code: string; nom?: string; zones: Array<Record<string, string>>; segments: Array<Record<string, string>> }
 export interface Modele {
   /** version des noms de zones (3 : ceux du manuel IBM) ; un modèle plus ancien est repris par normaliser */
   version?: number;
@@ -32,6 +34,7 @@ export interface Modele {
   lignes?: Array<Record<string, string>>;
   donnees?: Array<Record<string, string>>;
   etats?: Etat[];
+  ecrans?: Ecran[];
   /** le défi relevé (defis.js), qui voyage avec le programme partagé */
   defi?: string;
 }

@@ -6,8 +6,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { generer, fichiersEntree, fichiersSortie } from '../../src/cobol/generateur.js';
+import { analyserEcran, genererEcran, messageEntree } from '../../src/cobol/dialogue.js';
 const anglais = process.env.COBOL_LANGUE === 'en';
-const { cas } = anglais ? { cas: (await import('./cas-en.js')).casEn } : await import('./cas.js');
+const { cas, casEcrans } = anglais ? { cas: (await import('./cas-en.js')).casEn } : await import('./cas.js');
 
 const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'cobol-'));
 const attendus = {};
@@ -40,5 +41,23 @@ for (const nom of fs.readdirSync(dossierSources).filter((f) => f.endsWith('.cbl'
   for (const f of fs.readdirSync(d).filter((f) => !['S.cbl', 's'].includes(f)).sort()) fichiers[f] = fs.readFileSync(path.join(d, f), 'latin1');
   sources[nom] = { sortie, fichiers };
 }
-fs.writeFileSync(new URL('./gnucobol.json', import.meta.url), JSON.stringify({ compilateur: execFileSync('cobc', ['--version']).toString().split('\n')[0], attendus, sources }, null, 2) + '\n');
+// Écrans de saisie : un échange par entrée, la zone de conversation passe d'un échange au suivant.
+const ecrans = {};
+casEcrans.forEach(([nom, modele, code, echanges], i) => {
+  const d = path.join(dossier, `ecran${i}`);
+  fs.mkdirSync(d);
+  const ecran = modele.ecrans.find((e) => e.code === code);
+  fs.writeFileSync(path.join(d, 'E.cbl'), genererEcran(modele, ecran));
+  execFileSync('cobc', ['-x', '-o', path.join(d, 'e'), path.join(d, 'E.cbl')], { stdio: ['ignore', 'ignore', 'inherit'] });
+  const m = analyserEcran(modele, ecran);
+  let conv = '';
+  ecrans[nom] = echanges.map((x) => {
+    fs.writeFileSync(path.join(d, 'ECRAN-E'), messageEntree(m, x));
+    fs.writeFileSync(path.join(d, 'CONV-E'), conv);
+    execFileSync(path.join(d, 'e'), { cwd: d, stdio: 'ignore' });
+    conv = fs.readFileSync(path.join(d, 'CONV-S'), 'latin1');
+    return fs.readFileSync(path.join(d, 'ECRAN-S'), 'latin1');
+  });
+});
+fs.writeFileSync(new URL('./gnucobol.json', import.meta.url), JSON.stringify({ compilateur: execFileSync('cobc', ['--version']).toString().split('\n')[0], attendus, sources, ecrans }, null, 2) + '\n');
 console.log(`${cas.length} sorties de référence et ${Object.keys(sources).length} sources écrits.`);
