@@ -2,9 +2,9 @@
 # Les textes que le thème fournit (theme.yaml, « home ») restent des données du thème.
 
 seo:
-    titre: "Apprendre à développer en codant dans le navigateur"
-    titre_marque: "Apprendre à développer en codant dans le navigateur | {marque}"
-    description: "Apprenez à développer en codant dans votre navigateur, sans vidéo ni installation : un vrai projet, des tests automatiques, le premier chapitre gratuit."
+    titre: "Exercices Symfony, Laravel et PHP dans le navigateur"
+    titre_marque: "Exercices Symfony, Laravel et PHP dans le navigateur | {marque}"
+    description: "Pratiquez Symfony 8, Laravel 13 et PHP 8.5 sur de vrais projets qui tournent dans votre navigateur : tests automatiques, rien à installer, premier chapitre gratuit."
 
 commun:
     essayer_pratique: "Essayer un exercice, sans compte"
