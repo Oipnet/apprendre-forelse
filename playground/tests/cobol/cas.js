@@ -1,5 +1,5 @@
 // Les cas comparés à GnuCOBOL : un modèle par cas, à partir des exemples de l'atelier.
-import { exemple, exempleMiseAJour, normaliser } from '../../src/cobol/generateur.js';
+import { exemple, exempleMiseAJour, exempleEtat, normaliser } from '../../src/cobol/generateur.js';
 import { DEFIS } from '../../src/cobol/defis.js';
 
 // GnuCOBOL ne compile pas EXEC SQL sans précompilateur : les cas comparés laissent la base de côté
@@ -152,6 +152,54 @@ cas.push(['mise a jour : creation, modification, annulation, erreurs', exempleMi
   const m = structuredClone(exempleMiseAJour);
   m.appels[1].donnees.reverse();
   cas.push(['mise a jour : mouvements dans le desordre, tries avant lecture', m]);
+}
+
+// États (chapitre 4) : catégories chargées puis éditées, ou éditées directement ; itératives,
+// débordement de page, calculs, totaux sur deux niveaux ; un compte rendu de mise à jour.
+cas.push(['etat : exemple', structuredClone(exempleEtat)]);
+{ const m = structuredClone(exempleEtat); m.etats[0].postes = 0; cas.push(['etat : edition directe', m]); }
+const iterative = (m) => {
+  const e = m.etats[0];
+  e.lignesPage = 12;
+  e.libelles.push({ numero: '06', texte: '   * ligne' }, { numero: '07', texte: '   (suite page suivante)' });
+  e.structures.push({ st: '03', rubrique: 'RANG', debut: 15, w: '*', source: 'JET1IT', format: '9' });
+  e.categories.push({ ct: 'IT', nlg: '100', type: 'I', car: '2', st: '03', lb: '06', saut: '01', condition: "RTD1 = '1'" });
+  e.categories.push({ ct: 'BP', nlg: '100', type: 'Z', lb: '07', saut: '01', condition: '5-ET00-1CL NOT < 5-ET00-1CLM' });
+  e.categories.push({ ct: 'AB', nlg: '100', type: 'A', st: '01', lb: '01', saut: '01', sautType: '*', condition: '5-ET00-1CL NOT < 5-ET00-1CLM' });
+  return m;
+};
+cas.push(['etat : iterative et debordement de page', iterative(structuredClone(exempleEtat))]);
+{ const m = iterative(structuredClone(exempleEtat)); m.etats[0].postes = 0; cas.push(['etat : iterative en edition directe', m]); }
+{
+  const m = structuredClone(exempleEtat);
+  const e = m.etats[0];
+  e.structures.push({ st: '02', rubrique: 'TTC', debut: 40, mode: 'R', w: '1', source: 'FA00MTFACT', format: '-(4)9', condition: "CATX = 'DD'" });
+  e.structures.push({ st: '02', suite: '*', mode: '*', w: '*', source: '1.2' });
+  e.structures.push({ st: '02', rubrique: 'MARQUE', debut: 58, source: "'<'", format: 'X', condition: "CATX = 'TR'" });
+  cas.push(['etat : calcul arrondi et litteral', m]);
+}
+{
+  const m = structuredClone(exempleEtat);
+  Object.assign(fa(m), { argument: ['REGION', 'NUMCLI'], rupture: 2 });
+  fa(m).donnees = [...fa(m).donnees, { REGION: 'NOR', NUMCLI: '12', NOMCLI: 'DUPONT', MTFACT: '10' }, { REGION: 'SUD', NUMCLI: '7', NOMCLI: 'MARTIN', MTFACT: '-0.01' }];
+  const e = m.etats[0];
+  e.lignesPage = 60;
+  e.libelles.push({ numero: '06', texte: '                 TOTAL CLIENT' });
+  e.categories.push({ ct: 'TC', nlg: '100', type: '2', st: '02', lb: '06', saut: '01', condition: "RTD2 = '1'" });
+  e.structures.find((r) => r.rubrique === 'NUMCLI').condition = "CATX = 'DD' OR CATX = 'TC'";
+  cas.push(['etat : totaux sur deux niveaux', m]);
+}
+{
+  const m = structuredClone(exempleMiseAJour);
+  m.appels.push({ code: 'CR', utilisation: 'I', fichier: 'CR.TXT', argument: ['A'] });
+  m.etats = [{ code: 'CRA', nom: 'COMPTE RENDU', longueur: 40, postes: 0,
+    libelles: [{ numero: '01', texte: 'CLIENTS APRES MISE A JOUR' }, { numero: '02', texte: 'CLIENT' }],
+    structures: [{ st: '01', rubrique: 'NUMCLI', debut: 10, w: '2', source: 'CL00' }, { st: '01', rubrique: 'NOMCLI', debut: 18, w: '2', source: 'CL00' }],
+    categories: [
+      { ct: 'AA', nlg: '100', lb: '01', saut: '01', sautType: '*', condition: '5-CR00-ACE = ZERO' },
+      { ct: 'DD', nlg: '100', st: '01', lb: '02', saut: '01', condition: "CL-OC1 = '1' AND RTD1 = '1'" },
+    ] }];
+  cas.push(['mise a jour : etat des clients', m]);
 }
 
 // Les défis : le modèle de départ, et la solution de référence dont la SYSOUT est l'attendue du défi.

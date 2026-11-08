@@ -6,7 +6,8 @@
 // MOVE, ADD, SUBTRACT, COMPUTE, IF/ELSE/END-IF, PERFORM [UNTIL], PERFORM UNTIL ... END-PERFORM,
 // OPEN, CLOSE, READ AT END / NOT AT END, WRITE, SORT USING GIVING, DISPLAY, SET ... TO TRUE,
 // INITIALIZE, CONTINUE, GO TO [DEPENDING ON], NEXT SENTENCE, STOP RUN, GOBACK,
-// OCCURS (indices), REDEFINES, HIGH-VALUE, LOW-VALUE, ALL littéral, WRITE AFTER/BEFORE ADVANCING
+// OCCURS (indices), REDEFINES, HIGH-VALUE, LOW-VALUE, ALL littéral, ROUNDED, ADD/SUBTRACT GIVING,
+// SPECIAL-NAMES C01 IS nom (début de page), WRITE AFTER/BEFORE ADVANCING
 // (mêmes octets que GnuCOBOL en LINE SEQUENTIAL), USAGE COMP acceptés mais stockés en DISPLAY,
 // et EXEC SQL ... END-EXEC sur une base SQLite (sql.js) :
 // SELECT ... INTO, INSERT, UPDATE, DELETE, DECLARE CURSOR, OPEN, FETCH, CLOSE, COMMIT, ROLLBACK.
@@ -189,7 +190,7 @@ export class Programme {
     this.fichiers = new Map();    // nom -> { assign, organisation, enreg, tri }
     this.paragraphes = new Map(); // nom -> instructions
     this.ordre = [];
-    this.conditions = new Map();  // nom 88 -> { parent, valeurs }
+    this.mnemoniques = new Map(); this.conditions = new Map();  // nom 88 -> { parent, valeurs }
     this.curseurs = new Map();    // nom -> { sql, entrees }
     this.analyser(tokeniser(source));
   }
@@ -197,8 +198,11 @@ export class Programme {
   analyser(jetons) {
     const L = new Lecteur(jetons);
     const division = (nom) => { while (!L.fin() && !(L.est(nom) && L.voir(1)?.v === 'DIVISION')) L.p++; };
-    // ENVIRONMENT DIVISION facultative
-    while (!L.fin() && !(L.est('DATA') && L.voir(1)?.v === 'DIVISION') && !L.est('SELECT')) L.p++;
+    // ENVIRONMENT DIVISION facultative ; SPECIAL-NAMES : C01 IS nom (saut au canal 1 = début de page)
+    while (!L.fin() && !(L.est('DATA') && L.voir(1)?.v === 'DIVISION') && !L.est('SELECT')) {
+      if (L.est('C01', 'CSP') && L.voir(1)?.v === 'IS' && L.voir(2)?.t === 'mot') this.mnemoniques.set(L.voir(2).v, L.voir().v);
+      L.p++;
+    }
     while (L.est('SELECT')) this.select(L);
     division('DATA');
     L.mot('DATA'); L.mot('DIVISION'); L.point();
@@ -418,11 +422,22 @@ export class Programme {
         while (!L.est(v === 'ADD' ? 'TO' : 'FROM')) ins.sources.push(this.operande(L));
         L.mot();
         ins.cibles = [];
-        while (L.voir()?.t === 'mot' && !VERBES.has(L.voir().v) && !FINS.has(L.voir().v) && L.voir().v !== 'ROUNDED') ins.cibles.push(this.reference(L));
+        const cibles = () => {
+          const liste = [];
+          while (L.voir()?.t === 'mot' && !VERBES.has(L.voir().v) && !FINS.has(L.voir().v) && !L.est('ROUNDED', 'GIVING')) {
+            liste.push(this.reference(L));
+            if (L.optionnel('ROUNDED')) ins.arrondi = true;
+          }
+          return liste;
+        };
+        ins.cibles = cibles();
+        // ADD a TO b GIVING c : c reçoit b + a ; SUBTRACT a FROM b GIVING c : c reçoit b - a
+        if (L.optionnel('GIVING')) { ins.base = ins.cibles; ins.cibles = cibles(); }
         return ins;
       }
       case 'COMPUTE': {
         ins.cible = this.reference(L);
+        if (L.optionnel('ROUNDED')) ins.arrondi = true;
         if (!(L.optionnel('=') || L.optionnel('EQUAL'))) throw new ErreurCobol('= attendu', ligne);
         ins.expr = this.expression(L);
         return ins;
@@ -484,6 +499,8 @@ export class Programme {
           ins.avance = L.mot();
           L.optionnel('ADVANCING');
           if (L.optionnel('PAGE')) ins.page = true;
+          else if (this.mnemoniques.get(L.voir()?.v) === 'C01') { L.mot(); ins.page = true; }
+          else if (this.mnemoniques.has(L.voir()?.v)) throw new ErreurCobol(`ADVANCING ${L.voir().v} : seul le canal C01 (début de page) est pris en charge`, ligne);
           else { ins.lignes = this.operande(L); L.optionnel('LINE', 'LINES'); }
         }
         return ins;
@@ -801,6 +818,15 @@ class Execution {
     this.ecrire(el, chiffres);
   }
 
+  // ROUNDED : arrondi à la décimale de la cible, la moitié s'éloignant de zéro
+  arrondir(el, d, oui) {
+    const e = el.pic?.echelle ?? 0;
+    if (!oui || d.e <= e) return d;
+    const k = P10(d.e - e), n = d.n < 0n ? -d.n : d.n;
+    const r = (n + k / 2n) / k;
+    return new Dec(d.n < 0n ? -r : r, e);
+  }
+
   estNumerique(o) { return o.num !== undefined || o.fig === 'ZERO' || (o.el && o.el.pic && o.el.pic.genre === '9'); }
 
   affecter(el, source) {
@@ -959,13 +985,18 @@ class Execution {
       case 'ADD': case 'SUBTRACT': {
         let total = new Dec(0n);
         for (const s of ins.sources) total = total.plus(this.nombre(s));
+        if (ins.base) {
+          const v = this.nombre(ins.base[0]);
+          for (const c of ins.cibles) { const el = this.res(c); this.stockerNombre(el, this.arrondir(el, ins.v === 'ADD' ? v.plus(total) : v.moins(total), ins.arrondi)); }
+          return;
+        }
         for (const c of ins.cibles) {
           const el = this.res(c), v = this.nombre({ el });
-          this.stockerNombre(el, ins.v === 'ADD' ? v.plus(total) : v.moins(total));
+          this.stockerNombre(el, this.arrondir(el, ins.v === 'ADD' ? v.plus(total) : v.moins(total), ins.arrondi));
         }
         return;
       }
-      case 'COMPUTE': this.stockerNombre(this.res(ins.cible), this.calculer(ins.expr)); return;
+      case 'COMPUTE': { const el = this.res(ins.cible); this.stockerNombre(el, this.arrondir(el, this.calculer(ins.expr), ins.arrondi)); return; }
       case 'PHRASE':
         try { this.bloc(ins.corps); } catch (e) { if (!(e instanceof PhraseSuivante)) throw e; }
         return;

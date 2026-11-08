@@ -3,7 +3,7 @@ export interface Rubrique { code: string; libelle?: string; type: 'X' | '9'; lon
 export interface Table { code: string; nom: string; rubriques: string[]; cle: string[] }
 export interface Appel {
   code: string;
-  utilisation: 'C' | 'P' | 'M' | 'R';
+  utilisation: 'C' | 'P' | 'M' | 'R' | 'I';
   structure?: string;
   fichier: string;
   argument?: string[];
@@ -11,6 +11,14 @@ export interface Appel {
   synchro?: number;
   mouvement?: { rubrique?: string; creation: string; modification: string; annulation: string };
   donnees?: Array<Record<string, string>>;
+}
+/** État (chapitre 4) : libellés (-L), structures (-CE), composition (-D) ; code = fichier d'impression + lettre */
+export interface Etat {
+  code: string; nom?: string; longueur?: number; lignesPage?: number; postes?: number;
+  totalEntiers?: number; totalDecimales?: number; condition?: string;
+  libelles?: Array<{ numero: string; texte: string }>;
+  structures?: Array<{ st: string; rubrique?: string; suite?: string; debut?: number; mode?: string; w?: string; source?: string; indice?: string; condition?: string; format?: string; z?: string }>;
+  categories?: Array<{ ct: string; nlg?: string; type?: string; car?: string; st?: string; lb?: string; saut?: string; sautType?: string; fosf?: string; condition?: string }>;
 }
 export interface Modele {
   /** version des noms de zones (3 : ceux du manuel IBM) ; un modèle plus ancien est repris par normaliser */
@@ -23,11 +31,13 @@ export interface Modele {
   tables?: Table[];
   lignes?: Array<Record<string, string>>;
   donnees?: Array<Record<string, string>>;
+  etats?: Etat[];
   /** le défi relevé (defis.js), qui voyage avec le programme partagé */
   defi?: string;
 }
 export const exemple: Modele;
 export const exempleMiseAJour: Modele;
+export const exempleEtat: Modele;
 export const VERSION_MODELE: number;
 export function normaliser(modele: Modele): Modele & { appels: Appel[] };
 export function generer(modele: Modele): string;

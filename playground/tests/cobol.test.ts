@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ddlTable, exemple, exempleMiseAJour, fichierDonnees, fichiersEntree, fichiersSortie, generer, normaliser, placeFonction, type Modele } from '../src/cobol/generateur.js';
+import { ddlTable, exemple, exempleEtat, exempleMiseAJour, fichierDonnees, fichiersEntree, fichiersSortie, generer, normaliser, placeFonction, type Modele } from '../src/cobol/generateur.js';
 import { Programme } from '../src/cobol/interpreteur.js';
 import { fragmentDe, lireFragment } from '../src/cobol/partage.js';
 import { DEFIS, comparer, defiDuFragment } from '../src/cobol/defis.js';
@@ -144,6 +144,55 @@ describe('à la manière de Pacbase', () => {
 		const n: Modele = structuredClone(exempleMiseAJour);
 		n.appels![1].argument = ['NOMCLI'];
 		expect(() => generer(n)).toThrow(/même longueur/);
+	});
+});
+
+describe('états à la manière de Pacbase', () => {
+	it('l\'état donne une fonction F8e : catégories, ligne à éditer, aiguillage, structures, écriture', () => {
+		const source = generer(exempleEtat);
+		for (const f of ['F81.', 'F81AA.', 'F81DD-090.', 'F81DD-150.', 'F81DD-300. SUBTRACT 1 FROM J07 GIVING J06.', 'F81DD-500. IF NRD NOT = 1 GO TO F81DD-FN.',
+			'F81ZZ. MOVE 1 TO J00.', 'F8100.', 'F8102-TOT.', 'F8199. MOVE 6-ET00 TO ET00.', 'F8199-20. ADD 1 TO 5-ET00-1CE. GO TO F81ZZ-009.']) expect(source).toContain(`       ${f}`);
+		expect(source).toContain('C01 IS SAUTP.');
+		expect(source).toContain("MOVE TS-1-AA TO ST-TA GO TO F81ZZ-009.");
+		expect(source).toContain('WRITE ET00 AFTER ADVANCING SAUTP');
+		expect(source).toContain('MOVE 1-LI00-1 (J02) TO 6-ET100.');
+		expect(source).toContain('10 6-ET102 REDEFINES 6-ET100.');
+		expect(source).toContain('05 102-CPT OCCURS 1.');
+		expect(source).toContain('MOVE G102-MTFACT TO 6-ET102-MTFACT.');
+		// sans état décrit, l'édition simplifiée reste sur la SYSOUT
+		expect(source).not.toContain('DISPLAY L-TITRE');
+		expect(generer(exemple)).toContain('DISPLAY L-TITRE');
+		expect(fichiersSortie(exempleEtat)).toEqual([{ code: 'ET', fichier: 'ETAT.TXT', etat: true }]);
+		expect(placeFonction('81', exempleEtat)).toMatch(/état ET1/);
+	});
+
+	it('en édition directe, chaque ligne s\'édite au chargement de sa catégorie', () => {
+		const m: Modele = structuredClone(exempleEtat);
+		m.etats![0].postes = 0;
+		const source = generer(m);
+		expect(source).toContain("MOVE '010101 ' TO ST-SLS");
+		expect(source).toContain('PERFORM F81ZZ-010 THRU F8199-FN');
+		expect(source).toContain('       F81ZZ. MOVE SPACE TO CATX. GO TO F81-FN.');
+		expect(source).not.toContain('CAT-TAB');
+	});
+
+	it('refuse un état mal décrit, avec un message qui dit où', () => {
+		const essai = (f: (m: Modele) => void) => { const m: Modele = structuredClone(exempleEtat); f(m); return () => generer(m); };
+		expect(essai((m) => { m.appels![1].argument = []; })).toThrow(/lettre de l'état/);
+		expect(essai((m) => { m.etats![0].code = 'ET2'; })).toThrow(/ET1 n'est pas décrit/);
+		expect(essai((m) => { m.etats![0].libelles![2].numero = '09'; })).toThrow(/sans trou ni doublon/);
+		expect(essai((m) => { m.etats![0].structures![1].debut = 59; })).toThrow(/déborde/);
+		expect(essai((m) => { m.etats![0].structures![2].debut = 2; })).toThrow(/chevauche/);
+		expect(essai((m) => { m.etats![0].structures![0].format = ''; })).toThrow(/format d'édition/);
+		expect(essai((m) => { m.etats![0].categories![4].type = '2'; })).toThrow(/n'a que 1 niveau/);
+		expect(essai((m) => { m.etats![0].categories![3].st = '01'; })).toThrow(/rubrique à totaliser/);
+		expect(essai((m) => { m.etats![0].categories!.push({ ct: 'ZZ', st: '01' }); })).toThrow(/ZZ est interdite/);
+		expect(essai((m) => { m.lignes = [{ fo: '81', sf: '10', ope: 'N', opes: 'x', niv: '05', tc: 'BL' }]; })).toThrow(/générée pour l'état ET1/);
+	});
+
+	it('l\'état voyage dans le lien de partage', async () => {
+		const m = await lireFragment('#' + await fragmentDe(exempleEtat));
+		expect(m?.etats).toEqual(exempleEtat.etats);
 	});
 });
 

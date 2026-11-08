@@ -1,6 +1,8 @@
 // Générateur COBOL : dictionnaire de rubriques + structure + description d'un batch d'édition
 // -> programme COBOL (format fixe) compilable par GnuCOBOL.
 
+import { preparerEtats, emettreEtats, etatsAppeles } from './etats.js';
+
 const DONNEES_FACTURES = [
     { REGION: 'NOR', NUMCLI: '12', NOMCLI: 'DUPONT', MTFACT: '1250.50' },
     { REGION: 'SUD', NUMCLI: '7', NOMCLI: 'MARTIN', MTFACT: '-80' },
@@ -121,6 +123,49 @@ export const exempleMiseAJour = {
   lignes: [],
 };
 
+// Un état à la façon du manuel : chiffre d'affaires par région, en-tête de page, ligne détail
+// totalisée, total par région (rupture 1) et total général.
+export const exempleEtat = {
+  version: 3,
+  dictionnaire: exemple.dictionnaire.slice(0, 4),
+  structures: [exemple.structures[0]],
+  appels: [
+    { code: 'FA', utilisation: 'C', structure: 'FACTURE', fichier: 'FACTURES.DAT', argument: ['REGION'], rupture: 1, donnees: DONNEES_FACTURES },
+    { code: 'ET', utilisation: 'I', fichier: 'ETAT.TXT', argument: ['1'] },
+  ],
+  traitement: { programme: 'ETATCA', titre: 'CHIFFRE D AFFAIRES PAR REGION' },
+  // État ET1 : libellés (-L), structures (-CE), composition (-D)
+  etats: [{
+    code: 'ET1', nom: 'CHIFFRE D AFFAIRES PAR REGION', longueur: 60, lignesPage: 14, postes: 100,
+    libelles: [
+      { numero: '01', texte: 'CHIFFRE D\'AFFAIRES PAR REGION                    PAGE' },
+      { numero: '02', texte: 'REGION   CLIENT  NOM                             MONTANT' },
+      { numero: '03', texte: '------------------------------------------------------------' },
+      { numero: '04', texte: '         TOTAL REGION' },
+      { numero: '05', texte: 'TOTAL GENERAL' },
+    ],
+    structures: [
+      { st: '01', rubrique: 'PAGE', debut: 56, w: '5', source: 'ET001CP', format: 'ZZ9' },
+      { st: '02', rubrique: 'REGION', debut: 1, w: '1', source: 'FA00', condition: "CATX NOT = 'TT'" },
+      { st: '02', rubrique: 'NUMCLI', debut: 10, w: '1', source: 'FA00', condition: "CATX = 'DD'" },
+      { st: '02', rubrique: 'NOMCLI', debut: 18, w: '1', source: 'FA00', condition: "CATX = 'DD'" },
+      { st: '02', rubrique: 'MTFACT', debut: 48, mode: 'T', w: '1', source: 'FA00' },
+    ],
+    categories: [
+      { ct: 'AA', nlg: '100', st: '01', lb: '01', saut: '01', sautType: '*', condition: '5-ET00-1CL NOT < 5-ET00-1CLM' },
+      { ct: 'AA', nlg: '110', lb: '02', saut: '02' },
+      { ct: 'AA', nlg: '120', lb: '03', saut: '01' },
+      { ct: 'DD', nlg: '100', type: '*', st: '02', saut: '01' },
+      { ct: 'TR', nlg: '100', type: '1', st: '02', lb: '04', saut: '01', condition: "RTD1 = '1'" },
+      { ct: 'TR', nlg: '110', saut: '01' },
+      { ct: 'TT', nlg: '100', type: '0', st: '02', lb: '05', saut: '01', condition: "FA-FI = '1'" },
+    ],
+  }],
+  sorties: [],
+  tables: [],
+  lignes: [],
+};
+
 const OPS = ['=', 'NOT =', '>', '<', '>=', '<='];
 export const operateurs = OPS;
 
@@ -148,7 +193,7 @@ export function longueurFichier(r) {
 }
 
 // Clause PIC d'édition pour un nombre de chiffres entiers donné.
-function picEdition(ent, dec, signe) {
+export function picEdition(ent, dec, signe) {
   let p;
   if (signe) p = ent > 1 ? `-(${ent})9` : '-9';
   else p = ent > 1 ? `Z(${ent - 1})9` : '9';
@@ -261,6 +306,7 @@ export const UTILISATIONS = {
   P: 'principal : mis à jour par les mouvements',
   M: 'mouvements : mettent à jour le principal',
   R: 'résultat : le principal après mise à jour',
+  I: 'impression : l\'état (argument : sa lettre) y est écrit',
 };
 const CODES_RESERVES = ['ED', 'LC', 'LG', 'RT', 'NB', 'IN', 'SQ', 'R1', 'R2', 'R3', 'MI'];
 export const MOUVEMENT_DEFAUT = { creation: 'C', modification: 'M', annulation: 'A' };
@@ -288,10 +334,12 @@ export const appelEdite = (model) => (model.appels || []).find((a) => a.utilisat
 
 // Fonctions générées selon le genre de programme (édition ou mise à jour).
 export function fonctionsGenerees(model) {
-  if (estMiseAJour(model)) return ['01', '05', '10', '20', '22', '24', '26', '30', '33', '39', '70', '73', '76', '90'];
+  // un état appelé (fichier I) donne sa fonction F8e ; sans état, l'édition simplifiée est en F8E
+  const etats = etatsAppeles(model).map((x) => `8${x.e}`);
+  if (estMiseAJour(model)) return ['01', '05', '10', '20', '22', '24', '26', '30', '33', '39', '70', '73', '76', ...etats, '90'].sort(comparerCodes);
   const c = appelEdite(model);
   const rupture = c && Number(c.rupture || 0) > 0;
-  return ['01', '05', ...(rupture ? ['10'] : []), '20', ...(rupture ? ['22'] : []), '8E', '90'];
+  return ['01', '05', ...(rupture ? ['10'] : []), '20', ...(rupture ? ['22'] : []), ...(etats.length ? etats : ['8E']), '90'].sort(comparerCodes);
 }
 
 const ROLES_GENERES = {
@@ -306,6 +354,8 @@ const ROLES_GENERES = {
 export function placeFonction(fo, model) {
   const code = normaliserCode(fo);
   const gen = fonctionsGenerees(model);
+  const etat = etatsAppeles(model).find((x) => `8${x.e}` === code);
+  if (etat) return `générée (édition de l'état ${etat.code}) : appelez vos traitements par la colonne FOSF des catégories`;
   if (gen.includes(code)) return `générée (${ROLES_GENERES[code]}) : vos sous-fonctions s'y ajoutent${code === '8E' ? ', avant l\'impression du détail' : code === '20' ? ', avant la fermeture des fichiers' : ''}`;
   const avant = (x) => comparerCodes(code, x) < 0;
   if (avant('01')) return 'avant l\'initialisation, une fois';
@@ -412,6 +462,7 @@ export function normaliser(modele) {
   m.sorties ||= [];
   m.tables ||= [];
   m.lignes ||= [];
+  m.etats ||= [];
   if (!Array.isArray(m.appels)) {
     const t = m.traitement;
     const pris = new Set([...m.sorties.map((x) => x.code), ...m.tables.map((x) => x.code)]);
@@ -457,7 +508,7 @@ function migrerZones(m) {
 
 // ================= Données des fichiers en entrée =================
 function contenuAppel(model, a) {
-  if (a.utilisation === 'R') return null;
+  if (a.utilisation === 'R' || a.utilisation === 'I') return null;
   const s = model.structures.find((x) => x.code === a.structure);
   if (!s) throw new Error(`Fichier ${a.code} : enregistrement ${a.structure || '(aucun)'} inconnu`);
   const vide = (r, v) => a.utilisation === 'M' && String(v ?? '').trim() === '';
@@ -475,19 +526,19 @@ function contenuAppel(model, a) {
 export function fichiersEntree(modele) {
   const model = normaliser(modele);
   const f = {};
-  for (const a of model.appels) if (a.utilisation !== 'R') f[a.fichier] = contenuAppel(model, a);
+  for (const a of model.appels) if (a.utilisation !== 'R' && a.utilisation !== 'I') f[a.fichier] = contenuAppel(model, a);
   return f;
 }
 // Contenu du fichier lu par un programme d'édition (ou du premier fichier lu).
 export function fichierDonnees(modele) {
   const model = normaliser(modele);
-  const a = appelEdite(model) || model.appels.find((x) => x.utilisation !== 'R');
+  const a = appelEdite(model) || model.appels.find((x) => x.utilisation !== 'R' && x.utilisation !== 'I');
   return a ? contenuAppel(model, a) : '';
 }
 // Fichiers écrits par le programme (sorties, résultat de la mise à jour), pour les montrer après la SYSOUT.
 export function fichiersSortie(modele) {
   const model = normaliser(modele);
-  return [...model.appels.filter((a) => a.utilisation === 'R').map((a) => ({ code: a.code, fichier: a.fichier })),
+  return [...model.appels.filter((a) => a.utilisation === 'R' || a.utilisation === 'I').map((a) => ({ code: a.code, fichier: a.fichier, ...(a.utilisation === 'I' ? { etat: true } : {}) })),
     ...model.sorties.map((s) => ({ code: s.code, fichier: s.fichier }))];
 }
 
@@ -503,7 +554,7 @@ function verifierAppels(model) {
     codes.add(a.code);
     if (!(a.utilisation in UTILISATIONS)) throw new Error(`Fichier ${a.code} : utilisation ${a.utilisation} inconnue (${Object.keys(UTILISATIONS).join(' ')})`);
     if (!/^[A-Z0-9][A-Z0-9.]*$/.test(a.fichier || '')) throw new Error(`Fichier ${a.code} : nom de fichier invalide`);
-    if (a.utilisation !== 'R' && !model.structures.some((s) => s.code === a.structure)) throw new Error(`Fichier ${a.code} : enregistrement ${a.structure || '(aucun)'} inconnu`);
+    if (a.utilisation !== 'R' && a.utilisation !== 'I' && !model.structures.some((s) => s.code === a.structure)) throw new Error(`Fichier ${a.code} : enregistrement ${a.structure || '(aucun)'} inconnu`);
   }
   for (const x of [...model.sorties, ...model.tables]) if (codes.has(x.code)) throw new Error(`Le code ${x.code} sert à la fois à un fichier appelé et à un fichier en sortie ou une table`);
   const noms = appels.map((a) => a.fichier);
@@ -571,6 +622,10 @@ export function generer(modele) {
   const tables = model.tables;
   verifierTables(model, tables);
   const cd = verifierAppels(model);
+  // états (fichiers d'impression I) : niveaux de rupture du programme = RTD1 à RTDn
+  const etats = preparerEtats(model, cd.mode === 'maj' ? cd.n + 1 : cd.rupture);
+  const ed = emettreEtats(etats);
+  const simplifiee = !etats.length; // sans état décrit, l'édition simplifiée sur la SYSOUT (F8E)
   const src = new Source();
   const dico = new Map(model.dictionnaire.map((d) => [d.code, d]));
   const struct = (a) => model.structures.find((s) => s.code === a.structure);
@@ -581,6 +636,8 @@ export function generer(modele) {
   // ---------- langage structuré : analyse ----------
   const fonctions = analyserLignes(model.lignes);
   for (const [fo, sous] of fonctions) {
+    const etat = etats.find((x) => `8${x.e}` === fo);
+    if (etat) throw new Error(`Fonction ${fo} : elle est générée pour l'état ${etat.code} ; écrivez vos lignes dans une autre fonction et appelez-la par la colonne FOSF d'une catégorie`);
     if (generees.includes(fo) && sous.some((x) => x.sf === '99')) throw new Error(`Fonction ${fo} : la sous-fonction 99 est générée (fin de la fonction) : prenez un autre code`);
   }
   const travail = new Map();   // W-xxx déclarées automatiquement d'après le dictionnaire
@@ -724,16 +781,19 @@ export function generer(modele) {
     src.com(`Programme genere : ${t.titre || pgm}`.normalize('NFD').replace(/[^\x20-\x7e]/g, '').slice(0, 60));
     for (const c of commentaires) src.com(c);
     src.a('ENVIRONMENT DIVISION.');
+    if (etats.length) ed.specialNames(src);
     src.a('INPUT-OUTPUT SECTION.');
     src.a('FILE-CONTROL.');
   }
   function selectSorties() {
+    ed.selects(src, litteral);
     for (const so of sorties) {
       src.b(`SELECT ${so.code}-FICHIER ASSIGN TO ${litteral(so.fichier)}`);
       src.b('    ORGANIZATION IS LINE SEQUENTIAL.');
     }
   }
   function fdSorties() {
+    ed.fds(src);
     for (const so of sorties) {
       src.a(`FD  ${so.code}-FICHIER.`);
       src.a(`01  ${so.code}-ENR.`);
@@ -768,6 +828,7 @@ export function generer(modele) {
   }
   // Déroulement : fonctions générées et fonctions de l'utilisateur, dans l'ordre de leurs codes.
   function derouler(generes) {
+    for (const [fo, f] of Object.entries(ed.fonctions())) generes[fo] = () => f(src);
     const codes = [...new Set([...Object.keys(generes), ...fonctions.keys()])].sort(comparerCodes);
     for (const fo of codes) {
       if (generes[fo]) generes[fo]();
@@ -825,8 +886,8 @@ export function generer(modele) {
     const ruptures = c.argument.slice(0, N).map((x) => rubrique(model, x));
     const colonnes = (t.colonnes || []).map((x) => rubrique(model, x));
     const totaux = (t.totaux || []).map((x) => rubrique(model, x));
-    for (const r of totaux) if (r.type !== '9') throw new Error(`Total impossible sur une rubrique alphanumérique : ${r.code}`);
-    for (const r of [...colonnes, ...totaux, ...(t.filtres || []).map((f) => rubrique(model, f.rubrique))]) {
+    if (simplifiee) for (const r of totaux) if (r.type !== '9') throw new Error(`Total impossible sur une rubrique alphanumérique : ${r.code}`);
+    for (const r of [...(simplifiee ? [...colonnes, ...totaux] : []), ...(t.filtres || []).map((f) => rubrique(model, f.rubrique))]) {
       if (!struct(c).rubriques.includes(r.code)) throw new Error(`La rubrique ${r.code} n'est pas dans l'enregistrement ${c.structure} du fichier ${dd}`);
     }
     const lu = N ? `${dd}-TRIE` : `${dd}-FICHIER`;  // le fichier que lit l'itération
@@ -835,7 +896,7 @@ export function generer(modele) {
     entete([
       'F01 initialisations, F05 debut d iteration,',
       `${N ? 'F10 lecture avec rupture, ' : ''}F20 fin de traitement,`,
-      `${N ? 'F22 calcul des derniers, ' : ''}F8E edition, F90 ecritures,`,
+      `${N ? 'F22 calcul des derniers, ' : ''}${simplifiee ? 'F8E' : etats.map((x) => `F8${x.e}`).join(' ')} edition, F90 ecritures,`,
       'F9099-ITER-FN fin d iteration.',
       'Les autres fonctions sont les votres.',
     ]);
@@ -867,6 +928,15 @@ export function generer(modele) {
     src.a(`01  5-${dd}00.`);
     src.b(`05 5-${dd}00-CPTENR PIC 9(9) VALUE ZERO.`);
     src.a('01  NB-LUS PIC 9(9) VALUE ZERO.');
+    if (ed.aDesIndices()) {
+      src.a('01  INDICES COMPUTATIONAL SYNC.');
+      ed.indices(src);
+    }
+    if (!simplifiee) {
+      ed.working(src);
+      zonesCommunes();
+    } else editionSimplifiee();
+    function editionSimplifiee() {
     const niveauxTotal = ['G', ...ruptures.map((_, i) => `R${i + 1}`)];
     for (const n of niveauxTotal) {
       if (t.compter) src.a(`01  ${n}-NB PIC 9(7) VALUE ZERO.`);
@@ -924,6 +994,7 @@ export function generer(modele) {
     src.b('05 LC-LUS PIC Z(6)9.');
     src.b('05 FILLER PIC X(3) VALUE " / ".');
     src.b('05 LC-RETENUS PIC Z(6)9.');
+    }
 
     // ---------- PROCEDURE DIVISION ----------
     // lecture d'un enregistrement retenu par la sélection ; para : paragraphe de la lecture, fin : sortie
@@ -939,7 +1010,7 @@ export function generer(modele) {
       }
     };
     const ouvertures = () => {
-      for (const code of [dd, ...sorties.map((x) => x.code)].sort(comparerCodes)) {
+      for (const code of [dd, ...ed.codes(), ...sorties.map((x) => x.code)].sort(comparerCodes)) {
         src.a(`F01${code}.`);
         if (code === dd) {
           if (N) {
@@ -954,7 +1025,7 @@ export function generer(modele) {
       }
     };
     const fermetures = () => {
-      for (const code of [dd, ...sorties.map((x) => x.code)].sort(comparerCodes)) {
+      for (const code of [dd, ...ed.codes(), ...sorties.map((x) => x.code)].sort(comparerCodes)) {
         src.a(`F20${code}. CLOSE ${code === dd ? lu : `${code}-FICHIER`}.`);
         src.a(`F20${code}-FN. EXIT.`);
       }
@@ -963,9 +1034,11 @@ export function generer(modele) {
     derouler({
       '01': () => {
         src.a('F01.');
-        src.b('DISPLAY L-TITRE');
-        src.b('DISPLAY L-ENTETE');
-        src.b('DISPLAY L-TRAIT.');
+        if (simplifiee) {
+          src.b('DISPLAY L-TITRE');
+          src.b('DISPLAY L-ENTETE');
+          src.b('DISPLAY L-TRAIT.');
+        }
         ouvertures();
         sousFonctions('01');
         src.a('F01-FN. EXIT.');
@@ -1017,20 +1090,27 @@ export function generer(modele) {
       '20': () => {
         src.a('F20. IF FT = ALL \'1\'');
         src.b('NEXT SENTENCE ELSE GO TO F20-FN.');
-        if (t.compter) src.b('MOVE G-NB TO LG-NB');
-        for (const r of totaux) src.b(`MOVE G-${ident(r.code)} TO LG-${ident(r.code)}`);
-        src.b('DISPLAY L-TRAIT');
-        src.b('DISPLAY L-TOTAL-G');
-        src.b('MOVE NB-LUS TO LC-LUS');
-        src.b(`MOVE 5-${dd}00-CPTENR TO LC-RETENUS`);
-        src.b('DISPLAY L-COMPTES.');
+        if (simplifiee) {
+          if (t.compter) src.b('MOVE G-NB TO LG-NB');
+          for (const r of totaux) src.b(`MOVE G-${ident(r.code)} TO LG-${ident(r.code)}`);
+          src.b('DISPLAY L-TRAIT');
+          src.b('DISPLAY L-TOTAL-G');
+          src.b('MOVE NB-LUS TO LC-LUS');
+          src.b(`MOVE 5-${dd}00-CPTENR TO LC-RETENUS`);
+          src.b('DISPLAY L-COMPTES.');
+        }
         sousFonctions('20');
         fermetures();
         src.a('F2099. STOP RUN.');
         src.a('F2099-FN. EXIT.');
         src.a('F20-FN. EXIT.');
       },
-      '8E': () => {
+      ...(simplifiee ? { '8E': f8e } : {}),
+      '90': finIteration,
+    });
+    return src.texte();
+    function f8e() {
+      {
         src.a('F8E.');
         ruptures.forEach((r, i) => {
           const nv = `R${i + 1}`;
@@ -1062,10 +1142,8 @@ export function generer(modele) {
         }
         src.b('CONTINUE.');
         src.a('F8E-FN. EXIT.');
-      },
-      '90': finIteration,
-    });
-    return src.texte();
+      }
+    }
   }
   // ================= Programme de mise à jour (principal P, mouvements M, résultat R) =================
   // Squelette du chapitre 6 : F10 lecture avec rupture du principal et des mouvements, F22 derniers,
@@ -1090,7 +1168,7 @@ export function generer(modele) {
     const niveaux = [...Array(N).keys()].map((i) => i + 1);
     const NM = N + 1; // niveau du mouvement
     const entrees = [p, mv].sort((a, b) => comparerCodes(a.code, b.code));
-    const fichiersOuverts = [PP, MM, RR, ...sorties.map((x) => x.code)].sort(comparerCodes);
+    const fichiersOuverts = [PP, MM, RR, ...ed.codes(), ...sorties.map((x) => x.code)].sort(comparerCodes);
     const lu = (a) => `${a.code}-TRIE`;
     const arg = (a) => (a === p ? argP : argM);
 
@@ -1155,6 +1233,7 @@ export function generer(modele) {
     src.a('01  INDICES COMPUTATIONAL SYNC.');
     src.b('05 I01 PIC S9(4) VALUE +1.');
     src.b('05 I02 PIC S9(4) VALUE +4.');
+    ed.indices(src);
     src.com('Erreurs : EN-EI identification, PR-00 presence des rubriques,');
     src.com('GR-PR et GR-EG le mouvement, GM-ER le groupe de mouvements');
     src.a('01  EN-PRR.');
@@ -1163,7 +1242,7 @@ export function generer(modele) {
     for (const r of rubs(mv)) src.i(1, `10 PR-00-${K(r)} PIC X.`);
     src.a('01  GR-PRR.');
     src.b('05 GR-PR PIC X OCCURS 1.');
-    src.a('01  GR-EG PIC X VALUE \'1\'.');
+    src.b('05 GR-EG PIC X VALUE \'1\'.');
     src.a('01  GR-PRE PIC X VALUE \'0\'.');
     src.a('01  GM-ER PIC X VALUE \'0\'.');
     for (const c of [PP, MM, RR]) {
@@ -1171,6 +1250,7 @@ export function generer(modele) {
       src.b(`05 5-${c}00-CPTENR PIC 9(9) VALUE ZERO.`);
     }
     src.a('01  NB-REJETES PIC 9(9) VALUE ZERO.');
+    if (etats.length) ed.working(src);
     zonesCommunes();
     src.com('Lignes du compte rendu');
     emettreLigneEdition(src, 'L-TITRE', [{ valeur: titre }]);
