@@ -107,6 +107,8 @@ final class SearchIndexingTest extends WebTestCase
             'http://localhost/en/playground/laravel',
             'http://localhost/en/playground/php',
             'http://localhost/en/playground/ai',
+            'http://localhost/atelier-cobol',
+            'http://localhost/atelier-cobol/terminal',
             'http://localhost/ecoles-et-entreprises',
             'http://localhost/contact',
             'http://localhost/mentions-legales',
