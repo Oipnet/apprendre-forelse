@@ -1,7 +1,7 @@
 import { Ecran3270, COLONNES } from './terminal3270.js';
 import {
   exemple, exempleMiseAJour, generer, fichiersEntree, fichiersSortie, longueurFichier, picStockage, operateurs, MAX_RUPTURES, analyserLignes,
-  OPERATEURS_STRUCTURES, verifierTables, normaliser, UTILISATIONS, MOUVEMENT_DEFAUT, estMiseAJour, appelEdite, fonctionsGenerees, comparerCodes,
+  OPERATEURS_STRUCTURES, verifierTables, normaliser, zonesTraitees, UTILISATIONS, MOUVEMENT_DEFAUT, estMiseAJour, appelEdite, fonctionsGenerees, comparerCodes,
 } from './generateur.js';
 import { Programme } from './interpreteur.js';
 import { bandeauReception, montrerLien } from './partage.js';
@@ -358,7 +358,7 @@ VUES.appels = {
     champs.push(
       lab(16, 1, 'U : C consulté (édition)  P principal  M mouvements  R résultat (mise à jour)', 'bleu'),
       lab(17, 1, 'NR : niveaux de rupture (C) ou de synchronisation (P et M, même nombre).', 'bleu'),
-      lab(18, 1, 'Zones : CD00-RUB courant, 1-CD00-RUB suivant, CD-FT fin, CD-CFn, CD-DEn.', 'bleu'),
+      lab(18, 1, 'Zones : 1-CD00-RUB traité, CD00-RUB lu d\'avance, CD-FT fin, CD-CFn, CD-DEn.', 'bleu'),
       lab(19, 1, 'Mouvement : une rubrique vide ne modifie rien. FIN MAJ : exemple complet.', 'bleu'),
       lab(21, 1, pad(etat.toUpperCase(), 78), etat === 'Programme complet.' ? 'vert' : 'jaune'),
     );
@@ -681,7 +681,7 @@ VUES.specifique = {
       lab(18, 1, pad('OPE : N titre  M déplacer  A ajouter  S soustraire  C calculer  P appeler', 78), 'bleu'),
       lab(19, 1, pad('      MES afficher  ECR écrire  SQL table accès  SCO SRO valider/annuler  COB *', 78), 'bleu'),
       lab(20, 1, pad(`FO générées ${fonctionsGenerees(modele).join(' ')} (sous-fonctions)  02-04 init  TC BL IT EL DW`, 78), 'bleu'),
-      lab(21, 1, pad(infos || `Page ${ctx.page + 1}. Rubriques : ${(appelEdite(modele) || appel('P'))?.code || 'FA'}00- courant, 1-xx00- suivant, W- travail, D- détail`, 78), 'turquoise'),
+      lab(21, 1, pad(infos || `Page ${ctx.page + 1}. ${zonesTraitees(modele)[0] || 'FA00- traité'}, W- travail`, 78), 'turquoise'),
     );
     const n = Math.min(LIGNES_P, Math.max(0, lignes.length - debut));
     return { champs, curseur: n < LIGNES_P ? `F${n}` : 'A0' };

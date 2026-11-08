@@ -252,8 +252,10 @@ export const MAX_RUPTURES = 3;
 
 // ================= Appel des fichiers (façon -CD) =================
 // Chaque fichier lu ou écrit par le programme est « appelé » avec un code de deux caractères (dd), qui
-// préfixe ses zones : dd00-RUBRIQ (enregistrement courant), 1-dd00-RUBRIQ (suivant, lu d'avance),
-// dd-FT (fin de fichier), dd-PEn / dd-DEn (premier / dernier au niveau n), dd-CFn, dd-OCn.
+// préfixe ses zones, comme dans le programme généré par IBM : dd00-RUBRIQ la zone lue (avec rupture,
+// l'enregistrement lu d'avance), 1-dd00-RUBRIQ l'enregistrement traité quand le fichier a des ruptures,
+// 2-dd00-RUBRIQ le principal mis à jour ; dd-FT (fin de travail), dd-FI (fin de lecture),
+// dd-PEn / dd-DEn (premier / dernier au niveau n), dd-CFn (participe à l'itération), dd-OCn (existe).
 export const UTILISATIONS = {
   C: 'consulté : lu en séquence et édité dans l\'état',
   P: 'principal : mis à jour par les mouvements',
@@ -271,12 +273,22 @@ export const normaliserCode = (c) => {
   return /^\d$/.test(v) ? `0${v}` : v;
 };
 
+// Les zones à utiliser dans les traitements, fichier par fichier (aide des écrans).
+export function zonesTraitees(modele) {
+  return (modele.appels || []).filter((a) => a.utilisation !== 'R').map((a) => {
+    const dd = String(a.code || '').toUpperCase();
+    if (a.utilisation === 'P') return `1-${dd}00- principal lu, 2-${dd}00- mis à jour`;
+    if (a.utilisation === 'M' || Number(a.rupture || 0) > 0) return `1-${dd}00- traité, ${dd}00- suivant (lu d'avance)`;
+    return `${dd}00- traité`;
+  });
+}
+
 export const estMiseAJour = (model) => (model.appels || []).some((a) => a.utilisation === 'P');
 export const appelEdite = (model) => (model.appels || []).find((a) => a.utilisation === 'C');
 
 // Fonctions générées selon le genre de programme (édition ou mise à jour).
 export function fonctionsGenerees(model) {
-  if (estMiseAJour(model)) return ['01', '05', '10', '20', '24', '70', '73', '76', '90'];
+  if (estMiseAJour(model)) return ['01', '05', '10', '20', '22', '24', '26', '30', '33', '39', '70', '73', '76', '90'];
   const c = appelEdite(model);
   const rupture = c && Number(c.rupture || 0) > 0;
   return ['01', '05', ...(rupture ? ['10'] : []), '20', ...(rupture ? ['22'] : []), '8E', '90'];
@@ -284,7 +296,9 @@ export function fonctionsGenerees(model) {
 
 const ROLES_GENERES = {
   '01': 'initialisations', '05': 'lecture sans rupture', '10': 'lecture avec rupture', '20': 'fin de traitement',
-  '24': 'configuration et occurrence', '70': 'contrôle de correspondance', '73': 'mise à jour',
+  '22': 'calcul des derniers', '24': 'configuration et occurrence', '26': 'ruptures totales',
+  '30': 'variables de contrôle', '33': 'code mouvement', '39': 'présence des rubriques',
+  '70': 'contrôle de correspondance', '73': 'mise à jour',
   '76': 'mémorisation des erreurs', '8E': 'édition de l\'état', '90': 'écritures',
 };
 
@@ -696,10 +710,7 @@ export function generer(modele) {
       src.b(`05 ${pref}${K(r)} PIC ${picStockage(r)}${signe}.`);
     }
   };
-  const image = (nom, a) => {   // même enregistrement, toutes les rubriques en X (présence d'une rubrique)
-    src.a(`01  ${nom}.`);
-    for (const r of rubs(a)) src.b(`05 ${nom}-${K(r)} PIC X(${longueurFichier(r)}).`);
-  };
+
   const longueurEnr = (a) => rubs(a).reduce((n, r) => n + longueurFichier(r), 0);
 
   const sousFonctions = (fo) => { for (const l of corps(fo)) src.lignes.push(l); };
@@ -1057,6 +1068,14 @@ export function generer(modele) {
     return src.texte();
   }
   // ================= Programme de mise à jour (principal P, mouvements M, résultat R) =================
+  // Squelette du chapitre 6 : F10 lecture avec rupture du principal et des mouvements, F22 derniers,
+  // F24 configuration (indicatif minimum ddIND, dd-CFn) et occurrence (dd-OCn, 2-dd00), F26 ruptures
+  // totales, F30 variables de contrôle, F33 code mouvement (I02), F39 présence des rubriques, F70
+  // correspondance (GR-PR 8 ou 9), F73 mise à jour de 2-dd00, F76 erreurs et reprise de l'état
+  // initial (GM-ER), F90 écriture du résultat.
+  // Écarts assumés : les deux fichiers sont triés avant lecture ; chaque enregistrement mouvement est un
+  // mouvement (un niveau de rupture de plus que la synchronisation, sans rubrique) ; pas de contrôle de
+  // contenu (F45) ; le compte rendu est affiché sur la SYSOUT au lieu d'un fichier d'utilisation E.
   function genererMiseAJour() {
     const { p, mv, r: rs, n: N } = cd;
     const [PP, MM, RR] = [p.code, mv.code, rs.code];
@@ -1064,76 +1083,94 @@ export function generer(modele) {
     const argM = mv.argument.slice(0, N).map((x) => rubrique(model, x));
     const mo = mv.mouvement;
     const rc = rubrique(model, mo.rubrique);
-    const [vC, vM, vA] = [mo.creation, mo.modification, mo.annulation].map((v) => String(v).toUpperCase());
+    const codes = [mo.creation, mo.modification, mo.annulation].map((v) => String(v).toUpperCase());
     // rubriques du mouvement reportées sur le principal (ni argument, ni code mouvement)
     const reportees = rubs(mv).filter((r) => r.code !== rc.code && !argM.includes(r));
     const titre = (t.titre || pgm).normalize('NFD').replace(/[^\x20-\x7e]/g, '').toUpperCase();
-    const pic = (r) => (r.type === 'X' ? `X(${r.longueur})` : `9(${r.longueur})`);
     const niveaux = [...Array(N).keys()].map((i) => i + 1);
-    const tous = (f) => niveaux.map(f).join(' ');
+    const NM = N + 1; // niveau du mouvement
+    const entrees = [p, mv].sort((a, b) => comparerCodes(a.code, b.code));
+    const fichiersOuverts = [PP, MM, RR, ...sorties.map((x) => x.code)].sort(comparerCodes);
+    const lu = (a) => `${a.code}-TRIE`;
+    const arg = (a) => (a === p ? argP : argM);
 
     entete([
-      'Mise a jour : F01 initialisations, F05 lecture du principal,',
-      'F10 lecture des mouvements, F20 fin, F24 configuration,',
-      'F70 correspondance, F73 mise a jour, F76 erreurs,',
-      'F90 ecritures, F9099 fin d iteration.',
+      'Mise a jour : F01 initialisations, F10 lecture avec rupture,',
+      'F20 fin, F22 derniers, F24 configuration, F26 ruptures',
+      'totales, F30 controle, F33 code mouvement, F39 presence,',
+      'F70 correspondance, F73 mise a jour, F76 erreurs et reprise,',
+      'F90 ecritures.',
     ]);
-    for (const a of [p, mv]) {
+    for (const a of entrees) {
       src.b(`SELECT ${a.code}-FICHIER ASSIGN TO ${litteral(a.fichier)}`);
       src.b('    ORGANIZATION IS LINE SEQUENTIAL.');
+      src.b(`SELECT ${a.code}-TRIE ASSIGN TO "${a.code}TRIE.TMP"`);
+      src.b('    ORGANIZATION IS LINE SEQUENTIAL.');
+      src.b(`SELECT ${a.code}-TRAVAIL ASSIGN TO "${a.code}TRAV.TMP".`);
     }
     src.b(`SELECT ${RR}-FICHIER ASSIGN TO ${litteral(rs.fichier)}`);
     src.b('    ORGANIZATION IS LINE SEQUENTIAL.');
     selectSorties();
     src.a('DATA DIVISION.');
     src.a('FILE SECTION.');
-    src.a(`FD  ${PP}-FICHIER.`);
-    src.a(`01  ${PP}-ENR PIC X(${longueurEnr(p)}).`);
-    src.a(`FD  ${MM}-FICHIER.`);
-    src.a(`01  ${MM}-ENR PIC X(${longueurEnr(mv)}).`);
+    for (const a of entrees) {
+      src.a(`FD  ${a.code}-FICHIER.`);
+      src.a(`01  ${a.code}-ENR PIC X(${longueurEnr(a)}).`);
+      src.a(`SD  ${a.code}-TRAVAIL.`);
+      enregistrement(`${a.code}-TRV`, a);
+      src.a(`FD  ${a.code}-TRIE.`);
+      enregistrement(`${a.code}00`, a);
+    }
     src.a(`FD  ${RR}-FICHIER.`);
-    src.a(`01  ${RR}-ENR PIC X(${longueurEnr(p)}).`);
+    enregistrement(`${RR}00`, p);
     fdSorties();
     src.a('WORKING-STORAGE SECTION.');
-    src.com(`Principal ${PP}, mouvement courant ${MM}00 et suivant 1-${MM}00,`);
-    src.com(`resultat ${RR}00 ; ${MM}00X : le mouvement tel que lu (presence)`);
-    enregistrement(`${PP}00`, p);
-    enregistrement(`${MM}00`, mv);
-    enregistrement(`1-${MM}00`, mv);
-    image(`${MM}00X`, mv);
-    image(`1-${MM}00X`, mv);
-    enregistrement(`${RR}00`, p);
-    src.com('Arguments (indicatifs) par niveau, et minimum en cours');
-    const argument = (base, rubriquesArg) => {
-      // groupes emboîtés : base-ARGn contient les niveaux 1 à n
-      const emettre = (k, niveau) => {
-        if (k === 0) return;
-        src.lignes.push(`${niveau === 1 ? '       01  ' : '           ' + '   '.repeat(niveau - 2)}${niveau === 1 ? '' : String(niveau * 5 - 5).padStart(2, '0') + ' '}${base}-ARG${k}.`);
-        if (k > 1) emettre(k - 1, niveau + 1);
-        const r = rubriquesArg[k - 1];
-        src.lignes.push(`           ${'   '.repeat(niveau - 1)}${String(niveau * 5).padStart(2, '0')} ${base}-A${k} PIC ${pic(r)}.`);
-      };
-      emettre(N, 1);
-    };
-    argument(PP, argP);
-    argument(`${PP}P`, argP);
-    argument(MM, argM);
-    argument(`1-${MM}`, argM);
-    argument('MIN', argP);
-    src.com('FT fin de fichier, CFn configuration (participe au minimum),');
-    src.com('DEn dernier mouvement du niveau, OC1 indicatif en cours');
-    src.a(`01  ${PP}-FT PIC 9 VALUE ZERO.`);
-    src.a(`01  ${MM}-FT PIC 9 VALUE ZERO.`);
-    src.a(`01  1-${MM}-FT PIC 9 VALUE ZERO.`);
-    for (const i of niveaux) src.a(`01  ${PP}-CF${i} PIC 9 VALUE 1.`);
-    for (const i of niveaux) src.a(`01  ${MM}-CF${i} PIC 9 VALUE 1.`);
-    for (const i of niveaux) src.a(`01  ${MM}-DE${i} PIC 9 VALUE ZERO.`);
-    src.a(`01  ${PP}-OC1 PIC 9 VALUE ZERO.`);
-    src.a(`01  ${RR}-EX PIC 9 VALUE ZERO.`);
-    src.a(`01  ${MM}-ERREUR PIC X(40) VALUE SPACES.`);
-    src.a('01  IND-FIN PIC X VALUE "N".');
-    src.b('88 FIN-TRAITEMENT VALUE "O".');
-    for (const c of ['NB-PRINC', 'NB-MVTS', 'NB-CREES', 'NB-MODIFIES', 'NB-ANNULES', 'NB-REJETES', 'NB-ECRITS']) src.a(`01  ${c} PIC 9(7) VALUE ZERO.`);
+    src.com(`Principal : 1-${PP}00 en traitement, 2-${PP}00 mis a jour`);
+    enregistrement(`1-${PP}00`, p);
+    enregistrement(`2-${PP}00`, p);
+    src.com(`Mouvement en traitement ; zones X pour tester la presence`);
+    src.a(`01  1-${MM}00.`);
+    for (const r of rubs(mv)) {
+      const signe = r.type === '9' && r.signe ? ' SIGN LEADING SEPARATE' : '';
+      src.b(`05 1-${MM}00-${K(r)} PIC ${picStockage(r)}${signe}.`);
+      if (r.type === '9') src.b(`05 1-${MM}00-${K(r)}X REDEFINES 1-${MM}00-${K(r)} PIC X(${longueurFichier(r)}).`);
+    }
+    src.com('Indicatifs lus (ddIND) et indicatif de l iteration (IND)');
+    for (const a of entrees) {
+      src.a(`01  ${a.code}IND.`);
+      arg(a).forEach((r, i) => {
+        src.b(`05 ${a.code}IND${i + 1}.`);
+        src.i(1, `10 ${a.code}-IN-${K(r)} PIC ${picStockage(r)}.`);
+      });
+    }
+    src.a('01  IND.');
+    argP.forEach((r, i) => src.b(`05 IND${i + 1} PIC X(${longueurFichier(r)}).`));
+    variablesConditionnelles({
+      niveaux: NM,
+      aRupture: entrees.map((a) => [a.code, a === mv ? NM : N]),
+      synchro: entrees.map((a) => [a.code, N]),
+      occurrence: [[PP, N]],
+      tous: entrees.map((a) => a.code),
+    });
+    src.a('01  INDICES COMPUTATIONAL SYNC.');
+    src.b('05 I01 PIC S9(4) VALUE +1.');
+    src.b('05 I02 PIC S9(4) VALUE +4.');
+    src.com('Erreurs : EN-EI identification, PR-00 presence des rubriques,');
+    src.com('GR-PR et GR-EG le mouvement, GM-ER le groupe de mouvements');
+    src.a('01  EN-PRR.');
+    src.b('05 EN-EI PIC X.');
+    src.b('05 PR-00.');
+    for (const r of rubs(mv)) src.i(1, `10 PR-00-${K(r)} PIC X.`);
+    src.a('01  GR-PRR.');
+    src.b('05 GR-PR PIC X OCCURS 1.');
+    src.a('01  GR-EG PIC X VALUE \'1\'.');
+    src.a('01  GR-PRE PIC X VALUE \'0\'.');
+    src.a('01  GM-ER PIC X VALUE \'0\'.');
+    for (const c of [PP, MM, RR]) {
+      src.a(`01  5-${c}00.`);
+      src.b(`05 5-${c}00-CPTENR PIC 9(9) VALUE ZERO.`);
+    }
+    src.a('01  NB-REJETES PIC 9(9) VALUE ZERO.');
     zonesCommunes();
     src.com('Lignes du compte rendu');
     emettreLigneEdition(src, 'L-TITRE', [{ valeur: titre }]);
@@ -1142,217 +1179,257 @@ export function generer(modele) {
       ...argM.flatMap((r, i) => [...(i ? [{ blanc: 1 }] : []), { nom: `LE-A${i + 1}`, pic: `X(${longueurFichier(r)})` }]),
       { blanc: 1 }, { nom: 'LE-CODE', pic: 'X' }, { valeur: ' : ' }, { nom: 'LE-MESSAGE', pic: 'X(40)' },
     ]);
+    emettreLigneEdition(src, 'L-REPRISE', [{ valeur: 'INDICATIF ' }, { nom: 'LR-IND', pic: `X(${argP.reduce((s, r) => s + longueurFichier(r), 0)})` }, { valeur: ' : AUCUNE MISE A JOUR' }]);
     emettreLigneEdition(src, 'L-COMPTE', [{ nom: 'LC-LIBELLE', pic: 'X(20)' }, { valeur: ' : ' }, { nom: 'LC-NOMBRE', pic: 'Z(6)9' }]);
 
-    const lireMouvement = (cible) => {
-      src.i(cible, `READ ${MM}-FICHIER INTO 1-${MM}00`);
-      src.i(cible + 1, `AT END MOVE 1 TO 1-${MM}-FT`);
-      src.i(cible + 1, 'NOT AT END');
-      src.i(cible + 2, 'ADD 1 TO NB-MVTS');
-      src.i(cible + 2, `MOVE ${MM}-ENR TO 1-${MM}00X`);
-      argM.forEach((r, i) => src.i(cible + 2, `MOVE 1-${MM}00-${K(r)} TO 1-${MM}-A${i + 1}`));
-      src.i(cible, 'END-READ');
-    };
-    const arret = (n, message) => {
-      src.instr(n, `DISPLAY ${litteral(message)}`);
-      src.i(n, 'STOP RUN');
-    };
     const compte = (libelle, zone) => {
       src.b(`MOVE ${litteral(libelle)} TO LC-LIBELLE`);
       src.b(`MOVE ${zone} TO LC-NOMBRE`);
       src.b('DISPLAY L-COMPTE');
     };
+    const si = (cond, sortie) => { src.instr(0, `IF ${cond}`); src.b(`    NEXT SENTENCE ELSE GO TO ${sortie}.`); };
 
     src.a('PROCEDURE DIVISION.');
     derouler({
       '01': () => {
         src.a('F01.');
-        src.b(`OPEN INPUT ${PP}-FICHIER ${MM}-FICHIER`);
-        src.b(`OPEN OUTPUT ${RR}-FICHIER`);
-        for (const so of sorties) src.b(`OPEN OUTPUT ${so.code}-FICHIER`);
-        src.b('DISPLAY L-TITRE');
-        lireMouvement(0);
-        src.lignes[src.lignes.length - 1] += '.';
+        src.b('DISPLAY L-TITRE.');
+        for (const code of fichiersOuverts) {
+          const a = entrees.find((x) => x.code === code);
+          src.a(`F01${code}.`);
+          if (a) {
+            src.b(`SORT ${code}-TRAVAIL`);
+            for (const r of arg(a)) src.b(`    ON ASCENDING KEY ${code}-TRV-${K(r)}`);
+            if (a === mv) src.b('    WITH DUPLICATES IN ORDER');
+            src.b(`    USING ${code}-FICHIER GIVING ${code}-TRIE.`);
+            src.b(`OPEN INPUT ${lu(a)}.`);
+            src.a(`F01${code}-10. READ ${lu(a)} AT END`);
+            src.b(`    MOVE 1 TO ${code}-FI.`);
+          } else src.b(`OPEN OUTPUT ${code}-FICHIER.`);
+          src.a(`F01${code}-FN. EXIT.`);
+        }
         sousFonctions('01');
         src.a('F01-FN. EXIT.');
       },
       '05': () => {
-        src.a('F05.');
-        src.com(`Lecture du principal ${PP} s il a participe au tour precedent`);
-        src.b(`IF ${PP}-CF${N} = 1 AND ${PP}-FT = 0`);
-        src.i(1, `MOVE ${PP}-ARG${N} TO ${PP}P-ARG${N}`);
-        src.i(1, `READ ${PP}-FICHIER INTO ${PP}00`);
-        src.i(2, `AT END MOVE 1 TO ${PP}-FT`);
-        src.i(2, 'NOT AT END');
-        src.i(3, 'ADD 1 TO NB-PRINC');
-        argP.forEach((r, i) => src.i(3, `MOVE ${PP}00-${K(r)} TO ${PP}-A${i + 1}`));
-        src.i(3, `IF NB-PRINC > 1 AND ${PP}-ARG${N} NOT > ${PP}P-ARG${N}`);
-        arret(4, `${PP} : INDICATIF EN DOUBLE OU HORS ORDRE`);
-        src.i(3, 'END-IF');
-        src.i(1, 'END-READ');
-        src.b('END-IF.');
+        src.a('F05. EXIT.');
         sousFonctions('05');
         src.a('F05-FN. EXIT.');
       },
       '10': () => {
-        src.a('F10.');
-        src.com(`Lecture des mouvements ${MM} (lus d avance pour la rupture)`);
-        src.b(`IF ${MM}-CF${N} = 1 AND ${MM}-FT = 0`);
-        src.i(1, `IF 1-${MM}-FT = 1`);
-        src.i(2, `MOVE 1 TO ${MM}-FT`);
-        src.i(1, 'ELSE');
-        src.i(2, `MOVE 1-${MM}00 TO ${MM}00`);
-        src.i(2, `MOVE 1-${MM}00X TO ${MM}00X`);
-        src.i(2, `MOVE 1-${MM}-ARG${N} TO ${MM}-ARG${N}`);
-        lireMouvement(2);
-        src.i(2, `IF 1-${MM}-FT = 0 AND 1-${MM}-ARG${N} < ${MM}-ARG${N}`);
-        arret(3, `${MM} : MOUVEMENTS HORS ORDRE`);
-        src.i(2, 'END-IF');
-        src.i(1, 'END-IF');
-        src.b('END-IF');
-        src.b(`IF ${PP}-FT = 1 AND ${MM}-FT = 1`);
-        src.i(1, 'SET FIN-TRAITEMENT TO TRUE');
-        src.b('END-IF');
-        for (const i of niveaux) {
-          src.b(`IF 1-${MM}-FT = 1 OR 1-${MM}-ARG${i} NOT = ${MM}-ARG${i}`);
-          src.i(1, `MOVE 1 TO ${MM}-DE${i}`);
-          src.b('ELSE');
-          src.i(1, `MOVE 0 TO ${MM}-DE${i}`);
-          src.b('END-IF');
+        src.a('F10. EXIT.');
+        for (const a of entrees) {
+          const dd = a.code;
+          src.a(`F10${dd}.`);
+          si(a === p ? `RTD${N} = '1' AND ${dd}-CF${N} = '1'` : `${dd}-CF${N} = '1'`, `F10${dd}-FN`);
+          src.a(`F10${dd}-10. MOVE ${dd}-DE TO ${dd}-PE.`);
+          src.b(`IF ${dd}-FI = '1'`);
+          src.b(`    MOVE HIGH-VALUE TO ${dd}IND`);
+          src.b(`    MOVE 1 TO ${dd}-FT GO TO F10${dd}-FN.`);
+          src.b(`MOVE ${dd}00 TO 1-${dd}00.`);
+          for (const r of arg(a)) src.b(`MOVE ${dd}00-${K(r)} TO ${dd}-IN-${K(r)}.`);
+          src.b(`ADD 1 TO 5-${dd}00-CPTENR.`);
+          src.b(`READ ${lu(a)} AT END`);
+          src.b(`    MOVE 1 TO ${dd}-FI.`);
+          src.a(`F10${dd}-FN. EXIT.`);
         }
-        src.lignes[src.lignes.length - 1] += '.';
         sousFonctions('10');
         src.a('F10-FN. EXIT.');
       },
       '20': () => {
-        src.a('F20.');
-        src.b('IF NOT FIN-TRAITEMENT GO TO F20-FN.');
+        src.a('F20. IF FT = ALL \'1\'');
+        src.b('NEXT SENTENCE ELSE GO TO F20-FN.');
         src.b('DISPLAY " "');
-        compte('PRINCIPAL LU', 'NB-PRINC');
-        compte('MOUVEMENTS LUS', 'NB-MVTS');
-        compte('CREATIONS', 'NB-CREES');
-        compte('MODIFICATIONS', 'NB-MODIFIES');
-        compte('ANNULATIONS', 'NB-ANNULES');
+        compte('PRINCIPAL LU', `5-${PP}00-CPTENR`);
+        compte('MOUVEMENTS LUS', `5-${MM}00-CPTENR`);
         compte('MOUVEMENTS REJETES', 'NB-REJETES');
-        compte('RESULTAT ECRIT', 'NB-ECRITS');
+        compte('RESULTAT ECRIT', `5-${RR}00-CPTENR`);
         src.lignes[src.lignes.length - 1] += '.';
         sousFonctions('20');
-        src.a('F2099.');
-        for (const so of sorties) src.b(`CLOSE ${so.code}-FICHIER`);
-        src.b(`CLOSE ${PP}-FICHIER ${MM}-FICHIER ${RR}-FICHIER`);
-        src.b('STOP RUN.');
+        for (const code of fichiersOuverts) {
+          const a = entrees.find((x) => x.code === code);
+          src.a(`F20${code}. CLOSE ${a ? lu(a) : `${code}-FICHIER`}.`);
+          src.a(`F20${code}-FN. EXIT.`);
+        }
+        src.a('F2099. STOP RUN.');
+        src.a('F2099-FN. EXIT.');
         src.a('F20-FN. EXIT.');
       },
-      '24': () => {
-        src.a('F24.');
-        src.com('Minimum en cours et participation de chaque fichier');
-        src.b(`IF ${PP}-FT = 1`);
-        src.i(1, `MOVE ${MM}-ARG${N} TO MIN-ARG${N}`);
-        src.b(`ELSE IF ${MM}-FT = 1 OR ${PP}-ARG${N} < ${MM}-ARG${N}`);
-        src.i(1, `MOVE ${PP}-ARG${N} TO MIN-ARG${N}`);
-        src.b('ELSE');
-        src.i(1, `MOVE ${MM}-ARG${N} TO MIN-ARG${N}`);
-        src.b('END-IF END-IF');
-        for (const [dd] of [[PP], [MM]]) {
-          for (const i of niveaux) {
-            src.b(`IF ${dd}-FT = 0 AND ${dd}-ARG${i} = MIN-ARG${i}`);
-            src.i(1, `MOVE 1 TO ${dd}-CF${i}`);
-            src.b('ELSE');
-            src.i(1, `MOVE 0 TO ${dd}-CF${i}`);
-            src.b('END-IF');
-          }
+      '22': () => {
+        src.a('F22. EXIT.');
+        for (const a of entrees) {
+          const dd = a.code;
+          const n = a === mv ? NM : N;
+          src.a(`F22${dd}. MOVE ZERO TO ${dd}-DE.`);
+          src.b(`IF ${dd}-FI = '1' GO TO F22${dd}-1.`);
+          arg(a).forEach((r, i) => {
+            src.b(`IF ${dd}00-${K(r)} NOT = 1-${dd}00-${K(r)}`);
+            src.b(`    GO TO F22${dd}-${i + 1}.`);
+          });
+          if (a === mv) src.com('Chaque enregistrement est un mouvement a lui seul');
+          src.b(a === mv ? `GO TO F22${dd}-${NM}.` : `GO TO F22${dd}-FN.`);
+          for (let i = 1; i <= n; i++) src.a(`F22${dd}-${i}. MOVE 1 TO ${dd}-DE${i}.`);
+          src.a(`F22${dd}-FN. EXIT.`);
         }
-        src.com('Debut d un indicatif : le resultat part du principal, ou de rien');
-        src.b(`IF ${PP}-OC1 = 0`);
-        src.i(1, `MOVE 1 TO ${PP}-OC1`);
-        src.i(1, `IF ${PP}-CF${N} = 1`);
-        src.i(2, `MOVE ${PP}00 TO ${RR}00`);
-        src.i(2, `MOVE 1 TO ${RR}-EX`);
-        src.i(1, 'ELSE');
-        src.i(2, `INITIALIZE ${RR}00`);
-        argP.forEach((r, i) => src.i(2, `MOVE ${MM}00-${K(argM[i])} TO ${RR}00-${K(r)}`));
-        src.i(2, `MOVE 0 TO ${RR}-EX`);
-        src.i(1, 'END-IF');
-        src.b('END-IF.');
+        sousFonctions('22');
+        src.a('F22-FN. EXIT.');
+      },
+      '24': () => {
+        src.a('F24. MOVE ZERO TO VCF MOVE HIGH-VALUE TO IND.');
+        for (const a of entrees) src.b(`IF IND > ${a.code}IND MOVE ${a.code}IND TO IND.`);
+        for (const a of entrees) {
+          const dd = a.code;
+          src.a(`F24${dd}. IF ${dd}IND1 = IND1`);
+          src.b(`    MOVE 1 TO ${dd}-CF1.`);
+          for (let i = 2; i <= N; i++) {
+            src.b(`IF ${dd}IND${i} = IND${i}`);
+            src.b(`    MOVE ${dd}-CF${i - 1} TO ${dd}-CF${i}.`);
+          }
+          src.a(`F24${dd}-FN. EXIT.`);
+        }
+        for (const i of niveaux) {
+          const sf = `F240${i}`;
+          src.a(`${sf}.`);
+          si(`RTD${i} = '1'`, `${sf}-FN`);
+          src.b(`MOVE ${PP}-CF${i} TO ${PP}-OC${i}.`);
+          if (i === N) {
+            src.b(`IF ${PP}-CF${i} NOT = '1'`);
+            src.b(`    MOVE SPACE TO 2-${PP}00`);
+            src.b('ELSE');
+            src.b(`    MOVE 1-${PP}00 TO 2-${PP}00.`);
+          }
+          src.a(`${sf}-FN. EXIT.`);
+        }
         sousFonctions('24');
         src.a('F24-FN. EXIT.');
       },
+      '26': () => {
+        src.a('F26. MOVE RTD TO RTP. MOVE ZERO TO RTD.');
+        src.b('MOVE NRD TO NRP. MOVE ZERO TO NRD.');
+        for (const i of niveaux) {
+          for (const a of entrees) src.b(`IF (${a.code}-CF${i} = '0' OR ${a.code}-DE${i} = '1' AND ${a.code}-CF${N} = '1')`);
+          src.b(`MOVE ${i} TO NRD GO TO F26-${i}.`);
+        }
+        src.b(`IF ${MM}-CF${N} = '0' OR ${MM}-DE${NM} = '1'`);
+        src.b(`MOVE ${NM} TO NRD GO TO F26-${NM}.`);
+        src.b('GO TO F26-FN.');
+        for (let i = 1; i <= NM; i++) src.a(`F26-${i}. MOVE 1 TO RTD${i}.`);
+        src.a('F26-FN. EXIT.');
+      },
+      '30': () => {
+        src.a('F30.');
+        si(`${MM}-CF${N} = '1'`, 'F30-FN');
+        src.b('MOVE ZERO TO EN-PRR.');
+        src.b(`IF ${MM}-PE${NM} = '1'`);
+        src.b('MOVE ZERO TO GR-PRR MOVE 1 TO GR-EG.');
+        src.b(`IF RTP${N} = '1'`);
+        src.b('MOVE 0 TO GM-ER.');
+        sousFonctions('30');
+        src.a('F30-FN. EXIT.');
+      },
+      '33': () => {
+        src.a('F33.');
+        si(`${MM}-CF${N} = '1'`, 'F33-FN');
+        src.com('Un seul type d enregistrement : rang 1');
+        src.a('F33AA. MOVE 1 TO I01.');
+        src.a('F33AA-01. IF EN-EI = \'0\' MOVE 1 TO GR-PR (I01).');
+        src.a('F33AA-FN. EXIT.');
+        src.a('F33BB.');
+        codes.forEach((v, i) => {
+          src.b(`IF 1-${MM}00-${K(rc)} = ${litteral(v)}`);
+          src.b(`MOVE ${i + 1} TO I02 GO TO F33BB-FN.`);
+        });
+        src.b('MOVE 6 TO EN-EI.');
+        src.a('F33BB-FN. EXIT.');
+        sousFonctions('33');
+        src.a('F33-FN. EXIT.');
+      },
+      '39': () => {
+        src.a('F39.');
+        si(`${MM}-CF${N} = '1' AND EN-EI = '0'`, 'F39-FN');
+        src.a('F3900.');
+        for (const r of rubs(mv)) {
+          src.b(`IF 1-${MM}00-${K(r)}${r.type === '9' ? 'X' : ''} NOT = SPACE`);
+          src.b(`MOVE 1 TO PR-00-${K(r)}.`);
+        }
+        src.a('F3900-FN. EXIT.');
+        sousFonctions('39');
+        src.a('F39-FN. EXIT.');
+      },
       '70': () => {
         src.a('F70.');
-        src.b(`IF ${MM}-CF${N} = 0 GO TO F70-FN.`);
-        src.b(`MOVE SPACES TO ${MM}-ERREUR`);
-        const code = `${MM}00-${K(rc)}`;
-        src.b(`IF ${code} = ${litteral(vC)}`);
-        src.i(1, `IF ${RR}-EX = 1`);
-        src.i(2, `MOVE "CREATION : INDICATIF DEJA PRESENT" TO ${MM}-ERREUR`);
-        src.i(1, 'END-IF');
-        src.b(`ELSE IF ${code} = ${litteral(vM)} OR ${code} = ${litteral(vA)}`);
-        src.i(1, `IF ${RR}-EX = 0`);
-        src.i(2, `MOVE "INDICATIF ABSENT DU PRINCIPAL" TO ${MM}-ERREUR`);
-        src.i(1, 'END-IF');
-        src.b('ELSE');
-        src.i(1, `MOVE "CODE MOUVEMENT INCONNU" TO ${MM}-ERREUR`);
-        src.b('END-IF END-IF.');
+        si(`${MM}-CF${N} = '1' AND EN-EI = '0'`, 'F70-FN');
+        si(`${MM}-PE${NM} = '1'`, 'F70-FN');
+        src.a(`F70${PP}. IF I02 = 1 AND ${PP}-OC${N} = '1'`);
+        src.b('MOVE 8 TO GR-PR (I01).');
+        src.b(`IF I02 NOT = 1 AND ${PP}-OC${N} = '0'`);
+        src.b('MOVE 9 TO GR-PR (I01).');
+        src.a(`F70${PP}-FN. EXIT.`);
         sousFonctions('70');
         src.a('F70-FN. EXIT.');
       },
       '73': () => {
         src.a('F73.');
-        src.b(`IF ${MM}-CF${N} = 0 OR ${MM}-ERREUR NOT = SPACES GO TO F73-FN.`);
-        const code = `${MM}00-${K(rc)}`;
-        const reporter = (n) => {
-          for (const r of reportees) {
-            src.i(n, `IF ${MM}00X-${K(r)} NOT = SPACES`);
-            src.i(n + 1, `MOVE ${MM}00-${K(r)} TO ${RR}00-${K(r)}`);
-            src.i(n, 'END-IF');
-          }
-        };
-        src.b(`IF ${code} = ${litteral(vC)}`);
-        src.i(1, `INITIALIZE ${RR}00`);
-        argP.forEach((r, i) => src.i(1, `MOVE ${MM}00-${K(argM[i])} TO ${RR}00-${K(r)}`));
-        src.i(1, `MOVE 1 TO ${RR}-EX`);
-        reporter(1);
-        src.i(1, 'ADD 1 TO NB-CREES');
-        src.b('END-IF');
-        src.b(`IF ${code} = ${litteral(vM)}`);
-        reporter(1);
-        src.i(1, 'ADD 1 TO NB-MODIFIES');
-        src.b('END-IF');
-        src.b(`IF ${code} = ${litteral(vA)}`);
-        src.i(1, `MOVE 0 TO ${RR}-EX`);
-        src.i(1, 'ADD 1 TO NB-ANNULES');
-        src.b('END-IF.');
+        si(`${MM}-CF${N} = '1' AND EN-EI = '0'`, 'F73-FN');
+        src.b('IF GR-PR (I01) NOT = \'1\' GO TO F73-FN.');
+        src.a('F7301.');
+        src.b(`IF I02 = 3 MOVE 0 TO ${PP}-OC${N}`);
+        src.b('GO TO F7301-FN.');
+        src.b(`IF I02 = 1 MOVE 1 TO ${PP}-OC${N}.`);
+        argP.forEach((r, i) => src.b(`MOVE 1-${MM}00-${K(argM[i])} TO 2-${PP}00-${K(r)}.`));
+        for (const r of reportees) {
+          src.b(`IF PR-00-${K(r)} = '1'`);
+          src.b(`MOVE 1-${MM}00-${K(r)} TO 2-${PP}00-${K(r)}.`);
+        }
+        src.a('F7301-FN. EXIT.');
         sousFonctions('73');
         src.a('F73-FN. EXIT.');
       },
       '76': () => {
         src.a('F76.');
-        src.b(`IF ${MM}-CF${N} = 0 OR ${MM}-ERREUR = SPACES GO TO F76-FN.`);
-        src.b('ADD 1 TO NB-REJETES');
-        argM.forEach((r, i) => src.b(`MOVE ${MM}00X-${K(r)} TO LE-A${i + 1}`));
-        src.b(`MOVE ${MM}00-${K(rc)} TO LE-CODE`);
-        src.b(`MOVE ${MM}-ERREUR TO LE-MESSAGE`);
+        si(`${MM}-CF${N} = '1'`, 'F76-FN');
+        src.a('F76-A. IF EN-EI NOT = \'0\' MOVE EN-EI TO GR-EG');
+        src.b('GO TO F76-C. MOVE GR-PR (I01) TO GR-PRE.');
+        src.b('IF GR-PRE < \'0\' OR GR-PRE > \'1\'');
+        src.b('MOVE GR-PRE TO GR-EG GO TO F76-C.');
+        src.a('F76-C. IF GR-EG NOT = \'1\' MOVE \'1\' TO GM-ER.');
+        src.com('Compte rendu sur la SYSOUT : le mouvement en erreur');
+        src.a('F76-CR.');
+        si('GR-EG NOT = \'1\'', 'F76-CR-FN');
+        src.b('ADD 1 TO NB-REJETES.');
+        argM.forEach((r, i) => src.b(`MOVE 1-${MM}00-${K(r)}${r.type === '9' ? 'X' : ''} TO LE-A${i + 1}.`));
+        src.b(`MOVE 1-${MM}00-${K(rc)} TO LE-CODE.`);
+        src.b('MOVE SPACE TO LE-MESSAGE.');
+        for (const [code, message] of [['6', 'CODE MOUVEMENT INCONNU'], ['8', 'CREATION : INDICATIF DEJA PRESENT'], ['9', 'INDICATIF ABSENT DU PRINCIPAL']]) {
+          src.b(`IF GR-EG = '${code}'`);
+          src.b(`MOVE "${message}" TO LE-MESSAGE.`);
+        }
         src.b('DISPLAY L-ERREUR.');
+        src.a('F76-CR-FN. EXIT.');
+        src.a(`F76${PP}.`);
+        si(`RTD${N} = '1' AND GM-ER = '1'`, `F76${PP}-FN`);
+        src.b(`MOVE ${PP}-CF${N} TO ${PP}-OC${N}.`);
+        src.b(`IF ${PP}-CF${N} = '1'`);
+        src.b(`MOVE 1-${PP}00 TO 2-${PP}00.`);
+        src.b('MOVE IND TO LR-IND.');
+        src.b('DISPLAY L-REPRISE.');
+        src.a(`F76${PP}-FN. EXIT.`);
         sousFonctions('76');
         src.a('F76-FN. EXIT.');
       },
       '90': () => {
-        src.a('F90.');
-        src.com('Fin de l indicatif : plus de mouvement pour lui');
-        src.b(`IF ${MM}-CF${N} = 0 OR ${MM}-DE${N} = 1`);
-        src.i(1, `IF ${RR}-EX = 1`);
-        src.i(2, `WRITE ${RR}-ENR FROM ${RR}00`);
-        src.i(2, 'ADD 1 TO NB-ECRITS');
-        src.i(1, 'END-IF');
-        src.i(1, `MOVE 0 TO ${PP}-OC1`);
-        src.b('END-IF.');
+        src.a('F90. EXIT.');
+        src.a(`F90${RR}.`);
+        si(`${PP}-OC${N} = '1' AND RTD${N} = '1'`, `F90${RR}-FN`);
+        src.b(`MOVE 2-${PP}00 TO ${RR}00.`);
+        src.b(`WRITE ${RR}00.`);
+        src.a(`F90${RR}-99. ADD 1 TO 5-${RR}00-CPTENR.`);
+        src.a(`F90${RR}-FN. EXIT.`);
         sousFonctions('90');
-        src.a('F9099.');
-        src.b('GO TO F05.');
         src.a('F90-FN. EXIT.');
+        src.a('F9099-ITER-FN. GO TO F05.');
       },
     });
-    void tous;
     return src.texte();
   }
 }

@@ -34,6 +34,7 @@ export function generer(modele: Modele): string;
 export function fichierDonnees(modele: Modele): string;
 export function fichiersEntree(modele: Modele): Record<string, string>;
 export function fichiersSortie(modele: Modele): Array<{ code: string; fichier: string }>;
+export function zonesTraitees(modele: Modele): string[];
 export function fonctionsGenerees(modele: Modele): string[];
 export function placeFonction(fo: string, modele: Modele): string;
 export function comparerCodes(a: string, b: string): number;

@@ -822,6 +822,12 @@ class Execution {
       return this.stockerNombre(el, Dec.de(source.alpha.trim() || '0'));
     }
     if ((source.fig && source.fig !== 'ZERO') || source.all !== undefined) return this.ecrire(el, this.alpha(source, el.longueur));
+    // même PIC numérique des deux côtés : GnuCOBOL copie les octets tels quels (des espaces restent des espaces)
+    if (source.el) {
+      const s = this.res(source), a = s.pic, b = el.pic;
+      if (a && !s.enfants.length && a.genre === '9' && b.genre === '9' && a.chiffres === b.chiffres && a.echelle === b.echelle
+        && a.signe === b.signe && a.signeSepare === b.signeSepare) return this.ecrire(el, this.lire(s));
+    }
     this.stockerNombre(el, this.nombre(source));
   }
 
@@ -830,7 +836,12 @@ class Execution {
       const el = this.res(o);
       // GnuCOBOL affiche les numériques signés avec leur signe et la virgule implicite
       if (!el.enfants.length && el.pic.genre === '9') {
-        const p = el.pic, d = this.nombre(o);
+        const p = el.pic;
+        if (!p.signe) { // non signé : les octets tels quels (des espaces restent des espaces)
+          const brut = this.lire(el);
+          return p.echelle ? `${brut.slice(0, -p.echelle)}.${brut.slice(-p.echelle)}` : brut;
+        }
+        const d = this.nombre(o);
         let n = d.aEchelle(p.echelle); const neg = n < 0n; if (neg) n = -n;
         let s = n.toString().padStart(p.chiffres, '0');
         if (p.echelle) s = s.slice(0, -p.echelle) + '.' + s.slice(-p.echelle);

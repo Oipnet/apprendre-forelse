@@ -124,7 +124,7 @@ cas.push(['mise a jour : creation, modification, annulation, erreurs', exempleMi
   m.appels[1].donnees.forEach((x) => { x.CODMVT = { C: '1', M: '2', A: '3' }[x.CODMVT] || x.CODMVT; });
   m.lignes = [
     { fo: '30', sf: '10', ope: 'N', opes: 'Trace', niv: '05', tc: 'IT', cond: "MV-CF1 = 1 ET CL-CF1 = 0" },
-    { fo: '30', sf: '10', ope: 'MES', opes: "'SANS PRINCIPAL : ' MV00-NUMCLI" },
+    { fo: '30', sf: '10', ope: 'MES', opes: "'SANS PRINCIPAL : ' 1-MV00-NUMCLI" },
     { fo: '20', sf: '10', ope: 'MES', opes: "'FIN DE LA MISE A JOUR'" },
   ];
   cas.push(['mise a jour : codes 1 2 3, plusieurs mouvements, fin de fichier', m]);
@@ -151,7 +151,7 @@ cas.push(['mise a jour : creation, modification, annulation, erreurs', exempleMi
 {
   const m = structuredClone(exempleMiseAJour);
   m.appels[1].donnees.reverse();
-  cas.push(['mise a jour : mouvements hors ordre (arret)', m]);
+  cas.push(['mise a jour : mouvements dans le desordre, tries avant lecture', m]);
 }
 
 // Les défis : le modèle de départ, et la solution de référence dont la SYSOUT est l'attendue du défi.

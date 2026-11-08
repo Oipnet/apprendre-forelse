@@ -101,9 +101,11 @@ describe('à la manière de Pacbase', () => {
 		expect(source).toContain('MOVE FA00 TO 1-FA00.');
 		expect(source).toContain('IF FA00-REGION NOT = 1-FA00-REGION');
 		const maj = generer(exempleMiseAJour);
-		for (const f of ['F24.', 'F70.', 'F73.', 'F76.']) expect(maj).toContain(`       ${f}`);
-		expect(maj).toContain('MV-CF1');
-		expect(maj).toContain('CL-OC1');
+		for (const f of ['F10CL.', 'F10MV.', 'F22CL.', 'F2401.', 'F26.', 'F30.', 'F33BB.', 'F3900.', 'F70CL.', 'F7301.', 'F76-A.', 'F76CL.', 'F90CN.']) expect(maj).toContain(`       ${f}`);
+		expect(maj).toContain('MOVE ZERO TO VCF MOVE HIGH-VALUE TO IND.');
+		expect(maj).toContain("IF RTD1 = '1' AND CL-CF1 = '1'");
+		expect(maj).toContain('MOVE 1-CL00 TO 2-CL00.');
+		expect(maj).toContain('MOVE 2-CL00 TO CN00.');
 	});
 
 	it('les lettres passent avant les chiffres : 8E s\'exécute avant 80', () => {

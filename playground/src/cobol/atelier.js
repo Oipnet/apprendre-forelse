@@ -1,6 +1,6 @@
 import {
   exemple, exempleMiseAJour, generer, fichiersEntree, operateurs, longueurFichier, picStockage, analyserLignes, placeFonction,
-  normaliser, UTILISATIONS, MOUVEMENT_DEFAUT, estMiseAJour, appelEdite, fonctionsGenerees, MAX_RUPTURES, verifierTables, OPERATEURS_BASE,
+  normaliser, zonesTraitees, UTILISATIONS, MOUVEMENT_DEFAUT, estMiseAJour, appelEdite, fonctionsGenerees, MAX_RUPTURES, verifierTables, OPERATEURS_BASE,
 } from './generateur.js';
 import { Programme } from './interpreteur.js';
 import { bandeauReception, montrerLien, lienDe, oublierFragment } from './partage.js';
@@ -220,7 +220,7 @@ function vueAppels() {
     el('button', { class: 'bouton', type: 'button', onclick: () => { if (confirm('Remplacer votre programme par l\'exemple d\'édition ?')) { modele = normaliser(structuredClone(exemple)); structCourante = 0; appelDonnees = null; sourceModifie = false; changer(true); } } }, 'édition par région'),
     el('button', { class: 'bouton', type: 'button', onclick: () => { if (confirm('Remplacer votre programme par l\'exemple de mise à jour ?')) { modele = normaliser(structuredClone(exempleMiseAJour)); structCourante = 0; appelDonnees = null; sourceModifie = false; changer(true); } } }, 'mise à jour des clients'));
   return [
-    el('p', { class: 'aide' }, 'L\'appel des fichiers du programme. Chaque fichier a un code de deux caractères qui préfixe ses zones : CL00-NOMCLI pour l\'enregistrement courant, 1-CL00-NOMCLI pour le suivant, CL-FT à la fin du fichier.'),
+    el('p', { class: 'aide' }, 'L\'appel des fichiers du programme. Chaque fichier a un code de deux caractères qui préfixe ses zones : CL00-NOMCLI pour la zone lue, 1-CL00-NOMCLI pour l\'enregistrement traité quand le fichier a des ruptures (CL00 est alors le suivant, lu d\'avance), CL-FT à la fin du fichier.'),
     el('div', { class: 'cases', style: 'display:grid;grid-template-columns:1fr;gap:4px' },
       el('label', {}, el('input', { type: 'radio', name: 'genre', style: 'width:auto', checked: !maj, onchange: () => { passerEnEdition(); changer(true); } }), 'Édition : un fichier consulté (C), un état'),
       el('label', {}, el('input', { type: 'radio', name: 'genre', style: 'width:auto', checked: maj, onchange: () => { passerEnMiseAJour(); changer(true); } }), 'Mise à jour : principal (P) + mouvements (M) → résultat (R)')),
@@ -292,7 +292,7 @@ function vueSpe() {
   const ajouter = (l) => { lignes.push(l); changer(true); };
   const der = lignes.at(-1) || { fo: '30', sf: '10' };
   const maj = estMiseAJour(modele);
-  const zones = modele.appels.filter((a) => a.utilisation !== 'R').map((a) => `${a.code}00- courant du fichier ${a.code}, 1-${a.code}00- suivant`).join(' ; ');
+  const zones = zonesTraitees(modele).join(' ; ');
   return [
     el('p', { class: 'aide' }, 'Vos traitements, sans écrire de COBOL. Une sous-fonction commence par une ligne N : titre, niveau (05, 10…), type (BL bloc, IT si, EL sinon, DW tant que) et condition. Les lignes suivantes portent un opérateur : M déplacer, A ajouter, S soustraire, C calculer (C W-X = A + B), P appeler une fonction, MES afficher, ECR écrire un fichier, SQL accéder à une table (SQL CL R, voir l\'onglet Base), SCO / SRO valider / annuler, COB ligne COBOL, * commentaire.'),
     el('p', { class: 'aide' }, `Rubriques : ${zones} ; W- zone de travail (déclarée d'après le dictionnaire)${maj ? '' : ', D- ligne de détail'}. ${maj ? 'Synchronisation : CL-CF1 = 1 si le principal participe au tour, MV-CF1 pour le mouvement, MV-DE1 = 1 au dernier mouvement de l\'indicatif.' : 'Ruptures : RTP1 = 1 au premier d\'un groupe, RTD1 = 1 au dernier.'} Conditions : = # > < >= <=, ET, OU.`),
