@@ -17,12 +17,13 @@
   <header>
     <h1>Atelier COBOL</h1>
     <a class="lien-terminal" href="{{ path('app_cobol_terminal') }}">Passer en mode terminal 3270</a>
+    <a class="lien-terminal" href="{{ path('app_cobol_memo') }}">Le mémo</a>
     <button class="bouton principal" id="partager" type="button">Partager ce programme</button>
     <p>Un générateur de programmes COBOL batch, à l'ancienne : décrivez vos rubriques, l'enregistrement et l'état à produire, écrivez vos traitements en langage structuré. Le programme COBOL est généré, puis exécuté dans votre navigateur, avec une base de données façon DB2. Rien à installer, aucun compte.</p>
   </header>
   <div class="partage" id="bandeau-partage" role="status" hidden></div>
   <div class="partage" id="lien-partage" hidden></div>
-  <section class="defi" id="defi" data-contact="{{ path('app_contact') }}" aria-label="Défi" hidden></section>
+  <section class="defi" id="defi" data-contact="{{ path('app_contact') }}" data-memo="{{ path('app_cobol_memo') }}" aria-label="Défi" hidden></section>
 
   <div class="atelier">
     <section class="panneau" aria-label="Modèle">

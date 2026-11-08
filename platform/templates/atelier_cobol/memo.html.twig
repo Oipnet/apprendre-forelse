@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+{# Le mémo de l'atelier COBOL : la référence des écrans, des fonctions et des ruptures, à garder ouverte à côté de
+   l'atelier ou d'un défi. Des faits sur l'atelier, aucun indice sur un défi. Page autonome, en français seulement. #}
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <title>{% if seo.title %}{{ seo.title }}{% else %}Mémo de l'atelier COBOL{% endif %}</title>
+        {{ include('_head.html.twig') }}
+        {% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">{% endif %}
+        {{ vite_entry_link_tags('cobol-memo') }}
+        {{ vite_entry_script_tags('cobol-memo') }}
+    </head>
+    <body>
+<div class="page">
+  <nav class="retour-site"><a href="{{ path('app_home') }}">← {{ theme.name }}</a></nav>
+  <header>
+    <h1>Mémo de l'atelier COBOL</h1>
+    <p>Les écrans, l'appel des fichiers, le cycle des fonctions et les ruptures : de quoi retrouver ses réflexes de 2005, ou les prendre. C'est une référence, pas un corrigé.</p>
+    <div class="liens-memo">
+      <a href="{{ path('app_cobol') }}">Ouvrir l'atelier</a>
+      <a href="{{ path('app_cobol_terminal') }}">Ouvrir le terminal 3270</a>
+    </div>
+  </header>
+
+  <div class="memo">
+    <nav aria-label="Sommaire du mémo">
+      <ol>
+        <li><a href="#ecrans">Les écrans</a></li>
+        <li><a href="#fichiers">L'appel des fichiers</a></li>
+        <li><a href="#zones">Les zones d'un fichier</a></li>
+        <li><a href="#cycle">Le cycle des fonctions</a></li>
+        <li><a href="#ruptures">Les ruptures</a></li>
+        <li><a href="#traitement">L'édition simplifiée</a></li>
+        <li><a href="#structure">Le langage structuré</a></li>
+        <li><a href="#etats">Les états</a></li>
+        <li><a href="#base">La base</a></li>
+        <li><a href="#terminal">Le terminal</a></li>
+      </ol>
+    </nav>
+
+    <article>
+      <section id="ecrans">
+        <h2>Les écrans</h2>
+        <p>Un programme se décrit, il ne s'écrit pas. Chaque écran porte une partie du modèle ; le source COBOL est généré à partir de l'ensemble, puis compilé et exécuté dans le navigateur. L'atelier et le terminal partagent le même modèle.</p>
+        <div class="table-defile"><table class="ecrans">
+          <thead><tr><th>Atelier</th><th>Terminal</th><th>Ce qu'on y décrit</th></tr></thead>
+          <tbody>
+            <tr><td>Dictionnaire</td><td>R</td><td>Les rubriques, une seule fois : code, libellé, type <code>X</code> ou <code>9</code>, longueur, décimales, signe. Leur format sert partout.</td></tr>
+            <tr><td>Enregistrements</td><td>E</td><td>Les rubriques d'une ligne de fichier, dans l'ordre où elles se suivent. Les positions en découlent.</td></tr>
+            <tr><td>Fichiers</td><td>C</td><td>L'appel des fichiers : code, utilisation, enregistrement, nom, argument (rupture ou synchronisation).</td></tr>
+            <tr><td>Traitement</td><td>T</td><td>Le nom du programme, le titre, et pour une édition sans état : filtres, colonnes, détail, totaux. Les fichiers en sortie.</td></tr>
+            <tr><td>États</td><td>K</td><td>Un état décrit à la manière du manuel : libellés, structures, composition.</td></tr>
+            <tr><td>Langage structuré</td><td>P</td><td>Vos traitements, en fonctions et sous-fonctions.</td></tr>
+            <tr><td>Données</td><td>D</td><td>Le contenu des fichiers en entrée, saisi colonne par colonne.</td></tr>
+            <tr><td>Base</td><td>B, Q</td><td>Les tables façon DB2, et une console SQL pour les interroger.</td></tr>
+            <tr><td>Source, Exécuter</td><td>G, X</td><td>Le source généré, puis la SYSOUT et les fichiers produits.</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="fichiers">
+        <h2>L'appel des fichiers</h2>
+        <p>Chaque fichier du programme est appelé avec un code de deux caractères, qui préfixe ses zones, et une utilisation :</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>C</td><td>Consulté : lu en séquence. Dans un programme d'édition, c'est lui qui est édité.</td></tr>
+            <tr><td>P</td><td>Principal : le fichier que l'on met à jour. Trié sur son argument, sans doublon.</td></tr>
+            <tr><td>M</td><td>Mouvements : ils mettent à jour le principal. Même argument, trié, plusieurs mouvements par indicatif possibles. Une rubrique d'un caractère donne le code mouvement (création, modification, annulation).</td></tr>
+            <tr><td>R</td><td>Résultat : le principal après mise à jour, au même enregistrement.</td></tr>
+            <tr><td>I</td><td>Impression : un état y est écrit. Son argument est la lettre de l'état.</td></tr>
+          </tbody>
+        </table></div>
+        <p>Deux genres de programme : l'<strong>édition</strong> (un fichier C, un état) et la <strong>mise à jour</strong> (P + M donnent R, avec un compte rendu). L'argument d'un fichier C déclare ses ruptures ; celui de P et M, la synchronisation.</p>
+      </section>
+
+      <section id="zones">
+        <h2>Les zones d'un fichier</h2>
+        <p>Pour un fichier de code <code>FA</code> et une rubrique <code>NOMCLI</code> :</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>FA00-NOMCLI</td><td>La zone lue. Quand le fichier a des ruptures ou est un mouvement, c'est l'enregistrement suivant, lu d'avance.</td></tr>
+            <tr><td>1-FA00-NOMCLI</td><td>L'enregistrement en traitement (fichier avec ruptures, mouvements, principal lu).</td></tr>
+            <tr><td>2-FA00-NOMCLI</td><td>Le principal mis à jour, avant écriture du résultat.</td></tr>
+            <tr><td>FA-FT</td><td>Fin de travail du fichier.</td></tr>
+            <tr><td>FA-PE<i>n</i>, FA-DE<i>n</i></td><td>Premier, dernier enregistrement au niveau <i>n</i>.</td></tr>
+            <tr><td>FA-CF<i>n</i>, FA-OC<i>n</i></td><td>Synchronisation : l'enregistrement participe au tour, existe.</td></tr>
+            <tr><td>W-NOMCLI</td><td>Une zone de travail, déclarée au format de la rubrique.</td></tr>
+            <tr><td>D-NOMCLI</td><td>La rubrique sur la ligne de détail de l'édition simplifiée.</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="cycle">
+        <h2>Le cycle des fonctions</h2>
+        <p>Le programme généré est découpé en fonctions de deux caractères, exécutées dans l'ordre de leur code. Le programme boucle de F05 à F90, une fois par enregistrement, jusqu'à la fin des fichiers.</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>F01</td><td>Initialisations : ouverture des fichiers, une seule fois.</td></tr>
+            <tr><td>F05</td><td>Début d'itération.</td></tr>
+            <tr><td>F10</td><td>Lecture (avec rupture ou synchronisation).</td></tr>
+            <tr><td>F20</td><td>Fin de traitement : quand tous les fichiers sont lus, vos sous-fonctions de F20, la fermeture des fichiers, l'arrêt.</td></tr>
+            <tr><td>F22</td><td>Calcul des derniers : qui est le dernier de son groupe, à chaque niveau.</td></tr>
+            <tr><td>F24 à F39</td><td>Mise à jour : configuration et occurrence (24), ruptures totales (26), variables de contrôle (30), code mouvement (33), présence des rubriques (39).</td></tr>
+            <tr><td>F70 à F76</td><td>Mise à jour : contrôle de correspondance (70), mise à jour (73), mémorisation des erreurs (76).</td></tr>
+            <tr><td>F8E, F8<i>e</i></td><td>L'édition : F8E pour l'édition simplifiée, F8<i>e</i> pour l'état de lettre <i>e</i>.</td></tr>
+            <tr><td>F90</td><td>Écritures, puis retour en F05.</td></tr>
+          </tbody>
+        </table></div>
+        <h3>Placer ses fonctions</h3>
+        <p>Vos sous-fonctions s'ajoutent aux fonctions générées (par exemple 8E 10, 20 10), ou forment vos propres fonctions, placées selon leur code. L'ordre est celui de l'EBCDIC : les lettres passent avant les chiffres, donc <code>0A</code> avant <code>00</code> et <code>8E</code> avant <code>80</code>.</p>
+        <ul>
+          <li>Avant F01 : une fois, avant l'initialisation. Entre F01 et F05 : une fois, après.</li>
+          <li>Entre F05 et F20 : à chaque tour, après la lecture, y compris au dernier passage.</li>
+          <li>Entre F20 et F90 : à chaque enregistrement, avant ou après l'édition selon le code.</li>
+          <li>Après F90 : jamais seule, seulement appelée par l'opérateur P.</li>
+        </ul>
+      </section>
+
+      <section id="ruptures">
+        <h2>Les ruptures</h2>
+        <p>Les ruptures se déclarent à l'appel du fichier consulté : jusqu'à trois rubriques d'argument, de la plus large à la plus fine. Le programme trie le fichier sur cet argument, puis le lit avec un enregistrement d'avance pour savoir, avant de le traiter, si un groupe commence ou se termine.</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>RTP<i>n</i> = 1</td><td>L'enregistrement traité est le premier de son groupe au niveau <i>n</i>.</td></tr>
+            <tr><td>RTD<i>n</i> = 1</td><td>Il est le dernier : c'est le moment des sous-totaux.</td></tr>
+            <tr><td>FA-FI = 1</td><td>Plus rien à lire d'avance : l'enregistrement en traitement est le dernier du fichier.</td></tr>
+          </tbody>
+        </table></div>
+        <p>Une rupture de niveau 1 entraîne celles des niveaux plus fins. Dans l'édition simplifiée, chaque niveau imprime son sous-total ; dans un état, ce sont les catégories de type 1 à 3, et le total général est de type 0.</p>
+        <p class="note">Rappel : la zone lue (FA00-) est le suivant, l'enregistrement traité est 1-FA00-. Confondre les deux décale tout d'une ligne.</p>
+      </section>
+
+      <section id="traitement">
+        <h2>L'édition simplifiée</h2>
+        <p>Un programme d'édition sans état imprime sur la SYSOUT une édition réglée dans l'onglet Traitement :</p>
+        <ul>
+          <li><strong>Filtres</strong> : les enregistrements qui ne passent pas tous les filtres sont ignorés (comptés dans les lus, pas dans les retenus).</li>
+          <li><strong>Colonnes</strong> : les rubriques de la ligne de détail, et la case « imprimer le détail ».</li>
+          <li><strong>Totaux</strong> : les rubriques numériques à totaliser, à chaque rupture et au total général ; « compter les lignes » ajoute le nombre d'enregistrements.</li>
+          <li><strong>Fichiers en sortie</strong> : écrits depuis le langage structuré, par M puis ECR.</li>
+        </ul>
+      </section>
+
+      <section id="structure">
+        <h2>Le langage structuré</h2>
+        <p>Une sous-fonction commence par une ligne N : titre, niveau (05, 10…), type et condition. Les types : <code>BL</code> bloc, <code>IT</code> si, <code>EL</code> sinon, <code>DW</code> tant que. Une sous-fonction de niveau plus élevé s'emboîte dans la précédente.</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>M a b</td><td>Déplacer a dans b.</td></tr>
+            <tr><td>A a b, S a b</td><td>Ajouter a à b, soustraire a de b.</td></tr>
+            <tr><td>C W-X = A + B</td><td>Calculer.</td></tr>
+            <tr><td>P ff</td><td>Appeler la fonction ff.</td></tr>
+            <tr><td>MES …</td><td>Afficher sur la SYSOUT.</td></tr>
+            <tr><td>ECR dd</td><td>Écrire un enregistrement du fichier en sortie dd.</td></tr>
+            <tr><td>SQL tb aa</td><td>Accéder à une table (voir la base).</td></tr>
+            <tr><td>SCO, SRO</td><td>Valider, annuler (COMMIT, ROLLBACK).</td></tr>
+            <tr><td>COB …</td><td>Une ligne de COBOL telle quelle.</td></tr>
+            <tr><td>*</td><td>Un commentaire.</td></tr>
+          </tbody>
+        </table></div>
+        <p>Conditions : <code>=</code> <code>#</code> (différent) <code>&gt;</code> <code>&lt;</code> <code>&gt;=</code> <code>&lt;=</code>, reliées par <code>ET</code> et <code>OU</code>.</p>
+      </section>
+
+      <section id="etats">
+        <h2>Les états</h2>
+        <p>Un état s'imprime dans un fichier d'impression (utilisation I). Son code est celui du fichier suivi de sa lettre : le fichier ET de lettre 1 donne l'état ET1 et la fonction F81. Il se décrit en trois écrans.</p>
+        <h3>Libellés (-L)</h3>
+        <p>Les lignes fixes, numérotées de 01 sans trou, à la longueur de l'état.</p>
+        <h3>Structures (-CE)</h3>
+        <p>Les rubriques à placer sur une ligne : structure (01, 02…), rubrique, colonne de début, mode, source et condition.</p>
+        <ul>
+          <li>Mode : <code>M</code> mouvement, <code>T</code> à totaliser, <code>+</code> ou <code>R</code> calcul (R arrondi), <code>U</code> par vous.</li>
+          <li>Type de zone de la source : blanc pour la zone lue, <code>1</code> traitement, <code>2</code> mise à jour, <code>5</code> compteurs, <code>*</code> expression libre.</li>
+          <li>Source : <code>FFNNRUBRIQ</code> (fichier, segment, rubrique ; <code>FA00</code> seul prend la rubrique de même nom) ou un littéral entre quotes.</li>
+          <li>Une ligne suite (<code>*</code>) porte une opération + - * / sur une autre source, ou la suite de la condition.</li>
+        </ul>
+        <h3>Composition (-D)</h3>
+        <p>Les caractéristiques (longueur de ligne, lignes par page, postes) puis les catégories : des lignes éditées sous la même condition, dans l'ordre des codes. Chaque ligne : numéro, type, structure, libellé, saut avant la ligne, fonction à exécuter avant, condition.</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>(blanc)</td><td>Ligne ordinaire.</td></tr>
+            <tr><td>A, Z</td><td>En-tête et fin de page.</td></tr>
+            <tr><td>I</td><td>Ligne itérative, répétée.</td></tr>
+            <tr><td>*</td><td>Ligne de détail, totalisée.</td></tr>
+            <tr><td>T</td><td>Détail jamais imprimé, seulement totalisé.</td></tr>
+            <tr><td>0, 1 à 3</td><td>Total général, total de rupture du niveau.</td></tr>
+          </tbody>
+        </table></div>
+        <p>Saut <code>00</code> : surimpression ; saut absolu <code>*</code> à 01 : nouvelle page. Postes à 0 : chaque ligne est éditée tout de suite, sans être stockée. Les compteurs <code>5-dd00-eCL</code> (ligne dans la page), <code>CLM</code> (lignes par page), <code>CP</code> (page) et <code>CE</code> (lignes écrites) servent dans les conditions et les sources ; <code>CATX</code> est la catégorie en cours.</p>
+      </section>
+
+      <section id="base">
+        <h2>La base</h2>
+        <p>Une base tourne dans le navigateur, à la manière de DB2. Chaque table a un code de deux lettres : ses colonnes s'utilisent sous la forme <code>CL-NOMCLI</code>. L'opérateur SQL prend le code de la table et le type d'accès :</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>R, RU</td><td>Lire par la clé, lire pour mettre à jour.</td></tr>
+            <tr><td>W, RW, D</td><td>Insérer, mettre à jour par la clé, supprimer par la clé.</td></tr>
+            <tr><td>P, RN, CL</td><td>Ouvrir le curseur (toute la table, dans l'ordre de la clé), ligne suivante, fermer.</td></tr>
+          </tbody>
+        </table></div>
+        <p><code>SQLCODE</code> dit le résultat : 0 trouvé, 100 absent ou fin de curseur, -803 clé en double. La base garde ses lignes d'une exécution à l'autre.</p>
+      </section>
+
+      <section id="terminal">
+        <h2>Le terminal</h2>
+        <p>Les mêmes écrans sur 24 lignes de 80 colonnes. Un code sur la ligne CHOIX, puis Entrée : <code>R</code> <code>E</code> <code>C</code> <code>T</code> <code>P</code> <code>D</code> <code>K</code> (puis <code>-D</code>, <code>-L</code>, <code>-CE</code>) <code>S</code> <code>B</code> <code>Q</code> <code>G</code> <code>X</code>.</p>
+        <ul>
+          <li>Tab et Maj+Tab de champ en champ, Entrée valide l'écran, F1 à F12 pour PF1 à PF12.</li>
+          <li>PF3 retour, PF7 et PF8 pages, PF10 et PF11 gauche et droite, PF12 menu.</li>
+          <li>En colonne A : un code action, S supprimer, D dupliquer, I insérer, selon l'écran. Une ligne vide en bas sert à créer.</li>
+          <li><code>FIN</code>, <code>FIN MAJ</code>, <code>FIN ETAT</code> chargent les exemples ; <code>PARTAGE</code> donne le lien du programme.</li>
+        </ul>
+      </section>
+    </article>
+  </div>
+</div>
+
+    </body>
+</html>

@@ -37,12 +37,28 @@ final class CobolTest extends WebTestCase
         $this->assertFalse($client->getResponse()->headers->has('X-Robots-Tag'));
     }
 
-    public function testLesDeuxPagesSontDansLeSitemap(): void
+    public function testLeMemoSeLitSansScriptEtRenvoieAuxDeuxEcrans(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/atelier-cobol/memo');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'Mémo');
+        $this->assertSelectorExists('section#cycle');
+        $this->assertSelectorExists('section#ruptures');
+        $this->assertSelectorExists('.liens-memo a[href="/atelier-cobol"]');
+        $this->assertSelectorExists('.liens-memo a[href="/atelier-cobol/terminal"]');
+        $this->assertFalse($client->getResponse()->headers->has('X-Robots-Tag'));
+        $this->assertSame('http://localhost/atelier-cobol/memo', $crawler->filter('link[rel="canonical"]')->attr('href'));
+    }
+
+    public function testLesPagesSontDansLeSitemap(): void
     {
         $client = static::createClient();
         $client->request('GET', '/sitemap.xml');
 
         $this->assertStringContainsString('<loc>http://localhost/atelier-cobol</loc>', (string) $client->getResponse()->getContent());
         $this->assertStringContainsString('<loc>http://localhost/atelier-cobol/terminal</loc>', (string) $client->getResponse()->getContent());
+        $this->assertStringContainsString('<loc>http://localhost/atelier-cobol/memo</loc>', (string) $client->getResponse()->getContent());
     }
 }

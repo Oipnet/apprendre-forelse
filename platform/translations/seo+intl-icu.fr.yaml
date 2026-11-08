@@ -114,6 +114,10 @@ atelier_cobol:
         titre: "Atelier COBOL en mode terminal 3270"
         description: "Le générateur de batchs COBOL sur un écran vert de 24 lignes sur 80 : touches PF, clavier bloqué, codes action, et le programme exécuté dans le navigateur."
         fil_ariane: Atelier COBOL, terminal
+    memo:
+        titre: "Mémo de l'atelier COBOL : écrans, fonctions et ruptures"
+        description: "La référence de l'atelier COBOL : appel des fichiers, zones, cycle des fonctions F01 à F90, ruptures, langage structuré, états et base."
+        fil_ariane: Mémo de l'atelier COBOL
 bac_a_sable:
     index:
         titre: "Bac à sable PHP en ligne : PHP pur, Symfony et Laravel"

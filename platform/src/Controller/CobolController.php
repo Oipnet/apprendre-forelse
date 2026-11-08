@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * L'atelier COBOL : un générateur de programmes batch COBOL à l'ancienne (rubriques, enregistrement, langage
  * structuré, base façon DB2), qui génère le source puis l'exécute dans le navigateur (playground/src/cobol).
- * Le serveur ne fait que servir les deux pages : le programme reste dans le navigateur du visiteur, et un lien
+ * Le serveur ne fait que servir les pages (atelier, terminal, mémo) : le programme reste dans le navigateur du visiteur, et un lien
  * partagé le porte après le # (rien n'est envoyé ni gardé ici). En français seulement.
  */
 final class CobolController extends AbstractController
@@ -27,5 +27,12 @@ final class CobolController extends AbstractController
     public function terminal(): Response
     {
         return $this->render('atelier_cobol/terminal.html.twig');
+    }
+
+    #[Route('/atelier-cobol/memo', name: 'app_cobol_memo', methods: ['GET'])]
+    #[Seo('atelier_cobol.memo.titre', 'atelier_cobol.memo.description', breadcrumb: 'atelier_cobol.memo.fil_ariane', domain: 'seo')]
+    public function memo(): Response
+    {
+        return $this->render('atelier_cobol/memo.html.twig');
     }
 }

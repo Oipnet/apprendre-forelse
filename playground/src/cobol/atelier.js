@@ -647,6 +647,7 @@ function defis() {
     el('p', {}, d.enonce[0]),
     el('ol', {}, ...d.enonce.slice(1, -1).map((x) => el('li', {}, x))),
     el('p', {}, d.enonce.at(-1)),
+    el('p', {}, 'Les écrans, les fonctions et les ruptures sont rappelés dans ', el('a', { href: zone.dataset.memo || '/atelier-cobol/memo', target: '_blank', rel: 'noopener' }, 'le mémo de l\'atelier'), '.'),
     el('details', {}, el('summary', {}, 'Voir la SYSOUT attendue'), el('pre', { class: 'sysout' }, d.attendu)),
     verdict, actions,
   );

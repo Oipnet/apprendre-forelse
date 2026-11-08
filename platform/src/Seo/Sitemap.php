@@ -168,10 +168,11 @@ final readonly class Sitemap
                 $entries[] = $this->entry('app_scratch_ai', ['_locale' => $locale], self::SCRATCH_UPDATED_AT);
             }
 
-            // L'atelier COBOL, en français seulement : la page graphique et le terminal.
+            // L'atelier COBOL, en français seulement : la page graphique, le terminal et le mémo.
             if (\in_array(Exercise::LOCALE, $homes, true)) {
                 $entries[] = $this->entry('app_cobol', [], self::COBOL_UPDATED_AT);
                 $entries[] = $this->entry('app_cobol_terminal', [], self::COBOL_UPDATED_AT);
+                $entries[] = $this->entry('app_cobol_memo', [], self::COBOL_UPDATED_AT);
             }
             $entries[] = $this->entry('app_organizations', [], self::PAGES_UPDATED_AT);
             if ($this->selfHosting->enabled()) {

@@ -34,6 +34,7 @@ final readonly class SearchIndexing
         'app_scratch_ai',
         'app_cobol',
         'app_cobol_terminal',
+        'app_cobol_memo',
         'app_blog',
         'app_article',
         'app_legal_notice',
