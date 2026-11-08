@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ddlTable, exemple, exempleMiseAJour, fichierDonnees, fichiersEntree, fichiersSortie, generer, normaliser, placeFonction, type Modele } from '../src/cobol/generateur.js';
 import { Programme } from '../src/cobol/interpreteur.js';
@@ -21,6 +22,16 @@ describe('interpréteur COBOL', () => {
 		let sortie = r.sortie;
 		for (const so of fichiersSortie(modele)) sortie += `--- ${so.fichier}\n` + (r.fichiers[so.fichier] ?? '');
 		expect(sansEspacesFinaux(sortie)).toBe(sansEspacesFinaux((references.attendus as Record<string, string>)[nom]));
+	});
+});
+
+describe('interpréteur COBOL, sources écrits à la main', () => {
+	const sources = (references as unknown as { sources: Record<string, { sortie: string; fichiers: Record<string, string> }> }).sources;
+	const lire = (nom: string) => readFileSync(new URL(`./cobol/sources/${nom}`, import.meta.url), 'latin1');
+	it.each(Object.keys(sources))('%s : mêmes octets que GnuCOBOL', (nom) => {
+		const r = new Programme(lire(nom)).executer();
+		expect(r.sortie).toBe(sources[nom].sortie);
+		for (const [f, contenu] of Object.entries(sources[nom].fichiers)) expect(r.fichiers[f]).toBe(contenu);
 	});
 });
 

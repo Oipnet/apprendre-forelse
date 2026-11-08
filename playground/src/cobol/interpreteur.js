@@ -5,7 +5,10 @@
 // PIC X / 9 / S9 / V / éditions (Z 9 . , - B /), VALUE, SIGN LEADING SEPARATE,
 // MOVE, ADD, SUBTRACT, COMPUTE, IF/ELSE/END-IF, PERFORM [UNTIL], PERFORM UNTIL ... END-PERFORM,
 // OPEN, CLOSE, READ AT END / NOT AT END, WRITE, SORT USING GIVING, DISPLAY, SET ... TO TRUE,
-// INITIALIZE, CONTINUE, GO TO, STOP RUN, GOBACK, et EXEC SQL ... END-EXEC sur une base SQLite (sql.js) :
+// INITIALIZE, CONTINUE, GO TO [DEPENDING ON], NEXT SENTENCE, STOP RUN, GOBACK,
+// OCCURS (indices), REDEFINES, HIGH-VALUE, LOW-VALUE, ALL littéral, WRITE AFTER/BEFORE ADVANCING
+// (mêmes octets que GnuCOBOL en LINE SEQUENTIAL), USAGE COMP acceptés mais stockés en DISPLAY,
+// et EXEC SQL ... END-EXEC sur une base SQLite (sql.js) :
 // SELECT ... INTO, INSERT, UPDATE, DELETE, DECLARE CURSOR, OPEN, FETCH, CLOSE, COMMIT, ROLLBACK.
 
 export class ErreurCobol extends Error {
@@ -33,6 +36,7 @@ function tokeniser(source) {
     while (i < code.length) {
       const c = code[i];
       if (c === ' ' || c === '\t') { i++; continue; }
+      if ((c === ',' || c === ';') && (i + 1 >= code.length || code[i + 1] === ' ')) { i++; continue; }
       const exec = /^EXEC\s+SQL\b/i.exec(code.slice(i));
       if (exec) {
         const deb = i + exec[0].length;
@@ -65,7 +69,8 @@ function tokeniser(source) {
       } else if (c === '(' || c === ')') {
         jetons.push({ t: 'mot', v: c, ligne }); i++; continue;
       } else {
-        while (j < code.length && !' ()'.includes(code[j]) && !(code[j] === '.' && (j + 1 >= code.length || code[j + 1] === ' '))) j++;
+        const sep = (k) => (code[k] === '.' || code[k] === ',' || code[k] === ';') && (k + 1 >= code.length || code[k + 1] === ' ');
+        while (j < code.length && !' ()'.includes(code[j]) && !sep(j)) j++;
         if (j > i) jetons.push({ t: 'mot', v: code.slice(i, j).toUpperCase(), ligne });
       }
       if (code[j] === '.' && (j + 1 >= code.length || code[j + 1] === ' ')) { jetons.push({ t: 'point', v: '.', ligne }); j++; }
@@ -91,6 +96,43 @@ class Lecteur {
   point() { const x = this.suivant(); if (x.t !== 'point') throw new ErreurCobol(`point attendu, trouvé « ${x.v} »`, x.ligne); }
   fin() { return this.p >= this.j.length; }
   ligne() { return this.voir()?.ligne; }
+}
+
+// ---------- Constantes figuratives ----------
+// ZERO, SPACE, HIGH-VALUE, LOW-VALUE, QUOTE et ALL littéral : consommées si présentes, sinon null.
+function figuratif(L) {
+  const x = L.voir();
+  if (!x || x.t !== 'mot') return null;
+  if (x.v === 'ALL') {
+    L.p++;
+    const y = L.voir();
+    if (y?.t === 'lit' && y.v.length) { L.p++; return { all: y.v }; }
+    const f = figuratif(L);
+    if (!f) throw new ErreurCobol('ALL : littéral attendu', x.ligne);
+    return f;
+  }
+  const fig = FIGURATIFS[x.v];
+  if (!fig) return null;
+  L.p++;
+  return { fig };
+}
+const FIGURATIFS = {
+  ZERO: 'ZERO', ZEROS: 'ZERO', ZEROES: 'ZERO', SPACE: 'SPACE', SPACES: 'SPACE',
+  'HIGH-VALUE': 'HIGH', 'HIGH-VALUES': 'HIGH', 'LOW-VALUE': 'LOW', 'LOW-VALUES': 'LOW', QUOTE: 'QUOTE', QUOTES: 'QUOTE',
+};
+const CARACTERE_FIGURATIF = { SPACE: ' ', ZERO: '0', HIGH: '\xff', LOW: '\x00', QUOTE: '"' };
+const USAGES = ['DISPLAY', 'COMP', 'COMP-1', 'COMP-2', 'COMP-3', 'COMP-4', 'COMP-5', 'COMPUTATIONAL', 'COMPUTATIONAL-1',
+  'COMPUTATIONAL-2', 'COMPUTATIONAL-3', 'COMPUTATIONAL-4', 'COMPUTATIONAL-5', 'BINARY', 'PACKED-DECIMAL', 'INDEX'];
+const CLAUSES = ['PIC', 'PICTURE', 'VALUE', 'USAGE', 'SYNC', 'SYNCHRONIZED', 'REDEFINES', 'BLANK', 'OCCURS', 'SIGN',
+  'ASCENDING', 'DESCENDING', 'INDEXED', ...USAGES];
+
+// Vue d'une donnée décalée de delta octets (occurrence d'une table) ; ses enfants le sont aussi.
+function decaler(el, delta) {
+  if (!delta) return el;
+  return Object.create(el, {
+    pos: { value: el.pos + delta },
+    enfants: { get: () => el.enfants.map((e) => decaler(e, delta)) },
+  });
 }
 
 // ---------- Clauses PIC ----------
@@ -155,8 +197,8 @@ export class Programme {
   analyser(jetons) {
     const L = new Lecteur(jetons);
     const division = (nom) => { while (!L.fin() && !(L.est(nom) && L.voir(1)?.v === 'DIVISION')) L.p++; };
-    division('ENVIRONMENT');
-    while (!L.fin() && !L.est('DATA', 'SELECT')) L.p++;
+    // ENVIRONMENT DIVISION facultative
+    while (!L.fin() && !(L.est('DATA') && L.voir(1)?.v === 'DIVISION') && !L.est('SELECT')) L.p++;
     while (L.est('SELECT')) this.select(L);
     division('DATA');
     L.mot('DATA'); L.mot('DIVISION'); L.point();
@@ -221,15 +263,38 @@ export class Programme {
       this.conditions.set(nom, { parent, valeurs });
       return;
     }
+    const usage = () => {
+      // COMP, COMP-3... : acceptés, mais la zone reste stockée en DISPLAY (un chiffre par octet)
+      if (L.est(...USAGES)) { el.usage = L.mot(); return true; }
+      return false;
+    };
     while (!L.estPoint()) {
       if (L.optionnel('PIC', 'PICTURE')) { L.optionnel('IS'); el.picTexte = L.suivant().v; }
       else if (L.optionnel('VALUE')) { L.optionnel('IS'); el.valeur = this.litteralDonnee(L); }
       else if (L.optionnel('SIGN')) { L.optionnel('IS'); L.optionnel('LEADING'); if (L.optionnel('SEPARATE')) L.optionnel('CHARACTER'); el.signeSepare = true; }
-      else if (L.optionnel('USAGE')) { L.optionnel('IS'); if (!L.optionnel('DISPLAY')) throw new ErreurCobol('seul USAGE DISPLAY est pris en charge', ligne); }
-      else if (L.optionnel('DISPLAY')) { /* usage par défaut */ }
+      else if (L.optionnel('USAGE')) { L.optionnel('IS'); if (!usage()) throw new ErreurCobol(`USAGE non pris en charge : ${L.voir()?.v}`, ligne); }
+      else if (usage()) { /* USAGE implicite */ }
+      else if (L.optionnel('SYNC', 'SYNCHRONIZED')) L.optionnel('LEFT', 'RIGHT');
+      else if (L.optionnel('REDEFINES')) el.redefinit = L.mot();
+      else if (L.optionnel('BLANK')) { L.optionnel('WHEN'); L.mot(); el.blancSiZero = true; }
+      else if (L.optionnel('OCCURS')) {
+        el.occurs = Number(L.mot());
+        if (!Number.isInteger(el.occurs) || el.occurs < 1) throw new ErreurCobol('OCCURS : nombre d\'occurrences attendu', ligne);
+        L.optionnel('TIMES');
+        while (L.est('ASCENDING', 'DESCENDING', 'INDEXED')) {
+          if (L.optionnel('INDEXED')) {
+            L.optionnel('BY');
+            while (L.voir()?.t === 'mot' && !L.est(...CLAUSES)) this.index(L.mot(), L.ligne());
+          } else {
+            L.mot(); L.optionnel('KEY'); L.optionnel('IS');
+            while (L.voir()?.t === 'mot' && !L.est(...CLAUSES)) L.mot();
+          }
+        }
+      }
       else throw new ErreurCobol(`clause non prise en charge : ${L.voir().v}`, L.ligne());
     }
     L.point();
+    if (!el.picTexte && el.usage === 'INDEX') el.picTexte = 'S9(9)';
     if (el.picTexte) el.pic = analyserPic(el.picTexte, el.signeSepare);
     // rattachement hiérarchique
     if (niveau === 1 || niveau === 77) {
@@ -253,29 +318,54 @@ export class Programme {
   }
 
   litteralDonnee(L) {
-    const x = L.suivant();
+    const x = L.voir();
+    const f = figuratif(L);
+    if (f) return f;
+    L.p++;
     if (x.t === 'lit') return { alpha: x.v };
-    if (['ZERO', 'ZEROS', 'ZEROES'].includes(x.v)) return { fig: 'ZERO' };
-    if (['SPACE', 'SPACES'].includes(x.v)) return { fig: 'SPACE' };
     if (/^[+-]?\d*\.?\d+$/.test(x.v)) return { num: x.v };
     throw new ErreurCobol(`valeur non prise en charge : ${x.v}`, x.ligne);
   }
 
+  // INDEXED BY : l'index est une donnée à part, entière
+  index(nom, ligne) {
+    if (this.donnees.has(nom)) throw new ErreurCobol(`donnée ${nom} déclarée deux fois`, ligne);
+    const el = { niveau: 77, nom, ligne, enfants: [], pic: analyserPic('S9(9)'), valeur: { num: '1' }, signeSepare: false, estIndex: true };
+    this._racines.push(el);
+    this.donnees.set(nom, el);
+  }
+
   allouer() {
-    // chaque 01 a sa zone mémoire ; les enregistrements d'un même FD partagent la leur
+    // chaque 01 a sa zone mémoire ; les enregistrements d'un même FD partagent la leur,
+    // un 01 REDEFINES partage celle du 01 redéfini.
+    // longueur = une occurrence ; une donnée OCCURS n occupe n fois sa longueur dans son groupe.
     const taille = (el) => {
       if (el.pic) { if (el.enfants.length) throw new ErreurCobol(`groupe ${el.nom} avec PIC`, el.ligne); return (el.longueur = el.pic.longueur); }
       if (!el.enfants.length) throw new ErreurCobol(`donnée ${el.nom || 'FILLER'} sans PIC`, el.ligne);
-      return (el.longueur = el.enfants.reduce((s, e) => s + taille(e), 0));
+      let s = 0;
+      for (const e of el.enfants) { taille(e); if (!e.redefinit) s += e.longueur * (e.occurs || 1); }
+      return (el.longueur = s);
     };
     const placer = (el, zone, pos) => {
       el.zone = zone; el.pos = pos;
       let p = pos;
-      for (const e of el.enfants) { placer(e, zone, p); p += e.longueur; }
+      for (const e of el.enfants) {
+        if (e.redefinit) {
+          const cible = el.enfants.find((x) => x.nom === e.redefinit && x !== e);
+          if (!cible) throw new ErreurCobol(`REDEFINES ${e.redefinit} : donnée de même niveau introuvable`, e.ligne);
+          placer(e, zone, cible.pos);
+        } else { placer(e, zone, p); p += e.longueur * (e.occurs || 1); }
+      }
     };
     for (const r of this._racines) {
       taille(r);
-      const zone = r.fichier && r.fichier.enreg !== r ? r.fichier.enreg.zone : { octets: [] };
+      if (r.occurs) throw new ErreurCobol(`OCCURS interdit au niveau ${r.niveau}`, r.ligne);
+      let zone;
+      if (r.redefinit) {
+        const cible = this.donnees.get(r.redefinit);
+        if (!cible || cible.parent) throw new ErreurCobol(`REDEFINES ${r.redefinit} : niveau 01 introuvable`, r.ligne);
+        zone = cible.zone;
+      } else zone = r.fichier && r.fichier.enreg !== r ? r.fichier.enreg.zone : { octets: [] };
       placer(r, zone, 0);
       if (zone.octets.length < r.longueur) zone.octets.push(...Array(r.longueur - zone.octets.length).fill(' '));
     }
@@ -295,7 +385,12 @@ export class Programme {
       }
       if (x.t === 'mot' && L.voir(1)?.v === 'SECTION') { L.p += 2; L.point(); continue; }
       if (!courant) { courant = []; this.paragraphes.set('(DEBUT)', courant); this.ordre.push('(DEBUT)'); }
-      courant.push(...this.instructions(L, []));
+      // une phrase (jusqu'au point) n'est regroupée que si elle contient NEXT SENTENCE
+      this._phraseSuivante = false;
+      const ligne = L.ligne();
+      const phrase = this.instructions(L, []);
+      if (this._phraseSuivante) courant.push({ v: 'PHRASE', ligne, corps: phrase });
+      else courant.push(...phrase);
       if (L.estPoint()) L.point();
     }
   }
@@ -385,6 +480,12 @@ export class Programme {
       case 'WRITE': {
         ins.enreg = this.reference(L);
         if (L.optionnel('FROM')) ins.depuis = this.operande(L);
+        if (L.est('AFTER', 'BEFORE')) {
+          ins.avance = L.mot();
+          L.optionnel('ADVANCING');
+          if (L.optionnel('PAGE')) ins.page = true;
+          else { ins.lignes = this.operande(L); L.optionnel('LINE', 'LINES'); }
+        }
         return ins;
       }
       case 'SORT': {
@@ -400,9 +501,17 @@ export class Programme {
         return ins;
       }
       case 'SET': {
-        ins.cond = L.mot();
-        if (!this.conditions.has(ins.cond)) throw new ErreurCobol(`${ins.cond} n'est pas un nom de condition`, ligne);
-        L.mot('TO'); L.mot('TRUE');
+        if (this.conditions.has(L.voir()?.v)) {
+          ins.cond = L.mot();
+          L.mot('TO'); L.mot('TRUE');
+          return ins;
+        }
+        ins.cibles = [];
+        while (L.voir()?.t === 'mot' && !L.est('TO', 'UP', 'DOWN')) ins.cibles.push(this.reference(L));
+        if (!ins.cibles.length) throw new ErreurCobol('SET : donnée ou condition attendue', ligne);
+        ins.mode = L.mot();
+        if (ins.mode !== 'TO') L.mot('BY');
+        ins.source = this.operande(L);
         return ins;
       }
       case 'INITIALIZE': {
@@ -411,7 +520,17 @@ export class Programme {
         return ins;
       }
       case 'STOP': L.mot('RUN'); return ins;
-      case 'GO': L.optionnel('TO'); ins.para = L.mot(); return ins;
+      case 'GO': {
+        L.optionnel('TO');
+        const paras = [];
+        while (L.voir()?.t === 'mot' && !L.est('DEPENDING') && !VERBES.has(L.voir().v) && !FINS.has(L.voir().v)) paras.push(L.mot());
+        if (!paras.length) throw new ErreurCobol('GO TO : paragraphe attendu', ligne);
+        if (L.optionnel('DEPENDING')) { L.optionnel('ON'); ins.paras = paras; ins.selon = this.operande(L); }
+        else if (paras.length > 1) throw new ErreurCobol('GO TO : plusieurs paragraphes sans DEPENDING ON', ligne);
+        else ins.para = paras[0];
+        return ins;
+      }
+      case 'NEXT': L.mot('SENTENCE'); this._phraseSuivante = true; return ins;
       case 'GOBACK': case 'CONTINUE': case 'EXIT': return ins;
       default:
         throw new ErreurCobol(`instruction non prise en charge : ${v}`, ligne);
@@ -473,19 +592,33 @@ export class Programme {
     return ins;
   }
 
+  // NOM ou NOM (i [, j...]) quand NOM ou un de ses groupes porte OCCURS ; i peut être « I + 1 ».
   reference(L) {
     const ligne = L.ligne();
     const nom = L.mot();
     const el = this.donnees.get(nom);
     if (!el) throw new ErreurCobol(`donnée inconnue : ${nom}`, ligne);
-    return { el };
+    let tables = 0;
+    for (let e = el; e; e = e.parent) if (e.occurs) tables++;
+    if (!tables || !L.est('(')) return { el };
+    L.mot('(');
+    const indices = [];
+    while (!L.est(')')) {
+      let i = this.operande(L);
+      if (L.est('+', '-') && /^\d+$/.test(L.voir(1)?.v || '')) { const op = L.mot(); i = { op, g: i, d: { num: L.mot() } }; }
+      indices.push(i);
+    }
+    L.mot(')');
+    if (indices.length !== tables) throw new ErreurCobol(`${nom} : ${tables} indice(s) attendu(s), ${indices.length} donné(s)`, ligne);
+    return { el, indices };
   }
 
   operande(L) {
     const x = L.voir();
+    if (!x) throw new ErreurCobol('fin de source inattendue');
     if (x.t === 'lit') { L.p++; return { alpha: x.v }; }
-    if (['ZERO', 'ZEROS', 'ZEROES'].includes(x.v)) { L.p++; return { fig: 'ZERO' }; }
-    if (['SPACE', 'SPACES'].includes(x.v)) { L.p++; return { fig: 'SPACE' }; }
+    const f = figuratif(L);
+    if (f) return f;
     if (/^[+-]?\d*\.?\d+$/.test(x.v)) { L.p++; return { num: x.v }; }
     return this.reference(L);
   }
@@ -565,10 +698,12 @@ function contientSql(liste) {
 }
 
 const VERBES = new Set(['MOVE', 'ADD', 'SUBTRACT', 'COMPUTE', 'DISPLAY', 'IF', 'PERFORM', 'OPEN', 'CLOSE', 'READ',
-  'WRITE', 'SORT', 'SET', 'INITIALIZE', 'STOP', 'GO', 'GOBACK', 'CONTINUE', 'EXIT']);
+  'WRITE', 'SORT', 'SET', 'INITIALIZE', 'STOP', 'GO', 'GOBACK', 'CONTINUE', 'EXIT', 'NEXT']);
 const FINS = new Set(['ELSE', 'END-IF', 'END-PERFORM', 'END-READ', 'NOT', 'AT', 'END']);
 
 class Arret { }
+// NEXT SENTENCE : remonte jusqu'à la fin de la phrase.
+class PhraseSuivante { }
 // GO TO : remonte jusqu'à la boucle qui déroule les paragraphes.
 class Saut { constructor(para) { this.para = para; } }
 
@@ -584,18 +719,35 @@ class Execution {
     this.max = max;
     this.ouverts = new Map();
     // valeurs initiales
-    for (const el of pgm.donnees.values()) if (!el.parent) this.initialiser(el, true);
-    for (const r of pgm._racines) if (!r.nom) this.initialiser(r, true);
+    for (const r of pgm._racines) if (!r.redefinit) this.initialiser(r, true);
   }
 
   // --- mémoire ---
   lire(el) { return el.zone.octets.slice(el.pos, el.pos + el.longueur).join(''); }
   ecrire(el, texte) { const o = el.zone.octets; for (let i = 0; i < el.longueur; i++) o[el.pos + i] = texte[i] ?? ' '; }
 
+  // référence (avec ses indices éventuels) -> donnée à la bonne occurrence
+  res(o) {
+    if (!o.indices) return o.el;
+    const tables = [];
+    for (let e = o.el; e; e = e.parent) if (e.occurs) tables.unshift(e);
+    let delta = 0;
+    tables.forEach((t, k) => {
+      const i = Number(this.calculer(o.indices[k]).aEchelle(0));
+      if (i < 1 || i > t.occurs) throw new ErreurCobol(`${o.el.nom} : indice ${i} hors de la table ${t.nom || 'FILLER'} (1 à ${t.occurs})`);
+      delta += (i - 1) * t.longueur;
+    });
+    return decaler(o.el, delta);
+  }
+
+  // toutes les occurrences d'une table ; les REDEFINES ne sont pas initialisés (ils recouvrent)
   initialiser(el, avecValeurs) {
+    for (let k = 0; k < (el.occurs || 1); k++) this.initialiserUn(decaler(el, k * el.longueur), avecValeurs);
+  }
+  initialiserUn(el, avecValeurs) {
     if (el.enfants.length) {
       if (avecValeurs && el.valeur) this.ecrire(el, this.alpha(el.valeur, el.longueur));
-      else for (const e of el.enfants) this.initialiser(e, avecValeurs);
+      else for (const e of el.enfants) if (!e.redefinit) this.initialiser(e, avecValeurs);
       return;
     }
     if (avecValeurs && el.valeur !== undefined) return this.affecter(el, el.valeur);
@@ -605,8 +757,8 @@ class Execution {
   }
 
   alpha(v, longueur) {
-    if (v.fig === 'SPACE') return ' '.repeat(longueur);
-    if (v.fig === 'ZERO') return '0'.repeat(longueur);
+    if (v.fig) return CARACTERE_FIGURATIF[v.fig].repeat(longueur);
+    if (v.all !== undefined) return v.all.repeat(Math.ceil(longueur / v.all.length)).slice(0, longueur);
     return (v.alpha ?? v.num).padEnd(longueur).slice(0, longueur);
   }
 
@@ -614,8 +766,8 @@ class Execution {
   nombre(o) {
     if (o.num !== undefined) return Dec.de(o.num);
     if (o.fig === 'ZERO') return new Dec(0n);
-    if (o.alpha !== undefined || o.fig) throw new ErreurCobol('valeur non numérique dans un calcul');
-    const el = o.el;
+    if (o.alpha !== undefined || o.fig || o.all !== undefined) throw new ErreurCobol('valeur non numérique dans un calcul');
+    const el = this.res(o);
     const p = el.pic;
     if (!p || p.genre !== '9') {
       const t = this.lire(el).trim();
@@ -635,7 +787,7 @@ class Execution {
 
   stockerNombre(el, d) {
     const p = el.pic;
-    if (p.genre === 'E') return this.ecrire(el, editer(p.masque, d));
+    if (p.genre === 'E') return this.ecrire(el, el.blancSiZero && d.n === 0n ? '' : editer(p.masque, d));
     if (p.genre === 'X') { // nombre vers alphanumérique : chiffres entiers sans signe
       const n = d.aEchelle(0);
       return this.ecrire(el, (n < 0n ? -n : n).toString().padEnd(el.longueur).slice(0, el.longueur));
@@ -656,7 +808,7 @@ class Execution {
       // cible alphanumérique ou groupe : copie de caractères, cadrée à gauche
       let t;
       if (source.el) {
-        const s = source.el;
+        const s = this.res(source);
         if (!el.enfants.length && s.pic?.genre === '9' && !s.enfants.length) {
           const p = s.pic, d = this.nombre(source);
           let n = d.aEchelle(p.echelle); if (n < 0n) n = -n;
@@ -669,13 +821,13 @@ class Execution {
       if (el.pic.genre === 'E') return this.ecrire(el, source.alpha.padEnd(el.longueur).slice(0, el.longueur));
       return this.stockerNombre(el, Dec.de(source.alpha.trim() || '0'));
     }
-    if (source.fig === 'SPACE') return this.ecrire(el, ' '.repeat(el.longueur));
+    if ((source.fig && source.fig !== 'ZERO') || source.all !== undefined) return this.ecrire(el, this.alpha(source, el.longueur));
     this.stockerNombre(el, this.nombre(source));
   }
 
   texte(o) {
     if (o.el) {
-      const el = o.el;
+      const el = this.res(o);
       // GnuCOBOL affiche les numériques signés avec leur signe et la virgule implicite
       if (!el.enfants.length && el.pic.genre === '9') {
         const p = el.pic, d = this.nombre(o);
@@ -686,16 +838,17 @@ class Execution {
       }
       return this.lire(el);
     }
-    if (o.fig === 'SPACE') return ' ';
-    if (o.fig === 'ZERO') return '0';
-    return o.alpha ?? o.num;
+    if (o.fig) return CARACTERE_FIGURATIF[o.fig];
+    return o.all ?? o.alpha ?? o.num;
   }
 
   comparer(a, b) {
     if (this.estNumerique(a) && this.estNumerique(b)) return this.nombre(a).cmp(this.nombre(b));
-    let x = this.texte(a), y = this.texte(b);
-    if (a.fig === 'SPACE') x = ' '.repeat(y.length);
-    if (b.fig === 'SPACE') y = ' '.repeat(x.length);
+    // une constante figurative prend la longueur de l'autre opérande
+    const fig = (o) => o.fig !== undefined || o.all !== undefined;
+    let x = fig(a) && !fig(b) ? null : this.texte(a), y = fig(b) && !fig(a) ? null : this.texte(b);
+    if (x === null) x = this.alpha(a, y.length);
+    if (y === null) y = this.alpha(b, x.length);
     const n = Math.max(x.length, y.length);
     x = x.padEnd(n); y = y.padEnd(n);
     return x < y ? -1 : x > y ? 1 : 0;
@@ -734,6 +887,12 @@ class Execution {
     return lignes;
   }
 
+  fermer(f) {
+    const o = this.ouverts.get(f);
+    if (o?.ouverte) this.fs[f.assign] += '\n';
+    this.ouverts.delete(f);
+  }
+
   lancer() {
     try {
       const debut = this.pgm.ordre[0];
@@ -741,8 +900,11 @@ class Execution {
       this.executerDepuis(0);
     } catch (e) {
       if (e instanceof Saut) throw new ErreurCobol(`GO TO ${e.para} : sortie d un PERFORM non prise en charge`);
+      if (e instanceof PhraseSuivante) throw new ErreurCobol('NEXT SENTENCE hors d\'une phrase');
       if (!(e instanceof Arret)) throw e;
     }
+    // STOP RUN ferme les fichiers restés ouverts
+    for (const f of [...this.ouverts.keys()]) this.fermer(f);
   }
 
   // Déroule les paragraphes à partir de index, jusqu'à jusquA inclus (PERFORM THRU) ou jusqu'à la fin.
@@ -782,17 +944,21 @@ class Execution {
 
   faire(ins) {
     switch (ins.v) {
-      case 'MOVE': for (const c of ins.cibles) this.affecter(c.el, ins.source); return;
+      case 'MOVE': for (const c of ins.cibles) this.affecter(this.res(c), ins.source); return;
       case 'ADD': case 'SUBTRACT': {
         let total = new Dec(0n);
         for (const s of ins.sources) total = total.plus(this.nombre(s));
         for (const c of ins.cibles) {
-          const v = this.nombre(c);
-          this.stockerNombre(c.el, ins.v === 'ADD' ? v.plus(total) : v.moins(total));
+          const el = this.res(c), v = this.nombre({ el });
+          this.stockerNombre(el, ins.v === 'ADD' ? v.plus(total) : v.moins(total));
         }
         return;
       }
-      case 'COMPUTE': this.stockerNombre(ins.cible.el, this.calculer(ins.expr)); return;
+      case 'COMPUTE': this.stockerNombre(this.res(ins.cible), this.calculer(ins.expr)); return;
+      case 'PHRASE':
+        try { this.bloc(ins.corps); } catch (e) { if (!(e instanceof PhraseSuivante)) throw e; }
+        return;
+      case 'NEXT': throw new PhraseSuivante();
       case 'DISPLAY': this.sortie.push(ins.elems.map((o) => this.texte(o)).join('') + '\n'); return;
       case 'IF': this.bloc(this.evaluer(ins.cond) ? ins.alors : ins.sinon); return;
       case 'PERFORM':
@@ -805,25 +971,39 @@ class Execution {
           else { if (mode === 'OUTPUT') this.fs[f.assign] = ''; this.ouverts.set(f, { mode }); }
         }
         return;
-      case 'CLOSE': for (const f of ins.fichiers) this.ouverts.delete(f); return;
+      case 'CLOSE': for (const f of ins.fichiers) this.fermer(f); return;
       case 'READ': {
         const o = this.ouverts.get(ins.f);
         if (!o || o.mode !== 'INPUT') throw new ErreurCobol(`READ ${ins.f.nom} : fichier non ouvert en lecture`);
         if (o.pos >= o.lignes.length) { this.bloc(ins.finFichier); return; }
         const enr = this.enregistrement(ins.f);
         this.ecrire(enr, o.lignes[o.pos++].padEnd(enr.longueur).slice(0, enr.longueur));
-        if (ins.into) this.affecter(ins.into.el, { el: enr });
+        if (ins.into) this.affecter(this.res(ins.into), { el: enr });
         this.bloc(ins.sinonFin);
         return;
       }
       case 'WRITE': {
-        const enr = ins.enreg.el;
+        const enr = this.res(ins.enreg);
         const f = [...this.pgm.fichiers.values()].find((x) => x.enreg === enr || (enr.zone === x.enreg?.zone));
         if (!f) throw new ErreurCobol(`${enr.nom} n'est l'enregistrement d'aucun fichier`);
         const o = this.ouverts.get(f);
         if (!o || o.mode === 'INPUT') throw new ErreurCobol(`WRITE ${enr.nom} : fichier non ouvert en écriture`);
         if (ins.depuis) this.affecter(enr, ins.depuis);
-        this.fs[f.assign] += this.lire(enr).replace(/ +$/, '') + '\n';
+        // octets de GnuCOBOL en LINE SEQUENTIAL : AFTER n = n sauts puis la ligne (0 = retour chariot),
+        // AFTER PAGE = saut de page puis la ligne ; BEFORE : la ligne puis les sauts ; sans ADVANCING : ligne + saut.
+        // Après un AFTER, la ligne reste ouverte : la fermeture du fichier ajoute le dernier saut.
+        let t = this.lire(enr).replace(/ +$/, '');
+        if (ins.avance) {
+          let sauts = '\f';
+          if (!ins.page) {
+            const n = Number(this.nombre(ins.lignes).aEchelle(0));
+            if (n < 0 || n > 99) throw new ErreurCobol(`WRITE ${ins.avance} ADVANCING ${n} : de 0 à 99 lignes`);
+            sauts = n === 0 ? '\r' : '\n'.repeat(n);
+          }
+          t = ins.avance === 'AFTER' ? sauts + t : t + sauts;
+        } else t += '\n';
+        o.ouverte = ins.avance === 'AFTER';
+        this.fs[f.assign] += t;
         return;
       }
       case 'SORT': {
@@ -847,13 +1027,34 @@ class Execution {
         return;
       }
       case 'SET': {
-        const { parent, valeurs } = this.pgm.conditions.get(ins.cond);
-        this.affecter(parent, valeurs[0]);
+        if (ins.cond) {
+          const { parent, valeurs } = this.pgm.conditions.get(ins.cond);
+          this.affecter(parent, valeurs[0]);
+          return;
+        }
+        for (const c of ins.cibles) {
+          const el = this.res(c);
+          if (ins.mode === 'TO') this.affecter(el, ins.source);
+          else {
+            const v = this.nombre({ el }), pas = this.nombre(ins.source);
+            this.stockerNombre(el, ins.mode === 'UP' ? v.plus(pas) : v.moins(pas));
+          }
+        }
         return;
       }
-      case 'INITIALIZE': for (const c of ins.cibles) this.initialiser(c.el, false); return;
+      case 'INITIALIZE':
+        for (const c of ins.cibles) {
+          const el = this.res(c);
+          if (c.indices) this.initialiserUn(el, false); else this.initialiser(el, false);
+        }
+        return;
       case 'STOP': case 'GOBACK': throw new Arret();
-      case 'GO': throw new Saut(ins.para);
+      case 'GO': {
+        if (!ins.selon) throw new Saut(ins.para);
+        const n = Number(this.nombre(ins.selon).aEchelle(0));
+        if (n >= 1 && n <= ins.paras.length) throw new Saut(ins.paras[n - 1]);
+        return; // hors plage : on continue en séquence
+      }
       case 'CONTINUE': case 'EXIT': return;
       case 'SQL': return this.sql(ins);
     }

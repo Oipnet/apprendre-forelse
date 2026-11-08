@@ -19,5 +19,19 @@ cas.forEach(([nom, modele], i) => {
   for (const so of fichiersSortie(modele)) sortie += `--- ${so.fichier}\n` + fs.readFileSync(path.join(d, so.fichier), 'utf8');
   attendus[nom] = sortie;
 });
-fs.writeFileSync(new URL('./gnucobol.json', import.meta.url), JSON.stringify({ compilateur: execFileSync('cobc', ['--version']).toString().split('\n')[0], attendus }, null, 2) + '\n');
-console.log(`${cas.length} sorties de référence écrites.`);
+// Sources écrits à la main (tests/cobol/sources) : ce que l'interpréteur doit savoir lire, au-delà du générateur.
+// La SYSOUT puis chaque fichier écrit, octet pour octet (sauts de page et retours chariot compris).
+const sources = {};
+const dossierSources = new URL('./sources/', import.meta.url);
+for (const nom of fs.readdirSync(dossierSources).filter((f) => f.endsWith('.cbl')).sort()) {
+  const d = path.join(dossier, nom);
+  fs.mkdirSync(d);
+  fs.copyFileSync(new URL(nom, dossierSources), path.join(d, 'S.cbl'));
+  execFileSync('cobc', ['-x', '-o', path.join(d, 's'), path.join(d, 'S.cbl')], { stdio: ['ignore', 'ignore', 'inherit'] });
+  const sortie = execFileSync(path.join(d, 's'), { cwd: d, stdio: ['ignore', 'pipe', 'ignore'] }).toString('latin1');
+  const fichiers = {};
+  for (const f of fs.readdirSync(d).filter((f) => !['S.cbl', 's'].includes(f)).sort()) fichiers[f] = fs.readFileSync(path.join(d, f), 'latin1');
+  sources[nom] = { sortie, fichiers };
+}
+fs.writeFileSync(new URL('./gnucobol.json', import.meta.url), JSON.stringify({ compilateur: execFileSync('cobc', ['--version']).toString().split('\n')[0], attendus, sources }, null, 2) + '\n');
+console.log(`${cas.length} sorties de référence et ${Object.keys(sources).length} sources écrits.`);

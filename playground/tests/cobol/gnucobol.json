@@ -19,5 +19,28 @@
     "mise a jour : mouvements hors ordre (arret)": "MISE A JOUR DES CLIENTS\nMV : MOUVEMENTS HORS ORDRE\n--- CLIENTS.NEW\n",
     "defi 01 : depart": "ETAT DES VENTES DU MOIS\n \n-\n-\nTOTAL GENERAL\nLUS / RETENUS      11 /      11\n",
     "defi 01 : solution": "ETAT DES VENTES DU MOIS\nVENDEUR  NOM DU VENDEUR     MONTANT\n-----------------------------------\nVENDEUR : 003\n      3  LAMBERT             760.00\n      3  LAMBERT             980.40\n  TOTAL VENDEUR  NB :       2  MTVENTE :       1740.40\n \nVENDEUR : 007\n      7  MOREAU              430.50\n      7  MOREAU             2100.00\n      7  MOREAU               12.00\n  TOTAL VENDEUR  NB :       3  MTVENTE :       2542.50\n \nVENDEUR : 012\n     12  DURAND             1250.00\n     12  DURAND               89.90\n     12  DURAND             1499.99\n  TOTAL VENDEUR  NB :       3  MTVENTE :       2839.89\n \nVENDEUR : 021\n     21  ROUSSEL             315.25\n  TOTAL VENDEUR  NB :       1  MTVENTE :        315.25\n \n-----------------------------------\nTOTAL GENERAL  NB :       9  MTVENTE :       7438.04\nLUS / RETENUS      11 /       9\n"
+  },
+  "sources": {
+    "figuratives.cbl": {
+      "sortie": "INF\nPAS FINI\nFINI\n",
+      "fichiers": {}
+    },
+    "sauts-melanges.cbl": {
+      "sortie": "",
+      "fichiers": {
+        "C.TXT": "\nA1PLAIN\n\n\nA2B1\nB2\n\nBP\f\nA3P2\n",
+        "D.TXT": "X\n\rY\n"
+      }
+    },
+    "sauts-page.cbl": {
+      "sortie": "",
+      "fichiers": {
+        "ETAT.TXT": "\fTITRE\nLIGNE1\n\nAPRES 2\rSURIMP\fPAGE2\nFIN\n"
+      }
+    },
+    "tables.cbl": {
+      "sortie": "AABBCC    |\nABS ..00..00..00|\nABS ..00..07XY00|..07|\n0306\n0042ZZ\nF04\nHORS +0003\nHORS +0004\n555123\nQ Q |\nABS   00..07XY00|\n      00  00  00|\n[   ]\n[  5]\n*-*-ZZ\nCC\nBAS\n",
+      "fichiers": {}
+    }
   }
 }
