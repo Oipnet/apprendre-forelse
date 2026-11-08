@@ -23,8 +23,9 @@ final class HardcodedTextTest extends TestCase
      * - l'administration, l'atelier des auteurs, l'espace et l'offre des organisations (cohortes) : outils internes ou
      *   clientèle française, servis en français seulement ;
      * - les e-mails internes, envoyés à l'administrateur de l'instance ;
-     * - l'atelier COBOL, un clin d'œil en français à l'informatique de gestion d'antan, dont tous les textes vivent
-     *   aussi dans ses scripts (playground/src/cobol).
+     * - l'atelier COBOL, un clin d'œil à l'informatique de gestion d'antan, avec son propre habillage : ses textes vont
+     *   par paires français/anglais dans le gabarit, comme dans ses scripts (playground/src/cobol), et le mémo a un
+     *   gabarit par langue.
      */
     private const EXCEPTIONS = [
         'legal/',

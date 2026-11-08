@@ -12,9 +12,11 @@
 // et EXEC SQL ... END-EXEC sur une base SQLite (sql.js) :
 // SELECT ... INTO, INSERT, UPDATE, DELETE, DECLARE CURSOR, OPEN, FETCH, CLOSE, COMMIT, ROLLBACK.
 
+import { t as tx } from './langue.js';
+
 export class ErreurCobol extends Error {
   constructor(message, ligne) {
-    super(ligne ? `ligne ${ligne} : ${message}` : message);
+    super(ligne ? tx(`ligne ${ligne} : ${message}`, `line ${ligne}: ${message}`) : message);
     this.ligne = ligne;
   }
 }
@@ -50,7 +52,7 @@ function tokeniser(source) {
       if (c === '"' || c === "'") {
         let j = i + 1, val = '';
         for (;;) {
-          if (j >= code.length) throw new ErreurCobol('littéral non terminé', ligne);
+          if (j >= code.length) throw new ErreurCobol(tx('littéral non terminé', 'unterminated literal'), ligne);
           if (code[j] === c) {
             if (code[j + 1] === c) { val += c; j += 2; continue; }
             break;
@@ -78,7 +80,7 @@ function tokeniser(source) {
       i = j;
     }
   });
-  if (sql) throw new ErreurCobol('EXEC SQL sans END-EXEC', sql.ligne);
+  if (sql) throw new ErreurCobol(tx('EXEC SQL sans END-EXEC', 'EXEC SQL without END-EXEC'), sql.ligne);
   return jetons;
 }
 
@@ -87,14 +89,14 @@ class Lecteur {
   voir(k = 0) { return this.j[this.p + k]; }
   est(...mots) { const x = this.voir(); return x && x.t === 'mot' && mots.includes(x.v); }
   estPoint() { return this.voir()?.t === 'point'; }
-  suivant() { const x = this.j[this.p++]; if (!x) throw new ErreurCobol('fin de source inattendue'); return x; }
+  suivant() { const x = this.j[this.p++]; if (!x) throw new ErreurCobol(tx('fin de source inattendue', 'unexpected end of source')); return x; }
   mot(attendu) {
     const x = this.suivant();
-    if (x.t !== 'mot' || (attendu && x.v !== attendu)) throw new ErreurCobol(`attendu ${attendu || 'un mot'}, trouvé « ${x.v} »`, x.ligne);
+    if (x.t !== 'mot' || (attendu && x.v !== attendu)) throw new ErreurCobol(tx(`attendu ${attendu || 'un mot'}, trouvé « ${x.v} »`, `expected ${attendu || 'a word'}, found "${x.v}"`), x.ligne);
     return x.v;
   }
   optionnel(...mots) { if (this.est(...mots)) { this.p++; return true; } return false; }
-  point() { const x = this.suivant(); if (x.t !== 'point') throw new ErreurCobol(`point attendu, trouvé « ${x.v} »`, x.ligne); }
+  point() { const x = this.suivant(); if (x.t !== 'point') throw new ErreurCobol(tx(`point attendu, trouvé « ${x.v} »`, `period expected, found "${x.v}"`), x.ligne); }
   fin() { return this.p >= this.j.length; }
   ligne() { return this.voir()?.ligne; }
 }
@@ -109,7 +111,7 @@ function figuratif(L) {
     const y = L.voir();
     if (y?.t === 'lit' && y.v.length) { L.p++; return { all: y.v }; }
     const f = figuratif(L);
-    if (!f) throw new ErreurCobol('ALL : littéral attendu', x.ligne);
+    if (!f) throw new ErreurCobol(tx('ALL : littéral attendu', 'ALL: literal expected'), x.ligne);
     return f;
   }
   const fig = FIGURATIFS[x.v];
@@ -153,7 +155,7 @@ function analyserPic(pic, signeSepare) {
     const echelle = d.includes('.') ? [...d.split('.')[1]].filter((c) => '9Z'.includes(c)).length : 0;
     return { genre: 'E', masque: d, longueur: d.length, echelle };
   }
-  throw new ErreurCobol(`clause PIC non prise en charge : ${pic}`);
+  throw new ErreurCobol(tx(`clause PIC non prise en charge : ${pic}`, `unsupported PIC clause: ${pic}`));
 }
 
 // ---------- Nombres décimaux exacts (BigInt + échelle) ----------
@@ -175,7 +177,7 @@ class Dec {
   moins(b) { const e = Math.max(this.e, b.e); return new Dec(this.aEchelle(e) - b.aEchelle(e), e); }
   fois(b) { return new Dec(this.n * b.n, this.e + b.e); }
   divise(b) {
-    if (b.n === 0n) throw new ErreurCobol('division par zéro');
+    if (b.n === 0n) throw new ErreurCobol(tx('division par zéro', 'division by zero'));
     const e = 12;
     return new Dec((this.n * P10(e + b.e)) / (b.n * P10(this.e)) , e);
   }
@@ -223,7 +225,7 @@ export class Programme {
         while (!L.estPoint()) L.p++;
         L.point();
         const f = this.fichiers.get(nom);
-        if (!f) throw new ErreurCobol(`fichier ${nom} non déclaré dans FILE-CONTROL`, L.ligne());
+        if (!f) throw new ErreurCobol(tx(`fichier ${nom} non déclaré dans FILE-CONTROL`, `file ${nom} not declared in FILE-CONTROL`), L.ligne());
         f.tri = tri;
         fichierCourant = f;
         continue;
@@ -254,7 +256,7 @@ export class Programme {
     this._racines ??= [];
     const ligne = L.ligne();
     const niveau = Number(L.mot());
-    if (!Number.isInteger(niveau)) throw new ErreurCobol(`numéro de niveau attendu`, ligne);
+    if (!Number.isInteger(niveau)) throw new ErreurCobol(tx(`numéro de niveau attendu`, `level number expected`), ligne);
     const nom = L.est('FILLER') || L.voir()?.t !== 'mot' ? (L.optionnel('FILLER'), null) : L.mot();
     const el = { niveau, nom, ligne, enfants: [], pic: null, valeur: undefined, signeSepare: false };
     if (niveau === 88) {
@@ -263,7 +265,7 @@ export class Programme {
       while (!L.estPoint()) valeurs.push(this.litteralDonnee(L));
       L.point();
       const parent = this._dernierElementaire;
-      if (!parent) throw new ErreurCobol('niveau 88 sans donnée', ligne);
+      if (!parent) throw new ErreurCobol(tx('niveau 88 sans donnée', 'level 88 without a data item'), ligne);
       this.conditions.set(nom, { parent, valeurs });
       return;
     }
@@ -276,14 +278,14 @@ export class Programme {
       if (L.optionnel('PIC', 'PICTURE')) { L.optionnel('IS'); el.picTexte = L.suivant().v; }
       else if (L.optionnel('VALUE')) { L.optionnel('IS'); el.valeur = this.litteralDonnee(L); }
       else if (L.optionnel('SIGN')) { L.optionnel('IS'); L.optionnel('LEADING'); if (L.optionnel('SEPARATE')) L.optionnel('CHARACTER'); el.signeSepare = true; }
-      else if (L.optionnel('USAGE')) { L.optionnel('IS'); if (!usage()) throw new ErreurCobol(`USAGE non pris en charge : ${L.voir()?.v}`, ligne); }
+      else if (L.optionnel('USAGE')) { L.optionnel('IS'); if (!usage()) throw new ErreurCobol(tx(`USAGE non pris en charge : ${L.voir()?.v}`, `unsupported USAGE: ${L.voir()?.v}`), ligne); }
       else if (usage()) { /* USAGE implicite */ }
       else if (L.optionnel('SYNC', 'SYNCHRONIZED')) L.optionnel('LEFT', 'RIGHT');
       else if (L.optionnel('REDEFINES')) el.redefinit = L.mot();
       else if (L.optionnel('BLANK')) { L.optionnel('WHEN'); L.mot(); el.blancSiZero = true; }
       else if (L.optionnel('OCCURS')) {
         el.occurs = Number(L.mot());
-        if (!Number.isInteger(el.occurs) || el.occurs < 1) throw new ErreurCobol('OCCURS : nombre d\'occurrences attendu', ligne);
+        if (!Number.isInteger(el.occurs) || el.occurs < 1) throw new ErreurCobol(tx('OCCURS : nombre d\'occurrences attendu', 'OCCURS: number of occurrences expected'), ligne);
         L.optionnel('TIMES');
         while (L.est('ASCENDING', 'DESCENDING', 'INDEXED')) {
           if (L.optionnel('INDEXED')) {
@@ -295,7 +297,7 @@ export class Programme {
           }
         }
       }
-      else throw new ErreurCobol(`clause non prise en charge : ${L.voir().v}`, L.ligne());
+      else throw new ErreurCobol(tx(`clause non prise en charge : ${L.voir().v}`, `unsupported clause: ${L.voir().v}`), L.ligne());
     }
     L.point();
     if (!el.picTexte && el.usage === 'INDEX') el.picTexte = 'S9(9)';
@@ -309,13 +311,13 @@ export class Programme {
     } else {
       const p = this._pile;
       while (p.length && p.at(-1).niveau >= niveau) p.pop();
-      if (!p.length) throw new ErreurCobol(`niveau ${niveau} sans groupe parent`, ligne);
+      if (!p.length) throw new ErreurCobol(tx(`niveau ${niveau} sans groupe parent`, `level ${niveau} without a parent group`), ligne);
       el.parent = p.at(-1);
       el.parent.enfants.push(el);
       p.push(el);
     }
     if (el.nom) {
-      if (this.donnees.has(el.nom)) throw new ErreurCobol(`donnée ${el.nom} déclarée deux fois`, ligne);
+      if (this.donnees.has(el.nom)) throw new ErreurCobol(tx(`donnée ${el.nom} déclarée deux fois`, `data item ${el.nom} declared twice`), ligne);
       this.donnees.set(el.nom, el);
     }
     this._dernierElementaire = el;
@@ -328,12 +330,12 @@ export class Programme {
     L.p++;
     if (x.t === 'lit') return { alpha: x.v };
     if (/^[+-]?\d*\.?\d+$/.test(x.v)) return { num: x.v };
-    throw new ErreurCobol(`valeur non prise en charge : ${x.v}`, x.ligne);
+    throw new ErreurCobol(tx(`valeur non prise en charge : ${x.v}`, `unsupported value: ${x.v}`), x.ligne);
   }
 
   // INDEXED BY : l'index est une donnée à part, entière
   index(nom, ligne) {
-    if (this.donnees.has(nom)) throw new ErreurCobol(`donnée ${nom} déclarée deux fois`, ligne);
+    if (this.donnees.has(nom)) throw new ErreurCobol(tx(`donnée ${nom} déclarée deux fois`, `data item ${nom} declared twice`), ligne);
     const el = { niveau: 77, nom, ligne, enfants: [], pic: analyserPic('S9(9)'), valeur: { num: '1' }, signeSepare: false, estIndex: true };
     this._racines.push(el);
     this.donnees.set(nom, el);
@@ -344,8 +346,8 @@ export class Programme {
     // un 01 REDEFINES partage celle du 01 redéfini.
     // longueur = une occurrence ; une donnée OCCURS n occupe n fois sa longueur dans son groupe.
     const taille = (el) => {
-      if (el.pic) { if (el.enfants.length) throw new ErreurCobol(`groupe ${el.nom} avec PIC`, el.ligne); return (el.longueur = el.pic.longueur); }
-      if (!el.enfants.length) throw new ErreurCobol(`donnée ${el.nom || 'FILLER'} sans PIC`, el.ligne);
+      if (el.pic) { if (el.enfants.length) throw new ErreurCobol(tx(`groupe ${el.nom} avec PIC`, `group ${el.nom} with a PIC`), el.ligne); return (el.longueur = el.pic.longueur); }
+      if (!el.enfants.length) throw new ErreurCobol(tx(`donnée ${el.nom || 'FILLER'} sans PIC`, `data item ${el.nom || 'FILLER'} without a PIC`), el.ligne);
       let s = 0;
       for (const e of el.enfants) { taille(e); if (!e.redefinit) s += e.longueur * (e.occurs || 1); }
       return (el.longueur = s);
@@ -356,18 +358,18 @@ export class Programme {
       for (const e of el.enfants) {
         if (e.redefinit) {
           const cible = el.enfants.find((x) => x.nom === e.redefinit && x !== e);
-          if (!cible) throw new ErreurCobol(`REDEFINES ${e.redefinit} : donnée de même niveau introuvable`, e.ligne);
+          if (!cible) throw new ErreurCobol(tx(`REDEFINES ${e.redefinit} : donnée de même niveau introuvable`, `REDEFINES ${e.redefinit}: no data item at the same level`), e.ligne);
           placer(e, zone, cible.pos);
         } else { placer(e, zone, p); p += e.longueur * (e.occurs || 1); }
       }
     };
     for (const r of this._racines) {
       taille(r);
-      if (r.occurs) throw new ErreurCobol(`OCCURS interdit au niveau ${r.niveau}`, r.ligne);
+      if (r.occurs) throw new ErreurCobol(tx(`OCCURS interdit au niveau ${r.niveau}`, `OCCURS not allowed at level ${r.niveau}`), r.ligne);
       let zone;
       if (r.redefinit) {
         const cible = this.donnees.get(r.redefinit);
-        if (!cible || cible.parent) throw new ErreurCobol(`REDEFINES ${r.redefinit} : niveau 01 introuvable`, r.ligne);
+        if (!cible || cible.parent) throw new ErreurCobol(tx(`REDEFINES ${r.redefinit} : niveau 01 introuvable`, `REDEFINES ${r.redefinit}: level 01 not found`), r.ligne);
         zone = cible.zone;
       } else zone = r.fichier && r.fichier.enreg !== r ? r.fichier.enreg.zone : { octets: [] };
       placer(r, zone, 0);
@@ -438,7 +440,7 @@ export class Programme {
       case 'COMPUTE': {
         ins.cible = this.reference(L);
         if (L.optionnel('ROUNDED')) ins.arrondi = true;
-        if (!(L.optionnel('=') || L.optionnel('EQUAL'))) throw new ErreurCobol('= attendu', ligne);
+        if (!(L.optionnel('=') || L.optionnel('EQUAL'))) throw new ErreurCobol(tx('= attendu', '= expected'), ligne);
         ins.expr = this.expression(L);
         return ins;
       }
@@ -500,7 +502,7 @@ export class Programme {
           L.optionnel('ADVANCING');
           if (L.optionnel('PAGE')) ins.page = true;
           else if (this.mnemoniques.get(L.voir()?.v) === 'C01') { L.mot(); ins.page = true; }
-          else if (this.mnemoniques.has(L.voir()?.v)) throw new ErreurCobol(`ADVANCING ${L.voir().v} : seul le canal C01 (début de page) est pris en charge`, ligne);
+          else if (this.mnemoniques.has(L.voir()?.v)) throw new ErreurCobol(tx(`ADVANCING ${L.voir().v} : seul le canal C01 (début de page) est pris en charge`, `ADVANCING ${L.voir().v}: only channel C01 (top of page) is supported`), ligne);
           else { ins.lignes = this.operande(L); L.optionnel('LINE', 'LINES'); }
         }
         return ins;
@@ -525,7 +527,7 @@ export class Programme {
         }
         ins.cibles = [];
         while (L.voir()?.t === 'mot' && !L.est('TO', 'UP', 'DOWN')) ins.cibles.push(this.reference(L));
-        if (!ins.cibles.length) throw new ErreurCobol('SET : donnée ou condition attendue', ligne);
+        if (!ins.cibles.length) throw new ErreurCobol(tx('SET : donnée ou condition attendue', 'SET: data item or condition expected'), ligne);
         ins.mode = L.mot();
         if (ins.mode !== 'TO') L.mot('BY');
         ins.source = this.operande(L);
@@ -541,16 +543,16 @@ export class Programme {
         L.optionnel('TO');
         const paras = [];
         while (L.voir()?.t === 'mot' && !L.est('DEPENDING') && !VERBES.has(L.voir().v) && !FINS.has(L.voir().v)) paras.push(L.mot());
-        if (!paras.length) throw new ErreurCobol('GO TO : paragraphe attendu', ligne);
+        if (!paras.length) throw new ErreurCobol(tx('GO TO : paragraphe attendu', 'GO TO: paragraph expected'), ligne);
         if (L.optionnel('DEPENDING')) { L.optionnel('ON'); ins.paras = paras; ins.selon = this.operande(L); }
-        else if (paras.length > 1) throw new ErreurCobol('GO TO : plusieurs paragraphes sans DEPENDING ON', ligne);
+        else if (paras.length > 1) throw new ErreurCobol(tx('GO TO : plusieurs paragraphes sans DEPENDING ON', 'GO TO: several paragraphs without DEPENDING ON'), ligne);
         else ins.para = paras[0];
         return ins;
       }
       case 'NEXT': L.mot('SENTENCE'); this._phraseSuivante = true; return ins;
       case 'GOBACK': case 'CONTINUE': case 'EXIT': return ins;
       default:
-        throw new ErreurCobol(`instruction non prise en charge : ${v}`, ligne);
+        throw new ErreurCobol(tx(`instruction non prise en charge : ${v}`, `unsupported statement: ${v}`), ligne);
     }
   }
 
@@ -558,7 +560,7 @@ export class Programme {
     const ligne = L.ligne();
     const nom = L.mot();
     const f = this.fichiers.get(nom);
-    if (!f) throw new ErreurCobol(`fichier inconnu : ${nom}`, ligne);
+    if (!f) throw new ErreurCobol(tx(`fichier inconnu : ${nom}`, `unknown file: ${nom}`), ligne);
     return f;
   }
 
@@ -568,8 +570,8 @@ export class Programme {
     const entrees = [];
     const sql = texte.replace(/:([A-Z0-9][A-Z0-9-]*)/gi, (_, nom) => {
       const el = this.donnees.get(nom.toUpperCase());
-      if (!el) throw new ErreurCobol(`EXEC SQL : zone :${nom} inconnue`, ligne);
-      if (el.enfants.length) throw new ErreurCobol(`EXEC SQL : :${nom} est un groupe, donnez une zone élémentaire`, ligne);
+      if (!el) throw new ErreurCobol(tx(`EXEC SQL : zone :${nom} inconnue`, `EXEC SQL: unknown host variable :${nom}`), ligne);
+      if (el.enfants.length) throw new ErreurCobol(tx(`EXEC SQL : :${nom} est un groupe, donnez une zone élémentaire`, `EXEC SQL: :${nom} is a group, give an elementary item`), ligne);
       entrees.push(el);
       return '?';
     });
@@ -578,7 +580,7 @@ export class Programme {
   listeHotes(texte, ligne) {
     return texte.split(',').map((x) => {
       const m = /^\s*:([A-Z0-9][A-Z0-9-]*)\s*$/i.exec(x);
-      if (!m) throw new ErreurCobol(`EXEC SQL : zone :NOM attendue dans INTO, trouvé « ${x.trim()} »`, ligne);
+      if (!m) throw new ErreurCobol(tx(`EXEC SQL : zone :NOM attendue dans INTO, trouvé « ${x.trim()} »`, `EXEC SQL: :NAME expected in INTO, found "${x.trim()}"`), ligne);
       return this.hotes(x, ligne).entrees[0];
     });
   }
@@ -586,7 +588,7 @@ export class Programme {
     const m = /^DECLARE\s+([A-Z0-9-]+)\s+CURSOR\s+FOR\s+(SELECT\b.*)$/is.exec(x.v);
     if (m) { this.curseurs.set(m[1].toUpperCase(), { ...this.hotes(m[2], x.ligne), ligne: x.ligne }); return; }
     if (/^INCLUDE\b/i.test(x.v)) return;
-    throw new ErreurCobol(`EXEC SQL non pris en charge dans les données : ${x.v.slice(0, 40)}`, x.ligne);
+    throw new ErreurCobol(tx(`EXEC SQL non pris en charge dans les données : ${x.v.slice(0, 40)}`, `EXEC SQL not supported in the data division: ${x.v.slice(0, 40)}`), x.ligne);
   }
   sqlInstruction(x) {
     const ligne = x.ligne, t = x.v;
@@ -605,7 +607,7 @@ export class Programme {
     else if (/^(COMMIT|ROLLBACK)(\s+WORK)?$/i.test(t)) ins.genre = t.split(/\s/)[0].toUpperCase();
     else if (/^INCLUDE\b/i.test(t)) ins.genre = 'RIEN';
     else if (/^(INSERT|UPDATE|DELETE)\b/i.test(t)) { ins.genre = 'MAJ'; Object.assign(ins, this.hotes(t, ligne)); }
-    else throw new ErreurCobol(`EXEC SQL non pris en charge : ${t.slice(0, 40)}`, ligne);
+    else throw new ErreurCobol(tx(`EXEC SQL non pris en charge : ${t.slice(0, 40)}`, `unsupported EXEC SQL: ${t.slice(0, 40)}`), ligne);
     return ins;
   }
 
@@ -614,7 +616,7 @@ export class Programme {
     const ligne = L.ligne();
     const nom = L.mot();
     const el = this.donnees.get(nom);
-    if (!el) throw new ErreurCobol(`donnée inconnue : ${nom}`, ligne);
+    if (!el) throw new ErreurCobol(tx(`donnée inconnue : ${nom}`, `unknown data item: ${nom}`), ligne);
     let tables = 0;
     for (let e = el; e; e = e.parent) if (e.occurs) tables++;
     if (!tables || !L.est('(')) return { el };
@@ -626,13 +628,13 @@ export class Programme {
       indices.push(i);
     }
     L.mot(')');
-    if (indices.length !== tables) throw new ErreurCobol(`${nom} : ${tables} indice(s) attendu(s), ${indices.length} donné(s)`, ligne);
+    if (indices.length !== tables) throw new ErreurCobol(tx(`${nom} : ${tables} indice(s) attendu(s), ${indices.length} donné(s)`, `${nom}: ${tables} subscript(s) expected, ${indices.length} given`), ligne);
     return { el, indices };
   }
 
   operande(L) {
     const x = L.voir();
-    if (!x) throw new ErreurCobol('fin de source inattendue');
+    if (!x) throw new ErreurCobol(tx('fin de source inattendue', 'unexpected end of source'));
     if (x.t === 'lit') { L.p++; return { alpha: x.v }; }
     const f = figuratif(L);
     if (f) return f;
@@ -666,7 +668,7 @@ export class Programme {
     else if (L.optionnel('>=')) op = '>=';
     else if (L.optionnel('<=')) op = '<=';
     else if (L.optionnel('<>')) { op = '='; non = !non; }
-    else throw new ErreurCobol(`opérateur de comparaison attendu, trouvé « ${L.voir()?.v} »`, L.ligne());
+    else throw new ErreurCobol(tx(`opérateur de comparaison attendu, trouvé « ${L.voir()?.v} »`, `comparison operator expected, found "${L.voir()?.v}"`), L.ligne());
     const b = this.operande(L);
     const rel = { rel: op, a, b };
     return non ? { non: rel } : rel;
@@ -751,7 +753,7 @@ class Execution {
     let delta = 0;
     tables.forEach((t, k) => {
       const i = Number(this.calculer(o.indices[k]).aEchelle(0));
-      if (i < 1 || i > t.occurs) throw new ErreurCobol(`${o.el.nom} : indice ${i} hors de la table ${t.nom || 'FILLER'} (1 à ${t.occurs})`);
+      if (i < 1 || i > t.occurs) throw new ErreurCobol(tx(`${o.el.nom} : indice ${i} hors de la table ${t.nom || 'FILLER'} (1 à ${t.occurs})`, `${o.el.nom}: subscript ${i} out of table ${t.nom || 'FILLER'} (1 to ${t.occurs})`));
       delta += (i - 1) * t.longueur;
     });
     return decaler(o.el, delta);
@@ -783,7 +785,7 @@ class Execution {
   nombre(o) {
     if (o.num !== undefined) return Dec.de(o.num);
     if (o.fig === 'ZERO') return new Dec(0n);
-    if (o.alpha !== undefined || o.fig || o.all !== undefined) throw new ErreurCobol('valeur non numérique dans un calcul');
+    if (o.alpha !== undefined || o.fig || o.all !== undefined) throw new ErreurCobol(tx('valeur non numérique dans un calcul', 'non-numeric value in a computation'));
     const el = this.res(o);
     const p = el.pic;
     if (!p || p.genre !== '9') {
@@ -913,12 +915,12 @@ class Execution {
 
   // --- fichiers ---
   enregistrement(f) {
-    if (!f.enreg) throw new ErreurCobol(`fichier ${f.nom} sans enregistrement`);
+    if (!f.enreg) throw new ErreurCobol(tx(`fichier ${f.nom} sans enregistrement`, `file ${f.nom} has no record`));
     return f.enreg;
   }
   lignesDe(f) {
     const contenu = this.fs[f.assign];
-    if (contenu === undefined) throw new ErreurCobol(`fichier ${f.assign} introuvable (OPEN INPUT ${f.nom})`);
+    if (contenu === undefined) throw new ErreurCobol(tx(`fichier ${f.assign} introuvable (OPEN INPUT ${f.nom})`, `file ${f.assign} not found (OPEN INPUT ${f.nom})`));
     const lignes = contenu.split(/\r?\n/);
     if (lignes.at(-1) === '') lignes.pop();
     return lignes;
@@ -936,8 +938,8 @@ class Execution {
       if (!debut) return;
       this.executerDepuis(0);
     } catch (e) {
-      if (e instanceof Saut) throw new ErreurCobol(`GO TO ${e.para} : sortie d un PERFORM non prise en charge`);
-      if (e instanceof PhraseSuivante) throw new ErreurCobol('NEXT SENTENCE hors d\'une phrase');
+      if (e instanceof Saut) throw new ErreurCobol(tx(`GO TO ${e.para} : sortie d un PERFORM non prise en charge`, `GO TO ${e.para}: leaving a PERFORM is not supported`));
+      if (e instanceof PhraseSuivante) throw new ErreurCobol(tx('NEXT SENTENCE hors d\'une phrase', 'NEXT SENTENCE outside a sentence'));
       if (!(e instanceof Arret)) throw e;
     }
     // STOP RUN ferme les fichiers restés ouverts
@@ -954,7 +956,7 @@ class Execution {
       } catch (e) {
         if (!(e instanceof Saut)) throw e;
         const j = this.pgm.ordre.indexOf(e.para);
-        if (j < 0) throw new ErreurCobol(`GO TO ${e.para} : paragraphe inconnu`);
+        if (j < 0) throw new ErreurCobol(tx(`GO TO ${e.para} : paragraphe inconnu`, `GO TO ${e.para}: unknown paragraph`));
         if (j < index || j > fin) throw e;
         i = j - 1;
       }
@@ -963,14 +965,14 @@ class Execution {
 
   performer(nom, jusquA) {
     const i = this.pgm.ordre.indexOf(nom);
-    if (i < 0) throw new ErreurCobol(`paragraphe inconnu : ${nom}`);
+    if (i < 0) throw new ErreurCobol(tx(`paragraphe inconnu : ${nom}`, `unknown paragraph: ${nom}`));
     this.executerDepuis(i, jusquA || nom);
   }
 
   bloc(liste) { for (const ins of liste) this.instruction(ins); }
 
   instruction(ins) {
-    if (++this.compteur > this.max) throw new ErreurCobol(`plus de ${this.max} instructions : boucle infinie ?`, ins.ligne);
+    if (++this.compteur > this.max) throw new ErreurCobol(tx(`plus de ${this.max} instructions : boucle infinie ?`, `more than ${this.max} statements: infinite loop?`), ins.ligne);
     try {
       this.faire(ins);
     } catch (e) {
@@ -1016,7 +1018,7 @@ class Execution {
       case 'CLOSE': for (const f of ins.fichiers) this.fermer(f); return;
       case 'READ': {
         const o = this.ouverts.get(ins.f);
-        if (!o || o.mode !== 'INPUT') throw new ErreurCobol(`READ ${ins.f.nom} : fichier non ouvert en lecture`);
+        if (!o || o.mode !== 'INPUT') throw new ErreurCobol(tx(`READ ${ins.f.nom} : fichier non ouvert en lecture`, `READ ${ins.f.nom}: file not open for input`));
         if (o.pos >= o.lignes.length) { this.bloc(ins.finFichier); return; }
         const enr = this.enregistrement(ins.f);
         this.ecrire(enr, o.lignes[o.pos++].padEnd(enr.longueur).slice(0, enr.longueur));
@@ -1027,9 +1029,9 @@ class Execution {
       case 'WRITE': {
         const enr = this.res(ins.enreg);
         const f = [...this.pgm.fichiers.values()].find((x) => x.enreg === enr || (enr.zone === x.enreg?.zone));
-        if (!f) throw new ErreurCobol(`${enr.nom} n'est l'enregistrement d'aucun fichier`);
+        if (!f) throw new ErreurCobol(tx(`${enr.nom} n'est l'enregistrement d'aucun fichier`, `${enr.nom} is not the record of any file`));
         const o = this.ouverts.get(f);
-        if (!o || o.mode === 'INPUT') throw new ErreurCobol(`WRITE ${enr.nom} : fichier non ouvert en écriture`);
+        if (!o || o.mode === 'INPUT') throw new ErreurCobol(tx(`WRITE ${enr.nom} : fichier non ouvert en écriture`, `WRITE ${enr.nom}: file not open for output`));
         if (ins.depuis) this.affecter(enr, ins.depuis);
         // octets de GnuCOBOL en LINE SEQUENTIAL : AFTER n = n sauts puis la ligne (0 = retour chariot),
         // AFTER PAGE = saut de page puis la ligne ; BEFORE : la ligne puis les sauts ; sans ADVANCING : ligne + saut.
@@ -1039,7 +1041,7 @@ class Execution {
           let sauts = '\f';
           if (!ins.page) {
             const n = Number(this.nombre(ins.lignes).aEchelle(0));
-            if (n < 0 || n > 99) throw new ErreurCobol(`WRITE ${ins.avance} ADVANCING ${n} : de 0 à 99 lignes`);
+            if (n < 0 || n > 99) throw new ErreurCobol(tx(`WRITE ${ins.avance} ADVANCING ${n} : de 0 à 99 lignes`, `WRITE ${ins.avance} ADVANCING ${n}: from 0 to 99 lines`));
             sauts = n === 0 ? '\r' : '\n'.repeat(n);
           }
           t = ins.avance === 'AFTER' ? sauts + t : t + sauts;
@@ -1126,7 +1128,7 @@ class Execution {
   }
   sql(ins) {
     if (ins.genre === 'RIEN') return;
-    if (!this.db) throw new ErreurCobol('EXEC SQL : aucune base de données n\'est disponible');
+    if (!this.db) throw new ErreurCobol(tx('EXEC SQL : aucune base de données n\'est disponible', 'EXEC SQL: no database is available'));
     this.journalSql.executees++;
     try {
       this.sqlcode(this.sqlFaire(ins));
@@ -1141,7 +1143,7 @@ class Execution {
   sqlFaire(ins) {
     const lier = (entrees) => entrees.map((el) => this.valeurSql(el));
     const remplir = (into, ligne) => {
-      if (ligne.length !== into.length) throw new ErreurCobol(`EXEC SQL : ${ligne.length} colonne(s) lue(s) pour ${into.length} zone(s) INTO`, ins.ligne);
+      if (ligne.length !== into.length) throw new ErreurCobol(tx(`EXEC SQL : ${ligne.length} colonne(s) lue(s) pour ${into.length} zone(s) INTO`, `EXEC SQL: ${ligne.length} column(s) read for ${into.length} INTO host variable(s)`), ins.ligne);
       into.forEach((el, i) => this.versZone(el, ligne[i]));
     };
     switch (ins.genre) {
@@ -1161,7 +1163,7 @@ class Execution {
         return this.db.getRowsModified() ? 0 : 100;
       case 'OPEN': {
         const c = this.pgm.curseurs.get(ins.curseur);
-        if (!c) throw new ErreurCobol(`curseur ${ins.curseur} non déclaré`, ins.ligne);
+        if (!c) throw new ErreurCobol(tx(`curseur ${ins.curseur} non déclaré`, `cursor ${ins.curseur} not declared`), ins.ligne);
         if (this.ouvertsSql.has(ins.curseur)) return -502;
         const st = this.db.prepare(c.sql);
         st.bind(lier(c.entrees));

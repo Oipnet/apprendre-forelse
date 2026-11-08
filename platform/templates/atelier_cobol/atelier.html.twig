@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 {# L'atelier COBOL (atelier) : un générateur de batchs COBOL façon années 1990, qui tourne entièrement dans le navigateur
-   (playground/src/cobol). Page autonome, en français seulement, avec son propre habillage. #}
-<html lang="fr">
+   (playground/src/cobol). Page autonome, en français ou en anglais (la langue de la route, que le script suit), avec son
+   propre habillage. #}
+{% set en = app.request.locale == 'en' %}
+<html lang="{{ en ? 'en' : 'fr' }}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-        <title>{% if seo.title %}{{ seo.title }}{% else %}Atelier COBOL{% endif %}</title>
+        <title>{% if seo.title %}{{ seo.title }}{% else %}{{ en ? 'COBOL workshop' : 'Atelier COBOL' }}{% endif %}</title>
         {{ include('_head.html.twig') }}
         {% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">{% endif %}
         {{ vite_entry_link_tags('cobol-atelier') }}
@@ -15,39 +17,39 @@
 <div class="page">
   <nav class="retour-site"><a href="{{ path('app_home') }}">← {{ theme.name }}</a></nav>
   <header>
-    <h1>Atelier COBOL</h1>
-    <a class="lien-terminal" href="{{ path('app_cobol_terminal') }}">Passer en mode terminal 3270</a>
-    <a class="lien-terminal" href="{{ path('app_cobol_memo') }}">Le mémo</a>
-    <button class="bouton principal" id="partager" type="button">Partager ce programme</button>
-    <p>Un générateur de programmes COBOL batch, à l'ancienne : décrivez vos rubriques, l'enregistrement et l'état à produire, écrivez vos traitements en langage structuré. Le programme COBOL est généré, puis exécuté dans votre navigateur, avec une base de données façon DB2. Rien à installer, aucun compte.</p>
+    <h1>{{ en ? 'COBOL workshop' : 'Atelier COBOL' }}</h1>
+    <a class="lien-terminal" href="{{ path('app_cobol_terminal') }}">{{ en ? 'Switch to 3270 terminal mode' : 'Passer en mode terminal 3270' }}</a>
+    <a class="lien-terminal" href="{{ path('app_cobol_memo') }}">{{ en ? 'The memo' : 'Le mémo' }}</a>
+    <button class="bouton principal" id="partager" type="button">{{ en ? 'Share this program' : 'Partager ce programme' }}</button>
+    <p>{% if en %}An old-school generator of batch COBOL programs: describe your data elements, the record and the report to produce, write your procedures in structured language. The COBOL program is generated, then run in your browser, with a DB2-style database. Nothing to install, no account.{% else %}Un générateur de programmes COBOL batch, à l'ancienne : décrivez vos rubriques, l'enregistrement et l'état à produire, écrivez vos traitements en langage structuré. Le programme COBOL est généré, puis exécuté dans votre navigateur, avec une base de données façon DB2. Rien à installer, aucun compte.{% endif %}</p>
   </header>
   <div class="partage" id="bandeau-partage" role="status" hidden></div>
   <div class="partage" id="lien-partage" hidden></div>
-  <section class="defi" id="defi" data-contact="{{ path('app_contact') }}" data-memo="{{ path('app_cobol_memo') }}" aria-label="Défi" hidden></section>
+  <section class="defi" id="defi" data-contact="{{ path('app_contact') }}" data-memo="{{ path('app_cobol_memo') }}" aria-label="{{ en ? 'Challenge' : 'Défi' }}" hidden></section>
 
   <div class="atelier">
-    <section class="panneau" aria-label="Modèle">
+    <section class="panneau" aria-label="{{ en ? 'Model' : 'Modèle' }}">
       <div class="onglets" role="tablist">
-        <button role="tab" id="o-dico" aria-selected="true" data-vue="dico">Dictionnaire</button>
-        <button role="tab" id="o-struct" aria-selected="false" data-vue="struct">Enregistrements</button>
-        <button role="tab" id="o-cd" aria-selected="false" data-vue="cd">Fichiers</button>
-        <button role="tab" id="o-trt" aria-selected="false" data-vue="trt">Traitement</button>
-        <button role="tab" id="o-etats" aria-selected="false" data-vue="etats">États</button>
-        <button role="tab" id="o-spe" aria-selected="false" data-vue="spe">Langage structuré</button>
-        <button role="tab" id="o-don" aria-selected="false" data-vue="don">Données</button>
-        <button role="tab" id="o-base" aria-selected="false" data-vue="base">Base</button>
+        <button role="tab" id="o-dico" aria-selected="true" data-vue="dico">{{ en ? 'Dictionary' : 'Dictionnaire' }}</button>
+        <button role="tab" id="o-struct" aria-selected="false" data-vue="struct">{{ en ? 'Records' : 'Enregistrements' }}</button>
+        <button role="tab" id="o-cd" aria-selected="false" data-vue="cd">{{ en ? 'Files' : 'Fichiers' }}</button>
+        <button role="tab" id="o-trt" aria-selected="false" data-vue="trt">{{ en ? 'Processing' : 'Traitement' }}</button>
+        <button role="tab" id="o-etats" aria-selected="false" data-vue="etats">{{ en ? 'Reports' : 'États' }}</button>
+        <button role="tab" id="o-spe" aria-selected="false" data-vue="spe">{{ en ? 'Structured language' : 'Langage structuré' }}</button>
+        <button role="tab" id="o-don" aria-selected="false" data-vue="don">{{ en ? 'Data' : 'Données' }}</button>
+        <button role="tab" id="o-base" aria-selected="false" data-vue="base">{{ en ? 'Database' : 'Base' }}</button>
       </div>
       <div class="contenu" id="vue"></div>
     </section>
 
-    <section class="panneau" aria-label="Programme">
+    <section class="panneau" aria-label="{{ en ? 'Program' : 'Programme' }}">
       <div class="source-tete">
-        <h2 id="titre-source">Source COBOL</h2>
+        <h2 id="titre-source">{{ en ? 'COBOL source' : 'Source COBOL' }}</h2>
         <span class="etat" id="etat-source"></span>
         <div class="actions">
-          <button class="bouton" id="regenerer" type="button">Régénérer depuis le modèle</button>
-          <button class="bouton" id="copier" type="button">Copier le source</button>
-          <button class="bouton principal" id="executer" type="button">Exécuter</button>
+          <button class="bouton" id="regenerer" type="button">{{ en ? 'Regenerate from the model' : 'Régénérer depuis le modèle' }}</button>
+          <button class="bouton" id="copier" type="button">{{ en ? 'Copy the source' : 'Copier le source' }}</button>
+          <button class="bouton principal" id="executer" type="button">{{ en ? 'Run' : 'Exécuter' }}</button>
         </div>
       </div>
       <div class="feuille">
@@ -60,18 +62,18 @@
         </div>
       </div>
       <div class="legende">
-        <span><i style="background:var(--grille)"></i>colonne 7 : indicateur (* = commentaire)</span>
-        <span><i style="background:var(--zone-a)"></i>zone A, colonnes 8 à 11 : divisions, paragraphes, niveaux 01</span>
-        <span><i style="background:var(--erreur-fond)"></i>au-delà de la colonne 72 : ignoré</span>
+        <span><i style="background:var(--grille)"></i>{{ en ? 'column 7: indicator (* = comment)' : 'colonne 7 : indicateur (* = commentaire)' }}</span>
+        <span><i style="background:var(--zone-a)"></i>{{ en ? 'area A, columns 8 to 11: divisions, paragraphs, 01 levels' : 'zone A, colonnes 8 à 11 : divisions, paragraphes, niveaux 01' }}</span>
+        <span><i style="background:var(--erreur-fond)"></i>{{ en ? 'beyond column 72: ignored' : 'au-delà de la colonne 72 : ignoré' }}</span>
       </div>
       <div class="sortie">
         <div class="sortie-tete">
-          <h2>Sortie</h2>
+          <h2>{{ en ? 'Output' : 'Sortie' }}</h2>
           <span class="etat" id="stats"></span>
         </div>
         <div id="message"></div>
         <div class="fichiers" id="fichiers"></div>
-        <pre class="sysout" id="sysout">Cliquez sur Exécuter.</pre>
+        <pre class="sysout" id="sysout">{{ en ? 'Click Run.' : 'Cliquez sur Exécuter.' }}</pre>
       </div>
     </section>
   </div>

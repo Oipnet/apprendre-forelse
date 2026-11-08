@@ -2,13 +2,15 @@
 // exécution, la SYSOUT est comparée ligne à ligne (espaces de fin ignorés). Rien n'est envoyé ni mesuré : seul le
 // bouton « Envoyer ma solution » ouvre le formulaire de contact, prérempli avec le lien du programme.
 
+import { EN, t as tx, traduireModele } from './langue.js';
+
 const VENTES = [
   ['12', 'DURAND', '1250.00'], ['7', 'MOREAU', '430.50'], ['12', 'DURAND', '89.90'], ['3', 'LAMBERT', '0'],
   ['7', 'MOREAU', '2100.00'], ['3', 'LAMBERT', '760.00'], ['21', 'ROUSSEL', '315.25'], ['12', 'DURAND', '1499.99'],
   ['21', 'ROUSSEL', '0'], ['3', 'LAMBERT', '980.40'], ['7', 'MOREAU', '12.00'],
 ].map(([VENDEUR, NOMVEN, MTVENTE]) => ({ VENDEUR, NOMVEN, MTVENTE }));
 
-export const DEFIS = {
+const DEFIS_FR = {
   '01': {
     titre: 'L\'état des ventes du mois',
     enonce: [
@@ -38,7 +40,7 @@ export const DEFIS = {
 };
 
 // La SYSOUT de la solution de référence, produite par GnuCOBOL (le test de l'atelier vérifie qu'elle n'a pas bougé).
-DEFIS['01'].attendu = [
+DEFIS_FR['01'].attendu = [
     'ETAT DES VENTES DU MOIS',
     'VENDEUR  NOM DU VENDEUR     MONTANT',
     '-----------------------------------',
@@ -68,6 +70,58 @@ DEFIS['01'].attendu = [
     'LUS / RETENUS      11 /       9',
   ].join('\n');
 
+// Les défis en anglais : même modèle, codes et textes traduits ; l'attendue est celle de la même solution de
+// référence passée par GnuCOBOL en anglais (tests/cobol/gnucobol-en.json).
+const DEFIS_EN = {
+  '01': {
+    titre: 'The monthly sales report',
+    enonce: [
+      'It\'s 2005. The sales director wants the monthly sales report on his desk tomorrow morning at 8. The SALES.DAT file is there, one line per sale. The dictionary and the record are ready: the report is up to you.',
+      'Only sales above 0 count (zero-value sales are ignored).',
+      'Sales are grouped by seller, with the detail of each sale (seller, name, amount).',
+      'Each seller has a subtotal of the amount and a count of sales.',
+      'The report ends with the grand total.',
+      'Everything is done with the Files and Processing screens, without structured code.',
+    ],
+    modele: traduireModele(DEFIS_FR['01'].modele, {
+      Vendeur: 'Seller', 'Nom du vendeur': 'Seller name', Montant: 'Amount', Vente: 'Sale', 'VENTES.DAT': 'SALES.DAT',
+      'ETAT DES VENTES DU MOIS': 'MONTHLY SALES REPORT', DEFI01: 'CHALL01',
+    }, { VENDEUR: 'SELLER', NOMVEN: 'SELNAM', MTVENTE: 'AMOUNT', VENTE: 'SALE' }),
+    attendu: '', // plus bas
+  },
+};
+DEFIS_EN['01'].attendu = [
+    'MONTHLY SALES REPORT',
+    'SELLER  SELLER NAME         AMOUNT',
+    '----------------------------------',
+    'SELLER : 003',
+    '     3  LAMBERT             760.00',
+    '     3  LAMBERT             980.40',
+    '  SELLER TOTAL  COUNT :       2  AMOUNT :       1740.40',
+    '',
+    'SELLER : 007',
+    '     7  MOREAU              430.50',
+    '     7  MOREAU             2100.00',
+    '     7  MOREAU               12.00',
+    '  SELLER TOTAL  COUNT :       3  AMOUNT :       2542.50',
+    '',
+    'SELLER : 012',
+    '    12  DURAND             1250.00',
+    '    12  DURAND               89.90',
+    '    12  DURAND             1499.99',
+    '  SELLER TOTAL  COUNT :       3  AMOUNT :       2839.89',
+    '',
+    'SELLER : 021',
+    '    21  ROUSSEL             315.25',
+    '  SELLER TOTAL  COUNT :       1  AMOUNT :        315.25',
+    '',
+    '----------------------------------',
+    'GRAND TOTAL  COUNT :       9  AMOUNT :       7438.04',
+    'READ / KEPT        11 /       9',
+  ].join('\n');
+
+export const DEFIS = EN ? DEFIS_EN : DEFIS_FR;
+
 export function defiDuFragment(hash = location.hash) {
   const m = /^#defi=(\w+)$/.exec(hash || '');
   return m && DEFIS[m[1]] ? m[1] : null;
@@ -80,7 +134,7 @@ export function comparer(sortie, attendu) {
   const a = net(attendu).split('\n');
   const o = net(sortie).split('\n');
   for (let i = 0; i < Math.max(a.length, o.length); i++) {
-    if (a[i] !== o[i]) return { reussi: false, ligne: i + 1, attendue: a[i] ?? '(fin de la SYSOUT)', obtenue: o[i] ?? '(fin de la SYSOUT)' };
+    if (a[i] !== o[i]) return { reussi: false, ligne: i + 1, attendue: a[i] ?? tx('(fin de la SYSOUT)', '(end of SYSOUT)'), obtenue: o[i] ?? tx('(fin de la SYSOUT)', '(end of SYSOUT)') };
   }
   return { reussi: true };
 }

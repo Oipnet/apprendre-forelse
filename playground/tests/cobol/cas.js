@@ -1,6 +1,7 @@
 // Les cas comparés à GnuCOBOL : un modèle par cas, à partir des exemples de l'atelier.
 import { exemple, exempleMiseAJour, exempleEtat, normaliser } from '../../src/cobol/generateur.js';
 import { DEFIS } from '../../src/cobol/defis.js';
+import { SOLUTIONS } from './solutions.js';
 
 // GnuCOBOL ne compile pas EXEC SQL sans précompilateur : les cas comparés laissent la base de côté
 // (elle est testée à part, sur SQLite : voir tests/cobol.test.ts).
@@ -203,13 +204,6 @@ cas.push(['etat : iterative et debordement de page', iterative(structuredClone(e
 }
 
 // Les défis : le modèle de départ, et la solution de référence dont la SYSOUT est l'attendue du défi.
-const SOLUTIONS = {
-  '01': (m) => {
-    Object.assign(m.appels[0], { argument: ['VENDEUR'], rupture: 1 });
-    Object.assign(m.traitement, { filtres: [{ rubrique: 'MTVENTE', op: '>', valeur: '0' }], detail: true, colonnes: ['VENDEUR', 'NOMVEN', 'MTVENTE'], totaux: ['MTVENTE'], compter: true });
-    return m;
-  },
-};
 for (const [id, d] of Object.entries(DEFIS)) {
   cas.push([`defi ${id} : depart`, normaliser(d.modele)]);
   cas.push([`defi ${id} : solution`, SOLUTIONS[id](normaliser(d.modele))]);

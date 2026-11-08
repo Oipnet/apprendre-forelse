@@ -66,6 +66,10 @@ final class ContactTest extends WebTestCase
         $this->assertSelectorTextContains('textarea#contact_form_message', 'défi n°01');
         $this->assertSelectorTextContains('textarea#contact_form_message', $lien);
 
+        $lien = 'http://localhost/en/cobol-workshop/terminal#programme=abc';
+        $client->request('GET', '/en/contact?'.http_build_query(['objet' => 'autre', 'defi' => '01', 'programme' => $lien]));
+        $this->assertSelectorTextContains('textarea#contact_form_message', 'challenge no. 01');
+
         foreach (['https://ailleurs.example/atelier-cobol#programme=abc', 'http://localhost/contact#programme=abc', 'http://localhost/atelier-cobol#autre'] as $autre) {
             $client->request('GET', '/contact?'.http_build_query(['defi' => '01', 'programme' => $autre]));
             $this->assertSelectorTextNotContains('textarea#contact_form_message', 'défi', 'Seul un lien vers l\'atelier du site est repris : '.$autre);

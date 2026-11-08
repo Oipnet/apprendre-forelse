@@ -135,7 +135,11 @@ final class ContactController extends AbstractController
             return;
         }
         $url = parse_url($link);
-        $atelier = [$this->generateUrl('app_cobol'), $this->generateUrl('app_cobol_terminal')];
+        $atelier = [];
+        foreach (['fr', 'en'] as $locale) {
+            $atelier[] = $this->generateUrl('app_cobol', ['_locale' => $locale]);
+            $atelier[] = $this->generateUrl('app_cobol_terminal', ['_locale' => $locale]);
+        }
         if (false === $url || ($url['host'] ?? null) !== $request->getHost() || !\in_array($url['path'] ?? null, $atelier, true) || !str_starts_with($url['fragment'] ?? '', 'programme=')) {
             return;
         }

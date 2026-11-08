@@ -107,8 +107,13 @@ final class SearchIndexingTest extends WebTestCase
             'http://localhost/en/playground/laravel',
             'http://localhost/en/playground/php',
             'http://localhost/en/playground/ai',
+            // L'atelier COBOL, dans les deux langues : la page graphique, le terminal et le mémo.
             'http://localhost/atelier-cobol',
             'http://localhost/atelier-cobol/terminal',
+            'http://localhost/atelier-cobol/memo',
+            'http://localhost/en/cobol-workshop',
+            'http://localhost/en/cobol-workshop/terminal',
+            'http://localhost/en/cobol-workshop/memo',
             'http://localhost/ecoles-et-entreprises',
             'http://localhost/contact',
             'http://localhost/mentions-legales',

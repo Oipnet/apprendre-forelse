@@ -2,6 +2,7 @@
 // -> programme COBOL (format fixe) compilable par GnuCOBOL.
 
 import { preparerEtats, emettreEtats, etatsAppeles } from './etats.js';
+import { EN, t as tx, traduireModele } from './langue.js';
 
 const DONNEES_FACTURES = [
     { REGION: 'NOR', NUMCLI: '12', NOMCLI: 'DUPONT', MTFACT: '1250.50' },
@@ -13,7 +14,7 @@ const DONNEES_FACTURES = [
     { REGION: 'NOR', NUMCLI: '27', NOMCLI: 'GIRAUD', MTFACT: '48.75' },
   ];
 
-export const exemple = {
+const exempleFr = {
   version: 3,
   dictionnaire: [
     { code: 'REGION', libelle: 'Région', type: 'X', longueur: 3 },
@@ -84,7 +85,7 @@ export const exemple = {
 };
 
 // Mise à jour d'un fichier de clients par des mouvements : création, modification, annulation.
-export const exempleMiseAJour = {
+const exempleMiseAJourFr = {
   version: 3,
   dictionnaire: [
     { code: 'NUMCLI', libelle: 'Client', type: '9', longueur: 6 },
@@ -125,10 +126,10 @@ export const exempleMiseAJour = {
 
 // Un état à la façon du manuel : chiffre d'affaires par région, en-tête de page, ligne détail
 // totalisée, total par région (rupture 1) et total général.
-export const exempleEtat = {
+const exempleEtatFr = {
   version: 3,
-  dictionnaire: exemple.dictionnaire.slice(0, 4),
-  structures: [exemple.structures[0]],
+  dictionnaire: exempleFr.dictionnaire.slice(0, 4),
+  structures: [exempleFr.structures[0]],
   appels: [
     { code: 'FA', utilisation: 'C', structure: 'FACTURE', fichier: 'FACTURES.DAT', argument: ['REGION'], rupture: 1, donnees: DONNEES_FACTURES },
     { code: 'ET', utilisation: 'I', fichier: 'ETAT.TXT', argument: ['1'] },
@@ -166,6 +167,35 @@ export const exempleEtat = {
   lignes: [],
 };
 
+// Les exemples en anglais : mêmes programmes, codes et textes traduits (voir langue.js).
+const CODES_EN = { NUMCLI: 'CUSTNO', NOMCLI: 'CUSTNM', MTFACT: 'AMOUNT', NBREL: 'NBREM', NBFACT: 'NBINV', FACTURE: 'INVOICE', CLIENT: 'CUSTOMER', MVTCLI: 'CUSTTRAN', CODMVT: 'TRCODE', PLAFOND: 'CRLIMIT' };
+const TEXTES_EN = {
+  'Région': 'Region', Client: 'Customer', 'Nom du client': 'Customer name', Montant: 'Amount', 'Nombre de relances': 'Number of reminders',
+  'Nombre de factures': 'Number of invoices', Facture: 'Invoice', 'FACTURES.DAT': 'INVOICES.DAT', 'RELANCES.DAT': 'REMINDER.DAT',
+  'CHIFFRE D AFFAIRES PAR REGION': 'SALES BY REGION', 'Montants négatifs à relancer': 'Negative amounts to chase',
+  "'** A RELANCER' D-NOMCLI": "'** TO CHASE' D-NOMCLI", 'Bilan des relances': 'Reminder summary',
+  "'FACTURES A RELANCER : ' W-NBREL": "'INVOICES TO CHASE : ' W-NBREL", 'Clients en base': 'Customers in the database',
+  "'CLIENTS EN BASE :'": "'CUSTOMERS IN THE DATABASE :'", 'Pour chaque client lu': 'For each customer read', 'Fin de la liste': 'End of the list',
+  'Cumul par client dans la base': 'Running total per customer', 'Client absent : on le crée': 'Missing customer: create it',
+  'Client connu : on cumule': 'Known customer: add to it',
+  'Plafond de crédit': 'Credit limit', 'Code mouvement': 'Transaction code', 'Mouvement client': 'Customer transaction',
+  'CLIENTS.DAT': 'CUSTOMERS.DAT', 'MOUVEMENTS.DAT': 'TRANSACT.DAT', 'CLIENTS.NEW': 'CUSTOMERS.NEW', 'MISE A JOUR DES CLIENTS': 'CUSTOMER UPDATE',
+  INCONNU: 'UNKNOWN', 'ETAT.TXT': 'REPORT.TXT',
+  "CHIFFRE D'AFFAIRES PAR REGION                    PAGE": `${'SALES BY REGION'.padEnd(49)}PAGE`,
+  'REGION   CLIENT  NOM                             MONTANT': 'REGION   CUST.   NAME                            AMOUNT',
+  '         TOTAL REGION': '         REGION TOTAL', 'TOTAL GENERAL': 'GRAND TOTAL',
+};
+// en anglais, l'annulation est une suppression : D (delete) plutôt que A
+const annulationEn = (m) => {
+  const mv = m.appels.find((a) => a.utilisation === 'M');
+  mv.mouvement.annulation = 'D';
+  for (const d of mv.donnees) if (d[mv.mouvement.rubrique] === 'A') d[mv.mouvement.rubrique] = 'D';
+  return m;
+};
+export const exemple = EN ? traduireModele(exempleFr, TEXTES_EN, CODES_EN) : exempleFr;
+export const exempleMiseAJour = EN ? annulationEn(traduireModele(exempleMiseAJourFr, TEXTES_EN, CODES_EN)) : exempleMiseAJourFr;
+export const exempleEtat = EN ? traduireModele(exempleEtatFr, TEXTES_EN, CODES_EN) : exempleEtatFr;
+
 const OPS = ['=', 'NOT =', '>', '<', '>=', '<='];
 export const operateurs = OPS;
 
@@ -174,7 +204,7 @@ const litteral = (s) => '"' + String(s).replace(/"/g, '""') + '"';
 
 export function rubrique(model, code) {
   const r = model.dictionnaire.find((d) => d.code === code);
-  if (!r) throw new Error(`Rubrique inconnue : ${code}`);
+  if (!r) throw new Error(tx(`Rubrique inconnue : ${code}`, `Unknown data element: ${code}`));
   return r;
 }
 
@@ -210,12 +240,12 @@ export function versFichier(r, valeur) {
   if (r.type === 'X') return v.slice(0, r.longueur).padEnd(r.longueur, ' ');
   const dec = r.decimales || 0;
   const m = v.replace(',', '.').match(/^([+-]?)(\d*)(?:\.(\d*))?$/);
-  if (!m) throw new Error(`Valeur numérique invalide pour ${r.code} : "${v}"`);
+  if (!m) throw new Error(tx(`Valeur numérique invalide pour ${r.code} : "${v}"`, `Invalid numeric value for ${r.code}: "${v}"`));
   const negatif = m[1] === '-';
   const ent = (m[2] || '0').replace(/^0+(?=\d)/, '');
   const frac = (m[3] || '').padEnd(dec, '0').slice(0, dec);
   const chiffres = (ent + frac).padStart(r.longueur, '0');
-  if (chiffres.length > r.longueur) throw new Error(`Valeur trop grande pour ${r.code} : "${v}"`);
+  if (chiffres.length > r.longueur) throw new Error(tx(`Valeur trop grande pour ${r.code} : "${v}"`, `Value too large for ${r.code}: "${v}"`));
   return r.signe ? (negatif ? '-' : '+') + chiffres : chiffres;
 }
 
@@ -240,7 +270,7 @@ class Source {
     if (ligne.trim()) this.ligne(ligne);
   }
   ligne(t) {
-    if (t.length > 72) throw new Error(`Ligne COBOL trop longue (${t.length}) : ${t}`);
+    if (t.length > 72) throw new Error(tx(`Ligne COBOL trop longue (${t.length}) : ${t}`, `COBOL line too long (${t.length}): ${t}`));
     this.lignes.push(t);
   }
   texte() { return this.lignes.join('\n') + '\n'; }
@@ -281,10 +311,10 @@ function emettreLigneEdition(src, nom, champs) {
 
 function condition(model, t, prefixe) {
   return (t.filtres || []).map((f) => {
-    if (!OPS.includes(f.op)) throw new Error(`Opérateur inconnu : ${f.op}`);
+    if (!OPS.includes(f.op)) throw new Error(tx(`Opérateur inconnu : ${f.op}`, `Unknown operator: ${f.op}`));
     const r = rubrique(model, f.rubrique);
     const val = r.type === 'X' ? litteral(f.valeur) : String(Number(String(f.valeur).replace(',', '.')));
-    if (r.type === '9' && Number.isNaN(Number(val))) throw new Error(`Valeur de filtre invalide : ${f.valeur}`);
+    if (r.type === '9' && Number.isNaN(Number(val))) throw new Error(tx(`Valeur de filtre invalide : ${f.valeur}`, `Invalid filter value: ${f.valeur}`));
     return `${prefixe}${ident(r.code)} ${f.op} ${val}`;
   });
 }
@@ -302,14 +332,14 @@ export const MAX_RUPTURES = 3;
 // 2-dd00-RUBRIQ le principal mis à jour ; dd-FT (fin de travail), dd-FI (fin de lecture),
 // dd-PEn / dd-DEn (premier / dernier au niveau n), dd-CFn (participe à l'itération), dd-OCn (existe).
 export const UTILISATIONS = {
-  C: 'consulté : lu en séquence et édité dans l\'état',
-  P: 'principal : mis à jour par les mouvements',
-  M: 'mouvements : mettent à jour le principal',
-  R: 'résultat : le principal après mise à jour',
-  I: 'impression : l\'état (argument : sa lettre) y est écrit',
+  C: tx('consulté : lu en séquence et édité dans l\'état', 'consulted: read in sequence and listed in the report'),
+  P: tx('principal : mis à jour par les mouvements', 'master: updated by the transactions'),
+  M: tx('mouvements : mettent à jour le principal', 'transactions: they update the master'),
+  R: tx('résultat : le principal après mise à jour', 'result: the master after the update'),
+  I: tx('impression : l\'état (argument : sa lettre) y est écrit', 'print: the report (argument: its letter) is written to it'),
 };
 const CODES_RESERVES = ['ED', 'LC', 'LG', 'RT', 'NB', 'IN', 'SQ', 'R1', 'R2', 'R3', 'MI'];
-export const MOUVEMENT_DEFAUT = { creation: 'C', modification: 'M', annulation: 'A' };
+export const MOUVEMENT_DEFAUT = { creation: 'C', modification: 'M', annulation: EN ? 'D' : 'A' };
 
 // Ordre des codes de fonction : celui de l'EBCDIC, les lettres avant les chiffres (0A < 00 < 8E < 80).
 const rang = (c) => (/[A-Z]/.test(c) ? c.charCodeAt(0) - 65 : 26 + Number(c));
@@ -323,9 +353,9 @@ export const normaliserCode = (c) => {
 export function zonesTraitees(modele) {
   return (modele.appels || []).filter((a) => a.utilisation !== 'R').map((a) => {
     const dd = String(a.code || '').toUpperCase();
-    if (a.utilisation === 'P') return `1-${dd}00- principal lu, 2-${dd}00- mis à jour`;
-    if (a.utilisation === 'M' || Number(a.rupture || 0) > 0) return `1-${dd}00- traité, ${dd}00- suivant (lu d'avance)`;
-    return `${dd}00- traité`;
+    if (a.utilisation === 'P') return tx(`1-${dd}00- principal lu, 2-${dd}00- mis à jour`, `1-${dd}00- master read, 2-${dd}00- updated`);
+    if (a.utilisation === 'M' || Number(a.rupture || 0) > 0) return tx(`1-${dd}00- traité, ${dd}00- suivant (lu d'avance)`, `1-${dd}00- current, ${dd}00- next (read ahead)`);
+    return tx(`${dd}00- traité`, `${dd}00- current`);
   });
 }
 
@@ -342,7 +372,13 @@ export function fonctionsGenerees(model) {
   return ['01', '05', ...(rupture ? ['10'] : []), '20', ...(rupture ? ['22'] : []), ...(etats.length ? etats : ['8E']), '90'].sort(comparerCodes);
 }
 
-const ROLES_GENERES = {
+const ROLES_GENERES = EN ? {
+  '01': 'initialization', '05': 'read without control break', '10': 'read with control break', '20': 'end of processing',
+  '22': 'last-record flags', '24': 'configuration and occurrence', '26': 'overall control breaks',
+  '30': 'control variables', '33': 'transaction code', '39': 'data element presence',
+  '70': 'matching check', '73': 'update',
+  '76': 'error recording', '8E': 'report listing', '90': 'writes',
+} : {
   '01': 'initialisations', '05': 'lecture sans rupture', '10': 'lecture avec rupture', '20': 'fin de traitement',
   '22': 'calcul des derniers', '24': 'configuration et occurrence', '26': 'ruptures totales',
   '30': 'variables de contrôle', '33': 'code mouvement', '39': 'présence des rubriques',
@@ -355,17 +391,18 @@ export function placeFonction(fo, model) {
   const code = normaliserCode(fo);
   const gen = fonctionsGenerees(model);
   const etat = etatsAppeles(model).find((x) => `8${x.e}` === code);
-  if (etat) return `générée (édition de l'état ${etat.code}) : appelez vos traitements par la colonne FOSF des catégories`;
-  if (gen.includes(code)) return `générée (${ROLES_GENERES[code]}) : vos sous-fonctions s'y ajoutent${code === '8E' ? ', avant l\'impression du détail' : code === '20' ? ', avant la fermeture des fichiers' : ''}`;
+  if (etat) return tx(`générée (édition de l'état ${etat.code}) : appelez vos traitements par la colonne FOSF des catégories`, `generated (listing of report ${etat.code}): call your code from the FOSF column of the categories`);
+  if (gen.includes(code)) return tx(`générée (${ROLES_GENERES[code]}) : vos sous-fonctions s'y ajoutent${code === '8E' ? ', avant l\'impression du détail' : code === '20' ? ', avant la fermeture des fichiers' : ''}`,
+    `generated (${ROLES_GENERES[code]}): your sub-functions are added to it${code === '8E' ? ', before the detail line is printed' : code === '20' ? ', before the files are closed' : ''}`);
   const avant = (x) => comparerCodes(code, x) < 0;
-  if (avant('01')) return 'avant l\'initialisation, une fois';
-  if (avant('05')) return 'une fois, après l\'initialisation';
-  if (avant('20')) return 'à chaque itération, après la lecture (aussi au dernier passage, fin de fichier)';
+  if (avant('01')) return tx('avant l\'initialisation, une fois', 'once, before initialization');
+  if (avant('05')) return tx('une fois, après l\'initialisation', 'once, after initialization');
+  if (avant('20')) return tx('à chaque itération, après la lecture (aussi au dernier passage, fin de fichier)', 'on every iteration, after the read (also on the last pass, at end of file)');
   if (avant('90')) {
-    if (gen.includes('8E')) return avant('8E') ? 'à chaque enregistrement, avant l\'état' : 'à chaque enregistrement, après l\'impression';
-    return 'à chaque itération (indicatif en cours)';
+    if (gen.includes('8E')) return avant('8E') ? tx('à chaque enregistrement, avant l\'état', 'for every record, before the report') : tx('à chaque enregistrement, après l\'impression', 'for every record, after printing');
+    return tx('à chaque itération (indicatif en cours)', 'on every iteration (current key)');
   }
-  return 'après la fin d\'itération : appelée seulement par P';
+  return tx('après la fin d\'itération : appelée seulement par P', 'after the end of the iteration: only called by P');
 }
 // Ancienne API : liste fixe (programme d'édition avec rupture).
 export const RESERVEES = ['01', '05', '10', '20', '8E', '90'];
@@ -379,8 +416,8 @@ export function analyserLignes(lignes) {
       || (a.sf.length === 2 && b.sf.length === 2 ? comparerCodes(a.sf, b.sf) : a.sf.localeCompare(b.sf)) || a.i - b.i);
   for (const l of tri) {
     const { fo, sf } = l;
-    if (!/^[0-9A-Z]{2}$/.test(fo)) throw new Error(`Code de fonction invalide : ${l.fo} (deux caractères, 0A à 99)`);
-    if (!/^[0-9A-Z]{2}$/.test(sf)) throw new Error(`Fonction ${fo} : code de sous-fonction invalide : ${l.sf}`);
+    if (!/^[0-9A-Z]{2}$/.test(fo)) throw new Error(tx(`Code de fonction invalide : ${l.fo} (deux caractères, 0A à 99)`, `Invalid function code: ${l.fo} (two characters, 0A to 99)`));
+    if (!/^[0-9A-Z]{2}$/.test(sf)) throw new Error(tx(`Fonction ${fo} : code de sous-fonction invalide : ${l.sf}`, `Function ${fo}: invalid sub-function code: ${l.sf}`));
     if (!fonctions.has(fo)) fonctions.set(fo, []);
     const sous = fonctions.get(fo);
     let cur = sous.find((x) => x.sf === sf);
@@ -390,9 +427,9 @@ export function analyserLignes(lignes) {
       cur.niv = (l.niv || '05').trim() || '05';
       cur.tc = ((l.tc || 'BL').trim() || 'BL').toUpperCase();
       cur.cond = l.cond || '';
-      if (!['BL', 'IT', 'EL', 'DW'].includes(cur.tc)) throw new Error(`Fonction ${fo}${sf} : type ${cur.tc} inconnu (BL IT EL DW)`);
-      if (['IT', 'DW'].includes(cur.tc) && !cur.cond.trim()) throw new Error(`Fonction ${fo}${sf} : ${cur.tc} demande une condition`);
-      if (!/^\d\d$/.test(cur.niv)) throw new Error(`Fonction ${fo}${sf} : niveau ${cur.niv} invalide (05, 10, 15...)`);
+      if (!['BL', 'IT', 'EL', 'DW'].includes(cur.tc)) throw new Error(tx(`Fonction ${fo}${sf} : type ${cur.tc} inconnu (BL IT EL DW)`, `Function ${fo}${sf}: unknown type ${cur.tc} (BL IT EL DW)`));
+      if (['IT', 'DW'].includes(cur.tc) && !cur.cond.trim()) throw new Error(tx(`Fonction ${fo}${sf} : ${cur.tc} demande une condition`, `Function ${fo}${sf}: ${cur.tc} needs a condition`));
+      if (!/^\d\d$/.test(cur.niv)) throw new Error(tx(`Fonction ${fo}${sf} : niveau ${cur.niv} invalide (05, 10, 15...)`, `Function ${fo}${sf}: invalid level ${cur.niv} (05, 10, 15...)`));
     } else cur.lignes.push(l);
   }
   return fonctions;
@@ -510,7 +547,7 @@ function migrerZones(m) {
 function contenuAppel(model, a) {
   if (a.utilisation === 'R' || a.utilisation === 'I') return null;
   const s = model.structures.find((x) => x.code === a.structure);
-  if (!s) throw new Error(`Fichier ${a.code} : enregistrement ${a.structure || '(aucun)'} inconnu`);
+  if (!s) throw new Error(tx(`Fichier ${a.code} : enregistrement ${a.structure || '(aucun)'} inconnu`, `File ${a.code}: unknown record ${a.structure || '(none)'}`));
   const vide = (r, v) => a.utilisation === 'M' && String(v ?? '').trim() === '';
   return (a.donnees || [])
     .map((ligne) => s.rubriques.map((c, i) => {
@@ -545,62 +582,62 @@ export function fichiersSortie(modele) {
 // ================= Vérification de l'appel des fichiers =================
 function verifierAppels(model) {
   const appels = model.appels;
-  if (!appels.length) throw new Error('Aucun fichier appelé : appelez au moins un fichier en entrée');
+  if (!appels.length) throw new Error(tx('Aucun fichier appelé : appelez au moins un fichier en entrée', 'No file called: call at least one input file'));
   const codes = new Set();
   for (const a of appels) {
-    if (!/^[A-Z][A-Z0-9]$/.test(a.code)) throw new Error(`Fichier appelé : code ${a.code || '(vide)'} invalide (2 caractères, une lettre en tête)`);
-    if (CODES_RESERVES.includes(a.code)) throw new Error(`Fichier appelé : le code ${a.code} est réservé`);
-    if (codes.has(a.code)) throw new Error(`Deux fichiers appelés ont le code ${a.code}`);
+    if (!/^[A-Z][A-Z0-9]$/.test(a.code)) throw new Error(tx(`Fichier appelé : code ${a.code || '(vide)'} invalide (2 caractères, une lettre en tête)`, `Called file: invalid code ${a.code || '(empty)'} (2 characters, starting with a letter)`));
+    if (CODES_RESERVES.includes(a.code)) throw new Error(tx(`Fichier appelé : le code ${a.code} est réservé`, `Called file: code ${a.code} is reserved`));
+    if (codes.has(a.code)) throw new Error(tx(`Deux fichiers appelés ont le code ${a.code}`, `Two called files have the code ${a.code}`));
     codes.add(a.code);
-    if (!(a.utilisation in UTILISATIONS)) throw new Error(`Fichier ${a.code} : utilisation ${a.utilisation} inconnue (${Object.keys(UTILISATIONS).join(' ')})`);
-    if (!/^[A-Z0-9][A-Z0-9.]*$/.test(a.fichier || '')) throw new Error(`Fichier ${a.code} : nom de fichier invalide`);
-    if (a.utilisation !== 'R' && a.utilisation !== 'I' && !model.structures.some((s) => s.code === a.structure)) throw new Error(`Fichier ${a.code} : enregistrement ${a.structure || '(aucun)'} inconnu`);
+    if (!(a.utilisation in UTILISATIONS)) throw new Error(tx(`Fichier ${a.code} : utilisation ${a.utilisation} inconnue (${Object.keys(UTILISATIONS).join(' ')})`, `File ${a.code}: unknown usage ${a.utilisation} (${Object.keys(UTILISATIONS).join(' ')})`));
+    if (!/^[A-Z0-9][A-Z0-9.]*$/.test(a.fichier || '')) throw new Error(tx(`Fichier ${a.code} : nom de fichier invalide`, `File ${a.code}: invalid file name`));
+    if (a.utilisation !== 'R' && a.utilisation !== 'I' && !model.structures.some((s) => s.code === a.structure)) throw new Error(tx(`Fichier ${a.code} : enregistrement ${a.structure || '(aucun)'} inconnu`, `File ${a.code}: unknown record ${a.structure || '(none)'}`));
   }
-  for (const x of [...model.sorties, ...model.tables]) if (codes.has(x.code)) throw new Error(`Le code ${x.code} sert à la fois à un fichier appelé et à un fichier en sortie ou une table`);
+  for (const x of [...model.sorties, ...model.tables]) if (codes.has(x.code)) throw new Error(tx(`Le code ${x.code} sert à la fois à un fichier appelé et à un fichier en sortie ou une table`, `Code ${x.code} is used both by a called file and by an output file or a table`));
   const noms = appels.map((a) => a.fichier);
-  if (new Set(noms).size !== noms.length) throw new Error('Deux fichiers appelés portent le même nom');
+  if (new Set(noms).size !== noms.length) throw new Error(tx('Deux fichiers appelés portent le même nom', 'Two called files have the same name'));
   const de = (u) => appels.filter((a) => a.utilisation === u);
   const [C, P, M, R] = ['C', 'P', 'M', 'R'].map(de);
   const struct = (a) => model.structures.find((s) => s.code === a.structure);
   const verifierArgument = (a, n) => {
-    if (a.argument.length < n) throw new Error(`Fichier ${a.code} : l'argument doit compter au moins ${n} rubrique(s)`);
-    if (a.argument.length > MAX_RUPTURES) throw new Error(`Fichier ${a.code} : ${MAX_RUPTURES} rubriques d'argument au plus`);
-    if (new Set(a.argument).size !== a.argument.length) throw new Error(`Fichier ${a.code} : une rubrique figure deux fois dans l'argument`);
-    for (const c of a.argument) if (!struct(a).rubriques.includes(c)) throw new Error(`Fichier ${a.code} : la rubrique ${c} de l'argument n'est pas dans l'enregistrement ${a.structure}`);
+    if (a.argument.length < n) throw new Error(tx(`Fichier ${a.code} : l'argument doit compter au moins ${n} rubrique(s)`, `File ${a.code}: the argument needs at least ${n} data element(s)`));
+    if (a.argument.length > MAX_RUPTURES) throw new Error(tx(`Fichier ${a.code} : ${MAX_RUPTURES} rubriques d'argument au plus`, `File ${a.code}: at most ${MAX_RUPTURES} argument data elements`));
+    if (new Set(a.argument).size !== a.argument.length) throw new Error(tx(`Fichier ${a.code} : une rubrique figure deux fois dans l'argument`, `File ${a.code}: a data element appears twice in the argument`));
+    for (const c of a.argument) if (!struct(a).rubriques.includes(c)) throw new Error(tx(`Fichier ${a.code} : la rubrique ${c} de l'argument n'est pas dans l'enregistrement ${a.structure}`, `File ${a.code}: argument data element ${c} is not in record ${a.structure}`));
   };
   if (P.length) {
-    if (C.length) throw new Error('Un programme de mise à jour (fichier P) ne consulte pas de fichier C : l\'état est réservé aux programmes d\'édition');
-    if (P.length > 1) throw new Error('Un seul fichier principal (P) par programme');
-    if (M.length !== 1) throw new Error('Il faut un et un seul fichier de mouvements (M) pour mettre à jour le principal');
-    if (R.length !== 1) throw new Error('Il faut un fichier résultat (R) : le principal après mise à jour');
+    if (C.length) throw new Error(tx('Un programme de mise à jour (fichier P) ne consulte pas de fichier C : l\'état est réservé aux programmes d\'édition', 'An update program (P file) does not read a C file: the simple listing is for report programs'));
+    if (P.length > 1) throw new Error(tx('Un seul fichier principal (P) par programme', 'Only one master file (P) per program'));
+    if (M.length !== 1) throw new Error(tx('Il faut un et un seul fichier de mouvements (M) pour mettre à jour le principal', 'Exactly one transaction file (M) is needed to update the master'));
+    if (R.length !== 1) throw new Error(tx('Il faut un fichier résultat (R) : le principal après mise à jour', 'A result file (R) is needed: the master after the update'));
     const [p, mv] = [P[0], M[0]];
     const n = Number(p.synchro || p.argument.length);
-    if (!(n >= 1)) throw new Error(`Fichier ${p.code} : il faut au moins une rubrique d'argument pour synchroniser`);
+    if (!(n >= 1)) throw new Error(tx(`Fichier ${p.code} : il faut au moins une rubrique d'argument pour synchroniser`, `File ${p.code}: at least one argument data element is needed to match the files`));
     verifierArgument(p, n); verifierArgument(mv, n);
     for (let k = 0; k < n; k++) {
       const [rp, rm] = [rubrique(model, p.argument[k]), rubrique(model, mv.argument[k])];
       for (const [a, r] of [[p, rp], [mv, rm]]) {
-        if (r.type === '9' && (r.signe || r.decimales)) throw new Error(`Fichier ${a.code} : la rubrique d'argument ${r.code} doit être un entier non signé`);
+        if (r.type === '9' && (r.signe || r.decimales)) throw new Error(tx(`Fichier ${a.code} : la rubrique d'argument ${r.code} doit être un entier non signé`, `File ${a.code}: argument data element ${r.code} must be an unsigned integer`));
       }
-      if (longueurFichier(rp) !== longueurFichier(rm)) throw new Error(`Argument de niveau ${k + 1} : ${rp.code} (${p.code}) et ${rm.code} (${mv.code}) doivent avoir la même longueur`);
+      if (longueurFichier(rp) !== longueurFichier(rm)) throw new Error(tx(`Argument de niveau ${k + 1} : ${rp.code} (${p.code}) et ${rm.code} (${mv.code}) doivent avoir la même longueur`, `Argument level ${k + 1}: ${rp.code} (${p.code}) and ${rm.code} (${mv.code}) must have the same length`));
     }
     const mo = mv.mouvement;
     const rc = mo.rubrique ? rubrique(model, mo.rubrique) : null;
-    if (!rc || !struct(mv).rubriques.includes(rc.code)) throw new Error(`Fichier ${mv.code} : indiquez la rubrique du code mouvement (dans l'enregistrement ${mv.structure})`);
-    if (rc.type !== 'X' || rc.longueur !== 1) throw new Error(`Fichier ${mv.code} : le code mouvement ${rc.code} doit être alphanumérique d'un caractère`);
+    if (!rc || !struct(mv).rubriques.includes(rc.code)) throw new Error(tx(`Fichier ${mv.code} : indiquez la rubrique du code mouvement (dans l'enregistrement ${mv.structure})`, `File ${mv.code}: choose the transaction code data element (in record ${mv.structure})`));
+    if (rc.type !== 'X' || rc.longueur !== 1) throw new Error(tx(`Fichier ${mv.code} : le code mouvement ${rc.code} doit être alphanumérique d'un caractère`, `File ${mv.code}: transaction code ${rc.code} must be one alphanumeric character`));
     const vals = [mo.creation, mo.modification, mo.annulation].map((v) => String(v || '').toUpperCase());
-    if (vals.some((v) => !/^[A-Z0-9]$/.test(v)) || new Set(vals).size !== 3) throw new Error(`Fichier ${mv.code} : les codes création, modification et annulation doivent être trois caractères différents`);
+    if (vals.some((v) => !/^[A-Z0-9]$/.test(v)) || new Set(vals).size !== 3) throw new Error(tx(`Fichier ${mv.code} : les codes création, modification et annulation doivent être trois caractères différents`, `File ${mv.code}: the create, modify and delete codes must be three different characters`));
     for (const c of struct(mv).rubriques) {
       if (c === rc.code || mv.argument.slice(0, n).includes(c)) continue;
-      if (!struct(p).rubriques.includes(c)) throw new Error(`Fichier ${mv.code} : la rubrique ${c} n'est pas dans l'enregistrement principal ${p.structure} : impossible de la reporter`);
+      if (!struct(p).rubriques.includes(c)) throw new Error(tx(`Fichier ${mv.code} : la rubrique ${c} n'est pas dans l'enregistrement principal ${p.structure} : impossible de la reporter`, `File ${mv.code}: data element ${c} is not in master record ${p.structure}: it cannot be carried over`));
     }
     return { mode: 'maj', p, mv, r: R[0], n };
   }
-  if (M.length || R.length) throw new Error('Des mouvements (M) ou un résultat (R) sans fichier principal (P)');
-  if (C.length !== 1) throw new Error('Un programme d\'édition lit un et un seul fichier consulté (C)');
+  if (M.length || R.length) throw new Error(tx('Des mouvements (M) ou un résultat (R) sans fichier principal (P)', 'Transactions (M) or a result (R) without a master file (P)'));
+  if (C.length !== 1) throw new Error(tx('Un programme d\'édition lit un et un seul fichier consulté (C)', 'A report program reads exactly one consulted file (C)'));
   const c = C[0];
   const rupture = Number(c.rupture || 0);
-  if (!(rupture >= 0 && rupture <= MAX_RUPTURES)) throw new Error(`Fichier ${c.code} : ${MAX_RUPTURES} niveaux de rupture au plus`);
+  if (!(rupture >= 0 && rupture <= MAX_RUPTURES)) throw new Error(tx(`Fichier ${c.code} : ${MAX_RUPTURES} niveaux de rupture au plus`, `File ${c.code}: at most ${MAX_RUPTURES} control break levels`));
   verifierArgument(c, rupture);
   return { mode: 'edition', c, rupture };
 }
@@ -612,13 +649,13 @@ export function generer(modele) {
   const pgm = ident(t.programme).replace(/-/g, '').slice(0, 8) || 'PGM';
   const sorties = model.sorties;
   for (const so of sorties) {
-    if (!/^[A-Z][A-Z0-9]$/.test(so.code || '')) throw new Error(`Fichier en sortie : code ${so.code || '(vide)'} invalide (2 caractères, une lettre en tête)`);
-    if (CODES_RESERVES.includes(so.code)) throw new Error(`Fichier en sortie : le code ${so.code} est réservé`);
-    if (!/^[A-Z0-9][A-Z0-9.]*$/.test(so.fichier || '')) throw new Error(`Fichier en sortie ${so.code} : nom de fichier invalide`);
-    if (!so.rubriques?.length) throw new Error(`Fichier en sortie ${so.code} : aucune rubrique`);
+    if (!/^[A-Z][A-Z0-9]$/.test(so.code || '')) throw new Error(tx(`Fichier en sortie : code ${so.code || '(vide)'} invalide (2 caractères, une lettre en tête)`, `Output file: invalid code ${so.code || '(empty)'} (2 characters, starting with a letter)`));
+    if (CODES_RESERVES.includes(so.code)) throw new Error(tx(`Fichier en sortie : le code ${so.code} est réservé`, `Output file: code ${so.code} is reserved`));
+    if (!/^[A-Z0-9][A-Z0-9.]*$/.test(so.fichier || '')) throw new Error(tx(`Fichier en sortie ${so.code} : nom de fichier invalide`, `Output file ${so.code}: invalid file name`));
+    if (!so.rubriques?.length) throw new Error(tx(`Fichier en sortie ${so.code} : aucune rubrique`, `Output file ${so.code}: no data element`));
     so.rubriques.forEach((c) => rubrique(model, c));
   }
-  if (new Set(sorties.map((x) => x.code)).size !== sorties.length) throw new Error('Deux fichiers en sortie ont le même code');
+  if (new Set(sorties.map((x) => x.code)).size !== sorties.length) throw new Error(tx('Deux fichiers en sortie ont le même code', 'Two output files have the same code'));
   const tables = model.tables;
   verifierTables(model, tables);
   const cd = verifierAppels(model);
@@ -637,8 +674,8 @@ export function generer(modele) {
   const fonctions = analyserLignes(model.lignes);
   for (const [fo, sous] of fonctions) {
     const etat = etats.find((x) => `8${x.e}` === fo);
-    if (etat) throw new Error(`Fonction ${fo} : elle est générée pour l'état ${etat.code} ; écrivez vos lignes dans une autre fonction et appelez-la par la colonne FOSF d'une catégorie`);
-    if (generees.includes(fo) && sous.some((x) => x.sf === '99')) throw new Error(`Fonction ${fo} : la sous-fonction 99 est générée (fin de la fonction) : prenez un autre code`);
+    if (etat) throw new Error(tx(`Fonction ${fo} : elle est générée pour l'état ${etat.code} ; écrivez vos lignes dans une autre fonction et appelez-la par la colonne FOSF d'une catégorie`, `Function ${fo}: it is generated for report ${etat.code}; write your lines in another function and call it from the FOSF column of a category`));
+    if (generees.includes(fo) && sous.some((x) => x.sf === '99')) throw new Error(tx(`Fonction ${fo} : la sous-fonction 99 est générée (fin de la fonction) : prenez un autre code`, `Function ${fo}: sub-function 99 is generated (end of the function): pick another code`));
   }
   const travail = new Map();   // W-xxx déclarées automatiquement d'après le dictionnaire
   const editees = new Map();   // ED-xxx pour afficher un nombre lisiblement
@@ -662,28 +699,28 @@ export function generer(modele) {
     const mots = decouper(l.opes || '');
     mots.forEach(noter);
     const ope = (l.ope || '').toUpperCase();
-    const exiger = (n, forme) => { if (mots.length < n) throw new Error(`${ou} : ${ope} attend ${forme}`); };
+    const exiger = (n, forme, en) => { if (mots.length < n) throw new Error(tx(`${ou} : ${ope} attend ${forme}`, `${ou}: ${ope} expects ${en}`)); };
     switch (ope) {
       case '*': src.com(l.opes || ''); return;
-      case 'M': exiger(2, 'une source et au moins une cible'); src.instr(indent, `MOVE ${mots[0]} TO ${mots.slice(1).join(' ')}`); return;
-      case 'A': exiger(2, 'une valeur et une cible'); src.instr(indent, `ADD ${mots.slice(0, -1).join(' ')} TO ${mots.at(-1)}`); return;
-      case 'S': exiger(2, 'une valeur et une cible'); src.instr(indent, `SUBTRACT ${mots.slice(0, -1).join(' ')} FROM ${mots.at(-1)}`); return;
+      case 'M': exiger(2, 'une source et au moins une cible', 'a source and at least one target'); src.instr(indent, `MOVE ${mots[0]} TO ${mots.slice(1).join(' ')}`); return;
+      case 'A': exiger(2, 'une valeur et une cible', 'a value and a target'); src.instr(indent, `ADD ${mots.slice(0, -1).join(' ')} TO ${mots.at(-1)}`); return;
+      case 'S': exiger(2, 'une valeur et une cible', 'a value and a target'); src.instr(indent, `SUBTRACT ${mots.slice(0, -1).join(' ')} FROM ${mots.at(-1)}`); return;
       case 'C': {
         const k = mots.indexOf('=');
-        if (k !== 1 || mots.length < 3) throw new Error(`${ou} : C s'écrit « C CIBLE = expression » (espaces autour des opérateurs)`);
+        if (k !== 1 || mots.length < 3) throw new Error(tx(`${ou} : C s'écrit « C CIBLE = expression » (espaces autour des opérateurs)`, `${ou}: C is written "C TARGET = expression" (spaces around the operators)`));
         src.instr(indent, `COMPUTE ${mots[0]} = ${mots.slice(2).join(' ')}`);
         return;
       }
       case 'P': {
-        exiger(1, 'un code de fonction');
+        exiger(1, 'un code de fonction', 'a function code');
         const fo = normaliserCode(mots[0].replace(/^F/, ''));
-        if (!fonctions.has(fo)) throw new Error(`${ou} : P ${mots[0]} : la fonction ${fo} n'existe pas`);
-        if (generees.includes(fo)) throw new Error(`${ou} : P ${mots[0]} : la fonction ${fo} est générée, elle ne s'appelle pas`);
+        if (!fonctions.has(fo)) throw new Error(tx(`${ou} : P ${mots[0]} : la fonction ${fo} n'existe pas`, `${ou}: P ${mots[0]}: function ${fo} does not exist`));
+        if (generees.includes(fo)) throw new Error(tx(`${ou} : P ${mots[0]} : la fonction ${fo} est générée, elle ne s'appelle pas`, `${ou}: P ${mots[0]}: function ${fo} is generated, it cannot be called`));
         src.instr(indent, `PERFORM F${fo} THRU F${fo}-FN`);
         return;
       }
       case 'MES': {
-        exiger(1, 'au moins un élément à afficher');
+        exiger(1, 'au moins un élément à afficher', 'at least one item to display');
         const elems = mots.map((m) => {
           const r = refNumerique(m);
           if (!r) return m;
@@ -697,24 +734,24 @@ export function generer(modele) {
       }
       case 'COB': src.instr(indent, l.opes || ''); return;
       case 'ECR': {
-        exiger(1, 'le code d\'un fichier en sortie');
+        exiger(1, 'le code d\'un fichier en sortie', 'the code of an output file');
         const so = sorties.find((x) => x.code === mots[0].toUpperCase());
-        if (!so) throw new Error(`${ou} : ECR ${mots[0]} : aucun fichier en sortie de ce code`);
+        if (!so) throw new Error(tx(`${ou} : ECR ${mots[0]} : aucun fichier en sortie de ce code`, `${ou}: ECR ${mots[0]}: no output file with this code`));
         src.instr(indent, `WRITE ${so.code}-ENR`);
         return;
       }
       case 'SQL': {
-        exiger(2, 'le code de la table puis le type d\'accès (R RU W RW D P RN CL)');
+        exiger(2, 'le code de la table puis le type d\'accès (R RU W RW D P RN CL)', 'the table code then the access type (R RU W RW D P RN CL)');
         const tb = tables.find((x) => x.code === mots[0].toUpperCase());
-        if (!tb) throw new Error(`${ou} : SQL ${mots[0]} : aucune table de ce code`);
+        if (!tb) throw new Error(tx(`${ou} : SQL ${mots[0]} : aucune table de ce code`, `${ou}: SQL ${mots[0]}: no table with this code`));
         const acces = mots[1].toUpperCase();
-        if (!(acces in ACCES_SQL)) throw new Error(`${ou} : accès ${acces} inconnu (${Object.keys(ACCES_SQL).join(' ')})`);
+        if (!(acces in ACCES_SQL)) throw new Error(tx(`${ou} : accès ${acces} inconnu (${Object.keys(ACCES_SQL).join(' ')})`, `${ou}: unknown access ${acces} (${Object.keys(ACCES_SQL).join(' ')})`));
         for (const x of sqlAcces(acces, tb)) src.instr(indent, x);
         return;
       }
       case 'SCO': src.instr(indent, 'EXEC SQL COMMIT END-EXEC'); return;
       case 'SRO': src.instr(indent, 'EXEC SQL ROLLBACK END-EXEC'); return;
-      default: throw new Error(`${ou} : opérateur ${ope || '(vide)'} inconnu (${OPERATEURS_STRUCTURES.join(' ')})`);
+      default: throw new Error(tx(`${ou} : opérateur ${ope || '(vide)'} inconnu (${OPERATEURS_STRUCTURES.join(' ')})`, `${ou}: unknown operator ${ope || '(empty)'} (${OPERATEURS_STRUCTURES.join(' ')})`));
     }
   };
 
@@ -735,10 +772,10 @@ export function generer(modele) {
     };
     let precedente = null;
     for (const sf of sous) {
-      const ou = `fonction ${fo} sous-fonction ${sf.sf}`;
+      const ou = tx(`fonction ${fo} sous-fonction ${sf.sf}`, `function ${fo} sub-function ${sf.sf}`);
       const niv = Number(sf.niv || 5);
       while (pile.length && pile.at(-1).niv >= niv) fermer(pile.at(-1).niv === niv ? sf : null);
-      if (sf.tc === 'EL' && !(precedente && precedente.tc === 'IT' && Number(precedente.niv || 5) === niv)) throw new Error(`${ou} : EL doit suivre une sous-fonction IT de même niveau`);
+      if (sf.tc === 'EL' && !(precedente && precedente.tc === 'IT' && Number(precedente.niv || 5) === niv)) throw new Error(tx(`${ou} : EL doit suivre une sous-fonction IT de même niveau`, `${ou}: EL must follow an IT sub-function of the same level`));
       src.a(`F${fo}${sf.sf}.`);
       if (sf.titre) src.com(`${fo}${sf.sf} ${sf.titre}`.normalize('NFD').replace(/[^\x20-\x7e]/g, '').slice(0, 62));
       if (sf.tc === 'IT' || sf.tc === 'DW') src.instr(0, `IF NOT (${conditionStructuree(sf.cond, ou)}) GO TO F${fo}${sf.sf}-FN.`);
@@ -756,7 +793,7 @@ export function generer(modele) {
   const fonctionUtilisateur = (fo) => {
     const titreF = fonctions.get(fo).find((x) => x.titre)?.titre;
     const l = [`       F${fo}.`];
-    if (titreF) l.push(`      * Fonction ${fo} : ${titreF}`.normalize('NFD').replace(/[^\x20-\x7e]/g, '').slice(0, 72));
+    if (titreF) l.push(tx(`      * Fonction ${fo} : ${titreF}`, `      * Function ${fo} : ${titreF}`).normalize('NFD').replace(/[^\x20-\x7e]/g, '').slice(0, 72));
     return [...l, ...corps(fo), `       F${fo}-FN. EXIT.`];
   };
 
@@ -778,7 +815,7 @@ export function generer(modele) {
   function entete(commentaires) {
     src.a('IDENTIFICATION DIVISION.');
     src.a(`PROGRAM-ID. ${pgm}.`);
-    src.com(`Programme genere : ${t.titre || pgm}`.normalize('NFD').replace(/[^\x20-\x7e]/g, '').slice(0, 60));
+    src.com(tx(`Programme genere : ${t.titre || pgm}`, `Generated program : ${t.titre || pgm}`).normalize('NFD').replace(/[^\x20-\x7e]/g, '').slice(0, 60));
     for (const c of commentaires) src.com(c);
     src.a('ENVIRONMENT DIVISION.');
     if (etats.length) ed.specialNames(src);
@@ -806,14 +843,14 @@ export function generer(modele) {
   }
   function zonesCommunes() {
     if (travail.size) {
-      src.com('Zones de travail, au format des rubriques du dictionnaire');
+      src.com(tx('Zones de travail, au format des rubriques du dictionnaire', 'Work areas, in the format of the dictionary elements'));
       for (const [nom, r] of travail) src.a(`01  ${nom} PIC ${picStockage(r)} VALUE ${r.type === 'X' ? 'SPACES' : 'ZERO'}.`);
     }
     if (tables.length) {
-      src.com('Base de donnees : code retour et zones d echange des tables');
+      src.com(tx('Base de donnees : code retour et zones d echange des tables', 'Database : return code and table host variables'));
       src.a('01  SQLCODE PIC S9(9) VALUE ZERO.');
       for (const tb of tables) {
-        src.com(`Table ${tb.nom} (code ${tb.code}), cle ${tb.cle.join(' ')}`);
+        src.com(tx(`Table ${tb.nom} (code ${tb.code}), cle ${tb.cle.join(' ')}`, `Table ${tb.nom} (code ${tb.code}), key ${tb.cle.join(' ')}`));
         src.a(`01  ${tb.code}-LIGNE.`);
         for (const c of tb.rubriques) src.b(`05 ${tb.code}-${ident(c)} PIC ${picStockage(rubrique(model, c))}.`);
       }
@@ -822,7 +859,7 @@ export function generer(modele) {
       }
     }
     if (editees.size) {
-      src.com('Zones d affichage des nombres (MES)');
+      src.com(tx('Zones d affichage des nombres (MES)', 'Display areas for numbers (MES)'));
       for (const [nom, r] of editees) src.a(`01  ${nom} PIC ${picEdition(r.longueur - (r.decimales || 0), r.decimales || 0, true)}.`);
     }
   }
@@ -886,17 +923,24 @@ export function generer(modele) {
     const ruptures = c.argument.slice(0, N).map((x) => rubrique(model, x));
     const colonnes = (t.colonnes || []).map((x) => rubrique(model, x));
     const totaux = (t.totaux || []).map((x) => rubrique(model, x));
-    if (simplifiee) for (const r of totaux) if (r.type !== '9') throw new Error(`Total impossible sur une rubrique alphanumérique : ${r.code}`);
+    if (simplifiee) for (const r of totaux) if (r.type !== '9') throw new Error(tx(`Total impossible sur une rubrique alphanumérique : ${r.code}`, `Cannot total an alphanumeric data element: ${r.code}`));
     for (const r of [...(simplifiee ? [...colonnes, ...totaux] : []), ...(t.filtres || []).map((f) => rubrique(model, f.rubrique))]) {
-      if (!struct(c).rubriques.includes(r.code)) throw new Error(`La rubrique ${r.code} n'est pas dans l'enregistrement ${c.structure} du fichier ${dd}`);
+      if (!struct(c).rubriques.includes(r.code)) throw new Error(tx(`La rubrique ${r.code} n'est pas dans l'enregistrement ${c.structure} du fichier ${dd}`, `Data element ${r.code} is not in record ${c.structure} of file ${dd}`));
     }
     const lu = N ? `${dd}-TRIE` : `${dd}-FICHIER`;  // le fichier que lit l'itération
     const cour = N ? `1-${dd}00` : `${dd}00`;        // l'enregistrement traité
 
-    entete([
+    const edition = simplifiee ? 'F8E' : etats.map((x) => `F8${x.e}`).join(' ');
+    entete(EN ? [
+      'F01 initialization, F05 start of iteration,',
+      `${N ? 'F10 read with control break, ' : ''}F20 end of processing,`,
+      `${N ? 'F22 last-record flags, ' : ''}${edition} listing, F90 writes,`,
+      'F9099-ITER-FN end of iteration.',
+      'The other functions are yours.',
+    ] : [
       'F01 initialisations, F05 debut d iteration,',
       `${N ? 'F10 lecture avec rupture, ' : ''}F20 fin de traitement,`,
-      `${N ? 'F22 calcul des derniers, ' : ''}${simplifiee ? 'F8E' : etats.map((x) => `F8${x.e}`).join(' ')} edition, F90 ecritures,`,
+      `${N ? 'F22 calcul des derniers, ' : ''}${edition} edition, F90 ecritures,`,
       'F9099-ITER-FN fin d iteration.',
       'Les autres fonctions sont les votres.',
     ]);
@@ -921,7 +965,7 @@ export function generer(modele) {
     fdSorties();
     src.a('WORKING-STORAGE SECTION.');
     if (N) {
-      src.com(`Fichier ${dd} : ${dd}00 lu d avance, 1-${dd}00 en traitement`);
+      src.com(tx(`Fichier ${dd} : ${dd}00 lu d avance, 1-${dd}00 en traitement`, `File ${dd} : ${dd}00 read ahead, 1-${dd}00 current`));
       enregistrement(`1-${dd}00`, c);
     }
     variablesConditionnelles({ niveaux: N, aRupture: N ? [[dd, N]] : [], tous: [dd] });
@@ -957,7 +1001,7 @@ export function generer(modele) {
       return r.type === 'X' ? texte.padEnd(l) : texte.padStart(l);
     };
     const titre = (t.titre || pgm).normalize('NFD').replace(/[^\x20-\x7e]/g, '').toUpperCase();
-    src.com('Lignes de l etat');
+    src.com(tx('Lignes de l etat', 'Listing lines'));
     emettreLigneEdition(src, 'L-TITRE', [{ valeur: titre }]);
     // sans colonne (un état de totaux seuls, ou un traitement pas encore décrit), les lignes restent valides
     const auMoinsUn = (champs) => (champs.length ? champs : [{ blanc: 1 }]);
@@ -981,8 +1025,8 @@ export function generer(modele) {
     });
     for (const n of niveauxTotal) {
       const i = n === 'G' ? -1 : Number(n.slice(1)) - 1;
-      const champs = [{ valeur: n === 'G' ? 'TOTAL GENERAL' : `${marge(i)}  TOTAL ${ruptures[i].code}` }];
-      if (t.compter) champs.push({ valeur: '  NB : ' }, { nom: `L${n}-NB`, pic: 'Z(6)9' });
+      const champs = [{ valeur: n === 'G' ? tx('TOTAL GENERAL', 'GRAND TOTAL') : tx(`${marge(i)}  TOTAL ${ruptures[i].code}`, `${marge(i)}  ${ruptures[i].code} TOTAL`) }];
+      if (t.compter) champs.push({ valeur: tx('  NB : ', '  COUNT : ') }, { nom: `L${n}-NB`, pic: 'Z(6)9' });
       for (const r of totaux) {
         const ent = r.longueur - (r.decimales || 0) + 4;
         champs.push({ valeur: `  ${r.code} : ` }, { nom: `L${n}-${ident(r.code)}`, pic: picEdition(ent, r.decimales || 0, true) });
@@ -990,7 +1034,7 @@ export function generer(modele) {
       emettreLigneEdition(src, `L-TOTAL-${n}`, champs);
     }
     src.a('01  L-COMPTES.');
-    src.b('05 FILLER PIC X(14) VALUE "LUS / RETENUS ".');
+    src.b(tx('05 FILLER PIC X(14) VALUE "LUS / RETENUS ".', '05 FILLER PIC X(14) VALUE "READ / KEPT   ".'));
     src.b('05 LC-LUS PIC Z(6)9.');
     src.b('05 FILLER PIC X(3) VALUE " / ".');
     src.b('05 LC-RETENUS PIC Z(6)9.');
@@ -1078,7 +1122,7 @@ export function generer(modele) {
           });
           src.b(`GO TO F22${dd}-RT.`);
           ruptures.forEach((_, i) => src.a(`F22${dd}-${i + 1}. MOVE 1 TO ${dd}-DE${i + 1}.`));
-          src.com('Sans synchronisation : ruptures totales = celles du fichier');
+          src.com(tx('Sans synchronisation : ruptures totales = celles du fichier', 'No matching : overall breaks = those of the file'));
           src.a(`F22${dd}-RT. MOVE ${dd}-DE TO RTD. MOVE ${dd}-PE TO RTP.`);
           src.b('MOVE NRD TO NRP. MOVE ZERO TO NRD.');
           ruptures.forEach((_, i) => src.b(`IF RTD${i + 1} = '1' MOVE ${i + 1} TO NRD GO TO F22${dd}-FN.`));
@@ -1172,7 +1216,13 @@ export function generer(modele) {
     const lu = (a) => `${a.code}-TRIE`;
     const arg = (a) => (a === p ? argP : argM);
 
-    entete([
+    entete(EN ? [
+      'Update : F01 initialization, F10 read with control break,',
+      'F20 end, F22 last records, F24 configuration, F26 overall',
+      'breaks, F30 control, F33 transaction code, F39 presence,',
+      'F70 matching, F73 update, F76 errors and recovery,',
+      'F90 writes.',
+    ] : [
       'Mise a jour : F01 initialisations, F10 lecture avec rupture,',
       'F20 fin, F22 derniers, F24 configuration, F26 ruptures',
       'totales, F30 controle, F33 code mouvement, F39 presence,',
@@ -1203,17 +1253,17 @@ export function generer(modele) {
     enregistrement(`${RR}00`, p);
     fdSorties();
     src.a('WORKING-STORAGE SECTION.');
-    src.com(`Principal : 1-${PP}00 en traitement, 2-${PP}00 mis a jour`);
+    src.com(tx(`Principal : 1-${PP}00 en traitement, 2-${PP}00 mis a jour`, `Master : 1-${PP}00 current, 2-${PP}00 updated`));
     enregistrement(`1-${PP}00`, p);
     enregistrement(`2-${PP}00`, p);
-    src.com(`Mouvement en traitement ; zones X pour tester la presence`);
+    src.com(tx(`Mouvement en traitement ; zones X pour tester la presence`, `Current transaction ; X fields to test presence`));
     src.a(`01  1-${MM}00.`);
     for (const r of rubs(mv)) {
       const signe = r.type === '9' && r.signe ? ' SIGN LEADING SEPARATE' : '';
       src.b(`05 1-${MM}00-${K(r)} PIC ${picStockage(r)}${signe}.`);
       if (r.type === '9') src.b(`05 1-${MM}00-${K(r)}X REDEFINES 1-${MM}00-${K(r)} PIC X(${longueurFichier(r)}).`);
     }
-    src.com('Indicatifs lus (ddIND) et indicatif de l iteration (IND)');
+    src.com(tx('Indicatifs lus (ddIND) et indicatif de l iteration (IND)', 'Keys read (ddIND) and key of the iteration (IND)'));
     for (const a of entrees) {
       src.a(`01  ${a.code}IND.`);
       arg(a).forEach((r, i) => {
@@ -1234,8 +1284,8 @@ export function generer(modele) {
     src.b('05 I01 PIC S9(4) VALUE +1.');
     src.b('05 I02 PIC S9(4) VALUE +4.');
     ed.indices(src);
-    src.com('Erreurs : EN-EI identification, PR-00 presence des rubriques,');
-    src.com('GR-PR et GR-EG le mouvement, GM-ER le groupe de mouvements');
+    src.com(tx('Erreurs : EN-EI identification, PR-00 presence des rubriques,', 'Errors : EN-EI identification, PR-00 element presence,'));
+    src.com(tx('GR-PR et GR-EG le mouvement, GM-ER le groupe de mouvements', 'GR-PR and GR-EG the transaction, GM-ER the group'));
     src.a('01  EN-PRR.');
     src.b('05 EN-EI PIC X.');
     src.b('05 PR-00.');
@@ -1252,14 +1302,14 @@ export function generer(modele) {
     src.a('01  NB-REJETES PIC 9(9) VALUE ZERO.');
     if (etats.length) ed.working(src);
     zonesCommunes();
-    src.com('Lignes du compte rendu');
+    src.com(tx('Lignes du compte rendu', 'Run report lines'));
     emettreLigneEdition(src, 'L-TITRE', [{ valeur: titre }]);
     emettreLigneEdition(src, 'L-ERREUR', [
-      { valeur: 'MVT ' },
+      { valeur: tx('MVT ', 'TRN ') },
       ...argM.flatMap((r, i) => [...(i ? [{ blanc: 1 }] : []), { nom: `LE-A${i + 1}`, pic: `X(${longueurFichier(r)})` }]),
       { blanc: 1 }, { nom: 'LE-CODE', pic: 'X' }, { valeur: ' : ' }, { nom: 'LE-MESSAGE', pic: 'X(40)' },
     ]);
-    emettreLigneEdition(src, 'L-REPRISE', [{ valeur: 'INDICATIF ' }, { nom: 'LR-IND', pic: `X(${argP.reduce((s, r) => s + longueurFichier(r), 0)})` }, { valeur: ' : AUCUNE MISE A JOUR' }]);
+    emettreLigneEdition(src, 'L-REPRISE', [{ valeur: tx('INDICATIF ', 'KEY ') }, { nom: 'LR-IND', pic: `X(${argP.reduce((s, r) => s + longueurFichier(r), 0)})` }, { valeur: tx(' : AUCUNE MISE A JOUR', ' : NO UPDATE') }]);
     emettreLigneEdition(src, 'L-COMPTE', [{ nom: 'LC-LIBELLE', pic: 'X(20)' }, { valeur: ' : ' }, { nom: 'LC-NOMBRE', pic: 'Z(6)9' }]);
 
     const compte = (libelle, zone) => {
@@ -1320,10 +1370,10 @@ export function generer(modele) {
         src.a('F20. IF FT = ALL \'1\'');
         src.b('NEXT SENTENCE ELSE GO TO F20-FN.');
         src.b('DISPLAY " "');
-        compte('PRINCIPAL LU', `5-${PP}00-CPTENR`);
-        compte('MOUVEMENTS LUS', `5-${MM}00-CPTENR`);
-        compte('MOUVEMENTS REJETES', 'NB-REJETES');
-        compte('RESULTAT ECRIT', `5-${RR}00-CPTENR`);
+        compte(tx('PRINCIPAL LU', 'MASTER READ'), `5-${PP}00-CPTENR`);
+        compte(tx('MOUVEMENTS LUS', 'TRANS. READ'), `5-${MM}00-CPTENR`);
+        compte(tx('MOUVEMENTS REJETES', 'TRANS. REJECTED'), 'NB-REJETES');
+        compte(tx('RESULTAT ECRIT', 'RESULT WRITTEN'), `5-${RR}00-CPTENR`);
         src.lignes[src.lignes.length - 1] += '.';
         sousFonctions('20');
         for (const code of fichiersOuverts) {
@@ -1346,7 +1396,7 @@ export function generer(modele) {
             src.b(`IF ${dd}00-${K(r)} NOT = 1-${dd}00-${K(r)}`);
             src.b(`    GO TO F22${dd}-${i + 1}.`);
           });
-          if (a === mv) src.com('Chaque enregistrement est un mouvement a lui seul');
+          if (a === mv) src.com(tx('Chaque enregistrement est un mouvement a lui seul', 'Each record is a transaction on its own'));
           src.b(a === mv ? `GO TO F22${dd}-${NM}.` : `GO TO F22${dd}-FN.`);
           for (let i = 1; i <= n; i++) src.a(`F22${dd}-${i}. MOVE 1 TO ${dd}-DE${i}.`);
           src.a(`F22${dd}-FN. EXIT.`);
@@ -1410,7 +1460,7 @@ export function generer(modele) {
       '33': () => {
         src.a('F33.');
         si(`${MM}-CF${N} = '1'`, 'F33-FN');
-        src.com('Un seul type d enregistrement : rang 1');
+        src.com(tx('Un seul type d enregistrement : rang 1', 'A single record type : rank 1'));
         src.a('F33AA. MOVE 1 TO I01.');
         src.a('F33AA-01. IF EN-EI = \'0\' MOVE 1 TO GR-PR (I01).');
         src.a('F33AA-FN. EXIT.');
@@ -1473,14 +1523,14 @@ export function generer(modele) {
         src.b('IF GR-PRE < \'0\' OR GR-PRE > \'1\'');
         src.b('MOVE GR-PRE TO GR-EG GO TO F76-C.');
         src.a('F76-C. IF GR-EG NOT = \'1\' MOVE \'1\' TO GM-ER.');
-        src.com('Compte rendu sur la SYSOUT : le mouvement en erreur');
+        src.com(tx('Compte rendu sur la SYSOUT : le mouvement en erreur', 'Run report on SYSOUT : the transaction in error'));
         src.a('F76-CR.');
         si('GR-EG NOT = \'1\'', 'F76-CR-FN');
         src.b('ADD 1 TO NB-REJETES.');
         argM.forEach((r, i) => src.b(`MOVE 1-${MM}00-${K(r)}${r.type === '9' ? 'X' : ''} TO LE-A${i + 1}.`));
         src.b(`MOVE 1-${MM}00-${K(rc)} TO LE-CODE.`);
         src.b('MOVE SPACE TO LE-MESSAGE.');
-        for (const [code, message] of [['6', 'CODE MOUVEMENT INCONNU'], ['8', 'CREATION : INDICATIF DEJA PRESENT'], ['9', 'INDICATIF ABSENT DU PRINCIPAL']]) {
+        for (const [code, message] of [['6', tx('CODE MOUVEMENT INCONNU', 'UNKNOWN TRANSACTION CODE')], ['8', tx('CREATION : INDICATIF DEJA PRESENT', 'CREATE : KEY ALREADY EXISTS')], ['9', tx('INDICATIF ABSENT DU PRINCIPAL', 'KEY NOT IN THE MASTER FILE')]]) {
           src.b(`IF GR-EG = '${code}'`);
           src.b(`MOVE "${message}" TO LE-MESSAGE.`);
         }
@@ -1523,7 +1573,7 @@ export function conditionStructuree(cond, ou = 'condition') {
     if (ch === '"' || ch === "'") {
       let j = i + 1;
       while (j < c.length && c[j] !== ch) j++;
-      if (j >= c.length) throw new Error(`${ou} : littéral non fermé dans la condition`);
+      if (j >= c.length) throw new Error(tx(`${ou} : littéral non fermé dans la condition`, `${ou}: unclosed literal in the condition`));
       out += c.slice(i, j + 1); i = j + 1; continue;
     }
     const deux = c.slice(i, i + 2);
@@ -1539,35 +1589,35 @@ export function conditionStructuree(cond, ou = 'condition') {
 export const OPERATEURS_STRUCTURES = ['N', 'M', 'A', 'S', 'C', 'P', 'MES', 'ECR', 'SQL', 'SCO', 'SRO', 'COB', '*'];
 // Types d'accès de l'opérateur SQL (« SQL CL R »), codes de VisualAge Pacbase.
 export const ACCES_SQL = {
-  R: 'lire par la clé (SELECT)',
-  RU: 'lire pour mettre à jour (SELECT FOR UPDATE)',
-  W: 'insérer (INSERT)',
-  RW: 'mettre à jour par la clé (UPDATE)',
-  D: 'supprimer par la clé (DELETE)',
-  DC: 'déclarer le curseur (déjà fait par le générateur)',
-  P: 'ouvrir le curseur : toute la table, dans l\'ordre de la clé (OPEN)',
-  RN: 'ligne suivante du curseur (FETCH)',
-  CL: 'fermer le curseur (CLOSE)',
+  R: tx('lire par la clé (SELECT)', 'read by key (SELECT)'),
+  RU: tx('lire pour mettre à jour (SELECT FOR UPDATE)', 'read for update (SELECT FOR UPDATE)'),
+  W: tx('insérer (INSERT)', 'insert (INSERT)'),
+  RW: tx('mettre à jour par la clé (UPDATE)', 'update by key (UPDATE)'),
+  D: tx('supprimer par la clé (DELETE)', 'delete by key (DELETE)'),
+  DC: tx('déclarer le curseur (déjà fait par le générateur)', 'declare the cursor (already done by the generator)'),
+  P: tx('ouvrir le curseur : toute la table, dans l\'ordre de la clé (OPEN)', 'open the cursor: the whole table, in key order (OPEN)'),
+  RN: tx('ligne suivante du curseur (FETCH)', 'next row of the cursor (FETCH)'),
+  CL: tx('fermer le curseur (CLOSE)', 'close the cursor (CLOSE)'),
 };
-export const OPERATEURS_BASE = { ...Object.fromEntries(Object.entries(ACCES_SQL).map(([k, v]) => [`SQL CL ${k}`, v])), SCO: 'valider (COMMIT)', SRO: 'annuler (ROLLBACK)' };
+export const OPERATEURS_BASE = { ...Object.fromEntries(Object.entries(ACCES_SQL).map(([k, v]) => [`SQL CL ${k}`, v])), SCO: tx('valider (COMMIT)', 'commit (COMMIT)'), SRO: tx('annuler (ROLLBACK)', 'roll back (ROLLBACK)') };
 
 export function verifierTables(model, tables = model.tables || []) {
   const codes = new Set((model.sorties || []).map((x) => x.code));
   const noms = new Set();
   for (const tb of tables) {
-    if (!/^[A-Z][A-Z0-9]$/.test(tb.code || '')) throw new Error(`Table : code ${tb.code || '(vide)'} invalide (2 caractères, une lettre en tête)`);
-    if (['ED', 'LC', 'LG', 'RT', 'NB', 'IN', 'SQ'].includes(tb.code)) throw new Error(`Table : le code ${tb.code} est réservé`);
-    if (codes.has(tb.code)) throw new Error(`Table ${tb.code} : code déjà pris par un fichier en sortie ou une autre table`);
+    if (!/^[A-Z][A-Z0-9]$/.test(tb.code || '')) throw new Error(tx(`Table : code ${tb.code || '(vide)'} invalide (2 caractères, une lettre en tête)`, `Table: invalid code ${tb.code || '(empty)'} (2 characters, starting with a letter)`));
+    if (['ED', 'LC', 'LG', 'RT', 'NB', 'IN', 'SQ'].includes(tb.code)) throw new Error(tx(`Table : le code ${tb.code} est réservé`, `Table: code ${tb.code} is reserved`));
+    if (codes.has(tb.code)) throw new Error(tx(`Table ${tb.code} : code déjà pris par un fichier en sortie ou une autre table`, `Table ${tb.code}: code already used by an output file or another table`));
     codes.add(tb.code);
-    if (!/^[A-Z][A-Z0-9_]{0,17}$/.test(tb.nom || '')) throw new Error(`Table ${tb.code} : nom invalide (lettres, chiffres, _ ; 18 au plus)`);
-    if (noms.has(tb.nom)) throw new Error(`Deux tables s'appellent ${tb.nom}`);
+    if (!/^[A-Z][A-Z0-9_]{0,17}$/.test(tb.nom || '')) throw new Error(tx(`Table ${tb.code} : nom invalide (lettres, chiffres, _ ; 18 au plus)`, `Table ${tb.code}: invalid name (letters, digits, _; 18 at most)`));
+    if (noms.has(tb.nom)) throw new Error(tx(`Deux tables s'appellent ${tb.nom}`, `Two tables are named ${tb.nom}`));
     noms.add(tb.nom);
-    if (!tb.rubriques?.length) throw new Error(`Table ${tb.code} : aucune rubrique`);
+    if (!tb.rubriques?.length) throw new Error(tx(`Table ${tb.code} : aucune rubrique`, `Table ${tb.code}: no data element`));
     tb.rubriques.forEach((c) => rubrique(model, c));
-    if (new Set(tb.rubriques).size !== tb.rubriques.length) throw new Error(`Table ${tb.code} : rubrique en double`);
-    if (!tb.cle?.length) throw new Error(`Table ${tb.code} : il faut une clé`);
+    if (new Set(tb.rubriques).size !== tb.rubriques.length) throw new Error(tx(`Table ${tb.code} : rubrique en double`, `Table ${tb.code}: duplicate data element`));
+    if (!tb.cle?.length) throw new Error(tx(`Table ${tb.code} : il faut une clé`, `Table ${tb.code}: a key is needed`));
     const k = tb.cle.find((c) => !tb.rubriques.includes(c));
-    if (k) throw new Error(`Table ${tb.code} : la clé ${k} doit être une rubrique de la table`);
+    if (k) throw new Error(tx(`Table ${tb.code} : la clé ${k} doit être une rubrique de la table`, `Table ${tb.code}: key ${k} must be a data element of the table`));
   }
 }
 
@@ -1591,7 +1641,7 @@ function sqlAcces(ope, tb) {
     case 'W': return [`EXEC SQL INSERT INTO ${tb.nom} (${liste(tb.rubriques)}) VALUES (${liste(tb.rubriques.map(hv))}) END-EXEC`];
     case 'R': case 'RU': return [`EXEC SQL SELECT ${liste(tb.rubriques)} INTO ${liste(tb.rubriques.map(hv))} FROM ${tb.nom} ${ou} END-EXEC`];
     case 'RW':
-      if (!autres.length) throw new Error(`SQL ${tb.code} RW ${tb.code} : la table n'a que des rubriques de clé, rien à mettre à jour`);
+      if (!autres.length) throw new Error(tx(`SQL ${tb.code} RW ${tb.code} : la table n'a que des rubriques de clé, rien à mettre à jour`, `SQL ${tb.code} RW ${tb.code}: the table only has key elements, nothing to update`));
       return [`EXEC SQL UPDATE ${tb.nom} SET ${liste(autres.map((c) => `${c} = ${hv(c)}`))} ${ou} END-EXEC`];
     case 'D': return [`EXEC SQL DELETE FROM ${tb.nom} ${ou} END-EXEC`];
     case 'DC': return ['CONTINUE'];

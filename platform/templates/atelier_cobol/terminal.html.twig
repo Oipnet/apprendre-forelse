@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 {# L'atelier COBOL (terminal) : un générateur de batchs COBOL façon années 1990, qui tourne entièrement dans le navigateur
-   (playground/src/cobol). Page autonome, en français seulement, avec son propre habillage. #}
-<html lang="fr">
+   (playground/src/cobol). Page autonome, en français ou en anglais (la langue de la route, que le script suit), avec son
+   propre habillage. #}
+{% set en = app.request.locale == 'en' %}
+<html lang="{{ en ? 'en' : 'fr' }}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-        <title>{% if seo.title %}{{ seo.title }}{% else %}Atelier COBOL, terminal 3270{% endif %}</title>
+        <title>{% if seo.title %}{{ seo.title }}{% else %}{{ en ? 'COBOL workshop, 3270 terminal' : 'Atelier COBOL, terminal 3270' }}{% endif %}</title>
         {{ include('_head.html.twig') }}
         {% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">{% endif %}
         {{ vite_entry_link_tags('cobol-terminal') }}
@@ -15,21 +17,21 @@
 <div class="page">
   <nav class="retour-site"><a href="{{ path('app_home') }}">← {{ theme.name }}</a></nav>
   <header>
-    <h1>Atelier COBOL, terminal</h1>
-    <a href="{{ path('app_cobol') }}">Revenir à l'atelier graphique</a>
-    <a href="{{ path('app_cobol_memo') }}">Le mémo</a>
+    <h1>{{ en ? 'COBOL workshop, terminal' : 'Atelier COBOL, terminal' }}</h1>
+    <a href="{{ path('app_cobol') }}">{{ en ? 'Back to the graphical workshop' : 'Revenir à l\'atelier graphique' }}</a>
+    <a href="{{ path('app_cobol_memo') }}">{{ en ? 'The memo' : 'Le mémo' }}</a>
   </header>
   <div class="partage" id="bandeau-partage" role="status" hidden></div>
   <div class="boitier">
     <div class="defile">
-      <div class="tube" id="tube" aria-label="Écran du terminal, cliquez puis tapez au clavier" role="application">
-        <textarea class="capture" id="capture" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Saisie clavier du terminal"></textarea>
+      <div class="tube" id="tube" aria-label="{{ en ? 'Terminal screen, click then type on the keyboard' : 'Écran du terminal, cliquez puis tapez au clavier' }}" role="application">
+        <textarea class="capture" id="capture" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="{{ en ? 'Terminal keyboard input' : 'Saisie clavier du terminal' }}"></textarea>
       </div>
       <div class="oia" data-etat><span>4B</span><span data-bloc></span><span data-ins></span><span data-pos></span></div>
     </div>
     <div class="touches" id="touches"></div>
   </div>
-  <p class="aide">Cliquez sur l'écran puis tout se fait au clavier : <kbd>Tab</kbd>/<kbd>Maj+Tab</kbd> de champ en champ, <kbd>Entrée</kbd> valide l'écran, <kbd>F1</kbd>…<kbd>F12</kbd> pour PF1…PF12 (<kbd>Maj</kbd> ajoute 12), <kbd>Fin</kbd> efface la fin du champ, <kbd>Inser</kbd> bascule l'insertion, <kbd>Maj+Entrée</kbd> va à la ligne suivante, <kbd>Échap</kbd> = Réinit quand le clavier est bloqué, <kbd>Maj+Échap</kbd> = Effacer. <kbd>Page préc.</kbd>/<kbd>Page suiv.</kbd> font PF7/PF8. Le modèle est partagé avec l'atelier graphique. Pour envoyer votre programme à quelqu'un, tapez <kbd>PARTAGE</kbd> sur la ligne CHOIX.</p>
+  {% if en %}<p class="aide">Click the screen, then everything is done with the keyboard: <kbd>Tab</kbd>/<kbd>Shift+Tab</kbd> from field to field, <kbd>Enter</kbd> sends the screen, <kbd>F1</kbd>…<kbd>F12</kbd> for PF1…PF12 (<kbd>Shift</kbd> adds 12), <kbd>End</kbd> erases the end of the field, <kbd>Insert</kbd> toggles insert mode, <kbd>Shift+Enter</kbd> goes to the next line, <kbd>Esc</kbd> = Reset when the keyboard is locked, <kbd>Shift+Esc</kbd> = Clear. <kbd>Page Up</kbd>/<kbd>Page Down</kbd> do PF7/PF8. The model is shared with the graphical workshop. To send your program to someone, type <kbd>SHARE</kbd> on the OPTION line.</p>{% else %}<p class="aide">Cliquez sur l'écran puis tout se fait au clavier : <kbd>Tab</kbd>/<kbd>Maj+Tab</kbd> de champ en champ, <kbd>Entrée</kbd> valide l'écran, <kbd>F1</kbd>…<kbd>F12</kbd> pour PF1…PF12 (<kbd>Maj</kbd> ajoute 12), <kbd>Fin</kbd> efface la fin du champ, <kbd>Inser</kbd> bascule l'insertion, <kbd>Maj+Entrée</kbd> va à la ligne suivante, <kbd>Échap</kbd> = Réinit quand le clavier est bloqué, <kbd>Maj+Échap</kbd> = Effacer. <kbd>Page préc.</kbd>/<kbd>Page suiv.</kbd> font PF7/PF8. Le modèle est partagé avec l'atelier graphique. Pour envoyer votre programme à quelqu'un, tapez <kbd>PARTAGE</kbd> sur la ligne CHOIX.</p>{% endif %}
   <div class="partage" id="lien-partage" hidden></div>
 </div>
 

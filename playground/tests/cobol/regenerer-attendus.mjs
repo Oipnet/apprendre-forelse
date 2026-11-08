@@ -1,11 +1,13 @@
 // Régénère gnucobol.json, les sorties de référence de tests/cobol.test.ts, avec le vrai compilateur GnuCOBOL.
 // À lancer après un changement du générateur : node tests/cobol/regenerer-attendus.mjs (cobc requis, apt install gnucobol).
+// En anglais : COBOL_LANGUE=en node tests/cobol/regenerer-attendus.mjs écrit gnucobol-en.json (cas de cas-en.js).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { generer, fichiersEntree, fichiersSortie } from '../../src/cobol/generateur.js';
-import { cas } from './cas.js';
+const anglais = process.env.COBOL_LANGUE === 'en';
+const { cas } = anglais ? { cas: (await import('./cas-en.js')).casEn } : await import('./cas.js');
 
 const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'cobol-'));
 const attendus = {};
@@ -19,6 +21,11 @@ cas.forEach(([nom, modele], i) => {
   for (const so of fichiersSortie(modele)) sortie += `--- ${so.fichier}\n` + fs.readFileSync(path.join(d, so.fichier), 'utf8');
   attendus[nom] = sortie;
 });
+if (anglais) {
+  fs.writeFileSync(new URL('./gnucobol-en.json', import.meta.url), JSON.stringify({ compilateur: execFileSync('cobc', ['--version']).toString().split('\n')[0], attendus }, null, 2) + '\n');
+  console.log(`${cas.length} sorties de référence en anglais écrites.`);
+  process.exit(0);
+}
 // Sources écrits à la main (tests/cobol/sources) : ce que l'interpréteur doit savoir lire, au-delà du générateur.
 // La SYSOUT puis chaque fichier écrit, octet pour octet (sauts de page et retours chariot compris).
 const sources = {};

@@ -39,6 +39,7 @@ export const exemple: Modele;
 export const exempleMiseAJour: Modele;
 export const exempleEtat: Modele;
 export const VERSION_MODELE: number;
+export const MOUVEMENT_DEFAUT: { creation: string; modification: string; annulation: string };
 export function normaliser(modele: Modele): Modele & { appels: Appel[] };
 export function generer(modele: Modele): string;
 export function fichierDonnees(modele: Modele): string;

@@ -3,6 +3,7 @@
 // Format : #programme=<JSON compressé (deflate brut), en base64 pour URL>.
 
 import { generer, normaliser } from './generateur.js';
+import { cle, t as tx } from './langue.js';
 
 const PREFIXE = 'programme=';
 const VERSION = 2; // 2 : fichiers appelés (appels) ; 1 : un seul fichier, décrit dans le traitement
@@ -74,9 +75,9 @@ export function oublierFragment() {
   history.replaceState(null, '', location.pathname + location.search);
 }
 
-const CLE_MODELE = 'atelier-cobol-modele-v1';
-const CLE_PRECEDENT = 'atelier-cobol-modele-precedent';
-const CLE_OUVERT = 'atelier-cobol-partage-ouvert';
+const CLE_MODELE = cle('modele-v1');
+const CLE_PRECEDENT = cle('modele-precedent');
+const CLE_OUVERT = cle('partage-ouvert');
 
 const bouton = (texte, action, principal = false) => {
   const b = document.createElement('button');
@@ -95,37 +96,37 @@ export async function bandeauReception(zone) {
     if (sessionStorage.getItem(CLE_OUVERT)) {
       sessionStorage.removeItem(CLE_OUVERT);
       const precedent = localStorage.getItem(CLE_PRECEDENT);
-      zone.replaceChildren(texte('Programme partagé ouvert. Modifiez-le, exécutez-le, puis partagez votre version.'),
-        ...(precedent ? [bouton('Revenir à mon programme', () => { localStorage.setItem(CLE_MODELE, precedent); localStorage.removeItem(CLE_PRECEDENT); location.reload(); })] : []));
+      zone.replaceChildren(texte(tx('Programme partagé ouvert. Modifiez-le, exécutez-le, puis partagez votre version.', 'Shared program opened. Change it, run it, then share your version.')),
+        ...(precedent ? [bouton(tx('Revenir à mon programme', 'Back to my program'), () => { localStorage.setItem(CLE_MODELE, precedent); localStorage.removeItem(CLE_PRECEDENT); location.reload(); })] : []));
       zone.hidden = false;
     }
   } catch { /* stockage indisponible */ }
   const recu = await lireFragment();
   // un lien de défi (#defi=01) a son propre bandeau (atelier.js)
   if (location.hash.startsWith(`#${PREFIXE}`) && !recu) {
-    zone.replaceChildren(texte('Ce lien de partage est abîmé ou incomplet : le programme ne peut pas être ouvert.'), bouton('Fermer', () => { oublierFragment(); zone.hidden = true; }));
+    zone.replaceChildren(texte(tx('Ce lien de partage est abîmé ou incomplet : le programme ne peut pas être ouvert.', 'This share link is damaged or incomplete: the program cannot be opened.')), bouton(tx('Fermer', 'Close'), () => { oublierFragment(); zone.hidden = true; }));
     zone.hidden = false;
     return;
   }
   if (!recu) return;
-  const nom = recu.traitement?.programme || 'sans nom';
+  const nom = recu.traitement?.programme || tx('sans nom', 'unnamed');
   const donnees = recu.appels.reduce((n, a) => n + (a.donnees || []).length, 0);
   zone.replaceChildren(
-    texte(`Ce lien contient le programme ${nom} : ${recu.appels.length} fichier(s) appelé(s), ${recu.lignes.length} ligne(s) de traitement, ${donnees} ligne(s) de données. L'ouvrir remplace votre programme, qui reste récupérable.`),
-    bouton('Ouvrir le programme', () => {
+    texte(tx(`Ce lien contient le programme ${nom} : ${recu.appels.length} fichier(s) appelé(s), ${recu.lignes.length} ligne(s) de traitement, ${donnees} ligne(s) de données. L'ouvrir remplace votre programme, qui reste récupérable.`, `This link holds program ${nom}: ${recu.appels.length} called file(s), ${recu.lignes.length} line(s) of code, ${donnees} line(s) of data. Opening it replaces your program, which you can get back.`)),
+    bouton(tx('Ouvrir le programme', 'Open the program'), () => {
       try {
         const actuel = localStorage.getItem(CLE_MODELE);
         if (actuel) localStorage.setItem(CLE_PRECEDENT, actuel);
         localStorage.setItem(CLE_MODELE, JSON.stringify(recu));
         sessionStorage.setItem(CLE_OUVERT, '1');
       } catch {
-        zone.replaceChildren(texte('Votre navigateur bloque le stockage local : impossible d\'ouvrir le programme ici.'));
+        zone.replaceChildren(texte(tx('Votre navigateur bloque le stockage local : impossible d\'ouvrir le programme ici.', 'Your browser blocks local storage: the program cannot be opened here.')));
         return;
       }
       oublierFragment();
       location.reload();
     }, true),
-    bouton('Garder le mien', () => { oublierFragment(); zone.hidden = true; }),
+    bouton(tx('Garder le mien', 'Keep mine'), () => { oublierFragment(); zone.hidden = true; }),
   );
   zone.hidden = false;
 }
@@ -142,12 +143,12 @@ export async function montrerLien(zone, modele) {
   const champ = document.createElement('input');
   champ.readOnly = true;
   champ.value = lien;
-  champ.setAttribute('aria-label', 'Lien de partage');
+  champ.setAttribute('aria-label', tx('Lien de partage', 'Share link'));
   champ.addEventListener('focus', () => champ.select());
-  const copier = bouton('Copier', async () => {
-    try { await navigator.clipboard.writeText(lien); copier.textContent = 'Copié'; } catch { champ.select(); copier.textContent = 'Lien sélectionné'; }
+  const copier = bouton(tx('Copier', 'Copy'), async () => {
+    try { await navigator.clipboard.writeText(lien); copier.textContent = tx('Copié', 'Copied'); } catch { champ.select(); copier.textContent = tx('Lien sélectionné', 'Link selected'); }
   }, true);
-  zone.replaceChildren(texte(`Le programme voyage dans le lien (${lien.length} caractères) : rien n'est gardé sur le serveur. Celui qui l'ouvre choisit de le charger.`), champ, copier);
+  zone.replaceChildren(texte(tx(`Le programme voyage dans le lien (${lien.length} caractères) : rien n'est gardé sur le serveur. Celui qui l'ouvre choisit de le charger.`, `The program travels inside the link (${lien.length} characters): nothing is kept on the server. Whoever opens it chooses to load it.`)), champ, copier);
   zone.hidden = false;
-  try { await navigator.clipboard.writeText(lien); copier.textContent = 'Copié'; return true; } catch { return false; }
+  try { await navigator.clipboard.writeText(lien); copier.textContent = tx('Copié', 'Copied'); return true; } catch { return false; }
 }

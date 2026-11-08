@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+{# Le mémo de l'atelier COBOL, en anglais (memo.html.twig en français) : la référence des écrans, des fonctions et des
+   ruptures. Des faits sur l'atelier, aucun indice sur un défi. Page autonome ; garder les deux versions au même niveau. #}
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <title>{% if seo.title %}{{ seo.title }}{% else %}COBOL workshop memo{% endif %}</title>
+        {{ include('_head.html.twig') }}
+        {% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">{% endif %}
+        {{ vite_entry_link_tags('cobol-memo') }}
+        {{ vite_entry_script_tags('cobol-memo') }}
+    </head>
+    <body>
+<div class="page">
+  <nav class="retour-site"><a href="{{ path('app_home') }}">← {{ theme.name }}</a></nav>
+  <header>
+    <h1>COBOL workshop memo</h1>
+    <p>The screens, the file calls, the function cycle and the control breaks: enough to get your 2005 reflexes back, or to pick them up. It is a reference, not an answer key.</p>
+    <div class="liens-memo">
+      <a href="{{ path('app_cobol') }}">Open the workshop</a>
+      <a href="{{ path('app_cobol_terminal') }}">Open the 3270 terminal</a>
+    </div>
+  </header>
+
+  <div class="memo">
+    <nav aria-label="Memo contents">
+      <ol>
+        <li><a href="#ecrans">The screens</a></li>
+        <li><a href="#fichiers">File calls</a></li>
+        <li><a href="#zones">The fields of a file</a></li>
+        <li><a href="#cycle">The function cycle</a></li>
+        <li><a href="#ruptures">Control breaks</a></li>
+        <li><a href="#traitement">The simple listing</a></li>
+        <li><a href="#structure">The structured language</a></li>
+        <li><a href="#etats">Reports</a></li>
+        <li><a href="#base">The database</a></li>
+        <li><a href="#terminal">The terminal</a></li>
+      </ol>
+    </nav>
+
+    <article>
+      <section id="ecrans">
+        <h2>The screens</h2>
+        <p>A program is described, not written. Each screen holds part of the model; the COBOL source is generated from the whole, then compiled and run in the browser. The workshop and the terminal share the same model.</p>
+        <div class="table-defile"><table class="ecrans">
+          <thead><tr><th>Workshop</th><th>Terminal</th><th>What you describe there</th></tr></thead>
+          <tbody>
+            <tr><td>Dictionary</td><td>R</td><td>The data elements, once: code, label, type <code>X</code> or <code>9</code>, length, decimals, sign. Their format is used everywhere.</td></tr>
+            <tr><td>Records</td><td>E</td><td>The elements of a file line, in the order they follow each other. The positions come from it.</td></tr>
+            <tr><td>Files</td><td>C</td><td>The file calls: code, usage, record, name, argument (control break or matching).</td></tr>
+            <tr><td>Processing</td><td>T</td><td>The program name, the title, and for a listing without a report: filters, columns, detail, totals. The output files.</td></tr>
+            <tr><td>Reports</td><td>K</td><td>A report described the way the manual does: labels, structures, layout.</td></tr>
+            <tr><td>Structured language</td><td>P</td><td>Your procedures, in functions and sub-functions.</td></tr>
+            <tr><td>Data</td><td>D</td><td>The content of the input files, typed column by column.</td></tr>
+            <tr><td>Database</td><td>B, Q</td><td>DB2-style tables, and an SQL console to query them.</td></tr>
+            <tr><td>Source, Run</td><td>G, X</td><td>The generated source, then the SYSOUT and the files produced.</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="fichiers">
+        <h2>File calls</h2>
+        <p>Each file of the program is called with a two-character code, which prefixes its fields, and a usage:</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>C</td><td>Consulted: read in sequence. In a listing program, it is the one that gets printed.</td></tr>
+            <tr><td>P</td><td>Principal: the file being updated. Sorted on its argument, no duplicates.</td></tr>
+            <tr><td>M</td><td>Transactions: they update the principal file. Same argument, sorted, several transactions per key allowed. A one-character element gives the transaction code (create, modify, delete).</td></tr>
+            <tr><td>R</td><td>Result: the principal file after the update, with the same record.</td></tr>
+            <tr><td>I</td><td>Print: a report is written to it. Its argument is the report letter.</td></tr>
+          </tbody>
+        </table></div>
+        <p>Two kinds of program: the <strong>listing</strong> (a C file, a report) and the <strong>update</strong> (P + M give R, with a log). The argument of a C file declares its control breaks; that of P and M, the matching.</p>
+      </section>
+
+      <section id="zones">
+        <h2>The fields of a file</h2>
+        <p>For a file with code <code>FA</code> and an element <code>CUSTNM</code>:</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>FA00-CUSTNM</td><td>The field read. When the file has control breaks or holds transactions, it is the next record, read ahead.</td></tr>
+            <tr><td>1-FA00-CUSTNM</td><td>The record being processed (file with control breaks, transactions, principal file read).</td></tr>
+            <tr><td>2-FA00-CUSTNM</td><td>The updated principal record, before the result is written.</td></tr>
+            <tr><td>FA-FT</td><td>End of work for the file.</td></tr>
+            <tr><td>FA-PE<i>n</i>, FA-DE<i>n</i></td><td>First, last record at level <i>n</i>.</td></tr>
+            <tr><td>FA-CF<i>n</i>, FA-OC<i>n</i></td><td>Matching: the record takes part in the cycle, exists.</td></tr>
+            <tr><td>W-CUSTNM</td><td>A working field, declared with the element's format.</td></tr>
+            <tr><td>D-CUSTNM</td><td>The element on the detail line of the simple listing.</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="cycle">
+        <h2>The function cycle</h2>
+        <p>The generated program is cut into two-character functions, run in the order of their code. The program loops from F05 to F90, once per record, until the end of the files.</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>F01</td><td>Initialization: opening the files, once.</td></tr>
+            <tr><td>F05</td><td>Start of iteration.</td></tr>
+            <tr><td>F10</td><td>Read (with control break or matching).</td></tr>
+            <tr><td>F20</td><td>End of processing: once every file is read, your F20 sub-functions, closing the files, stop.</td></tr>
+            <tr><td>F22</td><td>Last-record computation: which record is the last of its group, at each level.</td></tr>
+            <tr><td>F24 to F39</td><td>Update: configuration and occurrence (24), total breaks (26), control variables (30), transaction code (33), presence of elements (39).</td></tr>
+            <tr><td>F70 to F76</td><td>Update: matching check (70), update (73), error storage (76).</td></tr>
+            <tr><td>F8E, F8<i>e</i></td><td>Printing: F8E for the simple listing, F8<i>e</i> for the report with letter <i>e</i>.</td></tr>
+            <tr><td>F90</td><td>Writes, then back to F05.</td></tr>
+          </tbody>
+        </table></div>
+        <h3>Placing your functions</h3>
+        <p>Your sub-functions add to the generated functions (for example 8E 10, 20 10), or form your own functions, placed according to their code. The order is EBCDIC: letters come before digits, so <code>0A</code> before <code>00</code> and <code>8E</code> before <code>80</code>.</p>
+        <ul>
+          <li>Before F01: once, before initialization. Between F01 and F05: once, after it.</li>
+          <li>Between F05 and F20: on every cycle, after the read, including the last pass.</li>
+          <li>Between F20 and F90: for every record, before or after printing depending on the code.</li>
+          <li>After F90: never on its own, only performed by the P operator.</li>
+        </ul>
+      </section>
+
+      <section id="ruptures">
+        <h2>Control breaks</h2>
+        <p>Control breaks are declared in the call of the consulted file: up to three argument elements, from the broadest to the finest. The program sorts the file on this argument, then reads it one record ahead to know, before processing a record, whether a group starts or ends.</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>RTP<i>n</i> = 1</td><td>The record being processed is the first of its group at level <i>n</i>.</td></tr>
+            <tr><td>RTD<i>n</i> = 1</td><td>It is the last one: time for the subtotals.</td></tr>
+            <tr><td>FA-FI = 1</td><td>Nothing left to read ahead: the record being processed is the last of the file.</td></tr>
+          </tbody>
+        </table></div>
+        <p>A level 1 break triggers those of the finer levels. In the simple listing, each level prints its subtotal; in a report, these are the categories of type 1 to 3, and the grand total is type 0.</p>
+        <p class="note">Reminder: the field read (FA00-) is the next record, the record being processed is 1-FA00-. Mixing them up shifts everything by one line.</p>
+      </section>
+
+      <section id="traitement">
+        <h2>The simple listing</h2>
+        <p>A listing program without a report prints on the SYSOUT a listing set up in the Processing tab:</p>
+        <ul>
+          <li><strong>Filters</strong>: records that do not pass every filter are skipped (counted as read, not as kept).</li>
+          <li><strong>Columns</strong>: the elements of the detail line, and the “print the detail” box.</li>
+          <li><strong>Totals</strong>: the numeric elements to total, at each break and in the grand total; “count the lines” adds the number of records.</li>
+          <li><strong>Output files</strong>: written from the structured language, with M then ECR.</li>
+        </ul>
+      </section>
+
+      <section id="structure">
+        <h2>The structured language</h2>
+        <p>A sub-function starts with an N line: title, level (05, 10…), type and condition. The types: <code>BL</code> block, <code>IT</code> if, <code>EL</code> else, <code>DW</code> while. A sub-function with a higher level nests in the previous one.</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>M a b</td><td>Move a to b.</td></tr>
+            <tr><td>A a b, S a b</td><td>Add a to b, subtract a from b.</td></tr>
+            <tr><td>C W-X = A + B</td><td>Compute.</td></tr>
+            <tr><td>P ff</td><td>Perform function ff.</td></tr>
+            <tr><td>MES …</td><td>Display on the SYSOUT.</td></tr>
+            <tr><td>ECR dd</td><td>Write a record of output file dd.</td></tr>
+            <tr><td>SQL tb aa</td><td>Access a table (see the database).</td></tr>
+            <tr><td>SCO, SRO</td><td>Commit, roll back.</td></tr>
+            <tr><td>COB …</td><td>A line of COBOL as is.</td></tr>
+            <tr><td>*</td><td>A comment.</td></tr>
+          </tbody>
+        </table></div>
+        <p>Conditions: <code>=</code> <code>#</code> (not equal) <code>&gt;</code> <code>&lt;</code> <code>&gt;=</code> <code>&lt;=</code>, joined by <code>AND</code> and <code>OR</code>.</p>
+      </section>
+
+      <section id="etats">
+        <h2>Reports</h2>
+        <p>A report is printed to a print file (usage I). Its code is the file code followed by its letter: file ET with letter 1 gives report ET1 and function F81. It is described on three screens.</p>
+        <h3>Labels (-L)</h3>
+        <p>The fixed lines, numbered from 01 with no gap, at the report's length.</p>
+        <h3>Structures (-CE)</h3>
+        <p>The elements to place on a line: structure (01, 02…), element, start column, mode, source and condition.</p>
+        <ul>
+          <li>Mode: <code>M</code> move, <code>T</code> to total, <code>+</code> or <code>R</code> compute (R rounded), <code>U</code> by you.</li>
+          <li>Source field type: blank for the field read, <code>1</code> processing, <code>2</code> update, <code>5</code> counters, <code>*</code> free expression.</li>
+          <li>Source: <code>FFNNELEMNT</code> (file, segment, element; <code>FA00</code> alone takes the element of the same name) or a quoted literal.</li>
+          <li>A continuation line (<code>*</code>) holds a + - * / operation on another source, or the rest of the condition.</li>
+        </ul>
+        <h3>Layout (-D)</h3>
+        <p>The characteristics (line length, lines per page, items) then the categories: lines printed under the same condition, in code order. Each line: number, type, structure, label, skip before the line, function to run first, condition.</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>(blank)</td><td>Ordinary line.</td></tr>
+            <tr><td>A, Z</td><td>Page header and footer.</td></tr>
+            <tr><td>I</td><td>Iterative line, repeated.</td></tr>
+            <tr><td>*</td><td>Detail line, totaled.</td></tr>
+            <tr><td>T</td><td>Detail never printed, only totaled.</td></tr>
+            <tr><td>0, 1 to 3</td><td>Grand total, break total of the level.</td></tr>
+          </tbody>
+        </table></div>
+        <p>Skip <code>00</code>: overprint; absolute skip <code>*</code> to 01: new page. Items at 0: each line is printed right away, without being stored. The counters <code>5-dd00-eCL</code> (line in the page), <code>CLM</code> (lines per page), <code>CP</code> (page) and <code>CE</code> (lines written) are used in conditions and sources; <code>CATX</code> is the current category.</p>
+      </section>
+
+      <section id="base">
+        <h2>The database</h2>
+        <p>A database runs in the browser, the DB2 way. Each table has a two-letter code: its columns are used as <code>CL-CUSTNM</code>. The SQL operator takes the table code and the access type:</p>
+        <div class="table-defile"><table>
+          <tbody>
+            <tr><td>R, RU</td><td>Read by key, read for update.</td></tr>
+            <tr><td>W, RW, D</td><td>Insert, update by key, delete by key.</td></tr>
+            <tr><td>P, RN, CL</td><td>Open the cursor (the whole table, in key order), next row, close.</td></tr>
+          </tbody>
+        </table></div>
+        <p><code>SQLCODE</code> gives the result: 0 found, 100 not found or end of cursor, -803 duplicate key. The database keeps its rows from one run to the next.</p>
+      </section>
+
+      <section id="terminal">
+        <h2>The terminal</h2>
+        <p>The same screens on 24 lines of 80 columns. A code on the OPTION line, then Enter: <code>R</code> <code>E</code> <code>C</code> <code>T</code> <code>P</code> <code>D</code> <code>K</code> (then <code>-D</code>, <code>-L</code>, <code>-CE</code>) <code>S</code> <code>B</code> <code>Q</code> <code>G</code> <code>X</code>.</p>
+        <ul>
+          <li>Tab and Shift+Tab from field to field, Enter sends the screen, F1 to F12 for PF1 to PF12.</li>
+          <li>PF3 back, PF7 and PF8 pages, PF10 and PF11 left and right, PF12 menu.</li>
+          <li>In column A: an action code, S delete, D duplicate, I insert, depending on the screen. An empty line at the bottom is for creating.</li>
+          <li><code>END</code>, <code>END UPD</code>, <code>END REPORT</code> load the examples; <code>SHARE</code> gives the program's link.</li>
+        </ul>
+      </section>
+    </article>
+  </div>
+</div>
+
+    </body>
+</html>

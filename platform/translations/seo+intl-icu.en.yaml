@@ -74,6 +74,19 @@ exercice:
     complement_court: "An exercise from the {parcours} track."
     complement_minimal: An exercise checked by tests, in the browser.
 
+atelier_cobol:
+    atelier:
+        titre: "COBOL workshop: a batch program generator in the browser"
+        description: "Data elements, record, structured language: the COBOL program is generated then run in your browser, DB2-style database included, no account."
+        fil_ariane: COBOL workshop
+    terminal:
+        titre: "COBOL workshop in 3270 terminal mode"
+        description: "The COBOL batch generator on a green 24 by 80 screen: PF keys, locked keyboard, action codes, and the program run in your browser."
+        fil_ariane: COBOL workshop, terminal
+    memo:
+        titre: "COBOL workshop memo: screens, functions and control breaks"
+        description: "The COBOL workshop reference: file calls, fields, the F01 to F90 function cycle, control breaks, structured language, reports and database."
+        fil_ariane: COBOL workshop memo
 bac_a_sable:
     index:
         titre: "Online PHP playground: plain PHP, Symfony and Laravel"

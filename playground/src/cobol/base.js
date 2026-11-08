@@ -2,11 +2,12 @@
 // Les tables sont décrites dans le modèle ; le contenu est gardé dans le navigateur
 // (localStorage), partagé par l'atelier graphique et le terminal.
 
+import { cle } from './langue.js';
 import { ddlTable } from './generateur.js';
 // Le moteur SQLite en JavaScript pur (sans WebAssembly), servi par le site comme un fichier du build.
 import sqlAsm from 'sql.js/dist/sql-asm.js?url';
 
-const CLE = 'atelier-cobol-base-v1';
+const CLE = cle('base-v1');
 let promesse = null;
 
 function chargerScript(src) {

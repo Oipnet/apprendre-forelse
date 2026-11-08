@@ -1,6 +1,8 @@
 // Émulation d'un écran de terminal 3270 (24 x 80) : champs protégés ou saisissables,
 // navigation au clavier, touches d'attention (Entrée, PF1-PF12, Effacer), clavier bloqué jusqu'à Réinit.
 
+import { t as tx } from './langue.js';
+
 export const LIGNES = 24;
 export const COLONNES = 80;
 
@@ -140,13 +142,13 @@ export class Ecran3270 {
   caractere(ch) {
     if (this.bloque) return;
     const f = this.champA(this.curseur);
-    if (!f) return this.bloquer('PROTÉGÉ');
+    if (!f) return this.bloquer(tx('PROTÉGÉ', 'PROTECTED'));
     if (f.num && !/[0-9.,+\- ]/.test(ch)) return this.bloquer('NUM');
     if (f.majuscules !== false) ch = ch.toUpperCase();
     const i = this.curseur - f.pos;
     let v = f.valeur.padEnd(f.long);
     if (this.insertion) {
-      if (v.at(-1) !== ' ') return this.bloquer('PLEIN');
+      if (v.at(-1) !== ' ') return this.bloquer(tx('PLEIN', 'FULL'));
       v = v.slice(0, i) + ch + v.slice(i, -1);
     } else v = v.slice(0, i) + ch + v.slice(i + 1);
     f.valeur = v.replace(/ +$/, '');
@@ -166,7 +168,7 @@ export class Ecran3270 {
 
   supprimer() {
     const f = this.champA(this.curseur);
-    if (!f) return this.bloquer('PROTÉGÉ');
+    if (!f) return this.bloquer(tx('PROTÉGÉ', 'PROTECTED'));
     const i = this.curseur - f.pos;
     const v = f.valeur.padEnd(f.long);
     f.valeur = (v.slice(0, i) + v.slice(i + 1)).replace(/ +$/, '');
@@ -175,7 +177,7 @@ export class Ecran3270 {
 
   effacerFinDeChamp() {
     const f = this.champA(this.curseur);
-    if (!f) return this.bloquer('PROTÉGÉ');
+    if (!f) return this.bloquer(tx('PROTÉGÉ', 'PROTECTED'));
     f.valeur = f.valeur.slice(0, this.curseur - f.pos).replace(/ +$/, '');
     f.modifie = true;
   }
@@ -226,7 +228,7 @@ export class Ecran3270 {
     });
     if (this.etat) {
       const l = Math.floor(this.curseur / COLONNES) + 1, c = (this.curseur % COLONNES) + 1;
-      const bloc = this.occupe ? 'X SYSTÈME' : this.bloque ? `X ${this.bloque}  (Échap = Réinit)` : '';
+      const bloc = this.occupe ? tx('X SYSTÈME', 'X SYSTEM') : this.bloque ? tx(`X ${this.bloque}  (Échap = Réinit)`, `X ${this.bloque}  (Esc = Reset)`) : '';
       this.etat.querySelector('[data-bloc]').textContent = bloc;
       this.etat.querySelector('[data-ins]').textContent = this.insertion ? 'INS' : '';
       this.etat.querySelector('[data-pos]').textContent = `${String(l).padStart(2, '0')}/${String(c).padStart(3, '0')}`;
