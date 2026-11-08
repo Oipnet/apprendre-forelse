@@ -23,7 +23,8 @@
 		"fflate": "^0.8.3",
 		"happy-dom": "21.0.4",
 		"marked": "^18.1.2",
-		"monaco-editor": "^0.57.0"
+		"monaco-editor": "^0.57.0",
+		"sql.js": "1.14.2"
 	},
 	"devDependencies": {
 		"@php-wasm/node": "^3.1.61",

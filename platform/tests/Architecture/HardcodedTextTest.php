@@ -22,13 +22,16 @@ final class HardcodedTextTest extends TestCase
      * - les pages juridiques, un texte que l'on fait relire tel quel : elles auront un gabarit par langue ;
      * - l'administration, l'atelier des auteurs, l'espace et l'offre des organisations (cohortes) : outils internes ou
      *   clientèle française, servis en français seulement ;
-     * - les e-mails internes, envoyés à l'administrateur de l'instance.
+     * - les e-mails internes, envoyés à l'administrateur de l'instance ;
+     * - l'atelier COBOL, un clin d'œil en français à l'informatique de gestion d'antan, dont tous les textes vivent
+     *   aussi dans ses scripts (playground/src/cobol).
      */
     private const EXCEPTIONS = [
         'legal/',
         'admin/',
         'studio/',
         'cohorte/',
+        'atelier_cobol/',
         'contact/organizations.html.twig',
         'contact/free_class.html.twig',
         '_theme_preview.html.twig',

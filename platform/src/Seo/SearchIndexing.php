@@ -32,6 +32,8 @@ final readonly class SearchIndexing
         'app_scratch_laravel',
         'app_scratch_php',
         'app_scratch_ai',
+        'app_cobol',
+        'app_cobol_terminal',
         'app_blog',
         'app_article',
         'app_legal_notice',

@@ -102,6 +102,9 @@ export default defineConfig({
 				playground: './src/entries/playground.ts',
 				sandbox: './src/entries/sandbox.ts',
 				atelier: './src/entries/atelier.ts',
+				// L'atelier COBOL (générateur de batchs dans le navigateur), page graphique et terminal 3270.
+				'cobol-atelier': './src/entries/cobol-atelier.js',
+				'cobol-terminal': './src/entries/cobol-terminal.js',
 			},
 		},
 	},

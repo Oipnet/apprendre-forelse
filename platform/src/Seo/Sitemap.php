@@ -34,6 +34,9 @@ final readonly class Sitemap
     /** Dernière révision des pages du bac à sable (textes et projets de départ du moteur). */
     public const string SCRATCH_UPDATED_AT = '2026-10-28';
 
+    /** Dernière révision des pages de l'atelier COBOL. */
+    public const string COBOL_UPDATED_AT = '2026-11-09';
+
     public function __construct(
         private ContentRepository $content,
         private PublishedContent $published,
@@ -165,6 +168,11 @@ final readonly class Sitemap
                 $entries[] = $this->entry('app_scratch_ai', ['_locale' => $locale], self::SCRATCH_UPDATED_AT);
             }
 
+            // L'atelier COBOL, en français seulement : la page graphique et le terminal.
+            if (\in_array(Exercise::LOCALE, $homes, true)) {
+                $entries[] = $this->entry('app_cobol', [], self::COBOL_UPDATED_AT);
+                $entries[] = $this->entry('app_cobol_terminal', [], self::COBOL_UPDATED_AT);
+            }
             $entries[] = $this->entry('app_organizations', [], self::PAGES_UPDATED_AT);
             if ($this->selfHosting->enabled()) {
                 $entries[] = $this->entry('app_self_hosting', [], self::PAGES_UPDATED_AT);

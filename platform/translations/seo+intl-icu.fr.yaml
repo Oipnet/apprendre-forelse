@@ -105,6 +105,15 @@ pratique:
         complement: "Un exercice court de la Pratique {framework}, à faire dans le navigateur."
         complement_court: "Exercice {framework} à faire dans le navigateur."
 
+atelier_cobol:
+    atelier:
+        titre: "Atelier COBOL : générateur de batchs dans le navigateur"
+        description: "Rubriques, enregistrement, langage structuré : le programme COBOL est généré puis exécuté dans le navigateur, base façon DB2 comprise, sans compte."
+        fil_ariane: Atelier COBOL
+    terminal:
+        titre: "Atelier COBOL en mode terminal 3270"
+        description: "Le générateur de batchs COBOL sur un écran vert de 24 lignes sur 80 : touches PF, clavier bloqué, codes action, et le programme exécuté dans le navigateur."
+        fil_ariane: Atelier COBOL, terminal
 bac_a_sable:
     index:
         titre: "Bac à sable PHP en ligne : PHP pur, Symfony et Laravel"
