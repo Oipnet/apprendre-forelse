@@ -816,16 +816,18 @@ export function generer(modele) {
     const titre = (t.titre || pgm).normalize('NFD').replace(/[^\x20-\x7e]/g, '').toUpperCase();
     src.com('Lignes de l etat');
     emettreLigneEdition(src, 'L-TITRE', [{ valeur: titre }]);
-    emettreLigneEdition(src, 'L-ENTETE', colonnes.flatMap((r, i) => [
+    // sans colonne (un état de totaux seuls, ou un traitement pas encore décrit), les lignes restent valides
+    const auMoinsUn = (champs) => (champs.length ? champs : [{ blanc: 1 }]);
+    emettreLigneEdition(src, 'L-ENTETE', auMoinsUn(colonnes.flatMap((r, i) => [
       ...(i ? [{ blanc: 2 }] : []), { valeur: libelleCol(r, largeurs[i]) },
-    ]));
-    emettreLigneEdition(src, 'L-TRAIT', [{ valeur: '-'.repeat(largeurs.reduce((a, b) => a + b, 0) + 2 * (largeurs.length - 1)) }]);
-    emettreLigneEdition(src, 'L-DETAIL', colonnes.flatMap((r, i) => {
+    ])));
+    emettreLigneEdition(src, 'L-TRAIT', [{ valeur: '-'.repeat(Math.max(1, largeurs.reduce((a, b) => a + b, 0) + 2 * (largeurs.length - 1))) }]);
+    emettreLigneEdition(src, 'L-DETAIL', auMoinsUn(colonnes.flatMap((r, i) => {
       const champ = r.type === 'X'
         ? { nom: `D-${ident(r.code)}`, pic: `X(${largeurs[i]})` }
         : { nom: `D-${ident(r.code)}`, pic: picEdition(largeurs[i] - (r.signe ? 1 : 0) - (r.decimales ? r.decimales + 1 : 0), r.decimales || 0, r.signe) };
       return [...(i ? [{ blanc: 2 }] : []), champ];
-    }));
+    })));
     const marge = (i) => '  '.repeat(i);
     const nomRupture = (r) => (r.libelle || r.code).normalize('NFD').replace(/[^\x20-\x7e]/g, '').toUpperCase();
     ruptures.forEach((r, i) => {

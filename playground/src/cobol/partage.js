@@ -24,8 +24,9 @@ async function transformer(octets, flux) {
 
 // Ce qui part dans le lien : le modèle seul (pas le contenu de la base, propre à chaque navigateur).
 function essentiel(modele) {
-  const { dictionnaire, structures, appels, traitement, sorties, tables, lignes } = normaliser(modele);
-  return { v: VERSION, dictionnaire, structures, appels, traitement, sorties, tables, lignes };
+  const { dictionnaire, structures, appels, traitement, sorties, tables, lignes, defi } = normaliser(modele);
+  // le défi relevé voyage avec le programme : celui qui ouvre le lien voit la vérification
+  return { v: VERSION, dictionnaire, structures, appels, traitement, sorties, tables, lignes, ...(defi ? { defi } : {}) };
 }
 
 export async function fragmentDe(modele) {
@@ -55,6 +56,7 @@ export async function lireFragment(hash = location.hash) {
       lignes: Array.isArray(m.lignes) ? m.lignes : [],
       // version 1 : les données du fichier unique ; version 2 : chaque fichier appelé porte les siennes
       ...(Array.isArray(m.appels) ? { appels: m.appels } : { donnees: Array.isArray(m.donnees) ? m.donnees : [] }),
+      ...(typeof m.defi === 'string' && /^\w{1,8}$/.test(m.defi) ? { defi: m.defi } : {}),
     };
     const modele = normaliser(brut);
     generer(modele); // un modèle que le générateur refuse n'est pas ouvert
@@ -96,7 +98,8 @@ export async function bandeauReception(zone) {
     }
   } catch { /* stockage indisponible */ }
   const recu = await lireFragment();
-  if (location.hash && !recu) {
+  // un lien de défi (#defi=01) a son propre bandeau (atelier.js)
+  if (location.hash.startsWith(`#${PREFIXE}`) && !recu) {
     zone.replaceChildren(texte('Ce lien de partage est abîmé ou incomplet : le programme ne peut pas être ouvert.'), bouton('Fermer', () => { oublierFragment(); zone.hidden = true; }));
     zone.hidden = false;
     return;

@@ -22,6 +22,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   fonctions générées F01, F05, F10, F20, F24, F70, F73, F76, F8E, F90 et F9099 enchaînées par GO TO, sous-fonctions
   `FffSS` / `FffSS-FN`, et **mise à jour** d'un fichier principal par des mouvements (création, modification,
   annulation, fichier résultat, compte rendu des mouvements rejetés). Les programmes et liens d'avant sont repris.
+  **Défis** : un lien `/atelier-cobol#defi=01` charge un programme à écrire et la SYSOUT attendue (celle d'une
+  solution de référence passée par GnuCOBOL) ; chaque exécution est comparée ligne à ligne, et un défi réussi s'envoie
+  par le formulaire de contact, prérempli avec le lien du programme (`/contact?defi=01&programme=…`, repris seulement
+  s'il mène à l'atelier du site). Rien n'est mesuré.
 
 ## 3.35.0 — 2026-11-06
 

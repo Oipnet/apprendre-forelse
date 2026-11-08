@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { ddlTable, exemple, exempleMiseAJour, fichierDonnees, fichiersEntree, fichiersSortie, generer, normaliser, placeFonction, type Modele } from '../src/cobol/generateur.js';
 import { Programme } from '../src/cobol/interpreteur.js';
 import { fragmentDe, lireFragment } from '../src/cobol/partage.js';
-import { cas } from './cobol/cas.js';
+import { DEFIS, comparer, defiDuFragment } from '../src/cobol/defis.js';
+import { cas, SOLUTIONS } from './cobol/cas.js';
 import references from './cobol/gnucobol.json';
 
 /**
@@ -161,5 +162,34 @@ describe('partage par lien', () => {
 		const casse: Modele = structuredClone(exemple);
 		casse.appels![0].structure = 'INCONNUE';
 		expect(await lireFragment(`#${await fragmentDe(casse)}`)).toBeNull();
+	});
+});
+
+describe('les défis du vieux', () => {
+	const attendus = references.attendus as Record<string, string>;
+	it.each(Object.keys(DEFIS))('défi %s : la SYSOUT attendue est celle de la solution de référence sous GnuCOBOL', (id) => {
+		expect(comparer(attendus[`defi ${id} : solution`], DEFIS[id].attendu)).toEqual({ reussi: true });
+		// le modèle de départ tourne, mais ne réussit pas le défi
+		expect(comparer(attendus[`defi ${id} : depart`], DEFIS[id].attendu).reussi).toBe(false);
+	});
+
+	it('compare ligne à ligne, espaces de fin ignorés, et montre la première différence', () => {
+		expect(comparer('A  \nB\n\n', 'A\nB')).toEqual({ reussi: true });
+		expect(comparer('A\nC\nD', 'A\nB\nD')).toEqual({ reussi: false, ligne: 2, attendue: 'B', obtenue: 'C' });
+		expect(comparer('A', 'A\nB')).toMatchObject({ reussi: false, ligne: 2, obtenue: '(fin de la SYSOUT)' });
+	});
+
+	it('un lien de défi désigne un défi qui existe', () => {
+		expect(defiDuFragment('#defi=01')).toBe('01');
+		expect(defiDuFragment('#defi=99')).toBeNull();
+		expect(defiDuFragment('#programme=abc')).toBeNull();
+	});
+
+	it('le défi relevé voyage avec le programme partagé, dans un lien que le formulaire de contact accepte', async () => {
+		const solution = { ...SOLUTIONS['01'](normaliser(DEFIS['01'].modele)), defi: '01' };
+		const fragment = await fragmentDe(solution);
+		const recu = await lireFragment(`#${fragment}`);
+		expect(recu?.defi).toBe('01');
+		expect(`https://apprendre.forelse.fr/atelier-cobol?utm_source=lien&utm_medium=partage&utm_campaign=atelier-cobol#${fragment}`.length).toBeLessThan(4500);
 	});
 });

@@ -21,6 +21,8 @@ export interface Modele {
   tables?: Table[];
   lignes?: Array<Record<string, string>>;
   donnees?: Array<Record<string, string>>;
+  /** le défi relevé (defis.js), qui voyage avec le programme partagé */
+  defi?: string;
 }
 export const exemple: Modele;
 export const exempleMiseAJour: Modele;

@@ -44,6 +44,7 @@ final class ContactController extends AbstractController
         if (ContactSubject::Certificate === $subject) {
             $this->attachCertificate($message, $request->query->getString('certificat'));
         }
+        $this->attachCobolChallenge($message, $request);
         $form = $this->createForm(ContactFormType::class, $message);
         if ($sent = $this->handle($form, $request)) {
             return $sent;
@@ -120,6 +121,26 @@ final class ContactController extends AbstractController
         if (null === $message->getMessage()) {
             $message->setMessage($this->translator->trans('contact.index.contestation', ['code' => $certificate->getCode(), 'parcours' => $certificate->getTrackTitle(), 'motif' => $certificate->getRevocationReason() ?? '—'], 'compte')."\n\n");
         }
+    }
+
+    /**
+     * Envoyer un défi de l'atelier COBOL relevé : le message commence par le numéro du défi et le lien du programme.
+     * Seul un lien vers l'atelier de ce site est repris, pour qu'une adresse forgée ne glisse pas un autre texte.
+     */
+    private function attachCobolChallenge(ContactMessage $message, Request $request): void
+    {
+        $challenge = $request->query->getString('defi');
+        $link = $request->query->getString('programme');
+        if (!preg_match('/^\d{2}$/', $challenge) || null !== $message->getMessage() || \strlen($link) > 4500) {
+            return;
+        }
+        $url = parse_url($link);
+        $atelier = [$this->generateUrl('app_cobol'), $this->generateUrl('app_cobol_terminal')];
+        if (false === $url || ($url['host'] ?? null) !== $request->getHost() || !\in_array($url['path'] ?? null, $atelier, true) || !str_starts_with($url['fragment'] ?? '', 'programme=')) {
+            return;
+        }
+        $message->setSubject(ContactSubject::Other);
+        $message->setMessage($this->translator->trans('contact.index.defi_cobol', ['defi' => $challenge, 'lien' => $link], 'compte')."\n\n");
     }
 
     /** @param FormInterface<ContactMessage> $form */

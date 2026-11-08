@@ -53,6 +53,25 @@ final class ContactTest extends WebTestCase
         $this->assertSelectorTextContains('.flash', 'Message envoyé');
     }
 
+    /** Un défi de l'atelier COBOL relevé : le message commence par le défi et le lien du programme, s'il mène à l'atelier. */
+    public function testUnDefiCobolArriveAvecLeLienDuProgramme(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $lien = 'http://localhost/atelier-cobol?utm_source=lien#programme=abc_-123';
+        $client->request('GET', '/contact?'.http_build_query(['objet' => 'autre', 'defi' => '01', 'programme' => $lien]));
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('select#contact_form_subject option[value="autre"][selected]');
+        $this->assertSelectorTextContains('textarea#contact_form_message', 'défi n°01');
+        $this->assertSelectorTextContains('textarea#contact_form_message', $lien);
+
+        foreach (['https://ailleurs.example/atelier-cobol#programme=abc', 'http://localhost/contact#programme=abc', 'http://localhost/atelier-cobol#autre'] as $autre) {
+            $client->request('GET', '/contact?'.http_build_query(['defi' => '01', 'programme' => $autre]));
+            $this->assertSelectorTextNotContains('textarea#contact_form_message', 'défi', 'Seul un lien vers l\'atelier du site est repris : '.$autre);
+        }
+    }
+
     /** La page de contact anglaise : textes, objets et erreurs en anglais ; le message arrive dans la même boîte. */
     public function testLaPageDeContactExisteEnAnglais(): void
     {

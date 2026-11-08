@@ -101,3 +101,14 @@ pre.brut { margin: 0; font: 12px/1.5 var(--f-code); background: var(--papier); p
 .partage[hidden] { display: none; }
 .partage p { margin: 0; flex: 1 1 32ch; }
 .partage input { flex: 1 1 40ch; min-width: 0; font: 0.8rem var(--f-code); padding: 7px 8px; border: 1px solid var(--trait); border-radius: 4px; background: var(--surface); color: var(--encre); }
+.defi { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid var(--accent); background: var(--accent-fond); border-radius: 6px; }
+.defi[hidden] { display: none; }
+.defi h2 { margin: 0; font-size: 1.05rem; }
+.defi p, .defi ol { margin: 0; }
+.defi ol { padding-left: 1.4em; }
+.defi summary { cursor: pointer; }
+.defi .sysout { max-height: 22em; overflow: auto; }
+.defi .verdict { font-weight: 600; }
+.defi .verdict code { font: 0.85rem var(--f-code); white-space: pre; background: var(--surface); padding: 1px 4px; border-radius: 3px; }
+.defi .verdict.reussi { color: var(--ok, inherit); }
+.defi .actions { display: flex; flex-wrap: wrap; gap: 8px; }

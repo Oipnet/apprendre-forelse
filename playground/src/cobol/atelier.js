@@ -3,10 +3,12 @@ import {
   normaliser, UTILISATIONS, MOUVEMENT_DEFAUT, estMiseAJour, appelEdite, fonctionsGenerees, MAX_RUPTURES, verifierTables, OPERATEURS_BASE,
 } from './generateur.js';
 import { Programme } from './interpreteur.js';
-import { bandeauReception, montrerLien } from './partage.js';
+import { bandeauReception, montrerLien, lienDe, oublierFragment } from './partage.js';
+import { DEFIS, defiDuFragment, comparer } from './defis.js';
 import { ouvrirBase, sauverBase, synchroniser, contenuTable, viderTable, formaterValeur } from './base.js';
 
 const CLE = 'atelier-cobol-modele-v1';
+const CLE_PRECEDENT = 'atelier-cobol-modele-precedent';
 let modele;
 try { modele = JSON.parse(localStorage.getItem(CLE)) || null; } catch { modele = null; }
 if (!modele?.dictionnaire) modele = structuredClone(exemple);
@@ -488,7 +490,75 @@ function surligner(ligne) {
 $('#executer').addEventListener('click', executer);
 
 bandeauReception(document.getElementById('bandeau-partage'));
+defis();
 document.getElementById('partager')?.addEventListener('click', () => montrerLien(document.getElementById('lien-partage'), modele));
+
+// ================= Les défis du vieux =================
+// Un lien #defi=01 propose de charger le modèle du défi ; ensuite, chaque exécution compare la SYSOUT à l'attendue.
+function defis() {
+  const bandeau = document.getElementById('bandeau-partage');
+  const id = defiDuFragment();
+  if (id && id === modele.defi) oublierFragment();
+  else if (id) {
+    const d = DEFIS[id];
+    bandeau.replaceChildren(
+      el('p', {}, `Défi n°${id} : ${d.titre}. Le relever remplace votre programme, qui reste récupérable.`),
+      el('button', { class: 'bouton principal', type: 'button', onclick: () => {
+        try {
+          const actuel = localStorage.getItem(CLE);
+          if (actuel && !JSON.parse(actuel).defi) localStorage.setItem(CLE_PRECEDENT, actuel);
+          localStorage.setItem(CLE, JSON.stringify({ ...structuredClone(d.modele), defi: id }));
+        } catch {
+          bandeau.replaceChildren(el('p', {}, 'Votre navigateur bloque le stockage local : impossible d\'ouvrir le défi ici.'));
+          return;
+        }
+        oublierFragment();
+        location.reload();
+      } }, 'Relever le défi'),
+      el('button', { class: 'bouton', type: 'button', onclick: () => { oublierFragment(); bandeau.hidden = true; } }, 'Plus tard'),
+    );
+    bandeau.hidden = false;
+  }
+  const d = DEFIS[modele.defi];
+  const zone = document.getElementById('defi');
+  if (!d || !zone) return;
+  const verdict = el('p', { class: 'verdict', role: 'status' }, 'Exécutez votre programme : la SYSOUT est comparée à celle attendue.');
+  const actions = el('div', { class: 'actions' });
+  const quitter = el('button', { class: 'bouton', type: 'button', onclick: () => {
+    let precedent = null;
+    try { precedent = localStorage.getItem(CLE_PRECEDENT); } catch {}
+    if (precedent) { try { localStorage.setItem(CLE, precedent); localStorage.removeItem(CLE_PRECEDENT); } catch {} location.reload(); return; }
+    delete modele.defi; sauver(); zone.hidden = true;
+  } }, 'Quitter le défi');
+  zone.replaceChildren(
+    el('h2', {}, `Défi n°${modele.defi} : ${d.titre}`),
+    el('p', {}, d.enonce[0]),
+    el('ol', {}, ...d.enonce.slice(1, -1).map((x) => el('li', {}, x))),
+    el('p', {}, d.enonce.at(-1)),
+    el('details', {}, el('summary', {}, 'Voir la SYSOUT attendue'), el('pre', { class: 'sysout' }, d.attendu)),
+    verdict, actions,
+  );
+  actions.append(quitter);
+  zone.hidden = false;
+  document.addEventListener('atelier:execute', ({ detail }) => {
+    actions.replaceChildren(quitter);
+    verdict.className = 'verdict';
+    if (detail.sortie === null) { verdict.textContent = 'Le programme s\'arrête en erreur : corrigez-le, puis exécutez-le à nouveau.'; return; }
+    const r = comparer(detail.sortie, d.attendu);
+    if (!r.reussi) {
+      verdict.replaceChildren(`Pas encore. Ligne ${r.ligne}, attendu : `, el('code', {}, r.attendue || '(ligne vide)'), ', obtenu : ', el('code', {}, r.obtenue || '(ligne vide)'), '.');
+      return;
+    }
+    verdict.className = 'verdict reussi';
+    verdict.textContent = 'Défi réussi ✓ Votre SYSOUT est identique à celle attendue.';
+    actions.prepend(el('button', { class: 'bouton principal', type: 'button', onclick: async () => {
+      const lien = await lienDe(modele);
+      const url = new URL(zone.dataset.contact || '/contact', location.origin);
+      url.search = new URLSearchParams({ objet: 'autre', defi: modele.defi, programme: lien }).toString();
+      location.href = url.href;
+    } }, 'Envoyer ma solution'));
+  });
+}
 
 afficher();
 regenerer();
