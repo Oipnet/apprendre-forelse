@@ -35,7 +35,7 @@ final readonly class Sitemap
     public const string SCRATCH_UPDATED_AT = '2026-10-28';
 
     /** Dernière révision des pages de l'atelier COBOL. */
-    public const string COBOL_UPDATED_AT = '2026-11-09';
+    public const string COBOL_UPDATED_AT = '2026-11-08';
 
     public function __construct(
         private ContentRepository $content,
