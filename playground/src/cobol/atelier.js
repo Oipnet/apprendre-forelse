@@ -1,10 +1,11 @@
 import {
-  exemple, exempleMiseAJour, generer, fichiersEntree, operateurs, longueurFichier, picStockage, analyserLignes, placeFonction,
+  exemple, exempleMiseAJour, exempleEtat, generer, fichiersEntree, operateurs, longueurFichier, picStockage, analyserLignes, placeFonction,
   normaliser, zonesTraitees, UTILISATIONS, MOUVEMENT_DEFAUT, estMiseAJour, appelEdite, fonctionsGenerees, MAX_RUPTURES, verifierTables, OPERATEURS_BASE,
 } from './generateur.js';
 import { Programme } from './interpreteur.js';
 import { bandeauReception, montrerLien, lienDe, oublierFragment } from './partage.js';
 import { DEFIS, defiDuFragment, comparer } from './defis.js';
+import { TYPES_LIGNE, MODES_REMPLISSAGE, ETAT_DEFAUT, listing } from './etats.js';
 import { ouvrirBase, sauverBase, synchroniser, contenuTable, viderTable, formaterValeur } from './base.js';
 
 const CLE = 'atelier-cobol-modele-v1';
@@ -15,6 +16,7 @@ if (!modele?.dictionnaire) modele = structuredClone(exemple);
 modele.sorties ||= [];
 modele.lignes ||= [];
 modele.tables ||= [];
+modele.etats ||= [];
 // opérateurs de base de la première v0.5 -> opérateur SQL de Pacbase
 { const anciens = { INS: 'W', LEC: 'R', MAJ: 'RW', SUP: 'D', OUV: 'P', SUI: 'RN', FER: 'CL' };
   for (const l of modele.lignes) { const a = anciens[(l.ope || '').toUpperCase()]; if (a) { l.opes = `${(l.opes || '').trim()} ${a}`; l.ope = 'SQL'; } } }
@@ -60,6 +62,8 @@ function nettoyer() {
   const p = appel('P');
   for (const a of modele.appels) {
     if (a.utilisation === 'R') { a.structure = p?.structure; continue; }
+    // fichier d'impression : pas d'enregistrement, l'argument est la lettre de l'état
+    if (a.utilisation === 'I') { delete a.structure; a.argument = (a.argument || []).slice(0, 1); continue; }
     const s = structDe(a.structure) || modele.structures[0];
     a.structure = s?.code;
     const dansS = new Set(s?.rubriques || []);
@@ -162,15 +166,18 @@ function vueStruct() {
 }
 
 // ---------- Appel des fichiers ----------
+const impressions = () => modele.appels.filter((a) => a.utilisation === 'I');
 function passerEnMiseAJour() {
+  const garder = impressions();
   const s = modele.structures[0];
   const p = { code: 'MA', utilisation: 'P', structure: s.code, fichier: 'PRINCIPAL.DAT', argument: s.rubriques.slice(0, 1), synchro: 1, donnees: [] };
   const m = { code: 'MV', utilisation: 'M', structure: modele.structures[1]?.code || s.code, fichier: 'MOUVEMENTS.DAT', argument: s.rubriques.slice(0, 1), synchro: 1, mouvement: { ...MOUVEMENT_DEFAUT, rubrique: '' }, donnees: [] };
-  modele.appels = [p, m, { code: 'MR', utilisation: 'R', fichier: 'RESULTAT.DAT' }];
+  modele.appels = [p, m, { code: 'MR', utilisation: 'R', fichier: 'RESULTAT.DAT' }, ...garder];
 }
 function passerEnEdition() {
+  const garder = impressions();
   const p = appel('P') || modele.appels[0];
-  modele.appels = [{ code: 'FA', utilisation: 'C', structure: p?.structure || modele.structures[0].code, fichier: p?.fichier || 'ENTREE.DAT', argument: [], rupture: 0, donnees: p?.donnees || [] }];
+  modele.appels = [{ code: 'FA', utilisation: 'C', structure: p?.structure || modele.structures[0].code, fichier: p?.fichier || 'ENTREE.DAT', argument: [], rupture: 0, donnees: p?.donnees || [] }, ...garder];
 }
 function vueAppels() {
   const maj = estMiseAJour(modele);
@@ -195,8 +202,22 @@ function vueAppels() {
   };
   const blocs = modele.appels.map((a) => {
     const tete = el('div', { class: 'ligne-champs', style: 'grid-template-columns: 4em minmax(0,1fr) minmax(0,1fr); align-items:end' },
-      champCode(a), a.utilisation === 'R' ? el('span', { class: 'aide' }, `Enregistrement : celui du principal (${p?.structure || '?'})`) : champStruct(a), champFichier(a));
+      champCode(a), a.utilisation === 'R' ? el('span', { class: 'aide' }, `Enregistrement : celui du principal (${p?.structure || '?'})`)
+        : a.utilisation === 'I' ? el('label', { class: 'champ' }, 'Argument : lettre de l\'état', el('input', { class: 'code', value: a.argument[0] || '', maxlength: 1, style: 'width:3em', onchange: (e) => {
+          const ancien = a.code + (a.argument[0] || '');
+          a.argument = [e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')].filter(Boolean);
+          const et = modele.etats.find((x) => x.code === ancien);
+          if (et && a.argument[0]) et.code = a.code + a.argument[0];
+          changer(true);
+        } }))
+        : champStruct(a), champFichier(a));
     const corps = [];
+    if (a.utilisation === 'I') corps.push(el('p', { class: 'aide' }, `L'état ${a.code}${a.argument[0] || '?'} se décrit dans l'onglet États. Le programme l'écrit dans ${a.fichier}, avec ses sauts de ligne et de page.`),
+      el('div', { class: 'actions' }, el('button', { class: 'bouton', type: 'button', onclick: () => {
+        if (!confirm(`Retirer le fichier d'impression ${a.code} et son état ?`)) return;
+        modele.etats = modele.etats.filter((x) => x.code !== a.code + (a.argument[0] || ''));
+        modele.appels.splice(modele.appels.indexOf(a), 1); changer(true);
+      } }, `Retirer ${a.code}`)));
     if (a.utilisation === 'C') {
       corps.push(argument(a, 'Ruptures, de la plus large à la plus fine', 'Le fichier est trié sur ces rubriques ; un sous-total est imprimé à chaque changement (RTPn, RTDn, ' + `${a.code}-PEn, ${a.code}-DEn).`));
     }
@@ -218,13 +239,15 @@ function vueAppels() {
   });
   const exemples = el('div', { class: 'actions' }, 'Repartir d\'un exemple :',
     el('button', { class: 'bouton', type: 'button', onclick: () => { if (confirm('Remplacer votre programme par l\'exemple d\'édition ?')) { modele = normaliser(structuredClone(exemple)); structCourante = 0; appelDonnees = null; sourceModifie = false; changer(true); } } }, 'édition par région'),
-    el('button', { class: 'bouton', type: 'button', onclick: () => { if (confirm('Remplacer votre programme par l\'exemple de mise à jour ?')) { modele = normaliser(structuredClone(exempleMiseAJour)); structCourante = 0; appelDonnees = null; sourceModifie = false; changer(true); } } }, 'mise à jour des clients'));
+    el('button', { class: 'bouton', type: 'button', onclick: () => { if (confirm('Remplacer votre programme par l\'exemple de mise à jour ?')) { modele = normaliser(structuredClone(exempleMiseAJour)); structCourante = 0; appelDonnees = null; sourceModifie = false; changer(true); } } }, 'mise à jour des clients'),
+    el('button', { class: 'bouton', type: 'button', onclick: () => { if (confirm('Remplacer votre programme par l\'exemple d\'état ?')) { modele = normaliser(structuredClone(exempleEtat)); structCourante = 0; appelDonnees = null; sourceModifie = false; changer(true); } } }, 'état par région'));
   return [
     el('p', { class: 'aide' }, 'L\'appel des fichiers du programme. Chaque fichier a un code de deux caractères qui préfixe ses zones : CL00-NOMCLI pour la zone lue, 1-CL00-NOMCLI pour l\'enregistrement traité quand le fichier a des ruptures (CL00 est alors le suivant, lu d\'avance), CL-FT à la fin du fichier.'),
     el('div', { class: 'cases', style: 'display:grid;grid-template-columns:1fr;gap:4px' },
       el('label', {}, el('input', { type: 'radio', name: 'genre', style: 'width:auto', checked: !maj, onchange: () => { passerEnEdition(); changer(true); } }), 'Édition : un fichier consulté (C), un état'),
       el('label', {}, el('input', { type: 'radio', name: 'genre', style: 'width:auto', checked: maj, onchange: () => { passerEnMiseAJour(); changer(true); } }), 'Mise à jour : principal (P) + mouvements (M) → résultat (R)')),
     ...blocs,
+    impressions().length ? null : el('div', { class: 'actions' }, el('button', { class: 'bouton', type: 'button', onclick: () => { ajouterEtat(); vue = 'etats'; changer(true); } }, 'Ajouter un fichier d\'impression (état)')),
     exemples,
   ];
 }
@@ -244,17 +267,19 @@ function vueTrt() {
     el('select', { 'aria-label': 'Opérateur', onchange: (e) => { f.op = e.target.value; changer(); } }, operateurs.map((o) => el('option', { value: o, selected: o === f.op }, o))),
     el('input', { value: f.valeur, 'aria-label': 'Valeur', oninput: (e) => { f.valeur = e.target.value; changer(); } }),
     el('button', { class: 'mini', type: 'button', 'aria-label': 'Supprimer le filtre', onclick: () => { t.filtres.splice(i, 1); changer(true); } }, '×')));
+  const avecEtat = impressions().length > 0;
   const etat = maj ? [
     el('p', { class: 'aide' }, 'Un programme de mise à jour n\'imprime pas d\'état : il écrit le fichier résultat et un compte rendu (mouvements rejetés, nombre de créations, modifications et annulations).'),
   ] : [
     el('fieldset', {}, el('legend', {}, 'Filtres (tous vrais)'), filtres,
       el('div', { class: 'actions' }, el('button', { class: 'bouton', type: 'button', disabled: !s.rubriques.length, onclick: () => { t.filtres.push({ rubrique: s.rubriques[0], op: '=', valeur: '' }); changer(true); } }, 'Ajouter un filtre'))),
     el('p', { class: 'aide' }, 'Les ruptures se déclarent à l\'appel du fichier (onglet Fichiers).'),
+    ...(avecEtat ? [el('p', { class: 'aide' }, `L'état ${impressions().map((a) => a.code + (a.argument[0] || '')).join(', ')} se décrit dans l'onglet États. Sans état, le programme imprime une édition simplifiée sur la SYSOUT, réglée ici par des colonnes et des totaux.`)] : [
     el('fieldset', {}, el('legend', {}, 'Colonnes de l\'état'), cases(s.rubriques, t.colonnes),
       el('div', { class: 'cases' },
         el('label', {}, el('input', { type: 'checkbox', checked: t.detail, onchange: (e) => { t.detail = e.target.checked; changer(); } }), 'imprimer le détail'),
         el('label', {}, el('input', { type: 'checkbox', checked: t.compter, onchange: (e) => { t.compter = e.target.checked; changer(); } }), 'compter les lignes'))),
-    el('fieldset', {}, el('legend', {}, 'Totaux'), numeriques(s).length ? cases(numeriques(s), t.totaux) : el('p', { class: 'aide' }, 'Aucune rubrique numérique dans l\'enregistrement.')),
+    el('fieldset', {}, el('legend', {}, 'Totaux'), numeriques(s).length ? cases(numeriques(s), t.totaux) : el('p', { class: 'aide' }, 'Aucune rubrique numérique dans l\'enregistrement.'))]),
   ];
   const dd = (appelEdite(modele) || appel('P'))?.code || 'FA';
   return [
@@ -274,6 +299,89 @@ function vueTrt() {
   ];
 }
 
+// ---------- États (-L libellés, -CE structures, -D composition) ----------
+function ajouterEtat() {
+  const pris = new Set(modele.appels.map((a) => a.code));
+  const dd = ['ET', 'IM', 'EA', 'EB'].find((c) => !pris.has(c)) || 'EZ';
+  modele.appels.push({ code: dd, utilisation: 'I', fichier: 'ETAT.TXT', argument: ['1'] });
+  if (!modele.etats.some((x) => x.code === `${dd}1`)) {
+    modele.etats.push({ code: `${dd}1`, nom: modele.traitement.titre || 'ETAT', longueur: 80, lignesPage: 60, postes: 100,
+      libelles: [{ numero: '01', texte: (modele.traitement.titre || 'ETAT').toUpperCase() }], structures: [], categories: [{ ct: 'AA', nlg: '100', lb: '01', saut: '01', sautType: '*', condition: `5-${dd}00-1CL NOT < 5-${dd}00-1CLM` }] });
+  }
+}
+// Table de saisie : une ligne par objet, une colonne par champ ({ k, titre, l : largeur en caractères, code : majuscules, liste }).
+function grille(lignes, colonnes, legende) {
+  const rangs = lignes.map((l, i) => el('tr', {}, colonnes.map((c) => el('td', {}, c.liste
+    ? el('select', { 'aria-label': `${c.titre}, ligne ${i + 1}`, style: 'min-width:5.5ch;font-family:var(--f-code);font-size:.85rem', onchange: (e) => { l[c.k] = e.target.value; changer(); } },
+      Object.entries(c.liste).map(([v, t]) => el('option', { value: v, selected: String(l[c.k] ?? '') === v, title: t }, v || '·')))
+    : el('input', { value: l[c.k] ?? '', 'aria-label': `${c.titre}, ligne ${i + 1}`, class: c.code ? 'code' : '', maxlength: c.max, style: `width:calc(${c.l}ch + 22px);font-family:var(--f-code);font-size:.85rem`,
+      oninput: (e) => { const v = c.code ? e.target.value.toUpperCase() : e.target.value; l[c.k] = c.nombre ? (v === '' ? '' : Number(v)) : v; changer(); } }))),
+    el('td', {}, el('button', { class: 'mini', type: 'button', 'aria-label': `Supprimer la ligne ${i + 1} (${legende})`, onclick: () => { lignes.splice(i, 1); changer(true); } }, '×'))));
+  return el('div', { class: 'table-defile' }, el('table', {},
+    el('thead', {}, el('tr', {}, colonnes.map((c) => el('th', { title: c.aide || '' }, c.titre)), el('th', {}, ''))),
+    el('tbody', {}, rangs)));
+}
+function vueEtats() {
+  const imp = impressions();
+  if (!imp.length) return [
+    el('p', { class: 'aide' }, 'Un état s\'imprime dans un fichier d\'impression (utilisation I). Il se décrit comme au manuel : des libellés numérotés (les lignes fixes), des structures (les rubriques à placer sur une ligne et d\'où elles viennent), puis la composition : des catégories de lignes, éditées chacune sous sa condition.'),
+    el('p', { class: 'aide' }, 'Sans état, le programme d\'édition imprime une édition simplifiée sur la SYSOUT (onglet Traitement).'),
+    el('div', { class: 'actions' },
+      el('button', { class: 'bouton', type: 'button', onclick: () => { ajouterEtat(); changer(true); } }, 'Ajouter un état'),
+      el('button', { class: 'bouton', type: 'button', onclick: () => { if (confirm('Remplacer votre programme par l\'exemple d\'état ?')) { modele = normaliser(structuredClone(exempleEtat)); structCourante = 0; appelDonnees = null; sourceModifie = false; changer(true); } } }, 'Repartir de l\'exemple d\'état')),
+  ];
+  return imp.flatMap((a) => {
+    const code = a.code + (a.argument[0] || '');
+    let et = modele.etats.find((x) => x.code === code);
+    if (!et) return [el('p', { class: 'message erreur' }, `L'état ${code} n'est pas décrit.`), el('div', { class: 'actions' }, el('button', { class: 'bouton', type: 'button', onclick: () => { modele.etats.push({ code, nom: code, libelles: [], structures: [], categories: [] }); changer(true); } }, `Décrire l'état ${code}`))];
+    et.libelles ||= []; et.structures ||= []; et.categories ||= [];
+    const L = Number(et.longueur || ETAT_DEFAUT.longueur);
+    const nombre = (k, titre, min, max, aide) => el('label', { class: 'champ', title: aide }, titre, el('input', { class: 'code', type: 'number', min, max, value: et[k] ?? ETAT_DEFAUT[k], onchange: (e) => { et[k] = Number(e.target.value); changer(true); } }));
+    const regle = Array.from({ length: L }, (_, i) => ((i + 1) % 10 === 0 ? String((i + 1) / 10 % 10) : (i + 1) % 5 === 0 ? '+' : '.')).join('');
+    const libelles = et.libelles.map((l, i) => el('div', { style: 'display:flex;gap:6px;align-items:center' },
+      el('span', { class: 'code', style: 'width:2ch;font-size:.85rem' }, String(i + 1).padStart(2, '0')),
+      el('input', { value: l.texte, maxlength: L, 'aria-label': `Libellé ${i + 1}`, style: `font-family:var(--f-code);font-size:.85rem;padding-left:8px;padding-right:8px;width:calc(${L}ch + 18px);max-width:100%`, oninput: (e) => { l.texte = e.target.value; changer(); } }),
+      i === et.libelles.length - 1 ? el('button', { class: 'mini', type: 'button', 'aria-label': `Supprimer le libellé ${i + 1}`, onclick: () => { et.libelles.pop(); changer(true); } }, '×') : null));
+    et.libelles.forEach((l, i) => { l.numero = String(i + 1).padStart(2, '0'); });
+    const modes = { '': '', ...MODES_REMPLISSAGE };
+    const types = Object.fromEntries(Object.entries(TYPES_LIGNE).map(([k, v]) => [k, v]));
+    return [
+      el('p', { class: 'aide' }, `État ${code}, imprimé dans ${a.fichier} : la fonction F8${a.argument[0] || '?'} du programme. Les compteurs 5-${a.code}00-${a.argument[0] || 'e'}CL (ligne dans la page), CLM (lignes par page), CP (page) et CE (lignes écrites) servent dans les conditions et les sources ; CATX est la catégorie en cours d'édition.`),
+      el('fieldset', {}, el('legend', {}, 'Caractéristiques (-D)'),
+        el('div', { class: 'ligne-champs', style: 'grid-template-columns: minmax(0,2fr) repeat(3, minmax(0,1fr)); align-items:end' },
+          el('label', { class: 'champ' }, 'Nom', el('input', { value: et.nom || '', oninput: (e) => { et.nom = e.target.value; changer(); } })),
+          nombre('longueur', 'Longueur de ligne', 1, 264),
+          nombre('lignesPage', 'Lignes par page', 1, 99),
+          nombre('postes', 'Postes catégories', 0, 999, '0 : chaque ligne est éditée tout de suite (édition directe) ; sinon, les catégories sont chargées puis éditées')),
+        el('label', { class: 'champ' }, 'Condition d\'édition de l\'état (COBOL, sans IF ni point)', el('input', { class: 'code', value: et.condition || '', oninput: (e) => { et.condition = e.target.value.toUpperCase(); changer(); } }))),
+      el('fieldset', {}, el('legend', {}, 'Libellés (-L)'),
+        el('p', { class: 'aide' }, 'Les lignes fixes, numérotées de 01 sans trou : seul le dernier se supprime, comme au manuel (les catégories désignent les libellés par leur numéro).'),
+        el('pre', { class: 'brut', 'aria-hidden': 'true', style: 'margin:0 0 0 calc(2ch + 6px + 9px);padding:0;border:0;background:none;font-family:var(--f-code);font-size:.85rem;overflow:hidden' }, regle),
+        ...libelles,
+        el('div', { class: 'actions' }, el('button', { class: 'bouton', type: 'button', onclick: () => { et.libelles.push({ numero: '', texte: '' }); changer(true); } }, 'Ajouter un libellé'))),
+      el('fieldset', {}, el('legend', {}, 'Structures (-CE)'),
+        el('p', { class: 'aide' }, 'Les rubriques d\'une ligne : structure (01, 02…), rubrique, colonne de début, mode (M mouvement, T à totaliser, + ou R calcul, U par vous), puis la source : W le type de zone (blanc FD, 1 traitement, 2 mise à jour, 5 compteurs, * expression libre) et FFNNRUBRIQ (fichier, segment, rubrique ; un littéral entre quotes). Une ligne suite (*) porte une opération (+ - * /) ou la suite de la condition. Une rubrique hors dictionnaire prend un format (ZZ9, X(10)…).'),
+        grille(et.structures, [
+          { k: 'st', titre: 'ST', l: 2, max: 2, code: true }, { k: 'rubrique', titre: 'Rubrique', l: 6, max: 6, code: true },
+          { k: 'suite', titre: 'S', l: 1, max: 1, aide: '* : ligne suite' }, { k: 'debut', titre: 'Déb.', l: 3, max: 3, nombre: true },
+          { k: 'mode', titre: 'O', liste: modes }, { k: 'w', titre: 'W', l: 1, max: 1, code: true },
+          { k: 'source', titre: 'Source', l: 14, code: false }, { k: 'indice', titre: 'Ind.', l: 4, max: 6, code: true },
+          { k: 'condition', titre: 'Condition', l: 22 }, { k: 'format', titre: 'Format', l: 10, max: 30, code: true },
+        ], 'structures'),
+        el('div', { class: 'actions' }, el('button', { class: 'bouton', type: 'button', onclick: () => { const d = et.structures.at(-1); et.structures.push({ st: d?.st || '01', rubrique: '', debut: '', mode: '', w: '1', source: '' }); changer(true); } }, 'Ajouter une rubrique'))),
+      el('fieldset', {}, el('legend', {}, 'Composition (-D) : catégories'),
+        el('p', { class: 'aide' }, 'Une catégorie (2 caractères) regroupe des lignes éditées sous la même condition, dans l\'ordre des codes (les lettres avant les chiffres). Chaque ligne : numéro, type (blanc, I itérative, A / Z en-tête et fin de page, * ligne détail totalisée, T détail jamais éditée, 0 total général, 1 à 3 total de rupture), répétitions (I), structure, libellé, saut avant la ligne (00 surimpression, * saut absolu : nouvelle page à 01), traitement à exécuter avant (une de vos fonctions), condition.'),
+        grille(et.categories, [
+          { k: 'ct', titre: 'CT', l: 2, max: 2, code: true }, { k: 'nlg', titre: 'NLG', l: 3, max: 3, code: true },
+          { k: 'type', titre: 'T', liste: types }, { k: 'car', titre: 'CAR', l: 3, max: 30, code: true, aide: 'répétitions d\'une catégorie itérative : nombre ou indice' },
+          { k: 'st', titre: 'ST', l: 2, max: 2, code: true }, { k: 'lb', titre: 'LB', l: 2, max: 2, code: true },
+          { k: 'saut', titre: 'SAU', l: 2, max: 2, code: true }, { k: 'sautType', titre: '*', l: 1, max: 1, aide: '* : saut absolu' },
+          { k: 'fosf', titre: 'FOSF', l: 4, max: 4, code: true }, { k: 'condition', titre: 'Condition', l: 26 },
+        ], 'catégories'),
+        el('div', { class: 'actions' }, el('button', { class: 'bouton', type: 'button', onclick: () => { const d = et.categories.at(-1); et.categories.push({ ct: d?.ct || 'AA', nlg: String(Number(d?.nlg || 90) + 10).padStart(3, '0'), saut: '01' }); changer(true); } }, 'Ajouter une ligne'))),
+    ];
+  });
+}
 function vueSpe() {
   const lignes = modele.lignes;
   const champ = (l, k, attrs = {}) => el('input', { value: l[k] ?? '', 'aria-label': k, ...attrs, oninput: (e) => { l[k] = attrs.class === 'code' ? e.target.value.toUpperCase() : e.target.value; changer(); majInfos(); } });
@@ -351,7 +459,7 @@ function vueBase() {
 }
 
 // Données : un onglet par fichier lu (le résultat est produit par le programme).
-const appelsLus = () => modele.appels.filter((a) => a.utilisation !== 'R');
+const appelsLus = () => modele.appels.filter((a) => a.utilisation !== 'R' && a.utilisation !== 'I');
 function contenuBrut(a) {
   const f = fichiersEntree(modele);
   return f[a.fichier] || '(vide)';
@@ -393,7 +501,7 @@ function majBrut() {
 
 function afficher() {
   const v = $('#vue');
-  v.replaceChildren(...({ dico: vueDico, struct: vueStruct, cd: vueAppels, trt: vueTrt, spe: vueSpe, don: vueDon, base: vueBase }[vue])());
+  v.replaceChildren(...({ dico: vueDico, struct: vueStruct, cd: vueAppels, trt: vueTrt, etats: vueEtats, spe: vueSpe, don: vueDon, base: vueBase }[vue])());
   majInfos();
   document.querySelectorAll('.onglets button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.vue === vue)));
 }
@@ -475,11 +583,15 @@ async function executer() {
     document.dispatchEvent(new CustomEvent('atelier:execute', { detail: { sortie: null, modele } }));
   }
   if (!(fichierAffiche in derniersFichiers)) fichierAffiche = 'SYSOUT';
+  // un état imprimé se montre d'abord (la SYSOUT reste à un clic)
+  const etat = impressions().find((x) => x.fichier in derniersFichiers);
+  if (etat && fichierAffiche === 'SYSOUT' && !derniersFichiers.SYSOUT.trim()) fichierAffiche = etat.fichier;
   afficherFichiers();
 }
 function afficherFichiers() {
   $('#fichiers').replaceChildren(...Object.keys(derniersFichiers).map((nom) => el('button', { class: 'bouton', type: 'button', 'aria-pressed': String(nom === fichierAffiche), onclick: () => { fichierAffiche = nom; afficherFichiers(); } }, nom)));
-  $('#sysout').textContent = derniersFichiers[fichierAffiche] ?? '';
+  const t = derniersFichiers[fichierAffiche] ?? '';
+  $('#sysout').textContent = impressions().some((x) => x.fichier === fichierAffiche) ? listing(t) : t;
 }
 function surligner(ligne) {
   const lignes = zoneSource.value.split('\n');

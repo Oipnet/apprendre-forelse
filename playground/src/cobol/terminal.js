@@ -1,9 +1,10 @@
 import { Ecran3270, COLONNES } from './terminal3270.js';
 import {
-  exemple, exempleMiseAJour, generer, fichiersEntree, fichiersSortie, longueurFichier, picStockage, operateurs, MAX_RUPTURES, analyserLignes,
+  exemple, exempleMiseAJour, exempleEtat, generer, fichiersEntree, fichiersSortie, longueurFichier, picStockage, operateurs, MAX_RUPTURES, analyserLignes,
   OPERATEURS_STRUCTURES, verifierTables, normaliser, zonesTraitees, UTILISATIONS, MOUVEMENT_DEFAUT, estMiseAJour, appelEdite, fonctionsGenerees, comparerCodes,
 } from './generateur.js';
 import { Programme } from './interpreteur.js';
+import { ETAT_DEFAUT, listing } from './etats.js';
 import { bandeauReception, montrerLien } from './partage.js';
 import { ouvrirBase, sauverBase, synchroniser, contenuTable, viderTable, reinitialiserBase, formaterValeur } from './base.js';
 
@@ -14,6 +15,7 @@ if (!modele?.dictionnaire) modele = structuredClone(exemple);
 modele.sorties ||= [];
 modele.lignes ||= [];
 modele.tables ||= [];
+modele.etats ||= [];
 // opérateurs de base de la première v0.5 -> opérateur SQL de Pacbase
 { const anciens = { INS: 'W', LEC: 'R', MAJ: 'RW', SUP: 'D', OUV: 'P', SUI: 'RN', FER: 'CL' };
   for (const l of modele.lignes) { const a = anciens[(l.ope || '').toUpperCase()]; if (a) { l.opes = `${(l.opes || '').trim()} ${a}`; l.ope = 'SQL'; } } }
@@ -36,7 +38,7 @@ const structureLue = () => structDe((appelEdite(modele) || appel('P') || modele.
 // enregistrement affiché par l'écran E (E code pour en choisir un autre) et fichier de l'écran D
 let structCourante = null, appelDonnees = null;
 const S = () => structDe(structCourante) || structureLue();
-const appelsLus = () => modele.appels.filter((a) => a.utilisation !== 'R');
+const appelsLus = () => modele.appels.filter((a) => a.utilisation !== 'R' && a.utilisation !== 'I');
 const appelD = () => appelsLus().find((a) => a.code === appelDonnees) || appelsLus()[0];
 const rub = (c) => modele.dictionnaire.find((d) => d.code === c);
 
@@ -113,18 +115,19 @@ const app = {
 
 function commande(texte) {
   const [mot, ...reste] = texte.toUpperCase().split(/\s+/);
-  const cibles = { M: 'menu', R: 'rubriques', E: 'enreg', C: 'appels', T: 'traitement', D: 'donnees', G: 'source', X: 'execution', P: 'specifique', S: 'sorties', B: 'base', Q: 'requetes', AIDE: 'aide', '?': 'aide' };
+  if (mot === 'K') etatCourant(true);
+  const cibles = { K: 'etatD', '-D': 'etatD', '-L': 'etatL', '-CE': 'etatCE', M: 'menu', R: 'rubriques', E: 'enreg', C: 'appels', T: 'traitement', D: 'donnees', G: 'source', X: 'execution', P: 'specifique', S: 'sorties', B: 'base', Q: 'requetes', AIDE: 'aide', '?': 'aide' };
   if (mot === 'PARTAGE') {
     montrerLien(document.getElementById('lien-partage'), modele).then((copie) => app.afficher({ texte: copie ? 'LIEN DE PARTAGE COPIÉ. IL EST AUSSI AFFICHÉ SOUS LE TERMINAL.' : 'LIEN DE PARTAGE AFFICHÉ SOUS LE TERMINAL.', erreur: false }));
     return true;
   }
   if (mot === 'FIN') {
-    modele = normaliser(structuredClone(reste[0] === 'MAJ' ? exempleMiseAJour : exemple)); structCourante = appelDonnees = null; sauver(); app.pile = [];
+    modele = normaliser(structuredClone(reste[0] === 'MAJ' ? exempleMiseAJour : reste[0] === 'ETAT' ? exempleEtat : exemple)); structCourante = appelDonnees = null; sauver(); app.pile = [];
     reinitialiserBase().then(() => { if (db) { synchroniser(db, modele); sauverBase(db); } });
-    app.ouvrir('menu', {}, false); app.afficher({ texte: reste[0] === 'MAJ' ? 'EXEMPLE DE MISE À JOUR CHARGÉ, BASE VIDÉE.' : 'MODÈLE REMIS À L\'EXEMPLE DE DÉPART, BASE VIDÉE. FIN MAJ : EXEMPLE DE MISE À JOUR.', erreur: false });
+    app.ouvrir('menu', {}, false); app.afficher({ texte: reste[0] === 'MAJ' ? 'EXEMPLE DE MISE À JOUR CHARGÉ, BASE VIDÉE.' : reste[0] === 'ETAT' ? 'EXEMPLE D\'ÉTAT CHARGÉ (CHOIX K), BASE VIDÉE.' : 'MODÈLE REMIS À L\'EXEMPLE DE DÉPART, BASE VIDÉE. FIN MAJ : EXEMPLE DE MISE À JOUR.', erreur: false });
     return true;
   }
-  if (!cibles[mot]) { app.afficher({ texte: `CHOIX ${mot} INCONNU. POSSIBLES : M R E C T P D S B Q G X PARTAGE AIDE FIN`, erreur: true }, 'CHOIX'); return true; }
+  if (!cibles[mot]) { app.afficher({ texte: `CHOIX ${mot} INCONNU. POSSIBLES : M R E C T P D K -L -CE -D S B Q G X PARTAGE AIDE FIN`, erreur: true }, 'CHOIX'); return true; }
   if (mot === 'E' && reste[0]) {
     const code = reste[0].replace(/[^A-Z0-9-]/g, '').slice(0, 12);
     if (!/^[A-Z]/.test(code)) { app.afficher({ texte: 'E CODE : UNE LETTRE EN TÊTE.', erreur: true }, 'CHOIX'); return true; }
@@ -150,6 +153,7 @@ VUES.menu = {
       ['T', 'TRAITEMENT', estMiseAJour(modele) ? `Mise à jour ${T().programme} : titre du compte rendu` : `Batch ${T().programme} : filtres, colonnes, totaux`],
       ['P', 'TRAITEMENTS', 'Langage structuré : fonctions et opérateurs'],
       ['D', 'DONNÉES', `Lignes des fichiers en entrée (D code) : ${appelsLus().map((a) => a.code).join(' ')}`],
+      ['K', 'ÉTATS', (() => { const x = etatCourant(); return x ? `${x.et.code} : -D composition, -L libellés, -CE structures` : 'Libellés, structures, catégories (crée l\'état)'; })()],
       ['S', 'SORTIES', 'Fichiers produits par le traitement'],
       ['B', 'BASE', 'Tables de la base ; Q pour interroger en SQL'],
       ['G', 'GÉNÉRATION', 'Source COBOL généré, en consultation'],
@@ -158,7 +162,7 @@ VUES.menu = {
     const champs = [...cadre('M00', 'MENU GÉNÉRAL', 'PF1 AIDE  PF3 RETOUR  PF12 MENU  ENTRÉE VALIDER')];
     champs.push(lab(3, 6, 'Tapez un code sur la ligne CHOIX ou en face d\'une ligne, puis Entrée.', 'bleu'));
     lignes.forEach(([c, t, d], i) => {
-      const l = 5 + i + (i > 2 ? 1 : 0) + (i > 5 ? 1 : 0); // trois groupes : modèle, traitement, résultat
+      const l = 5 + i + (i > 2 ? 1 : 0) + (i > 6 ? 1 : 0); // trois groupes : modèle, traitement, résultat
       champs.push(zone(l, 6, 1, `S${i}`), lab(l, 9, c, 'blanc'), lab(l, 12, pad(t, 16), 'turquoise'), lab(l, 29, pad(d, 49), 'bleu'));
     });
     const nbDonnees = modele.appels.reduce((n, a) => n + (a.donnees || []).length, 0);
@@ -167,7 +171,7 @@ VUES.menu = {
   },
   gerer(touche, v) {
     if (touche !== 'ENTREE') return { erreur: `TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.` };
-    const codes = ['R', 'E', 'C', 'T', 'P', 'D', 'S', 'B', 'G', 'X'];
+    const codes = ['R', 'E', 'C', 'T', 'P', 'D', 'K', 'S', 'B', 'G', 'X'];
     const i = codes.findIndex((_, k) => (v[`S${k}`] || '').trim());
     if (i >= 0) { commande(codes[i]); return { fait: true }; }
     return { message: { texte: 'INDIQUEZ UN CHOIX.', erreur: false } };
@@ -274,6 +278,7 @@ function nettoyer() {
   const p = appel('P');
   for (const a of modele.appels) {
     if (a.utilisation === 'R') { a.structure = p?.structure; continue; }
+    if (a.utilisation === 'I') { delete a.structure; a.argument = (a.argument || []).slice(0, 1); continue; }
     const dansA = new Set(structDe(a.structure)?.rubriques || []);
     a.argument = (a.argument || []).filter((c, i, l) => dansA.has(c) && l.indexOf(c) === i).slice(0, MAX_RUPTURES);
     if (a.utilisation === 'C') a.rupture = Math.min(Number(a.rupture || 0), a.argument.length);
@@ -342,21 +347,21 @@ VUES.appels = {
     for (let i = 0; i < NB_APPELS; i++) {
       const a = modele.appels[i], l = 4 + i * 3;
       champs.push(zone(l, 1, 1, `A${i}`), zone(l, 3, 2, `C${i}`, a?.code), zone(l, 6, 1, `U${i}`, a?.utilisation),
-        zone(l, 8, 12, `E${i}`, a?.utilisation === 'R' ? '' : a?.structure), zone(l, 21, 14, `F${i}`, a?.fichier),
+        zone(l, 8, 12, `E${i}`, a?.utilisation === 'R' || a?.utilisation === 'I' ? '' : a?.structure), zone(l, 21, 14, `F${i}`, a?.fichier),
         zone(l, 36, 36, `G${i}`, (a?.argument || []).join(' ')),
-        zone(l, 73, 1, `N${i}`, a ? String(a.utilisation === 'C' ? a.rupture || 0 : a.utilisation === 'R' ? '' : a.synchro || (a.argument || []).length) : '', { num: true }));
+        zone(l, 73, 1, `N${i}`, a ? String(a.utilisation === 'C' ? a.rupture || 0 : a.utilisation === 'R' || a.utilisation === 'I' ? '' : a.synchro || (a.argument || []).length) : '', { num: true }));
       const mo = a?.mouvement;
       if (a?.utilisation === 'M') {
         champs.push(lab(l + 1, 8, 'CODE MVT', 'blanc'), zone(l + 1, 17, 12, `K${i}`, mo?.rubrique), lab(l + 1, 31, 'CRÉATION', 'blanc'), zone(l + 1, 40, 1, `KC${i}`, mo?.creation),
           lab(l + 1, 43, 'MODIF.', 'blanc'), zone(l + 1, 50, 1, `KM${i}`, mo?.modification), lab(l + 1, 53, 'ANNUL.', 'blanc'), zone(l + 1, 60, 1, `KA${i}`, mo?.annulation));
       } else if (a) {
-        champs.push(lab(l + 1, 8, pad(a.utilisation === 'R' ? `Résultat : même enregistrement que le principal (${appel('P')?.structure || '?'})` : `${UTILISATIONS[a.utilisation]}`, 70), 'bleu'));
+        champs.push(lab(l + 1, 8, pad(a.utilisation === 'R' ? `Résultat : même enregistrement que le principal (${appel('P')?.structure || '?'})` : a.utilisation === 'I' ? `Impression de l'état ${a.code}${a.argument?.[0] || '?'} (argument : sa lettre), décrit par CHOIX K` : `${UTILISATIONS[a.utilisation]}`, 70), 'bleu'));
       }
     }
     let etat = 'Programme complet.';
     try { generer(modele); } catch (e) { etat = e.message; }
     champs.push(
-      lab(16, 1, 'U : C consulté (édition)  P principal  M mouvements  R résultat (mise à jour)', 'bleu'),
+      lab(16, 1, 'U : C consulté  P principal  M mouvements  R résultat  I impression (état)', 'bleu'),
       lab(17, 1, 'NR : niveaux de rupture (C) ou de synchronisation (P et M, même nombre).', 'bleu'),
       lab(18, 1, 'Zones : 1-CD00-RUB traité, CD00-RUB lu d\'avance, CD-FT fin, CD-CFn, CD-DEn.', 'bleu'),
       lab(19, 1, 'Mouvement : une rubrique vide ne modifie rien. FIN MAJ : exemple complet.', 'bleu'),
@@ -374,17 +379,23 @@ VUES.appels = {
       if (a === 'S' || (!code && !u && !enr && !fic && !arg.length)) continue;
       if (a) return { erreur: 'ACTION : S POUR SUPPRIMER LA LIGNE.', champ: `A${i}` };
       if (!/^[A-Z][A-Z0-9]$/.test(code)) return { erreur: 'CODE : 2 CARACTÈRES, UNE LETTRE EN TÊTE (EX. FA).', champ: `C${i}` };
-      if (!(u in UTILISATIONS)) return { erreur: 'UTILISATION : C, P, M OU R.', champ: `U${i}` };
-      if (u !== 'R' && !structDe(enr)) return { erreur: `ENREGISTREMENT ${enr || '?'} INCONNU (CHOIX E ${enr || 'CODE'} POUR LE CRÉER).`, champ: `E${i}` };
+      if (!(u in UTILISATIONS)) return { erreur: 'UTILISATION : C, P, M, R OU I.', champ: `U${i}` };
+      if (u === 'I' && (arg.length !== 1 || !/^[A-Z0-9]$/.test(arg[0]))) return { erreur: 'IMPRESSION : L\'ARGUMENT EST LA LETTRE DE L\'ÉTAT (UN CARACTÈRE).', champ: `G${i}` };
+      if (u !== 'R' && u !== 'I' && !structDe(enr)) return { erreur: `ENREGISTREMENT ${enr || '?'} INCONNU (CHOIX E ${enr || 'CODE'} POUR LE CRÉER).`, champ: `E${i}` };
       if (!/^[A-Z0-9][A-Z0-9.]*$/.test(fic)) return { erreur: 'NOM DE FICHIER INVALIDE (EX. CLIENTS.DAT).', champ: `F${i}` };
       const hors = arg.find((c) => !structDe(enr)?.rubriques.includes(c));
-      if (u !== 'R' && hors) return { erreur: `ARGUMENT : ${hors} N'EST PAS DANS L'ENREGISTREMENT ${enr}.`, champ: `G${i}` };
+      if (u !== 'R' && u !== 'I' && hors) return { erreur: `ARGUMENT : ${hors} N'EST PAS DANS L'ENREGISTREMENT ${enr}.`, champ: `G${i}` };
       if (arg.length > MAX_RUPTURES) return { erreur: `ARGUMENT : ${MAX_RUPTURES} RUBRIQUES AU PLUS.`, champ: `G${i}` };
       const niv = n === '' ? arg.length : Number(n);
-      if (u !== 'R' && !(niv >= 0 && niv <= arg.length)) return { erreur: 'NR : DE 0 AU NOMBRE DE RUBRIQUES DE L\'ARGUMENT.', champ: `N${i}` };
+      if (u !== 'R' && u !== 'I' && !(niv >= 0 && niv <= arg.length)) return { erreur: 'NR : DE 0 AU NOMBRE DE RUBRIQUES DE L\'ARGUMENT.', champ: `N${i}` };
       const ancien = modele.appels.find((x) => x.code === code) || modele.appels[i] || {};
       const x = { code, utilisation: u, fichier: fic, donnees: ancien.donnees || [] };
-      if (u !== 'R') { x.structure = enr; x.argument = arg; }
+      if (u === 'I') {
+        x.argument = arg;
+        const avant = modele.appels.find((y) => y.code === code && y.utilisation === 'I');
+        const et = avant && modele.etats.find((y) => y.code === code + (avant.argument?.[0] || ''));
+        if (et) et.code = code + arg[0];
+      } else if (u !== 'R') { x.structure = enr; x.argument = arg; }
       if (u === 'C') x.rupture = niv;
       if (u === 'P' || u === 'M') x.synchro = niv;
       if (u === 'M') {
@@ -410,9 +421,9 @@ VUES.traitement = {
     if (estMiseAJour(modele)) {
       champs.push(lab(3, 1, 'PROGRAMME ......', 'blanc'), zone(3, 18, 8, 'PGM', t.programme),
         lab(4, 1, 'TITRE DU C.R. ..', 'blanc'), zone(4, 18, 50, 'TIT', t.titre),
-        lab(6, 1, 'Programme de mise à jour : pas d\'état. Il lit le principal et les mouvements,', 'bleu'),
+        lab(6, 1, 'Programme de mise à jour : il lit le principal et les mouvements,', 'bleu'),
         lab(7, 1, 'les synchronise sur leur argument, applique créations, modifications et', 'bleu'),
-        lab(8, 1, 'annulations, écrit le résultat et un compte rendu (mouvements rejetés, comptes).', 'bleu'),
+        lab(8, 1, 'annulations, écrit le résultat et un compte rendu (mouvements rejetés).', 'bleu'),
         lab(10, 1, `Fonctions générées : ${fonctionsGenerees(modele).map((f) => `F${f}`).join(' ')}`, 'turquoise'));
       return { champs, curseur: 'PGM' };
     }
@@ -609,6 +620,11 @@ VUES.execution = consultation('X01', 'EXÉCUTION DU BATCH', (ctx) => {
   ctx.message = { texte: r.info.slice(0, 78), erreur: !r.ok };
   const lignes = [{ texte: `SYSOUT DE ${T().programme}`, couleur: 'blanc' }, { texte: '' }, ...r.sortie.replace(/\n$/, '').split('\n').map((texte) => ({ texte }))];
   for (const so of r.ok ? fichiersSortie(modele) : []) {
+    if (so.etat) {
+      lignes.push({ texte: '' }, { texte: `ÉTAT IMPRIMÉ DANS ${so.fichier} (${so.code})`, couleur: 'blanc' });
+      for (const x of listing(r.fichiers?.[so.fichier] || '').replace(/\n$/, '').split('\n')) lignes.push({ texte: x, couleur: x.startsWith('─') ? 'bleu' : undefined });
+      continue;
+    }
     const contenu = (r.fichiers?.[so.fichier] || '').replace(/\n$/, '');
     const enr = contenu ? contenu.split('\n') : [];
     const rubs = modele.sorties.find((x) => x.code === so.code)?.rubriques || structDe(appel('P')?.structure)?.rubriques || [];
@@ -783,6 +799,167 @@ VUES.sorties = {
     try { generer(modele); } catch (e) { modele.sorties = ancien; return { erreur: e.message.toUpperCase().slice(0, 78) }; }
     sauver();
     return { message: { texte: `${liste.length} FICHIER(S) EN SORTIE.`, erreur: false } };
+  },
+};
+
+
+// ----- états : -D composition (caractéristiques et catégories), -L libellés, -CE structures -----
+// L'état courant : celui du premier fichier d'impression (I) ; K en crée un s'il n'y en a pas.
+function etatCourant(creer = false) {
+  let a = modele.appels.find((x) => x.utilisation === 'I');
+  if (!a && creer) {
+    const pris = new Set(modele.appels.map((x) => x.code));
+    a = { code: ['ET', 'IM', 'EA'].find((c) => !pris.has(c)) || 'EZ', utilisation: 'I', fichier: 'ETAT.TXT', argument: ['1'] };
+    modele.appels.push(a);
+  }
+  if (!a) return null;
+  if (!a.argument?.length) a.argument = ['1'];
+  const code = a.code + a.argument[0];
+  let et = modele.etats.find((x) => x.code === code);
+  if (!et && creer) { et = { code, nom: T().titre || code, longueur: 80, lignesPage: 60, postes: 100, libelles: [], structures: [], categories: [] }; modele.etats.push(et); sauver(); }
+  if (et) { et.libelles ||= []; et.structures ||= []; et.categories ||= []; }
+  return et ? { a, et } : null;
+}
+const sansEtat = (id, titre) => {
+  const champs = [...cadre(id, titre, 'PF1 AIDE  PF3 RETOUR')];
+  champs.push(lab(4, 1, 'Aucun fichier d\'impression. CHOIX K pour créer l\'état, ou CHOIX C : utilisation I,', 'jaune'), lab(5, 1, 'argument = la lettre de l\'état (ET et 1 donnent l\'état ET1).', 'jaune'));
+  return { champs, curseur: 'CHOIX' };
+};
+const verdictEtat = () => { try { generer(modele); return null; } catch (e) { return e.message; } };
+const pied = (champs, l) => { const e = verdictEtat(); champs.push(lab(l, 1, pad((e || 'Programme complet.').toUpperCase(), 78), e ? 'jaune' : 'vert')); };
+const PAR_PAGE_ETAT = 13;
+
+VUES.etatD = {
+  dessin(ctx) {
+    const x = etatCourant(); if (!x) return sansEtat('K01', 'COMPOSITION DE L\'ÉTAT (-D)');
+    const { a, et } = x;
+    const champs = [...cadre('K01', `COMPOSITION DE L'ÉTAT ${et.code} (-D)`, 'PF1 AIDE  PF3 RETOUR  PF7/8 PAGES  ENTRÉE VALIDER  -L LIBELLÉS  -CE STRUCT.')];
+    champs.push(lab(2, 1, 'NOM', 'blanc'), zone(2, 5, 30, 'NOM', et.nom, { majuscules: false }), lab(2, 37, 'LONG.', 'blanc'), zone(2, 43, 3, 'LON', et.longueur ?? ETAT_DEFAUT.longueur, { num: true }),
+      lab(2, 48, 'NB LIGNES', 'blanc'), zone(2, 58, 2, 'NBL', et.lignesPage ?? ETAT_DEFAUT.lignesPage, { num: true }), lab(2, 62, 'POSTES CAT.', 'blanc'), zone(2, 74, 3, 'POS', et.postes ?? ETAT_DEFAUT.postes, { num: true }));
+    champs.push(lab(3, 1, 'CONDITION', 'blanc'), zone(3, 11, 60, 'CND', et.condition));
+    champs.push(lab(4, 1, 'A CT NLG T CAR ST LB SAU * FOSF CONDITION', 'blanc'));
+    const liste = et.categories, debut = ctx.page * PAR_PAGE_ETAT;
+    for (let i = 0; i < PAR_PAGE_ETAT; i++) {
+      const c = liste[debut + i], l = 5 + i;
+      champs.push(zone(l, 1, 1, `A${i}`), zone(l, 3, 2, `CT${i}`, c?.ct), zone(l, 6, 3, `NL${i}`, c?.nlg), zone(l, 10, 1, `T${i}`, c?.type), zone(l, 12, 3, `CA${i}`, c?.car),
+        zone(l, 16, 2, `ST${i}`, c?.st), zone(l, 19, 2, `LB${i}`, c?.lb), zone(l, 22, 2, `SA${i}`, c?.saut), zone(l, 26, 1, `AB${i}`, c?.sautType), zone(l, 28, 4, `FO${i}`, c?.fosf),
+        zone(l, 33, 46, `CO${i}`, c?.condition));
+    }
+    champs.push(lab(18, 1, `Page ${ctx.page + 1}. Fichier ${a.code} (${a.fichier}), fonction F8${a.argument[0]}. POSTES 0 : édition directe.`, 'bleu'),
+      lab(19, 1, 'T : blanc, I itérative, A/Z en-tête/fin de page, * détail totalisé, T caché', 'bleu'),
+      lab(20, 1, '0 total général, 1-3 total de rupture. SAU 00 surimpression, * saut absolu.', 'bleu'));
+    pied(champs, 21);
+    return { champs, curseur: 'NOM' };
+  },
+  gerer(touche, v, mod, ctx) {
+    const x = etatCourant(); if (!x) return { erreur: 'AUCUN ÉTAT : CHOIX K.' };
+    const { et } = x;
+    if (touche === 'PF7') { if (!ctx.page) return { erreur: 'DÉJÀ EN HAUT.' }; ctx.page--; return; }
+    if (touche === 'PF8') { if ((ctx.page + 1) * PAR_PAGE_ETAT > et.categories.length) return { erreur: 'DÉJÀ EN BAS.' }; ctx.page++; return; }
+    if (touche !== 'ENTREE') return { erreur: `TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.` };
+    const nouv = { ...et, nom: v.NOM.trim(), longueur: Number(v.LON) || ETAT_DEFAUT.longueur, lignesPage: Number(v.NBL) || ETAT_DEFAUT.lignesPage, postes: Number(v.POS || 0), condition: v.CND.trim() };
+    const debut = ctx.page * PAR_PAGE_ETAT, page = [];
+    for (let i = 0; i < PAR_PAGE_ETAT; i++) {
+      const g = (k) => (v[`${k}${i}`] || '').trim();
+      if (g('A') === 'S') continue;
+      if (g('A')) return { erreur: 'ACTION : S POUR SUPPRIMER LA LIGNE.', champ: `A${i}` };
+      const c = { ct: g('CT'), nlg: g('NL'), type: g('T'), car: g('CA'), st: g('ST'), lb: g('LB'), saut: g('SA'), sautType: g('AB'), fosf: g('FO'), condition: g('CO') };
+      if (Object.values(c).every((y) => !y)) continue;
+      if (!c.ct) return { erreur: 'CT : LE CODE DE LA CATÉGORIE (2 CARACTÈRES).', champ: `CT${i}` };
+      page.push(c);
+    }
+    nouv.categories = [...et.categories.slice(0, debut), ...page, ...et.categories.slice(debut + PAR_PAGE_ETAT)]
+      .sort((p, q) => (p.ct === q.ct ? String(p.nlg).padStart(3, '0').localeCompare(String(q.nlg).padStart(3, '0')) : comparerCodes(p.ct.padEnd(2), q.ct.padEnd(2))));
+    Object.assign(et, nouv); sauver();
+    const e = verdictEtat();
+    return { message: { texte: (e ? `ENREGISTRÉ. À COMPLÉTER : ${e}` : `${et.categories.length} LIGNE(S) DE COMPOSITION.`).toUpperCase().slice(0, 78), erreur: !!e } };
+  },
+};
+
+VUES.etatL = {
+  dessin(ctx) {
+    const x = etatCourant(); if (!x) return sansEtat('L01', 'LIBELLÉS DE L\'ÉTAT (-L)');
+    const { et } = x;
+    const L = Number(et.longueur || ETAT_DEFAUT.longueur), dec = ctx.dec ||= 0, larg = 72;
+    const champs = [...cadre('L01', `LIBELLÉS DE L'ÉTAT ${et.code} (-L)`, 'PF1 AIDE  PF3 RETOUR  PF7/8 PAGES  PF10/11 GAUCHE/DROITE  ENTRÉE VALIDER')];
+    const regle = Array.from({ length: L }, (_, i) => ((i + 1) % 10 === 0 ? String((i + 1) / 10 % 10) : (i + 1) % 5 === 0 ? '+' : '.')).join('');
+    champs.push(lab(3, 1, `A LB COLONNES ${dec + 1} À ${Math.min(L, dec + larg)} SUR ${L}`, 'blanc'), lab(4, 6, pad(regle.slice(dec, dec + larg), larg), 'bleu'));
+    const debut = ctx.page * PAR_PAGE_ETAT;
+    for (let i = 0; i < PAR_PAGE_ETAT; i++) {
+      const n = debut + i, l = et.libelles[n], r = 5 + i;
+      champs.push(zone(r, 1, 1, `A${i}`), lab(r, 3, String(n + 1).padStart(2, '0'), 'turquoise'), zone(r, 6, Math.min(larg, L - dec), `X${i}`, (l?.texte || '').padEnd(L).slice(dec, dec + larg).replace(/ +$/, ''), { majuscules: false }));
+    }
+    champs.push(lab(19, 1, 'Numérotés de 01 sans trou : S ne supprime que le dernier. Ligne vide après', 'bleu'), lab(20, 1, 'le dernier : création. Les catégories (-D) citent les libellés par numéro.', 'bleu'));
+    pied(champs, 21);
+    return { champs, curseur: `X${Math.max(0, Math.min(PAR_PAGE_ETAT - 1, et.libelles.length - debut))}` };
+  },
+  gerer(touche, v, mod, ctx) {
+    const x = etatCourant(); if (!x) return { erreur: 'AUCUN ÉTAT : CHOIX K.' };
+    const { et } = x;
+    const L = Number(et.longueur || ETAT_DEFAUT.longueur);
+    if (touche === 'PF7') { if (!ctx.page) return { erreur: 'DÉJÀ EN HAUT.' }; ctx.page--; return; }
+    if (touche === 'PF8') { if ((ctx.page + 1) * PAR_PAGE_ETAT > et.libelles.length) return { erreur: 'DÉJÀ EN BAS.' }; ctx.page++; return; }
+    if (touche === 'PF10') { ctx.dec = Math.max(0, ctx.dec - 66); return; }
+    if (touche === 'PF11') { if (ctx.dec + 72 >= L) return { erreur: 'DÉJÀ À DROITE.' }; ctx.dec += 66; return; }
+    if (touche !== 'ENTREE') return { erreur: `TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.` };
+    const debut = ctx.page * PAR_PAGE_ETAT, libs = et.libelles.map((l) => ({ ...l }));
+    let suppr = false;
+    for (let i = 0; i < PAR_PAGE_ETAT; i++) {
+      const n = debut + i, a = (v[`A${i}`] || '').trim(), t = v[`X${i}`] ?? '';
+      if (a === 'S') { if (n !== libs.length - 1) return { erreur: 'SEUL LE DERNIER LIBELLÉ SE SUPPRIME (LES AUTRES SONT DÉSIGNÉS PAR LEUR NUMÉRO).', champ: `A${i}` }; suppr = true; continue; }
+      if (a) return { erreur: 'ACTION : S POUR SUPPRIMER LE DERNIER LIBELLÉ.', champ: `A${i}` };
+      if (n < libs.length) { const avant = libs[n].texte.padEnd(L); libs[n].texte = (avant.slice(0, ctx.dec) + t.padEnd(Math.min(72, L - ctx.dec)) + avant.slice(ctx.dec + 72)).replace(/ +$/, ''); }
+      else if (t.trim()) {
+        if (n !== libs.length) return { erreur: 'LES LIBELLÉS SE SUIVENT SANS TROU.', champ: `X${i}` };
+        libs.push({ numero: String(n + 1).padStart(2, '0'), texte: (' '.repeat(ctx.dec) + t).replace(/ +$/, '') });
+      }
+    }
+    if (suppr) libs.pop();
+    et.libelles = libs.map((l, i) => ({ ...l, numero: String(i + 1).padStart(2, '0') }));
+    sauver();
+    return { message: { texte: `${et.libelles.length} LIBELLÉ(S).`, erreur: false } };
+  },
+};
+
+VUES.etatCE = {
+  dessin(ctx) {
+    const x = etatCourant(); if (!x) return sansEtat('L02', 'STRUCTURES DE L\'ÉTAT (-CE)');
+    const { et } = x;
+    const champs = [...cadre('L02', `STRUCTURES DE L'ÉTAT ${et.code} (-CE)`, 'PF1 AIDE  PF3 RETOUR  PF7/8 PAGES  ENTRÉE VALIDER  -D COMPOSITION  -L LIBELLÉS')];
+    champs.push(lab(3, 1, 'A ST RUBRIQ S DEB O W SOURCE        IND  CONDITION            FORMAT', 'blanc'));
+    const debut = ctx.page * PAR_PAGE_ETAT;
+    for (let i = 0; i < PAR_PAGE_ETAT; i++) {
+      const r = et.structures[debut + i], l = 4 + i;
+      champs.push(zone(l, 1, 1, `A${i}`), zone(l, 3, 2, `ST${i}`, r?.st), zone(l, 6, 6, `RU${i}`, r?.rubrique), zone(l, 13, 1, `SU${i}`, r?.suite), zone(l, 15, 3, `DE${i}`, r?.debut ?? '', { num: true }),
+        zone(l, 19, 1, `O${i}`, r?.mode), zone(l, 21, 1, `W${i}`, r?.w), zone(l, 23, 13, `SO${i}`, r?.source), zone(l, 37, 4, `IN${i}`, r?.indice), zone(l, 42, 20, `CO${i}`, r?.condition), zone(l, 63, 14, `FM${i}`, r?.format));
+    }
+    champs.push(lab(17, 1, 'O : M mouvement, T à totaliser, + ou R calcul (R arrondi), U par vous.', 'bleu'),
+      lab(18, 1, 'Ligne suite (S = *) : opération + - * / sur une source, ou suite de condition.', 'bleu'),
+      lab(19, 1, 'W : blanc FD, 1 traitement, 2 mise à jour, 5 compteurs, * expression libre.', 'bleu'),
+      lab(20, 1, 'SOURCE : FFNNRUBRIQ (FA00 : rubrique de même nom) ou un littéral entre quotes.', 'bleu'));
+    pied(champs, 21);
+    return { champs, curseur: `ST${Math.max(0, Math.min(PAR_PAGE_ETAT - 1, et.structures.length - debut))}` };
+  },
+  gerer(touche, v, mod, ctx) {
+    const x = etatCourant(); if (!x) return { erreur: 'AUCUN ÉTAT : CHOIX K.' };
+    const { et } = x;
+    if (touche === 'PF7') { if (!ctx.page) return { erreur: 'DÉJÀ EN HAUT.' }; ctx.page--; return; }
+    if (touche === 'PF8') { if ((ctx.page + 1) * PAR_PAGE_ETAT > et.structures.length) return { erreur: 'DÉJÀ EN BAS.' }; ctx.page++; return; }
+    if (touche !== 'ENTREE') return { erreur: `TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.` };
+    const debut = ctx.page * PAR_PAGE_ETAT, page = [];
+    for (let i = 0; i < PAR_PAGE_ETAT; i++) {
+      const g = (k) => (v[`${k}${i}`] || '').trim();
+      if (g('A') === 'S') continue;
+      if (g('A')) return { erreur: 'ACTION : S POUR SUPPRIMER LA LIGNE.', champ: `A${i}` };
+      const r = { st: g('ST'), rubrique: g('RU'), suite: g('SU'), debut: g('DE') === '' ? '' : Number(g('DE')), mode: g('O'), w: g('W'), source: g('SO'), indice: g('IN'), condition: g('CO'), format: g('FM') };
+      if (Object.values(r).every((y) => y === '')) continue;
+      if (!r.st) return { erreur: 'ST : LE NUMÉRO DE LA STRUCTURE (01, 02...).', champ: `ST${i}` };
+      page.push(r);
+    }
+    et.structures = [...et.structures.slice(0, debut), ...page, ...et.structures.slice(debut + PAR_PAGE_ETAT)];
+    sauver();
+    const e = verdictEtat();
+    return { message: { texte: (e ? `ENREGISTRÉ. À COMPLÉTER : ${e}` : `${et.structures.length} LIGNE(S) DE STRUCTURE.`).toUpperCase().slice(0, 78), erreur: !!e } };
   },
 };
 
@@ -961,8 +1138,8 @@ VUES.aide = {
       ['blanc', ''],
       ['blanc', 'CHOIX (ligne du haut, depuis n\'importe quel écran)'],
       ['vert', 'M menu  R rubriques  E enregistrement (E code)  C appel des fichiers'],
-      ['vert', 'T traitement  P traitements  D données (D code)  S sorties  B base  Q SQL'],
-      ['vert', 'G source  X exécution  FIN exemple d\'édition  FIN MAJ exemple de mise à jour'],
+      ['vert', 'T traitement  P traitements  D données  K état (-D -L -CE)  S sorties  B base'],
+      ['vert', 'Q SQL  G source  X exécution  FIN, FIN MAJ, FIN ETAT : les exemples'],
       ['vert', 'PARTAGE  copie un lien qui contient tout le programme, à envoyer à qui vous voulez'],
       ['blanc', ''],
       ['blanc', 'CODES ACTION (colonne A des listes)'],

@@ -154,11 +154,18 @@ function preparer(model, def, dd, e, niveaux) {
     const saut = String(x.saut ?? '').trim() === '' ? '01' : deux(x.saut);
     if (!/^\d\d$/.test(saut)) throw new Error(`${ouL} : saut de 00 à 99`);
     if (!parCode.has(ct)) parCode.set(ct, []);
+    // ligne sans structure, libellé ni saut, qui ne porte qu'une condition : suite de la condition de la catégorie
+    const rien = (k) => String(x[k] ?? '').trim() === '';
+    if (parCode.get(ct).length && rien('st') && rien('lb') && rien('saut') && rien('type') && rien('car') && rien('fosf') && rien('sautType') && !rien('condition')) {
+      parCode.get(ct).push({ nlg: String(x.nlg ?? '').trim().padStart(3, '0'), suite: true, condition: String(x.condition).trim() });
+      continue;
+    }
     parCode.get(ct).push({ nlg: String(x.nlg ?? '').trim().padStart(3, '0'), type, car: String(x.car ?? '').trim().toUpperCase(), st, lb, saut,
       absolu: String(x.sautType || '').trim() === '*', fosf: String(x.fosf || '').trim().toUpperCase(), condition: String(x.condition || '').trim(), ou: ouL });
   }
-  const categories = [...parCode.entries()].sort(([a], [b]) => comparerCodes(a, b)).map(([ct, lignes]) => {
-    lignes.sort((x, y) => x.nlg.localeCompare(y.nlg));
+  const categories = [...parCode.entries()].sort(([a], [b]) => comparerCodes(a, b)).map(([ct, toutes]) => {
+    toutes.sort((x, y) => x.nlg.localeCompare(y.nlg));
+    const lignes = toutes.filter((l) => !l.suite);
     const ouC = `${ou}, catégorie ${ct}`;
     if (lignes.length > 39) throw new Error(`${ouC} : 39 lignes au plus`);
     const types = [...new Set(lignes.map((l) => l.type).filter((t) => t !== ''))];
@@ -177,7 +184,7 @@ function preparer(model, def, dd, e, niveaux) {
     if (type === 'I' && lignes[0].car && !/^(\d{1,3}|[A-Z][A-Z0-9-]{0,29})$/.test(lignes[0].car)) throw new Error(`${ouC} : nombre de répétitions : un nombre ou un indice`);
     const nl = lignes.reduce((s, l, i) => s + (i === 0 && l.absolu ? 0 : Number(l.saut)), 0);
     if (nl > 99) throw new Error(`${ouC} : la catégorie compte plus de 99 lignes`);
-    return { ct, type, lignes, nl, absolu: lignes[0].absolu, condition: lignes.map((l) => l.condition).filter(Boolean).join(' ') };
+    return { ct, type, lignes, nl, absolu: lignes[0].absolu, condition: toutes.map((l) => l.condition).filter(Boolean).join(' ') };
   });
 
   // ----- totalisation : structure de base (ligne * ou T) et niveaux des lignes de total -----
@@ -605,4 +612,10 @@ export function emettreEtats(etats) {
     src.a(`${F}-99. GO TO F8${et.e}99.`);
     src.a(`${F}-FN. EXIT.`);
   }
+}
+
+// Un fichier d'impression tel qu'on le lirait sur le listing : les sauts de page marqués, la surimpression fusionnée.
+export function listing(t) {
+  const fusion = (ligne) => ligne.split('\r').reduce((acc, x) => [...x.padEnd(acc.length)].map((c, i) => (c === ' ' && i < acc.length ? acc[i] : c)).join(''), '');
+  return t.split('\f').map((p, i) => (i ? `${'─'.repeat(16)} saut de page ${'─'.repeat(16)}\n` : '') + p.split('\n').map(fusion).join('\n')).join('').replace(/^\n/, '');
 }
