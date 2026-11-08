@@ -27,8 +27,11 @@ final class LessonRenderer
         $this->converter = new MarkdownConverter(self::environment());
     }
 
-    /** Les règles de rendu, partagées avec les articles (ArticleRenderer). */
-    public static function environment(): Environment
+    /**
+     * Les règles de rendu, partagées avec les articles (ArticleRenderer). Sans coloration, un bloc de code reste un
+     * simple <pre><code class="language-…"> : la forme qu'attendent les sites qui reprennent le flux RSS.
+     */
+    public static function environment(bool $highlight = true): Environment
     {
         $environment = new Environment([
             'html_input' => 'strip',
@@ -37,7 +40,9 @@ final class LessonRenderer
         ]);
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new GithubFlavoredMarkdownExtension());
-        $environment->addRenderer(FencedCode::class, new CodeBlockRenderer(new Highlighter()), 10);
+        if ($highlight) {
+            $environment->addRenderer(FencedCode::class, new CodeBlockRenderer(new Highlighter()), 10);
+        }
 
         return $environment;
     }

@@ -20,6 +20,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class ArticleRenderer
 {
     private readonly MarkdownConverter $converter;
+    private readonly MarkdownConverter $plain;
 
     public function __construct(
         private readonly ScratchLink $links,
@@ -29,6 +30,9 @@ final class ArticleRenderer
         $environment = LessonRenderer::environment();
         $environment->addEventListener(DocumentParsedEvent::class, $this->addTryLinks(...));
         $this->converter = new MarkdownConverter($environment);
+        $plain = LessonRenderer::environment(highlight: false);
+        $plain->addEventListener(DocumentParsedEvent::class, $this->addTryLinks(...));
+        $this->plain = new MarkdownConverter($plain);
     }
 
     public function toHtml(string $markdown): string
@@ -40,6 +44,16 @@ final class ArticleRenderer
     public function toHtmlUnderTitle(string $markdown): string
     {
         return LessonRenderer::underTitle($markdown, $this->toHtml(...));
+    }
+
+    /**
+     * Pour le flux RSS : le même texte, mais des blocs de code sans coloration. dev.to convertit le HTML importé en
+     * Markdown (reverse_markdown) : il recopie tel quel le texte d'un <pre><code>, mais traite chaque <span> de la
+     * coloration comme du texte courant, et y échappe les « _ » et les « * » (login\_throttling, \_\_construct).
+     */
+    public function toFeedHtml(string $markdown): string
+    {
+        return LessonRenderer::underTitle($markdown, fn (string $markdown): string => (string) $this->plain->convert($markdown));
     }
 
     private function addTryLinks(DocumentParsedEvent $event): void

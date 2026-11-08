@@ -69,7 +69,8 @@ final class BlogController extends AbstractController
      * au site, deviennent absolus : lus hors du site, ils mèneraient nulle part. Ils portent aussi des paramètres utm :
      * les copies masquent souvent leur referrer, et sans eux leurs visites se fondraient dans le trafic direct. Le lien de
      * l'article lui-même (<link>, <guid>) reste nu, puisque les copies en font leur URL canonique. Les sujets de
-     * l'article deviennent des <category> (dev.to en fait ses tags), son image une enclosure (voir ArticleShare).
+     * l'article deviennent des <category> (dev.to en fait ses tags), son image une enclosure (voir ArticleShare). Les
+     * blocs de code n'y sont pas colorés (voir ArticleRenderer::toFeedHtml) : dev.to y échapperait les « _ ».
      */
     #[Route(['fr' => '/blog/rss.xml', 'en' => '/en/blog/rss.xml'], name: 'app_blog_feed', methods: ['GET'])]
     public function feed(Blog $blog, ArticleRenderer $markdown, SchemaOrg $schema, ArticleShare $share): Response
@@ -84,7 +85,7 @@ final class BlogController extends AbstractController
             // L'image de l'article, en enclosure et en media:content : les lecteurs de flux en font la vignette.
             'image' => ['url' => $share->imageUrl($article), 'length' => $share->imageSize($article)],
             'html' => $this->tagged(
-                preg_replace('/\b(href|src)="\/(?!\/)/', '$1="'.$site.'/', $markdown->toHtmlUnderTitle($article->markdown)),
+                preg_replace('/\b(href|src)="\/(?!\/)/', '$1="'.$site.'/', $markdown->toFeedHtml($article->markdown)),
                 $site,
                 $article->slug,
             ),
