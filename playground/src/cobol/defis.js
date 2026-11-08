@@ -20,6 +20,7 @@ export const DEFIS = {
       'Tout se fait avec les écrans Fichiers et Traitement, sans langage structuré.',
     ],
     modele: {
+      version: 3,
       dictionnaire: [
         { code: 'VENDEUR', libelle: 'Vendeur', type: '9', longueur: 3 },
         { code: 'NOMVEN', libelle: 'Nom du vendeur', type: 'X', longueur: 15 },

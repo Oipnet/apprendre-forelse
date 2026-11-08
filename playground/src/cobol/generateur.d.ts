@@ -13,6 +13,8 @@ export interface Appel {
   donnees?: Array<Record<string, string>>;
 }
 export interface Modele {
+  /** version des noms de zones (3 : ceux du manuel IBM) ; un modèle plus ancien est repris par normaliser */
+  version?: number;
   dictionnaire: Rubrique[];
   structures: Array<{ code: string; libelle?: string; rubriques: string[] }>;
   appels?: Appel[];
@@ -26,6 +28,7 @@ export interface Modele {
 }
 export const exemple: Modele;
 export const exempleMiseAJour: Modele;
+export const VERSION_MODELE: number;
 export function normaliser(modele: Modele): Modele & { appels: Appel[] };
 export function generer(modele: Modele): string;
 export function fichierDonnees(modele: Modele): string;

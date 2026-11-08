@@ -12,6 +12,7 @@ const DONNEES_FACTURES = [
   ];
 
 export const exemple = {
+  version: 3,
   dictionnaire: [
     { code: 'REGION', libelle: 'Région', type: 'X', longueur: 3 },
     { code: 'NUMCLI', libelle: 'Client', type: '9', longueur: 6 },
@@ -47,12 +48,12 @@ export const exemple = {
   ],
   // Langage structuré : une sous-fonction commence par une ligne N (titre, niveau, type, condition).
   lignes: [
-    { fo: '8E', sf: '10', ope: 'N', opes: 'Montants négatifs à relancer', niv: '05', tc: 'IT', cond: 'FA00-MTFACT < 0' },
+    { fo: '8E', sf: '10', ope: 'N', opes: 'Montants négatifs à relancer', niv: '05', tc: 'IT', cond: '1-FA00-MTFACT < 0' },
     { fo: '8E', sf: '10', ope: 'M', opes: "'** A RELANCER' D-NOMCLI" },
     { fo: '8E', sf: '10', ope: 'A', opes: '1 W-NBREL' },
-    { fo: '8E', sf: '10', ope: 'M', opes: 'FA00-NUMCLI RL-NUMCLI' },
-    { fo: '8E', sf: '10', ope: 'M', opes: 'FA00-NOMCLI RL-NOMCLI' },
-    { fo: '8E', sf: '10', ope: 'M', opes: 'FA00-MTFACT RL-MTFACT' },
+    { fo: '8E', sf: '10', ope: 'M', opes: '1-FA00-NUMCLI RL-NUMCLI' },
+    { fo: '8E', sf: '10', ope: 'M', opes: '1-FA00-NOMCLI RL-NOMCLI' },
+    { fo: '8E', sf: '10', ope: 'M', opes: '1-FA00-MTFACT RL-MTFACT' },
     { fo: '8E', sf: '10', ope: 'ECR', opes: 'RL' },
     { fo: '20', sf: '10', ope: 'N', opes: 'Bilan des relances', niv: '05', tc: 'BL' },
     { fo: '20', sf: '10', ope: 'MES', opes: "'FACTURES A RELANCER : ' W-NBREL" },
@@ -66,15 +67,15 @@ export const exemple = {
     { fo: '20', sf: '40', ope: 'N', opes: 'Fin de la liste', niv: '05', tc: 'BL' },
     { fo: '20', sf: '40', ope: 'SQL', opes: 'CL CL' },
     { fo: '30', sf: '10', ope: 'N', opes: 'Cumul par client dans la base', niv: '05', tc: 'BL' },
-    { fo: '30', sf: '10', ope: 'M', opes: 'FA00-NUMCLI CL-NUMCLI' },
+    { fo: '30', sf: '10', ope: 'M', opes: '1-FA00-NUMCLI CL-NUMCLI' },
     { fo: '30', sf: '10', ope: 'SQL', opes: 'CL R' },
     { fo: '30', sf: '20', ope: 'N', opes: 'Client absent : on le crée', niv: '10', tc: 'IT', cond: 'SQLCODE = 100' },
-    { fo: '30', sf: '20', ope: 'M', opes: 'FA00-NOMCLI CL-NOMCLI' },
-    { fo: '30', sf: '20', ope: 'M', opes: 'FA00-MTFACT CL-MTFACT' },
+    { fo: '30', sf: '20', ope: 'M', opes: '1-FA00-NOMCLI CL-NOMCLI' },
+    { fo: '30', sf: '20', ope: 'M', opes: '1-FA00-MTFACT CL-MTFACT' },
     { fo: '30', sf: '20', ope: 'M', opes: '1 CL-NBFACT' },
     { fo: '30', sf: '20', ope: 'SQL', opes: 'CL W' },
     { fo: '30', sf: '30', ope: 'N', opes: 'Client connu : on cumule', niv: '10', tc: 'EL' },
-    { fo: '30', sf: '30', ope: 'A', opes: 'FA00-MTFACT CL-MTFACT' },
+    { fo: '30', sf: '30', ope: 'A', opes: '1-FA00-MTFACT CL-MTFACT' },
     { fo: '30', sf: '30', ope: 'A', opes: '1 CL-NBFACT' },
     { fo: '30', sf: '30', ope: 'SQL', opes: 'CL RW' },
   ],
@@ -82,6 +83,7 @@ export const exemple = {
 
 // Mise à jour d'un fichier de clients par des mouvements : création, modification, annulation.
 export const exempleMiseAJour = {
+  version: 3,
   dictionnaire: [
     { code: 'NUMCLI', libelle: 'Client', type: '9', longueur: 6 },
     { code: 'NOMCLI', libelle: 'Nom du client', type: 'X', longueur: 20 },
@@ -276,7 +278,8 @@ export const appelEdite = (model) => (model.appels || []).find((a) => a.utilisat
 export function fonctionsGenerees(model) {
   if (estMiseAJour(model)) return ['01', '05', '10', '20', '24', '70', '73', '76', '90'];
   const c = appelEdite(model);
-  return ['01', '05', ...(c && Number(c.rupture || 0) > 0 ? ['10'] : []), '20', '8E', '90'];
+  const rupture = c && Number(c.rupture || 0) > 0;
+  return ['01', '05', ...(rupture ? ['10'] : []), '20', ...(rupture ? ['22'] : []), '8E', '90'];
 }
 
 const ROLES_GENERES = {
@@ -411,7 +414,31 @@ export function normaliser(modele) {
     a.donnees ||= [];
     if (a.utilisation === 'M') a.mouvement = { ...MOUVEMENT_DEFAUT, ...(a.mouvement || {}) };
   }
+  if ((m.version || 0) < VERSION_MODELE) migrerZones(m);
+  m.version = VERSION_MODELE;
   return m;
+}
+
+// Version 3 (08/11/2026) : les zones suivent le manuel IBM. Pour un fichier lu avec rupture, dd00 est
+// l'enregistrement lu d'avance et 1-dd00 celui qu'on traite (c'était l'inverse) ; le principal se
+// traite dans 1-dd00 et se met à jour dans 2-dd00 (le résultat s'écrivait depuis rr00).
+export const VERSION_MODELE = 3;
+function migrerZones(m) {
+  const principal = m.appels.find((a) => a.utilisation === 'P');
+  const regles = [];
+  for (const a of m.appels) {
+    const dd = a.code;
+    if (!/^[A-Z][A-Z0-9]$/.test(dd)) continue;
+    const zone = new RegExp(`(^|[^A-Z0-9-])(1-)?${dd}00-`, 'gi');
+    if (a.utilisation === 'M' || (a.utilisation === 'C' && Number(a.rupture || 0) > 0)) regles.push((t) => t.replace(zone, (_, av, un) => `${av}${un ? '' : '1-'}${dd}00-`));
+    else if (a.utilisation === 'P') regles.push((t) => t.replace(zone, (_, av) => `${av}1-${dd}00-`));
+    else if (a.utilisation === 'R' && principal) regles.push((t) => t.replace(zone, (_, av) => `${av}2-${principal.code}00-`));
+  }
+  const migrer = (t) => horsLitteraux(t, (x) => regles.reduce((v, f) => f(v), x));
+  for (const l of m.lignes) {
+    if (l.opes !== undefined) l.opes = migrer(l.opes);
+    if (l.cond !== undefined) l.cond = migrer(l.cond);
+  }
 }
 
 // ================= Données des fichiers en entrée =================
@@ -737,7 +764,50 @@ export function generer(modele) {
     }
   }
 
+  // Variables conditionnelles (chapitre 6) : RTDn, NRD, NRP, RTPn, puis par fichier dd-DEn, dd-PEn,
+  // dd-CFn (VCF), dd-OCn, dd-FT (groupe FT) et dd-FI (groupe FI).
+  function variablesConditionnelles({ niveaux = 0, aRupture = [], synchro = [], occurrence = [], tous = [] }) {
+    const groupe = (nom, n, v) => { src.b(`05 ${nom}.`); for (let i = 1; i <= n; i++) src.i(1, `10 ${nom}${i} PIC X VALUE '${v}'.`); };
+    src.a('01  VARIABLES-CONDITIONNELLES.');
+    if (niveaux) {
+      groupe('RTD', niveaux, '1');
+      src.b('05 NRD PIC 9 VALUE 1.');
+      src.b('05 NRP PIC 9 VALUE ZERO.');
+      groupe('RTP', niveaux, '1');
+    }
+    for (const [dd, n] of aRupture) groupe(`${dd}-DE`, n, '1');
+    for (const [dd, n] of aRupture) groupe(`${dd}-PE`, n, '1');
+    if (synchro.length) {
+      src.b('05 VCF.');
+      for (const [dd, n] of synchro) {
+        src.i(1, `10 ${dd}-CF.`);
+        for (let i = 1; i <= n; i++) src.i(2, `15 ${dd}-CF${i} PIC X VALUE '1'.`);
+      }
+    }
+    for (const [dd, n] of occurrence) groupe(`${dd}-OC`, n, '0');
+    src.b('05 FT.');
+    for (const dd of tous) src.i(1, `10 ${dd}-FT PIC X VALUE '0'.`);
+    if (aRupture.length) {
+      src.b('05 FI.');
+      for (const [dd] of aRupture) src.i(1, `10 ${dd}-FI PIC X VALUE '0'.`);
+    }
+  }
+  // F90 écritures (les vôtres), puis la fin d'itération.
+  function finIteration() {
+    src.a('F90. EXIT.');
+    sousFonctions('90');
+    src.a('F90-FN. EXIT.');
+    src.a('F9099-ITER-FN. GO TO F05.');
+  }
+
   // ================= Programme d'édition (fichier consulté C) =================
+  // Squelette du chapitre 6 du manuel « Applications Batch » : F01 ouverture et première lecture,
+  // F05 début d'itération (lecture d'un fichier sans rupture), F10 lecture avec rupture (la zone
+  // dd00 est lue d'avance, l'enregistrement traité passe dans 1-dd00), F20 fin de traitement,
+  // F22 calcul des derniers (dd-DEn, et RTD/RTP/NRD/NRP faute de synchronisation), F8E l'état,
+  // F90 écritures, F9099-ITER-FN retour en F05.
+  // Écarts assumés : le fichier est trié avant lecture (le vrai programme l'attend trié), la sélection
+  // se fait à la lecture, et l'état reste une édition simplifiée sur la SYSOUT.
   function genererEdition() {
     const { c, rupture: N } = cd;
     const dd = c.code;
@@ -748,12 +818,15 @@ export function generer(modele) {
     for (const r of [...colonnes, ...totaux, ...(t.filtres || []).map((f) => rubrique(model, f.rubrique))]) {
       if (!struct(c).rubriques.includes(r.code)) throw new Error(`La rubrique ${r.code} n'est pas dans l'enregistrement ${c.structure} du fichier ${dd}`);
     }
-    const lecture = N ? `${dd}-TRIE` : `${dd}-FICHIER`;
+    const lu = N ? `${dd}-TRIE` : `${dd}-FICHIER`;  // le fichier que lit l'itération
+    const cour = N ? `1-${dd}00` : `${dd}00`;        // l'enregistrement traité
 
     entete([
-      `F01 initialisations, F05 lecture${N ? ', F10 lecture avec rupture' : ''},`,
-      'F20 fin de traitement, F8E edition de l etat, F90 ecritures,',
-      'F9099 fin d iteration. Les autres fonctions sont les votres.',
+      'F01 initialisations, F05 debut d iteration,',
+      `${N ? 'F10 lecture avec rupture, ' : ''}F20 fin de traitement,`,
+      `${N ? 'F22 calcul des derniers, ' : ''}F8E edition, F90 ecritures,`,
+      'F9099-ITER-FN fin d iteration.',
+      'Les autres fonctions sont les votres.',
     ]);
     src.b(`SELECT ${dd}-FICHIER ASSIGN TO ${litteral(c.fichier)}`);
     src.b('    ORGANIZATION IS LINE SEQUENTIAL.');
@@ -766,33 +839,23 @@ export function generer(modele) {
     src.a('DATA DIVISION.');
     src.a('FILE SECTION.');
     src.a(`FD  ${dd}-FICHIER.`);
-    src.a(`01  ${dd}-ENR PIC X(${longueurEnr(c)}).`);
     if (N) {
+      src.a(`01  ${dd}-ENR PIC X(${longueurEnr(c)}).`);
       src.a(`SD  ${dd}-TRAVAIL.`);
       enregistrement(`${dd}-TRV`, c);
       src.a(`FD  ${dd}-TRIE.`);
-      src.a(`01  ${dd}-TRI-ENR PIC X(${longueurEnr(c)}).`);
     }
+    enregistrement(`${dd}00`, c);
     fdSorties();
     src.a('WORKING-STORAGE SECTION.');
-    src.com(`Fichier ${dd} : enregistrement courant (${dd}00) et suivant (1-${dd}00)`);
-    enregistrement(`${dd}00`, c);
-    enregistrement(`1-${dd}00`, c);
-    src.a(`01  ${dd}-FT PIC 9 VALUE ZERO.`);
-    src.a('01  IND-FIN PIC X VALUE "N".');
-    src.b('88 FIN-TRAITEMENT VALUE "O".');
-    src.a('01  IND-RETENU PIC X VALUE "N".');
-    src.b('88 RETENU VALUE "O".');
     if (N) {
-      src.com('Ruptures : RTPn avec le precedent, RTDn avec le suivant ;');
-      src.com(`${dd}-PEn / ${dd}-DEn : premier / dernier du fichier au niveau n`);
-      ruptures.forEach((_, i) => src.a(`01  RTP${i + 1} PIC 9 VALUE ZERO.`));
-      ruptures.forEach((_, i) => src.a(`01  RTD${i + 1} PIC 9 VALUE 1.`));
-      ruptures.forEach((_, i) => src.a(`01  ${dd}-PE${i + 1} PIC 9 VALUE ZERO.`));
-      ruptures.forEach((_, i) => src.a(`01  ${dd}-DE${i + 1} PIC 9 VALUE ZERO.`));
+      src.com(`Fichier ${dd} : ${dd}00 lu d avance, 1-${dd}00 en traitement`);
+      enregistrement(`1-${dd}00`, c);
     }
-    src.a('01  NB-LUS PIC 9(7) VALUE ZERO.');
-    src.a('01  NB-RETENUS PIC 9(7) VALUE ZERO.');
+    variablesConditionnelles({ niveaux: N, aRupture: N ? [[dd, N]] : [], tous: [dd] });
+    src.a(`01  5-${dd}00.`);
+    src.b(`05 5-${dd}00-CPTENR PIC 9(9) VALUE ZERO.`);
+    src.a('01  NB-LUS PIC 9(9) VALUE ZERO.');
     const niveauxTotal = ['G', ...ruptures.map((_, i) => `R${i + 1}`)];
     for (const n of niveauxTotal) {
       if (t.compter) src.a(`01  ${n}-NB PIC 9(7) VALUE ZERO.`);
@@ -802,7 +865,6 @@ export function generer(modele) {
       }
     }
     zonesCommunes();
-
     // ---------- lignes de l'état ----------
     const largeurs = colonnes.map((r) => {
       const l = r.type === 'X' ? r.longueur : largeurEdition(r.longueur - (r.decimales || 0), r.decimales || 0, r.signe);
@@ -853,122 +915,132 @@ export function generer(modele) {
     src.b('05 LC-RETENUS PIC Z(6)9.');
 
     // ---------- PROCEDURE DIVISION ----------
-    const lireSuivant = () => {
-      src.b('MOVE "N" TO IND-RETENU');
-      src.b(`PERFORM UNTIL RETENU OR ${dd}-FT = 1`);
-      src.i(1, `READ ${lecture} INTO 1-${dd}00`);
-      src.i(2, `AT END MOVE 1 TO ${dd}-FT`);
-      src.i(2, 'NOT AT END');
-      src.i(3, 'ADD 1 TO NB-LUS');
-      const conds = condition(model, t, `1-${dd}00-`);
+    // lecture d'un enregistrement retenu par la sélection ; para : paragraphe de la lecture, fin : sortie
+    const conds = condition(model, t, `${dd}00-`);
+    const lire = (para, fin, auBout) => {
+      src.a(`${para}.`);
+      src.b(`READ ${lu} AT END`);
+      src.b(`    MOVE 1 TO ${auBout} GO TO ${fin}.`);
+      src.b('ADD 1 TO NB-LUS.');
       if (conds.length) {
-        src.i(3, `IF ${conds[0]}`);
-        for (const x of conds.slice(1)) src.i(3, `   AND ${x}`);
-        src.i(4, 'SET RETENU TO TRUE');
-        src.i(3, 'END-IF');
-      } else src.i(3, 'SET RETENU TO TRUE');
-      src.i(1, 'END-READ');
-      src.b('END-PERFORM');
+        src.instr(0, `IF ${conds.join(' AND ')}`);
+        src.b(`    NEXT SENTENCE ELSE GO TO ${para}.`);
+      }
     };
-    const lecture1 = () => {
-      src.b(`IF ${dd}-FT = 1`);
-      src.i(1, 'SET FIN-TRAITEMENT TO TRUE');
-      src.b('ELSE');
-      src.i(1, `MOVE 1-${dd}00 TO ${dd}00`);
-      if (N) {
-        ruptures.forEach((_, i) => src.i(1, `MOVE RTD${i + 1} TO RTP${i + 1}`));
+    const ouvertures = () => {
+      for (const code of [dd, ...sorties.map((x) => x.code)].sort(comparerCodes)) {
+        src.a(`F01${code}.`);
+        if (code === dd) {
+          if (N) {
+            src.b(`SORT ${dd}-TRAVAIL`);
+            for (const r of ruptures) src.b(`    ON ASCENDING KEY ${dd}-TRV-${K(r)}`);
+            src.b(`    USING ${dd}-FICHIER GIVING ${dd}-TRIE.`);
+          }
+          src.b(`OPEN INPUT ${lu}.`);
+          if (N) lire(`F01${dd}-10`, `F01${dd}-FN`, `${dd}-FI`);
+        } else src.b(`OPEN OUTPUT ${code}-FICHIER.`);
+        src.a(`F01${code}-FN. EXIT.`);
       }
-      src.lignes.push(...(() => { const sauver = src.lignes; src.lignes = []; lireSuivant(); const l = src.lignes; src.lignes = sauver; return l.map((x) => x.replace(/^ {11}/, '              ')); })());
-      if (N) {
-        const tous = (pref) => ruptures.map((_, i) => `${pref}${i + 1}`).join(' ');
-        src.i(1, `IF ${dd}-FT = 1`);
-        src.i(2, `MOVE 1 TO ${tous('RTD')}`);
-        src.i(1, 'ELSE');
-        src.i(2, `MOVE ZERO TO ${tous('RTD')}`);
-        ruptures.forEach((r, i) => {
-          src.i(2, `IF ${i ? `RTD${i} = 1 OR ` : ''}${dd}00-${K(r)} NOT = 1-${dd}00-${K(r)}`);
-          src.i(3, `MOVE 1 TO RTD${i + 1}`);
-          src.i(2, 'END-IF');
-        });
-        src.i(1, 'END-IF');
-        ruptures.forEach((_, i) => src.i(1, `MOVE RTP${i + 1} TO ${dd}-PE${i + 1}`));
-        ruptures.forEach((_, i) => src.i(1, `MOVE RTD${i + 1} TO ${dd}-DE${i + 1}`));
+    };
+    const fermetures = () => {
+      for (const code of [dd, ...sorties.map((x) => x.code)].sort(comparerCodes)) {
+        src.a(`F20${code}. CLOSE ${code === dd ? lu : `${code}-FICHIER`}.`);
+        src.a(`F20${code}-FN. EXIT.`);
       }
-      src.b('END-IF.');
     };
     src.a('PROCEDURE DIVISION.');
     derouler({
       '01': () => {
         src.a('F01.');
-        if (N) {
-          src.b(`SORT ${dd}-TRAVAIL`);
-          for (const r of ruptures) src.b(`    ON ASCENDING KEY ${dd}-TRV-${K(r)}`);
-          src.b(`    USING ${dd}-FICHIER GIVING ${dd}-TRIE`);
-        }
-        src.b(`OPEN INPUT ${lecture}`);
-        for (const so of sorties) src.b(`OPEN OUTPUT ${so.code}-FICHIER`);
         src.b('DISPLAY L-TITRE');
         src.b('DISPLAY L-ENTETE');
-        src.b('DISPLAY L-TRAIT');
-        lireSuivant();
-        src.lignes[src.lignes.length - 1] += '.';
+        src.b('DISPLAY L-TRAIT.');
+        ouvertures();
         sousFonctions('01');
         src.a('F01-FN. EXIT.');
       },
       '05': () => {
-        src.a('F05.');
-        if (!N) lecture1(); else src.com('Fichier lu avec rupture : voir F10');
+        src.a('F05. EXIT.');
+        if (!N) {
+          src.a(`F05${dd}.`);
+          lire(`F05${dd}-10`, `F05${dd}-FN`, `${dd}-FT`);
+          src.b(`ADD 1 TO 5-${dd}00-CPTENR.`);
+          src.a(`F05${dd}-FN. EXIT.`);
+        }
         sousFonctions('05');
         src.a('F05-FN. EXIT.');
       },
       ...(N ? {
         '10': () => {
-          src.a('F10.');
-          lecture1();
+          src.a('F10. EXIT.');
+          src.a(`F10${dd}.`);
+          src.a(`F10${dd}-10. MOVE ${dd}-DE TO ${dd}-PE.`);
+          src.b(`IF ${dd}-FI = '1'`);
+          src.b(`    MOVE 1 TO ${dd}-FT GO TO F10${dd}-FN.`);
+          src.b(`MOVE ${dd}00 TO 1-${dd}00.`);
+          src.b(`ADD 1 TO 5-${dd}00-CPTENR.`);
+          lire(`F10${dd}-20`, `F10${dd}-FN`, `${dd}-FI`);
+          src.a(`F10${dd}-FN. EXIT.`);
           sousFonctions('10');
           src.a('F10-FN. EXIT.');
         },
+        '22': () => {
+          src.a('F22. EXIT.');
+          src.a(`F22${dd}. MOVE ZERO TO ${dd}-DE.`);
+          src.b(`IF ${dd}-FI = '1' GO TO F22${dd}-1.`);
+          ruptures.forEach((r, i) => {
+            src.b(`IF ${dd}00-${K(r)} NOT = 1-${dd}00-${K(r)}`);
+            src.b(`    GO TO F22${dd}-${i + 1}.`);
+          });
+          src.b(`GO TO F22${dd}-RT.`);
+          ruptures.forEach((_, i) => src.a(`F22${dd}-${i + 1}. MOVE 1 TO ${dd}-DE${i + 1}.`));
+          src.com('Sans synchronisation : ruptures totales = celles du fichier');
+          src.a(`F22${dd}-RT. MOVE ${dd}-DE TO RTD. MOVE ${dd}-PE TO RTP.`);
+          src.b('MOVE NRD TO NRP. MOVE ZERO TO NRD.');
+          ruptures.forEach((_, i) => src.b(`IF RTD${i + 1} = '1' MOVE ${i + 1} TO NRD GO TO F22${dd}-FN.`));
+          src.a(`F22${dd}-FN. EXIT.`);
+          sousFonctions('22');
+          src.a('F22-FN. EXIT.');
+        },
       } : {}),
       '20': () => {
-        src.a('F20.');
-        src.b('IF NOT FIN-TRAITEMENT GO TO F20-FN.');
+        src.a('F20. IF FT = ALL \'1\'');
+        src.b('NEXT SENTENCE ELSE GO TO F20-FN.');
         if (t.compter) src.b('MOVE G-NB TO LG-NB');
         for (const r of totaux) src.b(`MOVE G-${ident(r.code)} TO LG-${ident(r.code)}`);
         src.b('DISPLAY L-TRAIT');
         src.b('DISPLAY L-TOTAL-G');
         src.b('MOVE NB-LUS TO LC-LUS');
-        src.b('MOVE NB-RETENUS TO LC-RETENUS');
+        src.b(`MOVE 5-${dd}00-CPTENR TO LC-RETENUS`);
         src.b('DISPLAY L-COMPTES.');
         sousFonctions('20');
-        src.a('F2099.');
-        for (const so of sorties) src.b(`CLOSE ${so.code}-FICHIER`);
-        src.b(`CLOSE ${lecture}`);
-        src.b('STOP RUN.');
+        fermetures();
+        src.a('F2099. STOP RUN.');
+        src.a('F2099-FN. EXIT.');
         src.a('F20-FN. EXIT.');
       },
       '8E': () => {
         src.a('F8E.');
-        src.b('ADD 1 TO NB-RETENUS');
         ruptures.forEach((r, i) => {
           const nv = `R${i + 1}`;
-          src.b(`IF RTP${i + 1} = 1`);
+          src.b(`IF RTP${i + 1} = '1'`);
           if (t.compter) src.i(1, `MOVE ZERO TO ${nv}-NB`);
           for (const x of totaux) src.i(1, `MOVE ZERO TO ${nv}-${ident(x.code)}`);
-          src.i(1, `MOVE ${dd}00-${K(r)} TO L-CLE-${i + 1}`);
+          src.i(1, `MOVE ${cour}-${K(r)} TO L-CLE-${i + 1}`);
           src.i(1, `DISPLAY L-GROUPE-${i + 1}`);
           src.b('END-IF');
         });
         const niv = N ? `R${N}` : 'G';
         if (t.compter) src.b(`ADD 1 TO ${niv}-NB`);
-        for (const r of totaux) src.b(`ADD ${dd}00-${ident(r.code)} TO ${niv}-${ident(r.code)}`);
-        for (const r of colonnes) src.b(`MOVE ${dd}00-${ident(r.code)} TO D-${ident(r.code)}`);
+        for (const r of totaux) src.b(`ADD ${cour}-${ident(r.code)} TO ${niv}-${ident(r.code)}`);
+        for (const r of colonnes) src.b(`MOVE ${cour}-${ident(r.code)} TO D-${ident(r.code)}`);
         src.b('CONTINUE.');
         sousFonctions('8E');
         src.a('F8E99.');
         if (t.detail) src.b('DISPLAY L-DETAIL');
         for (let i = N - 1; i >= 0; i--) {
           const nv = `R${i + 1}`, parent = i ? `R${i}` : 'G';
-          src.b(`IF RTD${i + 1} = 1`);
+          src.b(`IF RTD${i + 1} = '1'`);
           if (t.compter) src.i(1, `MOVE ${nv}-NB TO L${nv}-NB`);
           for (const x of totaux) src.i(1, `MOVE ${nv}-${ident(x.code)} TO L${nv}-${ident(x.code)}`);
           src.i(1, `DISPLAY L-TOTAL-${nv}`);
@@ -980,17 +1052,10 @@ export function generer(modele) {
         src.b('CONTINUE.');
         src.a('F8E-FN. EXIT.');
       },
-      '90': () => {
-        src.a('F90.');
-        sousFonctions('90');
-        src.a('F9099.');
-        src.b('GO TO F05.');
-        src.a('F90-FN. EXIT.');
-      },
+      '90': finIteration,
     });
     return src.texte();
   }
-
   // ================= Programme de mise à jour (principal P, mouvements M, résultat R) =================
   function genererMiseAJour() {
     const { p, mv, r: rs, n: N } = cd;

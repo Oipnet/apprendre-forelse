@@ -14,7 +14,9 @@ const cas = [];
 const fa = (m) => m.appels[0];
 const ruptures = (m, r) => { fa(m).argument = r; fa(m).rupture = r.length; };
 cas.push(['exemple (sans la base)', copie(exemple)]);
-{ const m = copie(exemple); ruptures(m, []); m.traitement.filtres = []; cas.push(['sans rupture ni filtre', m]); }
+// sans rupture, l'enregistrement traité est FA00 (il n'y a plus de lecture d'avance)
+const sansLectureDAvance = (m) => { for (const l of m.lignes) for (const k of ['opes', 'cond']) if (l[k]) l[k] = l[k].replace(/1-FA00-/g, 'FA00-'); };
+{ const m = copie(exemple); ruptures(m, []); sansLectureDAvance(m); m.traitement.filtres = []; cas.push(['sans rupture ni filtre', m]); }
 { const m = copie(exemple); m.traitement.detail = false; m.traitement.filtres = [{ rubrique: 'MTFACT', op: '>', valeur: '100' }]; cas.push(['sans detail, filtre > 100', m]); }
 { const m = copie(exemple); m.traitement.filtres = [{ rubrique: 'REGION', op: 'NOT =', valeur: 'EST' }, { rubrique: 'MTFACT', op: '<', valeur: '1000' }]; m.traitement.compter = false; cas.push(['deux filtres, sans comptage', m]); }
 {
@@ -55,18 +57,18 @@ cas.push(['exemple (sans la base)', copie(exemple)]);
   m.dictionnaire.push({ code: 'MAXI', libelle: 'Plus gros montant', type: '9', longueur: 9, decimales: 2, signe: true });
   ruptures(m, ['REGION', 'NUMCLI']);
   m.lignes.push(
-    { fo: '30', sf: '10', ope: 'N', opes: 'Plus gros montant', niv: '05', tc: 'IT', cond: 'FA00-MTFACT>W-MAXI' },
-    { fo: '30', sf: '10', ope: 'M', opes: 'FA00-MTFACT W-MAXI' },
+    { fo: '30', sf: '10', ope: 'N', opes: 'Plus gros montant', niv: '05', tc: 'IT', cond: '1-FA00-MTFACT>W-MAXI' },
+    { fo: '30', sf: '10', ope: 'M', opes: '1-FA00-MTFACT W-MAXI' },
     { fo: '30', sf: '20', ope: 'N', opes: 'Dernier client de la region', niv: '05', tc: 'IT', cond: 'RTD1=1 ET RTP2=1' },
-    { fo: '30', sf: '20', ope: 'MES', opes: "'  (seul client de son groupe : ' FA00-NOMCLI ')'" },
+    { fo: '30', sf: '20', ope: 'MES', opes: "'  (seul client de son groupe : ' 1-FA00-NOMCLI ')'" },
     { fo: '30', sf: '30', ope: 'N', opes: 'Sinon', niv: '05', tc: 'EL' },
     { fo: '30', sf: '30', ope: '*', opes: 'rien a signaler' },
     { fo: '30', sf: '30', ope: 'C', opes: 'W-NBREL = W-NBREL + 0' },
-    { fo: '30', sf: '40', ope: 'N', opes: 'Region # NOR', niv: '05', tc: 'IT', cond: "FA00-REGION # 'NOR'" },
-    { fo: '30', sf: '50', ope: 'N', opes: 'Gros montant', niv: '10', tc: 'IT', cond: 'FA00-MTFACT >= 99.99 OU FA00-MTFACT < -50' },
+    { fo: '30', sf: '40', ope: 'N', opes: 'Region # NOR', niv: '05', tc: 'IT', cond: "1-FA00-REGION # 'NOR'" },
+    { fo: '30', sf: '50', ope: 'N', opes: 'Gros montant', niv: '10', tc: 'IT', cond: '1-FA00-MTFACT >= 99.99 OU 1-FA00-MTFACT < -50' },
     { fo: '30', sf: '50', ope: 'P', opes: '95' },
     { fo: '95', sf: '10', ope: 'N', opes: 'Signalement', niv: '05', tc: 'BL' },
-    { fo: '95', sf: '10', ope: 'MES', opes: "'  >> A SURVEILLER : ' FA00-MTFACT" },
+    { fo: '95', sf: '10', ope: 'MES', opes: "'  >> A SURVEILLER : ' 1-FA00-MTFACT" },
     { fo: '03', sf: '10', ope: 'N', opes: 'Debut', niv: '05', tc: 'BL' },
     { fo: '03', sf: '10', ope: 'MES', opes: "'DEBUT DU TRAITEMENT'" },
     { fo: '20', sf: '50', ope: 'N', opes: 'Max', niv: '05', tc: 'BL' },
@@ -88,7 +90,7 @@ cas.push(['exemple (sans la base)', copie(exemple)]);
 {
   const m = copie(exemple);
   const c = m.appels[0];
-  delete m.appels;
+  delete m.appels; delete m.version;
   Object.assign(m.traitement, { structure: c.structure, fichier: c.fichier, ruptures: c.argument });
   m.donnees = c.donnees;
   m.lignes = [

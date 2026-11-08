@@ -95,9 +95,11 @@ describe('base de données façon DB2', () => {
 describe('à la manière de Pacbase', () => {
 	it('les fonctions générées portent les codes du générateur d\'IBM et s\'enchaînent par GO TO', () => {
 		const source = generer(exemple);
-		for (const f of ['F01.', 'F05.', 'F10.', 'F20.', 'F8E.', 'F90.', 'F9099.']) expect(source).toContain(`       ${f}`);
-		expect(source).toContain('GO TO F05.');
-		expect(source).toContain('IF NOT FIN-TRAITEMENT GO TO F20-FN.');
+		for (const f of ['F01.', 'F01FA.', 'F05. EXIT.', 'F10FA-10.', 'F22FA.', 'F2099. STOP RUN.', 'F8E.', 'F90. EXIT.']) expect(source).toContain(`       ${f}`);
+		expect(source).toContain('       F9099-ITER-FN. GO TO F05.');
+		expect(source).toContain("       F20. IF FT = ALL '1'");
+		expect(source).toContain('MOVE FA00 TO 1-FA00.');
+		expect(source).toContain('IF FA00-REGION NOT = 1-FA00-REGION');
 		const maj = generer(exempleMiseAJour);
 		for (const f of ['F24.', 'F70.', 'F73.', 'F76.']) expect(maj).toContain(`       ${f}`);
 		expect(maj).toContain('MV-CF1');
@@ -125,8 +127,9 @@ describe('à la manière de Pacbase', () => {
 		const m = normaliser(ancien);
 		expect(m.appels).toEqual([expect.objectContaining({ code: 'FA', utilisation: 'C', structure: 'FACTURE', fichier: 'FACTURES.DAT', argument: ['REGION'], rupture: 1 })]);
 		expect(m.lignes).toEqual([
-			expect.objectContaining({ fo: '20', sf: '10', opes: '1-FA00-NOMCLI' }),
-			expect.objectContaining({ fo: '8E', sf: '10', cond: 'FA00-MTFACT < 0' }),
+			// noms du manuel IBM : 1-FA00 l'enregistrement traité, FA00 le suivant (lu d'avance)
+			expect.objectContaining({ fo: '20', sf: '10', opes: 'FA00-NOMCLI' }),
+			expect.objectContaining({ fo: '8E', sf: '10', cond: '1-FA00-MTFACT < 0' }),
 			expect.objectContaining({ fo: '8E', sf: '10', opes: "'E-LITTERAL' D-NOMCLI" }),
 		]);
 		expect(fichierDonnees(ancien)).toBe(fichierDonnees(exemple));
