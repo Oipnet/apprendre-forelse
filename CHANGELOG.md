@@ -17,6 +17,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   navigateur par un interpréteur, dont les sorties sont comparées à celles de GnuCOBOL (`playground/tests/cobol.test.ts`).
   **Partage par lien** : le programme voyage dans l'adresse après le `#` (rien n'est envoyé ni gardé sur le serveur),
   et celui qui ouvre le lien choisit de le charger ou de garder le sien. En français seulement.
+  Au plus près du batch de VisualAge Pacbase (manuel IBM) : **appel des fichiers** façon `-CD` (utilisation C, P, M, R,
+  argument, niveaux de rupture et de synchronisation, zones `dd00-`, `1-dd00-`, `dd-PEn`, `dd-DEn`, `dd-CFn`),
+  fonctions générées F01, F05, F10, F20, F24, F70, F73, F76, F8E, F90 et F9099 enchaînées par GO TO, sous-fonctions
+  `FffSS` / `FffSS-FN`, et **mise à jour** d'un fichier principal par des mouvements (création, modification,
+  annulation, fichier résultat, compte rendu des mouvements rejetés). Les programmes et liens d'avant sont repris.
 
 ## 3.35.0 — 2026-11-06
 

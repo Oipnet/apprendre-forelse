@@ -5,7 +5,7 @@
 // PIC X / 9 / S9 / V / éditions (Z 9 . , - B /), VALUE, SIGN LEADING SEPARATE,
 // MOVE, ADD, SUBTRACT, COMPUTE, IF/ELSE/END-IF, PERFORM [UNTIL], PERFORM UNTIL ... END-PERFORM,
 // OPEN, CLOSE, READ AT END / NOT AT END, WRITE, SORT USING GIVING, DISPLAY, SET ... TO TRUE,
-// INITIALIZE, CONTINUE, STOP RUN, GOBACK, et EXEC SQL ... END-EXEC sur une base SQLite (sql.js) :
+// INITIALIZE, CONTINUE, GO TO, STOP RUN, GOBACK, et EXEC SQL ... END-EXEC sur une base SQLite (sql.js) :
 // SELECT ... INTO, INSERT, UPDATE, DELETE, DECLARE CURSOR, OPEN, FETCH, CLOSE, COMMIT, ROLLBACK.
 
 export class ErreurCobol extends Error {
@@ -411,6 +411,7 @@ export class Programme {
         return ins;
       }
       case 'STOP': L.mot('RUN'); return ins;
+      case 'GO': L.optionnel('TO'); ins.para = L.mot(); return ins;
       case 'GOBACK': case 'CONTINUE': case 'EXIT': return ins;
       default:
         throw new ErreurCobol(`instruction non prise en charge : ${v}`, ligne);
@@ -564,10 +565,12 @@ function contientSql(liste) {
 }
 
 const VERBES = new Set(['MOVE', 'ADD', 'SUBTRACT', 'COMPUTE', 'DISPLAY', 'IF', 'PERFORM', 'OPEN', 'CLOSE', 'READ',
-  'WRITE', 'SORT', 'SET', 'INITIALIZE', 'STOP', 'GOBACK', 'CONTINUE', 'EXIT']);
+  'WRITE', 'SORT', 'SET', 'INITIALIZE', 'STOP', 'GO', 'GOBACK', 'CONTINUE', 'EXIT']);
 const FINS = new Set(['ELSE', 'END-IF', 'END-PERFORM', 'END-READ', 'NOT', 'AT', 'END']);
 
 class Arret { }
+// GO TO : remonte jusqu'à la boucle qui déroule les paragraphes.
+class Saut { constructor(para) { this.para = para; } }
 
 class Execution {
   constructor(pgm, fichiers, max, db) {
@@ -737,23 +740,32 @@ class Execution {
       if (!debut) return;
       this.executerDepuis(0);
     } catch (e) {
+      if (e instanceof Saut) throw new ErreurCobol(`GO TO ${e.para} : sortie d un PERFORM non prise en charge`);
       if (!(e instanceof Arret)) throw e;
     }
   }
 
+  // Déroule les paragraphes à partir de index, jusqu'à jusquA inclus (PERFORM THRU) ou jusqu'à la fin.
+  // Un GO TO vers un paragraphe de la plage continue depuis lui ; hors de la plage, il remonte.
   executerDepuis(index, jusquA = null) {
-    for (let i = index; i < this.pgm.ordre.length; i++) {
-      const nom = this.pgm.ordre[i];
-      this.bloc(this.pgm.paragraphes.get(nom));
-      if (jusquA !== null && nom === jusquA) return;
+    const fin = jusquA === null ? this.pgm.ordre.length - 1 : this.pgm.ordre.indexOf(jusquA);
+    for (let i = index; i <= fin && i < this.pgm.ordre.length; i++) {
+      try {
+        this.bloc(this.pgm.paragraphes.get(this.pgm.ordre[i]));
+      } catch (e) {
+        if (!(e instanceof Saut)) throw e;
+        const j = this.pgm.ordre.indexOf(e.para);
+        if (j < 0) throw new ErreurCobol(`GO TO ${e.para} : paragraphe inconnu`);
+        if (j < index || j > fin) throw e;
+        i = j - 1;
+      }
     }
   }
 
   performer(nom, jusquA) {
     const i = this.pgm.ordre.indexOf(nom);
     if (i < 0) throw new ErreurCobol(`paragraphe inconnu : ${nom}`);
-    if (jusquA) return this.executerDepuis(i, jusquA);
-    this.bloc(this.pgm.paragraphes.get(nom));
+    this.executerDepuis(i, jusquA || nom);
   }
 
   bloc(liste) { for (const ins of liste) this.instruction(ins); }
@@ -841,6 +853,7 @@ class Execution {
       }
       case 'INITIALIZE': for (const c of ins.cibles) this.initialiser(c.el, false); return;
       case 'STOP': case 'GOBACK': throw new Arret();
+      case 'GO': throw new Saut(ins.para);
       case 'CONTINUE': case 'EXIT': return;
       case 'SQL': return this.sql(ins);
     }

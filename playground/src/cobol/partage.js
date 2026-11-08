@@ -1,11 +1,11 @@
-// Partage d'un programme par lien, comme le bac à sable : le modèle (dictionnaire, enregistrement, traitement,
-// langage structuré, données, sorties, tables) voyage dans l'adresse, après le #. Le serveur ne le voit ni ne le garde.
+// Partage d'un programme par lien, comme le bac à sable : le modèle (dictionnaire, enregistrements, fichiers appelés
+// et leurs données, traitement, langage structuré, sorties, tables) voyage dans l'adresse, après le #. Le serveur ne le voit ni ne le garde.
 // Format : #programme=<JSON compressé (deflate brut), en base64 pour URL>.
 
-import { generer } from './generateur.js';
+import { generer, normaliser } from './generateur.js';
 
 const PREFIXE = 'programme=';
-const VERSION = 1;
+const VERSION = 2; // 2 : fichiers appelés (appels) ; 1 : un seul fichier, décrit dans le traitement
 
 function versBase64Url(octets) {
   let s = '';
@@ -24,8 +24,8 @@ async function transformer(octets, flux) {
 
 // Ce qui part dans le lien : le modèle seul (pas le contenu de la base, propre à chaque navigateur).
 function essentiel(modele) {
-  const { dictionnaire, structures, traitement, sorties, tables, lignes, donnees } = modele;
-  return { v: VERSION, dictionnaire, structures, traitement, sorties, tables, lignes, donnees };
+  const { dictionnaire, structures, appels, traitement, sorties, tables, lignes } = normaliser(modele);
+  return { v: VERSION, dictionnaire, structures, appels, traitement, sorties, tables, lignes };
 }
 
 export async function fragmentDe(modele) {
@@ -49,11 +49,14 @@ export async function lireFragment(hash = location.hash) {
     if (octets.length > 512 * 1024) return null;
     const m = JSON.parse(new TextDecoder().decode(octets));
     if (!m || typeof m !== 'object' || !Array.isArray(m.dictionnaire) || !Array.isArray(m.structures) || !m.structures.length || typeof m.traitement !== 'object') return null;
-    const modele = {
+    const brut = {
       dictionnaire: m.dictionnaire, structures: m.structures, traitement: m.traitement,
       sorties: Array.isArray(m.sorties) ? m.sorties : [], tables: Array.isArray(m.tables) ? m.tables : [],
-      lignes: Array.isArray(m.lignes) ? m.lignes : [], donnees: Array.isArray(m.donnees) ? m.donnees : [],
+      lignes: Array.isArray(m.lignes) ? m.lignes : [],
+      // version 1 : les données du fichier unique ; version 2 : chaque fichier appelé porte les siennes
+      ...(Array.isArray(m.appels) ? { appels: m.appels } : { donnees: Array.isArray(m.donnees) ? m.donnees : [] }),
     };
+    const modele = normaliser(brut);
     generer(modele); // un modèle que le générateur refuse n'est pas ouvert
     return modele;
   } catch {
@@ -100,8 +103,9 @@ export async function bandeauReception(zone) {
   }
   if (!recu) return;
   const nom = recu.traitement?.programme || 'sans nom';
+  const donnees = recu.appels.reduce((n, a) => n + (a.donnees || []).length, 0);
   zone.replaceChildren(
-    texte(`Ce lien contient le programme ${nom} : ${recu.lignes.length} ligne(s) de traitement, ${recu.donnees.length} ligne(s) de données. L'ouvrir remplace votre programme, qui reste récupérable.`),
+    texte(`Ce lien contient le programme ${nom} : ${recu.appels.length} fichier(s) appelé(s), ${recu.lignes.length} ligne(s) de traitement, ${donnees} ligne(s) de données. L'ouvrir remplace votre programme, qui reste récupérable.`),
     bouton('Ouvrir le programme', () => {
       try {
         const actuel = localStorage.getItem(CLE_MODELE);

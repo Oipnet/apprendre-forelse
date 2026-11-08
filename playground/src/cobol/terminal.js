@@ -1,5 +1,8 @@
 import { Ecran3270, COLONNES } from './terminal3270.js';
-import { exemple, generer, fichierDonnees, longueurFichier, picStockage, operateurs, rupturesDe, MAX_RUPTURES, analyserLignes, placeFonction, RESERVEES, OPERATEURS_STRUCTURES, verifierTables } from './generateur.js';
+import {
+  exemple, exempleMiseAJour, generer, fichiersEntree, fichiersSortie, longueurFichier, picStockage, operateurs, MAX_RUPTURES, analyserLignes,
+  OPERATEURS_STRUCTURES, verifierTables, normaliser, UTILISATIONS, MOUVEMENT_DEFAUT, estMiseAJour, appelEdite, fonctionsGenerees, comparerCodes,
+} from './generateur.js';
 import { Programme } from './interpreteur.js';
 import { bandeauReception, montrerLien } from './partage.js';
 import { ouvrirBase, sauverBase, synchroniser, contenuTable, viderTable, reinitialiserBase, formaterValeur } from './base.js';
@@ -8,24 +11,14 @@ const CLE = 'atelier-cobol-modele-v1';
 let modele;
 try { modele = JSON.parse(localStorage.getItem(CLE)) || null; } catch { modele = null; }
 if (!modele?.dictionnaire) modele = structuredClone(exemple);
-if (!modele.sorties) modele.sorties = structuredClone(exemple.sorties);
-if (!modele.lignes) {
-  // modèle d'une version précédente : on lui ajoute l'exemple de langage structuré
-  modele.lignes = structuredClone(exemple.lignes);
-  for (const d of exemple.dictionnaire) if (!modele.dictionnaire.some((x) => x.code === d.code)) modele.dictionnaire.push({ ...d });
-  delete modele.specifique;
-}
-if (!modele.tables) {
-  // modèle d'avant la base : on ajoute la table d'exemple et, si les fonctions sont libres, son traitement
-  modele.tables = structuredClone(exemple.tables);
-  for (const d of exemple.dictionnaire) if (!modele.dictionnaire.some((x) => x.code === d.code)) modele.dictionnaire.push({ ...d });
-  const libre = !modele.lignes.some((l) => l.fo === '30' || (l.fo === '22' && l.sf >= '20'));
-  if (libre) modele.lignes.push(...structuredClone(exemple.lignes.filter((l) => l.fo === '30' || (l.fo === '22' && l.sf >= '20'))));
-}
+modele.sorties ||= [];
+modele.lignes ||= [];
+modele.tables ||= [];
 // opérateurs de base de la première v0.5 -> opérateur SQL de Pacbase
 { const anciens = { INS: 'W', LEC: 'R', MAJ: 'RW', SUP: 'D', OUV: 'P', SUI: 'RN', FER: 'CL' };
-  for (const l of modele.lignes || []) { const a = anciens[(l.ope || '').toUpperCase()]; if (a) { l.opes = `${(l.opes || '').trim()} ${a}`; l.ope = 'SQL'; } } }
-if (!modele.traitement.ruptures) { modele.traitement.ruptures = rupturesDe(modele.traitement); delete modele.traitement.rupture; }
+  for (const l of modele.lignes) { const a = anciens[(l.ope || '').toUpperCase()]; if (a) { l.opes = `${(l.opes || '').trim()} ${a}`; l.ope = 'SQL'; } } }
+// programmes d'avant l'appel des fichiers : un seul fichier, décrit dans le traitement
+modele = normaliser(modele);
 const sauver = () => { try { localStorage.setItem(CLE, JSON.stringify(modele)); } catch {} };
 // base SQLite : chargée à la demande, l'écran courant est redessiné quand elle est prête
 let db = null, erreurBase = null;
@@ -35,8 +28,16 @@ function base(vues) {
     .then(() => { if (vues.includes(app.courant?.vue)) app.afficher(); });
   return null;
 }
-const S = () => modele.structures[0];
 const T = () => modele.traitement;
+const structDe = (code) => modele.structures.find((x) => x.code === code);
+const appel = (u) => modele.appels.find((a) => a.utilisation === u);
+// l'enregistrement lu par le traitement : celui du fichier édité (C) ou du principal (P)
+const structureLue = () => structDe((appelEdite(modele) || appel('P') || modele.appels[0])?.structure) || modele.structures[0];
+// enregistrement affiché par l'écran E (E code pour en choisir un autre) et fichier de l'écran D
+let structCourante = null, appelDonnees = null;
+const S = () => structDe(structCourante) || structureLue();
+const appelsLus = () => modele.appels.filter((a) => a.utilisation !== 'R');
+const appelD = () => appelsLus().find((a) => a.code === appelDonnees) || appelsLus()[0];
 const rub = (c) => modele.dictionnaire.find((d) => d.code === c);
 
 // ---------- construction des écrans ----------
@@ -54,7 +55,7 @@ function cadre(id, titre, touches, choix = '') {
     lab(0, 79 - h.length, h, 'bleu'),
     lab(1, 1, 'CHOIX ===>', 'blanc'),
     zone(1, 12, 30, 'CHOIX', choix),
-    lab(1, 44, pad(`PGM ${T().programme}  ENR ${S().code}`, 35), 'bleu'),
+    lab(1, 44, pad(`PGM ${T().programme}  ${modele.appels.map((a) => `${a.code}/${a.utilisation}`).join(' ')}`, 35), 'bleu'),
     lab(23, 1, pad(touches, 78), 'turquoise'),
   ];
 }
@@ -112,18 +113,28 @@ const app = {
 
 function commande(texte) {
   const [mot, ...reste] = texte.toUpperCase().split(/\s+/);
-  const cibles = { M: 'menu', R: 'rubriques', E: 'enreg', T: 'traitement', D: 'donnees', G: 'source', X: 'execution', P: 'specifique', S: 'sorties', B: 'base', Q: 'requetes', AIDE: 'aide', '?': 'aide' };
+  const cibles = { M: 'menu', R: 'rubriques', E: 'enreg', C: 'appels', T: 'traitement', D: 'donnees', G: 'source', X: 'execution', P: 'specifique', S: 'sorties', B: 'base', Q: 'requetes', AIDE: 'aide', '?': 'aide' };
   if (mot === 'PARTAGE') {
     montrerLien(document.getElementById('lien-partage'), modele).then((copie) => app.afficher({ texte: copie ? 'LIEN DE PARTAGE COPIÉ. IL EST AUSSI AFFICHÉ SOUS LE TERMINAL.' : 'LIEN DE PARTAGE AFFICHÉ SOUS LE TERMINAL.', erreur: false }));
     return true;
   }
   if (mot === 'FIN') {
-    modele = structuredClone(exemple); sauver(); app.pile = [];
+    modele = normaliser(structuredClone(reste[0] === 'MAJ' ? exempleMiseAJour : exemple)); structCourante = appelDonnees = null; sauver(); app.pile = [];
     reinitialiserBase().then(() => { if (db) { synchroniser(db, modele); sauverBase(db); } });
-    app.ouvrir('menu', {}, false); app.afficher({ texte: 'MODÈLE REMIS À L\'EXEMPLE DE DÉPART, BASE VIDÉE.', erreur: false });
+    app.ouvrir('menu', {}, false); app.afficher({ texte: reste[0] === 'MAJ' ? 'EXEMPLE DE MISE À JOUR CHARGÉ, BASE VIDÉE.' : 'MODÈLE REMIS À L\'EXEMPLE DE DÉPART, BASE VIDÉE. FIN MAJ : EXEMPLE DE MISE À JOUR.', erreur: false });
     return true;
   }
-  if (!cibles[mot]) { app.afficher({ texte: `CHOIX ${mot} INCONNU. CHOIX POSSIBLES : M R E T P D S B Q G X PARTAGE AIDE FIN`, erreur: true }, 'CHOIX'); return true; }
+  if (!cibles[mot]) { app.afficher({ texte: `CHOIX ${mot} INCONNU. POSSIBLES : M R E C T P D S B Q G X PARTAGE AIDE FIN`, erreur: true }, 'CHOIX'); return true; }
+  if (mot === 'E' && reste[0]) {
+    const code = reste[0].replace(/[^A-Z0-9-]/g, '').slice(0, 12);
+    if (!/^[A-Z]/.test(code)) { app.afficher({ texte: 'E CODE : UNE LETTRE EN TÊTE.', erreur: true }, 'CHOIX'); return true; }
+    if (!structDe(code)) { modele.structures.push({ code, libelle: '', rubriques: [] }); sauver(); }
+    structCourante = code;
+  } else if (mot === 'E') structCourante = null;
+  if (mot === 'D' && reste[0]) {
+    if (!appelsLus().some((a) => a.code === reste[0])) { app.afficher({ texte: `D ${reste[0]} : AUCUN FICHIER EN ENTRÉE DE CE CODE (CHOIX C).`, erreur: true }, 'CHOIX'); return true; }
+    appelDonnees = reste[0];
+  }
   app.ouvrir(cibles[mot], { filtre: reste.join(' ') });
   return true;
 }
@@ -134,10 +145,11 @@ VUES.menu = {
   dessin() {
     const lignes = [
       ['R', 'RUBRIQUES', 'Dictionnaire des données : code, format, libellé'],
-      ['E', 'ENREGISTREMENT', `Composition de ${S().code} : ordre et positions`],
-      ['T', 'TRAITEMENT', `Batch ${T().programme} : filtres, rupture, colonnes, totaux`],
+      ['E', 'ENREGISTREMENTS', `${modele.structures.map((x) => x.code).join(' ')} : ordre et positions (E code)`],
+      ['C', 'APPEL FICHIERS', `${modele.appels.map((a) => `${a.code} ${a.utilisation} ${a.fichier}`).join('  ')}`.slice(0, 49)],
+      ['T', 'TRAITEMENT', estMiseAJour(modele) ? `Mise à jour ${T().programme} : titre du compte rendu` : `Batch ${T().programme} : filtres, colonnes, totaux`],
       ['P', 'TRAITEMENTS', 'Langage structuré : fonctions et opérateurs'],
-      ['D', 'DONNÉES', `Lignes du fichier ${T().fichier}`],
+      ['D', 'DONNÉES', `Lignes des fichiers en entrée (D code) : ${appelsLus().map((a) => a.code).join(' ')}`],
       ['S', 'SORTIES', 'Fichiers produits par le traitement'],
       ['B', 'BASE', 'Tables de la base ; Q pour interroger en SQL'],
       ['G', 'GÉNÉRATION', 'Source COBOL généré, en consultation'],
@@ -146,14 +158,16 @@ VUES.menu = {
     const champs = [...cadre('M00', 'MENU GÉNÉRAL', 'PF1 AIDE  PF3 RETOUR  PF12 MENU  ENTRÉE VALIDER')];
     champs.push(lab(3, 6, 'Tapez un code sur la ligne CHOIX ou en face d\'une ligne, puis Entrée.', 'bleu'));
     lignes.forEach(([c, t, d], i) => {
-      champs.push(zone(4 + i * 2, 6, 1, `S${i}`), lab(4 + i * 2, 9, c, 'blanc'), lab(4 + i * 2, 12, pad(t, 16), 'turquoise'), lab(4 + i * 2, 29, d, 'bleu'));
+      const l = 5 + i + (i > 2 ? 1 : 0) + (i > 5 ? 1 : 0); // trois groupes : modèle, traitement, résultat
+      champs.push(zone(l, 6, 1, `S${i}`), lab(l, 9, c, 'blanc'), lab(l, 12, pad(t, 16), 'turquoise'), lab(l, 29, pad(d, 49), 'bleu'));
     });
-    champs.push(lab(21, 6, `Rubriques : ${modele.dictionnaire.length}   Lignes de données : ${modele.donnees.length}   Tables : ${(modele.tables || []).length}`, 'vert'));
+    const nbDonnees = modele.appels.reduce((n, a) => n + (a.donnees || []).length, 0);
+    champs.push(lab(21, 6, `Rubriques : ${modele.dictionnaire.length}   Lignes de données : ${nbDonnees}   Tables : ${modele.tables.length}`, 'vert'));
     return { champs, curseur: 'CHOIX' };
   },
   gerer(touche, v) {
     if (touche !== 'ENTREE') return { erreur: `TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.` };
-    const codes = ['R', 'E', 'T', 'P', 'D', 'S', 'B', 'G', 'X'];
+    const codes = ['R', 'E', 'C', 'T', 'P', 'D', 'S', 'B', 'G', 'X'];
     const i = codes.findIndex((_, k) => (v[`S${k}`] || '').trim());
     if (i >= 0) { commande(codes[i]); return { fait: true }; }
     return { message: { texte: 'INDIQUEZ UN CHOIX.', erreur: false } };
@@ -241,22 +255,36 @@ function dupliquerCode(code, ...listes) {
   return `${base}${n}`;
 }
 function renommer(ancien, nouveau) {
-  const s = S(), t = T();
+  const t = T();
   const r = (c) => (c === ancien ? nouveau : c);
-  s.rubriques = s.rubriques.map(r); t.colonnes = t.colonnes.map(r); t.totaux = t.totaux.map(r);
-  t.filtres.forEach((f) => (f.rubrique = r(f.rubrique))); t.ruptures = t.ruptures.map(r);
-  modele.donnees.forEach((l) => { if (ancien in l) { l[nouveau] = l[ancien]; delete l[ancien]; } });
+  for (const x of modele.structures) x.rubriques = x.rubriques.map(r);
+  t.colonnes = t.colonnes.map(r); t.totaux = t.totaux.map(r);
+  t.filtres.forEach((f) => (f.rubrique = r(f.rubrique)));
+  for (const a of modele.appels) {
+    a.argument = (a.argument || []).map(r);
+    if (a.mouvement) a.mouvement.rubrique = r(a.mouvement.rubrique);
+    (a.donnees || []).forEach((l) => { if (ancien in l) { l[nouveau] = l[ancien]; delete l[ancien]; } });
+  }
+  for (const so of modele.sorties) so.rubriques = so.rubriques.map(r);
+  for (const tb of modele.tables) { tb.rubriques = tb.rubriques.map(r); tb.cle = tb.cle.map(r); }
 }
 function nettoyer() {
   const codes = new Set(modele.dictionnaire.map((d) => d.code));
-  const s = S(), t = T();
-  s.rubriques = s.rubriques.filter((c) => codes.has(c));
-  const dansS = new Set(s.rubriques);
-  t.colonnes = t.colonnes.filter((c) => dansS.has(c));
-  t.totaux = t.totaux.filter((c) => dansS.has(c) && rub(c).type === '9');
-  t.filtres = t.filtres.filter((f) => dansS.has(f.rubrique));
-  t.ruptures = t.ruptures.filter((c, i, a) => dansS.has(c) && a.indexOf(c) === i);
-  for (const tb of modele.tables || []) { tb.rubriques = tb.rubriques.filter((c) => codes.has(c)); tb.cle = tb.cle.filter((c) => tb.rubriques.includes(c)); }
+  for (const x of modele.structures) x.rubriques = x.rubriques.filter((c, i, l) => codes.has(c) && l.indexOf(c) === i);
+  const p = appel('P');
+  for (const a of modele.appels) {
+    if (a.utilisation === 'R') { a.structure = p?.structure; continue; }
+    const dansA = new Set(structDe(a.structure)?.rubriques || []);
+    a.argument = (a.argument || []).filter((c, i, l) => dansA.has(c) && l.indexOf(c) === i).slice(0, MAX_RUPTURES);
+    if (a.utilisation === 'C') a.rupture = Math.min(Number(a.rupture || 0), a.argument.length);
+    if (a.mouvement && !dansA.has(a.mouvement.rubrique)) a.mouvement.rubrique = '';
+  }
+  const t = T();
+  const dansS = new Set(structureLue()?.rubriques || []);
+  t.colonnes = (t.colonnes || []).filter((c) => dansS.has(c));
+  t.totaux = (t.totaux || []).filter((c) => dansS.has(c) && rub(c).type === '9');
+  t.filtres = (t.filtres || []).filter((f) => dansS.has(f.rubrique));
+  for (const tb of modele.tables) { tb.rubriques = tb.rubriques.filter((c) => codes.has(c)); tb.cle = tb.cle.filter((c) => tb.rubriques.includes(c)); }
 }
 
 // ----- enregistrement : lignes numérotées, on renumérote pour réordonner -----
@@ -264,24 +292,25 @@ VUES.enreg = {
   dessin() {
     const champs = [...cadre('E01', `COMPOSITION DE L'ENREGISTREMENT`, 'PF1 AIDE  PF3 RETOUR  ENTRÉE VALIDER   ACTION : S SUPPR   NUMÉRO : DÉPLACER')];
     champs.push(lab(3, 1, 'CODE ENREG.', 'blanc'), zone(3, 13, 12, 'ENR', S().code), lab(3, 27, 'LIBELLÉ', 'blanc'), zone(3, 35, 30, 'LIB', S().libelle, { majuscules: false }));
-    champs.push(lab(5, 1, 'A NUM RUBRIQUE     R  LIBELLÉ                  PIC                POSITIONS', 'blanc'));
+    champs.push(lab(5, 1, 'A NUM RUBRIQUE        LIBELLÉ                  PIC                POSITIONS', 'blanc'));
     let pos = 1;
     const n = S().rubriques.length;
     for (let i = 0; i < 15; i++) {
       const l = 6 + i, c = S().rubriques[i], d = c && rub(c);
       let info = '';
       if (d) { const lg = longueurFichier(d); info = `${pad(d.libelle, 24)} ${pad(picStockage(d) + (d.signe ? ' S' : ''), 18)} ${lpad(pos, 3)} À ${lpad(pos + lg - 1, 3)}`; pos += lg; }
-      const nr = c ? T().ruptures.indexOf(c) + 1 : 0;
-      champs.push(zone(l, 1, 1, `A${i}`), zone(l, 3, 3, `N${i}`, d ? String((i + 1) * 10).padStart(3, '0') : '', { num: true }), zone(l, 7, 12, `R${i}`, c || ''), zone(l, 20, 1, `K${i}`, nr ? String(nr) : '', { num: true }), lab(l, 23, info, 'bleu'));
+      champs.push(zone(l, 1, 1, `A${i}`), zone(l, 3, 3, `N${i}`, d ? String((i + 1) * 10).padStart(3, '0') : '', { num: true }), zone(l, 7, 12, `R${i}`, c || ''), lab(l, 23, info, 'bleu'));
     }
-    champs.push(lab(21, 1, `${n} rubrique(s), ${pos - 1} car. R = niveau de rupture : 1 le plus large, puis 2, 3.`, 'bleu'));
+    const lu = modele.appels.filter((a) => a.structure === S().code && a.utilisation !== 'R').map((a) => a.code);
+    champs.push(lab(21, 1, pad(`${n} rubrique(s), ${pos - 1} car. ${lu.length ? `Lu par ${lu.join(' ')}.` : 'Aucun fichier ne le lit.'} Autres : ${modele.structures.filter((x) => x !== S()).map((x) => `E ${x.code}`).join(', ') || 'E code pour en créer un'}`, 78), 'bleu'));
     return { champs, curseur: n < 15 ? `N${n}` : 'A0' };
   },
-  gerer(touche, v, mod) {
+  gerer(touche, v) {
     if (touche !== 'ENTREE') return { erreur: `TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.` };
     const s = S();
     const enr = (v.ENR || '').trim();
     if (!/^[A-Z][A-Z0-9-]{0,11}$/.test(enr)) return { erreur: 'CODE ENREGISTREMENT INVALIDE.', champ: 'ENR' };
+    if (enr !== s.code && structDe(enr)) return { erreur: `L'ENREGISTREMENT ${enr} EXISTE DÉJÀ : CHOIX E ${enr} POUR L'AFFICHER.`, champ: 'ENR' };
     const lignes = [];
     for (let i = 0; i < 15; i++) {
       const code = (v[`R${i}`] || '').trim();
@@ -291,21 +320,85 @@ VUES.enreg = {
       const num = Number((v[`N${i}`] || '').trim() || (i + 1) * 10);
       if (!Number.isFinite(num)) return { erreur: 'NUMÉRO INVALIDE.', champ: `N${i}` };
       if (lignes.some((x) => x.code === code)) return { erreur: `RUBRIQUE ${code} EN DOUBLE.`, champ: `R${i}` };
-      const k = (v[`K${i}`] || '').trim();
-      if (k && !/^[1-3]$/.test(k)) return { erreur: 'NIVEAU DE RUPTURE : 1, 2 OU 3.', champ: `K${i}` };
-      if (k && lignes.some((x) => x.k === k)) return { erreur: `DEUX RUBRIQUES ONT LE NIVEAU DE RUPTURE ${k}.`, champ: `K${i}` };
-      lignes.push({ num, i, code, k });
+      lignes.push({ num, i, code });
     }
-    const niveaux = lignes.filter((x) => x.k).sort((a, b) => a.k - b.k);
-    if (niveaux.some((x, j) => Number(x.k) !== j + 1)) return { erreur: 'LES NIVEAUX DE RUPTURE SE SUIVENT : 1, PUIS 2, PUIS 3.', champ: `K${niveaux.find((x, j) => Number(x.k) !== j + 1).i}` };
     lignes.sort((a, b) => a.num - b.num || a.i - b.i);
-    const ruptAvant = JSON.stringify(T().ruptures);
-    T().ruptures = niveaux.map((x) => x.code);
     const avant = JSON.stringify([s.code, s.libelle, s.rubriques]);
-    s.code = enr; T().structure = enr; s.libelle = v.LIB || '';
+    for (const a of modele.appels) if (a.structure === s.code) a.structure = enr;
+    if (structCourante === s.code) structCourante = enr;
+    s.code = enr; s.libelle = v.LIB || '';
     s.rubriques = lignes.map((x) => x.code);
     nettoyer(); sauver();
-    return { message: { texte: avant === JSON.stringify([s.code, s.libelle, s.rubriques]) && ruptAvant === JSON.stringify(T().ruptures) ? 'AUCUNE MODIFICATION.' : 'ENREGISTREMENT MIS À JOUR, RENUMÉROTÉ DE 10 EN 10.', erreur: false } };
+    return { message: { texte: avant === JSON.stringify([s.code, s.libelle, s.rubriques]) ? 'AUCUNE MODIFICATION.' : 'ENREGISTREMENT MIS À JOUR, RENUMÉROTÉ DE 10 EN 10. RUPTURES : CHOIX C.', erreur: false } };
+  },
+};
+
+// ----- appel des fichiers : une ligne par fichier, comme les lignes -CD -----
+const NB_APPELS = 4;
+VUES.appels = {
+  dessin() {
+    const champs = [...cadre('C01', 'APPEL DES FICHIERS DU PROGRAMME', 'PF1 AIDE  PF3 RETOUR  ENTRÉE VALIDER   ACTION : S SUPPRIMER')];
+    champs.push(lab(3, 1, 'A CD U ENREG.       FICHIER        ARGUMENT (NIVEAUX 1 2 3)            NR', 'blanc'));
+    for (let i = 0; i < NB_APPELS; i++) {
+      const a = modele.appels[i], l = 4 + i * 3;
+      champs.push(zone(l, 1, 1, `A${i}`), zone(l, 3, 2, `C${i}`, a?.code), zone(l, 6, 1, `U${i}`, a?.utilisation),
+        zone(l, 8, 12, `E${i}`, a?.utilisation === 'R' ? '' : a?.structure), zone(l, 21, 14, `F${i}`, a?.fichier),
+        zone(l, 36, 36, `G${i}`, (a?.argument || []).join(' ')),
+        zone(l, 73, 1, `N${i}`, a ? String(a.utilisation === 'C' ? a.rupture || 0 : a.utilisation === 'R' ? '' : a.synchro || (a.argument || []).length) : '', { num: true }));
+      const mo = a?.mouvement;
+      if (a?.utilisation === 'M') {
+        champs.push(lab(l + 1, 8, 'CODE MVT', 'blanc'), zone(l + 1, 17, 12, `K${i}`, mo?.rubrique), lab(l + 1, 31, 'CRÉATION', 'blanc'), zone(l + 1, 40, 1, `KC${i}`, mo?.creation),
+          lab(l + 1, 43, 'MODIF.', 'blanc'), zone(l + 1, 50, 1, `KM${i}`, mo?.modification), lab(l + 1, 53, 'ANNUL.', 'blanc'), zone(l + 1, 60, 1, `KA${i}`, mo?.annulation));
+      } else if (a) {
+        champs.push(lab(l + 1, 8, pad(a.utilisation === 'R' ? `Résultat : même enregistrement que le principal (${appel('P')?.structure || '?'})` : `${UTILISATIONS[a.utilisation]}`, 70), 'bleu'));
+      }
+    }
+    let etat = 'Programme complet.';
+    try { generer(modele); } catch (e) { etat = e.message; }
+    champs.push(
+      lab(16, 1, 'U : C consulté (édition)  P principal  M mouvements  R résultat (mise à jour)', 'bleu'),
+      lab(17, 1, 'NR : niveaux de rupture (C) ou de synchronisation (P et M, même nombre).', 'bleu'),
+      lab(18, 1, 'Zones : CD00-RUB courant, 1-CD00-RUB suivant, CD-FT fin, CD-CFn, CD-DEn.', 'bleu'),
+      lab(19, 1, 'Mouvement : une rubrique vide ne modifie rien. FIN MAJ : exemple complet.', 'bleu'),
+      lab(21, 1, pad(etat.toUpperCase(), 78), etat === 'Programme complet.' ? 'vert' : 'jaune'),
+    );
+    return { champs, curseur: 'C0' };
+  },
+  gerer(touche, v) {
+    if (touche !== 'ENTREE') return { erreur: `TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.` };
+    const liste = [];
+    for (let i = 0; i < NB_APPELS; i++) {
+      const a = (v[`A${i}`] || '').trim(), code = (v[`C${i}`] || '').trim(), u = (v[`U${i}`] || '').trim();
+      const enr = (v[`E${i}`] || '').trim(), fic = (v[`F${i}`] || '').trim(), arg = (v[`G${i}`] || '').trim().split(/\s+/).filter(Boolean);
+      const n = (v[`N${i}`] || '').trim();
+      if (a === 'S' || (!code && !u && !enr && !fic && !arg.length)) continue;
+      if (a) return { erreur: 'ACTION : S POUR SUPPRIMER LA LIGNE.', champ: `A${i}` };
+      if (!/^[A-Z][A-Z0-9]$/.test(code)) return { erreur: 'CODE : 2 CARACTÈRES, UNE LETTRE EN TÊTE (EX. FA).', champ: `C${i}` };
+      if (!(u in UTILISATIONS)) return { erreur: 'UTILISATION : C, P, M OU R.', champ: `U${i}` };
+      if (u !== 'R' && !structDe(enr)) return { erreur: `ENREGISTREMENT ${enr || '?'} INCONNU (CHOIX E ${enr || 'CODE'} POUR LE CRÉER).`, champ: `E${i}` };
+      if (!/^[A-Z0-9][A-Z0-9.]*$/.test(fic)) return { erreur: 'NOM DE FICHIER INVALIDE (EX. CLIENTS.DAT).', champ: `F${i}` };
+      const hors = arg.find((c) => !structDe(enr)?.rubriques.includes(c));
+      if (u !== 'R' && hors) return { erreur: `ARGUMENT : ${hors} N'EST PAS DANS L'ENREGISTREMENT ${enr}.`, champ: `G${i}` };
+      if (arg.length > MAX_RUPTURES) return { erreur: `ARGUMENT : ${MAX_RUPTURES} RUBRIQUES AU PLUS.`, champ: `G${i}` };
+      const niv = n === '' ? arg.length : Number(n);
+      if (u !== 'R' && !(niv >= 0 && niv <= arg.length)) return { erreur: 'NR : DE 0 AU NOMBRE DE RUBRIQUES DE L\'ARGUMENT.', champ: `N${i}` };
+      const ancien = modele.appels.find((x) => x.code === code) || modele.appels[i] || {};
+      const x = { code, utilisation: u, fichier: fic, donnees: ancien.donnees || [] };
+      if (u !== 'R') { x.structure = enr; x.argument = arg; }
+      if (u === 'C') x.rupture = niv;
+      if (u === 'P' || u === 'M') x.synchro = niv;
+      if (u === 'M') {
+        const k = (v[`K${i}`] || ancien.mouvement?.rubrique || '').trim();
+        x.mouvement = { rubrique: k, creation: (v[`KC${i}`] || ancien.mouvement?.creation || MOUVEMENT_DEFAUT.creation).trim(), modification: (v[`KM${i}`] || ancien.mouvement?.modification || MOUVEMENT_DEFAUT.modification).trim(), annulation: (v[`KA${i}`] || ancien.mouvement?.annulation || MOUVEMENT_DEFAUT.annulation).trim() };
+      }
+      liste.push(x);
+    }
+    if (!liste.length) return { erreur: 'AU MOINS UN FICHIER EN ENTRÉE.', champ: 'C0' };
+    if (new Set(liste.map((x) => x.code)).size !== liste.length) return { erreur: 'DEUX FICHIERS ONT LE MÊME CODE.' };
+    modele.appels = liste;
+    nettoyer(); sauver();
+    try { generer(modele); } catch (e) { return { message: { texte: `ENREGISTRÉ. À COMPLÉTER : ${e.message}`.toUpperCase().slice(0, 78), erreur: true } }; }
+    return { message: { texte: `${liste.length} FICHIER(S) APPELÉ(S). CHOIX D POUR LES DONNÉES, X POUR EXÉCUTER.`, erreur: false } };
   },
 };
 
@@ -314,10 +407,19 @@ VUES.traitement = {
   dessin() {
     const t = T();
     const champs = [...cadre('T01', 'DESCRIPTION DU TRAITEMENT', 'PF1 AIDE  PF3 RETOUR  ENTRÉE VALIDER')];
+    if (estMiseAJour(modele)) {
+      champs.push(lab(3, 1, 'PROGRAMME ......', 'blanc'), zone(3, 18, 8, 'PGM', t.programme),
+        lab(4, 1, 'TITRE DU C.R. ..', 'blanc'), zone(4, 18, 50, 'TIT', t.titre),
+        lab(6, 1, 'Programme de mise à jour : pas d\'état. Il lit le principal et les mouvements,', 'bleu'),
+        lab(7, 1, 'les synchronise sur leur argument, applique créations, modifications et', 'bleu'),
+        lab(8, 1, 'annulations, écrit le résultat et un compte rendu (mouvements rejetés, comptes).', 'bleu'),
+        lab(10, 1, `Fonctions générées : ${fonctionsGenerees(modele).map((f) => `F${f}`).join(' ')}`, 'turquoise'));
+      return { champs, curseur: 'PGM' };
+    }
     champs.push(
       lab(3, 1, 'PROGRAMME ......', 'blanc'), zone(3, 18, 8, 'PGM', t.programme),
-      lab(3, 30, 'FICHIER EN ENTRÉE ..', 'blanc'), zone(3, 51, 20, 'FIC', t.fichier),
-      lab(4, 1, 'TITRE DE L\'ÉTAT ', 'blanc'), zone(4, 18, 50, 'TIT', t.titre),
+      lab(3, 30, pad(`FICHIER LU : ${(appelEdite(modele) || appel('P'))?.code || '?'} ${(appelEdite(modele) || appel('P'))?.fichier || ''} (CHOIX C)`, 48), 'turquoise'),
+      lab(4, 1, estMiseAJour(modele) ? 'TITRE DU C.R. ..' : 'TITRE DE L\'ÉTAT ', 'blanc'), zone(4, 18, 50, 'TIT', t.titre),
       lab(6, 1, 'FILTRES (TOUS VRAIS)        RUBRIQUE     OPÉR.   VALEUR', 'blanc'),
     );
     for (let i = 0; i < 4; i++) {
@@ -326,22 +428,25 @@ VUES.traitement = {
     }
     champs.push(
       lab(11, 6, `Opérateurs : ${operateurs.join('  ')}`, 'bleu'),
-      lab(13, 1, 'RUPTURES .......', 'blanc'), lab(13, 18, pad(t.ruptures.length ? t.ruptures.map((c, i) => `${i + 1}:${c}`).join('  ') + '   (écran E, colonne R)' : 'aucune (écran E, colonne R)', 60), 'turquoise'),
+      lab(13, 1, 'RUPTURES .......', 'blanc'), lab(13, 18, pad((() => { const c = appelEdite(modele); const r = c ? c.argument.slice(0, c.rupture || 0) : []; return (r.length ? r.map((x, i) => `${i + 1}:${x}`).join('  ') : 'aucune') + '   (CHOIX C, argument du fichier)'; })(), 60), 'turquoise'),
       lab(14, 1, 'COLONNES .......', 'blanc'), zone(14, 18, 60, 'COL', t.colonnes.join(' ')),
       lab(15, 1, 'TOTAUX .........', 'blanc'), zone(15, 18, 60, 'TOT', t.totaux.join(' ')),
       lab(16, 1, 'DÉTAIL (O/N) ...', 'blanc'), zone(16, 18, 1, 'DET', t.detail ? 'O' : 'N'),
       lab(16, 30, 'COMPTER (O/N) ..', 'blanc'), zone(16, 47, 1, 'CPT', t.compter ? 'O' : 'N'),
-      lab(18, 1, `Rubriques de ${S().code} : ${S().rubriques.join(' ')}`.slice(0, 78), 'bleu'),
+      lab(18, 1, `Rubriques de ${structureLue().code} : ${structureLue().rubriques.join(' ')}`.slice(0, 78), 'bleu'),
     );
     return { champs, curseur: 'PGM' };
   },
   gerer(touche, v) {
     if (touche !== 'ENTREE') return { erreur: `TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.` };
-    const dansS = (c) => S().rubriques.includes(c);
+    const dansS = (c) => structureLue().rubriques.includes(c);
     const pgm = (v.PGM || '').trim();
     if (!/^[A-Z][A-Z0-9]{0,7}$/.test(pgm)) return { erreur: 'PROGRAMME : UNE LETTRE PUIS 7 LETTRES OU CHIFFRES MAX.', champ: 'PGM' };
-    const fic = (v.FIC || '').trim();
-    if (!/^[A-Z0-9][A-Z0-9.]*$/.test(fic)) return { erreur: 'NOM DE FICHIER INVALIDE.', champ: 'FIC' };
+    if (estMiseAJour(modele)) {
+      Object.assign(T(), { programme: pgm, titre: v.TIT || '' });
+      sauver();
+      return { message: { texte: 'TRAITEMENT ENREGISTRÉ. CHOIX G POUR VOIR LE SOURCE, X POUR EXÉCUTER.', erreur: false } };
+    }
     const filtres = [];
     for (let i = 0; i < 4; i++) {
       const r = (v[`FR${i}`] || '').trim(), o = (v[`FO${i}`] || '').trim().replace(/\s+/g, ' '), val = (v[`FV${i}`] || '').trim();
@@ -359,7 +464,7 @@ VUES.traitement = {
     const mauvaisT = tot.find((c) => !dansS(c) || rub(c).type !== '9');
     if (mauvaisT) return { erreur: `TOTAL ${mauvaisT} : RUBRIQUE NUMÉRIQUE DE L'ENREGISTREMENT ATTENDUE.`, champ: 'TOT' };
     for (const n of ['DET', 'CPT']) if (!['O', 'N'].includes((v[n] || '').trim())) return { erreur: 'RÉPONDEZ O OU N.', champ: n };
-    Object.assign(T(), { programme: pgm, fichier: fic, titre: v.TIT || '', filtres,  colonnes: col, totaux: tot, detail: v.DET.trim() === 'O', compter: v.CPT.trim() === 'O' });
+    Object.assign(T(), { programme: pgm, titre: v.TIT || '', filtres, colonnes: col, totaux: tot, detail: v.DET.trim() === 'O', compter: v.CPT.trim() === 'O' });
     sauver();
     return { message: { texte: 'TRAITEMENT ENREGISTRÉ. CHOIX G POUR VOIR LE SOURCE, X POUR EXÉCUTER.', erreur: false } };
   },
@@ -378,12 +483,14 @@ function versValeur(r, brut) {
 }
 VUES.donnees = {
   dessin(ctx) {
-    const champs = [...cadre('D01', `DONNÉES DU FICHIER ${T().fichier}`, 'PF1 AIDE  PF3 RETOUR  PF7/8 PAGES  ENTRÉE VALIDER   ACTION : S SUPPR  D DUPLIQ')];
+    const a = appelD();
+    const champs = [...cadre('D01', `DONNÉES DU FICHIER ${a?.code || ''} ${a?.fichier || ''}`, 'PF1 AIDE  PF3 RETOUR  PF7/8 PAGES  ENTRÉE VALIDER   ACTION : S SUPPR  D DUPLIQ')];
+    if (!a) { champs.push(lab(3, 1, 'Aucun fichier en entrée : CHOIX C pour en appeler un.', 'jaune')); return { champs, curseur: 'CHOIX' }; }
     let image = [];
-    try { image = fichierDonnees(modele).split('\n').filter((l, i, a) => i < a.length - 1); } catch (e) { ctx.message = { texte: e.message.toUpperCase().slice(0, 78), erreur: true }; }
+    try { image = fichiersEntree(modele)[a.fichier].split('\n').filter((l, i, t) => i < t.length - 1); } catch (e) { ctx.message = { texte: e.message.toUpperCase().slice(0, 78), erreur: true }; }
     // réglette : premier caractère de chaque rubrique
     let reg = '', pos = 0, noms = '';
-    for (const c of S().rubriques) {
+    for (const c of structDe(a.structure).rubriques) {
       const lg = longueurFichier(rub(c));
       reg += '|' + '.'.repeat(Math.max(0, lg - 1));
       noms += pad(c, lg - 1) + ' ';
@@ -397,16 +504,21 @@ VUES.donnees = {
       champs.push(zone(l, 1, 1, `A${i}`), zone(l, 3, Math.min(pos, LARGEUR_DON), `L${i}`, image[debut + i] ?? '', { majuscules: false }));
     }
     champs.push(lab(20, 1, trop ? `Ligne de ${pos} caractères : seules les ${LARGEUR_DON} premières sont modifiables ici.` : `Page ${ctx.page + 1}. Saisissez chaque ligne telle qu'elle est dans le fichier. Signe en tête (+/-).`, trop ? 'jaune' : 'bleu'));
+    const autres = appelsLus().filter((x) => x !== a).map((x) => `D ${x.code}`).join(', ');
+    champs.push(lab(21, 1, pad(`${a.utilisation === 'M' ? 'Mouvement : une rubrique laissée en blanc ne modifie rien. ' : ''}${a.utilisation !== 'C' ? 'Trié sur l\'argument. ' : ''}${autres ? `Autres fichiers : ${autres}` : ''}`, 78), 'bleu'));
     const n = Math.min(PAR_PAGE, Math.max(0, image.length - debut));
     return { champs, curseur: n < PAR_PAGE ? `L${n}` : 'A0' };
   },
   gerer(touche, v, mod, ctx) {
-    const nb = modele.donnees.length;
+    const a = appelD();
+    if (!a) return { erreur: 'AUCUN FICHIER EN ENTRÉE (CHOIX C).' };
+    a.donnees ||= [];
+    const nb = a.donnees.length;
     if (touche === 'PF7') { if (ctx.page === 0) return { erreur: 'DÉJÀ EN PREMIÈRE PAGE.' }; ctx.page--; return; }
     if (touche === 'PF8') { if ((ctx.page + 1) * PAR_PAGE > nb) return { erreur: 'DÉJÀ EN DERNIÈRE PAGE.' }; ctx.page++; return; }
     if (touche !== 'ENTREE') return { erreur: `TOUCHE ${touche} SANS EFFET SUR CET ÉCRAN.` };
     const debut = ctx.page * PAR_PAGE;
-    const garder = modele.donnees.map((l) => ({ ...l }));
+    const garder = a.donnees.map((l) => ({ ...l }));
     const supprimer = new Set(), ajouts = [];
     let changes = 0;
     for (let i = 0; i < PAR_PAGE; i++) {
@@ -418,9 +530,10 @@ VUES.donnees = {
       if (!brut.trim()) continue;
       const ligne = {};
       let p = 0;
-      for (const c of S().rubriques) {
+      for (const c of structDe(a.structure).rubriques) {
         const r = rub(c), lg = longueurFichier(r);
         const morceau = (brut.padEnd(p + lg)).slice(p, p + lg);
+        if (a.utilisation === 'M' && !morceau.trim()) { ligne[c] = ''; p += lg; continue; }
         if (r.type === '9') {
           const corps = r.signe ? morceau.slice(1) : morceau;
           if (r.signe && !['+', '-', ' '].includes(morceau[0])) return { erreur: `${c} (POSITION ${p + 1}) : SIGNE + OU - ATTENDU EN TÊTE.`, champ: `L${i}` };
@@ -434,9 +547,9 @@ VUES.donnees = {
       changes++;
     }
     if (!changes) return { message: { texte: 'AUCUNE MODIFICATION.', erreur: false } };
-    modele.donnees = [...garder.filter((_, k) => !supprimer.has(k)), ...ajouts];
+    a.donnees = [...garder.filter((_, k) => !supprimer.has(k)), ...ajouts];
     sauver();
-    return { message: { texte: `${changes} LIGNE(S) MISE(S) À JOUR. ${modele.donnees.length} LIGNE(S) DANS LE FICHIER.`, erreur: false } };
+    return { message: { texte: `${changes} LIGNE(S) MISE(S) À JOUR. ${a.donnees.length} LIGNE(S) DANS LE FICHIER ${a.code}.`, erreur: false } };
   },
 };
 
@@ -484,7 +597,7 @@ VUES.execution = consultation('X01', 'EXÉCUTION DU BATCH', (ctx) => {
     const t0 = performance.now();
     try {
       const recreees = avecBase ? synchroniser(db, modele) : [];
-      const r = new Programme(source).executer({ fichiers: { [T().fichier]: fichierDonnees(modele) }, db });
+      const r = new Programme(source).executer({ fichiers: fichiersEntree(modele), db });
       if (avecBase) sauverBase(db);
       const sql = r.sql.executees ? ` ${r.sql.executees} ORDRES SQL, ${r.sql.erreurs.length} EN ERREUR.` : '';
       ctx.resultat = { ok: true, sortie: r.sortie, fichiers: r.fichiers, sql: r.sql, recreees, info: `FIN NORMALE. ${r.instructions} INSTR. EN ${(performance.now() - t0).toFixed(0)} MS.${sql}` };
@@ -495,11 +608,12 @@ VUES.execution = consultation('X01', 'EXÉCUTION DU BATCH', (ctx) => {
   const r = ctx.resultat;
   ctx.message = { texte: r.info.slice(0, 78), erreur: !r.ok };
   const lignes = [{ texte: `SYSOUT DE ${T().programme}`, couleur: 'blanc' }, { texte: '' }, ...r.sortie.replace(/\n$/, '').split('\n').map((texte) => ({ texte }))];
-  for (const so of r.ok ? modele.sorties || [] : []) {
+  for (const so of r.ok ? fichiersSortie(modele) : []) {
     const contenu = (r.fichiers?.[so.fichier] || '').replace(/\n$/, '');
     const enr = contenu ? contenu.split('\n') : [];
+    const rubs = modele.sorties.find((x) => x.code === so.code)?.rubriques || structDe(appel('P')?.structure)?.rubriques || [];
     lignes.push({ texte: '' }, { texte: `FICHIER ${so.fichier} (${so.code}) : ${enr.length} ENREGISTREMENT(S)`, couleur: 'blanc' });
-    lignes.push({ texte: so.rubriques.map((c) => pad(c, longueurFichier(rub(c)) - 1) + ' ').join(''), couleur: 'turquoise' });
+    lignes.push({ texte: rubs.map((c) => pad(c, longueurFichier(rub(c)) - 1) + ' ').join(''), couleur: 'turquoise' });
     for (const x of enr) lignes.push({ texte: x });
   }
   if (r.ok && db) {
@@ -545,7 +659,7 @@ VUES.specifique = {
       const titre = (l.ope || '').toUpperCase() === 'N';
       champs.push(
         zone(r, 1, 1, `A${i}`),
-        zone(r, 3, 2, `F${i}`, l.fo, { num: true }),
+        zone(r, 3, 2, `F${i}`, l.fo),
         zone(r, 6, 2, `S${i}`, l.sf),
         zone(r, 9, 3, `O${i}`, l.ope),
         zone(r, 13, 36, `X${i}`, l.opes, { majuscules: false, couleur: titre ? 'blanc' : undefined }),
@@ -557,14 +671,17 @@ VUES.specifique = {
     let infos = '';
     try {
       const fns = analyserLignes(lignes);
-      const court = (fo) => { const n = Number(fo); return n <= 4 ? 'init' : n <= 24 ? 'fin' : n <= 79 ? 'avant état' : n <= 89 ? 'avant détail' : n <= 94 ? 'après détail' : 'sur appel P'; };
+      const gen = fonctionsGenerees(modele);
+      const avant = (fo, x) => comparerCodes(fo, x) < 0;
+      const court = (fo) => (gen.includes(fo) ? 'générée' : avant(fo, '01') ? 'avant init' : avant(fo, '05') ? 'init' : avant(fo, '20') ? 'après lecture'
+        : avant(fo, '90') ? (gen.includes('8E') ? (avant(fo, '8E') ? 'avant état' : 'après détail') : 'chaque tour') : 'sur appel P');
       infos = 'Fonctions : ' + [...fns.keys()].map((fo) => `F${fo} ${court(fo)}`).join(', ');
     } catch (e) { infos = e.message; }
     champs.push(
       lab(18, 1, pad('OPE : N titre  M déplacer  A ajouter  S soustraire  C calculer  P appeler', 78), 'bleu'),
       lab(19, 1, pad('      MES afficher  ECR écrire  SQL table accès  SCO SRO valider/annuler  COB *', 78), 'bleu'),
-      lab(20, 1, pad(`FO 02-04 init  21-24 fin  25-79 avant état  81-89 avant détail  TC BL IT EL DW`, 78), 'bleu'),
-      lab(21, 1, pad(infos || `Page ${ctx.page + 1}. Rubriques : E- courant, P- précédent, S- suivant, W- travail, D- détail`, 78), 'turquoise'),
+      lab(20, 1, pad(`FO générées ${fonctionsGenerees(modele).join(' ')} (sous-fonctions)  02-04 init  TC BL IT EL DW`, 78), 'bleu'),
+      lab(21, 1, pad(infos || `Page ${ctx.page + 1}. Rubriques : ${(appelEdite(modele) || appel('P'))?.code || 'FA'}00- courant, 1-xx00- suivant, W- travail, D- détail`, 78), 'turquoise'),
     );
     const n = Math.min(LIGNES_P, Math.max(0, lignes.length - debut));
     return { champs, curseur: n < LIGNES_P ? `F${n}` : 'A0' };
@@ -588,9 +705,9 @@ VUES.specifique = {
       if (a === 'S') continue;
       const vide = !l.fo && !l.sf && !l.ope && !l.opes.trim() && !niv && !tc && !cond.trim();
       if (vide) { if (a === 'I') page.push({ fo: '', sf: '', ope: '', opes: '' }); continue; }
-      if (!/^\d{1,2}$/.test(l.fo)) return { erreur: 'FO : NUMÉRO DE FONCTION SUR 2 CHIFFRES.', champ: `F${i}` };
+      if (!/^[0-9A-Z]{1,2}$/.test(l.fo)) return { erreur: 'FO : CODE DE FONCTION SUR 2 CARACTÈRES (0A À 99).', champ: `F${i}` };
       l.fo = l.fo.padStart(2, '0');
-      if (RESERVEES.includes(l.fo)) return { erreur: `F${l.fo} EST GÉNÉRÉE PAR L'ATELIER : PRENEZ UN AUTRE NUMÉRO.`, champ: `F${i}` };
+      if (fonctionsGenerees(modele).includes(l.fo) && l.sf === '99') return { erreur: `F${l.fo}99 EST GÉNÉRÉE : PRENEZ UNE AUTRE SOUS-FONCTION.`, champ: `S${i}` };
       if (!/^[0-9A-Z]{1,2}$/.test(l.sf)) return { erreur: 'SF : CODE DE SOUS-FONCTION SUR 2 CARACTÈRES (10, 20...).', champ: `S${i}` };
       l.sf = l.sf.padStart(2, '0');
       const ope = l.ope.toUpperCase();
@@ -617,7 +734,7 @@ VUES.specifique = {
       return { erreur: e.message.toUpperCase().slice(0, 78) };
     }
     // tri par fonction / sous-fonction, la ligne N en tête de sa sous-fonction
-    modele.lignes = reelles.map((l, i) => ({ l, i })).sort((x, y) => x.l.fo.localeCompare(y.l.fo) || x.l.sf.localeCompare(y.l.sf) || (y.l.ope === 'N') - (x.l.ope === 'N') || !x.l.ope - !y.l.ope || x.i - y.i).map((x) => x.l);
+    modele.lignes = reelles.map((l, i) => ({ l, i })).sort((x, y) => comparerCodes(x.l.fo.padStart(2, '0'), y.l.fo.padStart(2, '0')) || comparerCodes(x.l.sf.padStart(2, '0'), y.l.sf.padStart(2, '0')) || (y.l.ope === 'N') - (x.l.ope === 'N') || !x.l.ope - !y.l.ope || x.i - y.i).map((x) => x.l);
     sauver();
     return { message: { texte: `${modele.lignes.length} LIGNE(S) DE TRAITEMENT. CHOIX G POUR LE COBOL GÉNÉRÉ, X POUR EXÉCUTER.`, erreur: false } };
   },
@@ -639,7 +756,7 @@ VUES.sorties = {
     }
     champs.push(
       lab(17, 1, 'Pour écrire, dans le langage structuré (CHOIX P) :', 'bleu'),
-      lab(18, 3, 'M E-NOMCLI RL-NOMCLI    remplit une rubrique de l\'enregistrement RL', 'turquoise'),
+      lab(18, 3, pad(`M ${(appelEdite(modele) || appel('P'))?.code || 'FA'}00-NOMCLI RL-NOMCLI  remplit une rubrique de l'enregistrement RL`, 76), 'turquoise'),
       lab(19, 3, 'ECR RL                  écrit l\'enregistrement dans le fichier', 'turquoise'),
       lab(20, 1, 'Le contenu des fichiers s\'affiche après la SYSOUT (CHOIX X).', 'bleu'),
     );
@@ -843,8 +960,9 @@ VUES.aide = {
       ['vert', 'PF3 retour  PF7/PF8 page préc./suiv.  PF12 menu  PF1 cette aide'],
       ['blanc', ''],
       ['blanc', 'CHOIX (ligne du haut, depuis n\'importe quel écran)'],
-      ['vert', 'M menu  R rubriques  E enregistrement  T traitement  P traitements'],
-      ['vert', 'D données  S sorties  B base  Q SQL  G source  X exécution  FIN départ'],
+      ['vert', 'M menu  R rubriques  E enregistrement (E code)  C appel des fichiers'],
+      ['vert', 'T traitement  P traitements  D données (D code)  S sorties  B base  Q SQL'],
+      ['vert', 'G source  X exécution  FIN exemple d\'édition  FIN MAJ exemple de mise à jour'],
       ['vert', 'PARTAGE  copie un lien qui contient tout le programme, à envoyer à qui vous voulez'],
       ['blanc', ''],
       ['blanc', 'CODES ACTION (colonne A des listes)'],

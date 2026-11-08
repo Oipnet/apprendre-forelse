@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
-import { ddlTable, exemple, fichierDonnees, generer, type Modele } from '../src/cobol/generateur.js';
+import { ddlTable, exemple, exempleMiseAJour, fichierDonnees, fichiersEntree, fichiersSortie, generer, normaliser, placeFonction, type Modele } from '../src/cobol/generateur.js';
 import { Programme } from '../src/cobol/interpreteur.js';
 import { fragmentDe, lireFragment } from '../src/cobol/partage.js';
 import { cas } from './cobol/cas.js';
@@ -16,9 +16,9 @@ const sansEspacesFinaux = (s: string) => s.split('\n').map((l) => l.replace(/ +$
 
 describe('interpréteur COBOL', () => {
 	it.each(cas)('%s : même sortie que GnuCOBOL', (nom, modele) => {
-		const r = new Programme(generer(modele)).executer({ fichiers: { [modele.traitement.fichier]: fichierDonnees(modele) } });
+		const r = new Programme(generer(modele)).executer({ fichiers: fichiersEntree(modele) });
 		let sortie = r.sortie;
-		for (const so of modele.sorties || []) sortie += `--- ${so.fichier}\n` + r.fichiers[so.fichier];
+		for (const so of fichiersSortie(modele)) sortie += `--- ${so.fichier}\n` + (r.fichiers[so.fichier] ?? '');
 		expect(sansEspacesFinaux(sortie)).toBe(sansEspacesFinaux((references.attendus as Record<string, string>)[nom]));
 	});
 });
@@ -75,8 +75,58 @@ describe('base de données façon DB2', () => {
 		expect(source).toContain('EXEC SQL SELECT NUMCLI, NOMCLI, MTFACT, NBFACT INTO');
 		expect(source).toContain('EXEC SQL FETCH C-CL INTO');
 		const m: Modele = structuredClone(exemple);
-		m.lignes!.push({ fo: '23', sf: '10', ope: 'SQL', opes: 'CL ZZ' });
+		m.lignes!.push({ fo: '20', sf: '60', ope: 'SQL', opes: 'CL ZZ' });
 		expect(() => generer(m)).toThrow(/accès ZZ inconnu/);
+	});
+});
+
+describe('à la manière de Pacbase', () => {
+	it('les fonctions générées portent les codes du générateur d\'IBM et s\'enchaînent par GO TO', () => {
+		const source = generer(exemple);
+		for (const f of ['F01.', 'F05.', 'F10.', 'F20.', 'F8E.', 'F90.', 'F9099.']) expect(source).toContain(`       ${f}`);
+		expect(source).toContain('GO TO F05.');
+		expect(source).toContain('IF NOT FIN-TRAITEMENT GO TO F20-FN.');
+		const maj = generer(exempleMiseAJour);
+		for (const f of ['F24.', 'F70.', 'F73.', 'F76.']) expect(maj).toContain(`       ${f}`);
+		expect(maj).toContain('MV-CF1');
+		expect(maj).toContain('CL-OC1');
+	});
+
+	it('les lettres passent avant les chiffres : 8E s\'exécute avant 80', () => {
+		expect(placeFonction('8E', exemple)).toMatch(/générée/);
+		expect(placeFonction('85', exemple)).toMatch(/après l'impression/);
+		expect(placeFonction('30', exemple)).toMatch(/avant l'état/);
+		expect(placeFonction('95', exemple)).toMatch(/appelée seulement par P/);
+	});
+
+	it('un programme d\'avant l\'appel des fichiers est repris : zones E- et S-, fonctions renumérotées', () => {
+		const ancien = {
+			dictionnaire: exemple.dictionnaire, structures: exemple.structures, sorties: [], tables: [],
+			traitement: { ...exemple.traitement, structure: 'FACTURE', fichier: 'FACTURES.DAT', ruptures: ['REGION'] },
+			donnees: exemple.appels![0].donnees,
+			lignes: [
+				{ fo: '85', sf: '10', ope: 'N', opes: 'Negatifs', niv: '05', tc: 'IT', cond: 'E-MTFACT < 0' },
+				{ fo: '85', sf: '10', ope: 'M', opes: "'E-LITTERAL' D-NOMCLI" },
+				{ fo: '22', sf: '10', ope: 'MES', opes: 'S-NOMCLI' },
+			],
+		} as unknown as Modele;
+		const m = normaliser(ancien);
+		expect(m.appels).toEqual([expect.objectContaining({ code: 'FA', utilisation: 'C', structure: 'FACTURE', fichier: 'FACTURES.DAT', argument: ['REGION'], rupture: 1 })]);
+		expect(m.lignes).toEqual([
+			expect.objectContaining({ fo: '20', sf: '10', opes: '1-FA00-NOMCLI' }),
+			expect.objectContaining({ fo: '8E', sf: '10', cond: 'FA00-MTFACT < 0' }),
+			expect.objectContaining({ fo: '8E', sf: '10', opes: "'E-LITTERAL' D-NOMCLI" }),
+		]);
+		expect(fichierDonnees(ancien)).toBe(fichierDonnees(exemple));
+	});
+
+	it('la mise à jour refuse un mouvement sans code mouvement et un argument de longueur différente', () => {
+		const m: Modele = structuredClone(exempleMiseAJour);
+		m.appels![1].mouvement!.rubrique = '';
+		expect(() => generer(m)).toThrow(/code mouvement/);
+		const n: Modele = structuredClone(exempleMiseAJour);
+		n.appels![1].argument = ['NOMCLI'];
+		expect(() => generer(n)).toThrow(/même longueur/);
 	});
 });
 
@@ -90,11 +140,26 @@ describe('partage par lien', () => {
 		expect(generer(recu!)).toBe(generer(exemple));
 	});
 
+	it('une mise à jour voyage aussi, avec les données de chaque fichier', async () => {
+		const recu = await lireFragment(`#${await fragmentDe(exempleMiseAJour)}`);
+		expect(recu!.appels.map((a) => a.code)).toEqual(['CL', 'MV', 'CN']);
+		expect(generer(recu!)).toBe(generer(exempleMiseAJour));
+	});
+
+	it('un lien de la première version (un seul fichier) s\'ouvre encore', async () => {
+		const v1 = { v: 1, dictionnaire: exemple.dictionnaire, structures: exemple.structures, sorties: [], tables: [], lignes: [],
+			traitement: { ...exemple.traitement, structure: 'FACTURE', fichier: 'FACTURES.DAT', ruptures: ['REGION'] }, donnees: exemple.appels![0].donnees };
+		const octets = new Uint8Array(await new Response(new Blob([JSON.stringify(v1)]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());
+		const b64 = Buffer.from(octets).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+		const recu = await lireFragment(`#programme=${b64}`);
+		expect(recu!.appels[0]).toEqual(expect.objectContaining({ code: 'FA', fichier: 'FACTURES.DAT', rupture: 1 }));
+	});
+
 	it('un fragment abîmé ou étranger n\'ouvre rien', async () => {
 		expect(await lireFragment('#code=abc')).toBeNull();
 		expect(await lireFragment('#programme=pasducodecompresse')).toBeNull();
 		const casse: Modele = structuredClone(exemple);
-		casse.traitement.structure = 'INCONNUE';
+		casse.appels![0].structure = 'INCONNUE';
 		expect(await lireFragment(`#${await fragmentDe(casse)}`)).toBeNull();
 	});
 });

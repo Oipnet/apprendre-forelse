@@ -1,18 +1,37 @@
 // Types du générateur (generateur.js, écrit en JavaScript) : ce dont les tests ont besoin.
 export interface Rubrique { code: string; libelle?: string; type: 'X' | '9'; longueur: number; decimales?: number; signe?: boolean }
 export interface Table { code: string; nom: string; rubriques: string[]; cle: string[] }
+export interface Appel {
+  code: string;
+  utilisation: 'C' | 'P' | 'M' | 'R';
+  structure?: string;
+  fichier: string;
+  argument?: string[];
+  rupture?: number;
+  synchro?: number;
+  mouvement?: { rubrique?: string; creation: string; modification: string; annulation: string };
+  donnees?: Array<Record<string, string>>;
+}
 export interface Modele {
   dictionnaire: Rubrique[];
   structures: Array<{ code: string; libelle?: string; rubriques: string[] }>;
+  appels?: Appel[];
   traitement: Record<string, any>;
   sorties?: Array<{ code: string; fichier: string; rubriques: string[] }>;
   tables?: Table[];
   lignes?: Array<Record<string, string>>;
-  donnees: Array<Record<string, string>>;
+  donnees?: Array<Record<string, string>>;
 }
 export const exemple: Modele;
+export const exempleMiseAJour: Modele;
+export function normaliser(modele: Modele): Modele & { appels: Appel[] };
 export function generer(modele: Modele): string;
 export function fichierDonnees(modele: Modele): string;
+export function fichiersEntree(modele: Modele): Record<string, string>;
+export function fichiersSortie(modele: Modele): Array<{ code: string; fichier: string }>;
+export function fonctionsGenerees(modele: Modele): string[];
+export function placeFonction(fo: string, modele: Modele): string;
+export function comparerCodes(a: string, b: string): number;
 export function ddlTable(modele: Modele, table: Table): string;
 export function verifierTables(modele: Modele, tables?: Table[]): void;
 export const OPERATEURS_STRUCTURES: string[];

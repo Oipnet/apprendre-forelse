@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { generer, fichierDonnees } from '../../src/cobol/generateur.js';
+import { generer, fichiersEntree, fichiersSortie } from '../../src/cobol/generateur.js';
 import { cas } from './cas.js';
 
 const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'cobol-'));
@@ -13,10 +13,10 @@ cas.forEach(([nom, modele], i) => {
   const d = path.join(dossier, String(i));
   fs.mkdirSync(d);
   fs.writeFileSync(path.join(d, 'P.cbl'), generer(modele));
-  fs.writeFileSync(path.join(d, modele.traitement.fichier), fichierDonnees(modele));
+  for (const [f, c] of Object.entries(fichiersEntree(modele))) fs.writeFileSync(path.join(d, f), c);
   execFileSync('cobc', ['-x', '-o', path.join(d, 'p'), path.join(d, 'P.cbl')], { stdio: ['ignore', 'ignore', 'inherit'] });
-  let sortie = execFileSync(path.join(d, 'p'), { cwd: d }).toString();
-  for (const so of modele.sorties || []) sortie += `--- ${so.fichier}\n` + fs.readFileSync(path.join(d, so.fichier), 'utf8');
+  let sortie = execFileSync(path.join(d, 'p'), { cwd: d, stdio: ['ignore', 'pipe', 'ignore'] }).toString();
+  for (const so of fichiersSortie(modele)) sortie += `--- ${so.fichier}\n` + fs.readFileSync(path.join(d, so.fichier), 'utf8');
   attendus[nom] = sortie;
 });
 fs.writeFileSync(new URL('./gnucobol.json', import.meta.url), JSON.stringify({ compilateur: execFileSync('cobc', ['--version']).toString().split('\n')[0], attendus }, null, 2) + '\n');
