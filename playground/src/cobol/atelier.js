@@ -12,6 +12,10 @@ import { EN, cle, t as tx } from './langue.js';
 const CLE = cle('modele-v1');
 const CLE_PRECEDENT = cle('modele-precedent');
 let modele;
+// Arrivée par un lien de défi (#defi=01) sans programme à soi : le défi s'ouvre tout de suite, sans bandeau ni exemple
+// (l'exemple ressemble trop à une solution). Avec un programme à soi, defis() propose de le remplacer.
+{ const id = defiDuFragment();
+  try { if (id && !localStorage.getItem(CLE)) { localStorage.setItem(CLE, JSON.stringify({ ...structuredClone(DEFIS[id].modele), defi: id })); oublierFragment(); } } catch {} }
 try { modele = JSON.parse(localStorage.getItem(CLE)) || null; } catch { modele = null; }
 if (!modele?.dictionnaire) modele = structuredClone(exemple);
 modele.sorties ||= [];
