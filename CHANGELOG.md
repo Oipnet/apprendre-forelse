@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.36.0 — 2026-11-09
+
 ### Ajouté
 
 - **Atelier COBOL** (`/atelier-cobol`, et `/atelier-cobol/terminal` en terminal 3270) : un générateur de batchs COBOL
