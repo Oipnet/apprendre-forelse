@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.36.1 — 2026-11-09
+
 ### Modifié
 
 - **Atelier COBOL** : un lien de défi (`#defi=01`) ouvre le défi tout de suite pour un visiteur qui n'a pas encore de
