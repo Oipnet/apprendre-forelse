@@ -61,7 +61,8 @@ security:
     access_control:
         # L'atelier écrit dans les packs et exécute leur PHP : réservé aux auteurs. Comme /admin, il demande en plus une vraie
         # connexion, pas seulement le cookie « Rester connecté » (voir FullyAuthenticatedAreas).
-        - { path: ^/atelier, roles: ROLE_AUTEUR }
+        # (^/atelier(/|$) : l'atelier COBOL, /atelier-cobol, est public.)
+        - { path: ^/atelier(/|$), roles: ROLE_AUTEUR }
         # Tableau de bord EasyAdmin : comptes, progression, retours.
         - { path: ^/admin, roles: ROLE_ADMIN }
         # Espace des chefs de cohorte ; chaque cohorte est en plus vérifiée par CohortVoter.

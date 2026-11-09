@@ -1,0 +1,42 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. C.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT ED-FICHIER ASSIGN TO "C.TXT"
+               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT E2 ASSIGN TO "D.TXT"
+               ORGANIZATION IS LINE SEQUENTIAL.
+       DATA DIVISION.
+       FILE SECTION.
+       FD  ED-FICHIER.
+       01  ED00 PIC X(20).
+       FD  E2.
+       01  E200 PIC X(20).
+       WORKING-STORAGE SECTION.
+       PROCEDURE DIVISION.
+       F01.
+           OPEN OUTPUT ED-FICHIER E2.
+           MOVE 'A1' TO ED00.
+           WRITE ED00 AFTER ADVANCING 1 LINE.
+           MOVE 'PLAIN' TO ED00.
+           WRITE ED00.
+           MOVE 'A2' TO ED00.
+           WRITE ED00 AFTER 2.
+           MOVE 'B1' TO ED00.
+           WRITE ED00 BEFORE ADVANCING 1.
+           MOVE 'B2' TO ED00.
+           WRITE ED00 BEFORE ADVANCING 2.
+           MOVE 'BP' TO ED00.
+           WRITE ED00 BEFORE ADVANCING PAGE.
+           MOVE 'A3' TO ED00.
+           WRITE ED00 AFTER 1.
+           MOVE 'P2' TO ED00.
+           WRITE ED00.
+           CLOSE ED-FICHIER.
+           MOVE 'X' TO E200.
+           WRITE E200 BEFORE 1.
+           MOVE 'Y' TO E200.
+           WRITE E200 AFTER 0.
+           CLOSE E2.
+           STOP RUN.
