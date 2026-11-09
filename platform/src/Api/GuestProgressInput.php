@@ -19,6 +19,9 @@ final readonly class GuestProgressInput
         #[Assert\Range(min: 0, max: 20)]
         public int $hintsUsed = 0,
         public bool $completed = false,
+        /** Exercice à étapes : l'étape où en était l'invité. */
+        #[Assert\Range(min: 0, max: 99)]
+        public ?int $step = null,
     ) {
     }
 }

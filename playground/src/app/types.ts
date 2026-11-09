@@ -71,8 +71,33 @@ export interface ExercisePayload {
 		/** Les contenus proches (exercices, articles, notions), d'après la recherche du site ; vide sans elle. */
 		related?: { type: string; title: string; url: string }[];
 	} | null;
+	/**
+	 * Exercice à étapes (rouge, vert, refacto) : le code de l'apprenant continue d'une étape à l'autre. Vide pour un
+	 * exercice ordinaire ; alors `objectives` sont ceux de la dernière étape, et `editable` réunit ceux de toutes.
+	 */
+	steps?: ExerciseStep[];
 	/** Présent uniquement en environnement de développement de la plateforme. */
 	solution?: Record<string, string>;
+	/** Développement de la plateforme : la solution de chaque étape (et des précédentes). */
+	stepSolutions?: Record<string, string>[];
+}
+
+export type StepPhase = 'red' | 'green' | 'refactor';
+
+/** Une étape d'un exercice à étapes (voir App\Content\ExerciseStep). */
+export interface ExerciseStep {
+	id: string;
+	phase: StepPhase;
+	title: string;
+	instructionsHtml: string;
+	/** Les fichiers modifiables pendant l'étape ; ceux des autres étapes restent visibles, verrouillés. */
+	editable: string[];
+	open: string;
+	objectives: { test: string; label: string }[];
+	/** Les mutants (ids de `mutants`) que ses objectifs citent. */
+	mutants: string[];
+	/** Étape rouge : le code attendu, sur lequel les tests de l'apprenant doivent passer. */
+	reference: Record<string, string> | null;
 }
 
 export interface ExampleRequest {

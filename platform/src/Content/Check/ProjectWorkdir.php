@@ -41,6 +41,18 @@ final readonly class ProjectWorkdir
         }
     }
 
+    /**
+     * Retire des fichiers du projet (ceux qu'un remplacement temporaire avait ajoutés).
+     *
+     * @param list<string> $paths chemins relatifs
+     */
+    public function delete(string $workdir, array $paths): void
+    {
+        foreach ($paths as $path) {
+            $this->filesystem->remove($this->inside($workdir, $path));
+        }
+    }
+
     public function remove(string $workdir): void
     {
         $this->filesystem->remove($workdir);

@@ -2,9 +2,9 @@
 # The tracks themselves are in French: the card says so (track_card.langue.fr).
 
 seo:
-    titre: "Learn to code by coding in your browser"
-    titre_marque: "Learn to code by coding in your browser | {marque}"
-    description: "Learn to code in your browser, with no videos and nothing to install: a real project, automated tests, and the first chapter free."
+    titre: "Symfony, Laravel and PHP exercises in your browser"
+    titre_marque: "Symfony, Laravel and PHP exercises in your browser | {marque}"
+    description: "Practise Symfony 8, Laravel 13 and PHP 8.5 on real projects that run in your browser: automated tests, nothing to install, first chapter free."
 
 commun:
     essayer_pratique: "Try an exercise, no account needed"

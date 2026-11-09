@@ -19,12 +19,19 @@ final readonly class StructureCheck implements ExerciseCheck
             $result->error('Aucun test dans tests/.');
         }
         if (!$solution) {
-            $result->error('Aucune solution dans solution/.');
+            $result->error($exercise->hasSteps() ? 'Aucune solution dans steps/<étape>/solution/.' : 'Aucune solution dans solution/.');
         }
         $testCode = implode("\n", $context->tests);
-        foreach (array_filter($exercise->objectives, static fn (Objective $o) => $o->isHiddenTest()) as $objective) {
+        foreach (array_filter($exercise->allObjectives(), static fn (Objective $o) => $o->isHiddenTest()) as $objective) {
             if (!$context->runner->declares($testCode, $objective->test)) {
                 $result->error(sprintf('Objectif « %s » : aucun %s de ce nom dans tests/.', $objective->test, $context->runner->testNoun()));
+            }
+        }
+        // Un test caché qui porte le nom d'un test de l'apprenant : le rapport ne saurait plus lequel des deux a réussi.
+        $ownCode = implode("\n", array_intersect_key([...$starting, ...$solution], array_flip($exercise->ownTests())));
+        foreach (array_filter($exercise->allObjectives(), static fn (Objective $o) => $o->isHiddenTest()) as $objective) {
+            if ('' !== $ownCode && $context->runner->declares($ownCode, $objective->test)) {
+                $result->error(sprintf('Objectif « %s » : les tests de l\'apprenant (solution) ont une %s du même nom ; donnez au test caché un nom à lui.', $objective->test, $context->runner->testNoun()));
             }
         }
         // Un motif (migrations/*.php) désigne des fichiers qui n'existent pas encore : rien à vérifier.
@@ -38,11 +45,21 @@ final readonly class StructureCheck implements ExerciseCheck
             $result->error(sprintf('« open » (%s) : ce fichier n\'existe pas au départ (ni dans starter/, ni dans une base).', $exercise->open));
         }
         foreach ($exercise->mutants as $mutant) {
+            // Exercice à étapes : le mutant s'applique au code des étapes qui le citent (l'apprenant le récrit ensuite).
+            $states = [];
+            foreach ($exercise->steps as $index => $step) {
+                if (\in_array($mutant->id, $step->mutantIds(), true)) {
+                    $states[$step->id] = [...$starting, ...($context->steps[$index] ?? [])];
+                }
+            }
+            $states = $states ?: ['' => [...$starting, ...$solution]];
             foreach ($mutant->changes as $change) {
                 $depuisLEnvironnement = $environment->file($change['file']);
-                $code = $solution[$change['file']] ?? $starting[$change['file']] ?? (null === $depuisLEnvironnement ? null : (string) file_get_contents($depuisLEnvironnement));
-                if (null === $code || !str_contains($code, $change['search'])) {
-                    $result->error(sprintf('Mutant « %s » : texte à remplacer introuvable dans %s (%s).', $mutant->id, $change['file'], $change['search']));
+                foreach ($states as $stepId => $files) {
+                    $code = $files[$change['file']] ?? (null === $depuisLEnvironnement ? null : (string) file_get_contents($depuisLEnvironnement));
+                    if (null === $code || !str_contains($code, $change['search'])) {
+                        $result->error(sprintf('Mutant « %s »%s : texte à remplacer introuvable dans %s (%s).', $mutant->id, '' === $stepId ? '' : sprintf(' (étape « %s »)', $stepId), $change['file'], $change['search']));
+                    }
                 }
             }
         }

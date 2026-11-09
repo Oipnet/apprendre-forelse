@@ -20,6 +20,8 @@
     <testsuites>
         <testsuite name="Project Test Suite">
             <directory>tests</directory>
+            <!-- Les packs de test portent des tests d'exercice (…Test.php) : ceux de l'apprenant, pas du moteur. -->
+            <exclude>tests/Fixtures</exclude>
         </testsuite>
     </testsuites>
 

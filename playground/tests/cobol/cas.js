@@ -1,0 +1,234 @@
+// Les cas comparés à GnuCOBOL : un modèle par cas, à partir des exemples de l'atelier.
+import { exemple, exempleMiseAJour, exempleEtat, normaliser } from '../../src/cobol/generateur.js';
+import { DEFIS } from '../../src/cobol/defis.js';
+import { SOLUTIONS } from './solutions.js';
+
+// GnuCOBOL ne compile pas EXEC SQL sans précompilateur : les cas comparés laissent la base de côté
+// (elle est testée à part, sur SQLite : voir tests/cobol.test.ts).
+const copie = (o) => {
+  const m = JSON.parse(JSON.stringify(o));
+  m.tables = [];
+  m.lignes = (m.lignes || []).filter((l) => !(l.fo === '30' || (l.fo === '20' && l.sf !== '10')));
+  return m;
+};
+const cas = [];
+const fa = (m) => m.appels[0];
+const ruptures = (m, r) => { fa(m).argument = r; fa(m).rupture = r.length; };
+cas.push(['exemple (sans la base)', copie(exemple)]);
+// sans rupture, l'enregistrement traité est FA00 (il n'y a plus de lecture d'avance)
+const sansLectureDAvance = (m) => { for (const l of m.lignes) for (const k of ['opes', 'cond']) if (l[k]) l[k] = l[k].replace(/1-FA00-/g, 'FA00-'); };
+{ const m = copie(exemple); ruptures(m, []); sansLectureDAvance(m); m.traitement.filtres = []; cas.push(['sans rupture ni filtre', m]); }
+{ const m = copie(exemple); m.traitement.detail = false; m.traitement.filtres = [{ rubrique: 'MTFACT', op: '>', valeur: '100' }]; cas.push(['sans detail, filtre > 100', m]); }
+{ const m = copie(exemple); m.traitement.filtres = [{ rubrique: 'REGION', op: 'NOT =', valeur: 'EST' }, { rubrique: 'MTFACT', op: '<', valeur: '1000' }]; m.traitement.compter = false; cas.push(['deux filtres, sans comptage', m]); }
+{
+  const m = copie(exemple);
+  m.dictionnaire.push({ code: 'QTE', libelle: 'Quantité', type: '9', longueur: 4 });
+  m.dictionnaire.push({ code: 'PU', libelle: 'Prix unitaire', type: '9', longueur: 5, decimales: 3 });
+  m.structures[0].rubriques.push('QTE', 'PU');
+  ruptures(m, ['NUMCLI']);
+  m.traitement.colonnes = ['NUMCLI', 'REGION', 'QTE', 'PU', 'MTFACT'];
+  m.lignes = []; m.sorties = [];
+  m.traitement.totaux = ['QTE', 'MTFACT'];
+  m.traitement.filtres = [];
+  fa(m).donnees = [
+    ['NOR', '12', 'DUPONT', '-1250.5', '3', '12.125'],
+    ['SUD', '7', 'MARTIN', '-0.01', '0', '0'],
+    ['NOR', '12', 'DUPONT', '9999.99', '9999', '99.999'],
+    ['EST', '1', 'GARNIER', '0.5', '12', '1'],
+  ];
+  cas.push(['rupture numerique, decimales 3, negatifs', m]);
+}
+{
+  const m = copie(exemple);
+  ruptures(m, ['REGION', 'NOMCLI']);
+  fa(m).donnees.push({ REGION: 'NOR', NUMCLI: '12', NOMCLI: 'DUPONT', MTFACT: '10' }, { REGION: 'SUD', NUMCLI: '7', NOMCLI: 'MARTIN', MTFACT: '-5.5' });
+  cas.push(['deux niveaux de rupture', m]);
+}
+{
+  const m = copie(exemple);
+  m.dictionnaire.push({ code: 'ANNEE', libelle: 'Année', type: '9', longueur: 4 });
+  m.structures[0].rubriques.unshift('ANNEE');
+  ruptures(m, ['ANNEE', 'REGION', 'NUMCLI']);
+  m.traitement.detail = false;
+  fa(m).donnees = fa(m).donnees.flatMap((l, i) => [{ ...l, ANNEE: '2025' }, { ...l, ANNEE: i % 2 ? '2026' : '2025', MTFACT: '1.01' }]);
+  cas.push(['trois niveaux, sans detail', m]);
+}
+{
+  const m = copie(exemple);
+  m.dictionnaire.push({ code: 'MAXI', libelle: 'Plus gros montant', type: '9', longueur: 9, decimales: 2, signe: true });
+  ruptures(m, ['REGION', 'NUMCLI']);
+  m.lignes.push(
+    { fo: '30', sf: '10', ope: 'N', opes: 'Plus gros montant', niv: '05', tc: 'IT', cond: '1-FA00-MTFACT>W-MAXI' },
+    { fo: '30', sf: '10', ope: 'M', opes: '1-FA00-MTFACT W-MAXI' },
+    { fo: '30', sf: '20', ope: 'N', opes: 'Dernier client de la region', niv: '05', tc: 'IT', cond: 'RTD1=1 ET RTP2=1' },
+    { fo: '30', sf: '20', ope: 'MES', opes: "'  (seul client de son groupe : ' 1-FA00-NOMCLI ')'" },
+    { fo: '30', sf: '30', ope: 'N', opes: 'Sinon', niv: '05', tc: 'EL' },
+    { fo: '30', sf: '30', ope: '*', opes: 'rien a signaler' },
+    { fo: '30', sf: '30', ope: 'C', opes: 'W-NBREL = W-NBREL + 0' },
+    { fo: '30', sf: '40', ope: 'N', opes: 'Region # NOR', niv: '05', tc: 'IT', cond: "1-FA00-REGION # 'NOR'" },
+    { fo: '30', sf: '50', ope: 'N', opes: 'Gros montant', niv: '10', tc: 'IT', cond: '1-FA00-MTFACT >= 99.99 OU 1-FA00-MTFACT < -50' },
+    { fo: '30', sf: '50', ope: 'P', opes: '95' },
+    { fo: '95', sf: '10', ope: 'N', opes: 'Signalement', niv: '05', tc: 'BL' },
+    { fo: '95', sf: '10', ope: 'MES', opes: "'  >> A SURVEILLER : ' 1-FA00-MTFACT" },
+    { fo: '03', sf: '10', ope: 'N', opes: 'Debut', niv: '05', tc: 'BL' },
+    { fo: '03', sf: '10', ope: 'MES', opes: "'DEBUT DU TRAITEMENT'" },
+    { fo: '20', sf: '50', ope: 'N', opes: 'Max', niv: '05', tc: 'BL' },
+    { fo: '20', sf: '50', ope: 'MES', opes: "'PLUS GROS MONTANT : ' W-MAXI" },
+  );
+  cas.push(['langage structure : IT EL BL, niveaux, P, MES, C', m]);
+}
+{
+  const m = copie(exemple);
+  m.dictionnaire.push({ code: 'CPT', libelle: 'Compteur', type: '9', longueur: 3 });
+  m.lignes = [
+    { fo: '02', sf: '10', ope: 'N', opes: 'Boucle', niv: '05', tc: 'DW', cond: 'W-CPT < 3' },
+    { fo: '02', sf: '10', ope: 'A', opes: '1 W-CPT' },
+    { fo: '02', sf: '10', ope: 'MES', opes: "'TOUR ' W-CPT" },
+  ];
+  cas.push(['langage structure : DW', m]);
+}
+// Programme d'ancien format (avant l'appel des fichiers) : repris tel quel
+{
+  const m = copie(exemple);
+  const c = m.appels[0];
+  delete m.appels; delete m.version;
+  Object.assign(m.traitement, { structure: c.structure, fichier: c.fichier, ruptures: c.argument });
+  m.donnees = c.donnees;
+  m.lignes = [
+    { fo: '85', sf: '10', ope: 'N', opes: 'Negatifs', niv: '05', tc: 'IT', cond: 'E-MTFACT < 0' },
+    { fo: '85', sf: '10', ope: 'M', opes: "'** A RELANCER' D-NOMCLI" },
+    { fo: '22', sf: '10', ope: 'MES', opes: "'FIN'" },
+    { fo: '12', sf: '10', ope: 'MES', opes: "'APPELEE'" },
+    { fo: '30', sf: '10', ope: 'N', opes: 'Appel', niv: '05', tc: 'IT', cond: 'S-REGION = E-REGION' },
+    { fo: '30', sf: '10', ope: 'P', opes: '12' },
+  ];
+  cas.push(['ancien format repris (E-, S-, 85, 22, P 12)', m]);
+}
+// Mises à jour : principal + mouvements -> résultat
+cas.push(['mise a jour : creation, modification, annulation, erreurs', exempleMiseAJour]);
+{
+  const m = structuredClone(exempleMiseAJour);
+  m.appels[1].donnees = [];
+  cas.push(['mise a jour sans mouvement', m]);
+}
+{
+  const m = structuredClone(exempleMiseAJour);
+  m.appels[0].donnees = [];
+  m.appels[1].donnees = m.appels[1].donnees.filter((x) => x.CODMVT === 'C');
+  cas.push(['mise a jour : principal vide, creations', m]);
+}
+{
+  const m = structuredClone(exempleMiseAJour);
+  m.appels[1].donnees.push({ NUMCLI: '99', CODMVT: 'C', NOMCLI: 'DERNIER', REGION: 'SUD' }, { NUMCLI: '99', CODMVT: 'A' }, { NUMCLI: '99', CODMVT: 'C', NOMCLI: 'RENE' });
+  m.appels[0].donnees.push({ NUMCLI: '40', NOMCLI: 'APRES', REGION: 'EST', PLAFOND: '1' });
+  m.appels[1].mouvement = { rubrique: 'CODMVT', creation: '1', modification: '2', annulation: '3' };
+  m.appels[1].donnees.forEach((x) => { x.CODMVT = { C: '1', M: '2', A: '3' }[x.CODMVT] || x.CODMVT; });
+  m.lignes = [
+    { fo: '30', sf: '10', ope: 'N', opes: 'Trace', niv: '05', tc: 'IT', cond: "MV-CF1 = 1 ET CL-CF1 = 0" },
+    { fo: '30', sf: '10', ope: 'MES', opes: "'SANS PRINCIPAL : ' 1-MV00-NUMCLI" },
+    { fo: '20', sf: '10', ope: 'MES', opes: "'FIN DE LA MISE A JOUR'" },
+  ];
+  cas.push(['mise a jour : codes 1 2 3, plusieurs mouvements, fin de fichier', m]);
+}
+{
+  const m = structuredClone(exempleMiseAJour);
+  m.dictionnaire.push({ code: 'AGENCE', libelle: 'Agence', type: 'X', longueur: 2 });
+  m.structures[0].rubriques.unshift('AGENCE');
+  m.structures[1].rubriques.unshift('AGENCE');
+  for (const a of m.appels.slice(0, 2)) { a.argument = ['AGENCE', 'NUMCLI']; a.synchro = 2; }
+  m.appels[0].donnees = [
+    { AGENCE: 'BX', NUMCLI: '1', NOMCLI: 'A', REGION: 'SUD', PLAFOND: '1' },
+    { AGENCE: 'BX', NUMCLI: '5', NOMCLI: 'B', REGION: 'SUD', PLAFOND: '2' },
+    { AGENCE: 'PA', NUMCLI: '1', NOMCLI: 'C', REGION: 'NOR', PLAFOND: '3' },
+  ];
+  m.appels[1].donnees = [
+    { AGENCE: 'BX', NUMCLI: '5', CODMVT: 'M', PLAFOND: '20' },
+    { AGENCE: 'LY', NUMCLI: '1', CODMVT: 'C', NOMCLI: 'D', REGION: 'EST' },
+    { AGENCE: 'PA', NUMCLI: '1', CODMVT: 'A' },
+    { AGENCE: 'PA', NUMCLI: '2', CODMVT: 'M', NOMCLI: 'E' },
+  ];
+  cas.push(['mise a jour : synchro sur deux niveaux', m]);
+}
+{
+  const m = structuredClone(exempleMiseAJour);
+  m.appels[1].donnees.reverse();
+  cas.push(['mise a jour : mouvements dans le desordre, tries avant lecture', m]);
+}
+
+// États (chapitre 4) : catégories chargées puis éditées, ou éditées directement ; itératives,
+// débordement de page, calculs, totaux sur deux niveaux ; un compte rendu de mise à jour.
+cas.push(['etat : exemple', structuredClone(exempleEtat)]);
+{ const m = structuredClone(exempleEtat); m.etats[0].postes = 0; cas.push(['etat : edition directe', m]); }
+const iterative = (m) => {
+  const e = m.etats[0];
+  e.lignesPage = 12;
+  e.libelles.push({ numero: '06', texte: '   * ligne' }, { numero: '07', texte: '   (suite page suivante)' });
+  e.structures.push({ st: '03', rubrique: 'RANG', debut: 15, w: '*', source: 'JET1IT', format: '9' });
+  e.categories.push({ ct: 'IT', nlg: '100', type: 'I', car: '2', st: '03', lb: '06', saut: '01', condition: "RTD1 = '1'" });
+  e.categories.push({ ct: 'BP', nlg: '100', type: 'Z', lb: '07', saut: '01', condition: '5-ET00-1CL NOT < 5-ET00-1CLM' });
+  e.categories.push({ ct: 'AB', nlg: '100', type: 'A', st: '01', lb: '01', saut: '01', sautType: '*', condition: '5-ET00-1CL NOT < 5-ET00-1CLM' });
+  return m;
+};
+cas.push(['etat : iterative et debordement de page', iterative(structuredClone(exempleEtat))]);
+{ const m = iterative(structuredClone(exempleEtat)); m.etats[0].postes = 0; cas.push(['etat : iterative en edition directe', m]); }
+{
+  const m = structuredClone(exempleEtat);
+  const e = m.etats[0];
+  e.structures.push({ st: '02', rubrique: 'TTC', debut: 40, mode: 'R', w: '1', source: 'FA00MTFACT', format: '-(4)9', condition: "CATX = 'DD'" });
+  e.structures.push({ st: '02', suite: '*', mode: '*', w: '*', source: '1.2' });
+  e.structures.push({ st: '02', rubrique: 'MARQUE', debut: 58, source: "'<'", format: 'X', condition: "CATX = 'TR'" });
+  cas.push(['etat : calcul arrondi et litteral', m]);
+}
+{
+  const m = structuredClone(exempleEtat);
+  Object.assign(fa(m), { argument: ['REGION', 'NUMCLI'], rupture: 2 });
+  fa(m).donnees = [...fa(m).donnees, { REGION: 'NOR', NUMCLI: '12', NOMCLI: 'DUPONT', MTFACT: '10' }, { REGION: 'SUD', NUMCLI: '7', NOMCLI: 'MARTIN', MTFACT: '-0.01' }];
+  const e = m.etats[0];
+  e.lignesPage = 60;
+  e.libelles.push({ numero: '06', texte: '                 TOTAL CLIENT' });
+  e.categories.push({ ct: 'TC', nlg: '100', type: '2', st: '02', lb: '06', saut: '01', condition: "RTD2 = '1'" });
+  e.structures.find((r) => r.rubrique === 'NUMCLI').condition = "CATX = 'DD' OR CATX = 'TC'";
+  cas.push(['etat : totaux sur deux niveaux', m]);
+}
+{
+  const m = structuredClone(exempleMiseAJour);
+  m.appels.push({ code: 'CR', utilisation: 'I', fichier: 'CR.TXT', argument: ['A'] });
+  m.etats = [{ code: 'CRA', nom: 'COMPTE RENDU', longueur: 40, postes: 0,
+    libelles: [{ numero: '01', texte: 'CLIENTS APRES MISE A JOUR' }, { numero: '02', texte: 'CLIENT' }],
+    structures: [{ st: '01', rubrique: 'NUMCLI', debut: 10, w: '2', source: 'CL00' }, { st: '01', rubrique: 'NOMCLI', debut: 18, w: '2', source: 'CL00' }],
+    categories: [
+      { ct: 'AA', nlg: '100', lb: '01', saut: '01', sautType: '*', condition: '5-CR00-ACE = ZERO' },
+      { ct: 'DD', nlg: '100', st: '01', lb: '02', saut: '01', condition: "CL-OC1 = '1' AND RTD1 = '1'" },
+    ] }];
+  cas.push(['mise a jour : etat des clients', m]);
+}
+
+// Les défis : le modèle de départ, et la solution de référence dont la SYSOUT est l'attendue du défi.
+for (const [id, d] of Object.entries(DEFIS)) {
+  cas.push([`defi ${id} : depart`, normaliser(d.modele)]);
+  cas.push([`defi ${id} : solution`, SOLUTIONS[id](normaliser(d.modele))]);
+}
+
+// Écrans de saisie sans base (GnuCOBOL ne compile pas les EXEC SQL) : contrôles de présence, de classe et de valeurs,
+// touches. Chaque échange : ICF, touche et zones saisies ; l'écran renvoyé (ECRAN-S) doit être celui de GnuCOBOL.
+const ecranControles = {
+  code: 'TS0001', nom: 'Controles', zones: [
+    { nlg: '100', pos: 'A', lg: '1', col: '2', nat: 'L', libelle: 'TEST' },
+    { nlg: '200', rub: 'NUMCLI', pos: 'A', lg: '3', col: '2', nat: 'V', pres: 'S', presence: 'R' },
+    { nlg: '210', rub: 'NOMCLI', lg: '1', nat: 'V', pres: 'S', presence: 'R' },
+    { nlg: '220', rub: 'MTFACT', lg: '1', nat: 'V', pres: 'S' },
+    { nlg: '230', rub: 'REGION', lg: '1', nat: 'V', pres: 'S', maj: 'V', segMaj: 'NOR' },
+    { nlg: '231', maj: 'V', segMaj: 'SUD' },
+    { nlg: '800', rub: 'LIERR', pos: 'A', lg: '22', col: '2', nat: 'P', pres: 'F' },
+    { nlg: '950', rub: 'PFKEY', maj: 'G', segMaj: '', segSrc: '03' },
+  ], segments: [],
+};
+const casEcrans = [
+  ['ecran sans base : controles', { ...structuredClone(exemple), ecrans: [ecranControles] }, 'TS0001', [
+    { icf: '0' }, { valeurs: {} }, { valeurs: { NUMCLI: '12', NOMCLI: 'X', MTFACT: '-1.5', REGION: 'NOR' } },
+    { valeurs: { NUMCLI: '1A', NOMCLI: 'X' } }, { valeurs: { NUMCLI: '1', NOMCLI: 'X', REGION: 'EST' } },
+    { valeurs: { NUMCLI: ' 7', NOMCLI: 'X', MTFACT: '99999.999' } }, { touche: '05' }, { touche: '03' },
+  ]],
+];
+
+export { cas, casEcrans, SOLUTIONS };

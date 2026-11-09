@@ -1,0 +1,61 @@
+id: 01-le-premier-bidon
+title: Le premier bidon
+concepts: [TDD]
+xp: 100
+
+steps:
+  - id: rouge-bidon-vide
+    phase: red
+    title: Un bidon vide ne rapporte rien
+    editable: [tests/PaieDuLaitTest.php]
+    objectives:
+      - own-tests: fail
+        label: Votre test échoue sur votre code
+      - own-tests: reference
+        label: … et passe sur le code attendu
+  - id: vert-bidon-vide
+    phase: green
+    title: Zéro centime
+    editable: [src/PaieDuLait.php]
+    objectives:
+      - own-tests: pass
+        label: Votre test passe
+      - test: testVerifieUnBidonVide
+        label: Un bidon vide rapporte 0 centime
+  - id: rouge-dix-litres
+    phase: red
+    title: Dix litres
+    editable: [tests/PaieDuLaitTest.php]
+    objectives:
+      - own-tests: fail
+        label: Votre nouveau test échoue
+      - own-tests: reference
+        label: … et passe sur le code attendu
+  - id: vert-dix-litres
+    phase: green
+    title: 50 centimes le litre
+    editable: [src/PaieDuLait.php]
+    objectives:
+      - own-tests: pass
+        label: Vos tests passent
+      - test: testVerifieLePrixDuLitre
+        label: Dix litres rapportent 500 centimes
+  - id: refacto-prix
+    phase: refactor
+    title: Le prix a un nom
+    editable: [src/PaieDuLait.php]
+    objectives:
+      - own-tests: pass
+        label: Vos tests passent toujours
+      - test: testLePrixDuLitreEstUneConstante
+        label: Le prix du litre est une constante
+      - mutant: prix-oublie
+        label: Vos tests remarquent quand le prix est oublié
+
+mutants:
+  - id: prix-oublie
+    label: le prix du litre est oublié
+    changes:
+      - file: src/PaieDuLait.php
+        search: '$litres * self::PRIX_DU_LITRE'
+        replace: '$litres'

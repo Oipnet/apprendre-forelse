@@ -7,6 +7,7 @@ use App\Api\DraftInput;
 use App\Api\ExerciseAccessGuard;
 use App\Api\GuestProgressImporter;
 use App\Api\GuestProgressInput;
+use App\Api\SolutionInput;
 use App\Api\ExerciseLocator;
 use App\Content\Exercise;
 use App\Entity\User;
@@ -49,6 +50,7 @@ final class ProgressApiController extends AbstractController
             'completed' => $progress->isCompleted(),
             'solutionRevealed' => $progress->isSolutionRevealed(),
             'review' => $progress->getReview(),
+            'step' => $progress->getStep(),
         ]);
     }
 
@@ -57,7 +59,7 @@ final class ProgressApiController extends AbstractController
     public function save(?string $trackId, string $exerciseId, #[MapRequestPayload] DraftInput $input): Response
     {
         [$user, $exercise] = $this->resolve($trackId, $exerciseId);
-        $this->progress->saveDraft($user, $exercise, $input->files, $input->hintsUsed);
+        $this->progress->saveDraft($user, $exercise, $input->files, $input->hintsUsed, $input->step);
 
         return new Response(status: Response::HTTP_NO_CONTENT);
     }
@@ -74,11 +76,11 @@ final class ProgressApiController extends AbstractController
     /** La solution de référence, contre l'XP de l'exercice (voir ProgressService::revealSolution). */
     #[Route('/{trackId}/{exerciseId}/solution', name: 'api_progress_solution', methods: ['POST'])]
     #[Route('/pratique/{exerciseId}/solution', name: 'api_progress_solution_pratique', defaults: ['trackId' => null], methods: ['POST'], priority: 1)]
-    public function solution(?string $trackId, string $exerciseId): JsonResponse
+    public function solution(?string $trackId, string $exerciseId, #[MapRequestPayload] ?SolutionInput $input = null): JsonResponse
     {
         [$user, $exercise] = $this->resolve($trackId, $exerciseId);
 
-        return $this->json(['files' => (object) $this->progress->revealSolution($user, $exercise)]);
+        return $this->json(['files' => (object) $this->progress->revealSolution($user, $exercise, $input?->step)]);
     }
 
     /**

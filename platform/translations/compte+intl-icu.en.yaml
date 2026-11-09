@@ -168,6 +168,7 @@ contact:
             compte: "<strong>Your account?</strong> Display name, address, password, invoices and deletion are managed from <a href=\"{lien}\">My account</a>."
         envoyer: "Send the message"
         contestation: "I am disputing the revocation of my certificate {code} ({parcours}).\nReason given: {motif}"
+        defi_cobol: "I took on challenge no. {defi} of the COBOL workshop: my SYSOUT matches the expected one.\nMy program: {lien}"
     form:
         # HTML: rendered with |raw.
         confidentialite: "Your message and address are only used to reply to you: <a href=\"{lien}\">privacy policy</a>."

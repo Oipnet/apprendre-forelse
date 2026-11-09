@@ -169,6 +169,8 @@ contact:
         envoyer: "Envoyer le message"
         # Le début du message pour contester un certificat révoqué, depuis sa page.
         contestation: "Je conteste la révocation de mon certificat {code} ({parcours}).\nMotif indiqué : {motif}"
+        # Le début du message pour envoyer un défi relevé dans l'atelier COBOL.
+        defi_cobol: "J'ai relevé le défi n°{defi} de l'atelier COBOL : ma SYSOUT est identique à celle attendue.\nMon programme : {lien}"
     form:
         # HTML : rendu avec |raw.
         confidentialite: "Votre message et votre adresse servent seulement à vous répondre : <a href=\"{lien}\">politique de confidentialité</a>."

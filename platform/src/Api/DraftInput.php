@@ -16,6 +16,9 @@ final readonly class DraftInput
         public array $files = [],
         #[Assert\Range(min: 0, max: 20)]
         public int $hintsUsed = 0,
+        /** Exercice à étapes : l'étape où en est l'apprenant. */
+        #[Assert\Range(min: 0, max: 99)]
+        public ?int $step = null,
     ) {
     }
 }

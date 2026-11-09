@@ -199,4 +199,18 @@ describe('ExerciseSession', () => {
 		expect(fetch, 'Le brouillon différé est annulé : il est déjà parti.').toHaveBeenCalledOnce();
 		vi.unstubAllGlobals();
 	});
+
+	it('exercice à étapes : l\'étape part avec le brouillon, et la solution demandée est celle de l\'étape', async () => {
+		const { runtime } = doublures();
+		const fetch = vi.fn(async (_url: string, init?: RequestInit) => (init?.method === 'POST' ? Response.json({ files: { 'src/Menu.php': 'solution' } }) : new Response(null, { status: 204 })));
+		vi.stubGlobal('fetch', fetch);
+		const session = new ExerciseSession(runtime, new ApiProgressStore('/api/progress/t/e'), { ...etat(), step: 0 });
+
+		await session.goToStep(2);
+		expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toMatchObject({ step: 2 });
+		await session.revealSolution();
+		expect(fetch.mock.calls[1][0]).toBe('/api/progress/t/e/solution');
+		expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toEqual({ step: 2 });
+		vi.unstubAllGlobals();
+	});
 });

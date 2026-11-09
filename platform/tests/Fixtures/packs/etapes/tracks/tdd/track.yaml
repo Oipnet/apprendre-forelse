@@ -1,0 +1,6 @@
+id: tdd
+title: TDD
+description: Un exercice à étapes, rouge, vert, refacto.
+environment: php-8-tdd
+chapters:
+  - {id: c1, title: C1, exercises: [01-le-premier-bidon]}

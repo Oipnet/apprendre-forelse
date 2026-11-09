@@ -247,6 +247,81 @@ a.chip:hover {
 	white-space: pre-wrap;
 }
 
+/* Étape rouge réussie : le message de l'échec, lu comme un succès. */
+.objectives .why.why-ok {
+	color: var(--ok);
+}
+
+/* Exercice à étapes (rouge, vert, refacto) : la frise, puis l'étape en cours. */
+.steps-panel {
+	--phase-red: var(--ko);
+	--phase-green: var(--ok);
+	--phase-refactor: var(--accent-text);
+	margin: 0.8rem 0;
+}
+.steps-timeline {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+	list-style: none;
+	padding: 0;
+	margin: 0 0 0.6rem;
+}
+.step-dot {
+	width: 0.9rem;
+	height: 0.9rem;
+	border-radius: 50%;
+	border: 2px solid var(--phase);
+	opacity: 0.45;
+}
+.step-dot.phase-red,
+.step.phase-red,
+.step-phase.phase-red {
+	--phase: var(--phase-red);
+}
+.step-dot.phase-green,
+.step.phase-green,
+.step-phase.phase-green {
+	--phase: var(--phase-green);
+}
+.step-dot.phase-refactor,
+.step.phase-refactor,
+.step-phase.phase-refactor {
+	--phase: var(--phase-refactor);
+}
+.step-dot[data-state='done'] {
+	background: var(--phase);
+	opacity: 0.8;
+}
+.step-dot[data-state='current'] {
+	opacity: 1;
+	box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--phase);
+}
+.step {
+	border-left: 3px solid var(--phase);
+	padding: 0.2rem 0 0.2rem 0.8rem;
+}
+.step-position {
+	margin: 0;
+	font-size: 12px;
+	color: var(--muted);
+}
+.chip.step-phase {
+	color: var(--phase);
+	font-weight: 600;
+}
+.step-title {
+	margin: 0.3rem 0;
+}
+.step-rule {
+	margin: 0 0 0.5rem;
+	font-size: 12.5px;
+	color: var(--muted);
+}
+#step-next {
+	margin-top: 0.6rem;
+}
+
 /* La réussite : le panneau arrive d'un petit rebond (rien, avec prefers-reduced-motion). */
 @keyframes success-in {
 	from {
