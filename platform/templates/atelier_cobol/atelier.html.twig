@@ -15,12 +15,16 @@
     </head>
     <body>
 <div class="page">
-  <nav class="retour-site"><a href="{{ path('app_home') }}">← {{ theme.name }}</a></nav>
-  <header>
-    <h1>{{ en ? 'COBOL workshop' : 'Atelier COBOL' }}</h1>
-    <a class="lien-terminal" href="{{ path('app_cobol_terminal') }}">{{ en ? 'Switch to 3270 terminal mode' : 'Passer en mode terminal 3270' }}</a>
-    <a class="lien-terminal" href="{{ path('app_cobol_memo') }}">{{ en ? 'The memo' : 'Le mémo' }}</a>
-    <button class="bouton principal" id="partager" type="button">{{ en ? 'Share this program' : 'Partager ce programme' }}</button>
+  <header class="tete">
+    <div class="tete-titre">
+      <nav class="retour-site"><a href="{{ path('app_home') }}">← {{ theme.name }}</a></nav>
+      <h1>{{ en ? 'COBOL workshop' : 'Atelier COBOL' }}</h1>
+    </div>
+    <nav class="tete-liens" aria-label="{{ en ? 'Workshop' : 'Atelier' }}">
+      <a class="lien-tete lien-terminal" href="{{ path('app_cobol_terminal') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 9l3 3-3 3M12 15h5"></path></svg>{{ en ? '3270 terminal' : 'Terminal 3270' }}</a>
+      <a class="lien-tete" href="{{ path('app_cobol_memo') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h12l4 4v12H4z"></path><path d="M8 12h8M8 16h6"></path></svg>{{ en ? 'Memo' : 'Mémo' }}</a>
+      <button class="bouton" id="partager" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg>{{ en ? 'Share' : 'Partager' }}</button>
+    </nav>
     <p>{% if en %}An old-school generator of batch COBOL programs: describe your data elements, the record and the report to produce, write your procedures in structured language. The COBOL program is generated, then run in your browser, with a DB2-style database. Nothing to install, no account.{% else %}Un générateur de programmes COBOL batch, à l'ancienne : décrivez vos rubriques, l'enregistrement et l'état à produire, écrivez vos traitements en langage structuré. Le programme COBOL est généré, puis exécuté dans votre navigateur, avec une base de données façon DB2. Rien à installer, aucun compte.{% endif %}</p>
   </header>
   <div class="partage" id="bandeau-partage" role="status" hidden></div>
@@ -28,52 +32,87 @@
   <section class="defi" id="defi" data-contact="{{ path('app_contact') }}" data-memo="{{ path('app_cobol_memo') }}" aria-label="{{ en ? 'Challenge' : 'Défi' }}" hidden></section>
 
   <div class="atelier">
-    <section class="panneau" aria-label="{{ en ? 'Model' : 'Modèle' }}">
+    <section class="panneau modele" aria-label="{{ en ? 'Model' : 'Modèle' }}">
       <div class="onglets" role="tablist">
-        <button role="tab" id="o-dico" aria-selected="true" data-vue="dico">{{ en ? 'Dictionary' : 'Dictionnaire' }}</button>
-        <button role="tab" id="o-struct" aria-selected="false" data-vue="struct">{{ en ? 'Records' : 'Enregistrements' }}</button>
-        <button role="tab" id="o-cd" aria-selected="false" data-vue="cd">{{ en ? 'Files' : 'Fichiers' }}</button>
-        <button role="tab" id="o-trt" aria-selected="false" data-vue="trt">{{ en ? 'Processing' : 'Traitement' }}</button>
-        <button role="tab" id="o-etats" aria-selected="false" data-vue="etats">{{ en ? 'Reports' : 'États' }}</button>
-        <button role="tab" id="o-spe" aria-selected="false" data-vue="spe">{{ en ? 'Structured language' : 'Langage structuré' }}</button>
-        <button role="tab" id="o-don" aria-selected="false" data-vue="don">{{ en ? 'Data' : 'Données' }}</button>
-        <button role="tab" id="o-base" aria-selected="false" data-vue="base">{{ en ? 'Database' : 'Base' }}</button>
-      </div>
-      <div class="contenu" id="vue"></div>
-    </section>
-
-    <section class="panneau" aria-label="{{ en ? 'Program' : 'Programme' }}">
-      <div class="source-tete">
-        <h2 id="titre-source">{{ en ? 'COBOL source' : 'Source COBOL' }}</h2>
-        <span class="etat" id="etat-source"></span>
-        <div class="actions">
-          <button class="bouton" id="regenerer" type="button">{{ en ? 'Regenerate from the model' : 'Régénérer depuis le modèle' }}</button>
-          <button class="bouton" id="copier" type="button">{{ en ? 'Copy the source' : 'Copier le source' }}</button>
-          <button class="bouton principal" id="executer" type="button">{{ en ? 'Run' : 'Exécuter' }}</button>
+        <div class="groupe" role="presentation">
+          <span class="groupe-titre" role="presentation">{{ en ? 'Data' : 'Les données' }}</span>
+          <div class="groupe-onglets" role="presentation">
+            <button role="tab" id="o-dico" aria-selected="true" data-vue="dico">{{ en ? 'Dictionary' : 'Dictionnaire' }}<span class="compte" data-compte="dico"></span></button>
+            <button role="tab" id="o-struct" aria-selected="false" data-vue="struct">{{ en ? 'Records' : 'Enregistrements' }}<span class="compte" data-compte="struct"></span></button>
+            <button role="tab" id="o-cd" aria-selected="false" data-vue="cd">{{ en ? 'Files' : 'Fichiers' }}<span class="compte" data-compte="cd"></span></button>
+            <button role="tab" id="o-don" aria-selected="false" data-vue="don">{{ en ? 'Data lines' : 'Données' }}<span class="compte" data-compte="don"></span></button>
+          </div>
         </div>
-      </div>
-      <div class="feuille">
-        <div class="feuille-interne">
-          <div class="regle" aria-hidden="true" id="regle"></div>
-          <div style="position:relative">
-            <div class="gouttiere" id="gouttiere" aria-hidden="true"></div>
-            <textarea id="source" spellcheck="false" aria-labelledby="titre-source" wrap="off"></textarea>
+        <div class="groupe" role="presentation">
+          <span class="groupe-titre" role="presentation">{{ en ? 'Processing' : 'Le traitement' }}</span>
+          <div class="groupe-onglets" role="presentation">
+            <button role="tab" id="o-trt" aria-selected="false" data-vue="trt">{{ en ? 'Processing' : 'Traitement' }}</button>
+            <button role="tab" id="o-spe" aria-selected="false" data-vue="spe">{{ en ? 'Structured language' : 'Langage structuré' }}<span class="compte" data-compte="spe"></span></button>
+            <button role="tab" id="o-etats" aria-selected="false" data-vue="etats">{{ en ? 'Reports' : 'États' }}<span class="compte" data-compte="etats"></span></button>
+          </div>
+        </div>
+        <div class="groupe" role="presentation">
+          <span class="groupe-titre" role="presentation">{{ en ? 'Database' : 'La base' }}</span>
+          <div class="groupe-onglets" role="presentation">
+            <button role="tab" id="o-base" aria-selected="false" data-vue="base">{{ en ? 'Tables' : 'Base' }}<span class="compte" data-compte="base"></span></button>
           </div>
         </div>
       </div>
-      <div class="legende">
-        <span><i style="background:var(--grille)"></i>{{ en ? 'column 7: indicator (* = comment)' : 'colonne 7 : indicateur (* = commentaire)' }}</span>
-        <span><i style="background:var(--zone-a)"></i>{{ en ? 'area A, columns 8 to 11: divisions, paragraphs, 01 levels' : 'zone A, colonnes 8 à 11 : divisions, paragraphes, niveaux 01' }}</span>
-        <span><i style="background:var(--erreur-fond)"></i>{{ en ? 'beyond column 72: ignored' : 'au-delà de la colonne 72 : ignoré' }}</span>
-      </div>
-      <div class="sortie">
-        <div class="sortie-tete">
-          <h2>{{ en ? 'Output' : 'Sortie' }}</h2>
-          <span class="etat" id="stats"></span>
+      <div class="contenu" id="vue" role="tabpanel"></div>
+      <p class="verdict-modele" id="verdict-modele" role="status"></p>
+    </section>
+
+    <section class="panneau programme" aria-label="{{ en ? 'Program' : 'Programme' }}">
+      <div class="source-tete">
+        <div class="source-titre">
+          <h2 id="titre-programme"></h2>
+          <span class="sous-titre" id="sous-titre-programme"></span>
         </div>
-        <div id="message"></div>
-        <div class="fichiers" id="fichiers"></div>
+        <span class="pastille" id="etat-source"></span>
+        <div class="actions">
+          <button class="bouton" id="regenerer" type="button" hidden>{{ en ? 'Regenerate from the model' : 'Régénérer depuis le modèle' }}</button>
+          <button class="bouton" id="copier" type="button">{{ en ? 'Copy' : 'Copier' }}</button>
+          <button class="bouton principal" id="executer" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"></path></svg>{{ en ? 'Run' : 'Exécuter' }}</button>
+        </div>
+      </div>
+      <div class="vues" role="tablist" aria-label="{{ en ? 'View' : 'Vue' }}">
+        <button role="tab" id="v-source" aria-selected="true" aria-controls="p-source" data-sortie="source">{{ en ? 'COBOL source' : 'Source COBOL' }}<span class="note" id="note-source"></span></button>
+        <button role="tab" id="v-sysout" aria-selected="false" aria-controls="p-sysout" data-sortie="sysout">SYSOUT<span class="note" id="note-sysout"></span></button>
+        <button role="tab" id="v-fichiers" aria-selected="false" aria-controls="p-fichiers" data-sortie="fichiers">{{ en ? 'Output files' : 'Fichiers produits' }}<span class="note" id="note-fichiers"></span></button>
+      </div>
+
+      <div id="p-source" role="tabpanel" aria-labelledby="v-source">
+        <div class="editeur">
+          <nav class="plan" aria-label="{{ en ? 'Source outline' : 'Plan du source' }}">
+            <span class="plan-titre">{{ en ? 'Outline' : 'Plan' }}</span>
+            <div id="plan"></div>
+          </nav>
+          <div class="feuille" id="feuille">
+            <div class="feuille-interne">
+              <div class="regle" aria-hidden="true" id="regle"></div>
+              <div style="position:relative">
+                <div class="gouttiere" id="gouttiere" aria-hidden="true"></div>
+                <textarea id="source" spellcheck="false" aria-label="{{ en ? 'COBOL source' : 'Source COBOL' }}" wrap="off"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="legende">
+          <span>{{ en ? 'Columns 1 to 6: sequence numbers' : 'Colonnes 1 à 6 : numéros de séquence' }}</span>
+          <span><i class="l-ind"></i>{{ en ? 'Column 7: * comment' : 'Colonne 7 : * commentaire' }}</span>
+          <span><i class="l-zone-a"></i>{{ en ? 'Area A from 8, area B from 12' : 'Zone A en 8, zone B en 12' }}</span>
+          <span><i class="l-72"></i>{{ en ? 'Beyond 72: ignored' : 'Au-delà de 72 : ignoré' }}</span>
+        </div>
+      </div>
+
+      <div id="p-sysout" role="tabpanel" aria-labelledby="v-sysout" hidden>
+        <div id="message" class="bandeau-resultat"></div>
         <pre class="sysout" id="sysout">{{ en ? 'Click Run.' : 'Cliquez sur Exécuter.' }}</pre>
+      </div>
+
+      <div id="p-fichiers" role="tabpanel" aria-labelledby="v-fichiers" hidden>
+        <div class="fichiers" id="fichiers"></div>
+        <pre class="sysout" id="contenu-fichier"></pre>
       </div>
     </section>
   </div>

@@ -29,7 +29,7 @@ let structCourante = 0;
 let appelDonnees = null;
 let sourceModifie = false;
 let derniersFichiers = {};
-let fichierAffiche = 'SYSOUT';
+let fichierAffiche = null;
 
 const $ = (s) => document.querySelector(s);
 const el = (tag, attrs = {}, ...enfants) => {
@@ -85,12 +85,15 @@ function vueDico() {
   const lignes = modele.dictionnaire.map((d, i) => el('tr', {},
     el('td', {}, el('input', { class: 'code', value: d.code, 'aria-label': 'Code', oninput: (e) => renommer(d, e.target) })),
     el('td', {}, el('input', { value: d.libelle || '', 'aria-label': tx('Libellé', 'Label'), oninput: (e) => { d.libelle = e.target.value; changer(); } })),
-    el('td', {}, el('select', { 'aria-label': 'Type', onchange: (e) => { d.type = e.target.value; if (d.type === 'X') { delete d.decimales; delete d.signe; } changer(true); } },
-      el('option', { value: 'X', selected: d.type === 'X' }, tx('X texte', 'X text')), el('option', { value: '9', selected: d.type === '9' }, tx('9 nombre', '9 number')))),
+    el('td', {}, el('div', { class: 'segment', role: 'group', 'aria-label': tx(`Type de ${d.code}`, `Type of ${d.code}`) },
+      ...[['X', tx('texte', 'text')], ['9', tx('nombre', 'number')]].map(([t, nom]) => el('button', { type: 'button', title: `${t} ${nom}`, 'aria-pressed': String(d.type === t), onclick: () => {
+        if (d.type === t) return;
+        d.type = t; if (t === 'X') { delete d.decimales; delete d.signe; } changer(true);
+      } }, t)))),
     el('td', {}, el('input', { class: 'num', type: 'number', min: 1, max: 18, value: d.longueur, 'aria-label': tx('Longueur', 'Length'), onchange: (e) => { d.longueur = Math.max(1, Math.min(d.type === '9' ? 18 : 200, Number(e.target.value) || 1)); if ((d.decimales || 0) >= d.longueur) d.decimales = d.longueur - 1; changer(true); } })),
     el('td', {}, d.type === '9' ? el('input', { class: 'num', type: 'number', min: 0, max: 9, value: d.decimales || 0, 'aria-label': tx('Décimales', 'Decimals'), onchange: (e) => { d.decimales = Math.max(0, Math.min(d.longueur - 1, Number(e.target.value) || 0)); changer(true); } }) : ''),
     el('td', { style: 'text-align:center' }, d.type === '9' ? el('input', { type: 'checkbox', checked: !!d.signe, 'aria-label': tx('Signé', 'Signed'), onchange: (e) => { d.signe = e.target.checked; changer(true); } }) : ''),
-    el('td', { class: 'code' }, picStockage(d)),
+    el('td', {}, el('code', { class: 'pic' }, picStockage(d))),
     el('td', {}, el('button', { class: 'mini', type: 'button', title: tx('Supprimer la rubrique', 'Delete the data element'), 'aria-label': tx(`Supprimer ${d.code}`, `Delete ${d.code}`), onclick: () => { modele.dictionnaire.splice(i, 1); changer(true); } }, '×')),
   ));
   return [
@@ -507,6 +510,22 @@ function afficher() {
   v.replaceChildren(...({ dico: vueDico, struct: vueStruct, cd: vueAppels, trt: vueTrt, etats: vueEtats, spe: vueSpe, don: vueDon, base: vueBase }[vue])());
   majInfos();
   document.querySelectorAll('.onglets button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.vue === vue)));
+  majCompteurs();
+}
+// le nombre d'éléments de chaque onglet, et l'état du modèle en bas du panneau
+function majCompteurs() {
+  const n = {
+    dico: modele.dictionnaire.length, struct: modele.structures.length, cd: modele.appels.length,
+    don: modele.appels.reduce((x, a) => x + (a.donnees || []).length, 0), spe: modele.lignes.length, etats: modele.etats.length, base: modele.tables.length,
+  };
+  document.querySelectorAll('[data-compte]').forEach((c) => { c.textContent = n[c.dataset.compte] ? String(n[c.dataset.compte]) : ''; });
+  const v = $('#verdict-modele');
+  let erreur = null;
+  try { generer(modele); } catch (e) { erreur = e.message; }
+  v.className = `verdict-modele${erreur ? ' incomplet' : ''}`;
+  v.textContent = erreur ? tx(`À compléter : ${erreur}`, `Still to complete: ${erreur}`) : sourceModifie
+    ? tx('Programme complet. Le source, modifié à la main, ne suit plus le modèle.', 'Program complete. The source, edited by hand, no longer follows the model.')
+    : tx('Programme complet : le source se régénère à chaque modification.', 'Program complete: the source is regenerated on every change.');
 }
 document.querySelectorAll('.onglets button').forEach((b) => b.addEventListener('click', () => { vue = b.dataset.vue; afficher(); }));
 
@@ -516,32 +535,63 @@ function regenerer() {
   try {
     zoneSource.value = generer(modele);
     sourceModifie = false;
-    $('#etat-source').textContent = tx('généré depuis le modèle', 'generated from the model');
-    $('#etat-source').className = 'etat';
+    $('#regenerer').hidden = true;
+    pastille('ok', tx(`Généré · ${zoneSource.value.split('\n').length} lignes`, `Generated · ${zoneSource.value.split('\n').length} lines`));
   } catch (e) {
-    $('#etat-source').textContent = tx(`Le modèle est incomplet : ${e.message}`, `The model is incomplete: ${e.message}`);
-    $('#etat-source').className = 'etat modifie';
+    pastille('incomplet', tx('Modèle incomplet', 'Incomplete model'));
   }
+  $('#titre-programme').textContent = modele.traitement.programme || '';
+  $('#sous-titre-programme').textContent = modele.traitement.titre || '';
   majSource();
+  majCompteurs();
+}
+function pastille(genre, texte) {
+  const p = $('#etat-source');
+  p.className = `pastille ${genre}`;
+  p.textContent = texte;
+}
+// le plan : divisions et fonctions (F01, F20, F8E…), pour sauter dans le source
+function majPlan() {
+  const lignes = zoneSource.value.split('\n');
+  const entrees = [];
+  lignes.forEach((l, i) => {
+    const d = /^.{7}([A-Z-]+) DIVISION\./.exec(l);
+    if (d) { entrees.push([d[1], i]); return; }
+    const f = /^.{7}(F[0-9A-Z]{2})\.(?: |$)/.exec(l);
+    if (f) entrees.push([f[1], i]);
+  });
+  $('#plan').replaceChildren(...entrees.map(([nom, i]) => el('button', { type: 'button', class: 'plan-entree', onclick: () => allerALigne(i + 1) },
+    el('span', {}, nom), el('small', {}, String(i + 1)))));
+}
+function allerALigne(n) {
+  const hauteur = parseFloat(getComputedStyle(zoneSource).lineHeight) || 20;
+  $('#feuille').scrollTo({ top: Math.max(0, (n - 2) * hauteur), behavior: 'smooth' });
+  const lignes = zoneSource.value.split('\n');
+  const debut = lignes.slice(0, n - 1).reduce((x, l) => x + l.length + 1, 0);
+  zoneSource.focus({ preventScroll: true });
+  zoneSource.setSelectionRange(debut, debut + (lignes[n - 1] || '').length);
 }
 function majSource() {
   const n = zoneSource.value.split('\n').length;
   $('#gouttiere').textContent = Array.from({ length: n }, (_, i) => String(i + 1).padStart(4, ' ')).join('\n');
   zoneSource.style.height = 'auto';
   zoneSource.style.height = `${zoneSource.scrollHeight + 4}px`;
+  $('#note-source').textContent = String(n);
+  majPlan();
 }
 zoneSource.addEventListener('input', () => {
   sourceModifie = true;
-  $('#etat-source').textContent = tx('modifié à la main : le modèle ne l\'écrase plus', 'edited by hand: the model no longer overwrites it');
-  $('#etat-source').className = 'etat modifie';
+  pastille('modifie', tx('Modifié à la main', 'Edited by hand'));
+  $('#regenerer').hidden = false;
   majSource();
+  majCompteurs();
 });
 $('#regenerer').addEventListener('click', () => { regenerer(); });
 $('#copier').addEventListener('click', async (e) => {
   const b = e.currentTarget;
   try { await navigator.clipboard.writeText(zoneSource.value); b.textContent = tx('Copié', 'Copied'); }
   catch { zoneSource.select(); b.textContent = tx('Texte sélectionné', 'Text selected'); }
-  setTimeout(() => (b.textContent = tx('Copier le source', 'Copy the source')), 1600);
+  setTimeout(() => (b.textContent = tx('Copier', 'Copy')), 1600);
 });
 $('#regle').textContent = Array.from({ length: 80 }, (_, i) => ((i + 1) % 10 === 0 ? String((i + 1) / 10 % 10) : (i + 1) % 5 === 0 ? '+' : '.')).join('');
 
@@ -552,11 +602,32 @@ function texteTable(tb) {
   return [tx(`${tb.nom} : ${lignes.length} ligne(s), clé ${tb.cle.join(' ')}`, `${tb.nom}: ${lignes.length} row(s), key ${tb.cle.join(' ')}`), '', tb.rubriques.map((c, k) => cel(c, c, k)).join('  '),
     ...lignes.map((l) => l.map((v, k) => cel(tb.rubriques[k], formaterValeur(rub(tb.rubriques[k]), v), k)).join('  '))].join('\n');
 }
-async function executer() {
+// Source, SYSOUT, fichiers produits : un seul panneau visible
+let sortieVue = 'source';
+function montrer(id) {
+  sortieVue = id;
+  for (const b of document.querySelectorAll('.vues [role="tab"]')) {
+    const actif = b.dataset.sortie === id;
+    b.setAttribute('aria-selected', String(actif));
+    b.tabIndex = actif ? 0 : -1;
+    document.getElementById(b.getAttribute('aria-controls')).hidden = !actif;
+  }
+}
+document.querySelectorAll('.vues [role="tab"]').forEach((b) => b.addEventListener('click', () => montrer(b.dataset.sortie)));
+document.querySelector('.vues').addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const ids = ['source', 'sysout', 'fichiers'];
+  const i = (ids.indexOf(sortieVue) + (e.key === 'ArrowRight' ? 1 : ids.length - 1)) % ids.length;
+  montrer(ids[i]);
+  document.querySelector(`.vues [data-sortie="${ids[i]}"]`).focus();
+});
+
+async function executer(e) {
+  const demande = !!e; // un clic sur Exécuter montre le résultat ; le lancement au chargement laisse le source
   const msg = $('#message');
   msg.replaceChildren();
   let entrees = {};
-  try { entrees = fichiersEntree(modele); } catch (e) { msg.append(el('p', { class: 'message erreur' }, tx(`Données : ${e.message}`, `Data: ${e.message}`))); return; }
+  try { entrees = fichiersEntree(modele); } catch (e) { msg.append(el('p', { class: 'message erreur' }, tx(`Données : ${e.message}`, `Data: ${e.message}`))); if (demande) montrer('sysout'); return; }
   try {
     const t0 = performance.now();
     const pgm = new Programme(zoneSource.value);
@@ -572,35 +643,43 @@ async function executer() {
     const ecrits = Object.fromEntries(Object.entries(r.fichiers).filter(([nom]) => !(nom in entrees) && !nom.endsWith('.TMP')));
     derniersFichiers = { SYSOUT: r.sortie, ...ecrits };
     if (r.sql.executees) for (const tb of modele.tables) { try { derniersFichiers[`Table ${tb.nom}`] = texteTable(tb); } catch {} }
-    $('#stats').textContent = tx(`analyse ${(t1 - t0).toFixed(1)} ms · exécution ${(t2 - t1).toFixed(1)} ms · ${r.instructions} instructions${r.sql.executees ? ` · ${r.sql.executees} ordres SQL` : ''}`, `parse ${(t1 - t0).toFixed(1)} ms · run ${(t2 - t1).toFixed(1)} ms · ${r.instructions} statements${r.sql.executees ? ` · ${r.sql.executees} SQL statements` : ''}`);
-    msg.append(el('p', { class: 'message ok' }, tx('Fin normale (STOP RUN).', 'Normal end (STOP RUN).')));
+    msg.append(el('p', { class: 'message ok' }, el('strong', {}, tx('Fin normale (STOP RUN)', 'Normal end (STOP RUN)')),
+      el('span', {}, tx(`${r.instructions} instructions`, `${r.instructions} statements`)),
+      r.sql.executees ? el('span', {}, tx(`${r.sql.executees} ordres SQL, ${r.sql.erreurs.length} en erreur`, `${r.sql.executees} SQL statements, ${r.sql.erreurs.length} in error`)) : null,
+      el('span', {}, tx(`analyse ${(t1 - t0).toFixed(1)} ms, exécution ${(t2 - t1).toFixed(1)} ms`, `parse ${(t1 - t0).toFixed(1)} ms, run ${(t2 - t1).toFixed(1)} ms`))));
     for (const nom of recreees) msg.append(el('p', { class: 'message' }, tx(`Table ${nom} recréée vide : sa description avait changé.`, `Table ${nom} recreated empty: its description had changed.`)));
     for (const x of r.sql.erreurs) msg.append(el('p', { class: 'message erreur' }, tx(`SQLCODE ${x.code}, ligne ${x.ligne} : ${x.message}`, `SQLCODE ${x.code}, line ${x.ligne}: ${x.message}`)));
     if (vue === 'base') afficher();
     document.dispatchEvent(new CustomEvent('atelier:execute', { detail: { sortie: r.sortie, modele } }));
   } catch (e) {
     derniersFichiers = {};
-    $('#stats').textContent = '';
     msg.append(el('p', { class: 'message erreur' }, tx(`Erreur, ${e.message}${db ? ' La base n\'a pas été modifiée.' : ''}`, `Error, ${e.message}${db ? ' The database was not changed.' : ''}`)));
-    if (e.ligne) surligner(e.ligne);
+    if (e.ligne) msg.append(el('p', { class: 'message' }, el('button', { class: 'bouton', type: 'button', onclick: () => surligner(e.ligne) }, tx(`Voir la ligne ${e.ligne} du source`, `Show line ${e.ligne} of the source`))));
     document.dispatchEvent(new CustomEvent('atelier:execute', { detail: { sortie: null, modele } }));
   }
-  if (!(fichierAffiche in derniersFichiers)) fichierAffiche = 'SYSOUT';
-  // un état imprimé se montre d'abord (la SYSOUT reste à un clic)
+  const autres = Object.keys(derniersFichiers).filter((nom) => nom !== 'SYSOUT');
+  if (!autres.includes(fichierAffiche)) fichierAffiche = autres[0] || null;
+  // un état imprimé se montre d'abord quand la SYSOUT est vide
   const etat = impressions().find((x) => x.fichier in derniersFichiers);
-  if (etat && fichierAffiche === 'SYSOUT' && !derniersFichiers.SYSOUT.trim()) fichierAffiche = etat.fichier;
+  if (etat && !(derniersFichiers.SYSOUT || '').trim()) fichierAffiche = etat.fichier;
   afficherFichiers();
+  if (demande) montrer(etat && !(derniersFichiers.SYSOUT || '').trim() ? 'fichiers' : 'sysout');
 }
 function afficherFichiers() {
-  $('#fichiers').replaceChildren(...Object.keys(derniersFichiers).map((nom) => el('button', { class: 'bouton', type: 'button', 'aria-pressed': String(nom === fichierAffiche), onclick: () => { fichierAffiche = nom; afficherFichiers(); } }, nom)));
+  const sysout = derniersFichiers.SYSOUT;
+  $('#sysout').textContent = sysout ?? '';
+  const n = sysout ? sysout.replace(/\n$/, '').split('\n').length : 0;
+  $('#note-sysout').textContent = n ? tx(`${n} lignes`, `${n} lines`) : '';
+  const autres = Object.keys(derniersFichiers).filter((nom) => nom !== 'SYSOUT');
+  $('#note-fichiers').textContent = autres.length ? String(autres.length) : '';
+  $('#fichiers').replaceChildren(...autres.map((nom) => el('button', { class: 'bouton', type: 'button', 'aria-pressed': String(nom === fichierAffiche), onclick: () => { fichierAffiche = nom; afficherFichiers(); } }, nom)));
   const t = derniersFichiers[fichierAffiche] ?? '';
-  $('#sysout').textContent = impressions().some((x) => x.fichier === fichierAffiche) ? listing(t) : t;
+  $('#contenu-fichier').textContent = !autres.length ? tx('Aucun fichier produit par la dernière exécution.', 'No file produced by the last run.')
+    : impressions().some((x) => x.fichier === fichierAffiche) ? listing(t) : t;
 }
 function surligner(ligne) {
-  const lignes = zoneSource.value.split('\n');
-  const debut = lignes.slice(0, ligne - 1).reduce((s, l) => s + l.length + 1, 0);
-  zoneSource.focus();
-  zoneSource.setSelectionRange(debut, debut + (lignes[ligne - 1] || '').length);
+  montrer('source');
+  allerALigne(ligne);
 }
 $('#executer').addEventListener('click', executer);
 
