@@ -1,23 +1,23 @@
-<!DOCTYPE html>
+{% extends 'base.html.twig' %}
 {# L'atelier COBOL (atelier) : un générateur de batchs COBOL façon années 1990, qui tourne entièrement dans le navigateur
-   (playground/src/cobol). Page autonome, en français ou en anglais (la langue de la route, que le script suit), avec son
-   propre habillage. #}
+   (playground/src/cobol). Une page du site (en-tête et pied du thème, ses couleurs et ses polices), en français ou en
+   anglais (la langue de la route, que le script suit). Sa feuille est cantonnée à main.cobol. #}
 {% set en = app.request.locale == 'en' %}
-<html lang="{{ en ? 'en' : 'fr' }}">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-        <title>{% if seo.title %}{{ seo.title }}{% else %}{{ en ? 'COBOL workshop' : 'Atelier COBOL' }}{% endif %}</title>
-        {{ include('_head.html.twig') }}
-        {% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">{% endif %}
-        {{ vite_entry_link_tags('cobol-atelier') }}
-        {{ vite_entry_script_tags('cobol-atelier') }}
-    </head>
-    <body>
+{% block title %}{{ en ? 'COBOL workshop' : 'Atelier COBOL' }}{% endblock %}
+{% block body_class %}site-page cobol-page{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    {{ vite_entry_link_tags('cobol-atelier') }}
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+    {{ vite_entry_script_tags('cobol-atelier') }}
+{% endblock %}
+{% block body %}
+<main class="cobol">
 <div class="page">
   <header class="tete">
     <div class="tete-titre">
-      <nav class="retour-site"><a href="{{ path('app_home') }}">← {{ theme.name }}</a></nav>
       <h1>{{ en ? 'COBOL workshop' : 'Atelier COBOL' }}</h1>
     </div>
     <nav class="tete-liens" aria-label="{{ en ? 'Workshop' : 'Atelier' }}">
@@ -117,6 +117,5 @@
     </section>
   </div>
 </div>
-
-    </body>
-</html>
+</main>
+{% endblock %}

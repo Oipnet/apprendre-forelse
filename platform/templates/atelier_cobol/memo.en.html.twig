@@ -1,19 +1,19 @@
-<!DOCTYPE html>
+{% extends 'base.html.twig' %}
 {# Le mémo de l'atelier COBOL, en anglais (memo.html.twig en français) : la référence des écrans, des fonctions et des
-   ruptures. Des faits sur l'atelier, aucun indice sur un défi. Page autonome ; garder les deux versions au même niveau. #}
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-        <title>{% if seo.title %}{{ seo.title }}{% else %}COBOL workshop memo{% endif %}</title>
-        {{ include('_head.html.twig') }}
-        {% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">{% endif %}
-        {{ vite_entry_link_tags('cobol-memo') }}
-        {{ vite_entry_script_tags('cobol-memo') }}
-    </head>
-    <body>
+   ruptures. Des faits sur l'atelier, aucun indice sur un défi. Page du site (en-tête et pied du thème) ; garder les deux versions au même niveau. #}
+{% block title %}COBOL workshop memo{% endblock %}
+{% block body_class %}site-page cobol-page{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    {{ vite_entry_link_tags('cobol-memo') }}
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+    {{ vite_entry_script_tags('cobol-memo') }}
+{% endblock %}
+{% block body %}
+<main class="cobol">
 <div class="page">
-  <nav class="retour-site"><a href="{{ path('app_home') }}">← {{ theme.name }}</a></nav>
   <header>
     <h1>COBOL workshop memo</h1>
     <p>The screens, the file calls, the function cycle and the control breaks: enough to get your 2005 reflexes back, or to pick them up. It is a reference, not an answer key.</p>
@@ -237,6 +237,5 @@
     </article>
   </div>
 </div>
-
-    </body>
-</html>
+</main>
+{% endblock %}

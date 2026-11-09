@@ -1,23 +1,25 @@
 /* Le mémo de l'atelier : une page de référence à lire, sur la feuille et les couleurs de l'atelier. */
-.memo { display: grid; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); gap: 18px; align-items: start; }
-@media (max-width: 860px) { .memo { grid-template-columns: minmax(0, 1fr); } .memo nav { position: static; } }
-.memo nav { position: sticky; top: 16px; background: var(--surface); border: 1px solid var(--trait); border-radius: 6px; padding: 12px 14px; font-size: 0.88rem; }
-.memo nav ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
-.memo nav a { color: var(--encre); text-decoration: none; }
-.memo nav a:hover { color: var(--accent); text-decoration: underline; }
-.memo article { display: grid; gap: 18px; min-width: 0; }
-.memo section { background: var(--surface); border: 1px solid var(--trait); border-radius: 6px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; scroll-margin-top: 12px; }
-.memo h2 { font: 700 1.1rem/1.25 var(--f-titre); margin: 0; }
-.memo h3 { font: 600 0.95rem/1.3 var(--f-titre); margin: 6px 0 0; }
-.memo p, .memo ul, .memo ol { margin: 0; max-width: 75ch; }
-.memo ul, .memo article ol { padding-left: 1.3em; display: grid; gap: 3px; }
-.memo code { font: 0.85em var(--f-code); background: var(--papier); padding: 1px 4px; border-radius: 3px; }
-.memo pre { margin: 0; padding: 10px 12px; overflow-x: auto; font: 13px/1.5 var(--f-code); background: var(--papier); border-radius: 4px; }
-.memo table { min-width: 0; }
-.memo td { padding: 5px 6px; vertical-align: top; }
-.memo td:first-child { font-family: var(--f-code); white-space: nowrap; width: 1%; padding-right: 14px; }
-.memo .note { color: var(--doux); font-size: 0.88rem; }
-.liens-memo { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-.liens-memo a { color: var(--accent); font-weight: 600; }
-.memo table.ecrans td:first-child { font-family: var(--f-texte); font-weight: 600; }
-@media (max-width: 560px) { .memo td:first-child, .memo th { white-space: normal; } .memo table { font-size: 0.82rem; } }
+.cobol .memo { display: grid; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .cobol .memo { grid-template-columns: minmax(0, 1fr); } .cobol .memo nav { position: static; } }
+.cobol .memo nav { position: sticky; top: 16px; background: var(--surface); border: 1px solid var(--trait); border-radius: 6px; padding: 12px 14px; font-size: 0.88rem; }
+.cobol .memo nav ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; list-style: decimal; }
+.cobol .memo nav a { color: var(--encre); text-decoration: none; }
+.cobol .memo nav a:hover { color: var(--accent); text-decoration: underline; }
+.cobol .memo article { display: grid; gap: 18px; min-width: 0; }
+.cobol .memo section { background: var(--surface); border: 1px solid var(--trait); border-radius: 6px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; scroll-margin-top: 12px; }
+.cobol .memo h2 { font: 700 1.1rem/1.25 var(--f-titre); margin: 0; }
+.cobol .memo h3 { font: 600 0.95rem/1.3 var(--f-titre); margin: 6px 0 0; }
+.cobol .memo p, .cobol .memo ul, .cobol .memo ol { margin: 0; max-width: 75ch; }
+.cobol .memo ul, .cobol .memo article ol { padding-left: 1.3em; display: grid; gap: 3px; }
+.cobol .memo ul { list-style: disc; }
+.cobol .memo article ol { list-style: decimal; }
+.cobol .memo code { font: 0.85em var(--f-code); background: var(--papier); padding: 1px 4px; border-radius: 3px; }
+.cobol .memo pre { margin: 0; padding: 10px 12px; overflow-x: auto; font: 13px/1.5 var(--f-code); background: var(--papier); border-radius: 4px; }
+.cobol .memo table { min-width: 0; }
+.cobol .memo td { padding: 5px 6px; vertical-align: top; }
+.cobol .memo td:first-child { font-family: var(--f-code); white-space: nowrap; width: 1%; padding-right: 14px; }
+.cobol .memo .note { color: var(--doux); font-size: 0.88rem; }
+.cobol .liens-memo { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.cobol .liens-memo a { color: var(--accent); font-weight: 600; }
+.cobol .memo table.ecrans td:first-child { font-family: var(--f-texte); font-weight: 600; }
+@media (max-width: 560px) { .cobol .memo td:first-child, .cobol .memo th { white-space: normal; } .cobol .memo table { font-size: 0.82rem; } }
