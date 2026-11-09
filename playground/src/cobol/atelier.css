@@ -1,159 +1,154 @@
 /* Mise en page : feuille de programmation COBOL. À gauche le modèle (dictionnaire, structure, traitement, données),
    à droite le source sur une grille 80 colonnes, puis la sortie d'exécution. */
-:root {
-  --papier: #f3f5f2;
-  --surface: #ffffff;
-  --encre: #1d2a35;
-  --doux: #5b6b74;
-  --trait: #d5ddd8;
-  --grille: #e7ece8;
-  --zone-a: #eef3ef;
-  --accent: #0b6e4f;
-  --accent-fond: #e3f1eb;
+/* Les couleurs et les polices du site (jetons du thème actif, clairs ou sombres comme lui), avec des valeurs de repli.
+   Seuls la feuille de programmation et la SYSOUT gardent leur fond sombre, quel que soit le thème. */
+.cobol {
+  --papier: var(--color-bg, #f3f5f2);
+  --surface: var(--color-surface, #ffffff);
+  --encre: var(--color-ink, #1d2a35);
+  --doux: var(--color-ink-muted, #5b6b74);
+  --trait: var(--color-line, #d5ddd8);
+  --grille: color-mix(in srgb, var(--trait) 55%, var(--surface));
+  --zone-a: color-mix(in srgb, var(--trait) 30%, var(--surface));
+  --accent: var(--color-accent, #0b6e4f);
+  --sur-accent: var(--color-on-accent, #ffffff);
+  --accent-fond: color-mix(in srgb, var(--accent) 11%, var(--surface));
   --code-fond: #101820;
   --code-texte: #d6e2ea;
   --code-doux: #8a9cab;
   --code-trait: #2e4253;
   --code-bande: #17222c;
-  --ok: #2f7a4a;
-  --erreur: #a8352a;
-  --erreur-fond: #f8e7e4;
-  --f-titre: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --f-texte: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --f-code: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --ok: var(--color-success, #2f7a4a);
+  --erreur: var(--color-danger, #a8352a);
+  --erreur-fond: var(--color-danger-bg, #f8e7e4);
+  --f-titre: var(--font-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --f-texte: var(--font-sans, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --f-code: var(--font-mono, ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace);
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --papier: #131a1f; --surface: #1a2329; --encre: #dde6e3; --doux: #93a3a8; --trait: #2c3a41; --grille: #212c32;
-  --zone-a: #1e292f; --accent: #6cc4a0; --accent-fond: #183a2f; --ok: #6cc48c; --erreur: #f08d80; --erreur-fond: #3a2220; --code-fond: #0b1117; --code-bande: #121b23; color-scheme: dark } }
-:root[data-theme="dark"] {
-  --papier: #131a1f; --surface: #1a2329; --encre: #dde6e3; --doux: #93a3a8; --trait: #2c3a41; --grille: #212c32;
-  --zone-a: #1e292f; --accent: #6cc4a0; --accent-fond: #183a2f; --ok: #6cc48c; --erreur: #f08d80; --erreur-fond: #3a2220; --code-fond: #0b1117; --code-bande: #121b23; color-scheme: dark }
 
-* { box-sizing: border-box; }
-body { background: var(--papier); color: var(--encre); font: 15px/1.5 var(--f-texte); }
-.page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; max-width: 1500px; margin: 0 auto; display: grid; gap: 18px; }
-header.tete { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
-.tete-titre { display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; }
-h1 { font: 700 1.5rem/1.15 var(--f-titre); margin: 0; letter-spacing: -0.01em; }
-header.tete p { flex: 1 1 100%; margin: 0; color: var(--doux); font-size: 0.88rem; max-width: 95ch; }
-.tete-liens { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.lien-tete { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--encre); font-weight: 500; font-size: 0.9rem; text-decoration: none; }
-.lien-tete:hover { background: var(--accent-fond); color: var(--accent); }
-.tete-liens .bouton { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; }
-.atelier { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 18px; align-items: start; }
-@media (max-width: 980px) { .atelier { grid-template-columns: minmax(0, 1fr); } }
-.panneau { background: var(--surface); border: 1px solid var(--trait); border-radius: 10px; min-width: 0; }
-.panneau.programme { overflow: hidden; }
-.onglets { display: flex; flex-wrap: wrap; gap: 14px 26px; padding: 14px 16px; border-bottom: 1px solid var(--trait); }
-.groupe { display: flex; flex-direction: column; gap: 6px; }
-.groupe-titre { font: 600 0.68rem var(--f-texte); text-transform: uppercase; letter-spacing: 0.07em; color: var(--doux); }
-.groupe-onglets { display: flex; flex-wrap: wrap; gap: 4px; }
-.onglets button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font: 500 0.88rem var(--f-texte); background: none; border: 1px solid transparent; border-radius: 8px; color: var(--encre); padding: 0 11px; cursor: pointer; }
-.onglets button:hover { background: var(--papier); }
-.onglets button[aria-selected="true"] { color: var(--accent); border-color: var(--accent); background: var(--accent-fond); font-weight: 600; }
-.compte:not(:empty) { min-width: 1.5em; padding: 0 6px; border-radius: 999px; background: var(--grille); color: var(--doux); font-size: 0.75rem; font-weight: 600; text-align: center; }
-.verdict-modele { margin: 0; padding: 10px 16px; border-top: 1px solid var(--trait); border-radius: 0 0 10px 10px; background: var(--accent-fond); color: var(--accent); font-size: 0.84rem; font-weight: 500; }
-.verdict-modele.incomplet { background: var(--erreur-fond); color: var(--erreur); }
-.segment { display: inline-flex; border: 1px solid var(--trait); border-radius: 6px; overflow: hidden; }
-.segment button { width: 2.2em; min-height: 32px; border: 0; background: var(--surface); color: var(--doux); font: 600 0.85rem var(--f-code); cursor: pointer; }
-.segment button + button { border-left: 1px solid var(--trait); }
-.segment button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
-code.pic { display: inline-block; padding: 2px 7px; border-radius: 5px; background: var(--accent-fond); color: var(--accent); font: 0.82rem var(--f-code); white-space: nowrap; }
-.onglets button:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.contenu { padding: 16px; display: grid; gap: 14px; }
-.aide { color: var(--doux); font-size: 0.88rem; margin: 0; max-width: 65ch; }
-.table-defile { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 0.88rem; }
-select { min-width: 7.5em; }
-th { text-align: left; font: 600 0.72rem var(--f-texte); text-transform: uppercase; letter-spacing: 0.06em; color: var(--doux); padding: 4px 6px; border-bottom: 1px solid var(--trait); white-space: nowrap; }
-td { padding: 3px 4px; border-bottom: 1px solid var(--grille); vertical-align: middle; }
-input, select { font: inherit; color: var(--encre); background: var(--papier); border: 1px solid var(--trait); border-radius: 4px; padding: 4px 6px; width: 100%; min-width: 0; }
-input[type="checkbox"] { width: auto; accent-color: var(--accent); }
-input.code, td.code { font-family: var(--f-code); font-size: 0.85rem; text-transform: uppercase; }
-input.num { width: 4.5em; }
-.ligne-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 14px; }
-label.champ { display: grid; gap: 3px; font-size: 0.8rem; color: var(--doux); font-weight: 600; }
-fieldset { border: 1px solid var(--trait); border-radius: 5px; padding: 10px 12px; margin: 0; display: grid; gap: 8px; min-width: 0; }
-legend { font-weight: 600; font-size: 0.82rem; padding: 0 4px; }
-.cases { display: flex; flex-wrap: wrap; gap: 6px 16px; }
-.cases label { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-code); font-size: 0.85rem; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-button.bouton { font: 600 0.85rem var(--f-texte); border-radius: 4px; padding: 7px 12px; cursor: pointer; border: 1px solid var(--trait); background: var(--surface); color: var(--encre); }
-button.bouton.principal { background: var(--accent); border-color: var(--accent); color: var(--surface); }
-button.mini { font: 600 0.8rem var(--f-code); background: none; border: 1px solid transparent; color: var(--doux); cursor: pointer; border-radius: 3px; padding: 2px 6px; }
-button.mini:hover { border-color: var(--trait); color: var(--encre); }
-.ordre { display: grid; gap: 4px; }
-.ordre div { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 4px; font-family: var(--f-code); font-size: 0.85rem; padding: 3px 6px; background: var(--papier); border-radius: 3px; }
-.ordre div small { font-family: var(--f-texte); color: var(--doux); }
+.cobol * { box-sizing: border-box; }
+.cobol { color: var(--encre); font: 15px/1.5 var(--f-texte); }
+.cobol .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; max-width: 1500px; margin: 0 auto; display: grid; gap: 18px; }
+.cobol header.tete { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+.cobol .tete-titre { display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; }
+.cobol h1 { font: 700 1.5rem/1.15 var(--f-titre); margin: 0; letter-spacing: -0.01em; }
+.cobol header.tete p { flex: 1 1 100%; margin: 0; color: var(--doux); font-size: 0.88rem; max-width: 95ch; }
+.cobol .tete-liens { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cobol .lien-tete { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--encre); font-weight: 500; font-size: 0.9rem; text-decoration: none; }
+.cobol .lien-tete:hover { background: var(--accent-fond); color: var(--accent); }
+.cobol .tete-liens .bouton { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; }
+.cobol .atelier { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 18px; align-items: start; }
+@media (max-width: 980px) { .cobol .atelier { grid-template-columns: minmax(0, 1fr); } }
+.cobol .panneau { background: var(--surface); border: 1px solid var(--trait); border-radius: 10px; min-width: 0; }
+.cobol .panneau.programme { overflow: hidden; }
+.cobol .onglets { display: flex; flex-wrap: wrap; gap: 14px 26px; padding: 14px 16px; border-bottom: 1px solid var(--trait); }
+.cobol .groupe { display: flex; flex-direction: column; gap: 6px; }
+.cobol .groupe-titre { font: 600 0.68rem var(--f-texte); text-transform: uppercase; letter-spacing: 0.07em; color: var(--doux); }
+.cobol .groupe-onglets { display: flex; flex-wrap: wrap; gap: 4px; }
+.cobol .onglets button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font: 500 0.88rem var(--f-texte); background: none; border: 1px solid transparent; border-radius: 8px; color: var(--encre); padding: 0 11px; cursor: pointer; }
+.cobol .onglets button:hover { background: var(--papier); }
+.cobol .onglets button[aria-selected="true"] { color: var(--accent); border-color: var(--accent); background: var(--accent-fond); font-weight: 600; }
+.cobol .compte:not(:empty) { min-width: 1.5em; padding: 0 6px; border-radius: 999px; background: var(--grille); color: var(--doux); font-size: 0.75rem; font-weight: 600; text-align: center; }
+.cobol .verdict-modele { margin: 0; padding: 10px 16px; border-top: 1px solid var(--trait); border-radius: 0 0 10px 10px; background: var(--accent-fond); color: var(--accent); font-size: 0.84rem; font-weight: 500; }
+.cobol .verdict-modele.incomplet { background: var(--erreur-fond); color: var(--erreur); }
+.cobol .segment { display: inline-flex; border: 1px solid var(--trait); border-radius: 6px; overflow: hidden; }
+.cobol .segment button { width: 2.2em; min-height: 32px; border: 0; background: var(--surface); color: var(--doux); font: 600 0.85rem var(--f-code); cursor: pointer; }
+.cobol .segment button + button { border-left: 1px solid var(--trait); }
+.cobol .segment button[aria-pressed="true"] { background: var(--accent); color: var(--sur-accent); }
+.cobol code.pic { display: inline-block; padding: 2px 7px; border-radius: 5px; background: var(--accent-fond); color: var(--accent); font: 0.82rem var(--f-code); white-space: nowrap; }
+.cobol .onglets button:focus-visible, .cobol button:focus-visible, .cobol input:focus-visible, .cobol select:focus-visible, .cobol textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cobol .contenu { padding: 16px; display: grid; gap: 14px; }
+.cobol .aide { color: var(--doux); font-size: 0.88rem; margin: 0; max-width: 65ch; }
+.cobol .table-defile { overflow-x: auto; }
+.cobol table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 0.88rem; }
+.cobol select { min-width: 7.5em; }
+.cobol th { text-align: left; font: 600 0.72rem var(--f-texte); text-transform: uppercase; letter-spacing: 0.06em; color: var(--doux); padding: 4px 6px; border-bottom: 1px solid var(--trait); white-space: nowrap; }
+.cobol td { padding: 3px 4px; border-bottom: 1px solid var(--grille); vertical-align: middle; }
+.cobol input, .cobol select { font: inherit; color: var(--encre); background: var(--papier); border: 1px solid var(--trait); border-radius: 4px; padding: 4px 6px; width: 100%; min-width: 0; }
+.cobol input[type="checkbox"] { width: auto; accent-color: var(--accent); }
+.cobol input.code, .cobol td.code { font-family: var(--f-code); font-size: 0.85rem; text-transform: uppercase; }
+.cobol input.num { width: 4.5em; }
+.cobol .ligne-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 14px; }
+.cobol label.champ { display: grid; gap: 3px; font-size: 0.8rem; color: var(--doux); font-weight: 600; }
+.cobol fieldset { border: 1px solid var(--trait); border-radius: 5px; padding: 10px 12px; margin: 0; display: grid; gap: 8px; min-width: 0; }
+.cobol legend { font-weight: 600; font-size: 0.82rem; padding: 0 4px; }
+.cobol .cases { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.cobol .cases label { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-code); font-size: 0.85rem; }
+.cobol .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cobol button.bouton { font: 600 0.85rem var(--f-texte); border-radius: 4px; padding: 7px 12px; cursor: pointer; border: 1px solid var(--trait); background: var(--surface); color: var(--encre); }
+.cobol button.bouton.principal { background: var(--accent); border-color: var(--accent); color: var(--sur-accent); }
+.cobol button.mini { font: 600 0.8rem var(--f-code); background: none; border: 1px solid transparent; color: var(--doux); cursor: pointer; border-radius: 3px; padding: 2px 6px; }
+.cobol button.mini:hover { border-color: var(--trait); color: var(--encre); }
+.cobol .ordre { display: grid; gap: 4px; }
+.cobol .ordre div { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 4px; font-family: var(--f-code); font-size: 0.85rem; padding: 3px 6px; background: var(--papier); border-radius: 3px; }
+.cobol .ordre div small { font-family: var(--f-texte); color: var(--doux); }
 
 /* Feuille de programmation */
-.source-tete { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--trait); }
-.source-titre { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; flex: 1 1 220px; min-width: 0; }
-.source-titre h2 { font: 600 1rem var(--f-code); margin: 0; }
-.sous-titre { font-size: 0.82rem; color: var(--doux); }
-.source-tete .actions .principal { display: inline-flex; align-items: center; gap: 8px; }
-.pastille { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 500; background: var(--accent-fond); color: var(--accent); }
-.pastille::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.pastille.incomplet { background: var(--erreur-fond); color: var(--erreur); }
-.pastille.modifie { background: var(--grille); color: var(--encre); }
-.vues { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px 10px 0; border-bottom: 1px solid var(--trait); }
-.vues button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: none; font: 500 0.88rem var(--f-texte); color: var(--doux); cursor: pointer; }
-.vues button[aria-selected="true"] { color: var(--encre); border-bottom-color: var(--accent); font-weight: 600; }
-.vues .note:not(:empty) { font-size: 0.75rem; font-weight: 400; color: var(--doux); }
-[role="tabpanel"][hidden] { display: none; }
-.editeur { display: flex; min-width: 0; }
-.plan { flex: 0 0 132px; padding: 10px 6px; border-right: 1px solid var(--trait); background: var(--papier); display: flex; flex-direction: column; gap: 4px; max-height: min(72vh, 700px); overflow-y: auto; }
-.plan-titre { padding: 0 8px 4px; font: 600 0.68rem var(--f-texte); text-transform: uppercase; letter-spacing: 0.07em; color: var(--doux); }
-#plan { display: flex; flex-direction: column; gap: 1px; }
-.plan-entree { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 30px; padding: 0 8px; border: 0; border-radius: 6px; background: none; color: var(--encre); font: 0.78rem var(--f-code); text-align: left; cursor: pointer; }
-.plan-entree span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.plan-entree small { color: var(--doux); font-size: 0.72rem; }
-.plan-entree:hover { background: var(--grille); }
-@media (max-width: 720px) { .plan { display: none; } }
-.feuille { flex: 1 1 auto; min-width: 0; overflow: auto; position: relative; max-height: min(72vh, 700px); background: var(--code-fond); color: var(--code-texte); }
-.feuille-interne { position: relative; width: calc(80ch + 5ch + 24px); font: 13px/1.55 var(--f-code); }
-.regle { position: sticky; top: 0; z-index: 1; display: flex; padding-left: calc(5ch + 12px); color: var(--code-doux); background: var(--code-bande); border-bottom: 1px solid var(--code-trait); white-space: pre; user-select: none; }
-.gouttiere { position: absolute; left: 0; top: 0; width: calc(5ch + 6px); text-align: right; color: var(--code-doux); white-space: pre; padding-top: 8px; user-select: none; font: inherit; }
-textarea#source { display: block; width: calc(80ch + 24px); margin-left: calc(5ch + 6px); min-height: 520px; resize: none; border: 0; padding: 8px 6px; font: inherit; color: var(--code-texte); caret-color: #fff; white-space: pre; overflow: hidden; tab-size: 4;
+.cobol .source-tete { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--trait); }
+.cobol .source-titre { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; flex: 1 1 220px; min-width: 0; }
+.cobol .source-titre h2 { font: 600 1rem var(--f-code); margin: 0; }
+.cobol .sous-titre { font-size: 0.82rem; color: var(--doux); }
+.cobol .source-tete .actions .principal { display: inline-flex; align-items: center; gap: 8px; }
+.cobol .pastille { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 500; background: var(--accent-fond); color: var(--accent); }
+.cobol .pastille::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.cobol .pastille.incomplet { background: var(--erreur-fond); color: var(--erreur); }
+.cobol .pastille.modifie { background: var(--grille); color: var(--encre); }
+.cobol .vues { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px 10px 0; border-bottom: 1px solid var(--trait); }
+.cobol .vues button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: none; font: 500 0.88rem var(--f-texte); color: var(--doux); cursor: pointer; }
+.cobol .vues button[aria-selected="true"] { color: var(--encre); border-bottom-color: var(--accent); font-weight: 600; }
+.cobol .vues .note:not(:empty) { font-size: 0.75rem; font-weight: 400; color: var(--doux); }
+.cobol [role="tabpanel"][hidden] { display: none; }
+.cobol .editeur { display: flex; min-width: 0; }
+.cobol .plan { flex: 0 0 132px; padding: 10px 6px; border-right: 1px solid var(--trait); background: var(--papier); display: flex; flex-direction: column; gap: 4px; max-height: min(72vh, 700px); overflow-y: auto; }
+.cobol .plan-titre { padding: 0 8px 4px; font: 600 0.68rem var(--f-texte); text-transform: uppercase; letter-spacing: 0.07em; color: var(--doux); }
+.cobol #plan { display: flex; flex-direction: column; gap: 1px; }
+.cobol .plan-entree { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 30px; padding: 0 8px; border: 0; border-radius: 6px; background: none; color: var(--encre); font: 0.78rem var(--f-code); text-align: left; cursor: pointer; }
+.cobol .plan-entree span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cobol .plan-entree small { color: var(--doux); font-size: 0.72rem; }
+.cobol .plan-entree:hover { background: var(--grille); }
+@media (max-width: 720px) { .cobol .plan { display: none; } }
+.cobol .feuille { flex: 1 1 auto; min-width: 0; overflow: auto; position: relative; max-height: min(72vh, 700px); background: var(--code-fond); color: var(--code-texte); }
+.cobol .feuille-interne { position: relative; width: calc(80ch + 5ch + 24px); font: 13px/1.55 var(--f-code); }
+.cobol .regle { position: sticky; top: 0; z-index: 1; display: flex; padding-left: calc(5ch + 12px); color: var(--code-doux); background: var(--code-bande); border-bottom: 1px solid var(--code-trait); white-space: pre; user-select: none; }
+.cobol .gouttiere { position: absolute; left: 0; top: 0; width: calc(5ch + 6px); text-align: right; color: var(--code-doux); white-space: pre; padding-top: 8px; user-select: none; font: inherit; }
+.cobol textarea#source { display: block; width: calc(80ch + 24px); margin-left: calc(5ch + 6px); min-height: 520px; resize: none; border: 0; padding: 8px 6px; font: inherit; color: var(--code-texte); caret-color: #fff; white-space: pre; overflow: hidden; tab-size: 4;
   background:
     linear-gradient(to right, transparent calc(6ch + 6px), var(--code-bande) calc(6ch + 6px), var(--code-bande) calc(7ch + 6px), transparent calc(7ch + 6px)),
     linear-gradient(to right, transparent calc(7ch + 6px), var(--code-bande) calc(7ch + 6px), var(--code-bande) calc(11ch + 6px), transparent calc(11ch + 6px)),
     linear-gradient(to right, transparent calc(72ch + 6px), var(--code-trait) calc(72ch + 6px), var(--code-trait) calc(72ch + 7px), transparent calc(72ch + 7px)),
     var(--code-fond);
 }
-textarea#source:focus-visible { outline-offset: -2px; }
-textarea#source::selection { background: #2f5d4c; }
-.legende { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 14px; border-top: 1px solid var(--trait); font-size: 0.78rem; color: var(--doux); }
-.legende i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
-.legende .l-ind, .legende .l-zone-a { background: var(--code-bande); border: 1px solid var(--code-trait); }
-.legende .l-72 { width: 2px; background: var(--code-doux); }
-pre.sysout { margin: 0; padding: 12px 16px 16px; overflow: auto; max-height: min(72vh, 700px); font: 13px/1.55 var(--f-code); background: var(--code-fond); color: var(--code-texte); min-height: 12em; }
-.bandeau-resultat:empty { display: none; }
-.message { margin: 0; padding: 10px 16px; font-size: 0.86rem; border-bottom: 1px solid var(--trait); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
-.message.erreur { background: var(--erreur-fond); color: var(--erreur); }
-.message.ok { background: var(--accent-fond); color: var(--accent); }
-.message.ok strong { font-weight: 600; }
-.fichiers { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--trait); }
-.fichiers:empty { display: none; }
-.fichiers button { font: 0.78rem var(--f-code); }
-.fichiers button[aria-pressed="true"] { background: var(--accent-fond); border-color: var(--accent); }
-pre.brut { margin: 0; font: 12px/1.5 var(--f-code); background: var(--papier); padding: 8px 10px; border-radius: 4px; overflow-x: auto; }
-@media (prefers-reduced-motion: no-preference) { button.bouton { transition: background .15s; } }
-/* Retour au site, partage par lien */
-.retour-site a { color: var(--doux); font-size: 0.85rem; text-decoration: none; }
-.retour-site a:hover { color: var(--accent); text-decoration: underline; }
-.partage { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; border: 1px solid var(--accent); background: var(--accent-fond); border-radius: 6px; }
-.partage[hidden] { display: none; }
-.partage p { margin: 0; flex: 1 1 32ch; }
-.partage input { flex: 1 1 40ch; min-width: 0; font: 0.8rem var(--f-code); padding: 7px 8px; border: 1px solid var(--trait); border-radius: 4px; background: var(--surface); color: var(--encre); }
-.defi { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid var(--accent); background: var(--accent-fond); border-radius: 6px; }
-.defi[hidden] { display: none; }
-.defi h2 { margin: 0; font-size: 1.05rem; }
-.defi p, .defi ol { margin: 0; }
-.defi ol { padding-left: 1.4em; }
-.defi summary { cursor: pointer; }
-.defi .sysout { max-height: 22em; overflow: auto; }
-.defi .verdict { font-weight: 600; }
-.defi .verdict code { font: 0.85rem var(--f-code); white-space: pre; background: var(--surface); padding: 1px 4px; border-radius: 3px; }
-.defi .verdict.reussi { color: var(--ok, inherit); }
-.defi .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cobol textarea#source:focus-visible { outline-offset: -2px; }
+.cobol textarea#source::selection { background: #2f5d4c; }
+.cobol .legende { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 14px; border-top: 1px solid var(--trait); font-size: 0.78rem; color: var(--doux); }
+.cobol .legende i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.cobol .legende .l-ind, .cobol .legende .l-zone-a { background: var(--code-bande); border: 1px solid var(--code-trait); }
+.cobol .legende .l-72 { width: 2px; background: var(--code-doux); }
+.cobol pre.sysout { margin: 0; padding: 12px 16px 16px; overflow: auto; max-height: min(72vh, 700px); font: 13px/1.55 var(--f-code); background: var(--code-fond); color: var(--code-texte); min-height: 12em; }
+.cobol .bandeau-resultat:empty { display: none; }
+.cobol .message { margin: 0; padding: 10px 16px; font-size: 0.86rem; border-bottom: 1px solid var(--trait); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+.cobol .message.erreur { background: var(--erreur-fond); color: var(--erreur); }
+.cobol .message.ok { background: var(--accent-fond); color: var(--accent); }
+.cobol .message.ok strong { font-weight: 600; }
+.cobol .fichiers { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--trait); }
+.cobol .fichiers:empty { display: none; }
+.cobol .fichiers button { font: 0.78rem var(--f-code); }
+.cobol .fichiers button[aria-pressed="true"] { background: var(--accent-fond); border-color: var(--accent); }
+.cobol pre.brut { margin: 0; font: 12px/1.5 var(--f-code); background: var(--papier); padding: 8px 10px; border-radius: 4px; overflow-x: auto; }
+@media (prefers-reduced-motion: no-preference) { .cobol button.bouton { transition: background .15s; } }
+/* Partage par lien */
+.cobol .partage { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; border: 1px solid var(--accent); background: var(--accent-fond); border-radius: 6px; }
+.cobol .partage[hidden] { display: none; }
+.cobol .partage p { margin: 0; flex: 1 1 32ch; }
+.cobol .partage input { flex: 1 1 40ch; min-width: 0; font: 0.8rem var(--f-code); padding: 7px 8px; border: 1px solid var(--trait); border-radius: 4px; background: var(--surface); color: var(--encre); }
+.cobol .defi { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid var(--accent); background: var(--accent-fond); border-radius: 6px; }
+.cobol .defi[hidden] { display: none; }
+.cobol .defi h2 { margin: 0; font-size: 1.05rem; }
+.cobol .defi p, .cobol .defi ol { margin: 0; }
+.cobol .defi ol { padding-left: 1.4em; list-style: decimal; }
+.cobol .defi summary { cursor: pointer; }
+.cobol .defi .sysout { max-height: 22em; overflow: auto; }
+.cobol .defi .verdict { font-weight: 600; }
+.cobol .defi .verdict code { font: 0.85rem var(--f-code); white-space: pre; background: var(--surface); padding: 1px 4px; border-radius: 3px; }
+.cobol .defi .verdict.reussi { color: var(--ok, inherit); }
+.cobol .defi .actions { display: flex; flex-wrap: wrap; gap: 8px; }

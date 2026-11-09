@@ -1,48 +1,48 @@
-/* Un seul univers, sombre : le tube du terminal. */
-:root {
-  color-scheme: dark;
+/* Le tube du terminal et son boîtier restent sombres ; autour, les couleurs et les polices du site (jetons du thème). */
+.cobol {
+  --page-encre: var(--color-ink, #1d2a35); --page-doux: var(--color-ink-muted, #5b6b74); --page-lien: var(--color-accent, #0b6e4f);
+  --page-surface: var(--color-surface, #ffffff); --page-trait: var(--color-line, #d5ddd8);
+  --f-titre: var(--font-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
   --fond: #0d1114; --boitier: #1b2126; --tube: #050807; --trait: #2c353b; --texte: #c9d3d6; --doux: #7f8d93;
   --vert: #3ee07a; --bleu: #5fa8ff; --blanc: #eef4f2; --rouge: #ff5b4f; --turquoise: #42d9d0; --jaune: #f2d75c; --rose: #ff7ad1;
-  --f-code: ui-monospace, Menlo, Consolas, monospace;
-  --f-texte: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-code: var(--font-mono, ui-monospace, Menlo, Consolas, monospace);
+  --f-texte: var(--font-sans, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
 }
-* { box-sizing: border-box; }
-html, body { margin: 0; background: var(--fond); color: var(--texte); font: 14px/1.5 var(--f-texte); }
-.page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 32px; max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
-header h1 { margin: 0; font: 600 1.15rem var(--f-texte); }
-header a { color: var(--bleu); }
-.boitier { background: var(--boitier); border: 1px solid var(--trait); border-radius: 10px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
-.defile { overflow-x: auto; }
-.tube { --t: max(9px, min(17px, calc((100vw - 64px) / 48.5))); font: var(--t)/1.32 var(--f-code); background: var(--tube); color: var(--vert); padding: 10px 12px; border-radius: 6px; width: max-content; cursor: text; position: relative; outline: none;
+.cobol * { box-sizing: border-box; }
+.cobol { color: var(--page-encre); font: 14px/1.5 var(--f-texte); }
+.cobol .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 32px; max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
+.cobol header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; }
+.cobol header h1 { flex: 1 1 auto; margin: 0; font: 700 1.5rem/1.15 var(--f-titre); }
+.cobol header a { color: var(--page-lien); font-weight: 600; }
+.cobol .boitier { color-scheme: dark; background: var(--boitier); color: var(--texte); border: 1px solid var(--trait); border-radius: 10px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.cobol .defile { overflow-x: auto; }
+.cobol .tube { --t: max(9px, min(17px, calc((100vw - 64px) / 48.5))); font: var(--t)/1.32 var(--f-code); background: var(--tube); color: var(--vert); padding: 10px 12px; border-radius: 6px; width: max-content; cursor: text; position: relative; outline: none;
   box-shadow: inset 0 0 40px rgba(62, 224, 122, 0.05); }
-.tube.actif { box-shadow: inset 0 0 40px rgba(62, 224, 122, 0.08), 0 0 0 1px #2d4a3a; }
-.t-ligne { white-space: pre; height: 1.32em; }
-.t-ligne span { white-space: pre; }
-.c-vert { color: var(--vert); } .c-bleu { color: var(--bleu); } .c-blanc { color: var(--blanc); font-weight: 600; }
-.c-rouge { color: var(--rouge); font-weight: 600; } .c-turquoise { color: var(--turquoise); } .c-jaune { color: var(--jaune); } .c-rose { color: var(--rose); }
-.s { text-decoration: underline; text-decoration-color: rgba(62, 224, 122, 0.35); text-underline-offset: 0.2em; }
-.err { background: rgba(255, 91, 79, 0.18); }
-.curseur { background: var(--vert); color: var(--tube) !important; }
-.tube:not(.actif) .curseur { background: transparent; outline: 1px solid var(--vert); color: inherit !important; }
-@media (prefers-reduced-motion: no-preference) { .tube.actif .curseur { animation: clignote 1.1s steps(1) infinite; } }
+.cobol .tube.actif { box-shadow: inset 0 0 40px rgba(62, 224, 122, 0.08), 0 0 0 1px #2d4a3a; }
+.cobol .t-ligne { white-space: pre; height: 1.32em; }
+.cobol .t-ligne span { white-space: pre; }
+.cobol .c-vert { color: var(--vert); } .cobol .c-bleu { color: var(--bleu); } .cobol .c-blanc { color: var(--blanc); font-weight: 600; }
+.cobol .c-rouge { color: var(--rouge); font-weight: 600; } .cobol .c-turquoise { color: var(--turquoise); } .cobol .c-jaune { color: var(--jaune); } .cobol .c-rose { color: var(--rose); }
+.cobol .s { text-decoration: underline; text-decoration-color: rgba(62, 224, 122, 0.35); text-underline-offset: 0.2em; }
+.cobol .err { background: rgba(255, 91, 79, 0.18); }
+.cobol .curseur { background: var(--vert); color: var(--tube) !important; }
+.cobol .tube:not(.actif) .curseur { background: transparent; outline: 1px solid var(--vert); color: inherit !important; }
+@media (prefers-reduced-motion: no-preference) { .cobol .tube.actif .curseur { animation: clignote 1.1s steps(1) infinite; } }
 @keyframes clignote { 50% { background: transparent; color: inherit; } }
-.oia { display: flex; gap: 18px; font: 600 12px var(--f-code); color: var(--turquoise); padding: 4px 12px; border-top: 1px solid #12302b; width: 100%; }
-.oia [data-bloc] { color: var(--jaune); min-width: 22ch; }
-.oia [data-pos] { margin-left: auto; }
-textarea.capture { position: absolute; opacity: 0; width: 1px; height: 1px; left: 0; top: 0; border: 0; padding: 0; resize: none; font-size: 16px; }
-.touches { display: flex; flex-wrap: wrap; gap: 6px; }
-.touches button { font: 600 12px var(--f-code); background: #262e34; color: var(--texte); border: 1px solid var(--trait); border-bottom-width: 3px; border-radius: 5px; padding: 6px 9px; cursor: pointer; }
-.touches button:active { transform: translateY(1px); border-bottom-width: 2px; }
-.touches button:focus-visible { outline: 2px solid var(--bleu); }
-.aide { color: var(--doux); font-size: 13px; margin: 0; max-width: 75ch; }
-.aide kbd { font: 12px var(--f-code); background: #262e34; border: 1px solid var(--trait); border-radius: 3px; padding: 0 4px; color: var(--texte); }
-/* Retour au site, partage par lien */
-.retour-site a { color: var(--doux); font-size: 0.85rem; text-decoration: none; }
-.retour-site a:hover { color: var(--bleu); text-decoration: underline; }
-.partage { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; border: 1px solid var(--trait); background: var(--boitier); border-radius: 6px; }
-.partage[hidden] { display: none; }
-.partage p { margin: 0; flex: 1 1 32ch; }
-.partage input { flex: 1 1 40ch; min-width: 0; font: 0.8rem var(--f-code); padding: 7px 8px; border: 1px solid var(--trait); border-radius: 4px; background: var(--tube); color: var(--vert); }
-.partage button { font: 600 0.85rem var(--f-texte); border-radius: 4px; padding: 7px 12px; cursor: pointer; border: 1px solid var(--trait); background: var(--tube); color: var(--texte); }
-.partage button.principal { border-color: var(--vert); color: var(--vert); }
+.cobol .oia { display: flex; gap: 18px; font: 600 12px var(--f-code); color: var(--turquoise); padding: 4px 12px; border-top: 1px solid #12302b; width: 100%; }
+.cobol .oia [data-bloc] { color: var(--jaune); min-width: 22ch; }
+.cobol .oia [data-pos] { margin-left: auto; }
+.cobol textarea.capture { position: absolute; opacity: 0; width: 1px; height: 1px; left: 0; top: 0; border: 0; padding: 0; resize: none; font-size: 16px; }
+.cobol .touches { display: flex; flex-wrap: wrap; gap: 6px; }
+.cobol .touches button { font: 600 12px var(--f-code); background: #262e34; color: var(--texte); border: 1px solid var(--trait); border-bottom-width: 3px; border-radius: 5px; padding: 6px 9px; cursor: pointer; }
+.cobol .touches button:active { transform: translateY(1px); border-bottom-width: 2px; }
+.cobol .touches button:focus-visible { outline: 2px solid var(--bleu); }
+.cobol .aide { color: var(--page-doux); font-size: 13px; margin: 0; max-width: 75ch; }
+.cobol .aide kbd { font: 12px var(--f-code); background: var(--page-surface); border: 1px solid var(--page-trait); border-radius: 3px; padding: 0 4px; color: var(--page-encre); }
+/* Partage par lien : sur les couleurs du site */
+.cobol .partage { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; border: 1px solid var(--page-trait); background: var(--page-surface); color: var(--page-encre); border-radius: 6px; }
+.cobol .partage[hidden] { display: none; }
+.cobol .partage p { margin: 0; flex: 1 1 32ch; }
+.cobol .partage input { flex: 1 1 40ch; min-width: 0; font: 0.8rem var(--f-code); padding: 7px 8px; border: 1px solid var(--page-trait); border-radius: 4px; background: var(--page-surface); color: var(--page-encre); }
+.cobol .partage button { font: 600 0.85rem var(--f-texte); border-radius: 4px; padding: 7px 12px; cursor: pointer; border: 1px solid var(--page-trait); background: var(--page-surface); color: var(--page-encre); }
+.cobol .partage button.principal { border-color: var(--page-lien); background: var(--page-lien); color: var(--color-on-accent, #fff); }
