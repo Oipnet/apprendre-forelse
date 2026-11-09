@@ -45,6 +45,22 @@ final class ArticleRendererTest extends KernelTestCase
         $this->assertStringContainsString('<pre data-lang="php"', $html);
     }
 
+    public function testLeFluxGardeLeCodeSansColoration(): void
+    {
+        $html = $this->renderer()->toFeedHtml(<<<'MD'
+            # Le titre
+
+            ```php sandbox=php
+            <?php $login_throttling = __DIR__;
+            ```
+            MD);
+
+        $this->assertStringContainsString('<pre><code class="language-php">&lt;?php $login_throttling = __DIR__;'."\n".'</code></pre>', $html, 'Un bloc de code brut : dev.to recopie son texte sans échapper les « _ ».');
+        $this->assertStringNotContainsString('hl-', $html);
+        $this->assertStringContainsString('class="code-try-link"', $html, 'Le lien vers le bac à sable reste.');
+        $this->assertStringNotContainsString('<h1', $html, 'Sous le titre de la page, comme toHtmlUnderTitle.');
+    }
+
     private function renderer(): ArticleRenderer
     {
         self::bootKernel();
