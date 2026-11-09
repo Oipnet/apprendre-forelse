@@ -121,6 +121,9 @@ final readonly class CourseSeo
                     'notions' => $concepts ? mb_strtolower(implode(', ', \array_slice($concepts, 0, 4))) : mb_strtolower($chapter->title),
                     'n' => $count,
                 ]),
+                // Une description écrite courte : ce que la générée dit du chapitre, en une phrase.
+                $this->trans('chapitre.complement', ['numero' => $number, 'parcours' => $track->title, 'n' => $count]),
+                $this->trans('chapitre.complement_court', ['n' => $count]),
             )
             ->setCanonical($url = $this->schema->url('app_chapter_summary', ['_locale' => $track->locale, 'trackId' => $track->id, 'chapterId' => $chapter->id]))
             ->addStructuredData($this->schema->breadcrumb([
@@ -157,6 +160,8 @@ final readonly class CourseSeo
             ->setDescription(
                 $this->stories->fromInstructions($exercise->instructions),
                 $this->trans('exercice.complement', ['chapitre' => $chapter->title, 'parcours' => $track->title]),
+                $this->trans('exercice.complement_court', ['parcours' => $track->title]),
+                $this->trans('exercice.complement_minimal'),
             )
             ->setCanonical($url = $this->schema->url('app_exercise', ['_locale' => $track->locale, 'trackId' => $track->id, 'exerciseId' => $exercise->id]))
             ->addStructuredData($this->schema->breadcrumb([

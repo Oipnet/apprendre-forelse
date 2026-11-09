@@ -32,10 +32,12 @@ final readonly class ProgressService
     /**
      * @param array<string, string> $files
      */
-    public function saveDraft(User $user, Exercise $exercise, array $files, int $hintsUsed): ExerciseProgress
+    public function saveDraft(User $user, Exercise $exercise, array $files, int $hintsUsed, ?int $step = null): ExerciseProgress
     {
         $progress = $this->findOrCreate($user, $exercise);
-        $progress->saveDraft($this->onlyEditable($exercise, $files), min($hintsUsed, \count($exercise->hints)), $this->clock->now());
+        // L'étape n'a de sens que pour un exercice à étapes, et ne dépasse pas la dernière.
+        $step = $exercise->hasSteps() && null !== $step ? min($step, \count($exercise->steps) - 1) : null;
+        $progress->saveDraft($this->onlyEditable($exercise, $files), min($hintsUsed, \count($exercise->hints)), $this->clock->now(), $step);
         $this->entityManager->flush();
 
         return $progress;
@@ -78,13 +80,16 @@ final readonly class ProgressService
      *
      * @return array<string, string> fichiers de la solution, par chemin
      */
-    public function revealSolution(User $user, Exercise $exercise): array
+    public function revealSolution(User $user, Exercise $exercise, ?int $step = null): array
     {
         $progress = $this->findOrCreate($user, $exercise);
         $progress->revealSolution($this->clock->now());
         $this->entityManager->flush();
 
-        return $this->content->solutionFiles($exercise);
+        // Exercice à étapes : la solution de l'étape demandée (et de celles d'avant), pas celle de tout l'exercice.
+        return $exercise->hasSteps() && null !== $step
+            ? $this->content->stepSolutionFiles($exercise, min($step, \count($exercise->steps) - 1))
+            : $this->content->solutionFiles($exercise);
     }
 
     /**

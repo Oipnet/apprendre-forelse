@@ -69,14 +69,20 @@ final class PageSeo implements ResetInterface
 
     /**
      * Le texte principal, complété s'il est trop court pour être utile (moins de 120 caractères), le tout dans
-     * la limite. Le complément est abandonné plutôt que coupé.
+     * la limite : le premier complément qui tient, du plus parlant au plus court. Un complément est abandonné
+     * plutôt que coupé.
      */
-    public function setDescription(string $text, string $complement = ''): self
+    public function setDescription(string $text, string ...$complements): self
     {
         $text = self::clean($text);
-        $complement = self::clean($complement);
-        if (mb_strlen($text) < 120 && '' !== $complement && mb_strlen($text.' '.$complement) <= self::DESCRIPTION_MAX) {
-            $text .= ' '.$complement;
+        if (mb_strlen($text) < 120) {
+            foreach ($complements as $complement) {
+                $complement = self::clean($complement);
+                if ('' !== $complement && mb_strlen($text.' '.$complement) <= self::DESCRIPTION_MAX) {
+                    $text .= ' '.$complement;
+                    break;
+                }
+            }
         }
         $this->description = self::shorten($text, self::DESCRIPTION_MAX);
 

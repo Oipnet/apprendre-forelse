@@ -32,7 +32,8 @@
             {% if item.offer.fullAccess and app.user %}
                 <a class="btn mt-1" href="{{ path('app_track', {_locale: item.track.locale, trackId: item.track.id}) }}">{{ 'track_card.continuer'|trans }} <span aria-hidden="true">→</span></a>
             {% elseif item.offer.purchasable %}
-                <a class="btn btn-primary mt-1" href="{{ path('app_purchase', {trackId: item.track.id}) }}">{{ 'track_card.acheter'|trans }}</a>
+                {% set achat = path('app_purchase', {trackId: item.track.id}) %}
+                <a class="btn btn-primary mt-1" href="{{ app.user ? achat : path('app_login', {suite: achat}) }}">{{ 'track_card.acheter'|trans }}</a>
             {% elseif item.offer.comingSoon %}
                 <span class="text-ink-muted">{{ 'track_card.bientot'|trans }}</span>
             {% endif %}

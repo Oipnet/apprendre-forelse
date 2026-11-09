@@ -32,10 +32,48 @@ final readonly class ExerciseSources
         return [...$this->startingFiles($exercise), ...$this->solutionFiles($exercise)];
     }
 
-    /** @return array<string, string> fichiers de solution seuls (jamais envoyés au navigateur) */
+    /**
+     * Fichiers de solution seuls (jamais envoyés au navigateur). Exercice à étapes : les solutions de toutes ses
+     * étapes, chacune par-dessus la précédente.
+     *
+     * @return array<string, string>
+     */
     public function solutionFiles(Exercise $exercise): array
     {
-        return $this->read($exercise, 'solution');
+        return $exercise->hasSteps() ? $this->stepSolutionFiles($exercise, \count($exercise->steps) - 1) : $this->read($exercise, 'solution');
+    }
+
+    /**
+     * Les solutions des étapes, jusqu'à celle-ci comprise (steps/<id>/solution/), chacune par-dessus la précédente :
+     * ce que l'apprenant a écrit, à la fin de l'étape.
+     *
+     * @return array<string, string>
+     */
+    public function stepSolutionFiles(Exercise $exercise, int $step): array
+    {
+        $files = [];
+        foreach (\array_slice($exercise->steps, 0, max(0, $step + 1)) as $etape) {
+            $files = [...$files, ...$this->read($exercise, 'steps/'.$etape->id.'/solution')];
+        }
+
+        return $files;
+    }
+
+    /**
+     * Le code attendu d'une étape rouge, sur lequel les tests de l'apprenant doivent passer : l'état du projet à la fin
+     * de l'étape suivante (verte), sans les tests de l'apprenant (ce sont les siens qu'on essaie). Envoyé au navigateur
+     * avec l'exercice, comme les tests cachés : il ne donne que le code de l'étape verte suivante.
+     *
+     * @return array<string, string>
+     */
+    public function stepReferenceFiles(Exercise $exercise, int $step): array
+    {
+        // Seuls les fichiers que l'apprenant a pu changer : le reste du projet est déjà celui de l'exercice.
+        $depart = array_filter($this->startingFiles($exercise), static fn (string $path) => $exercise->isEditable($path), \ARRAY_FILTER_USE_KEY);
+        $files = [...$depart, ...$this->stepSolutionFiles($exercise, $step + 1)];
+        $ownTests = $exercise->ownTests();
+
+        return array_filter($files, static fn (string $path) => !\in_array($path, $ownTests, true), \ARRAY_FILTER_USE_KEY);
     }
 
     /** @return array<string, string> tests cachés, écrits dans tests/ du projet */

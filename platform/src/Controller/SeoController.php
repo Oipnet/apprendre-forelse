@@ -73,6 +73,21 @@ final class SeoController extends AbstractController
         return $this->cached(new Response($key, headers: ['Content-Type' => 'text/plain; charset=UTF-8']));
     }
 
+    /**
+     * La même clé, à l'adresse que le protocole IndexNow suppose par défaut (/<clé>.txt) : un outil qui soumet sans
+     * keyLocation (le bouton IndexNow d'Ahrefs, par exemple) est vérifié là. Toute autre adresse : 404.
+     */
+    #[Route('/{key}.txt', name: 'app_indexnow_key_root', requirements: ['key' => '[a-zA-Z0-9-]{8,128}'], methods: ['GET'], format: 'txt', priority: -10)]
+    public function indexNowKeyAtRoot(string $key, IndexNow $indexNow): Response
+    {
+        $expected = $indexNow->key();
+        if (null === $expected || !hash_equals($expected, $key)) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->cached(new Response($expected, headers: ['Content-Type' => 'text/plain; charset=UTF-8']));
+    }
+
     /** Identiques pour tous les visiteurs : une heure de cache partagé. */
     private function cached(Response $response): Response
     {

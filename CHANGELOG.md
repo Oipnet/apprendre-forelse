@@ -8,6 +8,87 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Atelier COBOL** (`/atelier-cobol`, et `/atelier-cobol/terminal` en terminal 3270) : un générateur de batchs COBOL
+  à l'ancienne, inspiré des générateurs des années 1990. On décrit rubriques, enregistrement, état (filtres, ruptures,
+  totaux) et traitements en langage structuré, avec fichiers en sortie et base façon DB2 (opérateur `SQL` et codes
+  d'accès R, W, RW, D, P, RN, CL ; SQLite en JavaScript pur, sql.js). Le source COBOL est généré puis exécuté dans le
+  navigateur par un interpréteur, dont les sorties sont comparées à celles de GnuCOBOL (`playground/tests/cobol.test.ts`).
+  **Partage par lien** : le programme voyage dans l'adresse après le `#` (rien n'est envoyé ni gardé sur le serveur),
+  et celui qui ouvre le lien choisit de le charger ou de garder le sien. En français seulement.
+  Au plus près du batch de VisualAge Pacbase (manuel IBM) : **appel des fichiers** façon `-CD` (utilisation C, P, M, R,
+  argument, niveaux de rupture et de synchronisation, zones `dd00-`, `1-dd00-`, `dd-PEn`, `dd-DEn`, `dd-CFn`),
+  fonctions générées F01, F05, F10, F20, F24, F70, F73, F76, F8E, F90 et F9099 enchaînées par GO TO, sous-fonctions
+  `FffSS` / `FffSS-FN`, et **mise à jour** d'un fichier principal par des mouvements (création, modification,
+  annulation, fichier résultat, compte rendu des mouvements rejetés). Les programmes et liens d'avant sont repris.
+  **Défis** : un lien `/atelier-cobol#defi=01` charge un programme à écrire et la SYSOUT attendue (celle d'une
+  solution de référence passée par GnuCOBOL) ; chaque exécution est comparée ligne à ligne, et un défi réussi s'envoie
+  par le formulaire de contact, prérempli avec le lien du programme (`/contact?defi=01&programme=…`, repris seulement
+  s'il mène à l'atelier du site). Rien n'est mesuré.
+
+## 3.35.0 — 2026-11-06
+
+### Corrigé
+
+- **Titre de la page auteur** : trop long avec la marque, il garde le nom et le métier (« Arnaud Pointet, Développeur
+  Symfony freelance à Bordeaux ») au lieu de tomber sur le nom seul (audit Ahrefs, « Title too short »).
+
+### Ajouté
+
+- **Clé IndexNow aussi à la racine** (`/<clé>.txt`, l'adresse par défaut du protocole) : un outil qui soumet sans
+  `keyLocation`, comme le bouton IndexNow d'Ahrefs, peut la vérifier. `/indexnow.txt` reste servie.
+
+## 3.34.0 — 2026-11-06
+
+### Ajouté
+
+- **Exercices à étapes** (`steps:` dans `exercise.yaml`), pour avancer au rythme du TDD : rouge, vert, refacto. Chaque
+  étape a sa consigne (`steps/<id>/instructions.md`), ses fichiers modifiables, ses objectifs et sa solution
+  (`steps/<id>/solution/`) ; l'apprenant garde son code d'une étape à l'autre. Le playground montre la frise des
+  étapes, verrouille les tests au vert et au refacto (le code au rouge) et propose « Étape suivante » quand l'étape est
+  réussie ; la réussite de l'exercice vient à la dernière. Une étape rouge se valide quand un test de l'apprenant
+  échoue sur son code (`own-tests: fail`, avec le message de PHPUnit) **et** passe sur le code attendu, celui de l'étape
+  verte suivante (`own-tests: reference`). La progression retient l'étape (`exercise_progress.step`, migration), « Voir
+  la solution » donne celle de l'étape en cours, la vérification d'une réussite rejoue les objectifs de la dernière
+  étape, et `content:check` vérifie les étapes une à une. Voir « Exercices à étapes » dans le README.
+- **Environnement `php-8-tdd`** pour le parcours « Apprendre le TDD en PHP » : `php-8` avec PHPUnit, le code dans
+  `src/` (`App\`), les tests dans `tests/` (`App\Tests\`).
+
+### Sécurité
+
+- **FrankenPHP 1.13.5** (image `dunglas/frankenphp:1.13.5-php8.5`, Caddy 2.11.9) : 17 failles corrigées. Celles qui
+  touchent la configuration du moteur (`php_server` + mode worker) : destructeurs d'une requête exécutés pendant la
+  réponse du client suivant en mode worker, cookies de session compris (GHSA-8qcf-v46r-g2mc) ; `request_body_timeout`
+  sans effet, un client lent par thread bloquait tout PHP (GHSA-j45x-h238-h4xx) ; en-tête `host` en HTTP/2 qui
+  remplaçait `HTTP_HOST` routé par Caddy (GHSA-2725-rh2w-9j9w) ; redirection ouverte sur la barre oblique finale de
+  `php_server` (GHSA-jvmv-5538-pqpg) ; plantages à distance (`die(-1)`, dépassement de `max_input_vars` :
+  GHSA-q6vv-3p75-53wr, GHSA-5359-vg53-5464). La faille la plus grave, un fichier non PHP téléversé exécuté comme PHP
+  (GHSA-j99q-3wr8-xj43), ne touche pas le moteur : rien n'est jamais écrit sous `platform/public`. Changements de
+  comportement sans effet ici : 404 pour un script introuvable, 413 pour un corps trop gros, `error_get_last()`
+  conservé entre deux requêtes d'un worker.
+- **Symfony 8.1.11** : corrige les failles publiées le 04/11 (`composer audit` bloquait la CI), dont
+  http-foundation, security-http (connexion programmatique qui sautait `checkPostAuth()`), serializer (fichier du
+  serveur lu par `UploadedFile` ou une URI `data:`), validator (contrainte `Ip` contournable en IPv6) et yaml (temps
+  d'analyse exponentiel).
+
+### Corrigé
+
+- **La page des offres (/formations, /en/training) et la page auteur (/auteurs/…) s'indexent** : elles manquaient à la
+  liste blanche de `SearchIndexing` et partaient en `noindex` (sans canonical ni Open Graph), alors que le sitemap les
+  annonçait.
+- **Sans compte, « Acheter » et « Créer ma classe gratuite » mènent droit à la connexion** (`/connexion?suite=…`, qui
+  ramène à la page demandée) au lieu d'une adresse qui y redirige en 302 : les robots ne voient plus de liens vers des
+  redirections.
+- **Descriptions plus complètes** (audit Ahrefs, « Meta description too short ») : une description courte prend le
+  premier complément qui tient dans les 155 caractères, du plus parlant au plus court, au lieu d'y renoncer. Les
+  sommaires de chapitre à description écrite ont maintenant le leur, et un exercice dont la consigne s'ouvre sur une
+  phrase qui annonce une liste (« Depuis : ») garde le premier élément de cette liste.
+- **Titre du blog** : « Le blog : Symfony, Laravel et PHP en pratique », au lieu de « Le blog » seul (et en anglais).
+- **L'adresse du serveur MCP (/mcp) ouverte dans un navigateur** redirige (301) vers la page d'installation
+  (/en/playground/ai ou /bac-a-sable/ia selon la langue) : les annuaires MCP y renvoient. Un client MCP (POST, ou GET
+  en `text/event-stream`) n'est pas concerné.
+
 ## 3.33.0 — 2026-11-04
 
 ### Ajouté

@@ -244,7 +244,7 @@ final class BlogTest extends WebTestCase
 
         $themes = sys_get_temp_dir().'/themes-'.bin2hex(random_bytes(4));
         mkdir($themes.'/auteur', 0o777, true);
-        file_put_contents($themes.'/auteur/theme.yaml', "name: Auteur\nperson:\n  name: Ada Lovelace\n  jobTitle: Formatrice\n  bio: 'Je forme des devs PHP.'\n  links: {malt: 'https://www.malt.fr/profile/ada', linkedin: 'https://www.linkedin.com/in/ada'}\n  location: Londres\n  availability: 'Disponible pour une mission'\n  booking: 'https://calendly.com/ada'\n  expertise: [Symfony]\n  skills: [Vue.js]\n  stats: [{value: '20 ans', label: 'de code'}]\n  services: [{title: 'Auditer', text: 'Un projet existant.'}]\n  press: [{name: 'A Week of Symfony', text: 'Cité', url: 'https://symfony.com/blog'}]\n  testimonials: [{quote: 'Parfait.', author: 'Un client'}]\nauthors:\n  grace-hopper: {name: Grace Hopper, jobTitle: Amirale, bio: 'Compilatrice.'}\n");
+        file_put_contents($themes.'/auteur/theme.yaml', "name: Auteur\nperson:\n  name: Ada Lovelace\n  jobTitle: Formatrice\n  bio: 'Je forme des devs PHP.'\n  links: {malt: 'https://www.malt.fr/profile/ada', linkedin: 'https://www.linkedin.com/in/ada'}\n  location: Londres\n  availability: 'Disponible pour une mission'\n  booking: 'https://calendly.com/ada'\n  expertise: [Symfony]\n  skills: [Vue.js]\n  stats: [{value: '20 ans', label: 'de code'}]\n  services: [{title: 'Auditer', text: 'Un projet existant.'}]\n  press: [{name: 'A Week of Symfony', text: 'Cité', url: 'https://symfony.com/blog'}]\n  testimonials: [{quote: 'Parfait.', author: 'Un client'}]\nauthors:\n  grace-hopper: {name: Grace Hopper, jobTitle: 'Amirale, pionnière de la compilation moderne', bio: 'Compilatrice.'}\n");
         $before = [$_SERVER['THEMES_DIR'] ?? null, $_SERVER['THEME'] ?? null];
         $_SERVER['THEMES_DIR'] = $_ENV['THEMES_DIR'] = $themes;
         $_SERVER['THEME'] = $_ENV['THEME'] = 'auteur';
@@ -295,6 +295,7 @@ final class BlogTest extends WebTestCase
             $crawler = $this->client->request('GET', '/auteurs/grace-hopper');
             $this->assertResponseIsSuccessful();
             $this->assertSame('Grace Hopper', $crawler->filter('h1')->text());
+            $this->assertSame('Grace Hopper, Amirale, pionnière de la compilation moderne', $crawler->filter('title')->text(), 'Trop long avec la marque : le métier reste, la marque tombe.');
             $this->assertCount(0, $crawler->filter('.author-page a[href="/blog/les-tests-en-direct"]'));
             $this->assertStringContainsString('#auteur-grace-hopper', (string) $this->client->getResponse()->getContent(), 'Son propre @id dans les données structurées.');
         } finally {

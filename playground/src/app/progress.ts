@@ -14,6 +14,8 @@ export interface SavedProgress {
 	solutionRevealed?: boolean;
 	/** Revue de code du mentor, conservée par le serveur. */
 	review?: Review | null;
+	/** Exercice à étapes : l'étape où en est l'apprenant (0 pour la première). */
+	step?: number | null;
 }
 
 export interface CompletionResult {
@@ -25,12 +27,16 @@ export interface CompletionResult {
 
 export interface ProgressStore {
 	load(): Promise<SavedProgress | null>;
-	saveDraft(files: Record<string, string>, hintsUsed: number): Promise<void>;
+	/** `step` : l'étape d'un exercice à étapes, absente pour un exercice ordinaire. */
+	saveDraft(files: Record<string, string>, hintsUsed: number, step?: number): Promise<void>;
 	/** Le brouillon, envoyé pendant que la page se ferme : la requête lui survit, personne n'attend la réponse. */
-	saveDraftOnExit?(files: Record<string, string>, hintsUsed: number): void;
+	saveDraftOnExit?(files: Record<string, string>, hintsUsed: number, step?: number): void;
 	complete(hintsUsed: number): Promise<CompletionResult>;
-	/** La solution de référence, contre l'XP de l'exercice ; null quand elle n'est pas accessible (invité). */
-	revealSolution(): Promise<Record<string, string> | null>;
+	/**
+	 * La solution de référence, contre l'XP de l'exercice ; null quand elle n'est pas accessible (invité).
+	 * `step` : celle d'une étape (et des précédentes), pour un exercice à étapes.
+	 */
+	revealSolution(step?: number): Promise<Record<string, string> | null>;
 }
 
 /** Même règle que App\Service\XpCalculator côté serveur : −25 % par indice, plancher à 25 %. */
@@ -64,13 +70,14 @@ export class LocalProgressStore implements ProgressStore {
 		return this.read();
 	}
 
-	async saveDraft(files: Record<string, string>, hintsUsed: number) {
-		this.write({ files, hintsUsed, completed: this.read()?.completed ?? false });
+	async saveDraft(files: Record<string, string>, hintsUsed: number, step?: number) {
+		const previous = this.read();
+		this.write({ files, hintsUsed, completed: previous?.completed ?? false, ...(step !== undefined ? { step } : previous?.step != null ? { step: previous.step } : {}) });
 	}
 
 	async complete(hintsUsed: number): Promise<CompletionResult> {
 		const previous = this.read();
-		this.write({ files: previous?.files ?? {}, hintsUsed, completed: true });
+		this.write({ files: previous?.files ?? {}, hintsUsed, completed: true, ...(previous?.step != null ? { step: previous.step } : {}) });
 		return { xpEarned: previous?.completed ? 0 : xpFor(this.baseXp, hintsUsed), totalXp: null, alreadyCompleted: !!previous?.completed };
 	}
 
@@ -105,20 +112,20 @@ export class ApiProgressStore implements ProgressStore {
 		return (await this.send('GET')) as SavedProgress | null;
 	}
 
-	async saveDraft(files: Record<string, string>, hintsUsed: number) {
-		await this.send('PUT', '', { files, hintsUsed });
+	async saveDraft(files: Record<string, string>, hintsUsed: number, step?: number) {
+		await this.send('PUT', '', { files, hintsUsed, ...(step !== undefined ? { step } : {}) });
 	}
 
 	/** keepalive : la requête part même si la page se ferme (au-delà de 64 Kio, le navigateur la refuse : tant pis). */
-	saveDraftOnExit(files: Record<string, string>, hintsUsed: number) {
-		this.request('PUT', '', { files, hintsUsed }, true).catch(() => {});
+	saveDraftOnExit(files: Record<string, string>, hintsUsed: number, step?: number) {
+		this.request('PUT', '', { files, hintsUsed, ...(step !== undefined ? { step } : {}) }, true).catch(() => {});
 	}
 
 	async complete(hintsUsed: number) {
 		return (await this.send('POST', '/complete', { hintsUsed })) as CompletionResult;
 	}
 
-	async revealSolution() {
-		return ((await this.send('POST', '/solution')) as { files: Record<string, string> }).files;
+	async revealSolution(step?: number) {
+		return ((await this.send('POST', '/solution', step !== undefined ? { step } : undefined)) as { files: Record<string, string> }).files;
 	}
 }

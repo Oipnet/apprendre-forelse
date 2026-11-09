@@ -110,7 +110,11 @@ final readonly class PracticeSeo
                 $this->trans('pratique.exercice.titre', ['framework' => $framework, 'fonctionnalite' => $feature]),
                 $this->trans('pratique.exercice.titre_court', ['framework' => $framework, 'fonctionnalite' => $feature]),
             )
-            ->setDescription($practice->summary, $this->trans('pratique.exercice.complement', ['framework' => $framework]))
+            ->setDescription(
+                $practice->summary,
+                $this->trans('pratique.exercice.complement', ['framework' => $framework]),
+                $this->trans('pratique.exercice.complement_court', ['framework' => $framework]),
+            )
             ->setCanonical($url = $this->schema->url('app_exercise_pratique', ['exerciseId' => $practice->exercise->id]))
             ->setType('article')
             ->setImage($image, $this->share->card($practice)->alt($this->translator), ShareImageRenderer::WIDTH, ShareImageRenderer::HEIGHT)

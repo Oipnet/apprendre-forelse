@@ -23,9 +23,11 @@ final class ExerciseReader
      * fichiers, date…) se règle dans l'exercice français. Les notions traduites ne sont que des étiquettes : les
      * pages de notions restent en français.
      */
-    public const array TRANSLATED_KEYS = ['title', 'summary', 'concepts', 'objectives', 'hints', 'requests', 'docs', 'preview', 'readonly', 'mutants', 'source'];
-    /** Les dossiers dont une traduction peut remplacer des fichiers. */
-    private const array TRANSLATED_FOLDERS = ['starter', 'solution', 'tests'];
+    public const array TRANSLATED_KEYS = ['title', 'summary', 'concepts', 'objectives', 'hints', 'requests', 'docs', 'preview', 'readonly', 'mutants', 'source', 'steps'];
+    /** Les dossiers dont une traduction peut remplacer des fichiers (steps/ : consignes et solutions des étapes). */
+    private const array TRANSLATED_FOLDERS = ['starter', 'solution', 'tests', 'steps'];
+    /** Ce qu'une traduction change dans une étape : les textes, et les tests des objectifs. */
+    private const array TRANSLATED_STEP_KEYS = ['id', 'title', 'objectives'];
 
     /** @return array<string, string> */
     public function deprecations(): array
@@ -73,24 +75,23 @@ final class ExerciseReader
             }
             $mutants[$mutant->id] = $mutant;
         }
-        $objectives = array_map(function (mixed $o) use ($file, $mutants) {
-            if (!\is_array($o)) {
-                throw new ContentException(sprintf('%s : chaque objectif est un objet {label, test} (ou {label, mutant}).', $file));
-            }
-            $label = $this->files->required($o, 'label', $file);
-            if (isset($o['mutant'])) {
-                return \is_string($o['mutant']) && isset($mutants[$o['mutant']])
-                    ? new Objective(Objective::MUTANT_PREFIX.$o['mutant'], $label)
-                    : throw new ContentException(sprintf('%s : l\'objectif cite le mutant « %s », qui n\'est pas déclaré dans « mutants ».', $file, \is_scalar($o['mutant']) ? $o['mutant'] : get_debug_type($o['mutant'])));
-            }
-
-            return new Objective(isset($o['own-tests']) ? Objective::OWN_TESTS : $this->files->required($o, 'test', $file), $label);
-        }, $this->items($meta, 'objectives', $file));
+        $steps = $this->steps($meta, $file, $mutants, $directory, $overlay);
+        $objectives = $steps ? end($steps)->objectives : array_map(fn (mixed $o) => $this->objective($o, $file, $mutants), $this->items($meta, 'objectives', $file));
         if (!$objectives) {
             throw new ContentException(sprintf('%s : au moins un objectif est requis.', $file));
         }
 
         $editable = $this->strings($meta, 'editable', $file);
+        if ($steps) {
+            // Les fichiers modifiables de l'exercice : ceux de toutes ses étapes (brouillon, soumission, vérification).
+            $editable = array_values(array_unique(array_merge(...array_map(static fn (ExerciseStep $step) => $step->editable, $steps))));
+            $nommes = array_values(array_filter($editable, static fn (string $entree) => !str_contains($entree, '*')));
+            foreach ($steps as $step) {
+                if (str_contains($step->open, '*') || (!$step->isEditable($step->open) && !\in_array($step->open, [...$nommes, ...$this->strings($meta, 'readonly', $file)], true))) {
+                    throw new ContentException(sprintf('%s : étape « %s » : « open » (%s) doit désigner un fichier modifiable ou en lecture seule.', $file, $step->id, $step->open));
+                }
+            }
+        }
         $readonly = $this->strings($meta, 'readonly', $file);
         // Un fichier à la fois modifiable et verrouillé serait ouvert deux fois dans l'éditeur.
         foreach ($readonly as $verrouille) {
@@ -102,7 +103,7 @@ final class ExerciseReader
         }
         // Un motif (migrations/*.php) désigne des fichiers à venir : il ne peut pas être ouvert.
         $explicites = array_values(array_filter($editable, static fn (string $entree) => !str_contains($entree, '*')));
-        $open = $this->optionalString($meta, 'open', $file) ?? ($explicites[0] ?? $readonly[0] ?? throw new ContentException(sprintf('%s : aucun fichier éditable ni en lecture seule à ouvrir (précisez « open »).', $file)));
+        $open = $steps ? $steps[0]->open : $this->optionalString($meta, 'open', $file) ?? ($explicites[0] ?? $readonly[0] ?? throw new ContentException(sprintf('%s : aucun fichier éditable ni en lecture seule à ouvrir (précisez « open »).', $file)));
         if (str_contains($open, '*')) {
             throw new ContentException(sprintf('%s : « open » (%s) doit désigner un fichier, pas un motif.', $file, $open));
         }
@@ -140,12 +141,127 @@ final class ExerciseReader
             formerIds: FormerIds::parse($meta['former_ids'] ?? null, $file),
             locale: $locale,
             overlay: $overlay,
+            steps: $steps,
         );
-        if (($mutants || array_filter($objectives, static fn (Objective $o) => !$o->isHiddenTest())) && !$exercise->ownTests()) {
+        if (($mutants || array_filter($exercise->allObjectives(), static fn (Objective $o) => !$o->isHiddenTest())) && !$exercise->ownTests()) {
             throw new ContentException(sprintf('%s : des objectifs portent sur les tests de l\'apprenant, mais aucun fichier éditable tests/…Test.php ne les accueille.', $file));
         }
 
         return $exercise;
+    }
+
+    /**
+     * Un objectif : un test caché ({label, test}), les tests de l'apprenant ({label, own-tests: pass}) ou un mutant
+     * qu'ils doivent détecter ({label, mutant}). Dans une étape rouge, aussi « own-tests: fail » (ils échouent sur
+     * le code de l'apprenant) et « own-tests: reference » (ils passent sur le code attendu).
+     *
+     * @param array<string, Mutant> $mutants
+     */
+    private function objective(mixed $o, string $file, array $mutants, ?StepPhase $phase = null): Objective
+    {
+        if (!\is_array($o)) {
+            throw new ContentException(sprintf('%s : chaque objectif est un objet {label, test} (ou {label, mutant}).', $file));
+        }
+        $label = $this->files->required($o, 'label', $file);
+        if (isset($o['mutant'])) {
+            return \is_string($o['mutant']) && isset($mutants[$o['mutant']])
+                ? new Objective(Objective::MUTANT_PREFIX.$o['mutant'], $label)
+                : throw new ContentException(sprintf('%s : l\'objectif cite le mutant « %s », qui n\'est pas déclaré dans « mutants ».', $file, \is_scalar($o['mutant']) ? $o['mutant'] : get_debug_type($o['mutant'])));
+        }
+        if (!isset($o['own-tests'])) {
+            return new Objective($this->files->required($o, 'test', $file), $label);
+        }
+        $test = match ($o['own-tests']) {
+            'fail' => Objective::OWN_TESTS_FAIL,
+            'reference' => Objective::OWN_TESTS_REFERENCE,
+            default => Objective::OWN_TESTS,
+        };
+        if (Objective::OWN_TESTS !== $test && StepPhase::Red !== $phase) {
+            throw new ContentException(sprintf('%s : « own-tests: %s » ne sert que dans une étape rouge (phase: red) de « steps ».', $file, $o['own-tests']));
+        }
+
+        return new Objective($test, $label);
+    }
+
+    /**
+     * Les étapes d'un exercice à étapes (clé « steps ») : vide pour un exercice ordinaire.
+     *
+     * @param array<string, mixed>  $meta
+     * @param array<string, Mutant> $mutants
+     *
+     * @return list<ExerciseStep>
+     */
+    private function steps(array $meta, string $file, array $mutants, string $directory, ?string $overlay): array
+    {
+        if (!\array_key_exists('steps', $meta)) {
+            return [];
+        }
+        foreach (['objectives', 'editable', 'open', 'hints'] as $key) {
+            if (\array_key_exists($key, $meta)) {
+                throw new ContentException(sprintf('%s : « %s » se règle étape par étape dans « steps », pas pour tout l\'exercice.', $file, $key));
+            }
+        }
+        $items = $this->items($meta, 'steps', $file);
+        if (\count($items) < 2) {
+            throw new ContentException(sprintf('%s : « steps » compte au moins deux étapes.', $file));
+        }
+        $steps = [];
+        foreach ($items as $index => $item) {
+            if (!\is_array($item)) {
+                throw new ContentException(sprintf('%s : chaque étape est un objet {id, phase, title, editable, objectives}.', $file));
+            }
+            $id = $this->files->required($item, 'id', $file);
+            if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $id)) {
+                throw new ContentException(sprintf('%s : l\'id d\'étape « %s » s\'écrit en minuscules, chiffres et tirets.', $file, $id));
+            }
+            foreach ($steps as $previous) {
+                if ($previous->id === $id) {
+                    throw new ContentException(sprintf('%s : étape « %s » déclarée deux fois.', $file, $id));
+                }
+            }
+            $phase = StepPhase::tryFrom((string) ($item['phase'] ?? ''))
+                ?? throw new ContentException(sprintf('%s : étape « %s » : « phase » vaut red, green ou refactor.', $file, $id));
+            $editable = $this->strings($item, 'editable', $file);
+            if (!$editable) {
+                throw new ContentException(sprintf('%s : étape « %s » : « editable » liste au moins un fichier.', $file, $id));
+            }
+            $explicites = array_values(array_filter($editable, static fn (string $entree) => !str_contains($entree, '*')));
+            $open = $this->optionalString($item, 'open', $file) ?? $explicites[0]
+                ?? throw new ContentException(sprintf('%s : étape « %s » : précisez « open », aucun fichier modifiable n\'est nommé.', $file, $id));
+            $objectives = array_map(fn (mixed $o) => $this->objective($o, $file, $mutants, $phase), $this->items($item, 'objectives', $file));
+            if (!$objectives) {
+                throw new ContentException(sprintf('%s : étape « %s » : au moins un objectif est requis.', $file, $id));
+            }
+            $tests = array_map(static fn (Objective $o) => $o->test, $objectives);
+            if (StepPhase::Red === $phase) {
+                if (!\in_array(Objective::OWN_TESTS_FAIL, $tests, true) || !\in_array(Objective::OWN_TESTS_REFERENCE, $tests, true)) {
+                    throw new ContentException(sprintf('%s : étape rouge « %s » : ses objectifs comptent « own-tests: fail » et « own-tests: reference ».', $file, $id));
+                }
+                $next = $items[$index + 1] ?? null;
+                if (!\is_array($next) || 'green' !== ($next['phase'] ?? null)) {
+                    throw new ContentException(sprintf('%s : étape rouge « %s » : l\'étape suivante est verte (phase: green), c\'est son code qui sert de référence.', $file, $id));
+                }
+            }
+            $instructions = ($overlay ?? $directory).'/steps/'.$id.'/instructions.md';
+            $this->files->watch($instructions);
+            if (!is_file($instructions)) {
+                throw new ContentException(sprintf('%s : étape « %s » : %s manquant.', $file, $id, substr($instructions, \strlen($directory) + 1)));
+            }
+            $steps[] = new ExerciseStep(
+                id: $id,
+                phase: $phase,
+                title: $this->files->required($item, 'title', $file),
+                instructions: (string) file_get_contents($instructions),
+                editable: $editable,
+                open: $open,
+                objectives: $objectives,
+            );
+        }
+        if (StepPhase::Red === end($steps)->phase) {
+            throw new ContentException(sprintf('%s : la dernière étape ne peut pas être rouge.', $file));
+        }
+
+        return $steps;
     }
 
     /**
@@ -292,7 +408,7 @@ final class ExerciseReader
             throw new ContentException(sprintf('%s : « %s » ne se traduit pas : réglez-la dans l\'exercice français (clés traduisibles : %s).', $file, implode('», «', $unknown), implode(', ', self::TRANSLATED_KEYS)));
         }
         // Un texte laissé de côté s'afficherait en français au milieu de la traduction.
-        foreach (['title', 'summary', 'objectives', 'hints', 'requests', 'docs', 'mutants'] as $key) {
+        foreach (['title', 'summary', 'objectives', 'hints', 'requests', 'docs', 'mutants', 'steps'] as $key) {
             if (\array_key_exists($key, $meta) && [] !== $meta[$key] && !\array_key_exists($key, $translated)) {
                 throw new ContentException(sprintf('%s : « %s » manque : sans elle, le texte français s\'afficherait dans la traduction.', $file, $key));
             }
@@ -322,9 +438,41 @@ final class ExerciseReader
             }
         }
 
+        if (\array_key_exists('steps', $translated)) {
+            $translated['steps'] = $this->translateSteps($meta['steps'] ?? null, $translated['steps'], $file);
+        }
         $merged = [...$meta, ...$translated];
 
         return [$this->read($directory, $trackId, $inheritedEnvironment, $merged, $overlay, $locale), $merged];
+    }
+
+    /**
+     * Les étapes traduites : mêmes ids, dans le même ordre ; seuls les titres et les objectifs changent, le reste
+     * (phase, fichiers) vient de l'exercice français.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function translateSteps(mixed $steps, mixed $translated, string $file): array
+    {
+        $ids = static fn (mixed $list) => \is_array($list) ? array_map(static fn (mixed $s) => \is_array($s) ? (string) ($s['id'] ?? '') : '', $list) : [];
+        if (!\is_array($steps) || !\is_array($translated) || $ids($steps) !== $ids($translated)) {
+            throw new ContentException(sprintf('%s : les étapes traduites gardent les ids et l\'ordre de l\'exercice français (%s).', $file, implode(', ', $ids($steps))));
+        }
+        $merged = [];
+        foreach (array_values($steps) as $index => $step) {
+            $traduction = $translated[$index];
+            if ($unknown = array_diff(array_keys($traduction), self::TRANSLATED_STEP_KEYS)) {
+                throw new ContentException(sprintf('%s : étape « %s » : « %s » ne se traduit pas (clés traduisibles : %s).', $file, $step['id'], implode('», «', $unknown), implode(', ', self::TRANSLATED_STEP_KEYS)));
+            }
+            foreach (['title', 'objectives'] as $key) {
+                if (!\array_key_exists($key, $traduction)) {
+                    throw new ContentException(sprintf('%s : étape « %s » : « %s » manque : sans elle, le texte français s\'afficherait dans la traduction.', $file, $step['id'], $key));
+                }
+            }
+            $merged[] = [...$step, ...$traduction];
+        }
+
+        return $merged;
     }
 
     /** @return list<string> */

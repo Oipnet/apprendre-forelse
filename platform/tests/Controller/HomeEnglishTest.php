@@ -22,7 +22,7 @@ final class HomeEnglishTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSame('en', $crawler->filter('html')->attr('lang'));
-        $this->assertSame('Learn to code by coding in your browser | default', $crawler->filter('title')->text());
+        $this->assertSame('Symfony, Laravel and PHP exercises in your browser | default', $crawler->filter('title')->text());
         $this->assertSame('Frequently asked questions', $crawler->filter('#questions h2, .home-faq h2')->first()->text());
         $this->assertSame('Learn to code by coding in the browser.', $crawler->filter('.footer-brand p')->first()->text());
         $this->assertSelectorTextContains('main', 'Discovery', 'Le parcours de démo est traduit : sa fiche est en anglais.');

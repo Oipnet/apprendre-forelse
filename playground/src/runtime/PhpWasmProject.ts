@@ -218,6 +218,26 @@ export class PhpWasmProject implements Runtime {
 		}, {
 			noOwnTest: m.runtime.noOwnTest,
 			skipped: m.runtime.skipped,
+		}, async (files) => {
+			// Étape rouge : le code attendu, le temps d'un run des tests de l'apprenant ; ses fichiers à lui reviennent ensuite.
+			const originals = new Map<string, string | null>();
+			for (const [file, content] of Object.entries(files)) {
+				const path = `${APP_DIR}/${file}`;
+				originals.set(path, php.isFile(path) ? php.readFileAsText(path) : null);
+				php.mkdir(path.slice(0, path.lastIndexOf('/')));
+				php.writeFile(path, content);
+			}
+			this.clearTestCache(php);
+			try {
+				const run = await this.runPhpUnit(php, grading.ownTests);
+				return { cases: run.cases, broken: run.exitCode === 255 && !run.cases.length };
+			} finally {
+				for (const [path, code] of originals) {
+					if (code === null) php.unlink(path);
+					else php.writeFile(path, code);
+				}
+				this.clearTestCache(php);
+			}
 		});
 		result.cases.push(...cases);
 		if (report.length) result.output += `\n\n${m.runtime.mutants}\n${report.join('\n')}`;
