@@ -1,0 +1,47 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. ARRONDI.
+      * ROUNDED, ADD/SUBTRACT GIVING et saut au canal 1 (C01)
+       ENVIRONMENT DIVISION.
+       CONFIGURATION SECTION.
+       SPECIAL-NAMES.
+           C01 IS SAUTP.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT ET-FICHIER ASSIGN TO "CANAL.TXT"
+               ORGANIZATION IS LINE SEQUENTIAL.
+       DATA DIVISION.
+       FILE SECTION.
+       FD  ET-FICHIER.
+       01  ET00 PIC X(20).
+       WORKING-STORAGE SECTION.
+       01  COMPTEURS COMPUTATIONAL-3.
+           05 A PIC S9(5)V99 VALUE +10.25.
+           05 B PIC S9(5)V99 VALUE -3.
+           05 C PIC S9(5)V9 VALUE ZERO.
+           05 N PIC S9(4) VALUE +7.
+       01  E PIC -(5)9.9.
+       01  F PIC -(5)9.
+       01  G PIC -(5)9.99.
+       01  SAUT PIC 99 VALUE 2.
+       PROCEDURE DIVISION.
+           COMPUTE C ROUNDED = A.
+           MOVE C TO E. DISPLAY E.
+           COMPUTE C = A.
+           MOVE C TO E. DISPLAY E.
+           COMPUTE C ROUNDED = B * 1.05.
+           MOVE C TO E. DISPLAY E.
+           ADD A TO B GIVING C ROUNDED.
+           MOVE C TO E. DISPLAY E.
+           SUBTRACT 1 FROM N GIVING B.
+           MOVE B TO F. DISPLAY F.
+           ADD 0.006 TO A ROUNDED.
+           MOVE A TO G. DISPLAY G.
+           OPEN OUTPUT ET-FICHIER.
+           MOVE "TITRE" TO ET00.
+           WRITE ET00 AFTER ADVANCING SAUTP.
+           MOVE "LIGNE" TO ET00.
+           WRITE ET00 AFTER ADVANCING SAUT.
+           MOVE "PAGE 2" TO ET00.
+           WRITE ET00 AFTER ADVANCING SAUTP.
+           CLOSE ET-FICHIER.
+           STOP RUN.
