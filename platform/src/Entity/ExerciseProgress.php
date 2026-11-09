@@ -31,6 +31,10 @@ class ExerciseProgress
     #[ORM\Column(options: ['default' => 0])]
     private int $hintsUsed = 0;
 
+    /** Exercice à étapes : l'étape où en est l'apprenant (0 pour la première), null pour un exercice ordinaire. */
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $step = null;
+
     #[ORM\Column(options: ['default' => 0])]
     private int $xpEarned = 0;
 
@@ -128,6 +132,11 @@ class ExerciseProgress
         return $this->files;
     }
 
+    public function getStep(): ?int
+    {
+        return $this->step;
+    }
+
     public function getHintsUsed(): int
     {
         return $this->hintsUsed;
@@ -180,9 +189,12 @@ class ExerciseProgress
     /**
      * @param array<string, string> $files
      */
-    public function saveDraft(array $files, int $hintsUsed, \DateTimeImmutable $now): void
+    public function saveDraft(array $files, int $hintsUsed, \DateTimeImmutable $now, ?int $step = null): void
     {
         $this->files = $files;
+        if (null !== $step) {
+            $this->step = $step;
+        }
         // Un indice consulté ne se « rend » pas.
         $this->hintsUsed = max($this->hintsUsed, $hintsUsed);
         $this->updatedAt = $now;

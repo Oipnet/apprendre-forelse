@@ -84,6 +84,19 @@ final class PurchaseTest extends WebTestCase
         $this->client->submit($form, serverParameters: self::ORIGIN);
     }
 
+    public function testSansCompteLeBoutonAcheterMeneALaConnexionQuiRameneALAchat(): void
+    {
+        $this->setPrice('payant', 7900, 4900);
+
+        $this->client->request('GET', '/');
+        $this->assertSelectorExists('.track-offer a[href="/connexion?suite=/parcours/payant/acheter"]', 'Pas de lien vers une redirection : les robots le signalent.');
+        $this->assertSelectorNotExists('a[href="/parcours/payant/acheter"]');
+
+        $this->client->loginUser($this->createUser());
+        $this->client->request('GET', '/');
+        $this->assertSelectorExists('.track-offer a[href="/parcours/payant/acheter"]', 'Connecté, droit à l\'achat.');
+    }
+
     public function testUnChapitrePayantEstRefuseSansAccesSurLaPageEtLesApi(): void
     {
         $this->setPrice('payant', 7900, 4900);

@@ -23,7 +23,13 @@ final readonly class AuthorSeo
     {
         $this->seo
             // « Arnaud Pointet, Développeur Symfony freelance à Bordeaux » : ce qu'on cherche pour trouver quelqu'un.
-            ->setTitle(sprintf('%s, %s | %s', $person['name'], isset($person['location']) ? $this->translator->trans('auteur.titre_lieu', ['metier' => $person['jobTitle'], 'lieu' => $person['location']], 'blog') : $person['jobTitle'], $this->theme->name()), $person['name'])
+            ->setTitle(
+                sprintf('%s, %s | %s', $person['name'], $role = isset($person['location']) ? $this->translator->trans('auteur.titre_lieu', ['metier' => $person['jobTitle'], 'lieu' => $person['location']], 'blog') : $person['jobTitle'], $this->theme->name()),
+                // Trop long avec la marque : le métier passe avant elle, puis sans le lieu ; le nom seul en dernier recours.
+                sprintf('%s, %s', $person['name'], $role),
+                sprintf('%s, %s', $person['name'], $person['jobTitle']),
+                $person['name'],
+            )
             ->setDescription($person['bio'] ?? $person['jobTitle'])
             ->setCanonical($url = $this->schema->url('app_author', ['slug' => $person['id']]))
             ->setType('profile')

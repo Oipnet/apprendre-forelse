@@ -31,9 +31,10 @@ export class TestResultsView {
 			const spoken = li.querySelector('.objective-state');
 			if (spoken) spoken.textContent = m.results.state[state]; // lu avant le libellé : la pastille n'est qu'une couleur
 			li.querySelector('.why')?.remove();
-			if (test && !ok && test.message) {
+			// Une étape rouge réussie dit aussi pourquoi c'est rouge : lire l'échec fait partie de l'étape.
+			if (test && test.message && (!ok || test.name === 'own-tests-fail')) {
 				const why = document.createElement('div');
-				why.className = 'why';
+				why.className = ok ? 'why why-ok' : 'why';
 				why.textContent = summaryOf(test);
 				li.append(why);
 			}
