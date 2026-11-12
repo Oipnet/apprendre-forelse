@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Sécurité
+
+- **Playground** : `isomorphic-git`, tiré par `@php-wasm/web`, passe de 1.37.6 à 1.38.10 par un `overrides` npm
+  (GHSA-cw2g-2vwq-88w6, GHSA-96wc-2m84-2cj7, GHSA-9qw7-j9xw-fv9c, publiées après le 09/11 : `npm audit` faisait
+  échouer la CI). Le playground ne clone aucun dépôt Git.
+
 ### Modifié
 
 - **Environnements Symfony 8.2 en développement** (`symfony-8-2-dev`, `symfony-8-2-doctrine-dev`) : passage à
