@@ -8,6 +8,23 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Sécurité
+
+- **Playground** : `isomorphic-git`, tiré par `@php-wasm/web`, passe de 1.37.6 à 1.38.10 par un `overrides` npm
+  (GHSA-cw2g-2vwq-88w6, GHSA-96wc-2m84-2cj7, GHSA-9qw7-j9xw-fv9c, publiées après le 09/11 : `npm audit` faisait
+  échouer la CI). Le playground ne clone aucun dépôt Git.
+
+### Modifié
+
+- **Environnements Symfony 8.2 en développement** (`symfony-8-2-dev`, `symfony-8-2-doctrine-dev`) : passage à
+  Symfony 8.2.0-BETA1, ajout de Messenger (chaînes de messages, stamps propagés) et de `phpdocumentor/type-resolver`
+  (le Serializer lit les génériques `@template` des PHPDoc). Côté Doctrine, la contrainte `#[EntityExists]` a son
+  validateur déclaré, en attendant que DoctrineBundle le fasse, et la route de connexion OIDC propre à cet
+  environnement disparaît : il reprend celle de sa base, que BETA1 avait cassée.
+- **Index de complétion** : les événements de formulaire, `EntryTypeProviderInterface`, `#[EntityExists]` et
+  `ExpressionLanguage` (avec `ConstantFunctionProvider`) sont proposés à l'éditeur, pour les nouveaux exercices de
+  Pratique sur Symfony 8.2.
+
 ## 3.36.1 — 2026-11-09
 
 ### Modifié

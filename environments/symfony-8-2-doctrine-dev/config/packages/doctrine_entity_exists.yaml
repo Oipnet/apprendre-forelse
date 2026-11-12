@@ -1,0 +1,6 @@
+# La contrainte #[EntityExists] de Symfony 8.2 (doctrine-bridge) : DoctrineBundle 3 n'en déclare pas encore le
+# validateur, qui a besoin du registre Doctrine. À retirer quand DoctrineBundle le fera.
+services:
+    Symfony\Bridge\Doctrine\Validator\Constraints\EntityExistsValidator:
+        arguments: ['@doctrine']
+        tags: [validator.constraint_validator]
