@@ -259,8 +259,8 @@ de toucher à quoi que ce soit.
 echo "UMAMI_DB_PASSWORD=$(openssl rand -hex 32)" >> .env
 ```
 
-Umami dérive le secret de ses sessions de son adresse de base : au changement, il faut se reconnecter au tableau de
-bord, et les visiteurs du jour peuvent compter deux fois (identifiant de visite recalculé). Les mesures restent.
+Le secret d'Umami (`APP_SECRET`, obligatoire depuis Umami 3.5.0) reprend son adresse de base : au changement, il faut
+se reconnecter au tableau de bord, et les visiteurs du jour peuvent compter deux fois (identifiant de visite recalculé). Les mesures restent.
 
 ## 9. Tableau de bord d'Umami sans tunnel
 

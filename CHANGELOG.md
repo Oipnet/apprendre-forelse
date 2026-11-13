@@ -8,6 +8,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Umami 3.5.0** (au lieu de 3.4.0) : Umami exige désormais `APP_SECRET`. Les fichiers Compose lui donnent la valeur
+  qu'il prenait avant à sa place (son adresse de base) : connexions au tableau de bord, identifiants de visite et
+  double authentification restent valides, rien à ajouter au `.env`. La montée migre sa base (tables du suivi des
+  erreurs du navigateur, que le site n'active pas) : sauvegarder la base `umami` avant, puis
+  `docker compose up -d umami`.
+
 ## 3.36.1 — 2026-11-09
 
 ### Modifié
