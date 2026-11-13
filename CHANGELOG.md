@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.36.2 — 2026-11-13
+
 ### Modifié
 
 - **Umami 3.5.0** (au lieu de 3.4.0) : Umami exige désormais `APP_SECRET`. Les fichiers Compose lui donnent la valeur
