@@ -219,7 +219,7 @@ services:
   # production. Créez-y le site, puis relancez avec son identifiant pour voir la balise apparaître :
   #   ANALYTICS_SCRIPT_URL=/mesure/traceur.js ANALYTICS_WEBSITE_ID=… docker compose --profile mesure up -d
   umami:
-    image: ghcr.io/umami-software/umami:3.4.0  # même version qu'en production (deploy/compose.yaml)
+    image: ghcr.io/umami-software/umami:3.5.0  # même version qu'en production (deploy/compose.yaml)
     mem_limit: ${UMAMI_MEM_LIMIT:-512m}
     pids_limit: 128
     profiles: ["mesure"]
@@ -229,6 +229,8 @@ services:
     environment:
       DATABASE_URL: postgresql://formation:${POSTGRES_PASSWORD:-formation}@db:5432/umami
       DATABASE_TYPE: postgresql
+      # Obligatoire depuis Umami 3.5.0. En local, n'importe quelle valeur ; en production, voir deploy/compose.yaml.
+      APP_SECRET: ${UMAMI_APP_SECRET:-umami-en-local}
       TRACKER_SCRIPT_NAME: traceur.js
       DISABLE_TELEMETRY: "1"
       LOCALE: fr-FR

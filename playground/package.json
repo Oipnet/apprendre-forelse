@@ -38,6 +38,7 @@
 		"vitest": "^5.0.1"
 	},
 	"overrides": {
+		"isomorphic-git": "^1.44.13",
 		"monaco-editor": {
 			"dompurify": "$dompurify"
 		},
