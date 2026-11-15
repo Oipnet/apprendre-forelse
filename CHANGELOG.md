@@ -8,6 +8,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Pratique en PHP sans framework** : environnement `php-8-pratique` (le projet de `php-8`, plus PHPUnit ; tests cachés
+  dans `tests/Pratique/`). Un exercice PHP peut annoncer sa version (`version: '8.6'`) : elle se vérifie contre la clé
+  `php` de l'environnement, et les exercices parus d'une même version font leur page de nouveautés
+  (`/pratique/nouveautes/php-8-6`), comme pour Symfony et Laravel. Les exercices PHP 8.6 ne passeront qu'une fois le
+  playground (php-wasm) et l'image du serveur (FrankenPHP) en PHP 8.6.
+
 ## 3.36.2 — 2026-11-13
 
 ### Modifié
