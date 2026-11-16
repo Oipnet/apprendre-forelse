@@ -342,7 +342,7 @@ services:
   umami:
     # Version épinglée : une nouvelle version d'Umami migre sa base, elle se choisit (et se sauvegarde avant),
     # elle n'arrive pas avec un déploiement du moteur. Changer ce numéro, puis `docker compose up -d umami`.
-    image: ghcr.io/umami-software/umami:3.4.0
+    image: ghcr.io/umami-software/umami:3.5.0
     logging: *logging
     mem_limit: ${UMAMI_MEM_LIMIT:-512m}
     pids_limit: 128
@@ -356,8 +356,11 @@ services:
       # caractères sûrs dans une adresse.
       DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:?UMAMI_DB_PASSWORD manquant dans .env}@db:5432/umami
       DATABASE_TYPE: postgresql
-      # Pas d'APP_SECRET : Umami le dérive de DATABASE_URL. Changer UMAMI_DB_PASSWORD déconnecte donc du tableau de
-      # bord, sans rien perdre des mesures.
+      # Obligatoire depuis Umami 3.5.0 (il refuse de démarrer sans). Avant, Umami prenait DATABASE_URL à sa place :
+      # la même valeur garde les connexions au tableau de bord, les identifiants de visite du mois et ce qu'Umami a
+      # chiffré (double authentification). Changer UMAMI_DB_PASSWORD déconnecte donc toujours du tableau de bord,
+      # sans rien perdre des mesures.
+      APP_SECRET: postgresql://umami:${UMAMI_DB_PASSWORD}@db:5432/umami
       # Le traceur est servi sous ce nom, et non /script.js, que les bloqueurs de publicités connaissent.
       TRACKER_SCRIPT_NAME: traceur.js
       DISABLE_TELEMETRY: "1"

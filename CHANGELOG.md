@@ -8,11 +8,15 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
-### Sécurité
+### Ajouté
 
-- **Playground** : `isomorphic-git`, tiré par `@php-wasm/web`, passe de 1.37.6 à 1.38.10 par un `overrides` npm
-  (GHSA-cw2g-2vwq-88w6, GHSA-96wc-2m84-2cj7, GHSA-9qw7-j9xw-fv9c, publiées après le 09/11 : `npm audit` faisait
-  échouer la CI). Le playground ne clone aucun dépôt Git.
+- **Pratique en PHP sans framework** : environnement `php-8-pratique` (le projet de `php-8`, plus PHPUnit ; tests cachés
+  dans `tests/Pratique/`). Un exercice PHP peut annoncer sa version (`version: '8.6'`) : elle se vérifie contre la clé
+  `php` de l'environnement, et les exercices parus d'une même version font leur page de nouveautés
+  (`/pratique/nouveautes/php-8-6`), comme pour Symfony et Laravel. Les exercices PHP 8.6 ne passeront qu'une fois le
+  playground (php-wasm) et l'image du serveur (FrankenPHP) en PHP 8.6.
+- **Complétion** : l'éditeur propose les classes de l'extension URI (`Uri\WhatWg\UrlBuilder`…) et, dans un index
+  construit avec PHP 8.6, ses nouveautés (`Time\Duration`, `SortDirection`, `StreamException`…).
 
 ### Modifié
 
@@ -24,6 +28,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Index de complétion** : les événements de formulaire, `EntryTypeProviderInterface`, `#[EntityExists]` et
   `ExpressionLanguage` (avec `ConstantFunctionProvider`) sont proposés à l'éditeur, pour les nouveaux exercices de
   Pratique sur Symfony 8.2.
+
+## 3.36.2 — 2026-11-13
+
+### Modifié
+
+- **Umami 3.5.0** (au lieu de 3.4.0) : Umami exige désormais `APP_SECRET`. Les fichiers Compose lui donnent la valeur
+  qu'il prenait avant à sa place (son adresse de base) : connexions au tableau de bord, identifiants de visite et
+  double authentification restent valides, rien à ajouter au `.env`. La montée migre sa base (tables du suivi des
+  erreurs du navigateur, que le site n'active pas) : sauvegarder la base `umami` avant, puis
+  `docker compose up -d umami`.
 
 ## 3.36.1 — 2026-11-09
 
