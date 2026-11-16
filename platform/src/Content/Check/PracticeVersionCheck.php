@@ -46,9 +46,20 @@ final readonly class PracticeVersionCheck implements ExerciseCheck
             return;
         }
 
-        if (Comparator::lessThan($this->parser->normalize($installed), $this->parser->normalize($version))) {
+        if (!self::reaches($this->parser, $installed, $version)) {
             $result->error(sprintf('La fonctionnalité arrive en %s, or l\'environnement « %s » a %s %s : mettez l\'environnement à jour.', $version, $environment->id, $package, $installed));
         }
+    }
+
+    /**
+     * La version installée apporte-t-elle les nouveautés de la version annoncée ? Une préversion (alpha, bêta, RC)
+     * de 8.2 les apporte déjà : c'est pour elle que les exercices sur 8.2 sortent avant la version finale.
+     */
+    public static function reaches(VersionParser $parser, string $installed, string $announced): bool
+    {
+        $normalized = (string) preg_replace('/-(alpha|beta|rc)\d*$/i', '', $parser->normalize($installed));
+
+        return !Comparator::lessThan($normalized, $parser->normalize($announced));
     }
 
     private function locked(?string $lockFile, string $package): ?string
