@@ -58,6 +58,9 @@ const NAMESPACES = [
     'Symfony\\Component\\Form\\FormInterface',
     'Symfony\\Component\\Form\\FormError',
     'Symfony\\Component\\Form\\Extension\\Core\\Type\\',
+    'Symfony\\Component\\Form\\Event\\',
+    'Symfony\\Component\\Form\\FormEvents',
+    'Symfony\\Component\\Form\\EntryTypeProviderInterface',
     'Symfony\\Bridge\\Doctrine\\Form\\Type\\EntityType',
     'Symfony\\Component\\OptionsResolver\\OptionsResolver',
     'Symfony\\Component\\Validator\\Constraints\\',
@@ -67,6 +70,7 @@ const NAMESPACES = [
     'Symfony\\Component\\Validator\\Exception\\',
     'Symfony\\Component\\Validator\\Validator\\ValidatorInterface',
     'Symfony\\Bridge\\Doctrine\\Validator\\Constraints\\UniqueEntity',
+    'Symfony\\Bridge\\Doctrine\\Validator\\Constraints\\EntityExists',
     'Symfony\\Bridge\\Doctrine\\Attribute\\MapEntity',
     // Sécurité
     'Symfony\\Component\\Security\\Core\\User\\',
@@ -128,6 +132,9 @@ const NAMESPACES = [
     'Symfony\\Component\\KeyManagement\\BlindIndex',
     'Symfony\\Component\\PropertyAccess\\PropertyAccess',
     'Symfony\\Component\\PropertyAccess\\PropertyAccessorInterface',
+    // Expressions, dont les constantes autorisées (Symfony 8.2)
+    'Symfony\\Component\\ExpressionLanguage\\ExpressionLanguage',
+    'Symfony\\Component\\ExpressionLanguage\\ConstantFunctionProvider',
     // Verrous, traductions sûres et schémas JSON (Symfony 8.2)
     'Symfony\\Component\\Lock\\LockFactory',
     'Symfony\\Component\\Lock\\LockInterface',
@@ -285,6 +292,10 @@ const NATIVES = [
     'Attribute', 'Override', 'SensitiveParameter', 'AllowDynamicProperties',
     // Divers
     'Random\\Randomizer', 'IntlDateFormatter', 'NumberFormatter', 'Collator',
+    // Extension URI (PHP 8.5, constructeurs en 8.6)
+    'Uri\\WhatWg\\Url', 'Uri\\WhatWg\\UrlBuilder', 'Uri\\WhatWg\\InvalidUrlException', 'Uri\\Rfc3986\\Uri', 'Uri\\Rfc3986\\UriBuilder',
+    // PHP 8.6 : absentes d'un PHP plus ancien, elles n'entrent dans l'index que s'il est construit avec PHP 8.6.
+    'Time\\Duration', 'Time\\TimeException', 'SortDirection', 'StreamErrorMode', 'StreamErrorCode', 'StreamError', 'StreamException',
 ];
 
 function summary(string|false $doc): string

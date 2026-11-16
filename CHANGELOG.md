@@ -8,6 +8,56 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Pratique** : la liste se découpe en pages de 20 exercices (`/pratique?page=2`, `/en/practice?page=2`), avec des
+  liens précédent, numéros et suivant qui gardent les filtres et le tri, et le rang affiché (« 21 à 40 »). Une page
+  après la dernière renvoie une 404. Les pages 2 et suivantes sont leur propre canonical, en `noindex, follow`.
+
+### Corrigé
+
+- **SEO** : une liste de Pratique filtrée par notion (`notions[]=`), par recherche ou triée par titre restait
+  indexable (la règle attendait `notion`) ; elle passe en `noindex, follow` comme le filtre par framework.
+
+## 3.37.0 — 2026-11-16
+
+### Ajouté
+
+- **Pratique en PHP sans framework** : environnement `php-8-pratique` (le projet de `php-8`, plus PHPUnit ; tests cachés
+  dans `tests/Pratique/`). Un exercice PHP peut annoncer sa version (`version: '8.6'`) : elle se vérifie contre la clé
+  `php` de l'environnement, et les exercices parus d'une même version font leur page de nouveautés
+  (`/pratique/nouveautes/php-8-6`), comme pour Symfony et Laravel. Les exercices PHP 8.6 ne passeront qu'une fois le
+  playground (php-wasm) et l'image du serveur (FrankenPHP) en PHP 8.6.
+- **Complétion** : l'éditeur propose les classes de l'extension URI (`Uri\WhatWg\UrlBuilder`…) et, dans un index
+  construit avec PHP 8.6, ses nouveautés (`Time\Duration`, `SortDirection`, `StreamException`…).
+
+### Modifié
+
+- **Environnements Symfony 8.2 en développement** (`symfony-8-2-dev`, `symfony-8-2-doctrine-dev`) : passage à
+  Symfony 8.2.0-BETA1, ajout de Messenger (chaînes de messages, stamps propagés) et de `phpdocumentor/type-resolver`
+  (le Serializer lit les génériques `@template` des PHPDoc). Côté Doctrine, la contrainte `#[EntityExists]` a son
+  validateur déclaré, en attendant que DoctrineBundle le fasse, et la route de connexion OIDC propre à cet
+  environnement disparaît : il reprend celle de sa base, que BETA1 avait cassée.
+- **Index de complétion** : les événements de formulaire, `EntryTypeProviderInterface`, `#[EntityExists]` et
+  `ExpressionLanguage` (avec `ConstantFunctionProvider`) sont proposés à l'éditeur, pour les nouveaux exercices de
+  Pratique sur Symfony 8.2.
+
+### Corrigé
+
+- **content:check** : un exercice de Pratique annoncé pour Symfony 8.2 était refusé sur un environnement en
+  8.2.0-BETA1, la bêta passant pour antérieure à 8.2. Une préversion (alpha, bêta, RC) compte désormais comme la
+  version qu'elle prépare.
+
+## 3.36.2 — 2026-11-13
+
+### Modifié
+
+- **Umami 3.5.0** (au lieu de 3.4.0) : Umami exige désormais `APP_SECRET`. Les fichiers Compose lui donnent la valeur
+  qu'il prenait avant à sa place (son adresse de base) : connexions au tableau de bord, identifiants de visite et
+  double authentification restent valides, rien à ajouter au `.env`. La montée migre sa base (tables du suivi des
+  erreurs du navigateur, que le site n'active pas) : sauvegarder la base `umami` avant, puis
+  `docker compose up -d umami`.
+
 ## 3.36.1 — 2026-11-09
 
 ### Modifié
