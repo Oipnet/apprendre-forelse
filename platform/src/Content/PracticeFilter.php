@@ -6,6 +6,9 @@ namespace App\Content;
  * Les filtres de la liste de Pratique, lus dans l'URL (#[MapQueryString]) : un framework, des notions cumulables, les
  * nouveautés seules, une recherche, un tri. Normalisés ici : le formulaire envoie un framework vide pour « Tous », et un
  * tri inconnu retombe sur le plus récent.
+ *
+ * La page n'est pas un filtre : toArray() la laisse de côté, pour qu'un changement de tri ou de filtre reparte de la
+ * première page. Une page qui n'existe pas (0, ou après la dernière) est introuvable : voir PracticeController.
  */
 final readonly class PracticeFilter
 {
@@ -25,6 +28,7 @@ final readonly class PracticeFilter
         public bool $nouveautes = false,
         ?string $recherche = null,
         ?string $tri = null,
+        public int $page = 1,
     ) {
         $this->framework = '' !== $framework ? $framework : null;
         $this->notions = array_values(array_unique(array_filter((array) $notions, \is_string(...))));
@@ -40,7 +44,7 @@ final readonly class PracticeFilter
     #[\NoDiscard]
     public function withNotions(array $notions): self
     {
-        return new self($this->framework, $notions, $this->nouveautes, $this->recherche, $this->tri);
+        return new self($this->framework, $notions, $this->nouveautes, $this->recherche, $this->tri, $this->page);
     }
 
     /** @return array{framework: ?string, notions: list<string>, nouveautes: bool, recherche: string, tri: string} */

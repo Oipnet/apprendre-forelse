@@ -6,11 +6,14 @@ use App\Entity\ExerciseProgress;
 use App\Service\TrackProgress;
 use Psr\Clock\ClockInterface;
 
-/** Filtre, trie et groupe la Pratique visible pour sa page de liste. */
+/** Filtre, trie, découpe en pages et groupe la Pratique visible pour sa page de liste. */
 final readonly class PracticeCatalog
 {
     /** Au-delà, les exercices passent dans le groupe « Avant ». */
     private const int JOURS_RECENTS = 7;
+
+    /** Exercices par page : la liste en comptera bientôt une centaine. */
+    public const int PER_PAGE = 20;
 
     /** Les intertitres de la liste, en français : la page les traduit d'après leur identifiant. */
     private const array GROUP_LABELS = ['par_titre' => 'Par titre', 'a_venir' => 'À venir', 'cette_semaine' => 'Cette semaine', 'avant' => 'Avant'];
@@ -18,6 +21,7 @@ final readonly class PracticeCatalog
     public function __construct(
         private PracticeVisibility $practices,
         private ClockInterface $clock,
+        private int $perPage = self::PER_PAGE,
     ) {
     }
 
@@ -40,14 +44,21 @@ final readonly class PracticeCatalog
                 && self::matches($p, $filter->recherche),
         );
 
+        // Les intertitres se posent sur la page découpée : la page 2 reprend « Avant » là où la première l'a laissé.
+        $pageCount = max(1, (int) ceil(\count($shown) / $this->perPage));
+        $page = $filter->page >= 1 ? \array_slice(self::sort($shown, $filter->tri), ($filter->page - 1) * $this->perPage, $this->perPage) : [];
+
         return new PracticeListing(
             filter: $filter,
             all: array_values($all),
-            groups: $this->group(self::sort($shown, $filter->tri), $filter->tri, $progress),
+            groups: $this->group($page, $filter->tri, $progress),
             shown: \count($shown),
             notionCounts: $notionCounts,
             newCount: \count(array_filter($all, static fn (Practice $p) => null !== $p->version)),
             completedCount: \count(array_filter($progress, static fn (ExerciseProgress $p) => $p->isCompleted())),
+            page: $filter->page,
+            pageCount: $pageCount,
+            perPage: $this->perPage,
         );
     }
 
