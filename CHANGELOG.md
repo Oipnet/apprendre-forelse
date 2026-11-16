@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Aperçu** : une page qui répond en JSON (`application/json`, `application/*+json`) s'affiche indentée et colorée,
+  case « Impression élégante » cochée par défaut pour revenir au texte brut. Le `fetch()` du code de la page reçoit
+  toujours la réponse telle quelle.
+
 ## 3.37.0 — 2026-11-16
 
 ### Ajouté
