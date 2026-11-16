@@ -226,7 +226,7 @@ jobs:
       - name: Icônes d'EasyAdmin dans l'archive
         run: |
           for env in symfony-8-easyadmin symfony-8-easyadmin-en; do
-            unzip -l "platform/public/envs/$env.zip" | grep -q 'vendor/easycorp/easyadmin-bundle/assets/icons/internal/user.svg' \
+            unzip -l "platform/public/envs/$env.zip" | grep 'vendor/easycorp/easyadmin-bundle/assets/icons/internal/user.svg' >/dev/null \
               || { echo "::error file=environments/symfony-8-easyadmin/.archiveignore::$env.zip ne contient pas les icônes d'EasyAdmin (assets/icons)."; exit 1; }
           done
 

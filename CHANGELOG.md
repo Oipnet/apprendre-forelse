@@ -17,14 +17,14 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
-- **Environnement `symfony-8-easyadmin`** : toute page d'admin plantait dans le playground (« The icon "internal:user"
-  does not exist »). L'archive écartait tout `vendor/easycorp/easyadmin-bundle/assets/`, or EasyAdmin 5.8 y lit ses
-  icônes SVG. `.archiveignore` garde maintenant `assets/icons` (CSS, JS et images restent écartés, ils sont servis
-  depuis `public/bundles/easyadmin`). La CI vérifie que les icônes sont dans l'archive, et reconstruit les
-  environnements quand un `.archiveignore` change.
-- **Aperçu** : après un déploiement qui modifie le Service Worker de l'aperçu (`preview-sw.js`), l'ancien servait encore
-  l'aperçu jusqu'au rechargement suivant (le JSON restait brut juste après la v3.38.0). Son adresse porte maintenant
-  l'empreinte du fichier : le nouveau s'installe dès l'ouverture de l'exercice.
+- **Environnements `symfony-8-easyadmin` et `symfony-8-easyadmin-en`** : toute page d'admin plantait dans le playground
+  (« The icon "internal:user" does not exist »). L'archive écartait tout `vendor/easycorp/easyadmin-bundle/assets/`, or
+  EasyAdmin 5.8 y lit ses icônes SVG. `.archiveignore` garde maintenant `assets/icons` (CSS, JS et images restent
+  écartés, ils sont servis depuis `public/bundles/easyadmin`). La CI vérifie que les icônes sont dans l'archive, et
+  reconstruit les environnements quand un `.archiveignore` change. - **Aperçu** : après un déploiement qui modifie le
+  Service Worker de l'aperçu (`preview-sw.js`), l'ancien servait encore l'aperçu jusqu'au rechargement suivant (le JSON
+  restait brut juste après la v3.38.0). Son adresse porte maintenant l'empreinte du fichier : le nouveau s'installe dès
+  l'ouverture de l'exercice.
 
 ## 3.38.0 — 2026-11-16
 
