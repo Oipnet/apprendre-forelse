@@ -29,6 +29,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   `ExpressionLanguage` (avec `ConstantFunctionProvider`) sont proposés à l'éditeur, pour les nouveaux exercices de
   Pratique sur Symfony 8.2.
 
+### Corrigé
+
+- **content:check** : un exercice de Pratique annoncé pour Symfony 8.2 était refusé sur un environnement en
+  8.2.0-BETA1, la bêta passant pour antérieure à 8.2. Une préversion (alpha, bêta, RC) compte désormais comme la
+  version qu'elle prépare.
+
 ## 3.36.2 — 2026-11-13
 
 ### Modifié
