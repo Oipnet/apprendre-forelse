@@ -72,7 +72,10 @@ async function start() {
 		}
 	});
 
-	const registration = await navigator.serviceWorker.register('/preview-sw.js', { scope: '/preview/' });
+	// L'adresse porte l'empreinte du fichier : après un déploiement, elle change, et register() installe le nouveau
+	// worker tout de suite. Sous la même adresse, il rendait l'ancien, qui servait l'aperçu jusqu'au rechargement suivant.
+	const version = document.documentElement.dataset.swVersion ?? '';
+	const registration = await navigator.serviceWorker.register(`/preview-sw.js${version ? `?v=${encodeURIComponent(version)}` : ''}`, { scope: '/preview/' });
 	// Service Workers bloqués par le navigateur (réglage, extension) : Chromium résout alors sans rien.
 	if (!registration) throw new Error(m.sandbox.serviceWorkersBlocked);
 	await activated(registration);
@@ -89,7 +92,8 @@ const ACTIVATION_TIMEOUT_MS = 10_000;
  * à suivre, l'attente ne finissait jamais, et l'écran de démarrage tournait sans rien dire.
  */
 function activated(registration: ServiceWorkerRegistration): Promise<void> {
-	if (registration.active) return Promise.resolve();
+	// Un nouveau worker en cours d'installation passe devant l'ancien, encore actif : c'est lui qui doit servir l'aperçu.
+	if (registration.active && !registration.installing && !registration.waiting) return Promise.resolve();
 	return new Promise((resolve, reject) => {
 		const timer = setTimeout(() => {
 			reject(new Error(m.sandbox.activationTimeout(ACTIVATION_TIMEOUT_MS / 1000)));
@@ -102,7 +106,9 @@ function activated(registration: ServiceWorkerRegistration): Promise<void> {
 					resolve();
 				} else if (worker.state === 'redundant') {
 					clearTimeout(timer);
-					reject(new Error(m.sandbox.rejected));
+					// Le nouveau worker a échoué : l'ancien, s'il y en a un, sert encore l'aperçu.
+					if (registration.active) resolve();
+					else reject(new Error(m.sandbox.rejected));
 				}
 			};
 			worker.addEventListener('statechange', check);

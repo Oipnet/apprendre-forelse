@@ -25,6 +25,17 @@ final class SandboxIsolationTest extends WebTestCase
         $this->assertResponseHeaderSame('Content-Security-Policy', 'frame-ancestors http://localhost');
     }
 
+    public function testLeServiceWorkerEstVersionneParSonEmpreinte(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/sandbox', server: self::SANDBOX);
+
+        // Un déploiement qui modifie preview-sw.js change cette empreinte : le navigateur installe le nouveau worker
+        // dès l'ouverture du relais, au lieu de garder l'ancien jusqu'au rechargement suivant.
+        $version = $client->getCrawler()->filter('html')->attr('data-sw-version');
+        $this->assertSame(substr(hash_file('xxh3', __DIR__.'/../../public/preview-sw.js'), 0, 12), $version);
+    }
+
     public function testLeBacASableNeSertAucunePageDeLaPlateforme(): void
     {
         $client = static::createClient();
