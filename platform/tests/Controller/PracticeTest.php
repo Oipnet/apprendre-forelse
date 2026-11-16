@@ -92,6 +92,8 @@ final class PracticeTest extends WebTestCase
     /** Deux exercices par page pour les cinq du pack : trois pages, des liens qui gardent les filtres et le tri. */
     public function testLaListeSeDecoupeEnPages(): void
     {
+        // Sans redémarrage entre deux requêtes : le noyau redémarré oublierait le catalogue posé ici.
+        $this->client->disableReboot();
         static::getContainer()->set(PracticeCatalog::class, new PracticeCatalog(static::getContainer()->get(PracticeVisibility::class), static::getContainer()->get(ClockInterface::class), 2));
         $titres = fn (Crawler $crawler) => $crawler->filter('.practice-list .title')->extract(['_text']);
 
