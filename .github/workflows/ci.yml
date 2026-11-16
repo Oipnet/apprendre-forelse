@@ -215,11 +215,20 @@ jobs:
           path: |
             environments/*/vendor
             platform/public/envs
-          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'environments/*/paquets.json', 'environments/bin/**', 'packages/simulateur-docker/composer.json', 'packages/simulateur-docker/src/**', 'packages/simulateur-docker/bin/**', 'environments/nuxt-*/**', 'environments/goravel-*/**') }}
+          key: environnements-${{ env.PHP_VERSION }}-${{ hashFiles('environments/*/composer.lock', 'environments/*/paquets.json', 'environments/*/.archiveignore', 'environments/bin/**', 'packages/simulateur-docker/composer.json', 'packages/simulateur-docker/src/**', 'packages/simulateur-docker/bin/**', 'environments/nuxt-*/**', 'environments/goravel-*/**') }}
 
       - name: Construire les environnements
         if: steps.cache-environnements.outputs.cache-hit != 'true'
         run: environments/bin/build-env.sh
+
+      # EasyAdmin lit ses icônes SVG dans vendor/…/assets/icons et sa mise en page en affiche une sur chaque page :
+      # une archive qui les perd (.archiveignore trop large) fait planter toute l'admin dans le playground.
+      - name: Icônes d'EasyAdmin dans l'archive
+        run: |
+          for env in symfony-8-easyadmin symfony-8-easyadmin-en; do
+            unzip -l "platform/public/envs/$env.zip" | grep -q 'vendor/easycorp/easyadmin-bundle/assets/icons/internal/user.svg' \
+              || { echo "::error file=environments/symfony-8-easyadmin/.archiveignore::$env.zip ne contient pas les icônes d'EasyAdmin (assets/icons)."; exit 1; }
+          done
 
       - name: Dépendances du simulateur Docker
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
