@@ -1,0 +1,12 @@
+# Environnement d'exécution des exercices de Pratique en PHP sans framework (pack pratique, dépôt de contenu) : le projet
+# de php-8, plus PHPUnit. Le code vit dans src/ (namespace App), les tests cachés des exercices dans tests/Pratique/
+# (namespace App\Tests). Il prolonge php-8 : la console, le petit Composer (.forelse/composer.php) et le catalogue des
+# paquets (paquets.json) en viennent.
+#
+# « php » dit la version dont parlent les exercices (« version: '8.6' » se vérifie contre elle, voir PracticeVersionCheck).
+# Le navigateur, le vérificateur et content:check exécutent, eux, la version embarquée : les exercices PHP 8.6 ne
+# passeront qu'une fois le playground (php-wasm) et l'image du serveur (FrankenPHP) en PHP 8.6.
+id: php-8-pratique
+extends: php-8
+title: PHP 8.6 — sans framework, PHPUnit (Pratique)
+php: '8.6'
