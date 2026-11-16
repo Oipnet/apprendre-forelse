@@ -82,6 +82,12 @@ practice:
         appliquer: Appliquer les filtres
         reinitialiser: Réinitialiser les filtres
         trouves: "{n, plural, =0 {Aucun exercice} one {# exercice} other {# exercices}}"
+        pagination:
+            titre: Pages de la liste
+            precedente: ← Précédente
+            suivante: Suivante →
+            page: "Page {n}"
+            rang: "{debut} à {fin}"
         trier: "Trier :"
         tri_recents: Récents
         tri_titre: Titre

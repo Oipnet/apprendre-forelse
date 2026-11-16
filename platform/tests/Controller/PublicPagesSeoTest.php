@@ -115,6 +115,26 @@ final class PublicPagesSeoTest extends WebTestCase
         $this->assertSame('noindex, follow', $crawler->filter('meta[name="robots"]')->attr('content'));
     }
 
+    /** Une notion cochée ou une recherche tiennent aussi dans l'URL : elles ne s'indexent pas plus qu'un framework. */
+    public function testLaPratiqueParNotionRechercheOuTriNeSIndexePas(): void
+    {
+        foreach (['notions[]=Validator', 'recherche=routes', 'tri=titre', 'page=1'] as $query) {
+            $crawler = $this->client->request('GET', '/pratique?'.$query);
+            $this->assertSame('noindex, follow', $crawler->filter('meta[name="robots"]')->attr('content'), $query);
+            $this->assertSame('http://localhost/pratique', $crawler->filter('link[rel="canonical"]')->attr('href'), $query);
+        }
+        $crawler = $this->client->request('GET', '/pratique');
+        $this->assertCount(0, $crawler->filter('meta[name="robots"][content*="noindex"]'), 'La première page sans filtre s\'indexe.');
+    }
+
+    public function testUnePageDeLaPratiqueQuiNExistePasEstIntrouvable(): void
+    {
+        foreach (['page=0', 'page=99', 'page=deux'] as $query) {
+            $this->client->request('GET', '/pratique?'.$query);
+            $this->assertResponseStatusCodeSame(404, $query);
+        }
+    }
+
     public function testLesPagesPriveesNOntNiCanonicalNiOpenGraph(): void
     {
         foreach (['/connexion', '/inscription', '/mot-de-passe-oublie'] as $path) {

@@ -24,8 +24,9 @@ final class PhpProfile implements FrameworkProfileProvider
             bootNote: new TranslatableMessage('playground.framework.php.demarrage', [], 'apprentissage'),
             unpackLabel: new TranslatableMessage('playground.framework.php.decompression', [], 'apprentissage'),
             testRunner: FrameworkProfile::PHPUNIT,
-            // Un projet sans framework ne suit la version d'aucun paquet : « version: » n'y a pas de sens.
-            versionPackage: null,
+            // Un projet sans framework ne suit la version d'aucun paquet : « version: » y est celle de PHP lui-même,
+            // lue dans la clé « php » de l'environnement (voir PracticeVersionCheck). Elle fait la page « PHP 8.6 ».
+            versionPackage: FrameworkProfile::PHP_VERSION,
             projectDirs: ['public', 'src', 'bin', 'templates', 'tests'],
             codeDirs: ['public/', 'src/', 'bin/', 'templates/'],
             cacheDirs: [],
