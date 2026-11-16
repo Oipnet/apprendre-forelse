@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.39.0 — 2026-11-16
+
 ### Ajouté
 
 - **Pratique** : filtre « À faire seulement » (`?restants=1`, en anglais « Not done yet only ») qui cache les exercices
