@@ -49,8 +49,11 @@ final readonly class SearchIndexing
         'app_sitemap',
     ];
 
-    /** Filtres de la liste de Pratique : la page filtrée se suit, mais ne s'indexe pas. */
-    public const array PRACTICE_FILTERS = ['framework', 'notion', 'nouveautes'];
+    /**
+     * Filtres, tri et pages de la liste de Pratique : la page filtrée, triée ou au-delà de la première se suit, mais ne
+     * s'indexe pas. Les exercices eux-mêmes sont tous dans le sitemap.
+     */
+    public const array PRACTICE_FILTERS = ['framework', 'notions', 'nouveautes', 'recherche', 'tri', 'page'];
 
     /** Filtre du catalogue des parcours : même règle. */
     public const array TRACK_FILTERS = ['framework'];

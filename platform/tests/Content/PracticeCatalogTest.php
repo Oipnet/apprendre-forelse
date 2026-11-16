@@ -25,7 +25,7 @@ final class PracticeCatalogTest extends TestCase
 {
     private const string ROOT = __DIR__.'/../../..';
 
-    private function catalog(string $today = '2026-09-12', bool $admin = false): PracticeCatalog
+    private function catalog(string $today = '2026-09-12', bool $admin = false, int $perPage = PracticeCatalog::PER_PAGE): PracticeCatalog
     {
         $content = new ContentRepository([__DIR__.'/../Fixtures/packs/pratique'], new EnvironmentRegistry(self::ROOT.'/environments'), new Version(self::ROOT.'/VERSION'));
         $security = $this->createStub(Security::class);
@@ -33,7 +33,7 @@ final class PracticeCatalogTest extends TestCase
 
         $clock = new MockClock($today.' 15:00');
 
-        return new PracticeCatalog(new PracticeVisibility($content, $security, $clock), $clock);
+        return new PracticeCatalog(new PracticeVisibility($content, $security, $clock), $clock, $perPage);
     }
 
     /** @return list<string> */
@@ -64,6 +64,40 @@ final class PracticeCatalogTest extends TestCase
         $this->assertSame(3, $listing->shown);
         $this->assertCount(3, $listing->all);
         $this->assertSame(2, $listing->newCount);
+    }
+
+    public function testLaListeSeDecoupeEnPages(): void
+    {
+        $catalog = $this->catalog(perPage: 2);
+
+        $first = $catalog->search(new PracticeFilter(), []);
+        $this->assertSame(['Une nouveauté récente', 'Un point précis'], self::titles($first));
+        $this->assertSame([1, 2], [$first->page, $first->pageCount]);
+        $this->assertSame(3, $first->shown, 'Le compte reste celui de toute la liste filtrée.');
+        $this->assertSame([1, 2], [$first->firstShown(), $first->lastShown()]);
+
+        $second = $catalog->search(new PracticeFilter(page: 2), []);
+        $this->assertSame(['Côté Laravel'], self::titles($second));
+        $this->assertSame(['Avant'], self::labels($second), 'La seconde page reprend l\'intertitre là où la première l\'a laissé.');
+        $this->assertSame([3, 3], [$second->firstShown(), $second->lastShown()]);
+        $this->assertTrue($second->hasPage());
+
+        $this->assertFalse($catalog->search(new PracticeFilter(page: 3), [])->hasPage());
+        $this->assertFalse($catalog->search(new PracticeFilter(page: 0), [])->hasPage());
+        $this->assertSame(['Côté Laravel'], self::titles($catalog->search(new PracticeFilter('laravel'), [])), 'Les filtres passent avant le découpage.');
+        $this->assertSame(1, $catalog->search(new PracticeFilter('laravel'), [])->pageCount);
+        $this->assertTrue($catalog->search(new PracticeFilter('cobol'), [])->hasPage(), 'Une liste vide a sa première page, qui dit qu\'il n\'y a rien.');
+    }
+
+    public function testLesNumerosDePageSautentLoinDeLaPageCourante(): void
+    {
+        $links = static fn (int $page, int $count) => new PracticeListing(new PracticeFilter(), [], [], $count * 10, [], 0, 0, $page, $count, 10)->pageLinks();
+
+        $this->assertSame([], $links(1, 1));
+        $this->assertSame([1, 2, 3, 4, 5], $links(3, 5));
+        $this->assertSame([1, 2, 3, null, 9], $links(1, 9));
+        $this->assertSame([1, null, 3, 4, 5, 6, 7, null, 9], $links(5, 9));
+        $this->assertSame([1, null, 7, 8, 9], $links(9, 9));
     }
 
     public function testLesFiltresSeCumulent(): void

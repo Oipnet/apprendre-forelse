@@ -32,6 +32,12 @@ final readonly class FrameworkProfile
     public const string GORAVEL_WASM = 'goravel-wasm';
 
     /**
+     * « versionPackage » d'un projet sans framework : la version qui fait foi pour « version: » est celle de PHP,
+     * déclarée par l'environnement (clé « php »), et non celle d'un paquet de composer.lock.
+     */
+    public const string PHP_VERSION = 'php';
+
+    /**
      * @param string                       $id              identifiant écrit dans environment.yaml (« symfony »)
      * @param string                       $label           nom affiché (« Symfony »)
      * @param int                          $order           rang dans les listes (le plus petit d'abord), comme « order: » d'un parcours
@@ -42,7 +48,7 @@ final readonly class FrameworkProfile
      *                                                      profils du moteur, un texte tel quel pour celui d'un paquet
      * @param string|TranslatableInterface $unpackLabel     étape de démarrage : « Décompression du projet Symfony »
      * @param string                       $testRunner      PHPUNIT ou VITEST : comment content:check et le navigateur notent
-     * @param string|null                  $versionPackage  paquet dont la version fait foi pour « version: » (null : pas de versions)
+     * @param string|null                  $versionPackage  paquet dont la version fait foi pour « version: » (null : pas de versions, PHP_VERSION : celle de PHP)
      * @param list<string>                 $projectDirs     dossiers du projet, visibles dans l'explorateur
      * @param list<string>                 $codeDirs        ce qui est « du code » pour la rédaction assistée (hors tests et assets)
      * @param list<string>                 $cacheDirs       caches à vider entre deux runs, côté serveur (content:check)

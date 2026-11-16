@@ -60,13 +60,18 @@ final class PracticeController extends AbstractController
         $user = $this->getUser();
         $progress = $user instanceof User ? $progressRepository->findPractice($user) : [];
         $listing = $catalog->search($filter, $progress);
-        $seo->index($listing->all);
+        // Une page après la dernière (ou la page 0) n'existe pas : un lien ancien ne mène pas à une liste vide.
+        if (!$listing->hasPage()) {
+            throw $this->createNotFoundException();
+        }
+        $seo->index($listing->all, $listing->filter);
         // L'élève d'une classe gratuite retrouve en tête les exercices que son formateur a choisis.
         $class = $user instanceof User && $user->getCohort()?->isFreeClass() ? $user->getCohort() : null;
 
         return $this->render('practice/index.html.twig', [
             'groups' => $listing->groups,
             'shown' => $listing->shown,
+            'pagination' => $listing,
             'frameworks' => array_intersect_key($this->frameworks->labels(), array_flip(array_map(static fn (Practice $p) => $p->framework, $listing->all))),
             'notionCounts' => $listing->notionCounts,
             'filters' => $listing->filter->toArray(),
