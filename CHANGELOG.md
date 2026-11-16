@@ -10,6 +10,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Mesure d'audience** : un admin connecté n'est plus mesuré. Ses pages ne portent pas la configuration du traceur
+  (ni page vue, ni événement), et le navigateur retient `umami.disabled` pour rester exclu après la déconnexion.
+  Le traceur n'est plus chargé du tout quand `umami.disabled` est posé.
 - **Pratique** : la liste se découpe en pages de 20 exercices (`/pratique?page=2`, `/en/practice?page=2`), avec des
   liens précédent, numéros et suivant qui gardent les filtres et le tri, et le rang affiché (« 21 à 40 »). Une page
   après la dernière renvoie une 404. Les pages 2 et suivantes sont leur propre canonical, en `noindex, follow`.

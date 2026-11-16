@@ -2,7 +2,9 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\User;
 use App\Tests\DatabaseTrait;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /** Mesure d'audience : la balise n'apparaît que sur une instance qui l'a configurée, et la page vie privée suit. */
@@ -34,6 +36,33 @@ final class AnalyticsTest extends WebTestCase
         // Le traceur est posé par l'entrée « mesure » (playground/src/mesure.ts), qui écarte les robots : un module,
         // donc différé, qui n'empêche pas l'affichage de la page.
         $this->assertCount(1, $crawler->filter('script[type="module"][src*="/build/"][src*="mesure"]'));
+    }
+
+    /**
+     * L'auteur du site ne compte pas ses propres visites : pour un admin connecté, pas de configuration du traceur ni
+     * d'événement annoncé, mais la balise qui fait poser umami.disabled à l'entrée « mesure » (playground/src/mesure.ts).
+     * Un apprenant connecté, lui, reste mesuré.
+     */
+    public function testUnAdminConnecteNEstPasMesure(): void
+    {
+        $client = self::clientAvecMesure();
+        $this->resetDatabase();
+        $admin = $this->createUser('admin@example.test', 'Admin');
+        $admin->setRoles([User::ROLE_ADMIN]);
+        static::getContainer()->get(EntityManagerInterface::class)->flush();
+        $client->loginUser($admin);
+
+        $crawler = $client->request('GET', '/');
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(0, $crawler->filter('meta[name="mesure-audience"]'));
+        $this->assertStringNotContainsString('data-website-id', (string) $client->getResponse()->getContent());
+        $this->assertSame('admin', $crawler->filter('meta[name="mesure-exclure"]')->attr('content'));
+        $this->assertCount(1, $crawler->filter('script[type="module"][src*="/build/"][src*="mesure"]'), 'L\'entrée « mesure » est là pour retenir ce navigateur.');
+
+        $client->loginUser($this->createUser());
+        $crawler = $client->request('GET', '/');
+        $this->assertCount(1, $crawler->filter('meta[name="mesure-audience"]'));
+        $this->assertCount(0, $crawler->filter('meta[name="mesure-exclure"]'));
     }
 
     /** L'inscription redirige : c'est la page suivante qui annonce « compte-cree », une seule fois. */

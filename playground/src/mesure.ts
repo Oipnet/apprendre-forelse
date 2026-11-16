@@ -25,6 +25,26 @@ export function mesurer(evenement: string, donnees?: Record<string, string | num
 	}
 }
 
+/** Clé d'Umami : tant qu'elle est posée dans le navigateur, son traceur n'envoie rien. */
+const DESACTIVE = 'umami.disabled';
+
+/**
+ * Le navigateur de l'auteur du site n'est pas mesuré. Une page vue par un admin connecté porte
+ * `<meta name="mesure-exclure">` (_head.html.twig) à la place de la configuration : on pose alors umami.disabled,
+ * pour que ce navigateur reste exclu après la déconnexion, sur les pages publiques. Le traceur n'est pas chargé non
+ * plus quand la clé est déjà là (posée ici ou à la main) : rien ne part, ni page vue ni événement.
+ */
+function exclu(doc: Document): boolean {
+	const fenetre = doc.defaultView ?? window;
+	try {
+		if (doc.querySelector('meta[name="mesure-exclure"]')) fenetre.localStorage.setItem(DESACTIVE, '1');
+		return null !== fenetre.localStorage.getItem(DESACTIVE);
+	} catch {
+		// Stockage refusé (navigation privée stricte, cookies bloqués) : seule la balise compte.
+		return null !== doc.querySelector('meta[name="mesure-exclure"]');
+	}
+}
+
 /** Les gestes d'un visiteur. Un robot qui affiche la page puis repart n'en fait aucun. */
 // Pas « scroll » : la page (éditeur, restauration de la position) peut défiler toute seule, sans visiteur.
 const GESTES = ['pointerdown', 'pointermove', 'touchstart', 'wheel', 'keydown'] as const;
@@ -43,6 +63,7 @@ const GESTES = ['pointerdown', 'pointermove', 'touchstart', 'wheel', 'keydown'] 
  * recopie telles quelles.
  */
 export function poserTraceur(doc: Document = document, nav: Navigator = navigator): HTMLScriptElement | null {
+	if (exclu(doc)) return null;
 	const config = doc.querySelector<HTMLMetaElement>('meta[name="mesure-audience"]');
 	const { src, ...attributs } = config?.dataset ?? {};
 	if (!src || nav.webdriver) return null;

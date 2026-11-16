@@ -10,6 +10,7 @@ afterEach(() => {
 	geste(); // Retire les écouteurs qu'un test aurait laissés, avant de vider la page.
 	document.head.innerHTML = '';
 	delete (window as { umami?: unknown }).umami;
+	localStorage.clear();
 });
 
 describe('poserTraceur', () => {
@@ -55,6 +56,32 @@ describe('poserTraceur', () => {
 			['exercice-ouvert', { exercice: 'x' }],
 			['tests-lances', undefined],
 		]);
+	});
+
+	it('ne mesure pas un admin connecté, et retient ce navigateur pour la suite', () => {
+		const envoyes: unknown[] = [];
+		(window as { umami?: unknown }).umami = undefined;
+		document.head.innerHTML = '<meta name="mesure-exclure" content="admin">';
+		expect(poserTraceur(document, navigateur(false))).toBeNull();
+		mesurer('exercice-ouvert', { exercice: 'x' });
+		geste();
+		expect(document.head.querySelector('script')).toBeNull();
+		expect(localStorage.getItem('umami.disabled')).toBe('1');
+		expect(envoyes).toEqual([]);
+
+		// Déconnecté, sur une page publique : toujours rien.
+		document.head.innerHTML = configuration;
+		expect(poserTraceur(document, navigateur(false))).toBeNull();
+		geste();
+		expect(document.head.querySelector('script')).toBeNull();
+	});
+
+	it('ne charge pas le traceur quand umami.disabled est déjà posé', () => {
+		localStorage.setItem('umami.disabled', '1');
+		document.head.innerHTML = configuration;
+		expect(poserTraceur(document, navigateur(false))).toBeNull();
+		geste();
+		expect(document.head.querySelector('script')).toBeNull();
 	});
 
 	it('ne fait rien sans mesure d\'audience configurée', () => {
