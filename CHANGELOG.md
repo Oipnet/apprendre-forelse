@@ -8,6 +8,17 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Pratique** : la liste se découpe en pages de 20 exercices (`/pratique?page=2`, `/en/practice?page=2`), avec des
+  liens précédent, numéros et suivant qui gardent les filtres et le tri, et le rang affiché (« 21 à 40 »). Une page
+  après la dernière renvoie une 404. Les pages 2 et suivantes sont leur propre canonical, en `noindex, follow`.
+
+### Corrigé
+
+- **SEO** : une liste de Pratique filtrée par notion (`notions[]=`), par recherche ou triée par titre restait
+  indexable (la règle attendait `notion`) ; elle passe en `noindex, follow` comme le filtre par framework.
+
 ## 3.37.0 — 2026-11-16
 
 ### Ajouté

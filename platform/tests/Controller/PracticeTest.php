@@ -3,6 +3,8 @@
 namespace App\Tests\Controller;
 
 use App\Content\ContentRepository;
+use App\Content\PracticeCatalog;
+use App\Content\PracticeVisibility;
 use App\Entity\User;
 use App\Repository\ExerciseProgressRepository;
 use App\Repository\FeedbackRepository;
@@ -10,7 +12,9 @@ use App\Service\ProgressService;
 use App\Tests\DatabaseTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * La Pratique : exercices hors parcours. Pack de test « pratique » (une nouveauté Symfony 8.1, un point précis
@@ -83,6 +87,34 @@ final class PracticeTest extends WebTestCase
         $this->assertCount(5, $titres('notions[]=Inconnue'), 'Une notion que le framework choisi ne connaît pas est oubliée, pas une erreur.');
         $this->assertSame([], $titres('framework=cobol'));
         $this->assertSelectorTextContains('main', 'Aucun exercice avec ces filtres');
+    }
+
+    /** Deux exercices par page pour les cinq du pack : trois pages, des liens qui gardent les filtres et le tri. */
+    public function testLaListeSeDecoupeEnPages(): void
+    {
+        static::getContainer()->set(PracticeCatalog::class, new PracticeCatalog(static::getContainer()->get(PracticeVisibility::class), static::getContainer()->get(ClockInterface::class), 2));
+        $titres = fn (Crawler $crawler) => $crawler->filter('.practice-list .title')->extract(['_text']);
+
+        $crawler = $this->client->request('GET', '/pratique');
+        $this->assertSame(['Lire un en-tête avec #[MapRequestHeader]', 'Une nouveauté récente'], $titres($crawler));
+        $this->assertSelectorTextContains('.pr-found', '1 à 2');
+        $this->assertSame(['/pratique?page=2', '/pratique?page=3', '/pratique?page=2'], $crawler->filter('.pr-pages a')->extract(['href']));
+        $this->assertSelectorTextSame('.pr-pages [aria-current="page"]', '1');
+
+        $crawler = $this->client->request('GET', '/pratique?page=3');
+        $this->assertSame(['Un paramètre de route avec Goravel'], $titres($crawler));
+        $this->assertSame('http://localhost/pratique?page=3', $crawler->filter('link[rel="canonical"]')->attr('href'), 'Une page suivante est son propre canonical.');
+        $this->assertSame('noindex, follow', $crawler->filter('meta[name="robots"]')->attr('content'));
+        $this->assertSame('/pratique?page=2', $crawler->filter('.pr-pages a[rel="prev"]')->attr('href'));
+        $this->assertSelectorNotExists('.pr-pages a[rel="next"]');
+
+        $crawler = $this->client->request('GET', '/pratique?tri=titre&framework=symfony&page=2');
+        $this->assertSame('/pratique?framework=symfony&tri=titre', $crawler->filter('.pr-pages a[rel="prev"]')->attr('href'), 'Les liens gardent les filtres et le tri.');
+        $this->assertSame('http://localhost/pratique', $crawler->filter('link[rel="canonical"]')->attr('href'), 'Filtrée, la liste a pour canonical la liste entière.');
+        $this->assertStringNotContainsString('page=', $crawler->filter('.pr-sorts a')->first()->attr('href'), 'Changer de tri repart de la première page.');
+
+        $this->client->request('GET', '/pratique?page=4');
+        $this->assertResponseStatusCodeSame(404);
     }
 
     /**
