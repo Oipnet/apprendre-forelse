@@ -58,7 +58,14 @@
    Le script vient du domaine du site, pas d'un tiers. Absent du bac à sable, qui n'hérite pas de ce gabarit.
    L'entrée « mesure » pose le traceur décrit ici, sauf pour un navigateur piloté par un robot (playground/src/mesure.ts).
    Sans le fragment (#…) des adresses : celui du bac à sable porte le code du visiteur, qui n'a rien à faire dans la mesure. #}
+{#- Un admin connecté n'est pas mesuré : pas de traceur, et l'entrée « mesure » pose umami.disabled dans ce
+   navigateur, pour qu'il ne soit plus compté même déconnecté. Sans effet sur le cache : une page avec un
+   utilisateur connecté (app.user, base.html.twig) est déjà privée. #}
+{%- if is_granted('ROLE_ADMIN') %}
+<meta name="mesure-exclure" content="admin">
+{%- else %}
 <meta name="mesure-audience" data-src="{{ analytics.scriptUrl }}" data-website-id="{{ analytics.websiteId }}" data-exclude-hash="true">
 {% for evenement in mesures %}<meta name="mesure-evenement" content="{{ evenement }}">{% endfor %}
+{%- endif %}
 {{ vite_entry_script_tags('mesure') }}
 {%- endif %}
