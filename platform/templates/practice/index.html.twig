@@ -131,7 +131,7 @@
 
                     <div class="pr-results">
                         <div class="pr-bar flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
-                            <p class="pr-found font-medium">{{ 'practice.index.trouves'|trans({n: shown}) }}{% if filters.framework %} · {{ frameworks[filters.framework] ?? filters.framework }}{% endif %}</p>
+                            <p class="pr-found font-medium">{{ 'practice.index.trouves'|trans({n: shown}) }}{% if pagination.pageCount > 1 %} <span class="pr-range font-normal text-ink-muted">· {{ 'practice.index.pagination.rang'|trans({debut: pagination.firstShown, fin: pagination.lastShown}) }}</span>{% endif %}{% if filters.framework %} · {{ frameworks[filters.framework] ?? filters.framework }}{% endif %}</p>
                             <p class="pr-sorts flex items-center gap-2 text-sm">
                                 <span class="text-ink-muted">{{ 'practice.index.trier'|trans }}</span>
                                 {% for id, label in {recent: 'practice.index.tri_recents'|trans, titre: 'practice.index.tri_titre'|trans} %}
@@ -157,6 +157,29 @@
                                 <a class="btn" href="{{ path('app_practice') }}">{{ 'practice.index.tout_afficher'|trans }}</a>
                             </div>
                         {% endfor %}
+
+                        {# Des liens, pas un formulaire : chaque page a son adresse, garde les filtres et le tri, et se
+                           suit sans JavaScript. La première page n'a pas de ?page=, le tri par défaut pas de ?tri=. #}
+                        {% if pagination.pageCount > 1 %}
+                            {% set pageQuery = filters|merge({tri: filters.tri == 'recent' ? null : filters.tri})|filter(v => v is not empty) %}
+                            <nav class="pr-pages mt-8 flex flex-wrap items-center justify-center gap-1.5 text-sm" aria-label="{{ 'practice.index.pagination.titre'|trans }}">
+                                {% if pagination.page > 1 %}
+                                    <a class="pr-page-prev pr-tab tag" href="{{ path('app_practice', pageQuery|merge({page: (pagination.page - 1) > 1 ? pagination.page - 1 : null})|filter(v => v is not null)) }}" rel="prev">{{ 'practice.index.pagination.precedente'|trans }}</a>
+                                {% endif %}
+                                {% for n in pagination.pageLinks %}
+                                    {% if n is null %}
+                                        <span class="pr-page-gap px-1 text-ink-muted" aria-hidden="true">…</span>
+                                    {% elseif n == pagination.page %}
+                                        <span class="pr-page pr-tab tag active border-accent text-ink" aria-current="page">{{ n }}</span>
+                                    {% else %}
+                                        <a class="pr-page pr-tab tag" href="{{ path('app_practice', pageQuery|merge({page: (n) > 1 ? n : null})|filter(v => v is not null)) }}" aria-label="{{ 'practice.index.pagination.page'|trans({n: n}) }}">{{ n }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if pagination.page < pagination.pageCount %}
+                                    <a class="pr-page-next pr-tab tag" href="{{ path('app_practice', pageQuery|merge({page: (pagination.page + 1) > 1 ? pagination.page + 1 : null})|filter(v => v is not null)) }}" rel="next">{{ 'practice.index.pagination.suivante'|trans }}</a>
+                                {% endif %}
+                            </nav>
+                        {% endif %}
 
                         {% if shown and not app.user %}
                             {# Sur une instance sur invitation, l'éditeur reste fermé aux visiteurs (TrackAccessChecker) :
