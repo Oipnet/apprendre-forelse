@@ -4,7 +4,7 @@ namespace App\Content;
 
 /**
  * Les filtres de la liste de Pratique, lus dans l'URL (#[MapQueryString]) : un framework, des notions cumulables, les
- * nouveautés seules, une recherche, un tri. Normalisés ici : le formulaire envoie un framework vide pour « Tous », et un
+ * nouveautés seules, les exercices pas encore réussis seuls (restants), une recherche, un tri. Normalisés ici : le formulaire envoie un framework vide pour « Tous », et un
  * tri inconnu retombe sur le plus récent.
  *
  * La page n'est pas un filtre : toArray() la laisse de côté, pour qu'un changement de tri ou de filtre reparte de la
@@ -29,6 +29,7 @@ final readonly class PracticeFilter
         ?string $recherche = null,
         ?string $tri = null,
         public int $page = 1,
+        public bool $restants = false,
     ) {
         $this->framework = '' !== $framework ? $framework : null;
         $this->notions = array_values(array_unique(array_filter((array) $notions, \is_string(...))));
@@ -44,12 +45,12 @@ final readonly class PracticeFilter
     #[\NoDiscard]
     public function withNotions(array $notions): self
     {
-        return new self($this->framework, $notions, $this->nouveautes, $this->recherche, $this->tri, $this->page);
+        return new self($this->framework, $notions, $this->nouveautes, $this->recherche, $this->tri, $this->page, $this->restants);
     }
 
-    /** @return array{framework: ?string, notions: list<string>, nouveautes: bool, recherche: string, tri: string} */
+    /** @return array{framework: ?string, notions: list<string>, nouveautes: bool, restants: bool, recherche: string, tri: string} */
     public function toArray(): array
     {
-        return ['framework' => $this->framework, 'notions' => $this->notions, 'nouveautes' => $this->nouveautes, 'recherche' => $this->recherche, 'tri' => $this->tri];
+        return ['framework' => $this->framework, 'notions' => $this->notions, 'nouveautes' => $this->nouveautes, 'restants' => $this->restants, 'recherche' => $this->recherche, 'tri' => $this->tri];
     }
 }

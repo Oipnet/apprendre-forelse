@@ -75,6 +75,9 @@ practice:
         framework: Framework
         nouveautes_seulement: Nouveautés seulement
         nouveautes_aide: Sorties dans les dernières versions
+        restants_seulement: À faire seulement
+        restants_aide: Ceux que vous n'avez pas encore réussis
+        restants_aide_visiteur: Ceux que vous n'avez pas encore réussis dans ce navigateur
         notions: Notions
         notions_retenues: "{n, plural, one {# retenue} other {# retenues}}"
         voir_autres: "Voir les {n} autres"
@@ -97,6 +100,7 @@ practice:
             cette_semaine: Cette semaine
             avant: Avant
         aucun_filtre: Aucun exercice avec ces filtres.
+        aucun_restant: "Plus rien à faire avec ces filtres : vous avez tout réussi."
         tout_afficher: Tout afficher
         inscription_invitation: "Cette plateforme est réservée à ses membres : <a rel=\"nofollow\" href=\"{inscription}\">créez votre compte</a> avec votre code d'invitation, ou <a href=\"{connexion}\">connectez-vous</a>."
         inscription: "Ces exercices s'écrivent sans compte : l'éditeur s'ouvre tout de suite. Le compte garde votre progression, ouvre le mentor et les retours — <a rel=\"nofollow\" href=\"{inscription}\">créez le vôtre</a> ou <a href=\"{connexion}\">connectez-vous</a>."

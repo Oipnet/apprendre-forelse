@@ -213,8 +213,51 @@ for (const form of document.querySelectorAll<HTMLFormElement>('form[data-auto-su
 	});
 }
 
+/**
+ * Les réussites d'un visiteur sans compte vivent dans son navigateur : on en recopie la liste dans un cookie, que le
+ * serveur lit pour marquer les exercices réussis et appliquer « À faire seulement » sur chaque page de la liste
+ * (App\Content\GuestPracticeProgress). Le formulaire porte ce que le serveur a lu : si le navigateur en sait plus et
+ * que le filtre est coché, la liste se recharge, une seule fois par état (un cookie refusé ne fait pas boucler).
+ */
+const COOKIE_REUSSIS = 'pratique_reussis';
+
+function reussitesVisiteur(form: HTMLFormElement) {
+	const lues = form.dataset.guestCompleted;
+	if (lues === undefined) return; // apprenant connecté : sa progression est sur le serveur
+	const ids = new Set<string>();
+	try {
+		for (let i = 0; i < localStorage.length; i++) {
+			const key = localStorage.key(i)!;
+			const id = key.startsWith(`${GUEST_PREFIX}${PRACTICE}/`) ? key.slice(`${GUEST_PREFIX}${PRACTICE}/`.length) : null;
+			if (!id || !/^[a-z0-9][a-z0-9-]{0,99}$/.test(id)) continue;
+			const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as { completed?: boolean } | null;
+			if (saved?.completed) ids.add(id);
+		}
+	} catch {
+		return; // stockage indisponible
+	}
+	const valeur = [...ids].sort().join('.');
+	const secure = location.protocol === 'https:' ? '; Secure' : '';
+	document.cookie = valeur
+		? `${COOKIE_REUSSIS}=${valeur}; path=/; max-age=31536000; SameSite=Lax${secure}`
+		: `${COOKIE_REUSSIS}=; path=/; max-age=0; SameSite=Lax${secure}`;
+
+	if (lues.split('.').filter(Boolean).sort().join('.') === valeur) return;
+	if (!form.querySelector<HTMLInputElement>('input[name="restants"]')?.checked) return;
+	try {
+		if (sessionStorage.getItem('pratique:reussis') === valeur) return;
+		sessionStorage.setItem('pratique:reussis', valeur);
+	} catch {
+		return;
+	}
+	location.reload();
+}
+
 const filtresPratique = document.querySelector<HTMLFormElement>('[data-practice-filters]');
-if (filtresPratique) filtresEnDirect(filtresPratique, 'pratique:recherche', { tri: 'recent' });
+if (filtresPratique) {
+	reussitesVisiteur(filtresPratique);
+	filtresEnDirect(filtresPratique, 'pratique:recherche', { tri: 'recent' });
+}
 
 const filtresAtelier = document.querySelector<HTMLFormElement>('[data-studio-filters]');
 if (filtresAtelier) filtresEnDirect(filtresAtelier, 'atelier:recherche');

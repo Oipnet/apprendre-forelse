@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use App\Content\ContentRepository;
+use App\Content\GuestPracticeProgress;
 use App\Content\PracticeCatalog;
 use App\Content\PracticeVisibility;
 use App\Entity\User;
@@ -12,6 +13,7 @@ use App\Service\ProgressService;
 use App\Tests\DatabaseTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Component\BrowserKit\Cookie;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -89,6 +91,48 @@ final class PracticeTest extends WebTestCase
         $this->assertSelectorTextContains('main', 'Aucun exercice avec ces filtres');
     }
 
+    /** « À faire seulement » : un apprenant connecté ne voit plus ce qu'il a réussi, et les pages gardent le filtre. */
+    public function testLeFiltreAFaireCacheLesExercicesReussis(): void
+    {
+        $user = $this->createUser();
+        $container = static::getContainer();
+        $container->get(ProgressService::class)->complete($user, $container->get(ContentRepository::class)->findPractice('point-precis')->exercise, 0);
+        $this->client->loginUser($user);
+        // Un cookie de visiteur ne compte pas pour un apprenant connecté : sa progression est sur le serveur.
+        $this->client->getCookieJar()->set(new Cookie(GuestPracticeProgress::COOKIE, 'cote-laravel'));
+
+        $crawler = $this->client->request('GET', '/pratique?restants=1');
+        $this->assertSame(['Lire un en-tête avec #[MapRequestHeader]', 'Une nouveauté récente', 'Côté Laravel', 'Un paramètre de route avec Goravel'], $crawler->filter('.practice-list .title')->extract(['_text']));
+        $this->assertCount(1, $crawler->filter('input[name="restants"]:checked'));
+        $this->assertSelectorTextContains('.pr-reset', 'Réinitialiser');
+        $this->assertNull($crawler->filter('[data-practice-filters]')->attr('data-guest-completed'), 'Rien à recopier pour un apprenant connecté.');
+        $this->assertSame('noindex, follow', $crawler->filter('meta[name="robots"]')->attr('content'));
+
+        $crawler = $this->client->request('GET', '/pratique?restants=1&framework=symfony&notions[]=Validator');
+        $this->assertSame([], $crawler->filter('.practice-list .title')->extract(['_text']));
+        $this->assertSelectorTextContains('main', 'Plus rien à faire avec ces filtres');
+    }
+
+    /** Sans compte, les réussites viennent du navigateur, recopiées par site.ts dans un cookie. */
+    public function testLeFiltreAFaireLitLesReussitesDuVisiteur(): void
+    {
+        $this->client->getCookieJar()->set(new Cookie(GuestPracticeProgress::COOKIE, 'point-precis.cote-laravel.<script>.inconnu'));
+
+        $crawler = $this->client->request('GET', '/pratique?restants=1');
+        $this->assertSame(['Lire un en-tête avec #[MapRequestHeader]', 'Une nouveauté récente', 'Un paramètre de route avec Goravel'], $crawler->filter('.practice-list .title')->extract(['_text']));
+        $this->assertSame('point-precis.cote-laravel.inconnu', $crawler->filter('[data-practice-filters]')->attr('data-guest-completed'), 'Le serveur dit ce qu\'il a lu ; un identifiant invalide est ignoré.');
+        $this->assertSelectorTextContains('main', 'pas encore réussis dans ce navigateur');
+
+        $crawler = $this->client->request('GET', '/pratique');
+        $this->assertSame('completed', $crawler->filter('.practice-list a[href="/pratique/point-precis"]')->closest('li')?->attr('data-state'), 'La liste marque aussi les réussites du visiteur.');
+        $this->assertSame('todo', $crawler->filter('.practice-list a[href="/pratique/nouveaute-recente"]')->closest('li')?->attr('data-state'));
+
+        $this->client->getCookieJar()->clear();
+        $crawler = $this->client->request('GET', '/pratique?restants=1');
+        $this->assertCount(5, $crawler->filter('.practice-list .title'), 'Sans cookie, rien n\'est réussi.');
+        $this->assertSame('', $crawler->filter('[data-practice-filters]')->attr('data-guest-completed'));
+    }
+
     /** Deux exercices par page pour les cinq du pack : trois pages, des liens qui gardent les filtres et le tri. */
     public function testLaListeSeDecoupeEnPages(): void
     {
@@ -112,6 +156,12 @@ final class PracticeTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/pratique?tri=titre&framework=symfony&page=2');
         $this->assertSame('/pratique?framework=symfony&tri=titre', $crawler->filter('.pr-pages a[rel="prev"]')->attr('href'), 'Les liens gardent les filtres et le tri.');
+
+        $this->client->getCookieJar()->set(new Cookie(GuestPracticeProgress::COOKIE, 'exemple-map-request-header'));
+        $crawler = $this->client->request('GET', '/pratique?restants=1&page=2');
+        $this->assertSame(['Côté Laravel', 'Un paramètre de route avec Goravel'], $titres($crawler), 'Les pages se comptent sur la liste filtrée.');
+        $this->assertSame('/pratique?restants=1', $crawler->filter('.pr-pages a[rel="prev"]')->attr('href'), 'Les liens gardent « À faire seulement ».');
+        $this->client->getCookieJar()->clear();
         $this->assertSame('http://localhost/pratique', $crawler->filter('link[rel="canonical"]')->attr('href'), 'Filtrée, la liste a pour canonical la liste entière.');
         $this->assertStringNotContainsString('page=', $crawler->filter('.pr-sorts a')->first()->attr('href'), 'Changer de tri repart de la première page.');
 

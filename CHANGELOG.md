@@ -8,6 +8,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Pratique** : filtre « À faire seulement » (`?restants=1`, en anglais « Not done yet only ») qui cache les exercices
+  déjà réussis, combinable avec les autres filtres et gardé par la pagination. Pour un apprenant connecté, il suit sa
+  progression ; pour un visiteur sans compte, ses réussites gardées dans le navigateur, que la page recopie dans un
+  cookie `pratique_reussis` (la liste les marque aussi « Réussi »). La politique de confidentialité le mentionne.
+
 ### Corrigé
 
 - **Aperçu** : après un déploiement qui modifie le Service Worker de l'aperçu (`preview-sw.js`), l'ancien servait encore
