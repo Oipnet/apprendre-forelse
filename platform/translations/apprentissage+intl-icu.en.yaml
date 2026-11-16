@@ -63,6 +63,12 @@ practice:
         appliquer: Apply filters
         reinitialiser: Reset filters
         trouves: "{n, plural, =0 {No exercise} one {# exercise} other {# exercises}}"
+        pagination:
+            titre: List pages
+            precedente: ← Previous
+            suivante: Next →
+            page: "Page {n}"
+            rang: "{debut} to {fin}"
         trier: "Sort:"
         tri_recents: Recent
         tri_titre: Title

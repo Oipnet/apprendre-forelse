@@ -8,6 +8,7 @@ use App\Content\Exercise;
 use App\Content\ExerciseStory;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\Practice;
+use App\Content\PracticeFilter;
 use App\Theme\Theme;
 use App\Seo\PageSeo;
 use App\Seo\SchemaOrg;
@@ -33,8 +34,14 @@ final readonly class PracticeSeo
     ) {
     }
 
-    /** @param list<Practice> $practices ceux que la liste montre sans filtre */
-    public function index(array $practices): void
+    /**
+     * La page 2 et les suivantes de la liste sans filtre sont leur propre canonical (pas la première page, dont elles
+     * ne répètent rien) ; elles restent hors de l'index, comme une liste filtrée (SearchIndexing::PRACTICE_FILTERS).
+     * Une liste filtrée a pour canonical la liste entière.
+     *
+     * @param list<Practice> $practices ceux que la liste montre sans filtre
+     */
+    public function index(array $practices, ?PracticeFilter $filter = null): void
     {
         $frameworks = array_map(fn (Practice $p) => $this->frameworks->labelOf($p->framework), $practices)
             |> array_unique(...)
@@ -53,14 +60,20 @@ final readonly class PracticeSeo
                 $this->trans('pratique.titre_court'),
             )
             ->setDescription($this->trans('pratique.description'))
-            ->setCanonical($url = $this->schema->url('app_practice'))
-            ->addStructuredData($this->schema->breadcrumb([[$this->trans('pratique.fil_ariane'), $url]]));
+            ->setCanonical($this->schema->url('app_practice', self::isUnfiltered($filter) && $filter->page > 1 ? ['page' => $filter->page] : []))
+            ->addStructuredData($this->schema->breadcrumb([[$this->trans('pratique.fil_ariane'), $this->schema->url('app_practice')]]));
         // La liste existe dans chaque langue où un exercice est traduit (hreflang).
         foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
             if ($locale !== $this->seo->getLanguage() && [] !== $this->content->practices($locale)) {
                 $this->seo->addAlternate($locale, $this->schema->url('app_practice', ['_locale' => $locale]));
             }
         }
+    }
+
+    /** Aucun filtre ni tri choisi : seule la page change. */
+    private static function isUnfiltered(?PracticeFilter $filter): bool
+    {
+        return null !== $filter && $filter->toArray() == new PracticeFilter()->toArray();
     }
 
     /**
