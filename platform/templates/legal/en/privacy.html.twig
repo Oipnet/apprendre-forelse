@@ -126,6 +126,7 @@
             <ul>
                 <li><strong>Session cookie</strong>: keeps you signed in from one page to the next, and protects forms against forged submissions. It disappears when you close the browser or sign out.</li>
                 <li><strong>Local storage (<span class="font-mono">localStorage</span>)</strong>: code written before an account was created, from the time when the first chapter could be played as a visitor, may remain in your browser. On your first sign-in, it is moved to your account and then deleted from the browser.</li>
+                <li><strong>Exercises solved without an account</strong>: on the Practice page, the list of exercises you have solved in this browser is copied into a cookie (<span class="font-mono">pratique_reussis</span>, one year), to mark those exercises and show the ones you still have to do. It only holds exercise names, and the site keeps none of it.</li>
                 <li><strong>Sandbox</strong>: the preview of your code is displayed from <span class="font-mono">{{ sandboxHost }}</span>, in an isolated page. This domain sets no cookies; it only keeps the technical files needed to run PHP in your browser.</li>
                 {%- if analytics.enabled %}
                 <li><strong>Audience measurement</strong>: to know how many people visit the site and where they come from,

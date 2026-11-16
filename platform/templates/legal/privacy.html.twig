@@ -126,6 +126,7 @@
             <ul>
                 <li><strong>Cookie de session</strong> : vous garde connecté d'une page à l'autre, et protège les formulaires contre les envois forgés. Il disparaît quand vous fermez le navigateur ou vous déconnectez.</li>
                 <li><strong>Stockage local (<span class="font-mono">localStorage</span>)</strong> : du code écrit avant la création d'un compte, du temps où le premier chapitre se jouait en visiteur, peut subsister dans votre navigateur. À votre première connexion, il est transféré sur votre compte puis effacé du navigateur.</li>
+                <li><strong>Exercices réussis sans compte</strong> : sur la page de la Pratique, la liste des exercices que vous avez réussis dans ce navigateur est recopiée dans un cookie (<span class="font-mono">pratique_reussis</span>, un an), pour marquer ces exercices et afficher ceux qu'il vous reste à faire. Il ne contient que des noms d'exercices, et le site n'en garde rien.</li>
                 <li><strong>Bac à sable</strong> : l'aperçu de votre code s'affiche depuis <span class="font-mono">{{ sandboxHost }}</span>, dans une page isolée. Ce domaine ne dépose aucun cookie ; il ne conserve que les fichiers techniques nécessaires à l'exécution de PHP dans votre navigateur.</li>
                 {%- if analytics.enabled %}
                 <li><strong>Mesure d'audience</strong> : pour savoir combien de personnes visitent le site et par où elles

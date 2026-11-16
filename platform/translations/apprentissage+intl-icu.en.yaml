@@ -56,6 +56,9 @@ practice:
         framework: Framework
         nouveautes_seulement: New features only
         nouveautes_aide: Released in the latest versions
+        restants_seulement: Not done yet only
+        restants_aide: The ones you haven't solved yet
+        restants_aide_visiteur: The ones you haven't solved yet in this browser
         notions: Topics
         notions_retenues: "{n} selected"
         voir_autres: "Show {n} more"
@@ -78,6 +81,7 @@ practice:
             cette_semaine: This week
             avant: Earlier
         aucun_filtre: No exercise matches these filters.
+        aucun_restant: "Nothing left to do with these filters: you've solved them all."
         tout_afficher: Show all
         inscription_invitation: "This platform is for its members only: <a rel=\"nofollow\" href=\"{inscription}\">create your account</a> with your invitation code, or <a href=\"{connexion}\">log in</a>."
         inscription: "No account needed for these exercises: the editor opens right away. An account keeps your progress and unlocks the mentor and feedback. <a rel=\"nofollow\" href=\"{inscription}\">Create yours</a> or <a href=\"{connexion}\">log in</a>."

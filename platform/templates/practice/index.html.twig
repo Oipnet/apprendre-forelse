@@ -3,8 +3,8 @@
 
 {% block body %}
     {% import 'practice/_card.html.twig' as ui %}
-    {% set hasFilters = filters.framework or filters.notions or filters.nouveautes or filters.recherche %}
-    {% set filterCount = (filters.framework ? 1 : 0) + filters.notions|length + (filters.nouveautes ? 1 : 0) + (filters.recherche ? 1 : 0) %}
+    {% set hasFilters = filters.framework or filters.notions or filters.nouveautes or filters.restants or filters.recherche %}
+    {% set filterCount = (filters.framework ? 1 : 0) + filters.notions|length + (filters.nouveautes ? 1 : 0) + (filters.restants ? 1 : 0) + (filters.recherche ? 1 : 0) %}
     <main class="pr">
         <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
             <div class="pr-hero flex flex-col gap-6 border-b border-line pb-8 md:flex-row md:justify-between">
@@ -48,9 +48,11 @@
                 <div class="pr-layout mt-8 grid gap-8 md:grid-cols-[16rem_1fr]">
                     {# Les filtres sont un formulaire GET : sans JavaScript, le bouton « Appliquer » les envoie ;
                        avec, site.ts le masque et chaque case soumet le formulaire toute seule. Le panneau se
-                       replie sous 900 px, où il passerait sinon avant les exercices. #}
+                       replie sous 900 px, où il passerait sinon avant les exercices.
+                       data-guest-completed : pour un visiteur sans compte, les réussites lues dans le cookie ; site.ts
+                       le met à jour d'après le navigateur (voir GuestPracticeProgress). #}
                     <aside class="pr-aside">
-                        <form class="pr-card rounded-lg border border-line bg-surface p-4 text-sm" method="get" action="{{ path('app_practice') }}" data-practice-filters>
+                        <form class="pr-card rounded-lg border border-line bg-surface p-4 text-sm" method="get" action="{{ path('app_practice') }}" data-practice-filters{% if guestCompleted is not null %} data-guest-completed="{{ guestCompleted|join('.') }}"{% endif %}>
                             <input type="hidden" name="tri" value="{{ filters.tri }}">
                             <details class="fold" data-fold open>
                                 <summary class="flex cursor-pointer list-none items-center gap-2 font-semibold">
@@ -85,6 +87,14 @@
                                         <span>
                                             <span class="pr-check-title block font-medium">{{ 'practice.index.nouveautes_seulement'|trans }}</span>
                                             <span class="pr-check-hint block text-ink-muted">{{ 'practice.index.nouveautes_aide'|trans }}</span>
+                                        </span>
+                                    </label>
+
+                                    <label class="pr-check flex cursor-pointer items-start gap-2">
+                                        <input class="mt-1 accent-accent" type="checkbox" name="restants" value="1"{{ filters.restants ? ' checked' }}>
+                                        <span>
+                                            <span class="pr-check-title block font-medium">{{ 'practice.index.restants_seulement'|trans }}</span>
+                                            <span class="pr-check-hint block text-ink-muted">{{ (app.user ? 'practice.index.restants_aide' : 'practice.index.restants_aide_visiteur')|trans }}</span>
                                         </span>
                                     </label>
 
@@ -153,7 +163,7 @@
                             </section>
                         {% else %}
                             <div class="pr-empty mt-6 space-y-3 text-center">
-                                <p>{{ 'practice.index.aucun_filtre'|trans }}</p>
+                                <p>{{ (filters.restants ? 'practice.index.aucun_restant' : 'practice.index.aucun_filtre')|trans }}</p>
                                 <a class="btn" href="{{ path('app_practice') }}">{{ 'practice.index.tout_afficher'|trans }}</a>
                             </div>
                         {% endfor %}

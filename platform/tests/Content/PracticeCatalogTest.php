@@ -52,7 +52,7 @@ final class PracticeCatalogTest extends TestCase
     {
         $filter = new PracticeFilter('', ['Validator', 'Validator', ['x']], true, '  mail ', 'inconnu');
 
-        $this->assertSame(['framework' => null, 'notions' => ['Validator'], 'nouveautes' => true, 'recherche' => 'mail', 'tri' => 'recent'], $filter->toArray());
+        $this->assertSame(['framework' => null, 'notions' => ['Validator'], 'nouveautes' => true, 'restants' => false, 'recherche' => 'mail', 'tri' => 'recent'], $filter->toArray());
         $this->assertSame(['Twig'], (new PracticeFilter(notions: 'Twig'))->notions, 'Une seule notion, sans crochets.');
     }
 

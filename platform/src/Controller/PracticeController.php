@@ -6,6 +6,7 @@ use App\Api\PlaygroundConfigFactory;
 use App\Cohort\FreeClasses;
 use App\Content\Exercise;
 use App\Content\Framework\FrameworkRegistry;
+use App\Content\GuestPracticeProgress;
 use App\Content\LessonRenderer;
 use App\Content\Practice;
 use App\Content\PracticeCatalog;
@@ -50,6 +51,7 @@ final class PracticeController extends AbstractController
     /** Les filtres tiennent dans l'URL (et donc fonctionnent sans JavaScript) : voir PracticeFilter. */
     #[Route(['fr' => '/pratique', 'en' => '/en/practice'], name: 'app_practice', methods: ['GET'])]
     public function index(
+        Request $request,
         ExerciseProgressRepository $progressRepository,
         PracticeVersionIndex $versions,
         PracticeCatalog $catalog,
@@ -59,7 +61,9 @@ final class PracticeController extends AbstractController
     ): Response {
         $user = $this->getUser();
         $progress = $user instanceof User ? $progressRepository->findPractice($user) : [];
-        $listing = $catalog->search($filter, $progress);
+        // Sans compte, les réussites sont dans le navigateur, que site.ts recopie dans un cookie (GuestPracticeProgress).
+        $guestCompleted = $user instanceof User ? [] : GuestPracticeProgress::completed($request);
+        $listing = $catalog->search($filter, $progress, $guestCompleted);
         // Une page après la dernière (ou la page 0) n'existe pas : un lien ancien ne mène pas à une liste vide.
         if (!$listing->hasPage()) {
             throw $this->createNotFoundException();
@@ -80,6 +84,8 @@ final class PracticeController extends AbstractController
             'total' => \count($listing->all),
             'newCount' => $listing->newCount,
             'completedCount' => $listing->completedCount,
+            // Ce que le serveur a lu dans le cookie : site.ts recharge la liste filtrée si le navigateur en sait plus.
+            'guestCompleted' => $user instanceof User ? null : $guestCompleted,
             'inviteOnly' => $this->inviteOnly,
             'class' => $class,
             'classItems' => array_map(static fn (Practice $p) => ['practice' => $p, 'state' => TrackProgress::stateFrom($progress[$p->exercise->id] ?? null)], null !== $class ? $freeClasses->practicesOf($class) : []),

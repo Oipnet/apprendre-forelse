@@ -3,6 +3,7 @@
 namespace App\Content;
 
 use App\Entity\ExerciseProgress;
+use App\Entity\ProgressStatus;
 use App\Service\TrackProgress;
 use Psr\Clock\ClockInterface;
 
@@ -25,10 +26,18 @@ final readonly class PracticeCatalog
     ) {
     }
 
-    /** @param array<string, ExerciseProgress> $progress la progression de Pratique de l'apprenant, par exercice */
-    public function search(PracticeFilter $filter, array $progress): PracticeListing
+    /**
+     * @param array<string, ExerciseProgress> $progress      la progression de Pratique de l'apprenant, par exercice
+     * @param list<string>                    $guestCompleted les exercices qu'un visiteur sans compte a réussis dans son navigateur
+     *                                                        (voir GuestPracticeProgress) ; vide pour un apprenant connecté
+     */
+    public function search(PracticeFilter $filter, array $progress, array $guestCompleted = []): PracticeListing
     {
         $all = $this->practices->practices();
+        $completed = array_flip([
+            ...array_keys(array_filter($progress, static fn (ExerciseProgress $p) => $p->isCompleted())),
+            ...$guestCompleted,
+        ]);
 
         // Les notions proposées et leur nombre se comptent sur le seul framework choisi : cocher une notion
         // ne doit pas faire fondre la liste des notions elle-même. Une notion que le framework choisi n'a pas
@@ -40,6 +49,7 @@ final readonly class PracticeCatalog
         $shown = array_filter(
             $ofFramework,
             static fn (Practice $p) => (!$filter->nouveautes || null !== $p->version)
+                && (!$filter->restants || !isset($completed[$p->exercise->id]))
                 && ([] === $filter->notions || [] !== array_intersect($filter->notions, $p->exercise->concepts))
                 && self::matches($p, $filter->recherche),
         );
@@ -51,7 +61,7 @@ final readonly class PracticeCatalog
         return new PracticeListing(
             filter: $filter,
             all: array_values($all),
-            groups: $this->group($page, $filter->tri, $progress),
+            groups: $this->group($page, $filter->tri, $progress, $completed),
             shown: \count($shown),
             notionCounts: $notionCounts,
             newCount: \count(array_filter($all, static fn (Practice $p) => null !== $p->version)),
@@ -126,10 +136,11 @@ final readonly class PracticeCatalog
      *
      * @param list<Practice>                  $practices
      * @param array<string, ExerciseProgress> $progress
+     * @param array<string, int>              $completed les exercices réussis, en clés (compte ou navigateur du visiteur)
      *
      * @return list<array{id: string, label: string, items: list<array{practice: Practice, state: string}>}>
      */
-    private function group(array $practices, string $tri, array $progress): array
+    private function group(array $practices, string $tri, array $progress, array $completed): array
     {
         $today = $this->clock->now()->setTime(0, 0);
         $recent = $today->modify(sprintf('-%d days', self::JOURS_RECENTS - 1));
@@ -143,7 +154,8 @@ final readonly class PracticeCatalog
             };
             $groups[$id][] = [
                 'practice' => $practice,
-                'state' => TrackProgress::stateFrom($progress[$practice->exercise->id] ?? null),
+                // Le visiteur sans compte n'a que ses réussites (pas d'« en cours ») : son navigateur ne dit rien d'autre.
+                'state' => isset($completed[$practice->exercise->id]) ? ProgressStatus::Completed->value : TrackProgress::stateFrom($progress[$practice->exercise->id] ?? null),
             ];
         }
 
