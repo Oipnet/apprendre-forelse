@@ -1,6 +1,9 @@
 vendor/easycorp/easyadmin-bundle/tests/*
 vendor/easycorp/easyadmin-bundle/doc/*
-vendor/easycorp/easyadmin-bundle/assets/*
+vendor/easycorp/easyadmin-bundle/assets/css/*
+vendor/easycorp/easyadmin-bundle/assets/js/*
+vendor/easycorp/easyadmin-bundle/assets/images/*
+vendor/easycorp/easyadmin-bundle/assets/types.d.ts
 vendor/easycorp/easyadmin-bundle/public/*
 vendor/symfony/intl/Resources/data/*/[a-dg-ln-qs-z]*
 vendor/symfony/intl/Resources/data/*/e[!n]*
