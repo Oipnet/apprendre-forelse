@@ -15,6 +15,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   progression ; pour un visiteur sans compte, ses réussites gardées dans le navigateur, que la page recopie dans un
   cookie `pratique_reussis` (la liste les marque aussi « Réussi »). La politique de confidentialité le mentionne.
 
+### Corrigé
+
+- **Aperçu** : après un déploiement qui modifie le Service Worker de l'aperçu (`preview-sw.js`), l'ancien servait encore
+  l'aperçu jusqu'au rechargement suivant (le JSON restait brut juste après la v3.38.0). Son adresse porte maintenant
+  l'empreinte du fichier : le nouveau s'installe dès l'ouverture de l'exercice.
+
 ## 3.38.0 — 2026-11-16
 
 ### Ajouté
