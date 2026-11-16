@@ -285,6 +285,10 @@ const NATIVES = [
     'Attribute', 'Override', 'SensitiveParameter', 'AllowDynamicProperties',
     // Divers
     'Random\\Randomizer', 'IntlDateFormatter', 'NumberFormatter', 'Collator',
+    // Extension URI (PHP 8.5, constructeurs en 8.6)
+    'Uri\\WhatWg\\Url', 'Uri\\WhatWg\\UrlBuilder', 'Uri\\WhatWg\\InvalidUrlException', 'Uri\\Rfc3986\\Uri', 'Uri\\Rfc3986\\UriBuilder',
+    // PHP 8.6 : absentes d'un PHP plus ancien, elles n'entrent dans l'index que s'il est construit avec PHP 8.6.
+    'Time\\Duration', 'Time\\TimeException', 'SortDirection', 'StreamErrorMode', 'StreamErrorCode', 'StreamError', 'StreamException',
 ];
 
 function summary(string|false $doc): string

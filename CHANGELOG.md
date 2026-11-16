@@ -15,6 +15,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   `php` de l'environnement, et les exercices parus d'une même version font leur page de nouveautés
   (`/pratique/nouveautes/php-8-6`), comme pour Symfony et Laravel. Les exercices PHP 8.6 ne passeront qu'une fois le
   playground (php-wasm) et l'image du serveur (FrankenPHP) en PHP 8.6.
+- **Complétion** : l'éditeur propose les classes de l'extension URI (`Uri\WhatWg\UrlBuilder`…) et, dans un index
+  construit avec PHP 8.6, ses nouveautés (`Time\Duration`, `SortDirection`, `StreamException`…).
 
 ## 3.36.2 — 2026-11-13
 
