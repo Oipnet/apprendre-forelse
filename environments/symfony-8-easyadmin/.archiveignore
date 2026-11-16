@@ -4,7 +4,11 @@ vendor/easycorp/easyadmin-bundle/assets/css/*
 vendor/easycorp/easyadmin-bundle/assets/js/*
 vendor/easycorp/easyadmin-bundle/assets/images/*
 vendor/easycorp/easyadmin-bundle/assets/types.d.ts
-vendor/easycorp/easyadmin-bundle/public/*
+vendor/easycorp/easyadmin-bundle/public/*.css
+vendor/easycorp/easyadmin-bundle/public/*.js
+vendor/easycorp/easyadmin-bundle/public/*.txt
+vendor/easycorp/easyadmin-bundle/public/fonts/*
+vendor/easycorp/easyadmin-bundle/public/entrypoints.json
 vendor/symfony/intl/Resources/data/*/[a-dg-ln-qs-z]*
 vendor/symfony/intl/Resources/data/*/e[!n]*
 vendor/symfony/intl/Resources/data/*/f[!r]*

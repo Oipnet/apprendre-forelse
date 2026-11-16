@@ -221,13 +221,17 @@ jobs:
         if: steps.cache-environnements.outputs.cache-hit != 'true'
         run: environments/bin/build-env.sh
 
-      # EasyAdmin lit ses icônes SVG dans vendor/…/assets/icons et sa mise en page en affiche une sur chaque page :
-      # une archive qui les perd (.archiveignore trop large) fait planter toute l'admin dans le playground.
-      - name: Icônes d'EasyAdmin dans l'archive
+      # EasyAdmin lit ses icônes SVG dans vendor/…/assets/icons (la mise en page en affiche une sur chaque page) et
+      # l'adresse de ses CSS et JS dans vendor/…/public/manifest.json (les fichiers portent une empreinte). Une archive
+      # qui les perd (.archiveignore trop large) fait planter l'admin, ou l'affiche sans style, dans le playground.
+      - name: Fichiers d'EasyAdmin lus à l'exécution dans l'archive
         run: |
           for env in symfony-8-easyadmin symfony-8-easyadmin-en; do
-            unzip -l "platform/public/envs/$env.zip" | grep 'vendor/easycorp/easyadmin-bundle/assets/icons/internal/user.svg' >/dev/null \
-              || { echo "::error file=environments/symfony-8-easyadmin/.archiveignore::$env.zip ne contient pas les icônes d'EasyAdmin (assets/icons)."; exit 1; }
+            contenu=$(unzip -l "platform/public/envs/$env.zip")
+            for fichier in assets/icons/internal/user.svg public/manifest.json; do
+              echo "$contenu" | grep "vendor/easycorp/easyadmin-bundle/$fichier" >/dev/null \
+                || { echo "::error file=environments/symfony-8-easyadmin/.archiveignore::$env.zip ne contient pas vendor/easycorp/easyadmin-bundle/$fichier."; exit 1; }
+            done
           done
 
       - name: Dépendances du simulateur Docker
