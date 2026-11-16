@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.37.0 — 2026-11-16
+
 ### Ajouté
 
 - **Pratique en PHP sans framework** : environnement `php-8-pratique` (le projet de `php-8`, plus PHPUnit ; tests cachés
