@@ -14,6 +14,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   liens précédent, numéros et suivant qui gardent les filtres et le tri, et le rang affiché (« 21 à 40 »). Une page
   après la dernière renvoie une 404. Les pages 2 et suivantes sont leur propre canonical, en `noindex, follow`.
 
+### Modifié
+
+- **Aperçu** : une page qui répond en JSON (`application/json`, `application/*+json`) s'affiche indentée et colorée,
+  case « Impression élégante » cochée par défaut pour revenir au texte brut. Le `fetch()` du code de la page reçoit
+  toujours la réponse telle quelle.
+
 ### Corrigé
 
 - **SEO** : une liste de Pratique filtrée par notion (`notions[]=`), par recherche ou triée par titre restait
