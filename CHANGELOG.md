@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.38.0 — 2026-11-16
+
 ### Ajouté
 
 - **Mesure d'audience** : un admin connecté n'est plus mesuré. Ses pages ne portent pas la configuration du traceur
