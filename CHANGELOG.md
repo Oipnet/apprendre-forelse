@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Éditeur du playground** : les fichiers `.go` (parcours « Découvrir Goravel ») sont colorés. Monaco chargeait PHP,
+  Twig, YAML, JS… mais pas Go, et `.go` retombait en texte brut, dans l'éditeur comme dans la comparaison avec la
+  solution.
+
 ## 3.39.1 — 2026-11-17
 
 ### Corrigé

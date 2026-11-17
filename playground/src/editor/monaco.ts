@@ -11,6 +11,7 @@ import 'monaco-editor/languages/definitions/ini/register';
 import 'monaco-editor/languages/definitions/html/register';
 import 'monaco-editor/languages/definitions/javascript/register';
 import 'monaco-editor/languages/definitions/typescript/register';
+import 'monaco-editor/languages/definitions/go/register';
 import editorWorkerUrl from 'monaco-editor/editor/editor.worker?worker&url';
 import { m } from '../i18n';
 import { createModuleWorker } from '@forelse/runtime-contract';
@@ -33,7 +34,7 @@ export function monacoTheme(): 'vs' | 'vs-dark' {
 // Le thème de Monaco est global : un seul écouteur suffit pour tous les éditeurs (fichiers, avant / après).
 lightScheme?.addEventListener('change', () => monaco.editor.setTheme(monacoTheme()));
 
-const LANGUAGES: Record<string, string> = { php: 'php', twig: 'twig', yaml: 'yaml', yml: 'yaml', css: 'css', md: 'markdown', sh: 'shell', ini: 'ini', html: 'html', vue: 'html', js: 'javascript', mjs: 'javascript', ts: 'typescript', json: 'json', conf: 'shell', dockerfile: 'dockerfile' };
+const LANGUAGES: Record<string, string> = { php: 'php', twig: 'twig', yaml: 'yaml', yml: 'yaml', css: 'css', md: 'markdown', sh: 'shell', ini: 'ini', html: 'html', vue: 'html', js: 'javascript', mjs: 'javascript', ts: 'typescript', json: 'json', conf: 'shell', dockerfile: 'dockerfile', go: 'go' };
 
 export function languageOf(path: string): string {
 	if (path.endsWith('.html.twig')) return 'twig';
