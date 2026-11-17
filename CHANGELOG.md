@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.39.1 — 2026-11-17
+
 ### Corrigé
 
 - **Environnements `symfony-8-easyadmin` et `symfony-8-easyadmin-en`** : l'admin s'affichait sans style dans le
