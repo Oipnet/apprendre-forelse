@@ -71,6 +71,23 @@ describe.skipIf(!existsSync(binary))('Goravel dans le navigateur', () => {
 		expect(text(page.body)).not.toContain('nil pointer');
 	});
 
+	it('donne les erreurs du framework (goravel/framework/errors) au code de l\'apprenant', async () => {
+		const p = project();
+		p.writeFile('routes/web.go', 'package routes\n\nimport (\n\t"github.com/goravel/framework/contracts/http"\n\t"github.com/goravel/framework/errors"\n\n\t"goravel/app/facades"\n)\n\nfunc Web() {\n\tfacades.Route().Get("/", func(ctx http.Context) http.Response {\n\t\treturn ctx.Response().Success().Json(http.Json{"introuvable": errors.Is(errors.OrmRecordNotFound, errors.OrmRecordNotFound), "message": errors.OrmRecordNotFound.Error()})\n\t})\n}\n');
+		const page = await p.request({ method: 'GET', url: '/preview/abc/', headers: {} });
+		expect(JSON.parse(text(page.body))).toEqual({ introuvable: true, message: 'record not found' });
+	});
+
+	it('dit quels paquets sont disponibles quand un import ne l\'est pas', async () => {
+		const p = project();
+		p.writeFile('routes/web.go', 'package routes\n\nimport (\n\t"github.com/goravel/framework/support/str"\n)\n\nfunc Web() {\n\t_ = str.Of("x")\n}\n');
+		const page = await p.request({ method: 'GET', url: '/preview/abc/', headers: {} });
+		expect(page.status).toBe(500);
+		expect(text(page.body)).toContain('routes/web.go:4:');
+		expect(text(page.body)).toContain('n&#39;est pas disponible dans le navigateur');
+		expect(text(page.body)).toContain('github.com/goravel/framework/errors');
+	});
+
 	it('lance les tests Go de l\'apprenant, et donne le message de l\'assertion qui échoue', async () => {
 		const p = project();
 		const ok = await p.runTests();

@@ -9,11 +9,88 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/traefik/yaegi/stdlib"
+
+	"goravel/yaegisym"
 )
+
+// available : les chemins d'import compilés dans le binaire (bibliothèque standard et paquets extraits par
+// gen-symbols.sh). Les clés de yaegi sont « chemin/nom » : on retire le nom.
+func available(symbols map[string]map[string]reflect.Value) map[string]bool {
+	paths := map[string]bool{}
+	for key := range symbols {
+		paths[path.Dir(key)] = true
+	}
+	return paths
+}
+
+// unavailableImport : le premier import qui ne vient ni de la bibliothèque standard, ni des paquets compilés, ni
+// des sources du projet. yaegi le signale (« unable to find source related to »), mais sans dire quoi importer à
+// la place : on donne la liste des paquets du framework disponibles.
+func unavailableImport() error {
+	std, extracted := available(stdlib.Symbols), available(yaegisym.Symbols)
+	var err error
+	walkSources(func(p string) bool {
+		fset := token.NewFileSet()
+		f, perr := parser.ParseFile(fset, p, nil, parser.ImportsOnly)
+		if perr != nil {
+			return true // une erreur de syntaxe : yaegi la signale lui-même
+		}
+		for _, spec := range f.Imports {
+			imp, _ := strconv.Unquote(spec.Path.Value)
+			if std[imp] || extracted[imp] {
+				continue
+			}
+			if rest, ok := strings.CutPrefix(imp, Module+"/"); ok {
+				if info, serr := os.Stat(filepath.Join(Root, rest)); serr == nil && info.IsDir() {
+					continue
+				}
+			}
+			list := make([]string, 0, len(extracted))
+			for e := range extracted {
+				if !strings.HasPrefix(e, Module+"/") {
+					list = append(list, e)
+				}
+			}
+			sort.Strings(list)
+			pos := fset.Position(spec.Pos())
+			err = Clean(fmt.Errorf("%s:%d:%d: le paquet %q n'est pas disponible dans le navigateur. Paquets disponibles, en plus de la bibliothèque standard, de goravel/app/facades, goravel/tests et des dossiers du projet : %s",
+				filepath.ToSlash(pos.Filename), pos.Line, pos.Column, imp, strings.Join(list, ", ")))
+			return false
+		}
+		return true
+	})
+	return err
+}
+
+// walkSources : chaque fichier .go du projet, dans l'ordre des chemins, tant que fn rend true.
+func walkSources(fn func(path string) bool) {
+	var paths []string
+	_ = filepath.WalkDir(Root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() && p != Root && (d.Name() == "storage" || d.Name() == "vendor" || strings.HasPrefix(d.Name(), ".")) {
+			return filepath.SkipDir
+		}
+		if !d.IsDir() && strings.HasSuffix(d.Name(), ".go") {
+			paths = append(paths, p)
+		}
+		return nil
+	})
+	sort.Strings(paths)
+	for _, p := range paths {
+		if !fn(p) {
+			return
+		}
+	}
+}
 
 // missingImport : le premier `paquet.Nom` dont le paquet n'est pas importé, dans les sources de l'apprenant.
 //
@@ -21,6 +98,9 @@ import (
 // `func(router route.Router)`, il panique avec un « nil pointer dereference » sans fichier ni ligne. On cherche
 // donc ce cas avant de lui passer le code, pour rendre le message de `go build`.
 func missingImport() error {
+	if err := unavailableImport(); err != nil {
+		return err
+	}
 	byDir := map[string][]string{}
 	_ = filepath.WalkDir(Root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
