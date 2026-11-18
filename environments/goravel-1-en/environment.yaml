@@ -1,0 +1,8 @@
+# La version anglaise de goravel-1, utilisée par les traductions anglaises de ses exercices (le moteur choisit
+# <environnement>-<langue> quand il existe). Il prolonge goravel-1 et ne remplace que ce qui parle à l'apprenant :
+# le texte de la page d'accueil, le message de la route d'exemple, son chemin et les noms des tests. Les
+# identifiants (AccueilController, Bonjour, {nom}) restent ceux du squelette français, comme dans les autres
+# parcours traduits : un fichier traduit remplace son original, il ne peut pas en changer le nom.
+id: goravel-1-en
+extends: goravel-1
+title: Goravel 1.18 (English) — routes, controllers, SQLite, Go tests

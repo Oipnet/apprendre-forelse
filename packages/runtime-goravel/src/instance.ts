@@ -10,6 +10,7 @@
  */
 import './wasm_exec.js';
 import { MemFS, normalize } from './memfs.ts';
+import { catalogue } from './i18n/index.ts';
 
 /** La racine du projet : GOPATH/src/goravel (voir go/learner/learner.go). */
 export const ROOT = '/go/src/goravel';
@@ -136,5 +137,5 @@ async function launch(module: WebAssembly.Module, fs: MemFS, mode: 'serve' | 'te
 	} finally {
 		delete g[key];
 	}
-	host.fail('le programme Go s\'est arrêté sans répondre');
+	host.fail(catalogue(env.FORELSE_LANG).boot.stoppedWithoutAnswer);
 }

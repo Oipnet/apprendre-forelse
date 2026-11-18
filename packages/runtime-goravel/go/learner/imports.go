@@ -60,7 +60,8 @@ func unavailableImport() error {
 			}
 			sort.Strings(list)
 			pos := fset.Position(spec.Pos())
-			err = Clean(fmt.Errorf("%s:%d:%d: le paquet %q n'est pas disponible dans le navigateur. Paquets disponibles, en plus de la bibliothèque standard, de goravel/app/facades, goravel/tests et des dossiers du projet : %s",
+			err = Clean(fmt.Errorf(T("%s:%d:%d: le paquet %q n'est pas disponible dans le navigateur. Paquets disponibles, en plus de la bibliothèque standard, de goravel/app/facades, goravel/tests et des dossiers du projet : %s",
+				"%s:%d:%d: package %q is not available in the browser. Available packages, besides the standard library, goravel/app/facades, goravel/tests and the project's folders: %s"),
 				filepath.ToSlash(pos.Filename), pos.Line, pos.Column, imp, strings.Join(list, ", ")))
 			return false
 		}
@@ -205,7 +206,8 @@ func missingImportIn(paths []string) error {
 		})
 		if found != nil {
 			pos := fset.Position(found.Pos())
-			return Clean(fmt.Errorf("%s:%d:%d: undefined: %s (le paquet %s n'est pas importé : ajoutez son chemin dans import ( … ), en haut du fichier)",
+			return Clean(fmt.Errorf(T("%s:%d:%d: undefined: %s (le paquet %s n'est pas importé : ajoutez son chemin dans import ( … ), en haut du fichier)",
+				"%s:%d:%d: undefined: %s (package %s is not imported: add its path to import ( … ), at the top of the file)"),
 				filepath.ToSlash(pos.Filename), pos.Line, pos.Column, found.Name, found.Name))
 		}
 	}

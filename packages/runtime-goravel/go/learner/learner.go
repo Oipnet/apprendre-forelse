@@ -67,7 +67,7 @@ func (r *Interpreter) Routes() (err error) {
 		}
 		f, ok := v.Interface().(func())
 		if !ok {
-			return fmt.Errorf("routes.%s doit être une fonction sans argument : func %s()", name, name)
+			return fmt.Errorf(T("routes.%s doit être une fonction sans argument : func %s()", "routes.%s must be a function without arguments: func %s()"), name, name)
 		}
 		f()
 	}
