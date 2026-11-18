@@ -54,6 +54,9 @@ func (r *Interpreter) Routes() (err error) {
 	if _, err := os.Stat(filepath.Join(Root, "routes")); err != nil {
 		return nil
 	}
+	if err := missingImport(); err != nil {
+		return err
+	}
 	if _, err := r.i.Eval(`import "goravel/routes"`); err != nil {
 		return Clean(err)
 	}
@@ -108,6 +111,9 @@ func (r *Interpreter) Tests(dir string) (tests []Test, err error) {
 	path := Module + "/" + dir
 	if dir == "." {
 		path = Module
+	}
+	if err := missingImport(); err != nil {
+		return nil, err
 	}
 	if err := r.i.EvalTest(path); err != nil {
 		return nil, Clean(err)
