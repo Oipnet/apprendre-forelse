@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.40.0 — 2026-11-18
+
 ### Ajouté
 
 - **Éditeur du playground** : les fichiers `.go` (parcours « Découvrir Goravel ») sont colorés. Monaco chargeait PHP,
