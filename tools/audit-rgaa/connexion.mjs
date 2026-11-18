@@ -11,13 +11,15 @@ if (!['apprenant', 'chef'].includes(role)) {
   console.error('Usage : node connexion.mjs apprenant|chef');
   process.exit(1);
 }
-const { base } = JSON.parse(readFileSync(new URL('./pages.json', import.meta.url)));
+const { base, baseConnectee } = JSON.parse(readFileSync(new URL('./pages.json', import.meta.url)));
 mkdirSync(new URL('./.auth/', import.meta.url), { recursive: true });
 
 const browser = await chromium.launch({ headless: false });
-const context = await browser.newContext({ locale: 'fr-FR' });
+// Préprod protégée par basic auth : PREPROD_USER=forelse PREPROD_MDP=… node connexion.mjs apprenant
+const httpCredentials = process.env.PREPROD_USER ? { username: process.env.PREPROD_USER, password: process.env.PREPROD_MDP || '' } : undefined;
+const context = await browser.newContext({ locale: 'fr-FR', httpCredentials });
 const page = await context.newPage();
-await page.goto(`${base}/connexion`);
+await page.goto(`${baseConnectee || base}/connexion`);
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 await rl.question(`Connecte-toi avec le compte « ${role} » dans la fenêtre, puis appuie sur Entrée ici… `);
 rl.close();

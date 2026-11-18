@@ -1,5 +1,7 @@
 {
   "base": "https://apprendre.forelse.fr",
+  "baseConnectee": "https://preprod.forelse.fr",
+  "noteConnectee": "Pages avec role : auditées en préprod (choix d'Arnaud du 18/11), basic auth via PREPROD_USER et PREPROD_MDP.",
   "pages": [
     { "id": "P01", "titre": "Accueil", "url": "/", "role": null },
     { "id": "P02", "titre": "Contact", "url": "/contact", "role": null },

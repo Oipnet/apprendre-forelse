@@ -14,6 +14,10 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) =>
 const ici = new URL('.', import.meta.url).pathname;
 const conf = JSON.parse(readFileSync(join(ici, 'pages.json')));
 const base = (args.base || conf.base).replace(/\/$/, '');
+// Pages connectées : préprod, protégée par basic auth (identifiants en variables d'environnement, jamais dans un fichier).
+const baseConnectee = (args['base-connectee'] || conf.baseConnectee || base).replace(/\/$/, '');
+const identifiants = process.env.PREPROD_USER ? { username: process.env.PREPROD_USER, password: process.env.PREPROD_MDP || '' } : undefined;
+const racine = (p) => (p.role ? baseConnectee : base);
 const filtre = args.pages ? String(args.pages).split(',') : null;
 const pages = conf.pages.filter((p) => (filtre ? filtre.includes(p.id) : !p.inactif));
 const moteur = { chromium, firefox, webkit }[args.navigateur || 'chromium'];
@@ -58,7 +62,7 @@ const slug = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,
 
 async function ouvrir(context, p) {
   const page = await context.newPage();
-  const rep = await page.goto(base + p.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  const rep = await page.goto(racine(p) + p.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => {});
   if (p.attente) await page.waitForTimeout(p.attente);
   return { page, statut: rep?.status() };
@@ -243,10 +247,10 @@ for (const p of pages) {
   const etat = p.role ? join(ici, '.auth', `${p.role}.json`) : undefined;
   if (etat && !existsSync(etat)) { console.warn(`${p.id} ignorée : lancer d'abord « node connexion.mjs ${p.role} »`); continue; }
   const dossier = join(sortie, p.id); mkdirSync(dossier, { recursive: true });
-  const ligne = { id: p.id, titre: p.titre, url: base + p.url, affichages: {} };
+  const ligne = { id: p.id, titre: p.titre, url: racine(p) + p.url, affichages: {} };
   console.log(`${p.id} ${p.titre}…`);
   for (const [nom, opts] of Object.entries(AFFICHAGES)) {
-    const context = await browser.newContext({ ...opts, locale: 'fr-FR', storageState: etat, reducedMotion: 'no-preference' });
+    const context = await browser.newContext({ ...opts, locale: 'fr-FR', storageState: etat, reducedMotion: 'no-preference', httpCredentials: p.role ? identifiants : undefined });
     try {
       const { page, statut } = await ouvrir(context, p);
       await page.screenshot({ path: join(captures, `${p.id}-apercu-${nom}.png`), fullPage: nom !== 'reflow320' });
@@ -271,7 +275,7 @@ for (const p of pages) {
 await browser.close();
 
 // Résumé lisible.
-const md = [`# Tests automatisés RGAA — ${horodatage}`, '', `Base : ${base} · navigateur : ${args.navigateur || 'chromium'} · axe-core via @axe-core/playwright (WCAG 2.1 A/AA + bonnes pratiques).`, '',
+const md = [`# Tests automatisés RGAA — ${horodatage}`, '', `Base : ${base} (pages connectées : ${baseConnectee}) · navigateur : ${args.navigateur || 'chromium'} · axe-core via @axe-core/playwright (WCAG 2.1 A/AA + bonnes pratiques).`, '',
   '> Indices automatiques à qualifier : aucun critère ne peut être déclaré conforme sur cette seule base.', ''];
 for (const l of bilan) {
   md.push(`## ${l.id} — ${l.titre}`, '', l.url, '');

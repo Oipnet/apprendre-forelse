@@ -8,10 +8,17 @@ Scripts Playwright + axe-core pour l'étape 2 de l'audit RGAA 4.1.2 (échantillo
     npm install
     npx playwright install chromium firefox webkit
 
-## Comptes connectés (P10, P12, P13)
+## Comptes connectés (P10, P12, P13) — en préprod
 
+Les pages connectées sont auditées sur https://preprod.forelse.fr (choix d'Arnaud), protégée par basic auth.
+Les identifiants passent par l'environnement, jamais par un fichier :
+
+    export PREPROD_USER=forelse PREPROD_MDP='…'
     node connexion.mjs apprenant   # se connecter à la main, puis Entrée
     node connexion.mjs chef
+
+Comptes à créer en préprod par l'interface : un chef (inscription puis /ecoles-et-entreprises/classe-gratuite),
+puis un apprenant inscrit avec le lien d'invitation /inscription?code=… de la classe. Les courriels arrivent dans mailpit.
 
 Les sessions vont dans `.auth/` (jamais committé, aucun mot de passe stocké). Renseigner l'id de la cohorte de test dans `pages.json` (P13).
 
