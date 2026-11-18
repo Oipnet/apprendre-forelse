@@ -13,6 +13,9 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Éditeur du playground** : les fichiers `.go` (parcours « Découvrir Goravel ») sont colorés. Monaco chargeait PHP,
   Twig, YAML, JS… mais pas Go, et `.go` retombait en texte brut, dans l'éditeur comme dans la comparaison avec la
   solution.
+- **Goravel, `github.com/goravel/framework/errors`** : le code de l'apprenant peut l'importer (`errors.Is(err,
+  errors.OrmRecordNotFound)` après un `FirstOrFail` de l'ORM). Un import qu'aucun paquet du navigateur ne fournit
+  affiche maintenant la liste des paquets disponibles, au lieu de « unable to find source related to ».
 
 ### Corrigé
 

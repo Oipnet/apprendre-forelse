@@ -16,6 +16,7 @@ PAQUETS=(
 	github.com/goravel/framework/contracts/database/orm
 	github.com/goravel/framework/contracts/testing/http
 	github.com/goravel/framework/database/orm
+	github.com/goravel/framework/errors
 	github.com/stretchr/testify/assert
 	goravel/app/facades
 	goravel/tests
