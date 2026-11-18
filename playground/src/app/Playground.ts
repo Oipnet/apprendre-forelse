@@ -35,6 +35,7 @@ import { SuccessPanel } from './SuccessPanel';
 import { TestResultsView } from './TestResultsView';
 import { ApiKeyPanel, redactSecrets } from './api-key';
 import { bindRunButton } from './run';
+import { ScratchOfferBanner } from './scratch-offer';
 import { statusBar } from './status';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 
@@ -176,6 +177,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	};
 	// L'onglet « Base », créé plus bas : chaque réponse de l'aperçu peut avoir changé la base.
 	let base: DatabasePanel | null = null;
+	// L'encart du parcours, sous l'aperçu du bac à sable : il compte les exécutions réussies (scratch-offer.ts).
+	const offre = scratch && config.scratch?.offer ? new ScratchOfferBanner($('.pane-preview'), config.scratch.offer, mesure) : null;
 	const bridge = new PreviewBridge(runtime, $<HTMLIFrameElement>('#frame'), config.sandboxUrl, {
 		onConsole: versLaConsole,
 		onNavigated: (path) => {
@@ -204,6 +207,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			$('#requestlog').innerHTML = `<span class="method">${escapeHtml(request.method)}</span> ${escapeHtml(path)} <span class="code c${String(res.status)[0]}">${res.status}</span> · ${Math.round(res.durationMs)} ms`;
 			if (!metrics.firstRequest) mark('firstRequest');
 			base?.changed();
+			offre?.response(res.status);
 			// Une réponse en erreur : le mentor peut l'expliquer (si l'apprenant a un compte).
 			mentor.setError('preview', res.status >= 500 ? sansCle(`${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, res.headers['content-type']?.[0])}`) : null);
 		},
@@ -466,7 +470,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		files.onRestore = (etape) => void steps.goTo(etape ?? 0);
 	}
 	const runButton = $<HTMLButtonElement>('#run');
-	bindRunButton(runButton, { exercise, scratch, runtime, session, results, success, folding, status, reload, showWorkpane, metrics, mesure, steps });
+	bindRunButton(runButton, { exercise, scratch, runtime, session, results, success, folding, status, reload, showWorkpane, metrics, mesure, steps, onScratchRun: () => offre?.ran() });
 
 	// --- Indices et solution -------------------------------------------------------------
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });
