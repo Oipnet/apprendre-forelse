@@ -48,3 +48,14 @@ se testent composant par composant (étape 3 pour l'éditeur, fiches manuelles p
 Pour chaque page : titre annoncé, liste des titres, liens à intitulé ambigu, suite de tabulation avec l'annonce
 calculée de chaque élément (rôle, nom, état, zone, visible ou non), et l'arbre d'accessibilité complet (ariaSnapshot
 de Playwright). Sortie : `resultats/restitution-<horodatage>/`. À comparer à l'écoute avec `../tests-manuels-court.md`.
+
+## Restitution réelle par VoiceOver (Guidepup, macOS seulement)
+
+    npx @guidepup/setup@0.29.3      # une fois : autorise le pilotage de VoiceOver
+    node voiceover.mjs --pages P11  # ne plus toucher au Mac pendant le passage
+
+Prérequis et détails en tête de `voiceover.mjs` (réglage Tab de Safari, autorisations du Terminal). Le script ouvre
+chaque page publique dans Safari, démarre VoiceOver et note ce qu'il dit : arrivée, titres (VO + Cmd + H), suite de Tab.
+Sur P11, il entre dans l'éditeur, lit trois lignes, teste Tab, la sortie par Ctrl + M puis Ctrl + Maj + M, et enregistre
+les annonces des 30 s qui suivent le lancement des tests. Sortie : `resultats/voiceover-<horodatage>/`.
+Non testé depuis le cloud (pas de macOS) : premier passage à surveiller.
