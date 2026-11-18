@@ -39,3 +39,12 @@ Sortie : `resultats/<horodatage>/` avec `resume.md`, un dossier JSON par page et
 
 Ce sont des indices : un critère n'est jamais déclaré conforme sur cette seule base. Entrée, Échap et flèches
 se testent composant par composant (étape 3 pour l'éditeur, fiches manuelles pour le reste).
+
+## Ce que devrait annoncer un lecteur d'écran (pré-remplissage des fiches manuelles)
+
+    node restitution.mjs                 # même échantillon, mêmes sessions .auth/
+    node restitution.mjs --pages P11
+
+Pour chaque page : titre annoncé, liste des titres, liens à intitulé ambigu, suite de tabulation avec l'annonce
+calculée de chaque élément (rôle, nom, état, zone, visible ou non), et l'arbre d'accessibilité complet (ariaSnapshot
+de Playwright). Sortie : `resultats/restitution-<horodatage>/`. À comparer à l'écoute avec `../tests-manuels-court.md`.
