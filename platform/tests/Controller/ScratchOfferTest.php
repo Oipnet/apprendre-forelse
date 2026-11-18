@@ -56,8 +56,8 @@ final class ScratchOfferTest extends WebTestCase
         $this->assertNotNull($offer);
         $this->assertSame('payant', $offer['track']);
         $this->assertSame('/parcours/payant', $offer['url']);
-        $this->assertSame('Vous aimez essayer du PHP ici ?', $offer['title']);
-        $this->assertStringContainsString('« Parcours payant »', $offer['text']);
+        $this->assertSame("Vous aimez essayer du PHP ici\u{a0}?", $offer['title'], 'Insécable avant le point d\'interrogation.');
+        $this->assertStringContainsString("«\u{a0}Parcours payant\u{a0}»", $offer['text']);
         $this->assertMatchesRegularExpression('/^19,00\s€ TTC, accès à vie, premier chapitre gratuit avec un compte\.$/u', $offer['price'], 'Le prix fondateur, celui que le visiteur paierait.');
         $this->assertSame('Voir le parcours', $offer['cta']);
     }

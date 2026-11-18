@@ -341,8 +341,8 @@ bac_a_sable:
     pratique: "Des exercices guidés, corrigés par des tests : la Pratique"
     # L'encart du parcours sous l'aperçu, après quelques exécutions réussies (App\Scratch\ScratchOfferFactory).
     offre:
-        titre: "Vous aimez essayer du {framework} ici ?"
-        texte: "Le parcours « {parcours} » vous guide pas à pas, avec des exercices corrigés par des tests, dans ce même éditeur."
+        titre: "Vous aimez essayer du {framework} ici\u00A0?"
+        texte: "Le parcours «\u00A0{parcours}\u00A0» vous guide pas à pas, avec des exercices corrigés par des tests automatiques, dans ce même éditeur."
         prix: "{prix} TTC, accès à vie, premier chapitre gratuit avec un compte."
         voir: Voir le parcours
         fermer: Ne plus afficher
