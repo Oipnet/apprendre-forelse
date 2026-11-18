@@ -28,6 +28,8 @@ export interface RunButtonDeps {
 	mesure: Record<string, string>;
 	/** Exercice à étapes : la notation et la réussite sont celles de l'étape en cours. */
 	steps?: Pick<StepsController, 'grading' | 'current' | 'isLast' | 'passed' | 'failed'> | null;
+	/** Bac à sable : prévenu de chaque exécution (l'encart du parcours compte celles qui réussissent). */
+	onScratchRun?: () => void;
 }
 
 /** Branche le bouton « Exécuter » : les tests de l'exercice, ou l'aperçu rechargé dans le bac à sable. */
@@ -36,6 +38,7 @@ export function bindRunButton(button: HTMLButtonElement, deps: RunButtonDeps): v
 	if (deps.scratch) {
 		button.addEventListener('click', async () => {
 			await session.flush().catch(() => false);
+			deps.onScratchRun?.();
 			deps.reload();
 			mesurer('bac-a-sable-execute', deps.mesure);
 			status(m.scratch.ran, 'ok');

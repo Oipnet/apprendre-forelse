@@ -670,6 +670,19 @@ final class ContentRepositoryTest extends TestCase
         $this->repository($this->tmp)->tracks();
     }
 
+    public function testLeBacASableOuSeProposeLeParcoursEstLu(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->tmp.'/p/pack.yaml', "id: p\ntitle: P\ntracks: [t]");
+        $filesystem->dumpFile($this->tmp.'/p/tracks/t/track.yaml', "id: t\ntitle: T\nenvironment: symfony-8\nscratch: php\nchapters:\n  - {id: c, title: C, exercises: []}");
+        $this->assertSame(['php'], $this->repository($this->tmp)->findTrack('t')?->scratch, 'Un seul bac à sable peut s\'écrire sans liste.');
+
+        $filesystem->dumpFile($this->tmp.'/p/tracks/t/track.yaml', "id: t\ntitle: T\nenvironment: symfony-8\nscratch: [php, rails]\nchapters:\n  - {id: c, title: C, exercises: []}");
+        $this->expectException(ContentException::class);
+        $this->expectExceptionMessage('« scratch » est une liste de bacs à sable (symfony, laravel, php)');
+        $this->repository($this->tmp)->tracks();
+    }
+
     public function testUnNiveauInconnuOuUneDescriptionEnHtmlSontSignales(): void
     {
         $filesystem = new Filesystem();

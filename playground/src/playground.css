@@ -679,6 +679,38 @@ a.chip:hover {
 	color: var(--ko);
 }
 
+/* Bac à sable : le parcours proposé sous l'aperçu, après quelques exécutions (scratch-offer.ts) */
+.scratch-offer {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	padding: 0.45rem 0.4rem 0.45rem 0.7rem;
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--muted);
+	border-top: 1px solid var(--border);
+	background: var(--panel);
+}
+.scratch-offer p {
+	flex: 1;
+	margin: 0;
+}
+.scratch-offer strong {
+	color: var(--text);
+}
+.scratch-offer-price {
+	white-space: nowrap;
+}
+.scratch-offer a {
+	color: var(--accent-text);
+	font-weight: 600;
+	white-space: nowrap;
+}
+.scratch-offer [data-close] {
+	flex: none;
+	line-height: 1;
+}
+
 /* Requêtes (petit client HTTP) */
 .pane-requests {
 	flex: 1;

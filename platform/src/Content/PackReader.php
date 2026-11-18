@@ -2,6 +2,7 @@
 
 namespace App\Content;
 
+use App\Scratch\ScratchFramework;
 use App\Version;
 use Composer\Semver\Semver;
 
@@ -360,12 +361,20 @@ final class PackReader
             throw new ContentException(sprintf('%s : niveau « %s » inconnu (%s).', $file, \is_scalar($level) ? $level : \gettype($level), implode(', ', Track::LEVELS)));
         }
 
+        $scratch = $meta['scratch'] ?? [];
+        if (\is_string($scratch)) {
+            $scratch = [$scratch];
+        }
+        if (!\is_array($scratch) || !array_is_list($scratch) || [] !== array_filter($scratch, static fn ($f) => !\is_string($f) || null === ScratchFramework::tryFrom($f))) {
+            throw new ContentException(sprintf('%s : « scratch » est une liste de bacs à sable (%s).', $file, implode(', ', array_map(static fn (ScratchFramework $f) => $f->value, ScratchFramework::cases()))));
+        }
+
         $image = isset($meta['image']) ? $this->shareImage($meta['image'], $directory, $file) : null;
 
         $about = $directory.'/about.md';
         $this->files->watch($about);
 
-        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads, $image, FormerIds::parse($meta['former_ids'] ?? null, $file), $level, about: self::markdown($about));
+        $track = new Track($id, $pack->id, $this->files->required($meta, 'title', $file), $meta['description'] ?? '', $environment, $chapters, $directory, $meta['next'] ?? null, $visibility, $order, $downloads, $image, FormerIds::parse($meta['former_ids'] ?? null, $file), $level, about: self::markdown($about), scratch: array_values(array_unique($scratch)));
         $this->tracks[$id] = $track;
         $this->exercises[$id] = [];
 
@@ -473,7 +482,7 @@ final class PackReader
                 $this->incompleteTranslations[$locale][$track->id] = $missing;
                 continue;
             }
-            $this->trackTranslations[$locale][$track->id] = new Track($track->id, $track->packId, $title, (string) ($translated['description'] ?? ''), $track->environment, $chapters, $track->directory, $track->next, $track->visibility, $track->order, $track->downloads, $track->image, $track->formerIds, $track->level, $locale, null === $track->about ? null : self::markdown($about));
+            $this->trackTranslations[$locale][$track->id] = new Track($track->id, $track->packId, $title, (string) ($translated['description'] ?? ''), $track->environment, $chapters, $track->directory, $track->next, $track->visibility, $track->order, $track->downloads, $track->image, $track->formerIds, $track->level, $locale, null === $track->about ? null : self::markdown($about), $track->scratch);
             if ($this->source($translated, $file) !== self::trackFingerprint($track)) {
                 $this->outdatedTranslations[$locale][] = $track->id;
             }
