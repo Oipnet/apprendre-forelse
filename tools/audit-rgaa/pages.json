@@ -1,0 +1,18 @@
+{
+  "base": "https://apprendre.forelse.fr",
+  "pages": [
+    { "id": "P01", "titre": "Accueil", "url": "/", "role": null },
+    { "id": "P02", "titre": "Contact", "url": "/contact", "role": null },
+    { "id": "P03", "titre": "Mentions légales", "url": "/mentions-legales", "role": null },
+    { "id": "P04", "titre": "Déclaration d'accessibilité", "url": "/accessibilite", "role": null, "inactif": "page à créer à l'étape 5" },
+    { "id": "P05", "titre": "Recherche", "url": "/recherche?q=doctrine", "role": null },
+    { "id": "P06", "titre": "Connexion", "url": "/connexion", "role": null },
+    { "id": "P07", "titre": "Inscription", "url": "/inscription", "role": null },
+    { "id": "P08", "titre": "Liste des parcours", "url": "/parcours", "role": null },
+    { "id": "P09", "titre": "Page d'un parcours", "url": "/parcours/symfony-pour-dev-php", "role": null },
+    { "id": "P10", "titre": "Chapitre de cours", "url": "/parcours/symfony-pour-dev-php/chapitre/premiers-pas", "role": "apprenant" },
+    { "id": "P11", "titre": "Exercice dans le navigateur", "url": "/pratique/doctrine-onetomany-deux-cotes", "role": null, "attente": 15000 },
+    { "id": "P12", "titre": "Mon compte", "url": "/compte", "role": "apprenant" },
+    { "id": "P13", "titre": "Espace chef de cohorte", "url": "/cohorte/ID_A_REMPLIR", "role": "chef" }
+  ]
+}
