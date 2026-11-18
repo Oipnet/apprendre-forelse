@@ -10,16 +10,17 @@ import { GoravelProject } from '../src/project.ts';
 
 const binary = fileURLToPath(new URL('../dist/goravel.wasm', import.meta.url));
 const environment = fileURLToPath(new URL('../../../environments/goravel-1', import.meta.url));
+const environmentEn = fileURLToPath(new URL('../../../environments/goravel-1-en', import.meta.url));
 
-function projectFiles(): Record<string, Uint8Array> {
+function projectFiles(root: string = environment): Record<string, Uint8Array> {
 	const files: Record<string, Uint8Array> = {};
 	(function walk(dir: string) {
 		for (const name of readdirSync(dir)) {
 			const path = join(dir, name);
 			if (statSync(path).isDirectory()) walk(path);
-			else if (name !== 'environment.yaml') files[relative(environment, path)] = readFileSync(path);
+			else if (name !== 'environment.yaml') files[relative(root, path)] = readFileSync(path);
 		}
-	})(environment);
+	})(root);
 	return files;
 }
 
@@ -113,5 +114,22 @@ describe.skipIf(!existsSync(binary))('Goravel dans le navigateur', () => {
 		});
 		expect(result.cases.find((c) => c.name === 'own-tests')?.status).toBe('passed');
 		expect(result.cases.find((c) => c.name === 'mutant:salut')?.status).toBe('passed');
+	});
+
+	it('parle anglais sous /en : l\'environnement goravel-1-en, les messages du runtime et des tests', async () => {
+		const p = new GoravelProject(module, { ...projectFiles(), ...projectFiles(environmentEn) }, { basePath: '/preview/abc', locale: 'en' });
+		const json = await p.request({ method: 'GET', url: '/preview/abc/hello/Ada', headers: {} });
+		expect(JSON.parse(text(json.body))).toEqual({ message: 'Hello Ada' });
+		const ok = await p.runTests();
+		expect(ok.cases.map((c) => [c.name, c.status]).sort()).toEqual([['TestHelloGreetsSomeone', 'passed'], ['TestHomeResponds', 'passed']]);
+		expect(ok.output).toContain('PASS  (2 passed, 0 failed)');
+
+		p.writeFile('routes/web.go', 'package routes\n\nimport "goravel/app/facades"\n\nfunc Web() {\n\tfacades.Route().Prefix("/api").Group(func(router route.Router) {})\n}\n');
+		const missing = await p.request({ method: 'GET', url: '/preview/abc/', headers: {} });
+		expect(text(missing.body)).toContain('The Go code does not start');
+		expect(text(missing.body)).toContain('package route is not imported');
+		p.writeFile('routes/web.go', 'package routes\n\nimport (\n\t"github.com/goravel/framework/support/str"\n)\n\nfunc Web() {\n\t_ = str.Of("x")\n}\n');
+		const unavailable = await p.request({ method: 'GET', url: '/preview/abc/', headers: {} });
+		expect(text(unavailable.body)).toContain('is not available in the browser');
 	});
 });

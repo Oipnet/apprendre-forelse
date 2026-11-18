@@ -5,19 +5,22 @@
 import { unzipSync } from 'fflate';
 import wasmUrl from 'virtual:goravel-wasm';
 import { serveRuntime, type BootProgress, type EnvironmentSpec, type HttpRequest, type HttpResponse, type Runtime } from '@forelse/runtime-contract';
+import { catalogue, type Messages } from '../i18n/index.ts';
 import { GoravelProject } from '../project.ts';
 
 let project: GoravelProject | undefined;
+/** Les textes, dans la langue de la page (option « locale » du démarrage) : le français avant le démarrage. */
+let m: Messages = catalogue('fr');
 
 function ready(): GoravelProject {
-	if (!project) throw new Error('Le runtime Goravel n\'a pas démarré.');
+	if (!project) throw new Error(m.boot.notStarted);
 	return project;
 }
 
 /** Le binaire, lu par morceaux pour donner la progression du téléchargement. */
 async function download(url: string, onProgress?: (p: BootProgress) => void): Promise<Uint8Array> {
 	const response = await fetch(url);
-	if (!response.ok || !response.body) throw new Error(`Binaire Goravel introuvable (HTTP ${response.status}).`);
+	if (!response.ok || !response.body) throw new Error(m.boot.binaryMissing(response.status));
 	// Content-Length est la taille compressée quand le serveur sert le .br : la proportion n'est alors pas fiable.
 	const encoded = response.headers.get('Content-Encoding');
 	const total = encoded ? 0 : Number(response.headers.get('Content-Length') ?? 0);
@@ -29,7 +32,7 @@ async function download(url: string, onProgress?: (p: BootProgress) => void): Pr
 		if (done) break;
 		chunks.push(value);
 		received += value.length;
-		onProgress?.({ step: 'download', ratio: total ? received / total : null, label: `Téléchargement de Goravel (${(received / 1e6).toFixed(0)} Mo)` });
+		onProgress?.({ step: 'download', ratio: total ? received / total : null, label: m.boot.downloadingSize((received / 1e6).toFixed(0)) });
 	}
 	const bytes = new Uint8Array(received);
 	let offset = 0;
@@ -42,20 +45,21 @@ async function download(url: string, onProgress?: (p: BootProgress) => void): Pr
 
 const api: Runtime = {
 	async boot(env: EnvironmentSpec, onProgress?: (p: BootProgress) => void) {
-		if (!wasmUrl) throw new Error('Le binaire Goravel n\'a pas été construit (npm run build:wasm, dans packages/runtime-goravel).');
-		onProgress?.({ step: 'download', ratio: null, label: 'Téléchargement de Goravel' });
+		m = catalogue(env.options?.locale);
+		if (!wasmUrl) throw new Error(m.boot.binaryNotBuilt);
+		onProgress?.({ step: 'download', ratio: null, label: m.boot.downloading });
 		const [binary, archive] = await Promise.all([
 			download(wasmUrl, onProgress),
 			fetch(env.archiveUrl).then((r) => {
-				if (!r.ok) throw new Error(`Archive du projet introuvable (HTTP ${r.status}).`);
+				if (!r.ok) throw new Error(m.boot.archiveMissing(r.status));
 				return r.arrayBuffer();
 			}),
 		]);
-		onProgress?.({ step: 'unpack', ratio: null, label: 'Décompression du projet Goravel' });
+		onProgress?.({ step: 'unpack', ratio: null, label: m.boot.unpacking });
 		const files = Object.fromEntries(Object.entries(unzipSync(new Uint8Array(archive))).filter(([path]) => !path.endsWith('/')));
 		const module = await WebAssembly.compile(binary as Uint8Array<ArrayBuffer>);
-		onProgress?.({ step: 'boot', ratio: null, label: 'Démarrage de Goravel' });
-		project = new GoravelProject(module, files, { basePath: env.previewBasePath });
+		onProgress?.({ step: 'boot', ratio: null, label: m.boot.starting });
+		project = new GoravelProject(module, files, { basePath: env.previewBasePath, locale: env.options?.locale });
 		await project.start();
 	},
 

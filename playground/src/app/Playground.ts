@@ -243,6 +243,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 					framework,
 					options: {
 						phpVersion: exercise.environment.phpVersion,
+						// La langue de la page : celle des messages d'un runtime qui tourne hors de la page (Goravel).
+						locale: document.documentElement.lang || 'fr',
 						// Les options d'un runtime sont des chaînes : la liste voyage séparée par des virgules.
 						...(exercise.environment.phpExtensions?.length ? { phpExtensions: exercise.environment.phpExtensions.join(',') } : {}),
 						...(reseau ? { network: exercise.environment.network!.map((n) => n.host).join(',') } : {}),

@@ -10,6 +10,7 @@
  */
 import { gradeOwnTests, type Grading, type HttpRequest, type HttpResponse, type TestCaseResult, type TestRunResult } from '@forelse/runtime-contract';
 import { MemFS } from './memfs.ts';
+import { catalogue, langue, type Messages } from './i18n/index.ts';
 import { ROOT, runTests, startServer, type GoravelServer, type RawTestRun } from './instance.ts';
 
 /** Ce que l'explorateur ne montre pas : les journaux, les bases, le cache de l'interpréteur. */
@@ -20,6 +21,8 @@ export interface ProjectOptions {
 	basePath?: string;
 	/** Journaux de l'application (Gin, fmt.Println), pour le débogage. */
 	onOutput?: (text: string) => void;
+	/** La langue de la page (« en » sous /en) : celle des messages du runtime et des erreurs de l'interpréteur. */
+	locale?: string;
 }
 
 export class GoravelProject {
@@ -31,6 +34,7 @@ export class GoravelProject {
 	 * le dépôt, et elle reste la même d'une instance à l'autre (cookies et sessions survivent aux redémarrages).
 	 */
 	private readonly env: Record<string, string>;
+	private readonly m: Messages;
 
 	constructor(
 		private readonly module: WebAssembly.Module,
@@ -39,7 +43,9 @@ export class GoravelProject {
 	) {
 		this.basePath = (options.basePath ?? '').replace(/\/+$/, '');
 		const key = crypto.getRandomValues(new Uint8Array(16));
-		this.env = { APP_KEY: Array.from(key, (b) => b.toString(16).padStart(2, '0')).join('') };
+		// FORELSE_LANG : la langue des messages du code Go (go/learner/lang.go), pas celle de l'application.
+		this.env = { APP_KEY: Array.from(key, (b) => b.toString(16).padStart(2, '0')).join(''), FORELSE_LANG: langue(options.locale) };
+		this.m = catalogue(options.locale);
 		for (const [path, content] of Object.entries(files)) this.fs.writeFile(`${ROOT}/${path}`, content);
 		this.fs.mkdirp(`${ROOT}/storage/logs`);
 	}
@@ -94,7 +100,7 @@ export class GoravelProject {
 	async runTests(grading?: Grading): Promise<TestRunResult> {
 		const started = performance.now();
 		const run = await this.testRun(this.fs.clone());
-		const result = toResult(run);
+		const result = toResult(run, this.m);
 		if (grading?.ownTests.length) {
 			const outcome = await gradeOwnTests(grading, result.cases, async (mutant) => {
 				const fs = this.fs.clone();
@@ -104,9 +110,9 @@ export class GoravelProject {
 					fs.writeFile(file, (current ? new TextDecoder().decode(current) : '').split(change.search).join(change.replace));
 				}
 				const mutated = await this.testRun(fs);
-				const own = toResult(mutated).cases.filter((c) => c.file && grading.ownTests.includes(c.file));
+				const own = toResult(mutated, this.m).cases.filter((c) => c.file && grading.ownTests.includes(c.file));
 				return { cases: own, broken: Boolean(mutated.error) };
-			}, { noOwnTest: 'Aucun de vos tests ne s\'est exécuté.', skipped: '(ignoré)' });
+			}, { noOwnTest: this.m.tests.noOwnTest, skipped: this.m.tests.skipped });
 			result.cases.push(...outcome.cases);
 			if (outcome.report.length) result.output += `\n\n${outcome.report.join('\n')}`;
 		}
@@ -127,7 +133,7 @@ export class GoravelProject {
 }
 
 /** Le résultat du contrat, à partir de la sortie de `go test -v` : un message par test en échec. */
-export function toResult(run: RawTestRun): TestRunResult {
+export function toResult(run: RawTestRun, m: Messages = catalogue('fr')): TestRunResult {
 	const lines = run.output.split('\n').filter((line) => !line.startsWith('[HTTP]') && !/^\s*\[GIN/.test(line));
 	const messages = new Map<string, string[]>();
 	let current: string | null = null;
@@ -151,7 +157,7 @@ export function toResult(run: RawTestRun): TestRunResult {
 			name: c.name,
 			file: c.file || undefined,
 			status: c.status,
-			message: c.status === 'passed' ? undefined : (message || (c.status === 'error' ? 'Le test ne s\'est pas terminé.' : undefined)),
+			message: c.status === 'passed' ? undefined : (message || (c.status === 'error' ? m.tests.notFinished : undefined)),
 			summary: c.status === 'passed' || !message ? undefined : summarize(message),
 			timeMs: Math.round(c.timeMs),
 		};
@@ -160,7 +166,7 @@ export function toResult(run: RawTestRun): TestRunResult {
 	const passed = cases.filter((c) => c.status === 'passed').length;
 	let output = lines.join('\n').trimEnd();
 	if (run.error) output = `${output ? `${output}\n` : ''}${run.error}\nFAIL`;
-	else output += `\n${failed || cases.length === 0 ? 'FAIL' : 'PASS'}  (${passed} réussi${passed > 1 ? 's' : ''}, ${failed} en échec)`;
+	else output += `\n${failed || cases.length === 0 ? 'FAIL' : 'PASS'}  ${m.tests.summary(passed, failed)}`;
 	return {
 		exitCode: run.error || failed || cases.length === 0 ? 1 : 0,
 		cases,

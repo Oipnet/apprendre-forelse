@@ -66,7 +66,7 @@ func main() {
 func boot() (it *learner.Interpreter, learnerErr error, err error) {
 	defer func() {
 		if p := recover(); p != nil {
-			err = fmt.Errorf("démarrage de Goravel : %v", p)
+			err = fmt.Errorf(learner.T("démarrage de Goravel : %v", "starting Goravel: %v"), p)
 		}
 	}()
 	it, err = learner.New()
@@ -135,8 +135,8 @@ func handle(route contractsroute.Route, method, url string, headers js.Value, bo
 }
 
 func errorResponse(err error) any {
-	page := "<!doctype html><meta charset=\"utf-8\"><title>Erreur</title>" +
-		"<body style=\"font-family:system-ui,sans-serif;padding:1.5rem\"><h1 style=\"color:#b91c1c;font-size:1.25rem\">Le code Go ne démarre pas</h1>" +
+	page := "<!doctype html><meta charset=\"utf-8\"><title>" + learner.T("Erreur", "Error") + "</title>" +
+		"<body style=\"font-family:system-ui,sans-serif;padding:1.5rem\"><h1 style=\"color:#b91c1c;font-size:1.25rem\">" + learner.T("Le code Go ne démarre pas", "The Go code does not start") + "</h1>" +
 		"<pre style=\"white-space:pre-wrap;background:#fef2f2;padding:1rem;border-radius:.5rem\">" + html.EscapeString(learner.Clean(err).Error()) + "</pre>"
 	return response(http.StatusInternalServerError, http.Header{"Content-Type": {"text/html; charset=utf-8"}}, []byte(page), 0)
 }

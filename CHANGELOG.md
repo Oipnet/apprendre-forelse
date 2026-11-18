@@ -16,6 +16,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 - **Goravel, `github.com/goravel/framework/errors`** : le code de l'apprenant peut l'importer (`errors.Is(err,
   errors.OrmRecordNotFound)` après un `FirstOrFail` de l'ORM). Un import qu'aucun paquet du navigateur ne fournit
   affiche maintenant la liste des paquets disponibles, au lieu de « unable to find source related to ».
+- **Goravel en anglais** : l'environnement `goravel-1-en` (page d'accueil, route d'exemple `/hello/{nom}` et tests du
+  squelette en anglais), pour la traduction anglaise du parcours « Découvrir Goravel ». Sous `/en`, les messages du
+  runtime (démarrage, résumé des tests, import oublié ou indisponible, page « The Go code does not start ») sont en
+  anglais : le playground passe la langue de la page au runtime (option `locale`), qui la donne au code Go
+  (`FORELSE_LANG`).
 
 ### Corrigé
 
