@@ -20,6 +20,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   `panic: runtime error: invalid memory address or nil pointer dereference`, sans fichier ni ligne (yaegi panique
   au lieu de refuser le code). Le runtime repère maintenant un `paquet.Nom` dont le paquet n'est pas importé et
   affiche l'erreur du compilateur : `routes/web.go:31:51: undefined: route`, avec l'import à ajouter.
+- **Sécurité, admin** : EasyAdmin 5.9.0 → 5.10.2, pour les avis publiés le 17/11 (XSS stockées, contournement de
+  `setEntityPermission()`) qui faisaient échouer `composer audit` en CI.
 
 ## 3.39.1 — 2026-11-17
 
