@@ -247,9 +247,11 @@ jobs:
         run: |
           composer audit --locked --abandoned=report --working-dir=platform
           composer audit --abandoned=report --working-dir=packages/simulateur-docker
-          npm audit --omit=dev --audit-level=high --prefix playground
-          npm audit --omit=dev --audit-level=high --prefix packages/simulateur-nuxt
-          npm audit --omit=dev --audit-level=high --prefix packages/runtime-goravel
+          node tools/npm-audit.mjs playground
+          # GHSA-fc5q-39xc-vjpf (picomatch <=4.0.7, ReDoS, via vue-router/vite) : aucune version corrigée au 18/11/2026,
+          # et le parcours Nuxt n'est pas publié. À retirer dès qu'un picomatch corrigé sort (le script le signale).
+          node tools/npm-audit.mjs packages/simulateur-nuxt GHSA-fc5q-39xc-vjpf
+          node tools/npm-audit.mjs packages/runtime-goravel
 
       - name: Tests du simulateur Docker
         run: php vendor/bin/phpunit
