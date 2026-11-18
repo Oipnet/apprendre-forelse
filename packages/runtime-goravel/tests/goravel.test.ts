@@ -60,6 +60,17 @@ describe.skipIf(!existsSync(binary))('Goravel dans le navigateur', () => {
 		expect(text(page.body)).toContain('undefined: inconnu');
 	});
 
+	it('nomme le paquet non importé, au lieu de la panique de l\'interpréteur', async () => {
+		const p = project();
+		// Sans l'import de contracts/route, yaegi panique (nil pointer dereference) sans fichier ni ligne.
+		p.writeFile('routes/web.go', 'package routes\n\nimport "goravel/app/facades"\n\nfunc Web() {\n\tfacades.Route().Prefix("/api").Group(func(router route.Router) {})\n}\n');
+		const page = await p.request({ method: 'GET', url: '/preview/abc/', headers: {} });
+		expect(page.status).toBe(500);
+		expect(text(page.body)).toContain('routes/web.go:6:');
+		expect(text(page.body)).toContain('undefined: route');
+		expect(text(page.body)).not.toContain('nil pointer');
+	});
+
 	it('lance les tests Go de l\'apprenant, et donne le message de l\'assertion qui échoue', async () => {
 		const p = project();
 		const ok = await p.runTests();
