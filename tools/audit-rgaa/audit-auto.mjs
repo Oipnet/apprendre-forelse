@@ -287,9 +287,9 @@ for (const l of bilan) {
   const d = l.affichages.desktop;
   const toutes = Object.entries(l.affichages).flatMap(([nom, r]) => (r.axe?.violations || []).map((v) => ({ ...v, nom })));
   if (toutes.length) {
-    md.push('', '| Critère | Règle axe | Impact | Affichages | Nœuds | Exemple |', '|---|---|---|---|---|---|');
-    const parRegle = Object.values(toutes.reduce((acc, v) => { (acc[v.regle] ||= { ...v, noms: [] }).noms.push(v.nom); return acc; }, {}));
-    for (const v of parRegle) md.push(`| ${v.critereRgaa} | ${v.regle} | ${v.impact} | ${v.noms.join(', ')} | ${v.noeuds.length} | \`${String(v.noeuds[0]?.cible).slice(0, 60)}\` |`);
+    md.push('', '| Critère | Règle axe | Impact | Affichages (nœuds) | Exemple |', '|---|---|---|---|---|');
+    const parRegle = Object.values(toutes.reduce((acc, v) => { const r = (acc[v.regle] ||= { ...v, noms: [] }); r.noms.push(`${v.nom} (${v.noeuds.length})`); return acc; }, {}));
+    for (const v of parRegle) md.push(`| ${v.critereRgaa} | ${v.regle} | ${v.impact} | ${v.noms.join(', ')} | \`${String(v.noeuds[0]?.cible).slice(0, 60)}\` |`);
   }
   if (d && !d.erreur) {
     const s = d.structure; const c = d.clavier;
