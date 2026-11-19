@@ -1,0 +1,1366 @@
+{
+  "statut": 200,
+  "url": "https://apprendre.forelse.fr/inscription",
+  "axe": {
+    "violations": [
+      {
+        "regle": "link-in-text-block",
+        "critereRgaa": "10.6",
+        "impact": "serious",
+        "aide": "Links must be distinguishable without relying on color",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/link-in-text-block?application=playwright",
+        "wcag": [
+          "wcag2a",
+          "wcag141"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".text-sm.text-ink-muted > a[href$=\"confidentialite\"]"
+            ],
+            "html": "<a href=\"/confidentialite\">politique de confidentialité</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P07-crit-10-6-link-in-text-block-desktop-1.png"
+          },
+          {
+            "cible": [
+              ".text-sm.text-ink-muted:nth-child(4) > a[href$=\"connexion\"]"
+            ],
+            "html": "<a href=\"/connexion\">Connectez-vous</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P07-crit-10-6-link-in-text-block-desktop-2.png"
+          },
+          {
+            "cible": [
+              ".site-moteur > a"
+            ],
+            "html": "<a href=\"https://github.com/oipnet/apprendre-forelse\">code source</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P07-crit-10-6-link-in-text-block-desktop-3.png"
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 1,
+        "cibles": [
+          [
+            ".transition-transform"
+          ]
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "titre": "Créer un compte · Forelse",
+    "lang": "fr",
+    "changementsLangue": [],
+    "blocsCodeSansLang": 0,
+    "titres": [
+      {
+        "niveau": "1",
+        "texte": "Créer un compte",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Apprendre",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Forelse",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Informations",
+        "visible": true
+      }
+    ],
+    "regions": [
+      {
+        "el": "header",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": "Navigation principale",
+        "dansMain": false
+      },
+      {
+        "el": "form",
+        "role": "search",
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": "Navigation principale",
+        "dansMain": false
+      },
+      {
+        "el": "form",
+        "role": "search",
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "main",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "footer",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": "Pied de page",
+        "dansMain": false
+      }
+    ],
+    "liensEvitement": [
+      {
+        "texte": "Aller au contenu",
+        "href": "#contenu",
+        "cibleExiste": true
+      }
+    ],
+    "images": [
+      {
+        "el": "img",
+        "src": "/theme/forelse-v2/1793617677/logo",
+        "alt": "",
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": "Forelse apprendre"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": "true",
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": null
+      },
+      {
+        "el": "img",
+        "src": "/theme/forelse-v2/1793617677/logo",
+        "alt": "",
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": "Forelse apprendre"
+      }
+    ],
+    "formulaires": [
+      {
+        "el": "input",
+        "type": "search",
+        "nom": "q",
+        "id": "",
+        "labels": [],
+        "ariaLabel": "Rechercher",
+        "title": null,
+        "placeholder": "Rechercher un exercice, une notion…",
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "search",
+        "nom": "q",
+        "id": "",
+        "labels": [],
+        "ariaLabel": "Rechercher",
+        "title": null,
+        "placeholder": "Rechercher un exercice, une notion…",
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": false
+      },
+      {
+        "el": "input",
+        "type": "text",
+        "nom": "registration_form[displayName]",
+        "id": "registration_form_displayName",
+        "labels": [
+          "Pseudo"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": "nickname",
+        "required": true,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "email",
+        "nom": "registration_form[email]",
+        "id": "registration_form_email",
+        "labels": [
+          "Email"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": "email",
+        "required": true,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "password",
+        "nom": "registration_form[plainPassword]",
+        "id": "registration_form_plainPassword",
+        "labels": [
+          "Mot de passe"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": "new-password",
+        "required": true,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": true
+      }
+    ],
+    "dynamiques": {
+      "ariaLive": [],
+      "dialogues": [],
+      "ariaExpanded": [],
+      "onglets": 0,
+      "details": 3,
+      "iframes": [],
+      "editeurs": []
+    }
+  },
+  "survol": [],
+  "clavier": {
+    "suite": [
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Aller au contenu",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "boxShadow",
+          "backgroundColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 16,
+          "gras": false
+        },
+        "rect": {
+          "x": 16,
+          "y": 16,
+          "l": 146,
+          "h": 42
+        },
+        "dansIframe": false,
+        "rang": 1
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Forelse apprendre",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 14.62,
+          "seuil": 4.5,
+          "couleur": "rgb(27, 42, 28)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 16,
+          "gras": false
+        },
+        "rect": {
+          "x": 50,
+          "y": 18,
+          "l": 194,
+          "h": 30
+        },
+        "dansIframe": false,
+        "rang": 2
+      },
+      {
+        "el": "summary",
+        "role": null,
+        "texte": "Parcours ▾",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 276,
+          "y": 13,
+          "l": 89,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 3
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Pratique",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 370,
+          "y": 13,
+          "l": 78,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 4
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Bac à sable",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 451,
+          "y": 13,
+          "l": 97,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 5
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Blog",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 553,
+          "y": 13,
+          "l": 53,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 6
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Formations",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 609,
+          "y": 13,
+          "l": 96,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 7
+      },
+      {
+        "el": "summary",
+        "role": null,
+        "texte": "Rechercher",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 876,
+          "y": 15,
+          "l": 36,
+          "h": 36
+        },
+        "dansIframe": false,
+        "rang": 8
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Connexion",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 920,
+          "y": 13,
+          "l": 92,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 9
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Commencer gratuitement",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 7.14,
+          "seuil": 4.5,
+          "couleur": "rgb(27, 42, 28)",
+          "fond": "rgb(140,194,85)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": true
+        },
+        "rect": {
+          "x": 1020,
+          "y": 12,
+          "l": 210,
+          "h": 42
+        },
+        "dansIframe": false,
+        "rang": 10
+      },
+      {
+        "el": "input#registration_form_displayName",
+        "role": null,
+        "texte": "",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor",
+          "borderColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 449,
+          "y": 254,
+          "l": 382,
+          "h": 44
+        },
+        "dansIframe": false,
+        "rang": 11
+      },
+      {
+        "el": "input#registration_form_email",
+        "role": null,
+        "texte": "",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor",
+          "borderColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 449,
+          "y": 344,
+          "l": 382,
+          "h": 44
+        },
+        "dansIframe": false,
+        "rang": 12
+      },
+      {
+        "el": "input#registration_form_plainPassword",
+        "role": null,
+        "texte": "",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor",
+          "borderColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 449,
+          "y": 433,
+          "l": 382,
+          "h": 44
+        },
+        "dansIframe": false,
+        "rang": 13
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "politique de confidentialité",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 449,
+          "y": 493,
+          "l": 329,
+          "h": 37
+        },
+        "dansIframe": false,
+        "rang": 14
+      },
+      {
+        "el": "button",
+        "role": null,
+        "texte": "Créer mon compte",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 7.14,
+          "seuil": 4.5,
+          "couleur": "rgb(27, 42, 28)",
+          "fond": "rgb(140,194,85)",
+          "imageDeFond": false,
+          "taille": 16,
+          "gras": true
+        },
+        "rect": {
+          "x": 449,
+          "y": 532,
+          "l": 382,
+          "h": 44
+        },
+        "dansIframe": false,
+        "rang": 15
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Connectez-vous",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 534,
+          "y": 593,
+          "l": 98,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 16
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Forelse apprendre",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 14.62,
+          "seuil": 4.5,
+          "couleur": "rgb(27, 42, 28)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 50,
+          "y": 743,
+          "l": 405,
+          "h": 42
+        },
+        "dansIframe": false,
+        "rang": 17
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Les parcours",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 775,
+          "l": 79,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 18
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Pratique",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 496,
+          "l": 52,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 19
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Le bac à sable",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 524,
+          "l": 89,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 20
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Les notions",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 552,
+          "l": 71,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 21
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Le classement",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 580,
+          "l": 89,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 22
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Le blog",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 608,
+          "l": 46,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 23
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Questions fréquentes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 636,
+          "l": 132,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 24
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Écoles et entreprises",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 468,
+          "l": 129,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 25
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Formations et audits",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 496,
+          "l": 127,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 26
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Auto-hébergement",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 524,
+          "l": 115,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 27
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Qui suis-je",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 552,
+          "l": 67,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 28
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Contact",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 580,
+          "l": 48,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 29
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Connexion",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 608,
+          "l": 65,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 30
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Mentions légales",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 1006,
+          "y": 468,
+          "l": 104,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 31
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Confidentialité",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 1006,
+          "y": 496,
+          "l": 91,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 32
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Conditions de vente",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 1006,
+          "y": 524,
+          "l": 123,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 33
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "code source",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.3,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 1151,
+          "y": 728,
+          "l": 79,
+          "h": 16
+        },
+        "dansIframe": false,
+        "rang": 34
+      },
+      {
+        "el": "body",
+        "rang": 35
+      }
+    ],
+    "retourMajTab": [
+      "a code source",
+      "a Conditions de vente",
+      "a Confidentialité",
+      "a Mentions légales",
+      "a Connexion",
+      "a Contact",
+      "a Qui suis-je",
+      "a Auto-hébergement"
+    ]
+  },
+  "espacement": {
+    "rognes": [
+      {
+        "el": "a.skip-link",
+        "texte": "Aller au contenu"
+      }
+    ],
+    "capture": "P07-crit-10-12-espacement.png"
+  }
+}

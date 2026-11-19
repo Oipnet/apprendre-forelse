@@ -1,0 +1,118 @@
+{
+  "statut": 200,
+  "url": "https://apprendre.forelse.fr/parcours/symfony-pour-dev-php",
+  "axe": {
+    "violations": [
+      {
+        "regle": "link-in-text-block",
+        "critereRgaa": "10.6",
+        "impact": "serious",
+        "aide": "Links must be distinguishable without relying on color",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/link-in-text-block?application=playwright",
+        "wcag": [
+          "wcag2a",
+          "wcag141"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".site-moteur > a"
+            ],
+            "html": "<a href=\"https://github.com/oipnet/apprendre-forelse\">code source</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P09-crit-10-6-link-in-text-block-reflow320-1.png"
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "aria-prohibited-attr",
+        "critereRgaa": "7.1",
+        "aide": "Elements must only use permitted ARIA attributes",
+        "nb": 1,
+        "cibles": [
+          [
+            "s"
+          ]
+        ]
+      },
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 15,
+        "cibles": [
+          [
+            ".group-open\\:rotate-90"
+          ],
+          [
+            ".mt-2.btn.btn-primary > span[aria-hidden=\"true\"]"
+          ],
+          [
+            "details[open=\"\"] > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "a[aria-describedby=\"notions-08-incident-en-cuisine\"] > .state.w-6.text-center > span[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-2 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-3 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-4 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-5 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-6 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-7 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-8 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-9 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-10 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-11 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-12 > .tr-chapter > .items-start > .group-open\\:rotate-180.transition[aria-hidden=\"true\"]"
+          ]
+        ]
+      },
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "nb": 1,
+        "cibles": [
+          [
+            ".px-2\\.5"
+          ]
+        ]
+      }
+    ]
+  },
+  "reflow": {
+    "largeur": 320,
+    "largeurDocument": 385,
+    "defilementHorizontal": true,
+    "deborde": [
+      {
+        "el": "div.ml-auto",
+        "droite": 385,
+        "defileSeul": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,855 @@
+{
+  "statut": 200,
+  "url": "https://apprendre.forelse.fr/pratique/doctrine-onetomany-deux-cotes",
+  "axe": {
+    "violations": [
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "impact": "serious",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=playwright",
+        "wcag": [
+          "wcag2aa",
+          "wcag143"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".mtk7:nth-child(1)"
+            ],
+            "html": "<span class=\"mtk7\">#[ORM\\Entity(repositoryClass:&nbsp;CommandeRepository::</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-desktop-1.png"
+          },
+          {
+            "cible": [
+              ".view-line:nth-child(13) > span > .mtk7"
+            ],
+            "html": "<span class=\"mtk7\">#[ORM\\Id]</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-desktop-2.png"
+          },
+          {
+            "cible": [
+              ".view-line:nth-child(14) > span > .mtk7"
+            ],
+            "html": "<span class=\"mtk7\">#[ORM\\GeneratedValue]</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-desktop-3.png"
+          },
+          {
+            "cible": [
+              ".view-line:nth-child(15) > span > .mtk7"
+            ],
+            "html": "<span class=\"mtk7\">#[ORM\\Column]</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-desktop-4.png"
+          },
+          {
+            "cible": [
+              ".view-line:nth-child(18) > span > .mtk7"
+            ],
+            "html": "<span class=\"mtk7\">/**&nbsp;@var&nbsp;Collection&lt;int,&nbsp;LigneDeCommande&gt;&nbsp;*/</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-desktop-5.png"
+          },
+          {
+            "cible": [
+              ".view-line:nth-child(19) > span > .mtk7:nth-child(2)"
+            ],
+            "html": "<span class=\"mtk7\">#[ORM\\OneToMany(targetEntity:&nbsp;LigneDeCommande::cla</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-desktop-6.png"
+          },
+          {
+            "cible": [
+              ".view-line:nth-child(20) > span > .mtk7"
+            ],
+            "html": "<span class=\"mtk7\">#[ORM\\OrderBy(['id'&nbsp;=&gt;&nbsp;'ASC'])]</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-desktop-7.png"
+          },
+          {
+            "cible": [
+              ".view-line:nth-child(24) > span > .mtk7"
+            ],
+            "html": "<span class=\"mtk7\">#[ORM\\Column(length:&nbsp;100)]</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-desktop-8.png"
+          },
+          {
+            "cible": [
+              "#frame",
+              "#preview",
+              "small"
+            ],
+            "html": "<small>Internal Server Error</small>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 3.19 (foreground color: #d4a9a7, background color: #9e3b38, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": null
+          },
+          {
+            "cible": [
+              "#frame",
+              "#preview",
+              "div[data-toggle-selector=\"#trace-html-1\"] > h3 > .trace-namespace"
+            ],
+            "html": "<span class=\"trace-namespace\">Doctrine\\DBAL\\Exception\\</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 2.15 (foreground color: #999999, background color: #e0e0e0, font size: 9.8pt (13px), font weight: bold). Expected contrast ratio of 4.5:1",
+            "capture": null
+          },
+          {
+            "cible": [
+              "#frame",
+              "#preview",
+              "div[data-toggle-selector=\"#trace-html-1-15\"] > .trace-arguments"
+            ],
+            "html": "<span class=\"trace-arguments\">('/app/vendor/autoload_runtime.php')</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.47 (foreground color: #777777, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": null
+          },
+          {
+            "cible": [
+              "#frame",
+              "#preview",
+              "div[data-toggle-selector=\"#trace-html-2\"] > h3 > .trace-namespace"
+            ],
+            "html": "<span class=\"trace-namespace\">Doctrine\\DBAL\\Driver\\PDO\\</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 2.15 (foreground color: #999999, background color: #e0e0e0, font size: 9.8pt (13px), font weight: bold). Expected contrast ratio of 4.5:1",
+            "capture": null
+          },
+          {
+            "cible": [
+              "#frame",
+              "#preview",
+              "div[data-toggle-selector=\"#trace-html-2-18\"] > .trace-arguments"
+            ],
+            "html": "<span class=\"trace-arguments\">('/app/vendor/autoload_runtime.php')</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.47 (foreground color: #777777, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": null
+          },
+          {
+            "cible": [
+              "#frame",
+              "#preview",
+              ".sf-toolbar-icon > .sf-toolbar-status-red.sf-toolbar-status"
+            ],
+            "html": "<span class=\"sf-toolbar-status sf-toolbar-status-red\">500</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #fefbfc, background color: #e1244b, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": null
+          }
+        ]
+      },
+      {
+        "regle": "heading-order",
+        "critereRgaa": "9.1",
+        "impact": "moderate",
+        "aide": "Heading levels should only increase by one",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/heading-order?application=playwright",
+        "wcag": [],
+        "noeuds": [
+          {
+            "cible": [
+              "#frame",
+              "#preview",
+              "div[data-toggle-selector=\"#trace-html-1\"] > h3"
+            ],
+            "html": "<h3 class=\"trace-class\">\n                                                    <span class=\"trace-namespace\">Doctrine\\DBAL\\Exception\\</span>\n                                                NotNullConstraintViolationException                    </h3>",
+            "resume": "Fix any of the following:\n  Heading order invalid",
+            "capture": null
+          }
+        ]
+      },
+      {
+        "regle": "landmark-unique",
+        "critereRgaa": "9.2",
+        "impact": "moderate",
+        "aide": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/landmark-unique?application=playwright",
+        "wcag": [],
+        "noeuds": [
+          {
+            "cible": [
+              ".topbar"
+            ],
+            "html": "<header class=\"topbar\">",
+            "resume": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable",
+            "capture": "P11-crit-9-2-landmark-unique-desktop-1.png"
+          },
+          {
+            "cible": [
+              ".tabs"
+            ],
+            "html": "<nav class=\"tabs\">",
+            "resume": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable",
+            "capture": "P11-crit-9-2-landmark-unique-desktop-2.png"
+          }
+        ]
+      },
+      {
+        "regle": "scrollable-region-focusable",
+        "critereRgaa": "7.3",
+        "impact": "serious",
+        "aide": "Scrollable region must have keyboard access",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/scrollable-region-focusable?application=playwright",
+        "wcag": [
+          "wcag2a",
+          "wcag211",
+          "wcag213"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".notranslate"
+            ],
+            "html": "<pre data-lang=\"php\" class=\"notranslate\">",
+            "resume": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable",
+            "capture": "P11-crit-7-3-scrollable-region-focusable-desktop-1.png"
+          },
+          {
+            "cible": [
+              "#frame",
+              "#preview",
+              "#trace-html-1-9"
+            ],
+            "html": "<div id=\"trace-html-1-9\" class=\"trace-code sf-toggle-content sf-toggle-visible\">",
+            "resume": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable",
+            "capture": null
+          },
+          {
+            "cible": [
+              "#frame",
+              "#preview",
+              "#trace-html-2-12"
+            ],
+            "html": "<div id=\"trace-html-2-12\" class=\"trace-code sf-toggle-content sf-toggle-visible\">",
+            "resume": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable",
+            "capture": null
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 4,
+        "cibles": [
+          [
+            ".readonly.tab:nth-child(3)"
+          ],
+          [
+            ".ime-text-area"
+          ],
+          [
+            ".view-line:nth-child(8) > span > .mtk1:nth-child(4)"
+          ],
+          [
+            ".mtk1:nth-child(8)"
+          ]
+        ]
+      },
+      {
+        "regle": "duplicate-id-aria",
+        "critereRgaa": "8.2",
+        "aide": "IDs used in ARIA and labels must be unique",
+        "nb": 1,
+        "cibles": [
+          [
+            "#frame",
+            "#preview",
+            "div[aria-label=\"Time\"]"
+          ]
+        ]
+      },
+      {
+        "regle": "frame-title-unique",
+        "critereRgaa": "a-qualifier",
+        "aide": "Frames must have a unique title attribute",
+        "nb": 2,
+        "cibles": [
+          [
+            "#frame"
+          ],
+          [
+            "#frame",
+            "#preview"
+          ]
+        ]
+      },
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "nb": 6,
+        "cibles": [
+          [
+            "#shortcuts"
+          ],
+          [
+            "button[data-fold=\"brief\"]"
+          ],
+          [
+            "#toggle-tree"
+          ],
+          [
+            "#download-project"
+          ],
+          [
+            "button[data-fold=\"preview\"]"
+          ],
+          [
+            "#reload"
+          ]
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "titre": "Symfony : tenir les deux côtés d'une relation OneToMany",
+    "lang": "fr",
+    "changementsLangue": [],
+    "blocsCodeSansLang": 16,
+    "titres": [
+      {
+        "niveau": "1",
+        "texte": "Tenir les deux côtés d'une relation OneToMany",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "À faire",
+        "visible": true
+      },
+      {
+        "niveau": "3",
+        "texte": "OBJECTIFS",
+        "visible": true
+      },
+      {
+        "niveau": "3",
+        "texte": "📚 LA DOC QUI AIDE",
+        "visible": true
+      },
+      {
+        "niveau": "3",
+        "texte": "ÇA POURRAIT VOUS INTÉRESSER",
+        "visible": true
+      },
+      {
+        "niveau": "3",
+        "texte": "POUR ALLER PLUS LOIN",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Raccourcis clavier",
+        "visible": false
+      },
+      {
+        "niveau": "2",
+        "texte": "Avant / après",
+        "visible": false
+      }
+    ],
+    "regions": [
+      {
+        "el": "header",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": "Volet affiché",
+        "dansMain": false
+      },
+      {
+        "el": "main",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "aside",
+        "role": null,
+        "nom": "Consignes",
+        "dansMain": true
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": null,
+        "dansMain": true
+      },
+      {
+        "el": "aside",
+        "role": null,
+        "nom": null,
+        "dansMain": true
+      },
+      {
+        "el": "section",
+        "role": null,
+        "nom": "Aperçu",
+        "dansMain": true
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": null,
+        "dansMain": true
+      },
+      {
+        "el": "header",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      }
+    ],
+    "liensEvitement": [
+      {
+        "texte": "Aller au contenu",
+        "href": "#contenu",
+        "cibleExiste": true
+      }
+    ],
+    "images": [
+      {
+        "el": "img",
+        "src": "/theme/forelse-v2/1793617677/logo",
+        "alt": "",
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": "Forelse APPRENDRE"
+      },
+      {
+        "el": "canvas",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": "true",
+        "nom": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": null
+      },
+      {
+        "el": "canvas",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": "hérité",
+        "nom": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": null
+      },
+      {
+        "el": "canvas",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": "hérité",
+        "nom": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": null
+      }
+    ],
+    "formulaires": [
+      {
+        "el": "textarea",
+        "type": "textarea",
+        "nom": "",
+        "id": "",
+        "labels": [],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "text",
+        "nom": "",
+        "id": "url",
+        "labels": [],
+        "ariaLabel": "Chemin de l'aperçu",
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "text",
+        "nom": "",
+        "id": "console-cmd",
+        "labels": [
+          "$ bin/console🩺 Expliquer"
+        ],
+        "ariaLabel": "Commande bin/console",
+        "title": null,
+        "placeholder": "debug:router",
+        "autocomplete": "off",
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": false
+      },
+      {
+        "el": "select",
+        "type": "select-one",
+        "nom": "",
+        "id": "req-method",
+        "labels": [],
+        "ariaLabel": "Méthode HTTP",
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": false
+      },
+      {
+        "el": "input",
+        "type": "text",
+        "nom": "",
+        "id": "req-path",
+        "labels": [],
+        "ariaLabel": "Chemin de la requête",
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": false
+      },
+      {
+        "el": "textarea",
+        "type": "textarea",
+        "nom": "",
+        "id": "req-headers",
+        "labels": [],
+        "ariaLabel": "En-têtes",
+        "title": null,
+        "placeholder": "En-têtes, un par ligne (ex. Authorization: Bearer …)",
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": false
+      },
+      {
+        "el": "textarea",
+        "type": "textarea",
+        "nom": "",
+        "id": "req-body",
+        "labels": [],
+        "ariaLabel": "Corps de la requête",
+        "title": null,
+        "placeholder": "Corps JSON (ex. {\"nom\": \"Gimli\"})",
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": false
+      },
+      {
+        "el": "select",
+        "type": "select-one",
+        "nom": "",
+        "id": "",
+        "labels": [],
+        "ariaLabel": "Fichier",
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": false
+      }
+    ],
+    "dynamiques": {
+      "ariaLive": [
+        {
+          "el": "div.status",
+          "live": null,
+          "role": "status",
+          "atomic": null
+        },
+        {
+          "el": "#preview-frozen",
+          "live": null,
+          "role": "alert",
+          "atomic": null
+        },
+        {
+          "el": "#boot-label",
+          "live": null,
+          "role": "status",
+          "atomic": null
+        },
+        {
+          "el": "div.monaco-alert",
+          "live": null,
+          "role": "alert",
+          "atomic": "true"
+        },
+        {
+          "el": "div.monaco-alert",
+          "live": null,
+          "role": "alert",
+          "atomic": "true"
+        },
+        {
+          "el": "div.monaco-status",
+          "live": "polite",
+          "role": null,
+          "atomic": "true"
+        },
+        {
+          "el": "div.monaco-status",
+          "live": "polite",
+          "role": null,
+          "atomic": "true"
+        }
+      ],
+      "dialogues": [
+        {
+          "el": "dialog.feedback.shortcuts",
+          "modal": null,
+          "nom": "Raccourcis clavier",
+          "ouvert": false
+        },
+        {
+          "el": "dialog.before-after",
+          "modal": null,
+          "nom": null,
+          "ouvert": false
+        }
+      ],
+      "ariaExpanded": [
+        {
+          "el": "button.pane-rail",
+          "texte": "📋Consignes",
+          "expanded": "false",
+          "controls": "pane-brief"
+        },
+        {
+          "el": "button.pane-fold",
+          "texte": "‹",
+          "expanded": "true",
+          "controls": "pane-brief"
+        },
+        {
+          "el": "#toggle-tree",
+          "texte": "📁",
+          "expanded": "true",
+          "controls": "filetree"
+        },
+        {
+          "el": "button.pane-rail",
+          "texte": "👁Aperçu",
+          "expanded": "false",
+          "controls": "pane-preview"
+        },
+        {
+          "el": "button.pane-fold",
+          "texte": "›",
+          "expanded": "true",
+          "controls": "pane-preview"
+        }
+      ],
+      "onglets": 0,
+      "details": 15,
+      "iframes": [
+        {
+          "src": "https://forelsebox.app/sandbox?id=4e892646bf5c4e06",
+          "title": "Aperçu de l'application"
+        }
+      ],
+      "editeurs": [
+        {
+          "el": "div.monaco-editor.no-user-select",
+          "role": "code",
+          "nom": null,
+          "roledescription": null
+        },
+        {
+          "el": "div.native-edit-context",
+          "role": "textbox",
+          "nom": "Editor content",
+          "roledescription": "editor"
+        },
+        {
+          "el": "textarea.ime-text-area",
+          "role": null,
+          "nom": null,
+          "roledescription": null
+        },
+        {
+          "el": "#req-headers",
+          "role": null,
+          "nom": "En-têtes",
+          "roledescription": null
+        },
+        {
+          "el": "#req-body",
+          "role": null,
+          "nom": "Corps de la requête",
+          "roledescription": null
+        }
+      ]
+    }
+  },
+  "survol": [],
+  "clavier": {
+    "suite": [
+      {
+        "el": "div",
+        "role": "textbox",
+        "texte": "Editor content",
+        "tabindex": "0",
+        "focusVisibleCss": true,
+        "changementsAuFocus": [],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": null,
+        "rect": {
+          "x": 617,
+          "y": 97,
+          "l": 0,
+          "h": 21
+        },
+        "dansIframe": false,
+        "rang": 1,
+        "capture": "P11-crit-10-7-focus-001-editor-content.png"
+      },
+      {
+        "el": "div",
+        "role": "textbox",
+        "texte": "Editor content",
+        "tabindex": "0",
+        "focusVisibleCss": true,
+        "changementsAuFocus": [],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": null,
+        "rect": {
+          "x": 617,
+          "y": 97,
+          "l": 0,
+          "h": 21
+        },
+        "dansIframe": false,
+        "rang": 2,
+        "capture": "P11-crit-10-7-focus-002-editor-content.png"
+      },
+      {
+        "el": "div",
+        "role": "textbox",
+        "texte": "Editor content",
+        "tabindex": "0",
+        "focusVisibleCss": true,
+        "changementsAuFocus": [],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": null,
+        "rect": {
+          "x": 617,
+          "y": 97,
+          "l": 0,
+          "h": 21
+        },
+        "dansIframe": false,
+        "rang": 3,
+        "capture": "P11-crit-10-7-focus-003-editor-content.png"
+      },
+      {
+        "el": "div",
+        "role": "textbox",
+        "texte": "Editor content",
+        "tabindex": "0",
+        "focusVisibleCss": true,
+        "changementsAuFocus": [],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": null,
+        "rect": {
+          "x": 617,
+          "y": 97,
+          "l": 0,
+          "h": 21
+        },
+        "dansIframe": false,
+        "rang": 4,
+        "capture": "P11-crit-10-7-focus-004-editor-content.png",
+        "alerte": "Focus bloqué sur le même élément après 4 Tab : piège possible (12.9)."
+      }
+    ],
+    "retourMajTab": [
+      "div Editor content",
+      "div Editor content",
+      "div Editor content",
+      "div Editor content",
+      "div Editor content",
+      "div Editor content",
+      "div Editor content",
+      "div Editor content"
+    ]
+  },
+  "espacement": {
+    "rognes": [
+      {
+        "el": "a.skip-link",
+        "texte": "Aller au contenu"
+      },
+      {
+        "el": "h1.crumb-current",
+        "texte": "Tenir les deux côtés d'une relation OneToMany"
+      },
+      {
+        "el": "div.pagetab",
+        "texte": "📄 An exception occurred while executing a query: SQLSTATE[2"
+      }
+    ],
+    "capture": "P11-crit-10-12-espacement.png"
+  }
+}

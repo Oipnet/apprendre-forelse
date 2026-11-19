@@ -1,0 +1,87 @@
+{
+  "statut": 200,
+  "url": "https://apprendre.forelse.fr/parcours",
+  "axe": {
+    "violations": [
+      {
+        "regle": "link-in-text-block",
+        "critereRgaa": "10.6",
+        "impact": "serious",
+        "aide": "Links must be distinguishable without relying on color",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/link-in-text-block?application=playwright",
+        "wcag": [
+          "wcag2a",
+          "wcag141"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".mt-10:nth-child(6) > a[href$=\"pratique\"]"
+            ],
+            "html": "<a href=\"/pratique\">La Pratique</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P08-crit-10-6-link-in-text-block-reflow320-1.png"
+          },
+          {
+            "cible": [
+              ".site-moteur > a"
+            ],
+            "html": "<a href=\"https://github.com/oipnet/apprendre-forelse\">code source</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P08-crit-10-6-link-in-text-block-reflow320-2.png"
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "aria-prohibited-attr",
+        "critereRgaa": "7.1",
+        "aide": "Elements must only use permitted ARIA attributes",
+        "nb": 2,
+        "cibles": [
+          [
+            "article:nth-child(1) > .gap-6.p-6.md\\:p-8 > .track-offer.md\\:items-end.md\\:text-right > .track-price.text-ink-soft > s"
+          ],
+          [
+            "article:nth-child(2) > .gap-6.p-6.md\\:p-8 > .track-offer.md\\:items-end.md\\:text-right > .track-price.text-ink-soft > s"
+          ]
+        ]
+      },
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 1,
+        "cibles": [
+          [
+            ".group-open\\:rotate-90"
+          ]
+        ]
+      },
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "nb": 1,
+        "cibles": [
+          [
+            "summary[aria-label=\"Menu\"]"
+          ]
+        ]
+      }
+    ]
+  },
+  "reflow": {
+    "largeur": 320,
+    "largeurDocument": 385,
+    "defilementHorizontal": true,
+    "deborde": [
+      {
+        "el": "div.ml-auto",
+        "droite": 385,
+        "defileSeul": false
+      }
+    ]
+  }
+}

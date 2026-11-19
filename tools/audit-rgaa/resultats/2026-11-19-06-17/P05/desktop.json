@@ -1,0 +1,2527 @@
+{
+  "statut": 200,
+  "url": "https://apprendre.forelse.fr/recherche?q=doctrine",
+  "axe": {
+    "violations": [
+      {
+        "regle": "link-in-text-block",
+        "critereRgaa": "10.6",
+        "impact": "serious",
+        "aide": "Links must be distinguishable without relying on color",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/link-in-text-block?application=playwright",
+        "wcag": [
+          "wcag2a",
+          "wcag141"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".site-moteur > a"
+            ],
+            "html": "<a href=\"https://github.com/oipnet/apprendre-forelse\">code source</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P05-crit-10-6-link-in-text-block-desktop-1.png"
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 1,
+        "cibles": [
+          [
+            ".transition-transform"
+          ]
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "titre": "« doctrine » : recherche · Forelse",
+    "lang": "fr",
+    "changementsLangue": [],
+    "blocsCodeSansLang": 0,
+    "titres": [
+      {
+        "niveau": "1",
+        "texte": "Rechercher",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Doctrine dans Symfony : entités, mapping et EntityManager",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Ne pas remplacer une collection Doctrine",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Migrations Doctrine dans Symfony : générer, relire et jouer",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "QueryBuilder Doctrine : écrire ses requêtes dans Symfony",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Relations Doctrine dans Symfony : ManyToOne et OneToMany",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Écouteurs Doctrine dans Symfony : agir avant d'enregistrer une entité",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "ManyToMany avec Doctrine : côté propriétaire et côté inverse",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Pagination avec Doctrine : le Paginator dans un repository Symfony",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Requêtes N+1 avec Doctrine : les repérer et les éviter",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Traitement par lots avec Doctrine : toIterable(), flush() et clear()",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "OneToMany Symfony : les pièges Doctrine qu'on rencontre tous",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Retrouver un patient par son adresse chiffrée",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Chiffrer les colonnes sensibles d'une entité",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Tenir les deux côtés d'une relation OneToMany",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Enregistrer une commande avec ses lignes",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Supprimer une ligne retirée de sa commande",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Filtrer sans tronquer les collections",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Paginer des commandes chargées avec leurs lignes",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Le slug qui s'écrit tout seul",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Filtrer sur les propriétés d'une entité liée avec EasyAdmin",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "La première migration",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "La cave reste pleine",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Le grand livre de Bruna",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "🐉 Boss : la taverne à l'envers",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "La cave et le garde-manger",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Retour à la cave",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Chiffrer des colonnes avec Symfony 8.2 : ce que #[Encrypted] protège, et ce qu'il ne protège pas",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Les rouages de la taverne",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Événements Symfony : kernel.request et événements de l'application",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "La carte sort de la base",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Apprendre",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Forelse",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Informations",
+        "visible": true
+      }
+    ],
+    "regions": [
+      {
+        "el": "header",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": "Navigation principale",
+        "dansMain": false
+      },
+      {
+        "el": "form",
+        "role": "search",
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": "Navigation principale",
+        "dansMain": false
+      },
+      {
+        "el": "form",
+        "role": "search",
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "main",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "form",
+        "role": "search",
+        "nom": null,
+        "dansMain": true
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": "Types de résultats",
+        "dansMain": true
+      },
+      {
+        "el": "footer",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": "Pied de page",
+        "dansMain": false
+      }
+    ],
+    "liensEvitement": [
+      {
+        "texte": "Aller au contenu",
+        "href": "#contenu",
+        "cibleExiste": true
+      }
+    ],
+    "images": [
+      {
+        "el": "img",
+        "src": "/theme/forelse-v2/1793617677/logo",
+        "alt": "",
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": "Forelse apprendre"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": "true",
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": null
+      },
+      {
+        "el": "img",
+        "src": "/theme/forelse-v2/1793617677/logo",
+        "alt": "",
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": "Forelse apprendre"
+      }
+    ],
+    "formulaires": [
+      {
+        "el": "input",
+        "type": "search",
+        "nom": "q",
+        "id": "",
+        "labels": [],
+        "ariaLabel": "Rechercher",
+        "title": null,
+        "placeholder": "Rechercher un exercice, une notion…",
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "search",
+        "nom": "q",
+        "id": "",
+        "labels": [],
+        "ariaLabel": "Rechercher",
+        "title": null,
+        "placeholder": "Rechercher un exercice, une notion…",
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": false
+      },
+      {
+        "el": "input",
+        "type": "search",
+        "nom": "q",
+        "id": "search-q",
+        "labels": [
+          "Mots à chercher"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": "ex. validation, Livewire, voter…",
+        "autocomplete": "off",
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": true
+      }
+    ],
+    "dynamiques": {
+      "ariaLive": [
+        {
+          "el": "p.search-count.mt-6",
+          "live": null,
+          "role": "status",
+          "atomic": null
+        }
+      ],
+      "dialogues": [],
+      "ariaExpanded": [],
+      "onglets": 0,
+      "details": 3,
+      "iframes": [],
+      "editeurs": []
+    }
+  },
+  "survol": [],
+  "clavier": {
+    "suite": [
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Aller au contenu",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "boxShadow",
+          "backgroundColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 16,
+          "gras": false
+        },
+        "rect": {
+          "x": 16,
+          "y": 16,
+          "l": 146,
+          "h": 42
+        },
+        "dansIframe": false,
+        "rang": 1
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Forelse apprendre",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 14.62,
+          "seuil": 4.5,
+          "couleur": "rgb(27, 42, 28)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 16,
+          "gras": false
+        },
+        "rect": {
+          "x": 50,
+          "y": 18,
+          "l": 194,
+          "h": 30
+        },
+        "dansIframe": false,
+        "rang": 2
+      },
+      {
+        "el": "summary",
+        "role": null,
+        "texte": "Parcours ▾",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 276,
+          "y": 13,
+          "l": 89,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 3
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Pratique",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 370,
+          "y": 13,
+          "l": 78,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 4
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Bac à sable",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 451,
+          "y": 13,
+          "l": 97,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 5
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Blog",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 553,
+          "y": 13,
+          "l": 53,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 6
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Formations",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 609,
+          "y": 13,
+          "l": 96,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 7
+      },
+      {
+        "el": "summary",
+        "role": null,
+        "texte": "Rechercher",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 876,
+          "y": 15,
+          "l": 36,
+          "h": 36
+        },
+        "dansIframe": false,
+        "rang": 8
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Connexion",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": false
+        },
+        "rect": {
+          "x": 920,
+          "y": 13,
+          "l": 92,
+          "h": 39
+        },
+        "dansIframe": false,
+        "rang": 9
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Commencer gratuitement",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 7.14,
+          "seuil": 4.5,
+          "couleur": "rgb(27, 42, 28)",
+          "fond": "rgb(140,194,85)",
+          "imageDeFond": false,
+          "taille": 14.5,
+          "gras": true
+        },
+        "rect": {
+          "x": 1020,
+          "y": 12,
+          "l": 210,
+          "h": 42
+        },
+        "dansIframe": false,
+        "rang": 10
+      },
+      {
+        "el": "input#search-q",
+        "role": null,
+        "texte": "doctrine",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor",
+          "borderColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 280,
+          "y": 168,
+          "l": 592,
+          "h": 44
+        },
+        "dansIframe": false,
+        "rang": 11
+      },
+      {
+        "el": "button",
+        "role": null,
+        "texte": "Rechercher",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 7.14,
+          "seuil": 4.5,
+          "couleur": "rgb(27, 42, 28)",
+          "fond": "rgb(140,194,85)",
+          "imageDeFond": false,
+          "taille": 16,
+          "gras": true
+        },
+        "rect": {
+          "x": 880,
+          "y": 168,
+          "l": 120,
+          "h": 44
+        },
+        "dansIframe": false,
+        "rang": 12
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Tout 46",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 14.62,
+          "seuil": 4.5,
+          "couleur": "rgb(27, 42, 28)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 280,
+          "y": 244,
+          "l": 62,
+          "h": 28
+        },
+        "dansIframe": false,
+        "rang": 13
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Pratique 10",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.69,
+          "seuil": 4.5,
+          "couleur": "rgb(79, 94, 79)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 350,
+          "y": 244,
+          "l": 79,
+          "h": 28
+        },
+        "dansIframe": false,
+        "rang": 14
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Articles 3",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.69,
+          "seuil": 4.5,
+          "couleur": "rgb(79, 94, 79)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 437,
+          "y": 244,
+          "l": 69,
+          "h": 28
+        },
+        "dansIframe": false,
+        "rang": 15
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Notions 11",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.69,
+          "seuil": 4.5,
+          "couleur": "rgb(79, 94, 79)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 514,
+          "y": 244,
+          "l": 73,
+          "h": 28
+        },
+        "dansIframe": false,
+        "rang": 16
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Parcours 1",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.69,
+          "seuil": 4.5,
+          "couleur": "rgb(79, 94, 79)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 594,
+          "y": 244,
+          "l": 73,
+          "h": 28
+        },
+        "dansIframe": false,
+        "rang": 17
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Chapitres 3",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.69,
+          "seuil": 4.5,
+          "couleur": "rgb(79, 94, 79)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 675,
+          "y": 244,
+          "l": 80,
+          "h": 28
+        },
+        "dansIframe": false,
+        "rang": 18
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Exercices de parcours 18",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.69,
+          "seuil": 4.5,
+          "couleur": "rgb(79, 94, 79)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 763,
+          "y": 244,
+          "l": 151,
+          "h": 28
+        },
+        "dansIframe": false,
+        "rang": 19
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Doctrine dans Symfony : entités, mapping et EntityManager",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 372,
+          "l": 472,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 20
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Ne pas remplacer une collection Doctrine",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 510,
+          "l": 328,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 21
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Migrations Doctrine dans Symfony : générer, relire et jouer",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 648,
+          "l": 461,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 22
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "QueryBuilder Doctrine : écrire ses requêtes dans Symfony",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 389,
+          "l": 461,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 23
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Relations Doctrine dans Symfony : ManyToOne et OneToMany",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 527,
+          "l": 489,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 24
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Écouteurs Doctrine dans Symfony : agir avant d'enregistrer une entité",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 665,
+          "l": 551,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 25
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "ManyToMany avec Doctrine : côté propriétaire et côté inverse",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 389,
+          "l": 486,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 26
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Pagination avec Doctrine : le Paginator dans un repository Symfony",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 527,
+          "l": 534,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 27
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Requêtes N+1 avec Doctrine : les repérer et les éviter",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 665,
+          "l": 411,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 28
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Traitement par lots avec Doctrine : toIterable(), flush() et clear()",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 389,
+          "l": 492,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 29
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "OneToMany Symfony : les pièges Doctrine qu'on rencontre tous",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 527,
+          "l": 501,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 30
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Retrouver un patient par son adresse chiffrée",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 665,
+          "l": 362,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 31
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Chiffrer les colonnes sensibles d'une entité",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 389,
+          "l": 341,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 32
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Tenir les deux côtés d'une relation OneToMany",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 527,
+          "l": 365,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 33
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Enregistrer une commande avec ses lignes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 665,
+          "l": 341,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 34
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Supprimer une ligne retirée de sa commande",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 389,
+          "l": 358,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 35
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Filtrer sans tronquer les collections",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 527,
+          "l": 280,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 36
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Paginer des commandes chargées avec leurs lignes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 665,
+          "l": 411,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 37
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Le slug qui s'écrit tout seul",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 389,
+          "l": 207,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 38
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Filtrer sur les propriétés d'une entité liée avec EasyAdmin",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 527,
+          "l": 453,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 39
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "La première migration",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 665,
+          "l": 175,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 40
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "La cave reste pleine",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 389,
+          "l": 156,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 41
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Le grand livre de Bruna",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 527,
+          "l": 182,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 42
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "🐉 Boss : la taverne à l'envers",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 665,
+          "l": 231,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 43
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "La cave et le garde-manger",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 389,
+          "l": 214,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 44
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Retour à la cave",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 527,
+          "l": 126,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 45
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Chiffrer des colonnes avec Symfony 8.2 : ce que #[Encrypted] protège, et ce qu'i",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 665,
+          "l": 659,
+          "h": 50
+        },
+        "dansIframe": false,
+        "rang": 46
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Les rouages de la taverne",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 389,
+          "l": 202,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 47
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Événements Symfony : kernel.request et événements de l'application",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 527,
+          "l": 547,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 48
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "La carte sort de la base",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.49,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 18,
+          "gras": false
+        },
+        "rect": {
+          "x": 297,
+          "y": 665,
+          "l": 184,
+          "h": 22
+        },
+        "dansIframe": false,
+        "rang": 49
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Forelse apprendre",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 14.62,
+          "seuil": 4.5,
+          "couleur": "rgb(27, 42, 28)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 50,
+          "y": 437,
+          "l": 405,
+          "h": 42
+        },
+        "dansIframe": false,
+        "rang": 50
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Les parcours",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 468,
+          "l": 79,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 51
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Pratique",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 496,
+          "l": 52,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 52
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Le bac à sable",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 524,
+          "l": 89,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 53
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Les notions",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 552,
+          "l": 71,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 54
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Le classement",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 580,
+          "l": 89,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 55
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Le blog",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 608,
+          "l": 46,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 56
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Questions fréquentes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 495,
+          "y": 636,
+          "l": 132,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 57
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Écoles et entreprises",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 468,
+          "l": 129,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 58
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Formations et audits",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 496,
+          "l": 127,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 59
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Auto-hébergement",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 524,
+          "l": 115,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 60
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Qui suis-je",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 552,
+          "l": 67,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 61
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Contact",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 580,
+          "l": 48,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 62
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Connexion",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 750,
+          "y": 608,
+          "l": 65,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 63
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Mentions légales",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 1006,
+          "y": 468,
+          "l": 104,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 64
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Confidentialité",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 1006,
+          "y": 496,
+          "l": 91,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 65
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Conditions de vente",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 10.05,
+          "seuil": 4.5,
+          "couleur": "rgb(51, 68, 58)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 1006,
+          "y": 524,
+          "l": 123,
+          "h": 17
+        },
+        "dansIframe": false,
+        "rang": 66
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "code source",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.3,
+          "seuil": 4.5,
+          "couleur": "rgb(47, 107, 22)",
+          "fond": "rgb(251,252,248)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 1151,
+          "y": 728,
+          "l": 79,
+          "h": 16
+        },
+        "dansIframe": false,
+        "rang": 67
+      },
+      {
+        "el": "body",
+        "rang": 68
+      }
+    ],
+    "retourMajTab": [
+      "a code source",
+      "a Conditions de vente",
+      "a Confidentialité",
+      "a Mentions légales",
+      "a Connexion",
+      "a Contact",
+      "a Qui suis-je",
+      "a Auto-hébergement"
+    ]
+  },
+  "espacement": {
+    "rognes": [
+      {
+        "el": "a.skip-link",
+        "texte": "Aller au contenu"
+      },
+      {
+        "el": "label.sr-only",
+        "texte": "Mots à chercher"
+      }
+    ],
+    "capture": "P05-crit-10-12-espacement.png"
+  }
+}

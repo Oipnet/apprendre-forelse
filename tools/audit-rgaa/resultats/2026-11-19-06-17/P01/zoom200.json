@@ -1,0 +1,125 @@
+{
+  "statut": 200,
+  "url": "https://apprendre.forelse.fr/",
+  "axe": {
+    "violations": [
+      {
+        "regle": "aria-allowed-role",
+        "critereRgaa": "7.1",
+        "impact": "minor",
+        "aide": "ARIA role should be appropriate for the element",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/aria-allowed-role?application=playwright",
+        "wcag": [],
+        "noeuds": [
+          {
+            "cible": [
+              "#lp-panel-apprendre-php-8"
+            ],
+            "html": "<article class=\"track-card fl-card overflow-hidden\" id=\"lp-panel-apprendre-php-8\" role=\"tabpanel\" aria-labelledby=\"lp-tab-apprendre-php-8\" tabindex=\"0\">",
+            "resume": "Fix any of the following:\n  ARIA role tabpanel is not allowed for given element",
+            "capture": "P01-crit-7-1-aria-allowed-role-zoom200-1.png"
+          }
+        ]
+      },
+      {
+        "regle": "link-in-text-block",
+        "critereRgaa": "10.6",
+        "impact": "serious",
+        "aide": "Links must be distinguishable without relying on color",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/link-in-text-block?application=playwright",
+        "wcag": [
+          "wcag2a",
+          "wcag141"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".fl-lead > a[href$=\"auto-hebergement\"]"
+            ],
+            "html": "<a href=\"/auto-hebergement\">le faire tourner chez vous</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.59:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #33443a)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P01-crit-10-6-link-in-text-block-zoom200-1.png"
+          },
+          {
+            "cible": [
+              ".site-moteur > a"
+            ],
+            "html": "<a href=\"https://github.com/oipnet/apprendre-forelse\">code source</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P01-crit-10-6-link-in-text-block-zoom200-2.png"
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "aria-allowed-role",
+        "critereRgaa": "7.1",
+        "aide": "ARIA role should be appropriate for the element",
+        "nb": 2,
+        "cibles": [
+          [
+            "#lp-panel-symfony-pour-dev-php"
+          ],
+          [
+            "#lp-panel-decouvrir-goravel-1"
+          ]
+        ]
+      },
+      {
+        "regle": "aria-prohibited-attr",
+        "critereRgaa": "7.1",
+        "aide": "Elements must only use permitted ARIA attributes",
+        "nb": 1,
+        "cibles": [
+          [
+            "#lp-panel-apprendre-php-8 > .md\\:p-8.md\\:flex-row.md\\:justify-between > .track-offer.md\\:items-end.md\\:text-right > .track-price.text-ink-soft > s"
+          ]
+        ]
+      },
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 8,
+        "cibles": [
+          [
+            ".group-open\\:rotate-90"
+          ],
+          [
+            "em"
+          ],
+          [
+            ".fl-btn-lg.btn-primary.btn > span[aria-hidden=\"true\"]"
+          ],
+          [
+            ".cursor"
+          ],
+          [
+            ".gap-2.items-center.flex:nth-child(2) > .text-\\[\\#5cc97f\\]"
+          ],
+          [
+            ".gap-2.items-center.flex:nth-child(3) > .text-\\[\\#5cc97f\\]"
+          ],
+          [
+            "span[data-demo-goal=\"\"] > i"
+          ],
+          [
+            ".fl-btn-gold > .font-mono[aria-hidden=\"true\"]"
+          ]
+        ]
+      },
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "nb": 1,
+        "cibles": [
+          [
+            "summary[aria-label=\"Menu\"]"
+          ]
+        ]
+      }
+    ]
+  }
+}

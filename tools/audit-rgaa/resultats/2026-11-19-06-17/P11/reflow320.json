@@ -1,0 +1,81 @@
+{
+  "statut": 200,
+  "url": "https://apprendre.forelse.fr/pratique/doctrine-onetomany-deux-cotes",
+  "axe": {
+    "violations": [
+      {
+        "regle": "region",
+        "critereRgaa": "9.2",
+        "impact": "moderate",
+        "aide": "All page content should be contained by landmarks",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/region?application=playwright",
+        "wcag": [],
+        "noeuds": [
+          {
+            "cible": [
+              ".small-screen-note > span"
+            ],
+            "html": "<span>Cet exercice se joue mieux sur un écran large : ici, un volet à la fois.</span>",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P11-crit-9-2-region-reflow320-1.png"
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 2,
+        "cibles": [
+          [
+            "button[aria-label=\"Fermer\"]"
+          ],
+          [
+            ".ime-text-area"
+          ]
+        ]
+      },
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "nb": 3,
+        "cibles": [
+          [
+            "#shortcuts"
+          ],
+          [
+            "button[aria-label=\"Fermer\"]"
+          ],
+          [
+            "#toggle-tree"
+          ]
+        ]
+      }
+    ]
+  },
+  "reflow": {
+    "largeur": 320,
+    "largeurDocument": 320,
+    "defilementHorizontal": false,
+    "deborde": [
+      {
+        "el": "button.tab",
+        "droite": 398,
+        "defileSeul": false
+      },
+      {
+        "el": "button.tab",
+        "droite": 624,
+        "defileSeul": false
+      },
+      {
+        "el": "div.lines-content",
+        "droite": 16777248,
+        "defileSeul": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "statut": 200,
+  "url": "https://apprendre.forelse.fr/pratique/doctrine-onetomany-deux-cotes",
+  "axe": {
+    "violations": [
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "impact": "serious",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=playwright",
+        "wcag": [
+          "wcag2aa",
+          "wcag143"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".mtk7:nth-child(1)"
+            ],
+            "html": "<span class=\"mtk7\">#[ORM\\Entity(repositoryClass:&nbsp;CommandeRepository::</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-zoom200-1.png"
+          },
+          {
+            "cible": [
+              ".mtk7:nth-child(2)"
+            ],
+            "html": "<span class=\"mtk7\">class)]</span>",
+            "resume": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #608b4e, background color: #1e1e1e, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "capture": "P11-crit-3-2-color-contrast-zoom200-2.png"
+          }
+        ]
+      },
+      {
+        "regle": "region",
+        "critereRgaa": "9.2",
+        "impact": "moderate",
+        "aide": "All page content should be contained by landmarks",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/region?application=playwright",
+        "wcag": [],
+        "noeuds": [
+          {
+            "cible": [
+              ".small-screen-note > span"
+            ],
+            "html": "<span>Cet exercice se joue mieux sur un écran large : ici, un volet à la fois.</span>",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P11-crit-9-2-region-zoom200-1.png"
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 2,
+        "cibles": [
+          [
+            "button[aria-label=\"Fermer\"]"
+          ],
+          [
+            ".ime-text-area"
+          ]
+        ]
+      },
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "nb": 3,
+        "cibles": [
+          [
+            "#shortcuts"
+          ],
+          [
+            "button[aria-label=\"Fermer\"]"
+          ],
+          [
+            "#toggle-tree"
+          ]
+        ]
+      }
+    ]
+  }
+}
