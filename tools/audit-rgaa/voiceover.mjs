@@ -3,6 +3,7 @@
 //
 // Préparation, une fois :
 //   npm install                       (installe @guidepup/guidepup, voir package.json)
+//   npx @guidepup/setup@0.29.3 install           (une fois par projet : réglages VoiceOver de Guidepup)
 //   npx @guidepup/setup@0.29.3 setup             (autorise le pilotage de VoiceOver par AppleScript ; suivre ses consignes)
 //   Safari > Réglages > Avancés : cocher « Appuyer sur Tab pour mettre en évidence chaque élément d'une page web »
 //   Réglages Système > Confidentialité et sécurité > Accessibilité et Automatisation : autoriser le Terminal
