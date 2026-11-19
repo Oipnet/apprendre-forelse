@@ -57,6 +57,7 @@ de Playwright). Sortie : `resultats/restitution-<horodatage>/`. À comparer à l
     # sinon « Failed to mount Guidepup preferences … Operation not permitted ».
     # Le Terminal doit aussi être autorisé dans « Accessibilité » (sinon erreur 1002 « osascript n'est pas autorisé à envoyer de saisies »).
     node voiceover.mjs --pages P11  # ne plus toucher au Mac pendant le passage
+    node voiceover.mjs --pages P11 --sans-editeur  # titres et tabulation seulement, sans les raccourcis du scénario Monaco
 
 Prérequis et détails en tête de `voiceover.mjs` (réglage Tab de Safari, autorisations du Terminal). Le script ouvre
 chaque page publique dans Safari, démarre VoiceOver et note ce qu'il dit : arrivée, titres (VO + Cmd + H), suite de Tab.
