@@ -51,7 +51,7 @@ de Playwright). Sortie : `resultats/restitution-<horodatage>/`. À comparer à l
 
 ## Restitution réelle par VoiceOver (Guidepup, macOS seulement)
 
-    npx @guidepup/setup@0.29.3      # une fois : autorise le pilotage de VoiceOver
+    npx @guidepup/setup@0.29.3 setup      # une fois : autorise le pilotage de VoiceOver
     node voiceover.mjs --pages P11  # ne plus toucher au Mac pendant le passage
 
 Prérequis et détails en tête de `voiceover.mjs` (réglage Tab de Safari, autorisations du Terminal). Le script ouvre
