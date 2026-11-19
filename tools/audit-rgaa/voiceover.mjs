@@ -57,6 +57,8 @@ async function releve(n, action) {
     await pause(400);
     const phrase = await voiceOver.lastSpokenPhrase();
     if (dit.length > 2 && phrase === dit[0]) break;
+    // « En-tête introuvable » / « not found » : fin de la liste ; au-delà, VoiceOver lit autre chose que la page.
+    if (/introuvable|not found|aucun|no more/i.test(phrase)) { dit.push(phrase); break; }
     dit.push(phrase);
   }
   return dit;
@@ -121,7 +123,12 @@ try {
     md.push('## Annonce à l\'arrivée', '', ...(await voiceOver.spokenPhraseLog()).slice(0, 6).map((a) => `- « ${echappe(a)} »`), '');
     sauver();
 
-    // Titres, avec VO + Cmd + H.
+    // Titres, avec VO + Cmd + H, depuis le haut de la fenêtre de Safari (sinon le curseur VoiceOver peut partir de
+    // l'iframe d'aperçu). Les titres de l'aperçu (code de l'apprenant, hors champ) restent listés : ils suivent le
+    // cadre « Aperçu de l'application » dans l'ordre du document.
+    activerSafari();
+    await voiceOver.perform(voiceOver.keyboardCommands.moveToFirst).catch(() => {});
+    await pause(400);
     const titres = await releve(25, () => voiceOver.perform(voiceOver.keyboardCommands.findNextHeading));
     md.push('## Titres (VO + Cmd + H)', '', ...titres.map((t, i) => `${i + 1}. « ${echappe(t)} »`), '');
     sauver();
