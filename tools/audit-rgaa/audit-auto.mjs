@@ -135,7 +135,9 @@ const releverStructure = (page) => page.evaluate(() => {
 
 // Contraste d'un élément (fond résolu en remontant les ancêtres opaques ; images de fond non gérées → « à vérifier »).
 const CONTRASTE = `(() => {
-  const rgb = (c) => { const m = c.match(/rgba?\\(([^)]+)\\)/); if (!m) return null; const [r, g, b, a = 1] = m[1].split(/[ ,\\/]+/).filter(Boolean).map(Number); return { r, g, b, a }; };
+  const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  // Toute couleur CSS (rgb, oklch, color(), hsl…) ramenée en sRGB par le canvas.
+  const rgb = (c) => { if (!c || c === 'transparent') return { r: 0, g: 0, b: 0, a: 0 }; ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = '#000'; ctx.fillStyle = c; ctx.fillRect(0, 0, 1, 1); const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data; return { r, g, b, a: a / 255 }; };
   const lum = ({ r, g, b }) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
   const melange = (h, b) => ({ r: h.r * h.a + b.r * (1 - h.a), g: h.g * h.a + b.g * (1 - h.a), b: h.b * h.a + b.b * (1 - h.a), a: 1 });
   window.__rgaaContraste = (el) => {
