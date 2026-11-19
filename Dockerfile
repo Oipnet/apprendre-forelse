@@ -55,8 +55,10 @@ RUN node precompresser.ts /src/platform/public/build
 # Version épinglée, et non le tag flottant 1-php8.5 : une image reconstruite garde la base vérifiée, et Dependabot
 # propose chaque nouvelle version (.github/dependabot.yml). PHP 8.5.12 depuis 1.13.2 (correctif PHP2Shell,
 # CVE-2026-109618 et 109619) ; 1.13.4 corrige en plus les failles du mode worker et Brotli (Node2Shell, CVE-2026-111497) ; 1.13.5 (Caddy 2.11.9)
-# corrige 17 failles de php_server, du mode worker et de HTTP/2.
-FROM dunglas/frankenphp:1.13.5-php8.5 AS php_base
+# corrige 17 failles de php_server, du mode worker et de HTTP/2. PHP 8.5.13 (correctif de sécurité du 19/11/2026,
+# sévérité CRITICAL) : épinglé jusqu'au correctif de PHP, « 1.13.5-php8.5 » étant un tag flottant que le cache de la CI
+# (cache-from: type=gha) pouvait garder sur l'ancien PHP. Après un correctif de PHP, monter ici le dernier chiffre.
+FROM dunglas/frankenphp:1.13.5-php8.5.13 AS php_base
 
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 WORKDIR /app
