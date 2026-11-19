@@ -47,7 +47,13 @@ async function releve(n, action) {
   const dit = [];
   for (let i = 0; i < n; i++) {
     if (i % 5 === 0) activerSafari();
-    await action();
+    try { await action(); } catch (e) {
+      // Une commande refusée (raccourci VoiceOver, AppleScript) ne doit pas faire perdre le reste du relevé.
+      const cause = e.cause?.message || e.cause?.cause?.message || '';
+      console.error(`  erreur à l'étape ${i + 1} : ${e.message} ${cause}`);
+      dit.push(`(erreur : ${e.message} ${cause})`.replace(/\s+/g, ' ').slice(0, 300));
+      break;
+    }
     await pause(400);
     const phrase = await voiceOver.lastSpokenPhrase();
     if (dit.length > 2 && phrase === dit[0]) break;
