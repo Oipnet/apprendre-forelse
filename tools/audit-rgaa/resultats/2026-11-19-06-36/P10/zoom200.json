@@ -1,0 +1,127 @@
+{
+  "statut": 200,
+  "url": "https://preprod.forelse.fr/parcours/symfony-pour-dev-php",
+  "axe": {
+    "violations": [
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "impact": "serious",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+        "wcag": [
+          "wcag21a",
+          "wcag253"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".py-1"
+            ],
+            "html": "<summary class=\"flex cursor-pointer list-none items-center gap-2 rounded-full border border-line py-1 pr-3 pl-1 hover:bg-bg-2 [&::-webkit-details-marker]:hidden\" aria-label=\"Menu du compte de apprenant\">",
+            "resume": "Fix any of the following:\n  Text inside the element is not included in the accessible name",
+            "capture": "P10-crit-6-1-label-content-name-mismatch-zoom200-1.png"
+          }
+        ]
+      },
+      {
+        "regle": "link-in-text-block",
+        "critereRgaa": "10.6",
+        "impact": "serious",
+        "aide": "Links must be distinguishable without relying on color",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/link-in-text-block?application=playwright",
+        "wcag": [
+          "wcag2a",
+          "wcag141"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".site-moteur > a"
+            ],
+            "html": "<a href=\"https://github.com/oipnet/apprendre-forelse\">code source</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P10-crit-10-6-link-in-text-block-zoom200-1.png"
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "aria-prohibited-attr",
+        "critereRgaa": "7.1",
+        "aide": "Elements must only use permitted ARIA attributes",
+        "nb": 1,
+        "cibles": [
+          [
+            "s"
+          ]
+        ]
+      },
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 16,
+        "cibles": [
+          [
+            ".py-1 > .transition-transform.duration-200.motion-reduce\\:transition-none"
+          ],
+          [
+            ".group-open\\:rotate-90"
+          ],
+          [
+            ".btn.btn-primary.mt-2 > span[aria-hidden=\"true\"]"
+          ],
+          [
+            "details[open=\"\"] > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "a[aria-describedby=\"notions-08-incident-en-cuisine\"] > .state.w-6.text-center > span[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-2 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-3 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-4 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-5 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-6 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-7 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-8 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-9 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-10 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ],
+          [
+            "#chapitre-11 > .tr-chapter > .items-start.p-4 > .transition.group-open\\:rotate-180[aria-hidden=\"true\"]"
+          ]
+        ]
+      },
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "nb": 1,
+        "cibles": [
+          [
+            "summary[aria-label=\"Menu\"]"
+          ]
+        ]
+      }
+    ]
+  }
+}

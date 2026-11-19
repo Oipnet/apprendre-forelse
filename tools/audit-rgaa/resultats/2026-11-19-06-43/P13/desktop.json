@@ -1,0 +1,3281 @@
+{
+  "statut": 200,
+  "url": "https://preprod.forelse.fr/cohorte/3",
+  "axe": {
+    "violations": [
+      {
+        "regle": "landmark-one-main",
+        "critereRgaa": "9.2",
+        "impact": "moderate",
+        "aide": "Document should have one main landmark",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/landmark-one-main?application=playwright",
+        "wcag": [],
+        "noeuds": [
+          {
+            "cible": [
+              "html"
+            ],
+            "html": "<html lang=\"fr\" dir=\"ltr\" data-turbo=\"false\">",
+            "resume": "Fix all of the following:\n  Document does not have a main landmark",
+            "capture": "P13-crit-9-2-landmark-one-main-desktop-1.png"
+          }
+        ]
+      },
+      {
+        "regle": "link-name",
+        "critereRgaa": "6.2",
+        "impact": "serious",
+        "aide": "Links must have discernible text",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/link-name?application=playwright",
+        "wcag": [
+          "wcag2a",
+          "wcag244",
+          "wcag412"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".content-top > .dropdown-settings.dropdown > .dropdown-settings-button.dropdown-toggle[data-bs-offset=\"0,5\"]"
+            ],
+            "html": "<a class=\"dropdown-toggle dropdown-toggle-hidden-marker dropdown-settings-button\" href=\"#\" role=\"button\" data-bs-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\" data-bs-offset=\"0,5\">",
+            "resume": "Fix all of the following:\n  Element is in tab order and does not have accessible text\n\nFix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute",
+            "capture": "P13-crit-6-2-link-name-desktop-1.png"
+          }
+        ]
+      },
+      {
+        "regle": "meta-viewport",
+        "critereRgaa": "10.4",
+        "impact": "moderate",
+        "aide": "Zooming and scaling must not be disabled",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/meta-viewport?application=playwright",
+        "wcag": [
+          "wcag2aa",
+          "wcag144"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              "meta[name=\"viewport\"]"
+            ],
+            "html": "<meta content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\" name=\"viewport\">",
+            "resume": "Fix any of the following:\n  maximum-scale=1 on <meta> tag disables zooming on mobile devices",
+            "capture": null
+          }
+        ]
+      },
+      {
+        "regle": "region",
+        "critereRgaa": "9.2",
+        "impact": "moderate",
+        "aide": "All page content should be contained by landmarks",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/region?application=playwright",
+        "wcag": [],
+        "noeuds": [
+          {
+            "cible": [
+              ".content-header"
+            ],
+            "html": "<section class=\"content-header\">",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-1.png"
+          },
+          {
+            "cible": [
+              "#main > p:nth-child(1)"
+            ],
+            "html": "<p>\n        <span class=\"badge badge-success\">Classe gratuite</span>        Code d'invitation <code>classe-test-rgaa-z9723mf2f5</code>        · 1 élève\n    </p>",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-2.png"
+          },
+          {
+            "cible": [
+              "#main > .text-muted"
+            ],
+            "html": "<p class=\"text-muted\">Envoyez ce lien à vos élèves : ils créent leur compte avec, et retrouvent les exercices de la classe en haut de la Pratique.</p>",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-3.png"
+          },
+          {
+            "cible": [
+              ".form-control"
+            ],
+            "html": "<input class=\"form-control form-control-sm\" type=\"text\" value=\"https://preprod.forelse.fr/inscription?code=classe-test-rgaa-z9723mf2f5\" readonly=\"\" aria-label=\"Lien d'invitation de Classe test RGAA\" onfocus=\"this.select()\" style=\"\">",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-4.png"
+          },
+          {
+            "cible": [
+              "#suivi"
+            ],
+            "html": "<section class=\"beta-panel\" id=\"suivi\">",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-5.png"
+          },
+          {
+            "cible": [
+              "#exercices > .beta-panel-header"
+            ],
+            "html": "<div class=\"beta-panel-header\">\n            <h2>Exercices de la classe</h2>\n            <span class=\"badge badge-info\">2</span>        </div>",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-6.png"
+          },
+          {
+            "cible": [
+              "#exercices > .beta-panel-body > .text-muted"
+            ],
+            "html": "<p class=\"text-muted\">Retirer un exercice ne supprime aucune progression : il disparaît seulement du suivi.</p>",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-7.png"
+          },
+          {
+            "cible": [
+              "fieldset:nth-child(1)"
+            ],
+            "html": "<fieldset class=\"free-class-group mt-4\">",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-8.png"
+          },
+          {
+            "cible": [
+              "fieldset:nth-child(2)"
+            ],
+            "html": "<fieldset class=\"free-class-group mt-4\">",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-9.png"
+          },
+          {
+            "cible": [
+              "fieldset:nth-child(3)"
+            ],
+            "html": "<fieldset class=\"free-class-group mt-4\">",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": "P13-crit-9-2-region-desktop-10.png"
+          },
+          {
+            "cible": [
+              ".beta-panel:nth-child(6)"
+            ],
+            "html": "<section class=\"beta-panel\">",
+            "resume": "Fix any of the following:\n  Some page content is not contained by landmarks",
+            "capture": null
+          }
+        ]
+      }
+    ],
+    "incomplets": []
+  },
+  "structure": {
+    "titre": "Classe test RGAA",
+    "lang": "fr",
+    "changementsLangue": [],
+    "blocsCodeSansLang": 1,
+    "titres": [
+      {
+        "niveau": "1",
+        "texte": "Classe test RGAA",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Suivi",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Exercices de la classe",
+        "visible": true
+      },
+      {
+        "niveau": "2",
+        "texte": "Aller plus loin",
+        "visible": true
+      }
+    ],
+    "regions": [
+      {
+        "el": "aside",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "header",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "nav",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      },
+      {
+        "el": "aside",
+        "role": null,
+        "nom": null,
+        "dansMain": false
+      }
+    ],
+    "liensEvitement": [
+      {
+        "texte": "",
+        "href": "#",
+        "cibleExiste": false
+      },
+      {
+        "texte": "",
+        "href": "#",
+        "cibleExiste": false
+      },
+      {
+        "texte": "Clair",
+        "href": "#",
+        "cibleExiste": false
+      },
+      {
+        "texte": "Sombre",
+        "href": "#",
+        "cibleExiste": false
+      },
+      {
+        "texte": "Automatique",
+        "href": "#",
+        "cibleExiste": false
+      }
+    ],
+    "images": [
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "(lien sans texte)"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "(lien sans texte)"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": null
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Déconnexion"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "(lien sans texte)"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Clair"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Clair"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Sombre"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Sombre"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Automatique"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Automatique"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Forelse · cohortes"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": "chef"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": null
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Déconnexion"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": true,
+        "dansLien": "(lien sans texte)"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Clair"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Clair"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Sombre"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Sombre"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Automatique"
+      },
+      {
+        "el": "svg",
+        "src": "",
+        "alt": null,
+        "role": null,
+        "ariaHidden": null,
+        "nom": null,
+        "titleSvg": null,
+        "focusable": null,
+        "visible": false,
+        "dansLien": "Automatique"
+      }
+    ],
+    "formulaires": [
+      {
+        "el": "input",
+        "type": "text",
+        "nom": "",
+        "id": "",
+        "labels": [],
+        "ariaLabel": "Lien d'invitation de Classe test RGAA",
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": null,
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_0",
+        "labels": [
+          "Un paramètre de route avec Goravel"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Goravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_1",
+        "labels": [
+          "Arrêter proprement une commande longue avec schedule:interrupt"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_2",
+        "labels": [
+          "Chercher avec un corps de requête grâce à la méthode QUERY"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_3",
+        "labels": [
+          "Compter les lignes de plusieurs tables en une assertion"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_4",
+        "labels": [
+          "Des règles de validation sans chaînes à paramètres"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_5",
+        "labels": [
+          "Des valeurs par défaut calculées avec defaults()"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_6",
+        "labels": [
+          "Migrer des fichiers au fil des lectures avec read-through"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_7",
+        "labels": [
+          "Ne pas envoyer le mail d'une commande annulée"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_8",
+        "labels": [
+          "Ne traiter que le dernier événement d'une rafale avec #[DebounceFor]"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_9",
+        "labels": [
+          "Passer un fichier d'un disque à l'autre avec moveToDisk()"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_10",
+        "labels": [
+          "Regrouper les éléments voisins avec chunkBy()"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_11",
+        "labels": [
+          "Relire les colonnes calculées par la base avec #[Refreshes]"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_12",
+        "labels": [
+          "Restreindre les clés d'un tableau avec array_keys"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_13",
+        "labels": [
+          "Servir une page en Markdown avec response()->markdown()"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_14",
+        "labels": [
+          "Voir tout de suite ce qu'on vient d'écrire, malgré le réplica"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_15",
+        "labels": [
+          "Vérifier le contenu d'un événement avec un tableau de propriétés"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_16",
+        "labels": [
+          "Vérifier qu'un mail ne part qu'une fois"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Laravel",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_17",
+        "labels": [
+          "Changer de secret sans casser les liens déjà envoyés"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_18",
+        "labels": [
+          "Chiffrer les colonnes sensibles d'une entité"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_19",
+        "labels": [
+          "Des abonnés lisibles : method et priority"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_20",
+        "labels": [
+          "Des rôles par famille, avec des jokers"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_21",
+        "labels": [
+          "Des sous-commandes à la Docker"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_22",
+        "labels": [
+          "Des écouteurs qui se placent les uns par rapport aux autres"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_23",
+        "labels": [
+          "Décrire les outils d'un agent IA avec JsonSchema"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_24",
+        "labels": [
+          "Décrire un formulaire par attributs"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_25",
+        "labels": [
+          "Décrire un workflow par attributs"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_26",
+        "labels": [
+          "Enregistrer une commande avec ses lignes"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_27",
+        "labels": [
+          "Exiger un code SMS avant un virement"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_28",
+        "labels": [
+          "Filtrer sans tronquer les collections"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_29",
+        "labels": [
+          "Filtrer sur les propriétés d'une entité liée avec EasyAdmin"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_30",
+        "labels": [
+          "Laisser remonter une ValidationFailedException"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_31",
+        "labels": [
+          "Lire toute une collection avec [*]"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_32",
+        "labels": [
+          "Lire un en-tête avec #[MapRequestHeader]"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_33",
+        "labels": [
+          "Ne pas remplacer une collection Doctrine"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_34",
+        "labels": [
+          "Paginer des commandes chargées avec leurs lignes"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_35",
+        "labels": [
+          "Protéger une suppression par un jeton CSRF"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_36",
+        "labels": [
+          "Redemander le bon facteur plutôt qu'un 403"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_37",
+        "labels": [
+          "Redemander le mot de passe avant les pages sensibles"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_38",
+        "labels": [
+          "Retrouver un patient par son adresse chiffrée"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_39",
+        "labels": [
+          "Régler le style des badges d'EasyAdmin"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_40",
+        "labels": [
+          "Se déconnecter par un bouton, et non plus par un lien"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_41",
+        "labels": [
+          "Supprimer une ligne retirée de sa commande"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_42",
+        "labels": [
+          "Tenir les deux côtés d'une relation OneToMany"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_43",
+        "labels": [
+          "Un Cache-Control pour le CDN, un autre pour le navigateur"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_44",
+        "labels": [
+          "Un champ pour une période, avec BoundsType"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_45",
+        "labels": [
+          "Un import à la fois, avec #[Lock]"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_46",
+        "labels": [
+          "Un lien dans une traduction, sans raw"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_47",
+        "labels": [
+          "Un lien de connexion qui garde sa destination"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_48",
+        "labels": [
+          "Un lien de réinitialisation qui ne sert qu'une fois"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_49",
+        "labels": [
+          "Un nom par version d'API, et des groupes à écarter"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_50",
+        "labels": [
+          "Valider selon les droits de l'utilisateur"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      },
+      {
+        "el": "input",
+        "type": "checkbox",
+        "nom": "free_class[practiceIds][]",
+        "id": "free_class_practiceIds_51",
+        "labels": [
+          "Valider une expression cron pour de vrai"
+        ],
+        "ariaLabel": null,
+        "title": null,
+        "placeholder": null,
+        "autocomplete": null,
+        "required": false,
+        "ariaRequired": null,
+        "ariaDescribedby": null,
+        "ariaInvalid": null,
+        "fieldset": "Symfony",
+        "visible": true
+      }
+    ],
+    "dynamiques": {
+      "ariaLive": [],
+      "dialogues": [],
+      "ariaExpanded": [
+        {
+          "el": "#navigation-toggler",
+          "texte": "",
+          "expanded": "false",
+          "controls": null
+        },
+        {
+          "el": "a.dropdown-toggle.dropdown-toggle-hidden-marker",
+          "texte": "",
+          "expanded": "false",
+          "controls": null
+        },
+        {
+          "el": "a.dropdown-toggle.dropdown-toggle-hidden-marker",
+          "texte": "",
+          "expanded": "false",
+          "controls": null
+        },
+        {
+          "el": "button.ea-layout-toggle.ea-layout-toggle-sidebar",
+          "texte": "Réduire",
+          "expanded": "true",
+          "controls": null
+        },
+        {
+          "el": "a.dropdown-toggle.dropdown-toggle-hidden-marker",
+          "texte": "chef",
+          "expanded": "false",
+          "controls": null
+        },
+        {
+          "el": "a.dropdown-toggle.dropdown-toggle-hidden-marker",
+          "texte": "",
+          "expanded": "false",
+          "controls": null
+        },
+        {
+          "el": "button.ea-layout-toggle.ea-layout-toggle-content",
+          "texte": "Réduire",
+          "expanded": "true",
+          "controls": null
+        }
+      ],
+      "onglets": 0,
+      "details": 0,
+      "iframes": [],
+      "editeurs": []
+    }
+  },
+  "survol": [],
+  "clavier": {
+    "suite": [
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Forelse · cohortes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": {
+          "ratio": 14.5,
+          "seuil": 4.5,
+          "couleur": "oklch(0.269 0 none)",
+          "fond": "rgb(250,250,250)",
+          "imageDeFond": false,
+          "taille": 16,
+          "gras": false
+        },
+        "rect": {
+          "x": 16,
+          "y": -1071,
+          "l": 204,
+          "h": 65
+        },
+        "dansIframe": false,
+        "rang": 1,
+        "capture": "P13-crit-10-7-focus-001-forelse-cohortes.png"
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Mes cohortes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor",
+          "color",
+          "borderColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": {
+          "ratio": 17.18,
+          "seuil": 4.5,
+          "couleur": "oklch(0.205 0 0)",
+          "fond": "rgb(250,250,250)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 16,
+          "y": -981,
+          "l": 200,
+          "h": 32
+        },
+        "dansIframe": false,
+        "rang": 2,
+        "capture": "P13-crit-10-7-focus-002-mes-cohortes.png"
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "Retour au site",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor",
+          "color",
+          "borderColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": {
+          "ratio": 17.18,
+          "seuil": 4.5,
+          "couleur": "oklch(0.205 0 0)",
+          "fond": "rgb(250,250,250)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 16,
+          "y": -847,
+          "l": 200,
+          "h": 32
+        },
+        "dansIframe": false,
+        "rang": 3,
+        "capture": "P13-crit-10-7-focus-003-retour-au-site.png"
+      },
+      {
+        "el": "button",
+        "role": null,
+        "texte": "Réduire",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [],
+        "outline": false,
+        "indiceFocusInvisible": true,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 20.12,
+          "seuil": 4.5,
+          "couleur": "rgb(0, 0, 0)",
+          "fond": "rgb(250,250,250)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 220,
+          "y": 400,
+          "l": 42,
+          "h": 64
+        },
+        "dansIframe": false,
+        "rang": 4,
+        "capture": "P13-crit-10-7-focus-004-reduire.png"
+      },
+      {
+        "el": "a",
+        "role": "button",
+        "texte": "chef",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": {
+          "ratio": 4.74,
+          "seuil": 4.5,
+          "couleur": "oklch(0.556 0 none)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 1162,
+          "y": -509,
+          "l": 56,
+          "h": 21
+        },
+        "dansIframe": false,
+        "rang": 5,
+        "capture": "P13-crit-10-7-focus-005-chef.png"
+      },
+      {
+        "el": "a",
+        "role": "button",
+        "texte": "",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": null,
+        "rect": {
+          "x": 1218,
+          "y": -339,
+          "l": 41,
+          "h": 20
+        },
+        "dansIframe": false,
+        "rang": 6,
+        "capture": "P13-crit-10-7-focus-006-a.png"
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "← Mes cohortes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineColor",
+          "backgroundColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": true,
+        "contraste": {
+          "ratio": 19.8,
+          "seuil": 4.5,
+          "couleur": "oklch(0.145 0 none)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 1115,
+          "y": -156,
+          "l": 131,
+          "h": 32
+        },
+        "dansIframe": false,
+        "rang": 7,
+        "capture": "P13-crit-10-7-focus-007-mes-cohortes.png"
+      },
+      {
+        "el": "input",
+        "role": null,
+        "texte": "Lien d'invitation de Classe test RGAA",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineWidth",
+          "boxShadow",
+          "borderColor"
+        ],
+        "outline": false,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 267,
+          "y": 53,
+          "l": 916,
+          "h": 31
+        },
+        "dansIframe": false,
+        "rang": 8
+      },
+      {
+        "el": "button",
+        "role": null,
+        "texte": "Copier",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineColor",
+          "backgroundColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 19.8,
+          "seuil": 4.5,
+          "couleur": "oklch(0.145 0 none)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 12,
+          "gras": false
+        },
+        "rect": {
+          "x": 1187,
+          "y": 54,
+          "l": 60,
+          "h": 28
+        },
+        "dansIframe": false,
+        "rang": 9
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "1",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.83,
+          "seuil": 4.5,
+          "couleur": "oklch(0.488 0.243 264.376)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 13,
+          "gras": false
+        },
+        "rect": {
+          "x": 737,
+          "y": 191,
+          "l": 8,
+          "h": 15
+        },
+        "dansIframe": false,
+        "rang": 10
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "2",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.83,
+          "seuil": 4.5,
+          "couleur": "oklch(0.488 0.243 264.376)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 13,
+          "gras": false
+        },
+        "rect": {
+          "x": 848,
+          "y": 191,
+          "l": 8,
+          "h": 15
+        },
+        "dansIframe": false,
+        "rang": 11
+      },
+      {
+        "el": "input#free_class_practiceIds_0",
+        "role": null,
+        "texte": "exemple-goravel-salut",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 498,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 12
+      },
+      {
+        "el": "input#free_class_practiceIds_1",
+        "role": null,
+        "texte": "laravel-13-35-interruption",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 600,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 13
+      },
+      {
+        "el": "input#free_class_practiceIds_2",
+        "role": null,
+        "texte": "laravel-13-35-route-query",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 600,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 14
+      },
+      {
+        "el": "input#free_class_practiceIds_3",
+        "role": null,
+        "texte": "laravel-13-34-assert-database-count",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 600,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 15
+      },
+      {
+        "el": "input#free_class_practiceIds_4",
+        "role": null,
+        "texte": "laravel-13-36-rule-builders",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 646,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 16
+      },
+      {
+        "el": "input#free_class_practiceIds_5",
+        "role": null,
+        "texte": "laravel-13-35-defaults",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 646,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 17
+      },
+      {
+        "el": "input#free_class_practiceIds_6",
+        "role": null,
+        "texte": "laravel-13-26-read-through",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 646,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 18
+      },
+      {
+        "el": "input#free_class_practiceIds_7",
+        "role": null,
+        "texte": "laravel-13-36-mail-modele-supprime",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 692,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 19
+      },
+      {
+        "el": "input#free_class_practiceIds_8",
+        "role": null,
+        "texte": "laravel-13-26-debounce-for",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 692,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 20
+      },
+      {
+        "el": "input#free_class_practiceIds_9",
+        "role": null,
+        "texte": "laravel-13-32-move-to-disk",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 692,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 21
+      },
+      {
+        "el": "input#free_class_practiceIds_10",
+        "role": null,
+        "texte": "laravel-13-30-chunk-by",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 738,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 22
+      },
+      {
+        "el": "input#free_class_practiceIds_11",
+        "role": null,
+        "texte": "laravel-13-33-refreshes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 738,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 23
+      },
+      {
+        "el": "input#free_class_practiceIds_12",
+        "role": null,
+        "texte": "laravel-13-24-array-keys",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 738,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 24
+      },
+      {
+        "el": "input#free_class_practiceIds_13",
+        "role": null,
+        "texte": "laravel-13-35-markdown",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 784,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 25
+      },
+      {
+        "el": "input#free_class_practiceIds_14",
+        "role": null,
+        "texte": "laravel-13-38-lectures-fraiches",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 784,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 26
+      },
+      {
+        "el": "input#free_class_practiceIds_15",
+        "role": null,
+        "texte": "laravel-13-35-faux-par-proprietes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 784,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 27
+      },
+      {
+        "el": "input#free_class_practiceIds_16",
+        "role": null,
+        "texte": "laravel-13-31-assert-sent-once",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 830,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 28
+      },
+      {
+        "el": "input#free_class_practiceIds_17",
+        "role": null,
+        "texte": "symfony-8-2-rotation-secret",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 904,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 29
+      },
+      {
+        "el": "input#free_class_practiceIds_18",
+        "role": null,
+        "texte": "symfony-8-2-colonnes-chiffrees",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 929,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 30
+      },
+      {
+        "el": "input#free_class_practiceIds_19",
+        "role": null,
+        "texte": "symfony-8-2-subscriber-cles-nommees",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 929,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 31
+      },
+      {
+        "el": "input#free_class_practiceIds_20",
+        "role": null,
+        "texte": "symfony-8-2-hierarchie-jokers",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 975,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 32
+      },
+      {
+        "el": "input#free_class_practiceIds_21",
+        "role": null,
+        "texte": "symfony-8-2-sous-commandes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 975,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 33
+      },
+      {
+        "el": "input#free_class_practiceIds_22",
+        "role": null,
+        "texte": "symfony-8-2-ecouteurs-avant-apres",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 975,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 34
+      },
+      {
+        "el": "input#free_class_practiceIds_23",
+        "role": null,
+        "texte": "symfony-8-2-json-schema-outil",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1021,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 35
+      },
+      {
+        "el": "input#free_class_practiceIds_24",
+        "role": null,
+        "texte": "symfony-8-2-formulaires-par-attributs",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1021,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 36
+      },
+      {
+        "el": "input#free_class_practiceIds_25",
+        "role": null,
+        "texte": "symfony-8-2-workflow-par-attributs",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 1021,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 37
+      },
+      {
+        "el": "input#free_class_practiceIds_26",
+        "role": null,
+        "texte": "doctrine-onetomany-cascade-persist",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1067,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 38
+      },
+      {
+        "el": "input#free_class_practiceIds_27",
+        "role": null,
+        "texte": "symfony-8-2-preuve-code-sms",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1067,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 39
+      },
+      {
+        "el": "input#free_class_practiceIds_28",
+        "role": null,
+        "texte": "doctrine-collection-filtree",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 1067,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 40
+      },
+      {
+        "el": "input#free_class_practiceIds_29",
+        "role": null,
+        "texte": "easyadmin-5-8-filtres-imbriques",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1092,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 41
+      },
+      {
+        "el": "input#free_class_practiceIds_30",
+        "role": null,
+        "texte": "symfony-8-2-validation-422",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1092,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 42
+      },
+      {
+        "el": "input#free_class_practiceIds_31",
+        "role": null,
+        "texte": "symfony-8-2-property-access-wildcard",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 1092,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 43
+      },
+      {
+        "el": "input#free_class_practiceIds_32",
+        "role": null,
+        "texte": "symfony-8-1-map-request-header",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1138,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 44
+      },
+      {
+        "el": "input#free_class_practiceIds_33",
+        "role": null,
+        "texte": "doctrine-onetomany-remplacer-collection",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1138,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 45
+      },
+      {
+        "el": "input#free_class_practiceIds_34",
+        "role": null,
+        "texte": "doctrine-paginer-une-jointure",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 1138,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 46
+      },
+      {
+        "el": "input#free_class_practiceIds_35",
+        "role": null,
+        "texte": "symfony-jeton-csrf-suppression",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1184,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 47
+      },
+      {
+        "el": "input#free_class_practiceIds_36",
+        "role": null,
+        "texte": "symfony-8-2-reauthentification-par-facteur",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1182,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 48
+      },
+      {
+        "el": "input#free_class_practiceIds_37",
+        "role": null,
+        "texte": "symfony-8-2-mode-sudo",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 1182,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 49
+      },
+      {
+        "el": "input#free_class_practiceIds_38",
+        "role": null,
+        "texte": "symfony-8-2-index-aveugle",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1228,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 50
+      },
+      {
+        "el": "input#free_class_practiceIds_39",
+        "role": null,
+        "texte": "easyadmin-5-8-badges",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1228,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 51
+      },
+      {
+        "el": "input#free_class_practiceIds_40",
+        "role": null,
+        "texte": "symfony-8-2-deconnexion-post",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 1228,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 52
+      },
+      {
+        "el": "input#free_class_practiceIds_41",
+        "role": null,
+        "texte": "doctrine-onetomany-orphan-removal",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1274,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 53
+      },
+      {
+        "el": "input#free_class_practiceIds_42",
+        "role": null,
+        "texte": "doctrine-onetomany-deux-cotes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1274,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 54
+      },
+      {
+        "el": "input#free_class_practiceIds_43",
+        "role": null,
+        "texte": "symfony-8-2-cache-control-cible",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 1274,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 55
+      },
+      {
+        "el": "input#free_class_practiceIds_44",
+        "role": null,
+        "texte": "symfony-8-2-bornes",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1320,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 56
+      },
+      {
+        "el": "input#free_class_practiceIds_45",
+        "role": null,
+        "texte": "symfony-8-2-verrou-controleur",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1320,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 57
+      },
+      {
+        "el": "input#free_class_practiceIds_46",
+        "role": null,
+        "texte": "symfony-8-2-traduction-html",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 1320,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 58
+      },
+      {
+        "el": "input#free_class_practiceIds_47",
+        "role": null,
+        "texte": "symfony-8-2-lien-connexion-parametres",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1366,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 59
+      },
+      {
+        "el": "input#free_class_practiceIds_48",
+        "role": null,
+        "texte": "symfony-8-2-url-signee-usage-unique",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1366,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 60
+      },
+      {
+        "el": "input#free_class_practiceIds_49",
+        "role": null,
+        "texte": "symfony-8-2-groupes-serialisation",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 917,
+          "y": 1366,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 61
+      },
+      {
+        "el": "input#free_class_practiceIds_50",
+        "role": null,
+        "texte": "symfony-8-2-validation-securite",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 284,
+          "y": 1412,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 62
+      },
+      {
+        "el": "input#free_class_practiceIds_51",
+        "role": null,
+        "texte": "symfony-8-2-contrainte-cron",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": null,
+        "rect": {
+          "x": 601,
+          "y": 1412,
+          "l": 13,
+          "h": 13
+        },
+        "dansIframe": false,
+        "rang": 63
+      },
+      {
+        "el": "button",
+        "role": null,
+        "texte": "Enregistrer les exercices",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineColor",
+          "backgroundColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 17.18,
+          "seuil": 4.5,
+          "couleur": "oklch(0.985 0 0)",
+          "fond": "rgb(23,23,23)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 284,
+          "y": 1437,
+          "l": 187,
+          "h": 32
+        },
+        "dansIframe": false,
+        "rang": 64
+      },
+      {
+        "el": "a",
+        "role": null,
+        "texte": "demandez un devis",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [
+          "outlineStyle",
+          "outlineWidth",
+          "outlineColor"
+        ],
+        "outline": true,
+        "indiceFocusInvisible": false,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 6.83,
+          "seuil": 4.5,
+          "couleur": "oklch(0.488 0.243 264.376)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 15,
+          "gras": false
+        },
+        "rect": {
+          "x": 1020,
+          "y": 1626,
+          "l": 137,
+          "h": 18
+        },
+        "dansIframe": false,
+        "rang": 65
+      },
+      {
+        "el": "button",
+        "role": null,
+        "texte": "Réduire",
+        "tabindex": null,
+        "focusVisibleCss": true,
+        "changementsAuFocus": [],
+        "outline": false,
+        "indiceFocusInvisible": true,
+        "horsEcran": false,
+        "contraste": {
+          "ratio": 21,
+          "seuil": 4.5,
+          "couleur": "rgb(0, 0, 0)",
+          "fond": "rgb(255,255,255)",
+          "imageDeFond": false,
+          "taille": 14,
+          "gras": false
+        },
+        "rect": {
+          "x": 1247,
+          "y": 400,
+          "l": 24,
+          "h": 64
+        },
+        "dansIframe": false,
+        "rang": 66,
+        "capture": "P13-crit-10-7-focus-066-reduire.png"
+      },
+      {
+        "el": "body",
+        "rang": 67
+      }
+    ],
+    "retourMajTab": [
+      "button Réduire",
+      "a demandez un devis",
+      "button Enregistrer les exercices",
+      "input#free_class_practiceIds_51 symfony-8-2-contrainte-cron",
+      "input#free_class_practiceIds_50 symfony-8-2-validation-securite",
+      "input#free_class_practiceIds_49 symfony-8-2-groupes-serialisation",
+      "input#free_class_practiceIds_48 symfony-8-2-url-signee-usage-unique",
+      "input#free_class_practiceIds_47 symfony-8-2-lien-connexion-parametres"
+    ]
+  },
+  "espacement": {
+    "rognes": [],
+    "capture": "P13-crit-10-12-espacement.png"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "statut": 200,
+  "url": "https://preprod.forelse.fr/compte",
+  "axe": {
+    "violations": [
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "impact": "serious",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+        "wcag": [
+          "wcag21a",
+          "wcag253"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".py-1"
+            ],
+            "html": "<summary class=\"flex cursor-pointer list-none items-center gap-2 rounded-full border border-line py-1 pr-3 pl-1 hover:bg-bg-2 [&::-webkit-details-marker]:hidden\" aria-label=\"Menu du compte de apprenant\">",
+            "resume": "Fix any of the following:\n  Text inside the element is not included in the accessible name",
+            "capture": "P12-crit-6-1-label-content-name-mismatch-mobile-1.png"
+          }
+        ]
+      },
+      {
+        "regle": "link-in-text-block",
+        "critereRgaa": "10.6",
+        "impact": "serious",
+        "aide": "Links must be distinguishable without relying on color",
+        "doc": "https://dequeuniversity.com/rules/axe/4.14/link-in-text-block?application=playwright",
+        "wcag": [
+          "wcag2a",
+          "wcag141"
+        ],
+        "noeuds": [
+          {
+            "cible": [
+              ".site-moteur > a"
+            ],
+            "html": "<a href=\"https://github.com/oipnet/apprendre-forelse\">code source</a>",
+            "resume": "Fix any of the following:\n  The link has insufficient color contrast of 1.06:1 with the surrounding text. (Minimum contrast is 3:1, link text: #2f6b16, surrounding text: #4f5e4f)\n  The link has no styling (such as underline) to distinguish it from the surrounding text",
+            "capture": "P12-crit-10-6-link-in-text-block-mobile-1.png"
+          }
+        ]
+      }
+    ],
+    "incomplets": [
+      {
+        "regle": "color-contrast",
+        "critereRgaa": "3.2",
+        "aide": "Elements must meet minimum color contrast ratio thresholds",
+        "nb": 8,
+        "cibles": [
+          [
+            ".py-1 > .transition-transform.group-open\\:rotate-180.duration-200"
+          ],
+          [
+            ".group-open\\:rotate-90"
+          ],
+          [
+            ".bg-surface.p-4.border:nth-child(1) > .mt-3 > .mt-2.btn > span[aria-hidden=\"true\"]"
+          ],
+          [
+            ".bg-surface.p-4.border:nth-child(2) > .mt-3 > .mt-2.btn > span[aria-hidden=\"true\"]"
+          ],
+          [
+            ".bg-surface.p-4.border:nth-child(3) > .mt-3 > .mt-2.btn > span[aria-hidden=\"true\"]"
+          ],
+          [
+            ".bg-surface.p-4.border:nth-child(4) > .mt-3 > .mt-2.btn > span[aria-hidden=\"true\"]"
+          ],
+          [
+            ".text-sm[href$=\"classement\"] > span[aria-hidden=\"true\"]"
+          ],
+          [
+            ".btn[href$=\"pratique\"] > span[aria-hidden=\"true\"]"
+          ]
+        ]
+      },
+      {
+        "regle": "label-content-name-mismatch",
+        "critereRgaa": "6.1",
+        "aide": "Elements must have their visible text as part of their accessible name",
+        "nb": 1,
+        "cibles": [
+          [
+            "summary[aria-label=\"Menu\"]"
+          ]
+        ]
+      }
+    ]
+  }
+}
