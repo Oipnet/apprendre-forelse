@@ -15,6 +15,6 @@
     { "id": "P10", "titre": "Chapitre de cours", "url": "/parcours/symfony-pour-dev-php/chapitre/premiers-pas", "role": "apprenant" },
     { "id": "P11", "titre": "Exercice dans le navigateur", "url": "/pratique/doctrine-onetomany-deux-cotes", "role": null, "attente": 15000 },
     { "id": "P12", "titre": "Mon compte", "url": "/compte", "role": "apprenant" },
-    { "id": "P13", "titre": "Espace chef de cohorte", "url": "/cohorte/ID_A_REMPLIR", "role": "chef" }
+    { "id": "P13", "titre": "Espace chef de cohorte", "url": "/cohorte/3", "role": "chef" }
   ]
 }
