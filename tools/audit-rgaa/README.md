@@ -55,6 +55,7 @@ de Playwright). Sortie : `resultats/restitution-<horodatage>/`. À comparer à l
     npx @guidepup/setup@0.29.3 install    # une fois par projet : réglages VoiceOver de Guidepup
     # macOS : donner au Terminal l'« Accès complet au disque » (Confidentialité et sécurité), puis quitter et rouvrir le Terminal,
     # sinon « Failed to mount Guidepup preferences … Operation not permitted ».
+    # Le Terminal doit aussi être autorisé dans « Accessibilité » (sinon erreur 1002 « osascript n'est pas autorisé à envoyer de saisies »).
     node voiceover.mjs --pages P11  # ne plus toucher au Mac pendant le passage
 
 Prérequis et détails en tête de `voiceover.mjs` (réglage Tab de Safari, autorisations du Terminal). Le script ouvre
