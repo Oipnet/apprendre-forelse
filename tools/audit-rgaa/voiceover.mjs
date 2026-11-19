@@ -24,11 +24,18 @@ const ici = dirname(fileURLToPath(import.meta.url));
 const conf = JSON.parse(readFileSync(join(ici, 'pages.json'), 'utf8'));
 const arg = (nom) => { const i = process.argv.indexOf(nom); return i > 0 ? process.argv[i + 1] : undefined; };
 const filtre = arg('--pages')?.split(',');
+// --sans-editeur : relevé des titres et de la tabulation seulement (sans les raccourcis Ctrl/Cmd du scénario Monaco).
+const sansEditeur = process.argv.includes('--sans-editeur');
 const pages = conf.pages.filter((p) => !p.inactif && !p.role && (!filtre || filtre.includes(p.id)));
 const sortie = join(ici, 'resultats', `voiceover-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}`);
 mkdirSync(sortie, { recursive: true });
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const echappe = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+
+// Remet Safari au premier plan : sans lui, les touches partent vers une autre app (Cmd+Tab, Mission Control…).
+function activerSafari() {
+  execFileSync('osascript', ['-e', 'tell application "Safari" to activate']);
+}
 
 function ouvrirDansSafari(url) {
   execFileSync('open', ['-a', 'Safari', url]);
@@ -39,6 +46,7 @@ function ouvrirDansSafari(url) {
 async function releve(n, action) {
   const dit = [];
   for (let i = 0; i < n; i++) {
+    if (i % 5 === 0) activerSafari();
     await action();
     await pause(400);
     const phrase = await voiceOver.lastSpokenPhrase();
@@ -48,7 +56,7 @@ async function releve(n, action) {
   return dit;
 }
 
-async function scenarioEditeur(md) {
+async function scenarioEditeur(md, sauver) {
   md.push('', '## Scénario de l\'éditeur de code', '');
   // Atteindre l'éditeur au Tab : on s'arrête sur la zone d'édition de Monaco.
   let trouve = false;
@@ -57,7 +65,9 @@ async function scenarioEditeur(md) {
     const p = await voiceOver.lastSpokenPhrase();
     if (/édition|edit|Editor content|zone de texte|text area/i.test(p)) { trouve = true; md.push(`- Entrée dans l'éditeur (Tab n° ${i + 1}) : « ${echappe(p)} »`); }
   }
+  sauver();
   if (!trouve) { md.push('- **Éditeur non atteint en 60 Tab.**'); return; }
+  activerSafari();
   for (const touche of ['ArrowDown', 'ArrowDown', 'ArrowDown']) {
     await voiceOver.press(touche); await pause(500);
     md.push(`- Flèche bas : « ${echappe(await voiceOver.lastSpokenPhrase())} »`);
@@ -65,8 +75,10 @@ async function scenarioEditeur(md) {
   await voiceOver.press('Tab'); await pause(500);
   md.push(`- Tab dans l'éditeur (attendu : indentation, pas de sortie) : « ${echappe(await voiceOver.lastSpokenPhrase())} »`);
   await voiceOver.press('Command+Z'); await pause(300);
+  sauver();
   // Sortie : le raccourci affiché dans l'aide, puis celui que Monaco attend sous macOS.
   for (const raccourci of ['Control+M', 'Control+Shift+M']) {
+    activerSafari();
     await voiceOver.press(raccourci); await pause(500);
     const apres = await voiceOver.lastSpokenPhrase();
     await voiceOver.press('Tab'); await pause(600);
@@ -74,7 +86,9 @@ async function scenarioEditeur(md) {
     md.push(`- ${raccourci.replace('Control', 'Ctrl')} puis Tab : annonce après le raccourci « ${echappe(apres)} », puis « ${echappe(ou)} »`);
     if (!/édition|edit|Editor content/i.test(ou)) { md.push(`  → **sortie de l'éditeur obtenue avec ${raccourci.replace('Control', 'Ctrl')}**`); break; }
   }
+  sauver();
   // Lancer les tests depuis l'éditeur et écouter les annonces automatiques (régions live).
+  activerSafari();
   await voiceOver.press('Shift+Tab'); await pause(400);
   await voiceOver.clearSpokenPhraseLog();
   await voiceOver.press('Command+Enter');
@@ -91,24 +105,30 @@ try {
     ouvrirDansSafari(url);
     await pause(p.attente ?? 4000);
     await voiceOver.clearSpokenPhraseLog();
+    const fichier = join(sortie, `${p.id}.md`);
+    // Écrit au fil de l'eau : un relevé interrompu garde ce qui a déjà été entendu.
+    const sauver = () => writeFileSync(fichier, md.join('\n'));
     const md = [`# ${p.id} · ${p.titre} : restitution VoiceOver réelle`, '', `URL : ${url}  `, `Relevé : ${new Date().toLocaleString('fr-FR')} · Safari + VoiceOver (macOS)`, ''];
 
     // Arrivée sur la page : ce que VoiceOver annonce de lui-même.
     await pause(1500);
     md.push('## Annonce à l\'arrivée', '', ...(await voiceOver.spokenPhraseLog()).slice(0, 6).map((a) => `- « ${echappe(a)} »`), '');
+    sauver();
 
     // Titres, avec VO + Cmd + H.
     const titres = await releve(25, () => voiceOver.perform(voiceOver.keyboardCommands.findNextHeading));
     md.push('## Titres (VO + Cmd + H)', '', ...titres.map((t, i) => `${i + 1}. « ${echappe(t)} »`), '');
+    sauver();
 
     // Suite de tabulation.
     ouvrirDansSafari(url); await pause(p.attente ?? 4000);
     const tabs = await releve(50, () => voiceOver.press('Tab'));
     md.push('## Suite de tabulation (Tab)', '', '| # | Ce que dit VoiceOver |', '|---|---|', ...tabs.map((t, i) => `| ${i + 1} | ${echappe(t)} |`), '');
+    sauver();
 
-    if (p.id === 'P11') { ouvrirDansSafari(url); await pause(p.attente ?? 15000); await scenarioEditeur(md); }
+    if (p.id === 'P11' && !sansEditeur) { ouvrirDansSafari(url); await pause(p.attente ?? 15000); await scenarioEditeur(md, sauver); }
 
-    writeFileSync(join(sortie, `${p.id}.md`), md.join('\n'));
+    sauver();
   }
 } finally {
   await voiceOver.stop();
