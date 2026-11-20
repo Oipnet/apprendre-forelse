@@ -8,6 +8,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **PHP 8.6** : le playground exécute PHP 8.6.0 dans le navigateur, et les environnements du moteur déclarent `php: '8.6'`. php-wasm ne publie pas encore PHP 8.6 : `@php-wasm/web-8-5` est remplacé par notre compilation (même interface, binaires 8.6.0 avec intl), hébergée sur le fork `Oipnet/wordpress-playground`. Les 77 exercices de Pratique passent sur ces binaires (énoncé rouge, solution verte). Un pack qui demande encore 8.5 tourne en 8.6.
+
 ### Corrigé
 
 - **Référencement** : les pages 2 et suivantes de la Pratique (`/pratique?page=N`, `/en/practice?page=N`) annoncent la même page dans l'autre langue (hreflang), et plus la première, qui ne les nommait pas en retour (Ahrefs : « missing reciprocal hreflang »). Une langue qui n'a pas autant de pages n'est pas annoncée (#459).
