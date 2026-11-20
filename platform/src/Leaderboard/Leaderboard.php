@@ -158,7 +158,7 @@ final readonly class Leaderboard
         $labels = [];
         foreach ($this->progress->completedTrackIdsByUsers($userIds) as $userId => $trackIds) {
             $keys = array_map(static fn (?string $id) => $id ?? self::PRACTICE, $trackIds);
-            $labels[$userId] = array_values(array_map(static fn (string $key) => $filters[$key], array_filter($order, static fn (string $key) => \in_array($key, $keys, true))));
+            $labels[$userId] = array_values(array_map(static fn (string $key) => $filters[$key], array_filter($order, \in_array(?, $keys, true))));
         }
 
         return $labels;

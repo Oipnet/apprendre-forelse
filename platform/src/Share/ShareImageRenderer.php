@@ -227,7 +227,7 @@ final class ShareImageRenderer
         }
 
         // Un mot plus long que la ligne est raccourci plutôt que de déborder de l'image.
-        return array_map(static fn (string $l) => self::fit($l, $size, $font, $width), $lines);
+        return array_map(self::fit(?, $size, $font, $width), $lines);
     }
 
     /** Le texte tel quel s'il tient, sinon raccourci avec des points de suspension. */

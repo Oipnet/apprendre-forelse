@@ -32,12 +32,12 @@ final class TrackWriter
     /** Retire un exercice de track.yaml (la ligne, et elle seule). */
     public function retirerExercice(Track $track, string $exerciceId): void
     {
-        $this->sousVerrou($track, fn (string $fichier) => $this->retirer($fichier, $exerciceId));
+        $this->sousVerrou($track, $this->retirer(?, $exerciceId));
     }
 
     public function ajouterExercice(Track $track, string $chapitreId, string $exerciceId): void
     {
-        $this->sousVerrou($track, fn (string $fichier) => $this->ajouter($fichier, $chapitreId, $exerciceId));
+        $this->sousVerrou($track, $this->ajouter(?, $chapitreId, $exerciceId));
     }
 
     /** @param callable(string): void $ecriture */

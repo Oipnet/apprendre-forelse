@@ -263,7 +263,7 @@ final class ContentRepository implements ResetInterface
     public function exercisesOfChapter(Track $track, ?Chapter $chapter = null): array
     {
         return array_values(array_filter(array_map(
-            fn (string $id) => $this->findExercise($track->id, $id, $track->locale),
+            $this->findExercise($track->id, ?, $track->locale),
             null === $chapter ? $track->exerciseIds() : $chapter->exerciseIds,
         )));
     }

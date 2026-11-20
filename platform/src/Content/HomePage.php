@@ -40,7 +40,7 @@ final readonly class HomePage
     public function of(?User $user): array
     {
         $published = array_values($this->visibility->tracksHere());
-        $tracks = array_map(fn (Track $track) => $this->card($track, $user), $published);
+        $tracks = array_map($this->card(?, $user), $published);
         $upcoming = $this->visibility->upcoming();
         // Le bouton principal : pour un visiteur, un exercice de Pratique, qui se joue sans compte (le premier chapitre
         // d'un parcours en demande un) ; pour un compte, le premier exercice du premier parcours ; à défaut, l'inscription.
@@ -75,7 +75,7 @@ final readonly class HomePage
         $shown = null === $framework ? $published : array_values(array_filter($published, fn (Track $track) => $this->environments->frameworkOf($track->environment)->id === $framework));
 
         return [
-            'tracks' => array_map(fn (Track $track) => $this->card($track, $user), $shown),
+            'tracks' => array_map($this->card(?, $user), $shown),
             'upcoming' => null === $framework ? $this->visibility->upcoming() : [],
             'frameworks' => $frameworks,
             'framework' => $framework,

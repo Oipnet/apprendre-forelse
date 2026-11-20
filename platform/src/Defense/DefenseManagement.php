@@ -37,7 +37,7 @@ final readonly class DefenseManagement
     /** @return list<Track> les parcours sur lesquels la cohorte peut ouvrir des soutenances : ceux qu'elle propose */
     public function tracksOf(Cohort $cohort): array
     {
-        return array_values(array_filter($this->content->tracks(), static fn (Track $track) => TrackVisibility::isOfferedBy([$cohort], $track)));
+        return array_values(array_filter($this->content->tracks(), TrackVisibility::isOfferedBy([$cohort], ?)));
     }
 
     public function openSlot(Cohort $cohort, string $trackId, \DateTimeImmutable $startsAt, int $durationMinutes, DefenseMode $mode, string $place): Defense

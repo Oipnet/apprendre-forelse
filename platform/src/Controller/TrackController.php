@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Content\Chapter;
 use App\Content\ContentRepository;
 use App\Content\HomePage;
 use App\Content\LessonRenderer;
@@ -117,7 +116,7 @@ final class TrackController extends AbstractController
             return $this->redirectToRoute('app_track', ['trackId' => $track->id]);
         }
 
-        $summaries = array_map(static fn (Chapter $c) => $summary->summarize($track, $c, $progress), $chapters);
+        $summaries = array_map($summary->summarize($track, ?, $progress), $chapters);
 
         return new PdfResponse(
             $pdf->renderBooklet($content->packs()[$track->packId], $track, $summaries, $user),
