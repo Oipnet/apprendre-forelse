@@ -8,6 +8,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Corrigé
+
+- **Référencement** : les pages 2 et suivantes de la Pratique (`/pratique?page=N`, `/en/practice?page=N`) annoncent la même page dans l'autre langue (hreflang), et plus la première, qui ne les nommait pas en retour (Ahrefs : « missing reciprocal hreflang »). Une langue qui n'a pas autant de pages n'est pas annoncée (#459).
+
 ## 3.40.2 — 2026-11-20
 
 ### Corrigé
