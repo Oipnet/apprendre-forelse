@@ -115,6 +115,6 @@ final readonly class ProgressService
     private function onlyEditable(Exercise $exercise, array $files): array
     {
         // Les motifs (migrations/*.php) couvrent les fichiers créés par la console : ils sont gardés aussi.
-        return array_filter($files, static fn (string $path) => $exercise->isEditable($path), \ARRAY_FILTER_USE_KEY);
+        return array_filter($files, $exercise->isEditable(...), \ARRAY_FILTER_USE_KEY);
     }
 }

@@ -43,7 +43,7 @@ final readonly class SubmissionReplayer
         }
         // Sans fichier éditable, c'est le code de départ qui est rejoué, et il échoue (content:check y veille) : une
         // soumission vide est infirmée, pas « non vérifiable », ce qui suffisait à obtenir un certificat sans rien résoudre.
-        $files = array_filter($request->files, static fn (string $path) => $exercise->isEditable($path), \ARRAY_FILTER_USE_KEY);
+        $files = array_filter($request->files, $exercise->isEditable(...), \ARRAY_FILTER_USE_KEY);
         if (!$this->environments->has($exercise->environment)) {
             return $this->unverifiable($request, sprintf('Environnement « %s » absent.', $exercise->environment));
         }
