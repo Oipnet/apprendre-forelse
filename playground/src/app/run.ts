@@ -16,7 +16,7 @@ export interface RunButtonDeps {
 	scratch: boolean;
 	runtime: Pick<Runtime, 'runTests'>;
 	session: Pick<ExerciseSession, 'flush'>;
-	results: Pick<TestResultsView, 'show' | 'showError'>;
+	results: Pick<TestResultsView, 'show' | 'showError' | 'revealObjectivesAndHint'>;
 	success: Pick<SuccessPanel, 'show' | 'hide'>;
 	folding: Pick<PaneFolding, 'open' | 'showResult'>;
 	status: Status;
@@ -90,6 +90,7 @@ export function bindRunButton(button: HTMLButtonElement, deps: RunButtonDeps): v
 			} else {
 				steps?.failed();
 				deps.success.hide();
+				deps.results.revealObjectivesAndHint();
 			}
 		} catch (error) {
 			status(m.playground.testsError, 'ko');
