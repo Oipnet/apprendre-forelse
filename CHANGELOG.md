@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.40.1 — 2026-11-20
+
 ### Sécurité
 
 - **PHP 8.5.13** (correctif de sécurité du 19/11/2026, sévérité CRITICAL) : l'image de base est épinglée sur
