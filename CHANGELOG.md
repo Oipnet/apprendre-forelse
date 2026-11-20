@@ -11,7 +11,7 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 ### Sécurité
 
 - **PHP 8.5.13** (correctif de sécurité du 19/11/2026, sévérité CRITICAL) : l'image de base est épinglée sur
-  `dunglas/frankenphp:1.13.5-php8.5.13`, version de PHP comprise, pour qu'une image reconstruite ne garde pas
+  `dunglas/frankenphp:1.13.6-php8.5.13` (FrankenPHP 1.13.6), version de PHP comprise, pour qu'une image reconstruite ne garde pas
   PHP 8.5.12 par le cache de la CI.
 
 ## 3.40.0 — 2026-11-18
