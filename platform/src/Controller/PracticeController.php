@@ -68,7 +68,7 @@ final class PracticeController extends AbstractController
         if (!$listing->hasPage()) {
             throw $this->createNotFoundException();
         }
-        $seo->index($listing->all, $listing->filter);
+        $seo->index($listing->all, $listing->filter, $catalog->pageCounts());
         // L'élève d'une classe gratuite retrouve en tête les exercices que son formateur a choisis.
         $class = $user instanceof User && $user->getCohort()?->isFreeClass() ? $user->getCohort() : null;
 
