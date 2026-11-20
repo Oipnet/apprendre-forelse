@@ -8,6 +8,12 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Corrigé
+
+- **Bac à sable** : « Exécuter » montre un chargement (bouton grisé, aperçu pâli, roue) jusqu'à ce que la page soit
+  affichée, et le statut donne l'heure de l'exécution. Faute de retour visible, des visiteurs recliquaient 9 fois en
+  8 secondes ; les clics pendant un rechargement ne relancent plus rien et ne comptent plus dans la mesure d'audience.
+
 ## 3.40.1 — 2026-11-20
 
 ### Sécurité
