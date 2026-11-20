@@ -8,6 +8,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+## 3.40.2 — 2026-11-20
+
 ### Corrigé
 
 - **Bac à sable** : « Exécuter » montre un chargement (bouton grisé, aperçu pâli, roue) jusqu'à ce que la page soit
