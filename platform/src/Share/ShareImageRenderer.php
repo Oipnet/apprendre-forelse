@@ -160,7 +160,7 @@ final class ShareImageRenderer
                 self::rounded($image, $x, $y, $x + $length, $y + 12, 6, $tokens[$next(\count($tokens))]);
                 $x += $length + 14;
             }
-            $indent = max(0, min(3, $indent + $next(3) - 1));
+            $indent = clamp($indent + $next(3) - 1, 0, 3);
         }
     }
 

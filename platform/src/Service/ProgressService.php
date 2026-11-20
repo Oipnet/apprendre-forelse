@@ -36,8 +36,8 @@ final readonly class ProgressService
     {
         $progress = $this->findOrCreate($user, $exercise);
         // L'étape n'a de sens que pour un exercice à étapes, et ne dépasse pas la dernière.
-        $step = $exercise->hasSteps() && null !== $step ? min($step, \count($exercise->steps) - 1) : null;
-        $progress->saveDraft($this->onlyEditable($exercise, $files), min($hintsUsed, \count($exercise->hints)), $this->clock->now(), $step);
+        $step = $exercise->hasSteps() && null !== $step ? clamp($step, 0, \count($exercise->steps) - 1) : null;
+        $progress->saveDraft($this->onlyEditable($exercise, $files), clamp($hintsUsed, 0, \count($exercise->hints)), $this->clock->now(), $step);
         $this->entityManager->flush();
 
         return $progress;
@@ -62,7 +62,7 @@ final readonly class ProgressService
             // Déjà chargée plus tôt dans la requête : l'état lu alors peut dater d'avant le verrou.
             $this->entityManager->refresh($progress);
             $alreadyCompleted = $progress->isCompleted();
-            $hints = max($progress->getHintsUsed(), min($hintsUsed, \count($exercise->hints)));
+            $hints = max($progress->getHintsUsed(), clamp($hintsUsed, 0, \count($exercise->hints)));
             // La solution consultée ne rapporte rien : c'est ce que promet la page d'accueil.
             $xp = $progress->complete($hints, $progress->isSolutionRevealed() ? 0 : $this->xpCalculator->xpFor($exercise->xp, $hints), $this->clock->now(), Exercise::LOCALE === $exercise->locale ? null : $exercise->locale);
             $user->addXp($xp);
@@ -88,7 +88,7 @@ final readonly class ProgressService
 
         // Exercice à étapes : la solution de l'étape demandée (et de celles d'avant), pas celle de tout l'exercice.
         return $exercise->hasSteps() && null !== $step
-            ? $this->content->stepSolutionFiles($exercise, min($step, \count($exercise->steps) - 1))
+            ? $this->content->stepSolutionFiles($exercise, clamp($step, 0, \count($exercise->steps) - 1))
             : $this->content->solutionFiles($exercise);
     }
 
