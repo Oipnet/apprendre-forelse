@@ -8,6 +8,11 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **PHP 8.6 requis** (`composer.json` : `php >=8.6`) : le code du moteur utilise l'application partielle
+  (`f(?, $a)` à la place de `fn ($x) => f($x, $a)`) et `clamp()`. À déployer après le passage du serveur en PHP 8.6.
+
 ### Corrigé
 
 - **Bac à sable** : « Exécuter » montre un chargement (bouton grisé, aperçu pâli, roue) jusqu'à ce que la page soit
