@@ -8,6 +8,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **PHP 8.6** : le serveur passe à PHP 8.6.0 (FrankenPHP 1.13.6-php8.6.0, CI en 8.6), et le playground exécute la même version dans le navigateur, et les environnements du moteur déclarent `php: '8.6'`. php-wasm ne publie pas encore PHP 8.6 : `@php-wasm/web-8-5` est remplacé par notre compilation (même interface, binaires 8.6.0 avec intl), hébergée sur le fork `Oipnet/wordpress-playground`. Les 77 exercices de Pratique passent sur ces binaires (énoncé rouge, solution verte). Un pack qui demande encore 8.5 tourne en 8.6.
+
 ### Corrigé
 
 - **Débutants** : une `Parse error` ou une `Fatal error` affichée dans l'aperçu (servie en 200 par PHP) compte comme une erreur, et le mentor propose de l'expliquer. Le bouton d'indice passe sous les objectifs, et les consignes défilent jusqu'à lui après des tests en échec. Dans la Gazette, une erreur de syntaxe est expliquée en français avant le message de PHP (#462).
