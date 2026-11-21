@@ -8,6 +8,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Modifié
+
+- **Environnement `symfony-8-easyadmin`** : EasyAdmin 5.8.0 → 5.10.2 (avec les correctifs Symfony 8.1.11 et Doctrine ORM 3.8 que la mise à jour entraîne, dont celui de `symfony/yaml`, CVE-2026-123792). Depuis la 5.10, `Actions::setPermission()` et `disable()` protègent aussi l'URL d'une action personnalisée (403), et plus seulement son bouton : un prochain exercice Pratique en dépend. Les exercices `easyadmin-5-8-badges` et `easyadmin-5-8-filtres-imbriques` restent verts.
+
 ### Corrigé
 
 - **Débutants** : une `Parse error` ou une `Fatal error` affichée dans l'aperçu (servie en 200 par PHP) compte comme une erreur, et le mentor propose de l'expliquer. Le bouton d'indice passe sous les objectifs, et les consignes défilent jusqu'à lui après des tests en échec. Dans la Gazette, une erreur de syntaxe est expliquée en français avant le message de PHP (#462).
