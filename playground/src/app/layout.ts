@@ -57,6 +57,9 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 			<ul class="objectives">
 				${exercise.objectives.map((o) => `<li data-test="${escapeHtml(o.test)}"><span class="dot" aria-hidden="true"></span><span class="sr-only objective-state"></span><span>${escapeHtml(o.label)}</span></li>`).join('')}
 			</ul>
+			<!-- Les indices sous les objectifs : là où l'apprenant regarde après un échec, pas sous la documentation. -->
+			<div class="hints" id="hints"></div>
+			<button id="hint" class="ghost small"><span aria-hidden="true">💡</span> ${m.hints.hint(0)}</button>
 			${
 				exercise.docs.length
 					? `<h3><span aria-hidden="true">📚</span> ${m.layout.docs}</h3>
@@ -68,8 +71,6 @@ export function layout(exercise: ExercisePayload, config: PlaygroundConfig, plat
 			<div id="success" class="success" hidden></div>
 			<div id="review" class="mentor" hidden></div>
 			<div id="solution-note" class="solution-note" hidden></div>
-			<div class="hints" id="hints"></div>
-			<button id="hint" class="ghost small"><span aria-hidden="true">💡</span> ${m.hints.hint(0)}</button>
 			<details class="output" id="output-box" hidden><summary>${m.layout.testOutput(escapeHtml(framework.testRunnerLabel))} <button id="explain-tests" class="ghost small" hidden title="${m.layout.explainTitle}"><span aria-hidden="true">🩺</span> ${m.layout.explainError}</button></summary><pre id="output"></pre></details>
 		</aside>
 		<section class="panel code">

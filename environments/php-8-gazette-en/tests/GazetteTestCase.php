@@ -76,7 +76,12 @@ abstract class GazetteTestCase extends TestCase
             })($index);
             $html = (string) ob_get_contents();
         } catch (\Throwable $erreur) {
-            $this->fail(sprintf('The page %s crashed: %s (%s, line %d).', $url, $erreur->getMessage(), str_replace(self::projet().'/', '', $erreur->getFile()), $erreur->getLine()));
+            $fichier = str_replace(self::projet().'/', '', $erreur->getFile());
+            // One typo fails every objective at once: tell the beginner it is a single syntax error, and where to
+            // look, before PHP's own message.
+            $this->fail($erreur instanceof \ParseError
+                ? sprintf('PHP could not read %s: syntax error around line %d (often a missing quote, parenthesis or semicolon). Fix it, and the other objectives will follow. PHP says: %s', $fichier, $erreur->getLine(), $erreur->getMessage())
+                : sprintf('The page %s crashed: %s (%s, line %d).', $url, $erreur->getMessage(), $fichier, $erreur->getLine()));
         } finally {
             while (ob_get_level() > $niveau) {
                 ob_end_clean();
