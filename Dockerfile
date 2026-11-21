@@ -7,7 +7,7 @@
 # --- 0. Goravel en WebAssembly (runtime goravel-wasm, packages/runtime-goravel) -----------
 # Le framework Go compilé pour le navigateur. Même version de Go que go.mod ; le chargeur wasm_exec.js
 # vient du même compilateur (il change avec lui).
-FROM golang:1.25 AS goravel_wasm
+FROM golang:1.27 AS goravel_wasm
 WORKDIR /src/go
 COPY packages/runtime-goravel/go/go.mod packages/runtime-goravel/go/go.sum ./
 RUN go mod download
