@@ -76,7 +76,7 @@ final class ExerciseReader
             $mutants[$mutant->id] = $mutant;
         }
         $steps = $this->steps($meta, $file, $mutants, $directory, $overlay);
-        $objectives = $steps ? end($steps)->objectives : array_map($this->objective(?, $file, $mutants), $this->items($meta, 'objectives', $file));
+        $objectives = $steps ? end($steps)->objectives : array_map(fn (mixed $o) => $this->objective($o, $file, $mutants), $this->items($meta, 'objectives', $file));
         if (!$objectives) {
             throw new ContentException(sprintf('%s : au moins un objectif est requis.', $file));
         }
@@ -134,8 +134,8 @@ final class ExerciseReader
                     : throw new ContentException(sprintf('%s : chaque commande de « setup » est une chaîne (ex. « doctrine:schema:update --force »).', $file)),
                 $this->items($meta, 'setup', $file),
             ),
-            requests: array_map($this->exampleRequest(?, $file), $this->items($meta, 'requests', $file)),
-            docs: array_map($this->docLink(?, $file), $this->items($meta, 'docs', $file)),
+            requests: array_map(fn ($request) => $this->exampleRequest($request, $file), $this->items($meta, 'requests', $file)),
+            docs: array_map(fn ($doc) => $this->docLink($doc, $file), $this->items($meta, 'docs', $file)),
             mutants: array_values($mutants),
             duration: $this->duration($meta['duration'] ?? null, $file),
             formerIds: FormerIds::parse($meta['former_ids'] ?? null, $file),
@@ -228,7 +228,7 @@ final class ExerciseReader
             $explicites = array_values(array_filter($editable, static fn (string $entree) => !str_contains($entree, '*')));
             $open = $this->optionalString($item, 'open', $file) ?? $explicites[0]
                 ?? throw new ContentException(sprintf('%s : étape « %s » : précisez « open », aucun fichier modifiable n\'est nommé.', $file, $id));
-            $objectives = array_map($this->objective(?, $file, $mutants, $phase), $this->items($item, 'objectives', $file));
+            $objectives = array_map(fn (mixed $o) => $this->objective($o, $file, $mutants, $phase), $this->items($item, 'objectives', $file));
             if (!$objectives) {
                 throw new ContentException(sprintf('%s : étape « %s » : au moins un objectif est requis.', $file, $id));
             }
