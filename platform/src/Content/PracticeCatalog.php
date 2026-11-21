@@ -72,6 +72,22 @@ final readonly class PracticeCatalog
         );
     }
 
+    /**
+     * Le nombre de pages de la liste sans filtre, dans chaque langue de la Pratique (0 : la liste n'y existe pas).
+     * Une page suivante annonce la même page dans les autres langues, là où elle existe (hreflang).
+     *
+     * @return array<string, int>
+     */
+    public function pageCounts(): array
+    {
+        $counts = [];
+        foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
+            $counts[$locale] = (int) ceil(\count($this->practices->practicesIn($locale)) / $this->perPage);
+        }
+
+        return $counts;
+    }
+
     /** « Sécurité » se range entre « Serializer » et « Sessions », comme dans un index français. */
     private static function collator(): \Collator
     {

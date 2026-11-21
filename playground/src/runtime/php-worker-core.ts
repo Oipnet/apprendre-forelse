@@ -48,8 +48,12 @@ async function download(url: string, progress: (p: BootProgress) => void): Promi
 let compiledPhp: Promise<WebAssembly.Module> | undefined;
 
 /**
- * La seule version de PHP embarquée (voir vite.config.ts), celle du serveur. Un environnement qui demande une version
- * antérieure (« php: '8.4' » d'un pack plus ancien) tourne sur celle-ci : PHP 8.5 exécute le code écrit pour 8.4.
+ * La seule version de PHP embarquée (voir vite.config.ts), celle du serveur : PHP 8.6. Un environnement qui demande une
+ * version antérieure (« php: '8.5' » d'un pack plus ancien) tourne sur celle-ci : PHP 8.6 exécute le code écrit pour 8.5.
+ *
+ * '8.5' est le nom sous lequel php-wasm la charge, pas sa version : php-wasm ne publie pas encore PHP 8.6, et
+ * package.json remplace @php-wasm/web-8-5 par notre compilation de PHP 8.6 (même interface, binaires 8.6.0).
+ * Le jour où @php-wasm/web-8-6 existe : passer ici à '8.6', retirer le remplacement et mettre 8-5 au stub.
  */
 const BROWSER_PHP = '8.5';
 function compilePhpWasm(version: typeof BROWSER_PHP): Promise<WebAssembly.Module> {

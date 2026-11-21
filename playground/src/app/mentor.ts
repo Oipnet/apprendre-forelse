@@ -78,6 +78,16 @@ export function renderExplanation(explanation: Explanation, markdown: (source: s
 }
 
 /**
+ * Une page qui contient une erreur fatale de PHP (Parse error, Fatal error…). Avec display_errors, PHP l'écrit dans
+ * la page et répond quand même 200 : sans ce repérage, l'aperçu montrerait « 200 » et le mentor resterait muet,
+ * alors que c'est l'erreur la plus fréquente d'un débutant (un guillemet ou un point-virgule oublié).
+ */
+export function hasPhpFatalError(body: Uint8Array, contentType = ''): boolean {
+	if (contentType && !/html|text/i.test(contentType)) return false; // une image, un JSON… : rien à lire
+	return /(?:^|<b>|PHP )(?:Parse|Fatal) error(?:<\/b>)?: /m.test(new TextDecoder().decode(body));
+}
+
+/**
  * Le texte utile d'une réponse d'aperçu en erreur : la page d'exception de Symfony est un gros
  * HTML dont seuls le message, la classe et les premières lignes de trace intéressent le mentor.
  */

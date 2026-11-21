@@ -16,7 +16,7 @@ import { HintsAndSolution } from './HintsAndSolution';
 import { escapeHtml } from './html';
 import { layout } from './layout';
 import { bindRetry, bootFailureActionsHtml, bootKey, firstLoadNote, loadErrorHtml, suivreDemarrage } from './boot';
-import { MentorClient, errorTextOf, stripAnsi } from './mentor';
+import { MentorClient, errorTextOf, hasPhpFatalError, stripAnsi } from './mentor';
 import { MentorPanel } from './MentorPanel';
 import { m } from '../i18n';
 import { mesurer } from '../mesure';
@@ -219,7 +219,9 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			if (!metrics.firstRequest) mark('firstRequest');
 			base?.changed();
 			// Une réponse en erreur : le mentor peut l'expliquer (si l'apprenant a un compte).
-			mentor.setError('preview', res.status >= 500 ? sansCle(`${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, res.headers['content-type']?.[0])}`) : null);
+			const contentType = res.headers['content-type']?.[0];
+			const enErreur = res.status >= 500 || hasPhpFatalError(res.body, contentType);
+			mentor.setError('preview', enErreur ? sansCle(`${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, contentType)}`) : null);
 		},
 	});
 	// Le relais de l'aperçu (page du bac à sable, Service Worker) se prépare pendant que PHP démarre : il n'a
