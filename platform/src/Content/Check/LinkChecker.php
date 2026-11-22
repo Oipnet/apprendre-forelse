@@ -25,7 +25,7 @@ final class LinkChecker
     {
         // Une requête par page (sans ancre), lancées ensemble : le client HTTP les parallélise.
         $responses = [];
-        foreach (array_unique(array_map(static fn (string $url) => strtok($url, '#'), $urls)) as $page) {
+        foreach (array_unique(array_map(strtok(?, '#'), $urls)) as $page) {
             $responses[$page] = $this->httpClient->request('GET', $page, ['timeout' => 15, 'max_redirects' => 5]);
         }
 

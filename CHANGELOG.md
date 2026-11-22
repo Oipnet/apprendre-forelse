@@ -18,6 +18,33 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   configuré. La croix le ferme pour de bon dans ce navigateur. Mesuré par l'événement `bac-a-sable-offre`
   (`action` = `vue`, `clic` ou `fermee`, avec `parcours`). Un moteur antérieur ignore la clé.
 
+### Modifié
+
+- **PHP 8.6** : le serveur passe à PHP 8.6.0 (FrankenPHP 1.13.6-php8.6.0, CI en 8.6), et le playground exécute la même version dans le navigateur, et les environnements du moteur déclarent `php: '8.6'`. php-wasm ne publie pas encore PHP 8.6 : `@php-wasm/web-8-5` est remplacé par notre compilation (même interface, binaires 8.6.0 avec intl), hébergée sur le fork `Oipnet/wordpress-playground`. Les 77 exercices de Pratique passent sur ces binaires (énoncé rouge, solution verte). Un pack qui demande encore 8.5 tourne en 8.6.
+- **Code du moteur en PHP 8.6** (`composer.json` : `php >=8.6`) : application partielle (`f(?, $a)` à la place de
+  `fn ($x) => f($x, $a)`), callables de première classe et `clamp()` (#458).
+
+### Corrigé
+
+- **Débutants** : une `Parse error` ou une `Fatal error` affichée dans l'aperçu (servie en 200 par PHP) compte comme une erreur, et le mentor propose de l'expliquer. Le bouton d'indice passe sous les objectifs, et les consignes défilent jusqu'à lui après des tests en échec. Dans la Gazette, une erreur de syntaxe est expliquée en français avant le message de PHP (#462).
+- **Référencement** : les pages 2 et suivantes de la Pratique (`/pratique?page=N`, `/en/practice?page=N`) annoncent la même page dans l'autre langue (hreflang), et plus la première, qui ne les nommait pas en retour (Ahrefs : « missing reciprocal hreflang »). Une langue qui n'a pas autant de pages n'est pas annoncée (#459).
+
+## 3.40.2 — 2026-11-20
+
+### Corrigé
+
+- **Bac à sable** : « Exécuter » montre un chargement (bouton grisé, aperçu pâli, roue) jusqu'à ce que la page soit
+  affichée, et le statut donne l'heure de l'exécution. Faute de retour visible, des visiteurs recliquaient 9 fois en
+  8 secondes ; les clics pendant un rechargement ne relancent plus rien et ne comptent plus dans la mesure d'audience.
+
+## 3.40.1 — 2026-11-20
+
+### Sécurité
+
+- **PHP 8.5.13** (correctif de sécurité du 19/11/2026, sévérité CRITICAL) : l'image de base est épinglée sur
+  `dunglas/frankenphp:1.13.6-php8.5.13` (FrankenPHP 1.13.6), version de PHP comprise, pour qu'une image reconstruite ne garde pas
+  PHP 8.5.12 par le cache de la CI.
+
 ## 3.40.0 — 2026-11-18
 
 ### Ajouté

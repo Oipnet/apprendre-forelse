@@ -653,6 +653,35 @@ a.chip:hover {
 	background: white;
 	width: 100%;
 }
+/* « Exécuter » dans le bac à sable : l'aperçu pâlit et une roue tourne jusqu'à ce que la page soit affichée. */
+.pane-preview.running #frame {
+	opacity: 0.45;
+	transition: opacity 0.15s;
+}
+.preview-running {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	pointer-events: none;
+	z-index: 1;
+}
+.preview-running[hidden] {
+	display: none;
+}
+.preview-running .spinner {
+	width: 2.2rem;
+	height: 2.2rem;
+	border: 3px solid var(--border);
+	border-top-color: var(--accent);
+	border-radius: 50%;
+	animation: tourne 0.8s linear infinite;
+}
+@keyframes tourne {
+	to {
+		transform: rotate(360deg);
+	}
+}
 .requestlog {
 	display: flex;
 	align-items: center;
@@ -1830,7 +1859,8 @@ dialog.confirm p {
 		transition: none;
 	}
 	#boot-bar.indeterminate,
-	.success:not([hidden]) {
+	.success:not([hidden]),
+	.preview-running .spinner {
 		animation: none;
 	}
 }

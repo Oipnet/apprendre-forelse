@@ -179,7 +179,7 @@ final class Mentor
     private function contexte(Exercise $exercise, array $fichiers): string
     {
         $objectifs = implode("\n", array_map(static fn ($o) => '- '.$o->label, $exercise->objectives));
-        $editables = array_filter($fichiers, static fn (string $chemin) => $exercise->isEditable($chemin), \ARRAY_FILTER_USE_KEY);
+        $editables = array_filter($fichiers, $exercise->isEditable(...), \ARRAY_FILTER_USE_KEY);
 
         return "# L'exercice : {$exercise->title}\nNotions : ".implode(', ', $exercise->concepts)."\n\n## Consignes\n".$exercise->instructions
             ."\n\n## Objectifs (chacun vérifié par un test)\n".$objectifs

@@ -16,11 +16,14 @@ export interface RunButtonDeps {
 	scratch: boolean;
 	runtime: Pick<Runtime, 'runTests'>;
 	session: Pick<ExerciseSession, 'flush'>;
-	results: Pick<TestResultsView, 'show' | 'showError'>;
+	results: Pick<TestResultsView, 'show' | 'showError' | 'revealObjectivesAndHint'>;
 	success: Pick<SuccessPanel, 'show' | 'hide'>;
 	folding: Pick<PaneFolding, 'open' | 'showResult'>;
 	status: Status;
-	reload: () => void;
+	/** Recharge l'aperçu ; la promesse se résout quand la page est affichée (ou au bout d'un délai). */
+	reload: () => Promise<void>;
+	/** Bac à sable : montre (ou retire) l'indicateur de chargement sur l'aperçu. */
+	running?: (enCours: boolean) => void;
 	/** Amène l'apprenant sur un volet, sur petit écran. */
 	showWorkpane: (pane: 'brief' | 'code') => void;
 	/** Les durées mesurées (debug / mesures) : premier et dernier lancement des tests. */
@@ -36,12 +39,28 @@ export interface RunButtonDeps {
 export function bindRunButton(button: HTMLButtonElement, deps: RunButtonDeps): void {
 	const { exercise, session, status } = deps;
 	if (deps.scratch) {
+		// Sans retour visible, une page qui ne change pas laissait croire que rien ne se passait : des visiteurs
+		// recliquaient 9 fois en 8 secondes. Le bouton attend maintenant que l'aperçu soit affiché.
+		let enCours = false;
 		button.addEventListener('click', async () => {
-			await session.flush().catch(() => false);
-			deps.onScratchRun?.();
-			deps.reload();
-			mesurer('bac-a-sable-execute', deps.mesure);
-			status(m.scratch.ran, 'ok');
+			if (enCours) return;
+			enCours = true;
+			button.disabled = true;
+			button.setAttribute('aria-busy', 'true');
+			deps.running?.(true);
+			status(m.scratch.running, 'busy');
+			try {
+				await session.flush().catch(() => false);
+				deps.onScratchRun?.();
+				mesurer('bac-a-sable-execute', deps.mesure);
+				await deps.reload();
+				status(m.scratch.ran(heure()), 'ok');
+			} finally {
+				enCours = false;
+				button.disabled = false;
+				button.removeAttribute('aria-busy');
+				deps.running?.(false);
+			}
 		});
 		return;
 	}
@@ -52,7 +71,7 @@ export function bindRunButton(button: HTMLButtonElement, deps: RunButtonDeps): v
 		status(m.playground.testsRunning, 'busy');
 		try {
 			// Les dernières frappes doivent être testées, pas perdues.
-			if (await session.flush()) deps.reload();
+			if (await session.flush()) void deps.reload();
 			const steps = deps.steps ?? null;
 			const result = await deps.runtime.runTests(steps ? steps.grading() : { ownTests: exercise.ownTests, mutants: exercise.mutants });
 			deps.metrics[deps.metrics.firstTestRun ? 'lastTestRun' : 'firstTestRun'] = Math.round(result.durationMs);
@@ -74,6 +93,7 @@ export function bindRunButton(button: HTMLButtonElement, deps: RunButtonDeps): v
 			} else {
 				steps?.failed();
 				deps.success.hide();
+				deps.results.revealObjectivesAndHint();
 			}
 		} catch (error) {
 			status(m.playground.testsError, 'ko');
@@ -83,4 +103,9 @@ export function bindRunButton(button: HTMLButtonElement, deps: RunButtonDeps): v
 			button.removeAttribute('aria-busy');
 		}
 	});
+}
+
+/** L'heure de l'exécution, à la seconde : deux exécutions de suite affichent deux messages différents. */
+function heure(): string {
+	return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }

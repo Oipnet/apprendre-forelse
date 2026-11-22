@@ -1,6 +1,6 @@
 {
 	"name": "@formation/playground",
-	"version": "3.40.0",
+	"version": "3.40.2",
 	"description": "Îlot TypeScript du moteur : runtime PHP WebAssembly, éditeur, aperçu isolé.",
 	"scripts": {
 		"dev": "NODE_OPTIONS=--experimental-transform-types vite",
@@ -15,9 +15,9 @@
 		"@forelse/runtime-contract": "file:../packages/runtime-contract",
 		"@forelse/runtime-goravel": "file:../packages/runtime-goravel",
 		"@forelse/simulateur-nuxt": "file:../packages/simulateur-nuxt",
-		"@php-wasm/universal": "^3.1.64",
-		"@php-wasm/util": "^3.1.64",
-		"@php-wasm/web": "^3.1.64",
+		"@php-wasm/universal": "^3.1.65",
+		"@php-wasm/util": "^3.1.65",
+		"@php-wasm/web": "^3.1.65",
 		"buffer": "6.0.3",
 		"dompurify": "^3.4.17",
 		"fflate": "^0.8.3",
@@ -27,7 +27,7 @@
 		"sql.js": "1.16.0"
 	},
 	"devDependencies": {
-		"@php-wasm/node": "^3.1.61",
+		"@php-wasm/node": "^3.1.65",
 		"@tailwindcss/cli": "^4.3.5",
 		"@tailwindcss/typography": "^0.5.20",
 		"@tailwindcss/vite": "^4.3.5",
@@ -55,6 +55,7 @@
 		"@php-wasm/web-8-3": "file:./stubs/php-wasm-unused",
 		"@php-wasm/node-8-3": "file:./stubs/php-wasm-unused",
 		"@php-wasm/web-8-4": "file:./stubs/php-wasm-unused",
-		"@php-wasm/node-8-4": "file:./stubs/php-wasm-unused"
+		"@php-wasm/node-8-4": "file:./stubs/php-wasm-unused",
+		"@php-wasm/web-8-5": "https://codeload.github.com/Oipnet/wordpress-playground/tar.gz/6d51f029ca0196b99d9e826568ced87654eb03dd"
 	}
 }

@@ -455,7 +455,8 @@ export const en: Messages = {
 	scratch: {
 		run: (masquable: (texte: string) => string) => `Run${masquable('')}`,
 		runTitle: (mod: string) => `Reload the preview with your code (${mod} + Enter)`,
-		ran: 'Preview reloaded',
+		running: 'Running…',
+		ran: (time: string) => `Preview reloaded at ${time}`,
 		shareTitle: 'Share your code',
 		shortLink: {
 			label: 'Short link',

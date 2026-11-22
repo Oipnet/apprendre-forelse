@@ -35,7 +35,7 @@ final readonly class FeedbackService
             $exercise->id,
             FeedbackKind::from($input->kind),
             trim($input->message),
-            min($input->hintsUsed, \count($exercise->hints)),
+            clamp($input->hintsUsed, 0, \count($exercise->hints)),
             $input->completed,
         );
         $this->entityManager->persist($feedback);

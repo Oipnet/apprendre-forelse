@@ -16,7 +16,7 @@ import { HintsAndSolution } from './HintsAndSolution';
 import { escapeHtml } from './html';
 import { layout } from './layout';
 import { bindRetry, bootFailureActionsHtml, bootKey, firstLoadNote, loadErrorHtml, suivreDemarrage } from './boot';
-import { MentorClient, errorTextOf, stripAnsi } from './mentor';
+import { MentorClient, errorTextOf, hasPhpFatalError, stripAnsi } from './mentor';
 import { MentorPanel } from './MentorPanel';
 import { m } from '../i18n';
 import { mesurer } from '../mesure';
@@ -38,6 +38,9 @@ import { bindRunButton } from './run';
 import { ScratchOfferBanner } from './scratch-offer';
 import { statusBar } from './status';
 import type { ExercisePayload, PlaygroundConfig } from './types';
+
+/** « Exécuter » n'attend pas plus longtemps une page de l'aperçu qui ne se charge pas. */
+const RELOAD_TIMEOUT_MS = 30_000;
 
 /** Monte l'environnement d'exercice complet dans `root`. */
 export async function mountPlayground(root: HTMLElement, config: PlaygroundConfig) {
@@ -179,20 +182,31 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	let base: DatabasePanel | null = null;
 	// L'encart du parcours, sous l'aperçu du bac à sable : il compte les exécutions réussies (scratch-offer.ts).
 	const offre = scratch && config.scratch?.offer ? new ScratchOfferBanner($('.pane-preview'), config.scratch.offer, mesure) : null;
+	// Les rechargements qui attendent que la page de l'aperçu soit affichée (voir reload).
+	let affichee: Array<() => void> = [];
+	const pageAffichee = () => {
+		const attentes = affichee;
+		affichee = [];
+		attentes.forEach((resoudre) => resoudre());
+	};
 	const bridge = new PreviewBridge(runtime, $<HTMLIFrameElement>('#frame'), config.sandboxUrl, {
 		onConsole: versLaConsole,
 		onNavigated: (path) => {
 			urlInput.value = path || '/';
 			$('#preview-frozen').hidden = true;
+			pageAffichee();
 		},
+		// Envoyé à chaque chargement, même quand la page a quitté le bac à sable (lien externe) et n'a pas de « navigated ».
 		onTitle: (title) => {
 			$('#pagetab-title').textContent = title;
 			$('#pagetab').hidden = !title;
+			pageAffichee();
 		},
 		// Une boucle infinie dans le code de la page (onMounted, watch, clic…) gèle l'aperçu : le relais est
 		// recréé, mais la page n'est pas rechargée, elle retomberait dans la boucle. La prochaine modification,
 		// ou ⟳, la recharge.
 		onFrozen: () => {
+			pageAffichee();
 			$('#preview-frozen').hidden = false;
 			status(m.playground.previewFrozen, 'ko');
 			versLaConsole('error', m.playground.previewFrozenConsole);
@@ -209,7 +223,9 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 			base?.changed();
 			offre?.response(res.status);
 			// Une réponse en erreur : le mentor peut l'expliquer (si l'apprenant a un compte).
-			mentor.setError('preview', res.status >= 500 ? sansCle(`${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, res.headers['content-type']?.[0])}`) : null);
+			const contentType = res.headers['content-type']?.[0];
+			const enErreur = res.status >= 500 || hasPhpFatalError(res.body, contentType);
+			mentor.setError('preview', enErreur ? sansCle(`${request.method} ${path} → ${res.status}\n\n${errorTextOf(res.body, contentType)}`) : null);
 		},
 	});
 	// Le relais de l'aperçu (page du bac à sable, Service Worker) se prépare pendant que PHP démarre : il n'a
@@ -298,13 +314,29 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	const { saved, initial, draft } = await depart;
 	const editables = [...new Set([...cheminsExplicites(exercise.editable), ...Object.keys(initial).filter((path) => estModifiable(path, exercise.editable))])];
 
-	/** Recharge l'aperçu ; pendant le démarrage, rien : il s'ouvrira de lui-même à la fin. */
+	/**
+	 * Recharge l'aperçu ; pendant le démarrage, rien : il s'ouvrira de lui-même à la fin. La promesse se résout quand la
+	 * page est affichée, ou au bout de RELOAD_TIMEOUT_MS (page qui ne se charge pas) : « Exécuter » l'attend.
+	 */
 	let apercuPret = false;
-	const reload = () => {
-		if (apercuPret) bridge.navigate(urlInput.value || '/');
+	const reload = (): Promise<void> => {
+		if (!apercuPret) return Promise.resolve();
+		return new Promise<void>((resolve) => {
+			const fin = setTimeout(resolve, RELOAD_TIMEOUT_MS);
+			affichee.push(() => {
+				clearTimeout(fin);
+				resolve();
+			});
+			bridge.navigate(urlInput.value || '/');
+		});
 	};
-	urlInput.addEventListener('keydown', (e) => e.key === 'Enter' && reload());
-	$('#reload').addEventListener('click', reload);
+	urlInput.addEventListener('keydown', (e) => e.key === 'Enter' && void reload());
+	$('#reload').addEventListener('click', () => void reload());
+	const panneauApercu = $('.pane-preview');
+	const running = (enCours: boolean) => {
+		panneauApercu.classList.toggle('running', enCours);
+		$('#preview-running').hidden = !enCours;
+	};
 
 	// --- Aperçu / console ----------------------------------------------------------------
 	bindPaneTabs(root, Boolean(runtime.runCommand));
@@ -470,7 +502,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		files.onRestore = (etape) => void steps.goTo(etape ?? 0);
 	}
 	const runButton = $<HTMLButtonElement>('#run');
-	bindRunButton(runButton, { exercise, scratch, runtime, session, results, success, folding, status, reload, showWorkpane, metrics, mesure, steps, onScratchRun: () => offre?.ran() });
+	bindRunButton(runButton, { exercise, scratch, runtime, session, results, success, folding, status, reload, running, showWorkpane, metrics, mesure, steps, onScratchRun: () => offre?.ran() });
 
 	// --- Indices et solution -------------------------------------------------------------
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });
