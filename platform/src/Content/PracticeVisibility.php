@@ -38,7 +38,17 @@ final readonly class PracticeVisibility
     /** @return array<string, Practice> du plus récent au plus ancien */
     public function practices(): array
     {
-        return array_filter($this->content->practices($this->locale()), $this->isVisible(...));
+        return $this->practicesIn($this->locale());
+    }
+
+    /**
+     * Les mêmes, dans une langue donnée : la liste d'une autre langue, que la page annonce (hreflang).
+     *
+     * @return array<string, Practice>
+     */
+    public function practicesIn(string $locale): array
+    {
+        return array_filter($this->content->practices($locale), $this->isVisible(...));
     }
 
     public function find(string $id): ?Practice

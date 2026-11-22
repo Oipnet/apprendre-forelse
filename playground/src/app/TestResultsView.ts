@@ -48,6 +48,16 @@ export class TestResultsView {
 		return passed;
 	}
 
+	/**
+	 * Après un échec : fait défiler les consignes jusqu'aux objectifs et au bouton d'indice, juste dessous. Sur un
+	 * petit écran, les consignes longues les laissaient hors de vue, et un débutant ne savait pas qu'un indice existait.
+	 */
+	revealObjectivesAndHint(): void {
+		const hint = this.root.querySelector<HTMLElement>('#hint');
+		const target = hint && !hint.hidden ? hint : this.root.querySelector<HTMLElement>('.objectives');
+		target?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+	}
+
 	/** Le run n'a pas abouti (runtime arrêté…) : l'erreur, à la place de la sortie. */
 	showError(error: unknown): void {
 		this.$('#output').textContent = String(error);
