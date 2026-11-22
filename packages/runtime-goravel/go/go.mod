@@ -1,6 +1,6 @@
 module goravel
 
-go 1.25.0
+go 1.27.0
 
 require (
 	github.com/goravel/framework v1.18.0
