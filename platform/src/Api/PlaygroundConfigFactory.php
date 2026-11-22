@@ -9,6 +9,7 @@ use App\Content\Exercise;
 use App\Content\Track;
 use App\Entity\User;
 use App\Scratch\ScratchFramework;
+use App\Scratch\ScratchOfferFactory;
 use App\Share\ShareLinks;
 use App\Share\SiteHost;
 use App\Theme\Theme;
@@ -36,6 +37,7 @@ final readonly class PlaygroundConfigFactory
         private TranslatorInterface $translator,
         private EnvironmentAssetUrls $assets,
         private SiteHost $site,
+        private ScratchOfferFactory $scratchOffers,
         /** Bêta fermée : l'inscription exige un code de cohorte, l'invité sans code est orienté vers la liste d'attente. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private bool $inviteOnly,
@@ -148,6 +150,8 @@ final readonly class PlaygroundConfigFactory
                 ],
                 // Les liens courts (ScratchShareController) : la case « Lien court » de la boîte de partage, cochée par défaut.
                 'shortLinks' => ['url' => $this->urls->generate('api_scratch_share', ['framework' => $framework->value])],
+                // Le parcours proposé sous l'aperçu, après quelques exécutions réussies ; null s'il n'est pas en vente.
+                'offer' => $this->scratchOffers->create($framework),
                 // Les paquets Composer à ajouter (PHP sans framework, Symfony), tant que leur catalogue a été construit
                 // (environments/bin/build-paquets.php) ; un paquet qui manque se demande par la page de contact.
                 'packages' => null === ($catalogue = $framework->packageCatalog()) || null === ($url = $this->assets->builtUrl($catalogue, $request)) ? null : [

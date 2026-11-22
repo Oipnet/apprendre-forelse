@@ -339,6 +339,13 @@ bac_a_sable:
         texte: "Mon code {framework}, à ouvrir et modifier directement dans le navigateur."
     autre: "Ouvrir le bac à sable {framework}"
     pratique: "Des exercices guidés, corrigés par des tests : la Pratique"
+    # L'encart du parcours sous l'aperçu, après quelques exécutions réussies (App\Scratch\ScratchOfferFactory).
+    offre:
+        titre: "Vous aimez essayer du {framework} ici\u00A0?"
+        texte: "Le parcours «\u00A0{parcours}\u00A0» vous guide pas à pas, avec des exercices corrigés par des tests automatiques, dans ce même éditeur."
+        prix: "{prix} TTC, accès à vie, premier chapitre gratuit avec un compte."
+        voir: Voir le parcours
+        fermer: Ne plus afficher
     index:
         titre: Un projet PHP, Symfony ou Laravel, dans votre navigateur
         intro: "Essayez une idée, reproduisez un bug, montrez du code à un collègue : le projet tourne dans le navigateur, sans rien installer ni créer de compte. Un lien suffit à le partager."

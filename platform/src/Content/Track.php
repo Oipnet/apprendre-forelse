@@ -35,6 +35,13 @@ final readonly class Track implements ExerciseOwner
         public string $locale = Exercise::LOCALE,
         /** La présentation du parcours (Markdown de `about.md`, à côté de track.yaml) : ce qu'on y apprend, pour qui. Null sans fichier. */
         public ?string $about = null,
+        /**
+         * Les bacs à sable (valeurs de ScratchFramework, clé « scratch » de track.yaml) sous l'aperçu desquels ce parcours
+         * est proposé, après quelques exécutions (voir App\Scratch\ScratchOfferFactory).
+         *
+         * @var list<string>
+         */
+        public array $scratch = [],
     ) {
     }
 
