@@ -30,6 +30,7 @@ func (testDeps) StartCPUProfile(io.Writer) error             { return errNoFuzz 
 func (testDeps) StopCPUProfile()                             {}
 func (testDeps) WriteProfileTo(string, io.Writer, int) error { return errNoFuzz }
 func (testDeps) ImportPath() string                          { return "goravel" }
+func (testDeps) ModulePath() string                          { return "goravel" } // depuis Go 1.26
 func (testDeps) StartTestLog(io.Writer)                      {}
 func (testDeps) StopTestLog() error                          { return nil }
 func (testDeps) SetPanicOnExit0(bool)                        {}
