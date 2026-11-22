@@ -36,7 +36,8 @@ const nodeShims = [
 ];
 
 /**
- * Seul PHP 8.5 est embarqué : les autres versions pointent vers un module vide.
+ * Seul PHP 8.6 est embarqué (sous le nom @php-wasm/web-8-5, voir php-worker-core.ts) : les autres versions
+ * pointent vers un module vide.
  * Les « overrides » npm évitent déjà de télécharger leurs binaires, mais npm enregistre
  * mal le chemin de ces paquets locaux (liens cassés après `npm ci`) : l'alias ne dépend pas d'eux.
  */
