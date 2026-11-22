@@ -131,7 +131,7 @@ final readonly class EnvironmentInstaller
             throw new ContentException(sprintf('Adresse de dépôt illisible : %s', $url));
         }
         $allowed = explode(',', $this->allowlist)
-            |> (static fn (array $hosts): array => array_map(trim(...), $hosts))
+            |> array_map(trim(...), ?)
             |> array_filter(...)
             |> array_values(...);
         if ([] !== $allowed && !\in_array($host, $allowed, true)) {

@@ -4,7 +4,6 @@ namespace App\Seo\Page;
 
 use App\Content\ContentDates;
 use App\Content\ContentRepository;
-use App\Content\Exercise;
 use App\Content\ExerciseStory;
 use App\Content\Framework\FrameworkRegistry;
 use App\Content\Practice;
@@ -39,10 +38,15 @@ final readonly class PracticeSeo
      * ne répètent rien) ; elles restent hors de l'index, comme une liste filtrée (SearchIndexing::PRACTICE_FILTERS).
      * Une liste filtrée a pour canonical la liste entière.
      *
-     * @param list<Practice> $practices ceux que la liste montre sans filtre
+     * Chaque page annonce la même page dans les autres langues (hreflang), pour que chaque version nomme l'autre en
+     * retour : la page 2 française et la page 2 anglaise. Une langue qui n'a pas autant de pages n'est pas annoncée.
+     *
+     * @param list<Practice>     $practices  ceux que la liste montre sans filtre
+     * @param array<string, int> $pageCounts le nombre de pages de la liste sans filtre, par langue (PracticeCatalog::pageCounts)
      */
-    public function index(array $practices, ?PracticeFilter $filter = null): void
+    public function index(array $practices, ?PracticeFilter $filter = null, array $pageCounts = []): void
     {
+        $page = self::isUnfiltered($filter) && $filter->page > 1 ? $filter->page : 1;
         $frameworks = array_map(fn (Practice $p) => $this->frameworks->labelOf($p->framework), $practices)
             |> array_unique(...)
             |> array_values(...);
@@ -60,12 +64,12 @@ final readonly class PracticeSeo
                 $this->trans('pratique.titre_court'),
             )
             ->setDescription($this->trans('pratique.description'))
-            ->setCanonical($this->schema->url('app_practice', self::isUnfiltered($filter) && $filter->page > 1 ? ['page' => $filter->page] : []))
+            ->setCanonical($this->schema->url('app_practice', $page > 1 ? ['page' => $page] : []))
             ->addStructuredData($this->schema->breadcrumb([[$this->trans('pratique.fil_ariane'), $this->schema->url('app_practice')]]));
-        // La liste existe dans chaque langue où un exercice est traduit (hreflang).
-        foreach ([Exercise::LOCALE, ...Exercise::TRANSLATIONS] as $locale) {
-            if ($locale !== $this->seo->getLanguage() && [] !== $this->content->practices($locale)) {
-                $this->seo->addAlternate($locale, $this->schema->url('app_practice', ['_locale' => $locale]));
+        // La même page de la liste, dans chaque langue où elle existe (hreflang).
+        foreach ($pageCounts as $locale => $count) {
+            if ($locale !== $this->seo->getLanguage() && $count >= $page) {
+                $this->seo->addAlternate($locale, $this->schema->url('app_practice', ['_locale' => $locale, ...$page > 1 ? ['page' => $page] : []]));
             }
         }
     }

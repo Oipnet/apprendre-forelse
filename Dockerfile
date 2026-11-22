@@ -52,19 +52,21 @@ RUN node precompresser.ts /src/platform/public/build
 
 
 # --- 2. Base PHP commune ----------------------------------------------------------------
-# Version épinglée, et non le tag flottant 1-php8.5 : une image reconstruite garde la base vérifiée, et Dependabot
+# Version épinglée, et non le tag flottant 1-php8.6 : une image reconstruite garde la base vérifiée, et Dependabot
 # propose chaque nouvelle version (.github/dependabot.yml). PHP 8.5.12 depuis 1.13.2 (correctif PHP2Shell,
 # CVE-2026-109618 et 109619) ; 1.13.4 corrige en plus les failles du mode worker et Brotli (Node2Shell, CVE-2026-111497) ; 1.13.5 (Caddy 2.11.9)
 # corrige 17 failles de php_server, du mode worker et de HTTP/2. 1.13.6 apporte PHP 8.5.13 (correctif de sécurité du 19/11/2026,
 # sévérité CRITICAL) : épinglé jusqu'au correctif de PHP, « 1.13.6-php8.5 » étant un tag flottant que le cache de la CI
 # (cache-from: type=gha) pouvait garder sur l'ancien PHP. Après un correctif de PHP, monter ici le dernier chiffre.
-FROM dunglas/frankenphp:1.13.6-php8.5.13 AS php_base
+# PHP 8.6.0 depuis le 21/11/2026, même FrankenPHP (1.13.6) : le playground exécute la même version (playground/package.json).
+FROM dunglas/frankenphp:1.13.6-php8.6.0 AS php_base
 
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 WORKDIR /app
 
+# mbstring : l'image FrankenPHP en PHP 8.6 ne l'embarque plus (celle en 8.5 l'avait), or les environnements l'exigent.
 # gd (avec FreeType) dessine les images de partage des pages (App\Share\ShareImageRenderer).
-RUN install-php-extensions @composer gd intl opcache pdo_pgsql pcntl \
+RUN install-php-extensions @composer gd intl mbstring opcache pdo_pgsql pcntl \
     # pcntl pour les seules commandes longues (worker, empaqueteur), qui la chargent avec « php -d extension=pcntl » :
     # elle leur fait entendre le SIGTERM d'un arrêt. Pas pour FrankenPHP (serveur multithread), d'où l'ini retiré.
     && rm "$PHP_INI_DIR/conf.d/docker-php-ext-pcntl.ini"

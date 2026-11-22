@@ -313,7 +313,7 @@ final class EnvironmentRegistry implements ResetInterface
     private static function paths(array|string $paths): array
     {
         return (array) $paths
-            |> (static fn (array $items): array => array_map(trim(...), $items))
+            |> array_map(trim(...), ?)
             |> array_filter(...)
             |> array_values(...);
     }
