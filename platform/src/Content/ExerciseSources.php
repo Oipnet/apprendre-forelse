@@ -69,7 +69,7 @@ final readonly class ExerciseSources
     public function stepReferenceFiles(Exercise $exercise, int $step): array
     {
         // Seuls les fichiers que l'apprenant a pu changer : le reste du projet est déjà celui de l'exercice.
-        $depart = array_filter($this->startingFiles($exercise), static fn (string $path) => $exercise->isEditable($path), \ARRAY_FILTER_USE_KEY);
+        $depart = array_filter($this->startingFiles($exercise), $exercise->isEditable(...), \ARRAY_FILTER_USE_KEY);
         $files = [...$depart, ...$this->stepSolutionFiles($exercise, $step + 1)];
         $ownTests = $exercise->ownTests();
 
