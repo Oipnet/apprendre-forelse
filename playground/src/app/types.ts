@@ -146,5 +146,20 @@ export interface PlaygroundConfig {
 		packages?: { url: string; requestUrl: string | null } | null;
 		/** Les liens courts (scratch-share.ts) : l'API qui les crée ; absent, le lien long seulement. */
 		shortLinks?: { url: string } | null;
+		/** Le parcours proposé sous l'aperçu après quelques exécutions (scratch-offer.ts) ; absent s'il n'est pas en vente. */
+		offer?: ScratchOffer | null;
 	} | null;
+}
+
+/** L'encart d'un parcours sous l'aperçu du bac à sable : textes traduits et prix formaté par le serveur. */
+export interface ScratchOffer {
+	/** L'identifiant du parcours : la croix est retenue par parcours, et la mesure le porte. */
+	track: string;
+	title: string;
+	text: string;
+	price: string;
+	cta: string;
+	url: string;
+	/** Le libellé de la croix. */
+	dismiss: string;
 }

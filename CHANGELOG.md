@@ -8,6 +8,16 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ## Non publié
 
+### Ajouté
+
+- **Bac à sable, un parcours proposé sous l'aperçu** : un parcours qui déclare `scratch: [php]` (ou `symfony`,
+  `laravel`) dans son `track.yaml` est proposé dans un encart discret sous l'aperçu de ce bac à sable, à partir de la
+  2e exécution réussie (« Exécuter » suivi d'une réponse sans erreur), jamais au premier clic. Texte et prix viennent
+  du serveur : le prix que ce visiteur paierait (fondateur compris), et rien si le parcours est gratuit, réservé aux
+  administrateurs, pas traduit dans la langue de la page, déjà ouvert à ce visiteur ou si le paiement n'est pas
+  configuré. La croix le ferme pour de bon dans ce navigateur. Mesuré par l'événement `bac-a-sable-offre`
+  (`action` = `vue`, `clic` ou `fermee`, avec `parcours`). Un moteur antérieur ignore la clé.
+
 ### Modifié
 
 - **Environnement `symfony-8-easyadmin`** : EasyAdmin 5.8.0 → 5.10.2 (avec les correctifs Symfony 8.1.11 et Doctrine ORM 3.8 que la mise à jour entraîne, dont celui de `symfony/yaml`, CVE-2026-123792). Depuis la 5.10, `Actions::setPermission()` et `disable()` protègent aussi l'URL d'une action personnalisée (403), et plus seulement son bouton : un prochain exercice Pratique en dépend. Les exercices `easyadmin-5-8-badges` et `easyadmin-5-8-filtres-imbriques` restent verts.

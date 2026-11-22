@@ -300,6 +300,12 @@ bac_a_sable:
         texte: "My {framework} code, to open and edit right in the browser."
     autre: "Open the {framework} playground"
     pratique: "Guided exercises, checked by tests: Practice"
+    offre:
+        titre: "Enjoying {framework} in here?"
+        texte: "The “{parcours}” track guides you step by step, with exercises checked by automated tests, right in this editor."
+        prix: "{prix} incl. VAT, lifetime access, first chapter free with an account."
+        voir: See the track
+        fermer: "Don’t show again"
     index:
         titre: A PHP, Symfony or Laravel project, in your browser
         intro: "Try an idea, reproduce a bug, show code to a colleague: the project runs in the browser, with nothing to install and no account. A link is all it takes to share it."
