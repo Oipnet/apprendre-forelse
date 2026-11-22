@@ -67,7 +67,7 @@ final readonly class CohortManagement
         $chosen = array_diff($trackIds, $locked);
         $kept = array_intersect($cohort->getAvailableTrackIds(), $locked);
         // Ordre du catalogue, pour un affichage stable.
-        $selection = array_values(array_filter(array_keys($this->content->tracks()), static fn (string $id) => \in_array($id, [...$chosen, ...$kept], true)));
+        $selection = array_values(array_filter(array_keys($this->content->tracks()), \in_array(?, [...$chosen, ...$kept], true)));
         if (!$selection && $cohort->isFundedByInstitution()) {
             // « Aucune sélection = tous les parcours » ouvrirait, sans devis, chaque parcours publié plus tard.
             throw new CohortRuleViolation('Une cohorte financée par l\'établissement propose au moins un parcours : rien n\'a été enregistré.');

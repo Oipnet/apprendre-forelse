@@ -470,7 +470,8 @@ export const fr = {
 		run: (masquable: (texte: string) => string) => `Exécuter${masquable('')}`,
 		/** `mod` : « Ctrl » ou « ⌘ ». */
 		runTitle: (mod: string) => `Recharger l'aperçu avec votre code (${mod} + Entrée)`,
-		ran: 'Aperçu rechargé',
+		running: 'Exécution…',
+		ran: (heure: string) => `Aperçu rechargé à ${heure}`,
 		shareTitle: 'Partager votre code',
 		/** La case « Lien court » de la boîte de partage (scratch-share.ts). */
 		shortLink: {

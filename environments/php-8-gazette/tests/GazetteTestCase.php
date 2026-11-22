@@ -73,7 +73,12 @@ abstract class GazetteTestCase extends TestCase
             })($index);
             $html = (string) ob_get_contents();
         } catch (\Throwable $erreur) {
-            $this->fail(sprintf('La page %s a planté : %s (%s, ligne %d).', $url, $erreur->getMessage(), str_replace(self::projet().'/', '', $erreur->getFile()), $erreur->getLine()));
+            $fichier = str_replace(self::projet().'/', '', $erreur->getFile());
+            // Une faute de frappe fait échouer tous les objectifs d'un coup : dire au débutant que c'est une seule
+            // erreur, de syntaxe, et où regarder, avant le message anglais de PHP.
+            $this->fail($erreur instanceof \ParseError
+                ? sprintf('PHP n\'a pas pu lire %s : erreur de syntaxe vers la ligne %d (souvent un guillemet, une parenthèse ou un point-virgule oublié). Corrigez-la, et les autres objectifs suivront. Message de PHP : %s', $fichier, $erreur->getLine(), $erreur->getMessage())
+                : sprintf('La page %s a planté : %s (%s, ligne %d).', $url, $erreur->getMessage(), $fichier, $erreur->getLine()));
         } finally {
             while (ob_get_level() > $niveau) {
                 ob_end_clean();

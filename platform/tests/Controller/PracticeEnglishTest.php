@@ -2,10 +2,13 @@
 
 namespace App\Tests\Controller;
 
+use App\Content\PracticeCatalog;
+use App\Content\PracticeVisibility;
 use App\Entity\ExerciseProgress;
 use App\Repository\ExerciseProgressRepository;
 use App\Tests\DatabaseTrait;
 use App\Tests\PacksTrait;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -47,6 +50,22 @@ final class PracticeEnglishTest extends WebTestCase
         $this->assertSame(['en' => 'http://localhost/en/practice', 'fr' => 'http://localhost/pratique', 'x-default' => 'http://localhost/pratique'], $this->alternates($crawler));
 
         $this->assertSame(['en' => 'http://localhost/en/practice', 'fr' => 'http://localhost/pratique', 'x-default' => 'http://localhost/pratique'], $this->alternates($this->client->request('GET', '/pratique')), 'La liste française nomme la liste anglaise.');
+    }
+
+    /**
+     * Un exercice par page : cinq pages en français, une seule en anglais. La page 2 française n'a pas d'équivalent
+     * anglais, elle n'en annonce donc aucun (et pas la première page anglaise, qui ne la nommerait pas en retour).
+     */
+    public function testUnePageSuivanteNAnnoncePasUnePageQuiNExistePas(): void
+    {
+        // Sans redémarrage entre deux requêtes : le noyau redémarré oublierait le catalogue posé ici.
+        $this->client->disableReboot();
+        static::getContainer()->set(PracticeCatalog::class, new PracticeCatalog(static::getContainer()->get(PracticeVisibility::class), static::getContainer()->get(ClockInterface::class), 1));
+
+        $this->assertSame([], $this->alternates($this->client->request('GET', '/pratique?page=2')));
+        $this->assertSame(['en' => 'http://localhost/en/practice', 'fr' => 'http://localhost/pratique', 'x-default' => 'http://localhost/pratique'], $this->alternates($this->client->request('GET', '/pratique')), 'La première page nomme toujours l\'autre langue.');
+        $this->assertSame(['en' => 'http://localhost/en/practice', 'fr' => 'http://localhost/pratique', 'x-default' => 'http://localhost/pratique'], $this->alternates($this->client->request('GET', '/en/practice')));
+        $this->assertSame(['en' => 'http://localhost/en/practice', 'fr' => 'http://localhost/pratique', 'x-default' => 'http://localhost/pratique'], $this->alternates($this->client->request('GET', '/pratique?framework=symfony&page=2')), 'Filtrée, la liste se rattache à la liste entière, comme son canonical.');
     }
 
     public function testUnExerciceNonTraduitNExistePasEnAnglais(): void
