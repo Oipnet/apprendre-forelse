@@ -61,7 +61,7 @@ final class TrackSeoCrudController extends AbstractCrudController
             ->setHelp('155 caractères au plus, reprise en og:description. Vide : description générée.')
             ->setFormTypeOption('attr', ['maxlength' => 155, 'rows' => 3]);
         yield TextField::new('trackId', 'Title généré')->onlyOnIndex()->setSortable(false)
-            ->formatValue(fn (?string $trackId) => $this->generatedTitle($trackId));
+            ->formatValue($this->generatedTitle(...));
         yield DateTimeField::new('updatedAt', 'Modifié le')->onlyOnIndex();
     }
 
