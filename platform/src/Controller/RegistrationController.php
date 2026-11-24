@@ -62,7 +62,7 @@ final class RegistrationController extends AbstractController
         } elseif ($withCode && !$form->get('invitationCode')->isValid()) {
             $this->throttle->recordUnknownCode($ip);
         } elseif ($form->isSubmitted() && !$form->isValid() && self::emailTaken($form)) {
-            $this->throttle->recordDuplicate($ip);
+            $this->throttle->recordDuplicate($ip, (string) $user->getEmail());
             $this->registration->notifyHolder($user);
         } elseif ($form->isSubmitted() && $form->isValid()) {
             $result = $this->registration->register(

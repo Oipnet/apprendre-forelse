@@ -10,13 +10,18 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
  * Les limites de l'inscription, par adresse IP (config/packages/rate_limiter.yaml). Un email déjà pris se voit
  * forcément : un nouveau compte, lui, est connecté aussitôt. Ce qu'on peut faire, c'est ralentir qui teste une liste
  * d'adresses : passé un certain nombre de refus, plus aucune inscription n'aboutit depuis cette adresse IP, que l'email
- * soit pris ou non. De même pour les codes d'invitation : un code ouvre des comptes, parfois des parcours payants.
+ * soit pris ou non. Chaque adresse ne compte qu'une fois par adresse IP : qui teste une liste essaie des adresses
+ * différentes, alors qu'une classe derrière la même box retente les mêmes (24/11/2026 : dix essais avec des adresses
+ * déjà inscrites ont bloqué une salle entière pendant une heure). De même pour les codes d'invitation : un code ouvre
+ * des comptes, parfois des parcours payants.
  */
 final readonly class RegistrationThrottle
 {
     public function __construct(
         #[Autowire(service: 'limiter.registration_duplicate')]
         private RateLimiterFactoryInterface $duplicates,
+        #[Autowire(service: 'limiter.registration_duplicate_email')]
+        private RateLimiterFactoryInterface $duplicateEmails,
         #[Autowire(service: 'limiter.invitation_code')]
         private RateLimiterFactoryInterface $invitationCodes,
     ) {
@@ -39,8 +44,12 @@ final readonly class RegistrationThrottle
         $this->invitationCodes->create(ClientKey::of($ip))->consume();
     }
 
-    public function recordDuplicate(?string $ip): void
+    /** Un refus pour email déjà pris (adresse normalisée, voir User::setEmail), compté une fois par adresse IP. */
+    public function recordDuplicate(?string $ip, string $email): void
     {
-        $this->duplicates->create(ClientKey::of($ip))->consume();
+        $key = ClientKey::of($ip);
+        if ($this->duplicateEmails->create($key.' '.$email)->consume()->isAccepted()) {
+            $this->duplicates->create($key)->consume();
+        }
     }
 }

@@ -48,10 +48,16 @@ framework:
             interval: '1 hour'
         # Inscriptions refusées parce que l'email a déjà un compte, par adresse IP. Au-delà, toute inscription
         # est refusée depuis cette adresse : c'est ce qui ralentit qui teste une liste d'emails. Seuls les refus
-        # comptent, pour qu'une classe entière s'inscrive derrière la même adresse IP.
+        # comptent, pour qu'une classe entière s'inscrive derrière la même adresse IP, et chaque adresse email une
+        # seule fois (registration_duplicate_email) : un élève qui retente la sienne ne bloque pas toute la salle.
         registration_duplicate:
             policy: sliding_window
             limit: 10
+            interval: '1 hour'
+        # La même adresse email déjà prise, réessayée depuis la même adresse IP : seul le premier refus compte.
+        registration_duplicate_email:
+            policy: fixed_window
+            limit: 1
             interval: '1 hour'
         # Codes d'invitation inconnus essayés à l'inscription, par adresse IP. Au-delà, plus aucun code n'est accepté
         # depuis cette adresse, pas même un bon : sinon la réussite dirait qu'on l'a trouvé.
