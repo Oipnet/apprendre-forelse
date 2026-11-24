@@ -27,6 +27,7 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Sécurité** : Twig 3.30.0 → 3.31.1 et twig/html-extra 3.29.0 → 3.31.1 (avis du 23 et 24/11, dont CVE-2026-133768, CVE-2026-133771 et CVE-2026-133769 ; contournements du bac à sable Twig et échappement manquant), qui faisaient échouer `composer audit` en CI.
 - **Inscription d'une classe derrière la même adresse IP** : le blocage après 10 inscriptions refusées pour email déjà pris (par IP et par heure) ne compte plus qu'une fois chaque adresse. Un élève qui retente la sienne, ou celle d'un voisin, ne bloque plus toute la salle ; tester une liste d'adresses différentes reste bloqué au même seuil. Le 24/11, une classe a été bloquée une heure après 4 inscriptions.
 - **Débutants** : une `Parse error` ou une `Fatal error` affichée dans l'aperçu (servie en 200 par PHP) compte comme une erreur, et le mentor propose de l'expliquer. Le bouton d'indice passe sous les objectifs, et les consignes défilent jusqu'à lui après des tests en échec. Dans la Gazette, une erreur de syntaxe est expliquée en français avant le message de PHP (#462).
 - **Référencement** : les pages 2 et suivantes de la Pratique (`/pratique?page=N`, `/en/practice?page=N`) annoncent la même page dans l'autre langue (hreflang), et plus la première, qui ne les nommait pas en retour (Ahrefs : « missing reciprocal hreflang »). Une langue qui n'a pas autant de pages n'est pas annoncée (#459).
