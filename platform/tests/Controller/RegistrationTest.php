@@ -106,7 +106,7 @@ final class RegistrationTest extends WebTestCase
         $this->resetDatabase();
         $this->createUser('gorm@example.test');
 
-        $this->register($client, 'Gorm@Example.test');
+        $this->register($client, 'gorm@example.test');
 
         $this->assertResponseStatusCodeSame(422);
         $this->assertSelectorTextContains('.form-card', static::getContainer()->get(TranslatorInterface::class)->trans(User::EMAIL_TAKEN, [], 'validators'));
@@ -179,6 +179,34 @@ final class RegistrationTest extends WebTestCase
 
         $this->assertResponseRedirects('/');
         $this->assertSame(1, $limiter->consume(0)->getRemainingTokens());
+    }
+
+    public function testUneAdresseDejaPriseNeCompteQuUneFoisParAdresseIp(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->createUser('gorm@example.test');
+        // Un élève a déjà retenté son adresse depuis la salle : un nouvel essai ne rapproche pas la salle du blocage.
+        static::getContainer()->get('limiter.registration_duplicate_email')->create('127.0.0.1 gorm@example.test')->consume();
+        $limiter = static::getContainer()->get('limiter.registration_duplicate')->create('127.0.0.1');
+
+        $this->register($client, 'gorm@example.test');
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSame(10, $limiter->consume(0)->getRemainingTokens());
+    }
+
+    public function testUneNouvelleAdresseDejaPriseCompte(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->createUser('gorm@example.test');
+        $limiter = static::getContainer()->get('limiter.registration_duplicate')->create('127.0.0.1');
+
+        $this->register($client, 'gorm@example.test');
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSame(9, $limiter->consume(0)->getRemainingTokens());
     }
 
     /** Envoi direct, sans charger le formulaire : c'est la première requête, sur le kernel des compteurs épuisés. */
