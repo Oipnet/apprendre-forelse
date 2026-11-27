@@ -47,15 +47,45 @@ final class WelcomeExerciseTest extends WebTestCase
         $this->assertSame("Replace `'Closed'` with `'Open'`.", $payload['guide']);
     }
 
-    public function testLaPageOuRevenirPasseAvantLExerciceDAccueil(): void
+    /**
+     * Presque toute inscription suit la lecture d'un exercice : la démo passe quand même avant, puis propose de le
+     * reprendre (dans la barre de guidage, et après la réussite).
+     */
+    public function testDepuisUnExerciceLaDemoPasseAvantPuisProposeDeLeReprendre(): void
     {
         $client = $this->client();
 
         $this->register($client, '/inscription?suite=/parcours/premiers-pas/suite', 'Créer mon compte');
 
-        $this->assertResponseRedirects('/parcours/premiers-pas/suite');
+        $this->assertResponseRedirects('/parcours/premiers-pas/pancarte?reprendre=%2Fparcours%2Fpremiers-pas%2Fsuite');
+        $crawler = $client->followRedirect();
+        $config = json_decode((string) $crawler->filter('[data-playground]')->attr('data-config'), true);
+        $this->assertSame(['title' => 'La suite', 'url' => '/parcours/premiers-pas/suite'], $config['resume']);
         $payload = $this->json($client, 'GET', '/api/exercises/premiers-pas/suite');
         $this->assertNull($payload['guide'], 'Un exercice sans guidage n\'en a pas.');
+    }
+
+    /** Une page où revenir qui n'est pas un exercice (« Acheter », une page protégée) : elle tout de suite. */
+    public function testUnePageQuiNEstPasUnExercicePasseAvantLaDemo(): void
+    {
+        $client = $this->client();
+
+        $this->register($client, '/inscription?suite=/parcours/premiers-pas', 'Créer mon compte');
+
+        $this->assertResponseRedirects('/parcours/premiers-pas');
+    }
+
+    /** `?reprendre=` qui ne mène pas à un exercice (ou mène ailleurs) : la démo n'a rien à proposer. */
+    public function testUnReprendreQuiNEstPasUnExerciceEstIgnore(): void
+    {
+        $client = $this->client();
+        $this->register($client, '/inscription', 'Créer mon compte');
+
+        foreach (['/parcours/premiers-pas', '//ailleurs.example/x', '/parcours/premiers-pas/inconnu'] as $reprendre) {
+            $crawler = $client->request('GET', '/parcours/premiers-pas/pancarte?reprendre='.rawurlencode($reprendre));
+            $config = json_decode((string) $crawler->filter('[data-playground]')->attr('data-config'), true);
+            $this->assertNull($config['resume'], $reprendre);
+        }
     }
 
     /**
@@ -71,14 +101,14 @@ final class WelcomeExerciseTest extends WebTestCase
         $this->assertResponseRedirects('/parcours/premiers-pas/pancarte');
     }
 
-    /** Le lien sans ?suite= d'un exercice : le Referer suffit pour y revenir. */
-    public function testDepuisUnExerciceLInscritYRevient(): void
+    /** Le lien sans ?suite= d'un exercice : le Referer suffit pour le retrouver après la démo. */
+    public function testDepuisUnExerciceLeRefererSuffit(): void
     {
         $client = $this->client();
 
         $this->register($client, '/inscription', 'Créer mon compte', referer: 'http://localhost/parcours/premiers-pas/suite');
 
-        $this->assertResponseRedirects('/parcours/premiers-pas/suite');
+        $this->assertResponseRedirects('/parcours/premiers-pas/pancarte?reprendre=%2Fparcours%2Fpremiers-pas%2Fsuite');
     }
 
     /** Un Referer d'un autre site (un lien posté ailleurs vers /inscription) n'est pas une page où revenir. */

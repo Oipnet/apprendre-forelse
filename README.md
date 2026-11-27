@@ -187,9 +187,11 @@ Les résultats s'exportent en CSV.
   parcours (« environ 46 h de pratique »), ainsi que l'accueil et le JSON-LD du cours (`timeRequired`). Un chapitre
   ou un parcours dont un exercice n'a pas de durée n'en affiche pas : une somme partielle promettrait trop peu.
 
-- `welcome: true` et `guide:` (dans `exercise.yaml`, facultatives) : l'exercice d'accueil. Un nouveau compte qui
-  n'avait pas de page où revenir (inscription depuis le menu, avec un mot de passe ou un fournisseur) y arrive
-  directement, dans la langue de son inscription, plutôt que sur l'accueil ; le premier exercice `welcome: true`
+- `welcome: true` et `guide:` (dans `exercise.yaml`, facultatives) : l'exercice d'accueil. Un nouveau compte (avec
+  un mot de passe ou un fournisseur) y arrive directement, dans la langue de son inscription, plutôt que sur
+  l'accueil. Inscrit depuis un exercice, il y passe aussi d'abord : la barre de guidage propose « Passer la démo », et
+  la réussite « Reprendre : <l'exercice> » (`?reprendre=`). Une page où revenir qui n'est pas un exercice (« Acheter »,
+  une page protégée) passe avant la démo. Le premier exercice `welcome: true`
   d'un parcours qu'il voit et peut ouvrir l'emporte, et sans exercice d'accueil rien ne change. `guide:` (texte
   d'une ligne en Markdown, traduisible) active le guidage pas à pas du playground tant que l'exercice n'est pas
   réussi : une barre en bas de l'écran dit ① quoi modifier (ce texte), ② de lancer les tests après une pause de

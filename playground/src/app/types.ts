@@ -128,6 +128,11 @@ export interface PlaygroundConfig {
 	/** L'apprenant connecté ; null pour un invité. */
 	user: { name: string; xp: number } | null;
 	loginUrl?: string | null;
+	/**
+	 * Exercice d'accueil, juste après l'inscription : l'exercice d'où l'on venait, à reprendre (« Passer la démo »
+	 * dans la barre de guidage, puis après la réussite au lieu de l'exercice suivant). Absent ailleurs.
+	 */
+	resume?: { title: string; url: string } | null;
 	/** Pour inviter l'invité à créer un compte après une réussite. */
 	registerUrl?: string | null;
 	/** Bêta fermée : la liste d'attente, pour l'invité qui n'a pas de code d'invitation. */

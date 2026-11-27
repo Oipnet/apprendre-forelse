@@ -32,6 +32,6 @@
                 {% endfor %}
             </div>
         {% endif %}
-        <p class="text-sm text-ink-muted">{{ 'security.login.pas_de_compte'|trans({lien: path('app_register', suite ? {suite: suite} : {})})|raw }}</p>
+        <p class="text-sm text-ink-muted">{{ 'security.login.pas_de_compte'|trans({lien: path('app_register', suite_inscription ? {suite: suite_inscription} : {})})|raw }}</p>
     </main>
 {% endblock %}

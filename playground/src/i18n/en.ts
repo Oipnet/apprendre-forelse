@@ -203,6 +203,7 @@ export const en: Messages = {
 		alreadyDone: '✓ You have already completed this exercise.',
 		alreadyDoneLast: '✓ You have already completed this exercise, the last one in the track.',
 		nextExercise: (title: string) => `Next exercise: ${title} →`,
+		resume: (title: string) => `Back to: ${title} →`,
 		continueWith: (track: string) => `Continue with “${track}” →`,
 		alreadyValidated: 'Exercise already completed.',
 		noXpSolution: 'No XP: the solution was viewed.',
@@ -528,6 +529,7 @@ export const en: Messages = {
 	guide: {
 		label: 'Step-by-step guide',
 		close: 'Close the guide',
+		skip: 'Skip the demo',
 		write: (consigne: string) => `<strong>Welcome! ① Edit the code in the highlighted box.</strong> ${consigne}`,
 		run: (consigne: string) => `① ${consigne}<br><strong>② Then click the highlighted ▶ button, top right</strong>: the tests check your code.`,
 		fix: (petitEcran: boolean) => `<strong>Almost!</strong> Read the message under the objective, fix the code${petitEcran ? ' (“Code” tab)' : ''}, then run the tests again.`,

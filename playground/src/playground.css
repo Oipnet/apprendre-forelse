@@ -1917,6 +1917,14 @@ dialog.confirm p {
 .guide-close {
 	flex: none;
 }
+/* « Passer la démo » : discret, la démo reste le chemin proposé. */
+.guide-skip {
+	flex: none;
+	align-self: center;
+	font-size: 0.85rem;
+	color: var(--muted);
+	white-space: nowrap;
+}
 /* La barre ne cache pas le bas de la consigne (objectifs, indice) : on peut toujours le faire défiler au-dessus. */
 .guided .brief {
 	padding-bottom: 8rem;

@@ -9,7 +9,7 @@ import type { CompletionResult } from './progress';
 import type { ExerciseSession } from './session';
 import type { ExercisePayload, PlaygroundConfig } from './types';
 
-type Context = Pick<PlaygroundConfig, 'context' | 'progress' | 'back' | 'registerUrl' | 'waitlistUrl'>;
+type Context = Pick<PlaygroundConfig, 'context' | 'progress' | 'back' | 'registerUrl' | 'waitlistUrl' | 'resume'>;
 
 /** Lien vers la fiche de cours débloquée par cet exercice (comptes seulement : l'invité n'y a pas accès). */
 export function lessonLinkHtml(exercise: Pick<ExercisePayload, 'lesson'>, config: Pick<PlaygroundConfig, 'progress'>, before = ''): string {
@@ -19,8 +19,9 @@ export function lessonLinkHtml(exercise: Pick<ExercisePayload, 'lesson'>, config
 }
 
 /** Le rappel, au retour sur un exercice déjà réussi : la suite du parcours, s'il y en a une. */
-export function alreadyDoneHtml(exercise: Pick<ExercisePayload, 'next' | 'nextTrack'>, config: Pick<PlaygroundConfig, 'context'>): string {
+export function alreadyDoneHtml(exercise: Pick<ExercisePayload, 'next' | 'nextTrack'>, config: Pick<PlaygroundConfig, 'context' | 'resume'>): string {
 	if (config.context === 'practice') return m.success.alreadyDone;
+	if (config.resume) return `${m.success.alreadyDone} <a href="${escapeHtml(config.resume.url)}">${m.success.resume(escapeHtml(config.resume.title))}</a>`;
 	if (exercise.next) return `${m.success.alreadyDone} <a href="${escapeHtml(exercise.next.url)}">${m.success.nextExercise(escapeHtml(exercise.next.title))}</a>`;
 	if (exercise.nextTrack) return `${m.success.alreadyDoneLast} <a href="${escapeHtml(exercise.nextTrack.url)}">${m.success.continueWith(escapeHtml(exercise.nextTrack.title))}</a>`;
 	return m.success.alreadyDone;
@@ -48,6 +49,11 @@ export function nextStepHtml(exercise: Pick<ExercisePayload, 'next' | 'nextTrack
 					<a class="button ghost small" href="${escapeHtml(config.back.url)}">${m.success.backToPractice}</a>`;
 		}
 		return `${source}<a class="button" href="${escapeHtml(config.back.url)}">${m.success.backToPractice}</a>`;
+	}
+	// La démo d'après l'inscription : on retourne à l'exercice qu'on lisait, la suite du parcours de la démo attendra.
+	if (config.resume) {
+		const next = exercise.next ? ` <a class="button ghost small" href="${escapeHtml(exercise.next.url)}">${m.success.nextExercise(escapeHtml(exercise.next.title))}</a>` : '';
+		return `<a class="button primary" href="${escapeHtml(config.resume.url)}">${m.success.resume(escapeHtml(config.resume.title))}</a>${next}`;
 	}
 	if (exercise.next && config.progress.mode === 'local' && config.registerUrl) {
 		return config.waitlistUrl

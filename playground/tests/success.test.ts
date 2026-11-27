@@ -18,6 +18,13 @@ describe('nextStepHtml', () => {
 		expect(beta).toContain('href="/attente"');
 	});
 
+	it('après la démo d\'inscription, ramène d\'abord à l\'exercice qu\'on lisait, la suite de la démo ensuite', () => {
+		const demo = { ...parcours, resume: { title: 'Le <jeton> CSRF', url: '/pratique/csrf' } };
+		expect(nextStepHtml({ ...exercice, next: suite }, demo)).toBe(
+			'<a class="button primary" href="/pratique/csrf">Reprendre : Le &lt;jeton&gt; CSRF →</a> <a class="button ghost small" href="/parcours/symfony/02">Exercice suivant : Les &lt;routes&gt; →</a>',
+		);
+	});
+
 	it('au dernier exercice, propose le parcours conseillé ensuite, sinon le retour au parcours', () => {
 		const html = nextStepHtml({ ...exercice, nextTrack: { id: 'laravel', title: 'Laravel', description: 'Un autre framework', url: '/parcours/laravel' } }, parcours);
 		expect(html).toContain('Continuez avec <strong>Laravel</strong> : Un autre framework</p>');

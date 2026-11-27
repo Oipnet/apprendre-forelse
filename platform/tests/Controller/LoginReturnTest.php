@@ -59,11 +59,24 @@ final class LoginReturnTest extends WebTestCase
         $this->client->request('GET', '/compte', server: ['HTTP_REFERER' => 'http://localhost/parcours/decouverte']);
         $this->assertResponseRedirects('/connexion');
         $this->client->followRedirect();
-        $this->assertSelectorNotExists('input[name="_target_path"]');
+        $this->assertSelectorExists('input[name="_target_path"][value="/compte"]', 'La page protégée voyage dans le formulaire.');
 
         $this->submit(self::PASSWORD);
 
         $this->assertResponseRedirects('http://localhost/compte');
+    }
+
+    /** Une page protégée abandonnée ne ramène pas, plus tard, une connexion lancée depuis un exercice. */
+    public function testUnePageProtegeeAbandonneeNeDetournePasUneConnexionPlusTardive(): void
+    {
+        $this->client->request('GET', '/compte');
+        $this->client->followRedirect();
+
+        $crawler = $this->client->request('GET', self::EXERCISE);
+        $this->client->click($crawler->filter('.exercise-access a')->reduce(static fn ($a) => 'Se connecter' === trim($a->text()))->link());
+        $this->submit(self::PASSWORD);
+
+        $this->assertResponseRedirects('http://localhost'.self::EXERCISE);
     }
 
     /** Sans ?suite=, un échec garde aussi la page d'origine : le formulaire la porte. */

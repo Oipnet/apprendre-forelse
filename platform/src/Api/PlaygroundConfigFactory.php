@@ -13,10 +13,12 @@ use App\Scratch\ScratchOfferFactory;
 use App\Share\ShareLinks;
 use App\Share\SiteHost;
 use App\Theme\Theme;
+use App\Security\ReturnPath;
 use App\Security\SandboxOrigin;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -38,6 +40,8 @@ final readonly class PlaygroundConfigFactory
         private EnvironmentAssetUrls $assets,
         private SiteHost $site,
         private ScratchOfferFactory $scratchOffers,
+        private ReturnPath $returnPath,
+        private RequestStack $requests,
         /** Bêta fermée : l'inscription exige un code de cohorte, l'invité sans code est orienté vers la liste d'attente. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private bool $inviteOnly,
@@ -83,7 +87,29 @@ final readonly class PlaygroundConfigFactory
             // Bêta fermée : l'invité sans code d'invitation est orienté vers la liste d'attente plutôt que vers un formulaire qu'il ne peut pas remplir.
             'waitlistUrl' => !$user && $this->inviteOnly ? $this->urls->generate('app_home').'#liste-attente' : null,
             'chapterShare' => null === $track ? null : $this->chapterShare($exercise, $track),
+            'resume' => $exercise->welcome && $user ? $this->resume() : null,
         ];
+    }
+
+    /**
+     * L'exercice d'où l'on s'est inscrit (`?reprendre=`, voir WelcomeExercise) : la démo propose de le reprendre, dans
+     * sa barre (« Passer la démo ») et après la réussite, au lieu de l'exercice suivant. Null s'il n'existe pas.
+     *
+     * @return array{title: string, url: string}|null
+     */
+    private function resume(): ?array
+    {
+        $path = $this->requests->getCurrentRequest()?->query->getString('reprendre') ?: null;
+        $route = $this->returnPath->exercise($path);
+        if (null === $route || null === $path) {
+            return null;
+        }
+        $locale = $route['_locale'] ?? Exercise::LOCALE;
+        $exercise = isset($route['trackId'])
+            ? $this->content->findExercise($route['trackId'], $route['exerciseId'], $locale)
+            : $this->content->findPractice($route['exerciseId'], $locale)?->exercise;
+
+        return null === $exercise || $exercise->welcome ? null : ['title' => $exercise->title, 'url' => $path];
     }
 
     /**

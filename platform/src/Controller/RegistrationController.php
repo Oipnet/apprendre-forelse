@@ -75,7 +75,7 @@ final class RegistrationController extends AbstractController
                 $form->has('invitationCode') ? (string) $form->get('invitationCode')->getData() : null,
             );
 
-            // Retour là où l'apprenant voulait aller (ex. l'exercice suivant), sinon l'exercice d'accueil, guidé.
+            // Là où l'apprenant voulait aller (ex. l'exercice suivant), après l'exercice d'accueil, guidé.
             // Lu avant login() : le gestionnaire de succès du form_login consomme le chemin cible.
             // L'exercice d'où l'on venait voyage dans le formulaire (champ « suite », lu à l'affichage, voir ReturnPath).
             $target = $this->getTargetPath($request->getSession(), 'main') ?? ($request->request->getString('suite') ?: $request->query->get('suite'));
@@ -91,7 +91,12 @@ final class RegistrationController extends AbstractController
             $this->addFlash('mesure', 'compte-cree');
 
             // Chemin local uniquement : pas de redirection ouverte.
-            return $this->redirect(SafeRedirect::localPath(\is_string($target) ? $target : null) ?? $this->welcome->urlFor($user) ?? $this->generateUrl('app_home'));
+            // Un exercice, ou rien : la démo d'abord, qui propose ensuite de le reprendre. Une autre page (« Acheter »,
+            // une page protégée) : elle tout de suite, c'est elle que l'apprenant voulait.
+            $target = SafeRedirect::localPath(\is_string($target) ? $target : null);
+            $welcome = null === $target || null !== $this->returnPath->exercise($target) ? $this->welcome->urlFor($user, $target) : null;
+
+            return $this->redirect($welcome ?? $target ?? $this->generateUrl('app_home'));
         }
 
         $seo->setDescription($this->translator->trans('compte.inscription', [], 'seo'));

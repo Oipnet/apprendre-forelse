@@ -31,7 +31,8 @@ final class SecurityController extends AbstractController
         return $this->render('security/login.html.twig', [
             'last_username' => $authenticationUtils->getLastUsername(),
             'error' => $authenticationUtils->getLastAuthenticationError(),
-            'suite' => $returnPath->forLogin($request),
+            'suite' => ($suites = $returnPath->forLoginPage($request))['login'],
+            'suite_inscription' => $suites['register'],
         ]);
     }
 

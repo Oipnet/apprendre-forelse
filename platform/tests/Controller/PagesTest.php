@@ -93,8 +93,8 @@ final class PagesTest extends WebTestCase
         $this->assertSelectorExists('.exercise-instructions');
         $this->assertSelectorNotExists('[data-playground]', '… mais l\'éditeur demande un compte.');
         $this->assertSelectorTextContains('.exercise-access h2', 'gratuit');
-        $this->assertSelectorExists('.exercise-access a[href="/inscription?suite=/parcours/decouverte/01-bonjour"]', 'L\'inscription ramène à cet exercice.');
-        $this->assertSelectorExists('.exercise-access a[href="/connexion?suite=/parcours/decouverte/01-bonjour"]', 'La connexion aussi.');
+        $this->assertSelectorExists('.exercise-access a[href="/inscription"]', 'Sans ?suite= : l\'inscription retrouve l\'exercice par le Referer.');
+        $this->assertSelectorExists('.exercise-access a[href="/connexion"]', 'La connexion aussi.');
         $this->assertSelectorNotExists('.exercise-access .price-box', 'Le premier chapitre ne se vend pas : il se déverrouille avec un compte.');
     }
 
@@ -125,7 +125,7 @@ final class PagesTest extends WebTestCase
         $this->assertSelectorExists('.breadcrumb a[href="/parcours/payant"]');
         $this->assertSelectorNotExists('[data-playground]', '… mais ni l\'éditeur…');
         $this->assertStringNotContainsString('build/assets/playground', (string) $client->getResponse()->getContent(), '… ni le moteur WebAssembly.');
-        $this->assertSelectorExists('.exercise-access a[href="/inscription?suite=/parcours/payant/e2"]');
+        $this->assertSelectorExists('.exercise-access a[href="/inscription"]');
         $this->assertSelectorExists('.exercise-access a[href="/parcours/payant/e1"]', 'Le premier chapitre, gratuit, est proposé.');
         $client->request('GET', '/parcours/payant/e1');
         $this->assertResponseIsSuccessful('Le premier chapitre se lit aussi sans compte.');
