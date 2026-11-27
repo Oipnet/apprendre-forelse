@@ -10,6 +10,13 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Ajouté
 
+- **Exercice d'accueil, guidé pas à pas** : après une inscription sans page où revenir (le lien « Créer un compte »
+  du menu, avec un mot de passe ou un fournisseur), le nouveau compte arrive sur l'exercice marqué `welcome: true`
+  dans `exercise.yaml`, dans la langue de l'inscription, au lieu de l'accueil. Une page où revenir (exercice
+  verrouillé, `?suite=`) passe toujours avant. La clé `guide:` (traduisible) y ajoute une barre de guidage : quoi
+  écrire, puis « Cliquez sur ▶ Lancer les tests », puis, après un échec, « lisez le message et corrigez », avec un
+  halo sur l'endroit où agir ; la réussite la ferme et le panneau habituel (XP, exercice suivant) prend le relais.
+  Les 11 premiers inscrits venus de ChatGPT étaient tous restés à 0 XP. Aucune nouvelle mesure d'audience.
 - **Bac à sable, un parcours proposé sous l'aperçu** : un parcours qui déclare `scratch: [php]` (ou `symfony`,
   `laravel`) dans son `track.yaml` est proposé dans un encart discret sous l'aperçu de ce bac à sable, à partir de la
   2e exécution réussie (« Exécuter » suivi d'une réponse sans erreur), jamais au premier clic. Texte et prix viennent

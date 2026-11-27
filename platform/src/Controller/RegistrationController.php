@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Account\RegistrationThrottle;
 use App\Account\UserRegistration;
+use App\Account\WelcomeExercise;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
 use App\Security\SafeRedirect;
@@ -34,6 +35,7 @@ final class RegistrationController extends AbstractController
         private readonly RegistrationThrottle $throttle,
         private readonly UserRegistration $registration,
         private readonly TranslatorInterface $translator,
+        private readonly WelcomeExercise $welcome,
     ) {
     }
 
@@ -71,7 +73,7 @@ final class RegistrationController extends AbstractController
                 $form->has('invitationCode') ? (string) $form->get('invitationCode')->getData() : null,
             );
 
-            // Retour là où l'apprenant voulait aller (ex. l'exercice suivant), sinon l'accueil.
+            // Retour là où l'apprenant voulait aller (ex. l'exercice suivant), sinon l'exercice d'accueil, guidé.
             // Lu avant login() : le gestionnaire de succès du form_login consomme le chemin cible.
             $target = $this->getTargetPath($request->getSession(), 'main') ?? $request->query->get('suite');
 
@@ -86,7 +88,7 @@ final class RegistrationController extends AbstractController
             $this->addFlash('mesure', 'compte-cree');
 
             // Chemin local uniquement : pas de redirection ouverte.
-            return $this->redirect(SafeRedirect::localPath(\is_string($target) ? $target : null) ?? $this->generateUrl('app_home'));
+            return $this->redirect(SafeRedirect::localPath(\is_string($target) ? $target : null) ?? $this->welcome->urlFor($user) ?? $this->generateUrl('app_home'));
         }
 
         $seo->setDescription($this->translator->trans('compte.inscription', [], 'seo'));

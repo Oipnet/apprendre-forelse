@@ -1879,3 +1879,85 @@ dialog.confirm p {
 		grid-template-columns: 1fr var(--rail);
 	}
 }
+
+/* Le guidage pas à pas de l'exercice d'accueil (guide.ts) : une barre en bas, et un halo sur l'endroit où agir. */
+.guide {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 1rem;
+	margin-inline: auto;
+	z-index: 30;
+	width: min(40rem, calc(100vw - 2rem));
+	display: flex;
+	align-items: flex-start;
+	gap: 0.6rem;
+	padding: 0.7rem 0.9rem;
+	border: 1px solid var(--accent);
+	border-radius: var(--radius);
+	background: var(--panel);
+	color: var(--text);
+	box-shadow: 0 6px 24px rgb(0 0 0 / 0.35);
+	animation: guide-in 0.35s ease-out;
+}
+@keyframes guide-in {
+	from {
+		opacity: 0;
+		translate: 0 0.75rem;
+	}
+}
+.guide-text {
+	margin: 0;
+	flex: 1;
+	line-height: 1.45;
+}
+.guide-text strong {
+	color: var(--accent-text);
+}
+.guide-close {
+	flex: none;
+}
+/* La barre ne cache pas le bas de la consigne (objectifs, indice) : on peut toujours le faire défiler au-dessus. */
+.guided .brief {
+	padding-bottom: 8rem;
+	scroll-padding-bottom: 8rem;
+}
+.guide-target {
+	outline: 3px solid var(--accent);
+	outline-offset: 2px;
+	/* Quelques pulsations pour attirer l'œil, puis un halo fixe (WCAG 2.2.2). */
+	animation: guide-pulse 1.6s ease-in-out 4;
+}
+/* L'éditeur remplit son volet, et Monaco peint par-dessus un contour : le halo est un cadre posé au-dessus. */
+#editor.guide-target {
+	position: relative;
+	outline: none;
+	animation: none;
+}
+#editor.guide-target::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	pointer-events: none;
+	border: 3px solid var(--accent);
+	border-radius: 4px;
+	animation: guide-pulse-border 1.6s ease-in-out 4;
+}
+@keyframes guide-pulse-border {
+	50% {
+		border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+	}
+}
+@keyframes guide-pulse {
+	50% {
+		outline-color: color-mix(in srgb, var(--accent) 35%, transparent);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.guide,
+	.guide-target,
+	#editor.guide-target::after {
+		animation: none;
+	}
+}

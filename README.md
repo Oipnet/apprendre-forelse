@@ -187,6 +187,16 @@ Les résultats s'exportent en CSV.
   parcours (« environ 46 h de pratique »), ainsi que l'accueil et le JSON-LD du cours (`timeRequired`). Un chapitre
   ou un parcours dont un exercice n'a pas de durée n'en affiche pas : une somme partielle promettrait trop peu.
 
+- `welcome: true` et `guide:` (dans `exercise.yaml`, facultatives) : l'exercice d'accueil. Un nouveau compte qui
+  n'avait pas de page où revenir (inscription depuis le menu, avec un mot de passe ou un fournisseur) y arrive
+  directement, dans la langue de son inscription, plutôt que sur l'accueil ; le premier exercice `welcome: true`
+  d'un parcours qu'il voit et peut ouvrir l'emporte, et sans exercice d'accueil rien ne change. `guide:` (texte
+  d'une ligne en Markdown, traduisible) active le guidage pas à pas du playground tant que l'exercice n'est pas
+  réussi : une barre en bas de l'écran dit ① quoi modifier (ce texte), ② de lancer les tests après une pause de
+  frappe, puis, après un échec, de lire le message et corriger, et entoure d'un halo l'éditeur, le bouton, puis les
+  objectifs. La croix la ferme pour de bon sur cet exercice, dans ce navigateur.
+  Un moteur antérieur à la 3.41 ignore `welcome` mais refuse `guide` dans une traduction : déclarer `moteur: '>=3.41'`.
+
 - **Pratique** (`<pack>/practice/<exercice>/`) : de courts exercices à part des parcours, pour se servir
   d'une fonctionnalité d'un framework, souvent une nouveauté d'une version, parfois un point précis. Pas de
   chapitre, pas de fiche, pas d'XP, pas d'histoire : le code de départ est écrit à l'ancienne, les tests

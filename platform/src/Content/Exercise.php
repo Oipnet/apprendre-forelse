@@ -55,6 +55,16 @@ final readonly class Exercise
          */
         public ?string $overlay = null,
         public array $steps = [],
+        /**
+         * L'exercice d'accueil (clé `welcome`) : un nouveau compte y arrive juste après son inscription, faute d'une
+         * page où revenir (voir WelcomeExercise).
+         */
+        public bool $welcome = false,
+        /**
+         * Le guidage pas à pas (clé `guide`, traduisible) : ce qu'il faut écrire, affiché dans une barre en bas de l'écran,
+         * puis « Lancez les tests » ; null pour un exercice sans guidage.
+         */
+        public ?string $guide = null,
     ) {
     }
 

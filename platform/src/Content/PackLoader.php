@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class PackLoader implements ContentSource
 {
     /** À augmenter quand LoadedContent change de forme : un cache d'avant n'a pas la nouvelle clé. */
-    private const int CACHE_FORMAT = 9;
+    private const int CACHE_FORMAT = 10;
 
     /**
      * @param list<string> $packPaths dossiers de packs, ou dossiers contenant des packs

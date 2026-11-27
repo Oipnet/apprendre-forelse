@@ -18,6 +18,8 @@ export interface ExercisePayload {
 	readonly: string[];
 	objectives: { test: string; label: string }[];
 	hints: string[];
+	/** Guidage pas à pas (exercice d'accueil) : ce qu'il faut écrire, en markdown d'une ligne ; null sans guidage. */
+	guide?: string | null;
 	/** Markdown. */
 	instructions: string;
 	/** La consigne rendue par la plateforme (LessonRenderer : code coloré, titre de tête retiré). */
