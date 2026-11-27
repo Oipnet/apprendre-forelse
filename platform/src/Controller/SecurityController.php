@@ -33,6 +33,8 @@ final class SecurityController extends AbstractController
             'error' => $authenticationUtils->getLastAuthenticationError(),
             'suite' => ($suites = $returnPath->forLoginPage($request))['login'],
             'suite_inscription' => $suites['register'],
+            // Venue du Referer : un nouveau compte créé par un fournisseur passe d'abord par la démo.
+            'demo' => null !== $suites['login'] && '' === $request->query->getString('suite'),
         ]);
     }
 

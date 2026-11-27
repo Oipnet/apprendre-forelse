@@ -55,7 +55,7 @@ final class WelcomeExerciseTest extends WebTestCase
     {
         $client = $this->client();
 
-        $this->register($client, '/inscription?suite=/parcours/premiers-pas/suite', 'Créer mon compte');
+        $this->register($client, '/inscription', 'Créer mon compte', referer: 'http://localhost/parcours/premiers-pas/suite');
 
         $this->assertResponseRedirects('/parcours/premiers-pas/pancarte?reprendre=%2Fparcours%2Fpremiers-pas%2Fsuite');
         $crawler = $client->followRedirect();
@@ -101,14 +101,17 @@ final class WelcomeExerciseTest extends WebTestCase
         $this->assertResponseRedirects('/parcours/premiers-pas/pancarte');
     }
 
-    /** Le lien sans ?suite= d'un exercice : le Referer suffit pour le retrouver après la démo. */
-    public function testDepuisUnExerciceLeRefererSuffit(): void
+    /**
+     * Un exercice demandé en clair (?suite=) : l'inscription depuis le panneau de réussite, vers l'exercice suivant.
+     * L'invité vient de réussir un exercice, il connaît l'interface : pas de démo.
+     */
+    public function testUnExerciceDemandeEnClairPasseAvantLaDemo(): void
     {
         $client = $this->client();
 
-        $this->register($client, '/inscription', 'Créer mon compte', referer: 'http://localhost/parcours/premiers-pas/suite');
+        $this->register($client, '/inscription?suite=/parcours/premiers-pas/suite', 'Créer mon compte');
 
-        $this->assertResponseRedirects('/parcours/premiers-pas/pancarte?reprendre=%2Fparcours%2Fpremiers-pas%2Fsuite');
+        $this->assertResponseRedirects('/parcours/premiers-pas/suite');
     }
 
     /** Un Referer d'un autre site (un lien posté ailleurs vers /inscription) n'est pas une page où revenir. */

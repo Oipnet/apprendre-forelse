@@ -7,6 +7,7 @@ use App\Content\ChapterOutline;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Content\Track;
+use App\Content\TrackVisibility;
 use App\Entity\User;
 use App\Scratch\ScratchFramework;
 use App\Scratch\ScratchOfferFactory;
@@ -41,6 +42,7 @@ final readonly class PlaygroundConfigFactory
         private SiteHost $site,
         private ScratchOfferFactory $scratchOffers,
         private ReturnPath $returnPath,
+        private TrackVisibility $visibility,
         private RequestStack $requests,
         /** Bêta fermée : l'inscription exige un code de cohorte, l'invité sans code est orienté vers la liste d'attente. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
@@ -105,8 +107,9 @@ final readonly class PlaygroundConfigFactory
             return null;
         }
         $locale = $route['_locale'] ?? Exercise::LOCALE;
+        // Un parcours que ce compte ne voit pas (en préparation, hors de sa cohorte) ne livre pas ses titres.
         $exercise = isset($route['trackId'])
-            ? $this->content->findExercise($route['trackId'], $route['exerciseId'], $locale)
+            ? (null === $this->visibility->find($route['trackId']) ? null : $this->content->findExercise($route['trackId'], $route['exerciseId'], $locale))
             : $this->content->findPractice($route['exerciseId'], $locale)?->exercise;
 
         return null === $exercise || $exercise->welcome ? null : ['title' => $exercise->title, 'url' => $path];

@@ -28,7 +28,7 @@
         {% if oauth.enabled %}
             <div class="oauth space-y-2 border-t border-line pt-4">
                 {% for provider in oauth.enabled %}
-                    <a class="btn w-full" href="{{ path('app_oauth_start', {fournisseur: provider.name}|merge(suite ? {suite: suite} : {})) }}">{{ 'security.login.continuer_avec'|trans({fournisseur: provider.label}) }}</a>
+                    <a class="btn w-full" href="{{ path('app_oauth_start', {fournisseur: provider.name}|merge(suite ? {suite: suite} : {})|merge(demo ? {demo: 1} : {})) }}">{{ 'security.login.continuer_avec'|trans({fournisseur: provider.label}) }}</a>
                 {% endfor %}
             </div>
         {% endif %}
