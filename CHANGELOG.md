@@ -34,6 +34,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Corrigé
 
+- **Sécurité** : Symfony 8.1.11 → 8.1.12 (avis du 25/11, dont CVE-2026-133743, CVE-2026-133746, CVE-2026-133753 et
+  CVE-2026-134790 : URL générées vers un autre hôte, règles access_control en stratégie unanime, redirections de
+  connexion) et EasyAdmin 5.10.2 → 5.10.4 (avis du 25/11 : setPermission() sur les onglets, recherche et tri sur des
+  champs masqués, téléversements), qui faisaient échouer `composer audit` en CI.
 - **Sécurité** : Twig 3.30.0 → 3.31.1 et twig/html-extra 3.29.0 → 3.31.1 (avis du 23 et 24/11, dont CVE-2026-133768, CVE-2026-133771 et CVE-2026-133769 ; contournements du bac à sable Twig et échappement manquant), qui faisaient échouer `composer audit` en CI.
 - **Inscription d'une classe derrière la même adresse IP** : le blocage après 10 inscriptions refusées pour email déjà pris (par IP et par heure) ne compte plus qu'une fois chaque adresse. Un élève qui retente la sienne, ou celle d'un voisin, ne bloque plus toute la salle ; tester une liste d'adresses différentes reste bloqué au même seuil. Le 24/11, une classe a été bloquée une heure après 4 inscriptions.
 - **Débutants** : une `Parse error` ou une `Fatal error` affichée dans l'aperçu (servie en 200 par PHP) compte comme une erreur, et le mentor propose de l'expliquer. Le bouton d'indice passe sous les objectifs, et les consignes défilent jusqu'à lui après des tests en échec. Dans la Gazette, une erreur de syntaxe est expliquée en français avant le message de PHP (#462).
