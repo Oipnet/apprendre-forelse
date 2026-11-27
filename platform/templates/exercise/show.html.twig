@@ -41,9 +41,9 @@
                     {% if not offer.quote.free %}{{ include('track/_price.html.twig', {continueUrl: null}) }}{% endif %}
                 {% endif %}
                 <p class="exercise-access-actions flex flex-wrap gap-2 pt-2">
-                    <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">{{ 'commun.creer_compte'|trans }}</a>
+                    <a class="btn btn-primary" href="{{ path('app_register') }}">{{ 'commun.creer_compte'|trans }}</a>
                     {% if inviteOnly %}<a class="btn" href="{{ path('app_home') }}#liste-attente">{{ 'commun.liste_attente'|trans }}</a>{% endif %}
-                    <a class="btn" href="{{ path('app_login', {suite: path('app_exercise', {trackId: track.id, exerciseId: exercise.id})}) }}">{{ 'commun.se_connecter'|trans }}</a>
+                    <a class="btn" href="{{ path('app_login') }}">{{ 'commun.se_connecter'|trans }}</a>
                     {% if firstExercise and not freeChapter %}<a class="btn" href="{{ path('app_exercise', {trackId: track.id, exerciseId: firstExercise.id}) }}">{{ 'exercise.show.premier_chapitre'|trans }}</a>{% endif %}
                 </p>
             {% endif %}

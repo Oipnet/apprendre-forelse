@@ -1,4 +1,5 @@
 import { m } from '../i18n';
+import { escapeHtml } from './html';
 import { markdown } from './markdown';
 
 /** Où en est l'apprenant guidé : modifier le code, lancer les tests, corriger après un échec. */
@@ -21,6 +22,8 @@ export interface GuideOptions {
 	key?: string;
 	/** Petit écran : l'éditeur et la consigne alternent, le texte dit où retrouver le code. */
 	narrow?: () => boolean;
+	/** Juste après l'inscription : l'exercice d'où l'on venait, pour passer la démo. */
+	skipUrl?: string | null;
 }
 
 /**
@@ -45,7 +48,8 @@ export class Guide {
 		this.bar = document.createElement('aside');
 		this.bar.className = 'guide';
 		this.bar.setAttribute('aria-label', m.guide.label);
-		this.bar.innerHTML = `<p class="guide-text" role="status"></p><button type="button" class="ghost small guide-close" aria-label="${m.guide.close}" title="${m.guide.close}">✕</button>`;
+		const skip = options.skipUrl ? `<a class="guide-skip" href="${escapeHtml(options.skipUrl)}">${m.guide.skip}</a>` : '';
+		this.bar.innerHTML = `<p class="guide-text" role="status"></p>${skip}<button type="button" class="ghost small guide-close" aria-label="${m.guide.close}" title="${m.guide.close}">✕</button>`;
 		this.text = this.bar.querySelector<HTMLElement>('.guide-text')!;
 		this.bar.querySelector('button')!.addEventListener('click', () => this.close());
 	}

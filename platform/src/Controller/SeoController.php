@@ -43,8 +43,8 @@ final class SeoController extends AbstractController
                 // Liens d'invitation : un code de cohorte ne doit pas circuler par un moteur de recherche.
                 'Disallow: /*?code=',
                 'Disallow: /*&code=',
-                // La connexion et l'inscription reçoivent la page d'origine (?suite=) : une adresse par page du site,
-                // toutes en noindex. /connexion et /inscription seules restent lisibles, avec leur noindex.
+                // La page d'origine en paramètre (?suite=) : anciens liens (une adresse par page du site, jusqu'à la
+                // 3.41), « Acheter », échec de connexion. /connexion et /inscription seules restent lisibles (noindex).
                 'Disallow: /*?suite=',
                 'Disallow: /*&suite=',
                 '',

@@ -448,7 +448,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	mark('editorLoaded');
 	// Exercice d'accueil : le guidage pas à pas, tant qu'il n'est pas réussi (guide.ts). Il démarre avec l'aperçu.
 	const guide = exercise.guide && !scratch && !saved?.completed
-		? new Guide(root, exercise.guide, { storage: stockage, key: `guide:${exercise.trackId}/${exercise.id}`, narrow: () => narrow.matches })
+		? new Guide(root, exercise.guide, { storage: stockage, key: `guide:${exercise.trackId}/${exercise.id}`, narrow: () => narrow.matches, skipUrl: config.resume?.url })
 		: null;
 	const editor = new EditorPanel($('#tabs'), $('#editor'), (path, content) => {
 		session.edit(path, content);

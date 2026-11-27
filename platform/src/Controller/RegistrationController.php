@@ -7,6 +7,7 @@ use App\Account\UserRegistration;
 use App\Account\WelcomeExercise;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
+use App\Security\ReturnPath;
 use App\Security\SafeRedirect;
 use App\Seo\PageSeo;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -36,6 +37,7 @@ final class RegistrationController extends AbstractController
         private readonly UserRegistration $registration,
         private readonly TranslatorInterface $translator,
         private readonly WelcomeExercise $welcome,
+        private readonly ReturnPath $returnPath,
     ) {
     }
 
@@ -73,9 +75,12 @@ final class RegistrationController extends AbstractController
                 $form->has('invitationCode') ? (string) $form->get('invitationCode')->getData() : null,
             );
 
-            // Retour là où l'apprenant voulait aller (ex. l'exercice suivant), sinon l'exercice d'accueil, guidé.
+            // Là où l'apprenant voulait aller (ex. l'exercice suivant), après l'exercice d'accueil, guidé.
             // Lu avant login() : le gestionnaire de succès du form_login consomme le chemin cible.
-            $target = $this->getTargetPath($request->getSession(), 'main') ?? $request->query->get('suite');
+            // L'exercice d'où l'on venait voyage dans le formulaire (champ « suite », lu à l'affichage, voir ReturnPath).
+            // Le formulaire est envoyé à sa propre adresse : un ?suite= en clair y reste.
+            $explicit = null !== $this->getTargetPath($request->getSession(), 'main') || '' !== $request->query->getString('suite');
+            $target = $this->getTargetPath($request->getSession(), 'main') ?? ($request->request->getString('suite') ?: $request->query->get('suite'));
 
             $security->login($user, 'form_login', 'main');
             $this->addFlash('success', t(
@@ -88,12 +93,30 @@ final class RegistrationController extends AbstractController
             $this->addFlash('mesure', 'compte-cree');
 
             // Chemin local uniquement : pas de redirection ouverte.
-            return $this->redirect(SafeRedirect::localPath(\is_string($target) ? $target : null) ?? $this->welcome->urlFor($user) ?? $this->generateUrl('app_home'));
+            // L'exercice d'où l'on venait (Referer), ou rien : la démo d'abord, qui propose ensuite de le reprendre.
+            // Une page demandée en clair (?suite= : « Acheter », l'exercice suivant depuis le panneau de réussite, qui
+            // connaît déjà l'interface) ou une page protégée : elle tout de suite.
+            $target = SafeRedirect::localPath(\is_string($target) ? $target : null);
+            $demo = null === $target || (!$explicit && null !== $this->returnPath->exercise($target));
+            $welcome = $demo ? $this->welcome->urlFor($user, $target) : null;
+
+            return $this->redirect($welcome ?? $target ?? $this->generateUrl('app_home'));
         }
 
         $seo->setDescription($this->translator->trans('compte.inscription', [], 'seo'));
 
-        return $this->render('security/register.html.twig', ['form' => $form, 'inviteOnly' => $this->inviteOnly]);
+        // Après un envoi refusé, le Referer est l'inscription elle-même : l'exercice d'origine vient du formulaire.
+        $suite = $form->isSubmitted()
+            ? SafeRedirect::localPath(($request->request->getString('suite') ?: $request->query->getString('suite')) ?: null)
+            : $this->returnPath->forRegistration($request);
+
+        return $this->render('security/register.html.twig', [
+            'form' => $form,
+            'inviteOnly' => $this->inviteOnly,
+            'suite' => $suite,
+            // Venue du Referer : les liens OAuth le disent, pour que la démo passe avant (voir OauthController::start).
+            'demo' => null !== $suite && '' === $request->query->getString('suite'),
+        ]);
     }
 
     /** @param FormInterface<User> $form */

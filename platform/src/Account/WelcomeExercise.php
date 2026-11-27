@@ -26,8 +26,11 @@ final readonly class WelcomeExercise
     /**
      * L'adresse de l'exercice d'accueil, dans la langue de la page, si ce compte le voit et peut l'ouvrir (une
      * cohorte qui ne propose pas son parcours ne l'a pas) ; null sinon, et l'inscription mène à l'accueil.
+     *
+     * `$resume` : l'exercice d'où l'on s'est inscrit. La démo passe avant lui (presque toute inscription suit la
+     * lecture d'un exercice), puis propose de le reprendre (`?reprendre=`, voir PlaygroundConfigFactory).
      */
-    public function urlFor(User $user): ?string
+    public function urlFor(User $user, ?string $resume = null): ?string
     {
         foreach ($this->visibility->tracksHere() as $track) {
             // Un parcours non traduit garde ses exercices en français : ils n'ont pas d'adresse dans cette langue.
@@ -36,7 +39,9 @@ final readonly class WelcomeExercise
             }
             foreach ($this->content->exercisesOf($track) as $exercise) {
                 if ($exercise->welcome && $this->access->canAccessExercise($user, $exercise)) {
-                    return $this->urls->generate('app_exercise', $exercise);
+                    $url = $this->urls->generate('app_exercise', $exercise);
+
+                    return null === $resume || $resume === $url ? $url : $url.'?'.http_build_query(['reprendre' => $resume]);
                 }
             }
         }

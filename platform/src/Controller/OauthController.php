@@ -14,6 +14,7 @@ use App\Account\WelcomeExercise;
 use App\Entity\User;
 use App\Form\ExternalRegistrationFormType;
 use App\Repository\UserRepository;
+use App\Security\ReturnPath;
 use App\Security\SafeRedirect;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -64,6 +65,7 @@ final class OauthController extends AbstractController
         private readonly TranslatorInterface $translator,
         private readonly LocaleSwitcher $locale,
         private readonly WelcomeExercise $welcomeExercise,
+        private readonly ReturnPath $returnPath,
         /** @var list<string> */
         #[Autowire('%kernel.enabled_locales%')]
         private readonly array $enabledLocales = ['fr'],
@@ -93,6 +95,9 @@ final class OauthController extends AbstractController
             'state' => $state,
             'mode' => $mode,
             'suite' => SafeRedirect::localPath(\is_string($suite) ? $suite : null),
+            // La page où revenir vient du Referer (lien des pages de connexion et d'inscription) : un nouveau compte
+            // passe d'abord par la démo. Demandée en clair (?suite= seul), elle passe avant.
+            'demo' => $request->query->getBoolean('demo'),
             // Le retour du fournisseur n'a qu'une adresse : la langue de la page de départ voyage avec le reste.
             'locale' => $request->getLocale(),
         ]);
@@ -146,7 +151,7 @@ final class OauthController extends AbstractController
 
         return match ($result->outcome) {
             SignInOutcome::SignedIn => $this->logIn($security, $result->user ?? throw new \LogicException(), $suite, t('flash.oauth.connecte', ['fournisseur' => $label], 'compte')),
-            SignInOutcome::RegistrationNeeded => $this->startRegistration($session, $profile, $suite),
+            SignInOutcome::RegistrationNeeded => $this->startRegistration($session, $profile, $suite, true === ($flow['demo'] ?? false)),
             SignInOutcome::UnverifiedAccount => $this->fail(t('flash.oauth.compte_non_confirme', ['fournisseur' => $label], 'compte')),
             SignInOutcome::OtherProviderAccount => $this->fail(t('flash.oauth.autre_compte_lie', ['fournisseur' => $label], 'compte')),
             SignInOutcome::NoVerifiedEmail => $this->fail(t('flash.oauth.aucune_adresse_verifiee', ['fournisseur' => $label], 'compte')),
@@ -196,7 +201,7 @@ final class OauthController extends AbstractController
             $user = $this->signIn->register($profile, $data['displayName'], $data['invitationCode']);
             $suite = \is_string($pending['suite'] ?? null) ? $pending['suite'] : null;
 
-            return $this->logIn($security, $user, $suite, t('flash.bienvenue', ['pseudo' => $user->getDisplayName()], 'compte'), welcome: true);
+            return $this->logIn($security, $user, $suite, t('flash.bienvenue', ['pseudo' => $user->getDisplayName()], 'compte'), welcome: null === $suite || true === ($pending['demo'] ?? false));
         }
 
         return $this->render('security/oauth_register.html.twig', [
@@ -254,19 +259,24 @@ final class OauthController extends AbstractController
         return $this->redirect($suite ?? $this->generateUrl('app_account', ['_fragment' => 'profil']));
     }
 
-    /** @param bool $welcome un nouveau compte : sans page où revenir, il commence par l'exercice d'accueil */
+    /**
+     * @param bool $welcome un nouveau compte sans page demandée en clair : il commence par l'exercice d'accueil, qui
+     *                      propose ensuite de reprendre l'exercice d'où il venait ; une autre page (« Acheter ») passe avant
+     */
     private function logIn(Security $security, User $user, ?string $suite, TranslatableMessage $message, bool $welcome = false): Response
     {
         $security->login($user, 'form_login', 'main');
         $this->recent->mark($user);
         $this->addFlash('success', $message);
 
-        return $this->redirect($suite ?? ($welcome ? $this->welcomeExercise->urlFor($user) : null) ?? $this->generateUrl('app_home'));
+        $demo = $welcome && (null === $suite || null !== $this->returnPath->exercise($suite)) ? $this->welcomeExercise->urlFor($user, $suite) : null;
+
+        return $this->redirect($demo ?? $suite ?? $this->generateUrl('app_home'));
     }
 
-    private function startRegistration(SessionInterface $session, ExternalProfile $profile, ?string $suite): Response
+    private function startRegistration(SessionInterface $session, ExternalProfile $profile, ?string $suite, bool $demo): Response
     {
-        $session->set(self::PENDING, ['profile' => $profile, 'suite' => $suite]);
+        $session->set(self::PENDING, ['profile' => $profile, 'suite' => $suite, 'demo' => $demo]);
 
         return $this->redirectToRoute('app_oauth_register', ['fournisseur' => $profile->provider]);
     }

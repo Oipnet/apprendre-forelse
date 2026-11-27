@@ -213,6 +213,8 @@ export const fr = {
 		alreadyDone: '✓ Vous avez déjà réussi cet exercice.',
 		alreadyDoneLast: '✓ Vous avez déjà réussi cet exercice, le dernier du parcours.',
 		nextExercise: (title: string) => `Exercice suivant : ${title} →`,
+		/** L'exercice d'où l'on s'est inscrit, après la démo. `title` : déjà échappé. */
+		resume: (title: string) => `Reprendre : ${title} →`,
 		continueWith: (track: string) => `Continuer avec « ${track} » →`,
 		alreadyValidated: 'Exercice déjà validé.',
 		noXpSolution: 'Sans XP : la solution a été consultée.',
@@ -546,6 +548,8 @@ export const fr = {
 	guide: {
 		label: 'Guide pas à pas',
 		close: 'Fermer le guide',
+		/** Lien vers l'exercice d'où l'on s'est inscrit. */
+		skip: 'Passer la démo',
 		/** `consigne` : déjà en HTML (markdown d'une ligne, nettoyé). */
 		write: (consigne: string) => `<strong>Bienvenue ! ① Modifiez le code, dans le cadre entouré.</strong> ${consigne}`,
 		run: (consigne: string) => `① ${consigne}<br><strong>② Cliquez ensuite sur le bouton ▶ entouré, en haut à droite</strong> : les tests vérifient votre code.`,

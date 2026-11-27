@@ -7,16 +7,19 @@ use App\Content\ChapterOutline;
 use App\Content\ContentRepository;
 use App\Content\Exercise;
 use App\Content\Track;
+use App\Content\TrackVisibility;
 use App\Entity\User;
 use App\Scratch\ScratchFramework;
 use App\Scratch\ScratchOfferFactory;
 use App\Share\ShareLinks;
 use App\Share\SiteHost;
 use App\Theme\Theme;
+use App\Security\ReturnPath;
 use App\Security\SandboxOrigin;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -38,6 +41,9 @@ final readonly class PlaygroundConfigFactory
         private EnvironmentAssetUrls $assets,
         private SiteHost $site,
         private ScratchOfferFactory $scratchOffers,
+        private ReturnPath $returnPath,
+        private TrackVisibility $visibility,
+        private RequestStack $requests,
         /** Bêta fermée : l'inscription exige un code de cohorte, l'invité sans code est orienté vers la liste d'attente. */
         #[Autowire(env: 'bool:REGISTRATION_INVITE_ONLY')]
         private bool $inviteOnly,
@@ -72,14 +78,41 @@ final readonly class PlaygroundConfigFactory
                 'reviewUrl' => $this->exerciseUrls->generate('api_mentor_review', $exercise),
                 'explainUrl' => $this->exerciseUrls->generate('api_mentor_explain', $exercise),
             ] : null,
-            'loginUrl' => $user ? null : $this->urls->generate('app_login', ['suite' => $this->exerciseUrls->generate('app_exercise', $exercise)]),
+            // Sans ?suite= : la page de l'exercice est le Referer, où la connexion ramène (voir ReturnPath). Le lien est
+            // affiché au chargement, un robot qui exécute le JavaScript le suivrait.
+            'loginUrl' => $user ? null : $this->urls->generate('app_login'),
+            // Lui garde ?suite= : il mène à l'exercice SUIVANT, pas à la page courante, et n'apparaît qu'après une
+            // réussite (panneau de réussite), qu'aucun robot n'atteint.
             'registerUrl' => $user ? null : $this->urls->generate('app_register', $next ? [
                 'suite' => $this->exerciseUrls->generate('app_exercise', $next),
             ] : []),
             // Bêta fermée : l'invité sans code d'invitation est orienté vers la liste d'attente plutôt que vers un formulaire qu'il ne peut pas remplir.
             'waitlistUrl' => !$user && $this->inviteOnly ? $this->urls->generate('app_home').'#liste-attente' : null,
             'chapterShare' => null === $track ? null : $this->chapterShare($exercise, $track),
+            'resume' => $exercise->welcome && $user ? $this->resume() : null,
         ];
+    }
+
+    /**
+     * L'exercice d'où l'on s'est inscrit (`?reprendre=`, voir WelcomeExercise) : la démo propose de le reprendre, dans
+     * sa barre (« Passer la démo ») et après la réussite, au lieu de l'exercice suivant. Null s'il n'existe pas.
+     *
+     * @return array{title: string, url: string}|null
+     */
+    private function resume(): ?array
+    {
+        $path = $this->requests->getCurrentRequest()?->query->getString('reprendre') ?: null;
+        $route = $this->returnPath->exercise($path);
+        if (null === $route || null === $path) {
+            return null;
+        }
+        $locale = $route['_locale'] ?? Exercise::LOCALE;
+        // Un parcours que ce compte ne voit pas (en préparation, hors de sa cohorte) ne livre pas ses titres.
+        $exercise = isset($route['trackId'])
+            ? (null === $this->visibility->find($route['trackId']) ? null : $this->content->findExercise($route['trackId'], $route['exerciseId'], $locale))
+            : $this->content->findPractice($route['exerciseId'], $locale)?->exercise;
+
+        return null === $exercise || $exercise->welcome ? null : ['title' => $exercise->title, 'url' => $path];
     }
 
     /**
@@ -117,7 +150,6 @@ final readonly class PlaygroundConfigFactory
     public function scratch(ScratchFramework $framework, Request $request): array
     {
         $user = $this->security->getUser();
-        $page = $this->urls->generate('app_scratch_'.$framework->value);
         $share = ShareLinks::of(
             $this->urls->generate('app_scratch_'.$framework->value, [], UrlGeneratorInterface::ABSOLUTE_URL),
             $this->translator->trans('bac_a_sable.partage.texte', ['framework' => $framework->label()], 'apprentissage'),
@@ -133,7 +165,7 @@ final readonly class PlaygroundConfigFactory
             'back' => ['title' => $this->translator->trans('bac_a_sable.retour', [], 'apprentissage'), 'url' => $this->urls->generate('app_scratch')],
             'progress' => ['mode' => 'local'],
             'user' => $user instanceof User ? ['name' => $user->getDisplayName(), 'xp' => $user->getXp()] : null,
-            'loginUrl' => $user ? null : $this->urls->generate('app_login', ['suite' => $page]),
+            'loginUrl' => $user ? null : $this->urls->generate('app_login'),
             'registerUrl' => null,
             'waitlistUrl' => null,
             'feedbackUrl' => null,

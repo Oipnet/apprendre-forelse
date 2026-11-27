@@ -1,7 +1,7 @@
 {#
   @theme Point de surcharge : l'en-tête des pages du site (marque, navigation, menu du compte).
   Variables : theme (App\Theme\Theme), brand_chip (la puce, déjà rendue : « atelier » dans l'atelier), login_suite
-  (string|null : la page où revenir après connexion), blog (App\Content\Blog), app.user (App\Entity\User|null),
+  (toujours null, dépréciée : la connexion retrouve seule la page d'origine), blog (App\Content\Blog), app.user (App\Entity\User|null),
   current_route (string|null : la route de la page, pour marquer le lien actif).
   Fonctions : header_tracks() (voir App\Twig\NavigationExtension) pour un menu des parcours ; search_enabled() (voir
   App\Twig\SearchExtension) : la recherche du site existe, un formulaire GET vers path('app_search') avec le champ q.
@@ -47,8 +47,8 @@
                     </div>
                 </details>
             {% else %}
-                <a href="{{ path('app_login', {suite: login_suite}) }}">{{ 'header.connexion'|trans }}</a>
-                <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register') }}">{{ 'header.creer_compte'|trans }}</a>
+                <a href="{{ path('app_login') }}">{{ 'header.connexion'|trans }}</a>
+                <a class="btn btn-primary" href="{{ path('app_register') }}">{{ 'header.creer_compte'|trans }}</a>
             {% endif %}
         </nav>
     </div>

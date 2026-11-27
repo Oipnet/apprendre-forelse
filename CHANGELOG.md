@@ -12,8 +12,10 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 - **Exercice d'accueil, guidé pas à pas** : après une inscription sans page où revenir (le lien « Créer un compte »
   du menu, avec un mot de passe ou un fournisseur), le nouveau compte arrive sur l'exercice marqué `welcome: true`
-  dans `exercise.yaml`, dans la langue de l'inscription, au lieu de l'accueil. Une page où revenir (exercice
-  verrouillé, `?suite=`) passe toujours avant. La clé `guide:` (traduisible) y ajoute une barre de guidage : quoi
+  dans `exercise.yaml`, dans la langue de l'inscription, au lieu de l'accueil. Inscrit depuis un exercice (presque
+  toujours), il y passe aussi d'abord : la barre propose « Passer la démo », la réussite « Reprendre : <l'exercice> »
+  au lieu de l'exercice suivant. Une page demandée en clair (`?suite=` : « Acheter », l'exercice suivant depuis le
+  panneau de réussite) ou une page protégée passe avant la démo. La clé `guide:` (traduisible) y ajoute une barre de guidage : quoi
   écrire, puis « Cliquez sur ▶ Lancer les tests », puis, après un échec, « lisez le message et corrigez », avec un
   halo sur l'endroit où agir ; la réussite la ferme et le panneau habituel (XP, exercice suivant) prend le relais.
   Les 11 premiers inscrits venus de ChatGPT étaient tous restés à 0 XP. Aucune nouvelle mesure d'audience.
@@ -27,6 +29,7 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
 
 ### Modifié
 
+- **Connexion et inscription sans `?suite=`** : les liens « Connexion » (en-tête, pied de page, playground) et « Créer un compte » (en-tête, exercice, Pratique, classement) mènent tous à `/connexion` ou `/inscription`, sans paramètre ni `rel="nofollow"`. La page où revenir vient du Referer (`App\Security\ReturnPath`) : toute page du site pour la connexion, un exercice pour l'inscription (ailleurs, le nouveau compte commence par l'exercice d'accueil). Une page protégée qui renvoie à la connexion passe toujours avant. Chaque page fabriquait sa propre adresse de connexion, que Google relevait (« bloquée par robots.txt ») et qu'Ahrefs signalait (liens nofollow). `?suite=` reste accepté (anciens liens, « Acheter », classe gratuite, inscription depuis le panneau de réussite). La variable `login_suite` des thèmes vaut désormais toujours `null` et sera retirée dans une version majeure.
 - **Environnement `symfony-8-easyadmin`** : EasyAdmin 5.8.0 → 5.10.2 (avec les correctifs Symfony 8.1.11 et Doctrine ORM 3.8 que la mise à jour entraîne, dont celui de `symfony/yaml`, CVE-2026-123792). Depuis la 5.10, `Actions::setPermission()` et `disable()` protègent aussi l'URL d'une action personnalisée (403), et plus seulement son bouton : un prochain exercice Pratique en dépend. Les exercices `easyadmin-5-8-badges` et `easyadmin-5-8-filtres-imbriques` restent verts.
 - **PHP 8.6** : le serveur passe à PHP 8.6.0 (FrankenPHP 1.13.6-php8.6.0, CI en 8.6), et le playground exécute la même version dans le navigateur, et les environnements du moteur déclarent `php: '8.6'`. php-wasm ne publie pas encore PHP 8.6 : `@php-wasm/web-8-5` est remplacé par notre compilation (même interface, binaires 8.6.0 avec intl), hébergée sur le fork `Oipnet/wordpress-playground`. Les 77 exercices de Pratique passent sur ces binaires (énoncé rouge, solution verte). Un pack qui demande encore 8.5 tourne en 8.6.
 - **Code du moteur en PHP 8.6** (`composer.json` : `php >=8.6`) : application partielle (`f(?, $a)` à la place de
