@@ -94,7 +94,7 @@
                             {% endif %}
                         </div>
                         {% if not app.user %}
-                            <a class="btn btn-primary min-h-11" href="{{ path('app_register') }}" rel="nofollow">{{ 'index.creer_compte'|trans }}</a>
+                            <a class="btn btn-primary min-h-11" href="{{ path('app_register') }}">{{ 'index.creer_compte'|trans }}</a>
                         {% elseif not app.user.leaderboardOptIn %}
                             <form method="post" action="{{ path('app_leaderboard_opt_in') }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token('leaderboard') }}">

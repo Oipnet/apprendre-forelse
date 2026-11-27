@@ -1,5 +1,5 @@
 {#
-  @theme Point de surcharge. Variables : theme (App\Theme\Theme), seo (App\Seo\PageSeo : alternates, les autres langues de la page), blog (App\Content\Blog), login_suite (string|null), moteur_version.
+  @theme Point de surcharge. Variables : theme (App\Theme\Theme), seo (App\Seo\PageSeo : alternates, les autres langues de la page), blog (App\Content\Blog), login_suite (toujours null, dépréciée), moteur_version.
   Obligatoire : la version et la licence du moteur (AGPL) avec le lien vers son code, les liens vers les mentions
   légales et la confidentialité.
   Pied de page commun à toutes les pages du site (l'éditeur d'exercice et l'atelier, en plein écran, n'en ont pas).
@@ -34,7 +34,7 @@
                     <li><a href="{{ path('app_organizations') }}">{{ 'footer.organisations'|trans }}</a></li>
                     {% if self_hosting.enabled %}<li><a href="{{ path('app_self_hosting') }}">{{ 'footer.auto_hebergement'|trans }}</a></li>{% endif %}
                     <li><a href="{{ path('app_contact') }}">{{ 'footer.contact'|trans }}</a></li>
-                    <li>{% if app.user %}<a href="{{ path('app_account') }}">{{ 'footer.mon_compte'|trans }}</a>{% else %}<a href="{{ path('app_login', {suite: login_suite ?? null}) }}">{{ 'footer.connexion'|trans }}</a>{% endif %}</li>
+                    <li>{% if app.user %}<a href="{{ path('app_account') }}">{{ 'footer.mon_compte'|trans }}</a>{% else %}<a href="{{ path('app_login') }}">{{ 'footer.connexion'|trans }}</a>{% endif %}</li>
                 </ul>
             </div>
             <div>

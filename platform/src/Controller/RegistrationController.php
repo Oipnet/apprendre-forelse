@@ -7,6 +7,7 @@ use App\Account\UserRegistration;
 use App\Account\WelcomeExercise;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
+use App\Security\ReturnPath;
 use App\Security\SafeRedirect;
 use App\Seo\PageSeo;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -36,6 +37,7 @@ final class RegistrationController extends AbstractController
         private readonly UserRegistration $registration,
         private readonly TranslatorInterface $translator,
         private readonly WelcomeExercise $welcome,
+        private readonly ReturnPath $returnPath,
     ) {
     }
 
@@ -75,7 +77,8 @@ final class RegistrationController extends AbstractController
 
             // Retour là où l'apprenant voulait aller (ex. l'exercice suivant), sinon l'exercice d'accueil, guidé.
             // Lu avant login() : le gestionnaire de succès du form_login consomme le chemin cible.
-            $target = $this->getTargetPath($request->getSession(), 'main') ?? $request->query->get('suite');
+            // L'exercice d'où l'on venait voyage dans le formulaire (champ « suite », lu à l'affichage, voir ReturnPath).
+            $target = $this->getTargetPath($request->getSession(), 'main') ?? ($request->request->getString('suite') ?: $request->query->get('suite'));
 
             $security->login($user, 'form_login', 'main');
             $this->addFlash('success', t(
@@ -93,7 +96,12 @@ final class RegistrationController extends AbstractController
 
         $seo->setDescription($this->translator->trans('compte.inscription', [], 'seo'));
 
-        return $this->render('security/register.html.twig', ['form' => $form, 'inviteOnly' => $this->inviteOnly]);
+        // Après un envoi refusé, le Referer est l'inscription elle-même : l'exercice d'origine vient du formulaire.
+        $suite = $form->isSubmitted()
+            ? SafeRedirect::localPath(($request->request->getString('suite') ?: $request->query->getString('suite')) ?: null)
+            : $this->returnPath->forRegistration($request);
+
+        return $this->render('security/register.html.twig', ['form' => $form, 'inviteOnly' => $this->inviteOnly, 'suite' => $suite]);
     }
 
     /** @param FormInterface<User> $form */

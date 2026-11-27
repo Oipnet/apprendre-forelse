@@ -72,7 +72,11 @@ final readonly class PlaygroundConfigFactory
                 'reviewUrl' => $this->exerciseUrls->generate('api_mentor_review', $exercise),
                 'explainUrl' => $this->exerciseUrls->generate('api_mentor_explain', $exercise),
             ] : null,
-            'loginUrl' => $user ? null : $this->urls->generate('app_login', ['suite' => $this->exerciseUrls->generate('app_exercise', $exercise)]),
+            // Sans ?suite= : la page de l'exercice est le Referer, où la connexion ramène (voir ReturnPath). Le lien est
+            // affiché au chargement, un robot qui exécute le JavaScript le suivrait.
+            'loginUrl' => $user ? null : $this->urls->generate('app_login'),
+            // Lui garde ?suite= : il mène à l'exercice SUIVANT, pas à la page courante, et n'apparaît qu'après une
+            // réussite (panneau de réussite), qu'aucun robot n'atteint.
             'registerUrl' => $user ? null : $this->urls->generate('app_register', $next ? [
                 'suite' => $this->exerciseUrls->generate('app_exercise', $next),
             ] : []),
@@ -117,7 +121,6 @@ final readonly class PlaygroundConfigFactory
     public function scratch(ScratchFramework $framework, Request $request): array
     {
         $user = $this->security->getUser();
-        $page = $this->urls->generate('app_scratch_'.$framework->value);
         $share = ShareLinks::of(
             $this->urls->generate('app_scratch_'.$framework->value, [], UrlGeneratorInterface::ABSOLUTE_URL),
             $this->translator->trans('bac_a_sable.partage.texte', ['framework' => $framework->label()], 'apprentissage'),
@@ -133,7 +136,7 @@ final readonly class PlaygroundConfigFactory
             'back' => ['title' => $this->translator->trans('bac_a_sable.retour', [], 'apprentissage'), 'url' => $this->urls->generate('app_scratch')],
             'progress' => ['mode' => 'local'],
             'user' => $user instanceof User ? ['name' => $user->getDisplayName(), 'xp' => $user->getXp()] : null,
-            'loginUrl' => $user ? null : $this->urls->generate('app_login', ['suite' => $page]),
+            'loginUrl' => $user ? null : $this->urls->generate('app_login'),
             'registerUrl' => null,
             'waitlistUrl' => null,
             'feedbackUrl' => null,

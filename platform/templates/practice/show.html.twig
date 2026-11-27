@@ -16,9 +16,9 @@
             <h2 class="text-xl font-semibold" id="exercise-access-title">{{ 'practice.show.a_vous'|trans }}</h2>
             <p>{{ 'practice.show.invitation'|trans }}</p>
             <p class="exercise-access-actions flex flex-wrap gap-2 pt-2">
-                <a class="btn btn-primary" rel="nofollow" href="{{ path('app_register', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">{{ 'commun.creer_compte'|trans }}</a>
+                <a class="btn btn-primary" href="{{ path('app_register') }}">{{ 'commun.creer_compte'|trans }}</a>
                 <a class="btn" href="{{ path('app_home') }}#liste-attente">{{ 'commun.liste_attente'|trans }}</a>
-                <a class="btn" href="{{ path('app_login', {suite: path('app_exercise_pratique', {exerciseId: practice.exercise.id})}) }}">{{ 'commun.se_connecter'|trans }}</a>
+                <a class="btn" href="{{ path('app_login') }}">{{ 'commun.se_connecter'|trans }}</a>
             </p>
         </aside>
 

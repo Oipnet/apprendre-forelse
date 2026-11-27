@@ -7,7 +7,10 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-/** La connexion ramène là d'où l'on vient (?suite=), et « Rester connecté·e » pose le cookie de longue durée. */
+/**
+ * La connexion ramène là d'où l'on vient (le Referer, ou ?suite=), et « Rester connecté·e » pose le cookie de longue
+ * durée.
+ */
 final class LoginReturnTest extends WebTestCase
 {
     use DatabaseTrait;
@@ -36,6 +39,44 @@ final class LoginReturnTest extends WebTestCase
         $this->assertResponseRedirects('http://localhost'.self::EXERCISE);
         $this->client->followRedirect();
         $this->assertSelectorExists('[data-playground]', 'Connecté·e, l\'exercice s\'ouvre.');
+    }
+
+    /** Le lien « Connexion » de l'en-tête n'emporte rien : la page d'où l'on vient est le Referer. */
+    public function testLeLienDeLEnTeteRameneALaPageCourante(): void
+    {
+        $crawler = $this->client->request('GET', '/parcours/decouverte');
+        $this->assertSame('/connexion', $crawler->filter('header a')->reduce(static fn ($a) => 'Connexion' === trim($a->text()))->attr('href'));
+        $this->client->click($crawler->filter('header a')->reduce(static fn ($a) => 'Connexion' === trim($a->text()))->link());
+
+        $this->submit(self::PASSWORD);
+
+        $this->assertResponseRedirects('http://localhost/parcours/decouverte');
+    }
+
+    /** Une page protégée renvoie à la connexion : c'est elle qui compte, pas la page qui y menait (le Referer). */
+    public function testUnePageProtegeePasseAvantLeReferer(): void
+    {
+        $this->client->request('GET', '/compte', server: ['HTTP_REFERER' => 'http://localhost/parcours/decouverte']);
+        $this->assertResponseRedirects('/connexion');
+        $this->client->followRedirect();
+        $this->assertSelectorNotExists('input[name="_target_path"]');
+
+        $this->submit(self::PASSWORD);
+
+        $this->assertResponseRedirects('http://localhost/compte');
+    }
+
+    /** Sans ?suite=, un échec garde aussi la page d'origine : le formulaire la porte. */
+    public function testUnEchecGardeLaPageDOrigineVenueDuReferer(): void
+    {
+        $crawler = $this->client->request('GET', self::EXERCISE);
+        $this->client->click($crawler->filter('.exercise-access a')->reduce(static fn ($a) => 'Se connecter' === trim($a->text()))->link());
+        $this->submit('faux');
+        $this->client->followRedirect();
+
+        $this->submit(self::PASSWORD);
+
+        $this->assertResponseRedirects('http://localhost'.self::EXERCISE);
     }
 
     public function testUnEchecGardeLaPageDOrigine(): void

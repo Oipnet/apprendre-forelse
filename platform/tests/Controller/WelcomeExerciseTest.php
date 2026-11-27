@@ -58,6 +58,39 @@ final class WelcomeExerciseTest extends WebTestCase
         $this->assertNull($payload['guide'], 'Un exercice sans guidage n\'en a pas.');
     }
 
+    /**
+     * Le bouton « Créer un compte » de l'en-tête, sur une page qui n'est pas un exercice (la page d'un parcours, un
+     * article) : le Referer n'est pas une page où revenir, le nouveau compte commence par l'exercice d'accueil.
+     */
+    public function testDepuisUnePageQuiNEstPasUnExerciceLInscritArriveSurLExerciceDAccueil(): void
+    {
+        $client = $this->client();
+
+        $this->register($client, '/inscription', 'Créer mon compte', referer: 'http://localhost/parcours/premiers-pas');
+
+        $this->assertResponseRedirects('/parcours/premiers-pas/pancarte');
+    }
+
+    /** Le lien sans ?suite= d'un exercice : le Referer suffit pour y revenir. */
+    public function testDepuisUnExerciceLInscritYRevient(): void
+    {
+        $client = $this->client();
+
+        $this->register($client, '/inscription', 'Créer mon compte', referer: 'http://localhost/parcours/premiers-pas/suite');
+
+        $this->assertResponseRedirects('/parcours/premiers-pas/suite');
+    }
+
+    /** Un Referer d'un autre site (un lien posté ailleurs vers /inscription) n'est pas une page où revenir. */
+    public function testUnRefererDUnAutreSiteEstIgnore(): void
+    {
+        $client = $this->client();
+
+        $this->register($client, '/inscription', 'Créer mon compte', referer: 'https://ailleurs.example/parcours/premiers-pas/suite');
+
+        $this->assertResponseRedirects('/parcours/premiers-pas/pancarte');
+    }
+
     private function client(): KernelBrowser
     {
         $this->usePacks(__DIR__.'/../Fixtures/packs/accueil');
@@ -67,9 +100,9 @@ final class WelcomeExerciseTest extends WebTestCase
         return $client;
     }
 
-    private function register(KernelBrowser $client, string $url, string $button): void
+    private function register(KernelBrowser $client, string $url, string $button, ?string $referer = null): void
     {
-        $client->request('GET', $url);
+        $client->request('GET', $url, server: null === $referer ? [] : ['HTTP_REFERER' => $referer]);
         $client->submitForm($button, [
             'registration_form[displayName]' => 'Gorm',
             'registration_form[email]' => 'gorm@example.test',

@@ -15,17 +15,19 @@
             {{ form_row(form.email) }}
             {{ form_row(form.plainPassword) }}
             <p class="text-sm text-ink-muted">{{ 'security.commun.confidentialite'|trans({lien: path('app_privacy')})|raw }}</p>
+            {# L'exercice d'où l'on vient, où l'inscription ramène (voir ReturnPath). #}
+            {% if suite %}<input type="hidden" name="suite" value="{{ suite }}">{% endif %}
             <button class="btn btn-primary w-full" type="submit">{{ 'security.commun.creer_mon_compte'|trans }}</button>
         {{ form_end(form) }}
         {% if oauth.enabled %}
             <div class="oauth space-y-2 border-t border-line pt-4">
                 {% for provider in oauth.enabled %}
-                    <a class="btn w-full" href="{{ path('app_oauth_start', {fournisseur: provider.name}|merge(app.request.query.get('suite') ? {suite: app.request.query.get('suite')} : {})) }}">{{ 'security.register.inscription_avec'|trans({fournisseur: provider.label}) }}</a>
+                    <a class="btn w-full" href="{{ path('app_oauth_start', {fournisseur: provider.name}|merge(suite ? {suite: suite} : {})) }}">{{ 'security.register.inscription_avec'|trans({fournisseur: provider.label}) }}</a>
                 {% endfor %}
                 <p class="text-sm text-ink-muted">{{ 'security.register.sans_mot_de_passe'|trans }}</p>
             </div>
         {% endif %}
-        <p class="text-sm text-ink-muted">{{ 'security.register.deja_inscrit'|trans({lien: path('app_login', {suite: app.request.query.get('suite')})})|raw }}</p>
+        <p class="text-sm text-ink-muted">{{ 'security.register.deja_inscrit'|trans({lien: path('app_login', suite ? {suite: suite} : {})})|raw }}</p>
         {% if inviteOnly %}
             <p class="text-sm text-ink-muted">{{ 'security.commun.liste_attente'|trans({lien: path('app_home') ~ '#liste-attente'})|raw }}</p>
         {% endif %}

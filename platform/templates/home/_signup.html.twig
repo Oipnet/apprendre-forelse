@@ -27,7 +27,7 @@
             <p class="mt-3 text-ink-muted">{{ 'signup.ouverte.texte'|trans }}</p>
             <p class="mt-6 flex flex-wrap gap-3">
                 <a class="btn btn-primary" href="{{ tryUrl }}">{{ (tryPractice ? 'commun.essayer_pratique' : 'commun.essayer_parcours')|trans }} <span aria-hidden="true">→</span></a>
-                <a class="btn" rel="nofollow" href="{{ path('app_register') }}">{{ 'signup.ouverte.creer_compte'|trans }}</a>
+                <a class="btn" href="{{ path('app_register') }}">{{ 'signup.ouverte.creer_compte'|trans }}</a>
             </p>
         {% endif %}
     </div>
