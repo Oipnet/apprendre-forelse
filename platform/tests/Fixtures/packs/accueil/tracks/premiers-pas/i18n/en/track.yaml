@@ -1,0 +1,4 @@
+title: First steps
+description: A guided welcome exercise, where a new account lands (WelcomeExerciseTest).
+chapters:
+  debut: {title: The beginning}

@@ -65,6 +65,8 @@ final readonly class ExercisePayloadFactory
             'readonly' => $exercise->readonly,
             'objectives' => array_map(static fn ($o) => ['test' => $o->test, 'label' => $o->label], $exercise->objectives),
             'hints' => $exercise->hints,
+            // Guidage pas à pas (exercice d'accueil) : ce qu'il faut écrire ; le playground ajoute « Lancez les tests ».
+            'guide' => $exercise->guide,
             'instructions' => $exercise->instructions,
             // La consigne telle que la page publique la montre (code coloré, sans le titre qui répète l'en-tête) :
             // le playground l'affiche au lieu de refaire le rendu avec un autre moteur.

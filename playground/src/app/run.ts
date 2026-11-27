@@ -33,6 +33,8 @@ export interface RunButtonDeps {
 	steps?: Pick<StepsController, 'grading' | 'current' | 'isLast' | 'passed' | 'failed'> | null;
 	/** Bac à sable : prévenu de chaque exécution (l'encart du parcours compte celles qui réussissent). */
 	onScratchRun?: () => void;
+	/** Prévenu du résultat de chaque lancement des tests (le guidage pas à pas, guide.ts). */
+	onTestsDone?: (passed: number, total: number) => void;
 }
 
 /** Branche le bouton « Exécuter » : les tests de l'exercice, ou l'aperçu rechargé dans le bac à sable. */
@@ -82,6 +84,7 @@ export function bindRunButton(button: HTMLButtonElement, deps: RunButtonDeps): v
 			// réussite, pour ne pas reprendre la place pendant que l'apprenant corrige ; sa rail porte le résultat.
 			deps.showWorkpane('brief');
 			deps.folding.showResult(passed, total);
+			deps.onTestsDone?.(passed, total);
 			if (passed === total && steps && !steps.isLast) {
 				// Une étape de plus : pas de réussite de l'exercice, le bouton de l'étape suivante.
 				deps.folding.open('brief');
@@ -96,6 +99,7 @@ export function bindRunButton(button: HTMLButtonElement, deps: RunButtonDeps): v
 				deps.results.revealObjectivesAndHint();
 			}
 		} catch (error) {
+			deps.onTestsDone?.(0, (deps.steps ? deps.steps.current.objectives : exercise.objectives).length);
 			status(m.playground.testsError, 'ko');
 			deps.results.showError(error);
 		} finally {

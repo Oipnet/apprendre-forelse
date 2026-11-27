@@ -23,7 +23,7 @@ final class ExerciseReader
      * fichiers, date…) se règle dans l'exercice français. Les notions traduites ne sont que des étiquettes : les
      * pages de notions restent en français.
      */
-    public const array TRANSLATED_KEYS = ['title', 'summary', 'concepts', 'objectives', 'hints', 'requests', 'docs', 'preview', 'readonly', 'mutants', 'source', 'steps'];
+    public const array TRANSLATED_KEYS = ['title', 'summary', 'concepts', 'objectives', 'hints', 'requests', 'docs', 'preview', 'readonly', 'mutants', 'source', 'steps', 'guide'];
     /** Les dossiers dont une traduction peut remplacer des fichiers (steps/ : consignes et solutions des étapes). */
     private const array TRANSLATED_FOLDERS = ['starter', 'solution', 'tests', 'steps'];
     /** Ce qu'une traduction change dans une étape : les textes, et les tests des objectifs. */
@@ -142,6 +142,8 @@ final class ExerciseReader
             locale: $locale,
             overlay: $overlay,
             steps: $steps,
+            welcome: $this->welcome($meta['welcome'] ?? false, $trackId, $file),
+            guide: $this->optionalString($meta, 'guide', $file),
         );
         if (($mutants || array_filter($exercise->allObjectives(), static fn (Objective $o) => !$o->isHiddenTest())) && !$exercise->ownTests()) {
             throw new ContentException(sprintf('%s : des objectifs portent sur les tests de l\'apprenant, mais aucun fichier éditable tests/…Test.php ne les accueille.', $file));
@@ -313,6 +315,19 @@ final class ExerciseReader
         return null === $value ? null : (string) $value;
     }
 
+    /** L'exercice d'accueil des nouveaux comptes (clé « welcome ») : un exercice de parcours, pas de Pratique. */
+    private function welcome(mixed $welcome, ?string $trackId, string $file): bool
+    {
+        if (!\is_bool($welcome)) {
+            throw new ContentException(sprintf('%s : « welcome » vaut true ou false.', $file));
+        }
+        if ($welcome && null === $trackId) {
+            throw new ContentException(sprintf('%s : « welcome » désigne un exercice de parcours, pas de Pratique.', $file));
+        }
+
+        return $welcome;
+    }
+
     /** Durée estimée d'un exercice : des minutes, entre 1 et 600. */
     private function duration(mixed $duration, string $file): ?int
     {
@@ -408,7 +423,7 @@ final class ExerciseReader
             throw new ContentException(sprintf('%s : « %s » ne se traduit pas : réglez-la dans l\'exercice français (clés traduisibles : %s).', $file, implode('», «', $unknown), implode(', ', self::TRANSLATED_KEYS)));
         }
         // Un texte laissé de côté s'afficherait en français au milieu de la traduction.
-        foreach (['title', 'summary', 'objectives', 'hints', 'requests', 'docs', 'mutants', 'steps'] as $key) {
+        foreach (['title', 'summary', 'objectives', 'hints', 'requests', 'docs', 'mutants', 'steps', 'guide'] as $key) {
             if (\array_key_exists($key, $meta) && [] !== $meta[$key] && !\array_key_exists($key, $translated)) {
                 throw new ContentException(sprintf('%s : « %s » manque : sans elle, le texte français s\'afficherait dans la traduction.', $file, $key));
             }

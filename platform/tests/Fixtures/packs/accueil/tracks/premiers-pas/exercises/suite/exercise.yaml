@@ -1,0 +1,5 @@
+id: suite
+title: La suite
+xp: 10
+editable: [src/Controller/BonjourController.php]
+objectives: [{test: testA, label: A}]

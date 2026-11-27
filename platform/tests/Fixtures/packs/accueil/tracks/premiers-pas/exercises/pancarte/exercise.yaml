@@ -1,0 +1,8 @@
+id: pancarte
+title: La pancarte
+xp: 10
+duration: 2
+welcome: true
+guide: "Remplacez `'Fermé'` par `'Ouvert'`."
+editable: [src/Controller/BonjourController.php]
+objectives: [{test: testA, label: A}]

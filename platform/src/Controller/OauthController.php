@@ -10,6 +10,7 @@ use App\Account\Oauth\OauthProviders;
 use App\Account\Oauth\RecentSignIn;
 use App\Account\Oauth\SignInOutcome;
 use App\Account\RegistrationThrottle;
+use App\Account\WelcomeExercise;
 use App\Entity\User;
 use App\Form\ExternalRegistrationFormType;
 use App\Repository\UserRepository;
@@ -62,6 +63,7 @@ final class OauthController extends AbstractController
         private readonly LoggerInterface $logger,
         private readonly TranslatorInterface $translator,
         private readonly LocaleSwitcher $locale,
+        private readonly WelcomeExercise $welcomeExercise,
         /** @var list<string> */
         #[Autowire('%kernel.enabled_locales%')]
         private readonly array $enabledLocales = ['fr'],
@@ -194,7 +196,7 @@ final class OauthController extends AbstractController
             $user = $this->signIn->register($profile, $data['displayName'], $data['invitationCode']);
             $suite = \is_string($pending['suite'] ?? null) ? $pending['suite'] : null;
 
-            return $this->logIn($security, $user, $suite, t('flash.bienvenue', ['pseudo' => $user->getDisplayName()], 'compte'));
+            return $this->logIn($security, $user, $suite, t('flash.bienvenue', ['pseudo' => $user->getDisplayName()], 'compte'), welcome: true);
         }
 
         return $this->render('security/oauth_register.html.twig', [
@@ -252,13 +254,14 @@ final class OauthController extends AbstractController
         return $this->redirect($suite ?? $this->generateUrl('app_account', ['_fragment' => 'profil']));
     }
 
-    private function logIn(Security $security, User $user, ?string $suite, TranslatableMessage $message): Response
+    /** @param bool $welcome un nouveau compte : sans page où revenir, il commence par l'exercice d'accueil */
+    private function logIn(Security $security, User $user, ?string $suite, TranslatableMessage $message, bool $welcome = false): Response
     {
         $security->login($user, 'form_login', 'main');
         $this->recent->mark($user);
         $this->addFlash('success', $message);
 
-        return $this->redirect($suite ?? $this->generateUrl('app_home'));
+        return $this->redirect($suite ?? ($welcome ? $this->welcomeExercise->urlFor($user) : null) ?? $this->generateUrl('app_home'));
     }
 
     private function startRegistration(SessionInterface $session, ExternalProfile $profile, ?string $suite): Response

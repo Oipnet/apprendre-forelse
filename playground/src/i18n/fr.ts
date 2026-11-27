@@ -543,4 +543,13 @@ export const fr = {
 		expandAll: 'Tout ouvrir',
 		collapseAll: 'Tout fermer',
 	},
+	guide: {
+		label: 'Guide pas à pas',
+		close: 'Fermer le guide',
+		/** `consigne` : déjà en HTML (markdown d'une ligne, nettoyé). */
+		write: (consigne: string) => `<strong>Bienvenue ! ① Modifiez le code, dans le cadre entouré.</strong> ${consigne}`,
+		run: (consigne: string) => `① ${consigne}<br><strong>② Cliquez ensuite sur le bouton ▶ entouré, en haut à droite</strong> : les tests vérifient votre code.`,
+		/** `petitEcran` : l'éditeur est caché derrière l'onglet « Code ». */
+		fix: (petitEcran: boolean) => `<strong>Presque !</strong> Lisez le message sous l'objectif, corrigez le code${petitEcran ? ' (onglet « Code »)' : ''}, puis relancez les tests.`,
+	},
 };

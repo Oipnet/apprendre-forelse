@@ -32,6 +32,7 @@ import { ExerciseSession } from './session';
 import { modifierLabel, shortcutOf, shortcutsHelpHtml, type Shortcut } from './shortcuts';
 import { StepsController } from './steps';
 import { SuccessPanel } from './SuccessPanel';
+import { Guide } from './guide';
 import { TestResultsView } from './TestResultsView';
 import { ApiKeyPanel, redactSecrets } from './api-key';
 import { bindRunButton } from './run';
@@ -445,7 +446,14 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	}
 	const [{ EditorPanel, monaco }, { registerCompletion }, { BeforeAfterDialog }] = await editeur;
 	mark('editorLoaded');
-	const editor = new EditorPanel($('#tabs'), $('#editor'), (path, content) => session.edit(path, content));
+	// Exercice d'accueil : le guidage pas à pas, tant qu'il n'est pas réussi (guide.ts). Il démarre avec l'aperçu.
+	const guide = exercise.guide && !scratch && !saved?.completed
+		? new Guide(root, exercise.guide, { storage: stockage, key: `guide:${exercise.trackId}/${exercise.id}`, narrow: () => narrow.matches })
+		: null;
+	const editor = new EditorPanel($('#tabs'), $('#editor'), (path, content) => {
+		session.edit(path, content);
+		guide?.edited();
+	});
 	// Un catalogue de paquets (PHP sans framework) : le message de composer.json dit comment en ajouter un.
 	if (catalogueUrl) editor.composerMessage = m.editor.composerCatalogMessage(!!catalogue);
 	const files = new ProjectFilesController(root, editor, runtime, exercise, session, compact.matches, scratch ? m.scratch.newProject : m.files);
@@ -502,7 +510,7 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 		files.onRestore = (etape) => void steps.goTo(etape ?? 0);
 	}
 	const runButton = $<HTMLButtonElement>('#run');
-	bindRunButton(runButton, { exercise, scratch, runtime, session, results, success, folding, status, reload, running, showWorkpane, metrics, mesure, steps, onScratchRun: () => offre?.ran() });
+	bindRunButton(runButton, { exercise, scratch, runtime, session, results, success, folding, status, reload, running, showWorkpane, metrics, mesure, steps, onScratchRun: () => offre?.ran(), onTestsDone: (passed, total) => guide?.testsDone(passed, total) });
 
 	// --- Indices et solution -------------------------------------------------------------
 	new HintsAndSolution(root, exercise, config, { session, editor, revealPane, mesure });
@@ -598,6 +606,8 @@ export async function mountPlayground(root: HTMLElement, config: PlaygroundConfi
 	overlay.inert = true;
 	overlay.setAttribute('aria-hidden', 'true');
 	mark('ready');
+	// Brouillon repris (le code a déjà changé) : on propose directement de lancer les tests.
+	guide?.start(Object.keys(changedFiles(session.current, exercise.files)).length > 0);
 	demarrage.pret({ compte: config.progress.mode === 'api', ...(scratch ? { partage: shared !== null } : {}) });
 	status(m.playground.ready(metrics.ready / 1000), 'ok');
 	Object.assign(window, { playground: { metrics, runtime, editor: editor.instance, monaco } }); // debug / mesures

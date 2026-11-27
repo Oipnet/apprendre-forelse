@@ -525,4 +525,11 @@ export const en: Messages = {
 		expandAll: 'Expand all',
 		collapseAll: 'Collapse all',
 	},
+	guide: {
+		label: 'Step-by-step guide',
+		close: 'Close the guide',
+		write: (consigne: string) => `<strong>Welcome! ① Edit the code in the highlighted box.</strong> ${consigne}`,
+		run: (consigne: string) => `① ${consigne}<br><strong>② Then click the highlighted ▶ button, top right</strong>: the tests check your code.`,
+		fix: (petitEcran: boolean) => `<strong>Almost!</strong> Read the message under the objective, fix the code${petitEcran ? ' (“Code” tab)' : ''}, then run the tests again.`,
+	},
 };

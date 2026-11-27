@@ -1,0 +1,6 @@
+id: premiers-pas
+title: Premiers pas
+description: Un exercice d'accueil guidé, où arrive un nouveau compte (WelcomeExerciseTest).
+environment: symfony-8
+chapters:
+  - {id: debut, title: Le début, exercises: [suite, pancarte]}
