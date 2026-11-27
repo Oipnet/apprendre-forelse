@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d4ff617cefc51fa2ebb079ae442c546d",
+    "content-hash": "9a3701a2198ba1b4e6c6d6ec8e5dc5be",
     "packages": [
         {
             "name": "composer/semver",
@@ -3560,23 +3560,23 @@
         },
         {
             "name": "sentry/sentry-symfony",
-            "version": "5.16.1",
+            "version": "5.17.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/getsentry/sentry-symfony.git",
-                "reference": "99303326c667253e09a081b31c66b1d06facab59"
+                "reference": "1209ceddd7b0d86fa10b9734bee424ad3fd496f4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/getsentry/sentry-symfony/zipball/99303326c667253e09a081b31c66b1d06facab59",
-                "reference": "99303326c667253e09a081b31c66b1d06facab59",
+                "url": "https://api.github.com/repos/getsentry/sentry-symfony/zipball/1209ceddd7b0d86fa10b9734bee424ad3fd496f4",
+                "reference": "1209ceddd7b0d86fa10b9734bee424ad3fd496f4",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/psr7": "^2.1.1|^3.0",
                 "jean85/pretty-package-versions": "^1.5||^2.0",
                 "php": "^7.2||^8.0",
-                "sentry/sentry": "^4.35.0",
+                "sentry/sentry": "^4.38.0",
                 "symfony/cache-contracts": "^1.1||^2.4||^3.0",
                 "symfony/config": "^4.4.20||^5.0.11||^6.0||^7.0||^8.0",
                 "symfony/console": "^4.4.20||^5.0.11||^6.0||^7.0||^8.0",
@@ -3646,7 +3646,7 @@
             ],
             "support": {
                 "issues": "https://github.com/getsentry/sentry-symfony/issues",
-                "source": "https://github.com/getsentry/sentry-symfony/tree/5.16.1"
+                "source": "https://github.com/getsentry/sentry-symfony/tree/5.17.0"
             },
             "funding": [
                 {
@@ -3658,20 +3658,20 @@
                     "type": "custom"
                 }
             ],
-            "time": "2026-11-18T17:26:29+00:00"
+            "time": "2026-11-19T14:41:16+00:00"
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v23.0.0",
+            "version": "v23.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "f29b7a44597531c304360c3d42959aaf52e33618"
+                "reference": "6694b4d8826927896c9a1e57a26a8dbffb69f732"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/f29b7a44597531c304360c3d42959aaf52e33618",
-                "reference": "f29b7a44597531c304360c3d42959aaf52e33618",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/6694b4d8826927896c9a1e57a26a8dbffb69f732",
+                "reference": "6694b4d8826927896c9a1e57a26a8dbffb69f732",
                 "shasum": ""
             },
             "require": {
@@ -3718,9 +3718,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v23.0.0"
+                "source": "https://github.com/stripe/stripe-php/tree/v23.1.0"
             },
-            "time": "2026-11-11T19:52:56+00:00"
+            "time": "2026-11-19T03:46:04+00:00"
         },
         {
             "name": "symfony/asset",
@@ -9602,16 +9602,16 @@
         },
         {
             "name": "twig/extra-bundle",
-            "version": "v3.29.0",
+            "version": "v3.31.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twigphp/twig-extra-bundle.git",
-                "reference": "aaa2993e19293a99240c4c61aa461d743b0dd569"
+                "reference": "c97881570a39593c7aa78bdd6b5e9838fb081fbf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twigphp/twig-extra-bundle/zipball/aaa2993e19293a99240c4c61aa461d743b0dd569",
-                "reference": "aaa2993e19293a99240c4c61aa461d743b0dd569",
+                "url": "https://api.github.com/repos/twigphp/twig-extra-bundle/zipball/c97881570a39593c7aa78bdd6b5e9838fb081fbf",
+                "reference": "c97881570a39593c7aa78bdd6b5e9838fb081fbf",
                 "shasum": ""
             },
             "require": {
@@ -9622,7 +9622,7 @@
             },
             "require-dev": {
                 "league/commonmark": "^2.7",
-                "symfony/phpunit-bridge": "^6.4|^7.0",
+                "symfony/phpunit-bridge": "^7.4|^8.0",
                 "twig/cache-extra": "^3.0",
                 "twig/cssinliner-extra": "^3.0",
                 "twig/html-extra": "^3.0",
@@ -9660,7 +9660,7 @@
                 "twig"
             ],
             "support": {
-                "source": "https://github.com/twigphp/twig-extra-bundle/tree/v3.29.0"
+                "source": "https://github.com/twigphp/twig-extra-bundle/tree/v3.31.0"
             },
             "funding": [
                 {
@@ -9672,7 +9672,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-11T08:59:50+00:00"
+            "time": "2026-11-23T11:36:10+00:00"
         },
         {
             "name": "twig/html-extra",
@@ -9744,16 +9744,16 @@
         },
         {
             "name": "twig/intl-extra",
-            "version": "v3.30.0",
+            "version": "v3.31.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twigphp/intl-extra.git",
-                "reference": "211c603b3f7d5a8f6c6543a02fe9f82c09b18025"
+                "reference": "dd065c6d2ae1b63c5b88ebd2c23b98e1cd6a201a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twigphp/intl-extra/zipball/211c603b3f7d5a8f6c6543a02fe9f82c09b18025",
-                "reference": "211c603b3f7d5a8f6c6543a02fe9f82c09b18025",
+                "url": "https://api.github.com/repos/twigphp/intl-extra/zipball/dd065c6d2ae1b63c5b88ebd2c23b98e1cd6a201a",
+                "reference": "dd065c6d2ae1b63c5b88ebd2c23b98e1cd6a201a",
                 "shasum": ""
             },
             "require": {
@@ -9762,7 +9762,7 @@
                 "twig/twig": "^3.13|^4.0"
             },
             "require-dev": {
-                "symfony/phpunit-bridge": "^6.4|^7.0"
+                "symfony/phpunit-bridge": "^7.4|^8.0"
             },
             "type": "library",
             "autoload": {
@@ -9792,7 +9792,7 @@
                 "twig"
             ],
             "support": {
-                "source": "https://github.com/twigphp/intl-extra/tree/v3.30.0"
+                "source": "https://github.com/twigphp/intl-extra/tree/v3.31.0"
             },
             "funding": [
                 {
@@ -9804,7 +9804,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-25T05:50:11+00:00"
+            "time": "2026-11-23T16:18:07+00:00"
         },
         {
             "name": "twig/twig",
@@ -10788,16 +10788,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "13.4.7",
+            "version": "13.4.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "e6458d44279e3b4fc492d4c41fe8e677efed7a2c"
+                "reference": "291e66a76eb39f2fb8f880d38edc30dbd7acd9a2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/e6458d44279e3b4fc492d4c41fe8e677efed7a2c",
-                "reference": "e6458d44279e3b4fc492d4c41fe8e677efed7a2c",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/291e66a76eb39f2fb8f880d38edc30dbd7acd9a2",
+                "reference": "291e66a76eb39f2fb8f880d38edc30dbd7acd9a2",
                 "shasum": ""
             },
             "require": {
@@ -10868,7 +10868,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/13.4.7"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/13.4.8"
             },
             "funding": [
                 {
@@ -10876,7 +10876,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2026-11-13T11:10:10+00:00"
+            "time": "2026-11-19T12:17:15+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -12362,5 +12362,5 @@
         "ext-intl": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
