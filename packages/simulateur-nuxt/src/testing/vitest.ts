@@ -387,6 +387,14 @@ function hasRunnableTest(suite: SuiteNode, hasOnly: boolean, inOnly: boolean): b
 	});
 }
 
+/** Les classes d'erreur de Vitest (depuis la 5.1.1) : le verdict affiche « TestTimeoutError: … », comme Vitest. */
+class TestTimeoutError extends Error {
+	name = 'TestTimeoutError';
+}
+class HookTimeoutError extends Error {
+	name = 'HookTimeoutError';
+}
+
 async function withTimeout(value: unknown, timeout: number, what: string): Promise<unknown> {
 	if (!(value instanceof Promise)) return value;
 	let timer: ReturnType<typeof setTimeout> | undefined;
@@ -394,7 +402,10 @@ async function withTimeout(value: unknown, timeout: number, what: string): Promi
 		return await Promise.race([
 			value,
 			new Promise((_, reject) => {
-				timer = setTimeout(() => reject(new Error(`${what === 'test' ? 'Test' : `Hook ${what}`} timed out in ${timeout}ms.`)), timeout);
+				timer = setTimeout(() => {
+					const message = `${what === 'test' ? 'Test' : `Hook ${what}`} timed out in ${timeout}ms.`;
+					reject(what === 'test' ? new TestTimeoutError(message) : new HookTimeoutError(message));
+				}, timeout);
 			}),
 		]);
 	} finally {
