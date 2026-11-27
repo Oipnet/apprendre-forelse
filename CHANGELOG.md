@@ -14,8 +14,8 @@ Le format de ce fichier suit [Keep a Changelog](https://keepachangelog.com/fr/1.
   du menu, avec un mot de passe ou un fournisseur), le nouveau compte arrive sur l'exercice marqué `welcome: true`
   dans `exercise.yaml`, dans la langue de l'inscription, au lieu de l'accueil. Inscrit depuis un exercice (presque
   toujours), il y passe aussi d'abord : la barre propose « Passer la démo », la réussite « Reprendre : <l'exercice> »
-  au lieu de l'exercice suivant. Une page où revenir qui n'est pas un exercice (« Acheter », une page protégée) passe
-  avant la démo. La clé `guide:` (traduisible) y ajoute une barre de guidage : quoi
+  au lieu de l'exercice suivant. Une page demandée en clair (`?suite=` : « Acheter », l'exercice suivant depuis le
+  panneau de réussite) ou une page protégée passe avant la démo. La clé `guide:` (traduisible) y ajoute une barre de guidage : quoi
   écrire, puis « Cliquez sur ▶ Lancer les tests », puis, après un échec, « lisez le message et corrigez », avec un
   halo sur l'endroit où agir ; la réussite la ferme et le panneau habituel (XP, exercice suivant) prend le relais.
   Les 11 premiers inscrits venus de ChatGPT étaient tous restés à 0 XP. Aucune nouvelle mesure d'audience.
